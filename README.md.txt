@@ -1,0 +1,1 @@
+echo "# Projeto TCC - Faça a Festa" > README.md
