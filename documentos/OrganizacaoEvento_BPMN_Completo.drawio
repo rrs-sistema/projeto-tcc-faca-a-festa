@@ -249,7 +249,59 @@
           <mxGeometry relative="1" as="geometry"/>
         </mxCell>
         
-      </root>
+      
+    <mxCell id="edge_d1_integral" value="Integral" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="D1" target="S6" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge_d1_sinal" value="Sinal" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="D1" target="S7" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge_d1_to_f3" value="Não" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="S6" target="F3" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge_d1s_to_f3" value="Não" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="S7" target="F3" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge_d2_nao" value="Não" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="D2" target="A3" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge_d2_sim" value="Sim" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="D2" target="A10" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="msg_convite" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="A4" target="C1" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="msg_rsvp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="C3" target="S5" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="msg_solicita_ia" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="A6" target="IA1" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="msg_ia_sugestao" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="IA3" target="A7" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="msg_solicita_forn" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="A7" target="F1" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="msg_proposta_forn" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="F2" target="A8" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="msg_confirma_servico" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="F3" target="A11" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    </root>
     </mxGraphModel>
   </diagram>
 </mxfile>
