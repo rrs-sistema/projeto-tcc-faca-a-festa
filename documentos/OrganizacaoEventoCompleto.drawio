@@ -1,0 +1,147 @@
+
+<mxfile host="app.diagrams.net">
+  <diagram name="OrganizacaoEventoBPMN" id="0">
+    <mxGraphModel dx="2400" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1"
+      page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+    <mxCell id="pool1" value="Organizador" style="swimlane" vertex="1" parent="1">
+      <mxGeometry x="0" y="0" width="2400" height="100" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="pool2" value="Convidado" style="swimlane" vertex="1" parent="1">
+      <mxGeometry x="0" y="100" width="2400" height="100" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="pool3" value="Fornecedor" style="swimlane" vertex="1" parent="1">
+      <mxGeometry x="0" y="200" width="2400" height="100" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="pool4" value="Sistema" style="swimlane" vertex="1" parent="1">
+      <mxGeometry x="0" y="300" width="2400" height="100" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="pool5" value="IA" style="swimlane" vertex="1" parent="1">
+      <mxGeometry x="0" y="400" width="2400" height="100" as="geometry"/>
+    </mxCell>
+    
+        
+<mxCell id="start" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;shape=startEvent;" vertex="1" parent="pool1">
+  <mxGeometry x="40" y="20" width="30" height="30" as="geometry"/>
+</mxCell>
+
+        
+    <mxCell id="task1" value="Login / Cadastro" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="100" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="task2" value="Criar Evento" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="280" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="task3" value="Configurar Espaço" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="460" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="task4" value="Disparar Convites" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="640" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="task5" value="Gerir Orçamento" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="820" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="task6" value="Solicitar Sugestão IA" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="1000" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="task7" value="Selecionar Fornecedor" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="1180" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="task8" value="Negociar Fornecedor" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="1360" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="task9" value="Efetuar Pagamento" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="1540" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="task10" value="Checklist e Gamificação" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="1720" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="task11" value="Pré-Evento" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="1900" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="task12" value="Pós-Evento" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="pool1">
+      <mxGeometry x="2080" y="10" width="160" height="40" as="geometry"/>
+    </mxCell>
+    
+        
+<mxCell id="end" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;shape=endEvent;" vertex="1" parent="pool1">
+  <mxGeometry x="2270" y="20" width="30" height="30" as="geometry"/>
+</mxCell>
+
+        
+    <mxCell id="edge0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="start" target="task1" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+        
+    <mxCell id="edge1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task1" target="task2" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task2" target="task3" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task3" target="task4" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task4" target="task5" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task5" target="task6" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task6" target="task7" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task7" target="task8" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task8" target="task9" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task9" target="task10" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task10" target="task11" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+    <mxCell id="edge11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task11" target="task12" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+        
+    <mxCell id="edge99" style="edgeStyle=orthogonalEdgeStyle;rounded=0;" edge="1" source="task12" target="end" parent="1">
+      <mxGeometry relative="1" as="geometry"/>
+    </mxCell>
+    
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
