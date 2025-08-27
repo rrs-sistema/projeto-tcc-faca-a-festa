@@ -1,0 +1,107 @@
+Entidade,Campo,Tipo de Dado,Descrição
+avaliacoes,ativo,bool,Define se o registro está ativo ou inativo
+avaliacoes,avaliacaoId,string,ID único da avaliação
+avaliacoes,comentario,string,Comentário textual do usuário
+avaliacoes,dataAvaliacao,timestamp,Data/hora da avaliação
+avaliacoes,nota,int,Nota de 1 a 5
+avaliacoes,servicoId,string,Ref para servicos
+avaliacoes,usuarioId,string,Ref para usuarios
+categorias_servicos,ativo,bool,Define se o registro está ativo ou inativo
+categorias_servicos,categoriaId,string,ID único da categoria
+categorias_servicos,nome,string,Nome da categoria
+convidados,ativo,bool,Define se o registro está ativo ou inativo
+convidados,convidadoId,string,ID único do convidado no evento
+convidados,email,string,E-mail do convidado
+convidados,grupo,string,Grupo de afinidade
+convidados,nome,string,Nome do convidado
+convidados,statusPresenca,string,"Status de presença (confirmado, pendente, recusado)"
+convidados,tipo,string,"Tipo do convidado (adulto, criança)"
+convidados,usuarioId,string,Ref opcional para o usuário
+eventos,ativo,bool,Define se o registro está ativo ou inativo
+eventos,cidadeEstado,string,Localização resumida
+eventos,data,timestamp,Data do evento
+eventos,descricao,string,Descrição do evento
+eventos,eventoId,string,ID único do evento
+eventos,hora,string,Hora do evento
+eventos,local,string,Endereço ou local do evento
+eventos,nome,string,Nome do evento
+eventos,organizadorId,string,Ref para usuarios
+eventos,tipo,string,Tipo do evento
+fornecedores,aptoParaOperar,bool,Define se o fornecedor está apto a operar
+fornecedores,ativo,bool,Define se o registro está ativo ou inativo
+fornecedores,cnpj,string,CNPJ (opcional)
+fornecedores,cpf,string,CPF (opcional)
+fornecedores,descricao,string,Descrição dos serviços
+fornecedores,email,string,E-mail do fornecedor
+fornecedores,fornecedorId,string,ID único do fornecedor
+fornecedores,fotosUrls,array,URLs de imagens
+fornecedores,nome,string,Nome do fornecedor
+fornecedores,telefone,string,Telefone de contato
+fornecedores,usuarioId,string,Ref para usuarios
+fornecedores_evento,ativo,bool,Define se o registro está ativo ou inativo
+fornecedores_evento,categoria,string,Categoria do serviço
+fornecedores_evento,eventoId,string,Ref para eventos
+fornecedores_evento,fornecedorEventoId,string,ID único no evento
+fornecedores_evento,fornecedorId,string,Ref para fornecedores
+fornecedores_evento,observacoes,string,Observações específicas
+fornecedores_evento,status,string,"Status (contratado, em negociação, aguardando orçamento)"
+orcamentos,anotacoes,string,Observações gerais
+orcamentos,ativo,bool,Define se o registro está ativo ou inativo
+orcamentos,categoria,string,Categoria do item
+orcamentos,custoEstimado,number,Valor planejado
+orcamentos,custoReal,number,Valor pago
+orcamentos,eventoId,string,Ref para eventos
+orcamentos,formaPagamento,string,Forma de pagamento
+orcamentos,fornecedorId,string,Ref para fornecedores (opcional)
+orcamentos,item,string,Nome do item
+orcamentos,orcamentoId,string,ID único do orçamento
+orcamentos,servicoId,string,Ref para serviço (opcional)
+orcamentos,statusPagamento,string,Status do pagamento
+referencias,ativo,bool,Define se o registro está ativo ou inativo
+referencias,categoria,string,Tipo da referência
+referencias,eventoId,string,Ref para eventos
+referencias,favorito,bool,Se é uma referência favorita
+referencias,imagemUrl,string,URL da imagem
+referencias,referenciaId,string,ID único da imagem
+servicos,ativo,bool,Define se o registro está ativo ou inativo
+servicos,categoria,string,Categoria do serviço
+servicos,descricao,string,Descrição do serviço
+servicos,fornecedorId,string,Ref para fornecedores
+servicos,fotosUrls,array,URLs de imagens
+servicos,nome,string,Nome do serviço
+servicos,servicoId,string,ID único do serviço
+servicos,unidade,string,"Unidade de valor (por item, por hora, etc.)"
+servicos,valor,number,Valor do serviço
+tarefas,ativo,bool,Define se o registro está ativo ou inativo
+tarefas,dataPrevista,timestamp,Prazo para conclusão
+tarefas,descricao,string,Descrição adicional
+tarefas,eventoId,string,Ref para eventos
+tarefas,nome,string,Nome da tarefa
+tarefas,responsavel,string,Ref para usuários (organizador ou auxiliar)
+tarefas,status,string,"Status (pendente, concluída)"
+tarefas,tarefaId,string,ID único da tarefa
+territorios,ativo,bool,Define se o registro está ativo ou inativo
+territorios,descricao,string,(opcional) Descrição do território
+territorios,fornecedorId,string,Ref para fornecedores
+territorios,latitude,number,Latitude central da região
+territorios,longitude,number,Longitude central da região
+territorios,raioKm,number,Raio de cobertura em quilômetros
+territorios,territorioId,string,ID único da área de atuação
+usuarios,ativo,bool,Define se o registro está ativo ou inativo
+usuarios,cnpj,string,CNPJ (se fornecedor)
+usuarios,cpf,string,CPF (se aplicável)
+usuarios,email,string,E-mail de login e contato
+usuarios,endereco.bairro,string,Bairro
+usuarios,endereco.cep,string,CEP
+usuarios,endereco.cidade,string,Cidade
+usuarios,endereco.complemento,string,Complemento (opcional)
+usuarios,endereco.latitude,number,Latitude do endereço
+usuarios,endereco.logradouro,string,(Obrigatório se organizador ou fornecedor)
+usuarios,endereco.longitude,number,Longitude do endereço
+usuarios,endereco.numero,string,Número
+usuarios,endereco.uf,string,"Unidade federativa (ex.: PR, SP)"
+usuarios,fotoPerfilUrl,string,URL para foto de perfil
+usuarios,nome,string,Nome completo do usuário
+usuarios,senhaHash,string,Hash da senha
+usuarios,tipo,string,"Papel do usuário (organizador, fornecedor, convidado)"
+usuarios,usuarioId,string,ID único do usuário

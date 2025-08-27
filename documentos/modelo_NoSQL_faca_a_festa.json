@@ -1,0 +1,145 @@
+{
+  "usuarios": {
+    "usuarioId": "string - ID único do usuário",
+    "nome": "string - Nome completo do usuário",
+    "email": "string - E-mail de login e contato",
+    "senhaHash": "string - Hash da senha",
+    "tipo": "string - Papel do usuário (organizador, fornecedor, convidado)",
+    "cpf": "string - CPF (se aplicável)",
+    "cnpj": "string - CNPJ (se fornecedor)",
+    "fotoPerfilUrl": "string - URL para foto de perfil",
+    "endereco": {
+      "logradouro": "string - (Obrigatório se organizador ou fornecedor)",
+      "numero": "string",
+      "complemento": "string",
+      "bairro": "string",
+      "cidade": "string",
+      "uf": "string",
+      "cep": "string",
+      "latitude": "number",
+      "longitude": "number"
+    },
+    "ativo": "bool - Define se o usuário está ativo"
+  },
+
+  "eventos": {
+    "eventoId": "string - ID único do evento",
+    "nome": "string - Nome do evento",
+    "tipo": "string - Tipo do evento",
+    "data": "timestamp - Data do evento",
+    "hora": "string - Hora do evento",
+    "local": "string - Endereço ou local do evento",
+    "descricao": "string - Descrição do evento",
+    "cidadeEstado": "string - Localização resumida",
+    "organizadorId": "string - Ref para usuarios",
+    "ativo": "bool - Define se o evento está ativo"
+  },
+
+  "convidados": {
+    "convidadoId": "string - ID único do convidado no evento",
+    "usuarioId": "string - Ref opcional para o usuário",
+    "nome": "string - Nome do convidado",
+    "email": "string - E-mail do convidado",
+    "grupo": "string - Grupo de afinidade",
+    "statusPresenca": "string - Status de presença (confirmado, pendente, recusado)",
+    "tipo": "string - Tipo do convidado (adulto, criança)",
+    "ativo": "bool - Define se o convidado está ativo"
+  },
+
+  "fornecedores": {
+    "fornecedorId": "string - ID único do fornecedor",
+    "usuarioId": "string - Ref para usuarios",
+    "nome": "string - Nome do fornecedor",
+    "cpf": "string - CPF (opcional)",
+    "cnpj": "string - CNPJ (opcional)",
+    "telefone": "string - Telefone de contato",
+    "email": "string - E-mail do fornecedor",
+    "descricao": "string - Descrição dos serviços",
+    "fotosUrls": "array - URLs de imagens",
+    "ativo": "bool - Define se o fornecedor está ativo",
+    "aptoParaOperar": "bool - Define se o fornecedor está apto a operar"
+  },
+
+  "territorios": {
+    "territorioId": "string - ID único da área de atuação",
+    "fornecedorId": "string - Ref para fornecedores",
+    "latitude": "number - Latitude central da região",
+    "longitude": "number - Longitude central da região",
+    "raioKm": "number - Raio de cobertura em quilômetros",
+    "descricao": "string - (opcional) Descrição do território",
+    "ativo": "bool - Define se a área de atuação está ativa"
+  },
+
+  "servicos": {
+    "servicoId": "string - ID único do serviço",
+    "fornecedorId": "string - Ref para fornecedores",
+    "nome": "string - Nome do serviço",
+    "descricao": "string - Descrição do serviço",
+    "categoria": "string - Categoria do serviço",
+    "valor": "number - Valor do serviço",
+    "unidade": "string - Unidade de valor (por item, por hora, etc.)",
+    "fotosUrls": "array - URLs de imagens",
+    "ativo": "bool - Define se o serviço está ativo"
+  },
+
+  "avaliacoes": {
+    "avaliacaoId": "string - ID único da avaliação",
+    "servicoId": "string - Ref para servicos",
+    "usuarioId": "string - Ref para usuarios",
+    "nota": "int - Nota de 1 a 5",
+    "comentario": "string - Comentário textual do usuário",
+    "dataAvaliacao": "timestamp - Data/hora da avaliação",
+    "ativo": "bool - Define se a avaliação está ativa"
+  },
+
+  "fornecedores_evento": {
+    "fornecedorEventoId": "string - ID único no evento",
+    "eventoId": "string - Ref para eventos",
+    "fornecedorId": "string - Ref para fornecedores",
+    "categoria": "string - Categoria do serviço",
+    "status": "string - Status (contratado, em negociação, aguardando orçamento)",
+    "observacoes": "string - Observações específicas",
+    "ativo": "bool - Define se o vínculo está ativo"
+  },
+
+  "orcamentos": {
+    "orcamentoId": "string - ID único do orçamento",
+    "eventoId": "string - Ref para eventos",
+    "categoria": "string - Categoria do item",
+    "item": "string - Nome do item",
+    "fornecedorId": "string - Ref para fornecedores (opcional)",
+    "servicoId": "string - Ref para serviço (opcional)",
+    "custoEstimado": "number - Valor planejado",
+    "custoReal": "number - Valor pago",
+    "formaPagamento": "string - Forma de pagamento",
+    "statusPagamento": "string - Status do pagamento",
+    "anotacoes": "string - Observações gerais",
+    "ativo": "bool - Define se o orçamento está ativo"
+  },
+
+  "tarefas": {
+    "tarefaId": "string - ID único da tarefa",
+    "eventoId": "string - Ref para eventos",
+    "nome": "string - Nome da tarefa",
+    "descricao": "string - Descrição adicional",
+    "dataPrevista": "timestamp - Prazo para conclusão",
+    "status": "string - Status (pendente, concluída)",
+    "responsavel": "string - Ref para usuários (organizador ou auxiliar)",
+    "ativo": "bool - Define se a tarefa está ativa"
+  },
+
+  "referencias": {
+    "referenciaId": "string - ID único da imagem",
+    "eventoId": "string - Ref para eventos",
+    "imagemUrl": "string - URL da imagem",
+    "categoria": "string - Tipo da referência",
+    "favorito": "bool - Se é uma referência favorita",
+    "ativo": "bool - Define se a referência está ativa"
+  },
+
+  "categorias_servicos": {
+    "categoriaId": "string - ID único da categoria",
+    "nome": "string - Nome da categoria",
+    "ativo": "bool - Define se a categoria está ativa"
+  }
+}
