@@ -1,0 +1,131 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Faça a Festa - Casos de Uso" id="1">
+    <mxGraphModel dx="1350" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1200" pageHeight="1600" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Atores -->
+        <mxCell id="ORG" value="Organizador" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="60" width="40" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="CON" value="Convidado" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="600" width="40" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="FOR" value="Fornecedor" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="800" width="40" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="IA" value="IA (Serviço Externo)" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1000" width="40" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- Casos de Uso - Organizador -->
+        <mxCell id="UC1" value="Login/Cadastro" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="40" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC2" value="Criar/Editar Evento" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="90" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC3" value="Gerir Espaço dos Convidados" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="140" width="240" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC4" value="Gerir Orçamento" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="190" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC5" value="Solicitar Sugestão de Fornecedores" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="240" width="280" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC6" value="Selecionar Fornecedor (Top 3)" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="290" width="260" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC7" value="Negociar Fornecedor" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="340" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC8" value="Efetuar Pagamento / Registrar Cobrança" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="390" width="280" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC9" value="Checklist e Gamificação" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="440" width="220" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC10" value="Pré-Evento: Confirmações" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="490" width="240" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC11" value="Pós-Evento: Avaliações e Relatórios" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="540" width="300" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC12" value="Enviar Notificações e Lembretes" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="590" width="280" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC13" value="Controle Financeiro" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="640" width="220" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC14" value="Relatórios e Dashboards" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="300" y="690" width="260" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Casos de Uso - Convidado -->
+        <mxCell id="UC15" value="Acessar Espaço do Convidado" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="650" y="600" width="260" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC16" value="Confirmar Presença - RSVP" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="650" y="650" width="240" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC17" value="Interações: Playlist, Fotos" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="650" y="700" width="240" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Casos de Uso - Fornecedor -->
+        <mxCell id="UC18" value="Responder Cotação" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="650" y="800" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC19" value="Enviar Proposta" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="650" y="850" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC20" value="Confirmar Reserva" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="650" y="900" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC21" value="Executar Serviço" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="650" y="950" width="200" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Casos de Uso - IA -->
+        <mxCell id="UC22" value="Analisar Categorias e Itens" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="650" y="1050" width="260" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC23" value="Buscar Cotações" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="650" y="1100" width="200" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="UC24" value="Sugerir Top 3 Fornecedores" style="ellipse;whiteSpace=wrap;" vertex="1" parent="1">
+          <mxGeometry x="650" y="1150" width="260" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- Conexões entre atores e casos -->
+        <!-- Exemplo -->
+        <mxCell edge="1" source="ORG" target="UC1" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC2" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC3" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC4" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC5" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC6" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC7" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC8" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC9" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC10" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC11" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC12" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC13" parent="1"/>
+        <mxCell edge="1" source="ORG" target="UC14" parent="1"/>
+        <mxCell edge="1" source="CON" target="UC15" parent="1"/>
+        <mxCell edge="1" source="CON" target="UC16" parent="1"/>
+        <mxCell edge="1" source="CON" target="UC17" parent="1"/>
+        <mxCell edge="1" source="FOR" target="UC18" parent="1"/>
+        <mxCell edge="1" source="FOR" target="UC19" parent="1"/>
+        <mxCell edge="1" source="FOR" target="UC20" parent="1"/>
+        <mxCell edge="1" source="FOR" target="UC21" parent="1"/>
+        <mxCell edge="1" source="IA" target="UC22" parent="1"/>
+        <mxCell edge="1" source="IA" target="UC23" parent="1"/>
+        <mxCell edge="1" source="IA" target="UC24" parent="1"/>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
