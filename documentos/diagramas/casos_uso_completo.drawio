@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2">
   <diagram name="Casos de Uso - Sistema Faça a Festa" id="casosUso">
-    <mxGraphModel dx="80620" dy="39567" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+    <mxGraphModel dx="104359" dy="50229" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -32,7 +32,7 @@
           <mxGeometry x="190" y="590" width="160" height="60" as="geometry" />
         </mxCell>
         <mxCell id="pagamento" value="Efetuar Pagamento" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="540" y="660" width="160" height="60" as="geometry" />
+          <mxGeometry x="535" y="680" width="160" height="60" as="geometry" />
         </mxCell>
         <mxCell id="presenca" value="Confirmar Presença" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="300" y="1000" width="160" height="60" as="geometry" />
@@ -41,7 +41,7 @@
           <mxGeometry x="160" y="495" width="200" height="60" as="geometry" />
         </mxCell>
         <mxCell id="gerarCotacao" value="Gerar Cotação" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
-          <mxGeometry x="720" y="775" width="140" height="50" as="geometry" />
+          <mxGeometry x="770" y="770" width="140" height="50" as="geometry" />
         </mxCell>
         <mxCell id="compararCotacoes" value="Comparar Respostas de Cotação" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="90" y="680" width="200" height="60" as="geometry" />
@@ -80,7 +80,7 @@
           <mxGeometry x="350" y="725" width="120" height="50" as="geometry" />
         </mxCell>
         <mxCell id="corrigirTemplate" value="Editar Template" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
-          <mxGeometry x="400" y="650" width="110" height="50" as="geometry" />
+          <mxGeometry x="425" y="630" width="110" height="50" as="geometry" />
         </mxCell>
         <mxCell id="novoLink" value="Solicitar Novo Link" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
           <mxGeometry x="560" y="960" width="110" height="50" as="geometry" />
@@ -268,7 +268,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="edge_item_ia" parent="1" source="selecionarItem" target="ia_sugestao" edge="1">
+        <mxCell id="edge_item_ia" parent="1" source="gerirCotacao" target="ia_sugestao" edge="1">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1060" y="520" />
@@ -438,7 +438,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="outroMetodo" value="Selecionar Outro Método" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
-          <mxGeometry x="700" y="600" width="180" height="50" as="geometry" />
+          <mxGeometry x="730" y="580" width="180" height="50" as="geometry" />
         </mxCell>
         <mxCell id="atribuirResponsavel" value="Atribuir Responsável" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="670" y="50" width="80" height="60" as="geometry" />
@@ -474,7 +474,7 @@
           <mxGeometry x="1430" y="835" width="80" height="50" as="geometry" />
         </mxCell>
         <mxCell id="desativarAvaliacao" value="Desativar Avaliação" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
-          <mxGeometry x="1300" y="875" width="100" height="50" as="geometry" />
+          <mxGeometry x="1280" y="910" width="100" height="50" as="geometry" />
         </mxCell>
         <mxCell id="verAvaliacoesFornecedor" value="Ver Avaliações Recebidas" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="-180" y="870" width="200" height="60" as="geometry" />
@@ -538,6 +538,43 @@
         </mxCell>
         <mxCell id="checklistTarefas" value="Checklist de Tarefas" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
           <mxGeometry x="330" y="110" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="responderCotacaoFornecedor" value="Responder Cotação Fornecedor" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="260" y="835" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="detalharItensCotacao" value="Detalhar Itens da Cotação" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="740" y="960" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_org_gerirCotacao" parent="1" source="organizador" target="gerirCotacao" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_forn_responderCotacao" parent="1" source="fornecedor" target="responderCotacaoFornecedor" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_responder_detalhar" parent="1" source="responderCotacaoFornecedor" target="detalharItensCotacao" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_gerirCotacao_orcamento" parent="1" source="gerirCotacao" target="gerirOrcamento" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_orcamento_pagamento" parent="1" source="gerirOrcamento" target="pagamento" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_org_orcamento" parent="1" source="organizador" target="gerirOrcamento" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_org_pagamento" parent="1" source="organizador" target="pagamento" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="IjQnYW8EgP6txqm71GPg-1" value="" edge="1" parent="1" source="selecionarItem" target="gerirCotacao">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="360" y="524" as="sourcePoint" />
+            <mxPoint x="1086" y="325" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gerirCotacao" value="Gerir Cotação" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="570" y="495" width="160" height="60" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
