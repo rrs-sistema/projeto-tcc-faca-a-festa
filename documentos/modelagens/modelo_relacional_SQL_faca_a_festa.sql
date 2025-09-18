@@ -40,30 +40,6 @@ CREATE TABLE IF NOT EXISTS usuario (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =========================================================
--- Tabela: usuario_endereco
--- =========================================================
-CREATE TABLE IF NOT EXISTS usuario_endereco (
-    id VARCHAR(36) PRIMARY KEY,
-    id_usuario VARCHAR(36) NOT NULL,
-    id_cidade INT NOT NULL,
-    logradouro VARCHAR(150) NOT NULL,
-    numero VARCHAR(20),
-    bairro VARCHAR(100),
-    cep VARCHAR(9),
-    complemento VARCHAR(150),
-    principal BOOLEAN NOT NULL DEFAULT TRUE,
-    CONSTRAINT fk_usuario_endereco_usuario FOREIGN KEY (id_usuario) REFERENCES usuario(id_usuario)
-      ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT fk_usuario_endereco_cidade FOREIGN KEY (id_cidade) REFERENCES cidade(id_cidade)
-      ON UPDATE CASCADE ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
-CREATE INDEX idx_usuario_endereco_usuario ON usuario_endereco (id_usuario);
-CREATE UNIQUE INDEX uq_usuario_endereco_principal
-  ON usuario_endereco (id_usuario, principal)
-  WHERE principal = TRUE;
-
--- =========================================================
 -- Tabela: fornecedor
 -- =========================================================
 CREATE TABLE IF NOT EXISTS fornecedor (
