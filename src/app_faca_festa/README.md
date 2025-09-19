@@ -1,6 +1,6 @@
 # 🎉 Faça a Festa - Estrutura do Projeto
 
-Aplicativo multiplataforma (Android, iOS, Web e Desktop) desenvolvido em **Flutter**,  
+Aplicativo multiplataforma (Android, Web e Desktop) desenvolvido em **Flutter**,  
 seguindo **Clean Architecture + GetX + Offline-first** para garantir organização,  
 testabilidade e escalabilidade.
 
