@@ -172,3 +172,7 @@ Firebase (Firestore, Auth, Functions, Storage, Messaging)
 Drift/SQLite (offline-first)
 
 flutter_local_notifications (notificações locais)
+
+
+👨‍💻 Autor: Jullia Acsa, Rivaldo Roberto e Nicolas Brayan – Engenharia de Software
+📅 Projeto acadêmico/profissional: Faça a Festa
