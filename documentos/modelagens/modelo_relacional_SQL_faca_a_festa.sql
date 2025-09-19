@@ -267,6 +267,7 @@ CREATE TABLE IF NOT EXISTS pagamento (
     data_pagamento DATE NOT NULL,
     valor_pago DECIMAL(10,2) NOT NULL,
     forma_pagamento VARCHAR(50) NOT NULL,
+	tipo_pagamento ENUM('total','parcial') DEFAULT 'parcial'
     observacoes TEXT,
     CONSTRAINT fk_pagamento_orcamento FOREIGN KEY (id_orcamento) REFERENCES orcamento(id_orcamento)
       ON UPDATE CASCADE ON DELETE CASCADE
