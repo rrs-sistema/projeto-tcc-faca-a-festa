@@ -306,44 +306,48 @@ CREATE TABLE IF NOT EXISTS referencia (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- =========================================================
--- Tabelas de compras
+-- Tabelas de Cotações
 -- =========================================================
-CREATE TABLE IF NOT EXISTS compra_cotacao (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    id_compra_requisicao INT UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS cotacao (
+    id_cotacao INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     data_cotacao DATE,
     descricao VARCHAR(100)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS compra_fornecedor_cotacao (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    id_compra_cotacao INT UNSIGNED NOT NULL,
+CREATE TABLE IF NOT EXISTS fornecedor (
+    id_fornecedor VARCHAR(36) PRIMARY KEY,
+    nome VARCHAR(150) NOT NULL
+    -- outros campos do fornecedor...
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS fornecedor_cotacao (
+    id_cotacao INT UNSIGNED NOT NULL,
     id_fornecedor VARCHAR(36) NOT NULL,
-    codigo VARCHAR(32),
     prazo_entrega VARCHAR(50),
     venda_condicoes_pagamento VARCHAR(50),
-    taxa_desconto DECIMAL(18,6),
-    valor_subtotal DECIMAL(18,6),
-    valor_desconto DECIMAL(18,6),
-    valor_total DECIMAL(18,6),
-    CONSTRAINT fk_fornecedor_cotacao_cabecalho FOREIGN KEY (id_compra_cotacao) REFERENCES compra_cotacao(id)
+    PRIMARY KEY (id_cotacao, id_fornecedor), -- chave composta
+    CONSTRAINT fk_fornecedor_cotacao_cabecalho FOREIGN KEY (id_cotacao) REFERENCES cotacao(id_cotacao)
       ON UPDATE CASCADE ON DELETE CASCADE,
     CONSTRAINT fk_fornecedor_cotacao_fornecedor FOREIGN KEY (id_fornecedor) REFERENCES fornecedor(id_fornecedor)
       ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-CREATE TABLE IF NOT EXISTS compra_cotacao_detalhe (
+CREATE TABLE IF NOT EXISTS cotacao_detalhe (
     id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    id_compra_fornecedor_cotacao INT UNSIGNED NOT NULL,
+    id_cotacao INT UNSIGNED NOT NULL,
+    id_fornecedor VARCHAR(36) NOT NULL,
     id_produto INT NOT NULL,
-    quantidade DECIMAL(18,6),
-    valor_unitario DECIMAL(18,6),
-    valor_subtotal DECIMAL(18,6),
-    taxa_desconto DECIMAL(18,6),
-    valor_desconto DECIMAL(18,6),
-    valor_total DECIMAL(18,6),
-    CONSTRAINT fk_cotacao_detalhe_fornecedor FOREIGN KEY (id_compra_fornecedor_cotacao) REFERENCES compra_fornecedor_cotacao(id)
-      ON UPDATE CASCADE ON DELETE CASCADE
+    quantidade DECIMAL(15,2),
+    valor_unitario DECIMAL(15,2),
+    valor_subtotal DECIMAL(15,2),
+    taxa_desconto DECIMAL(5,2),
+    valor_desconto DECIMAL(15,2),
+    valor_total DECIMAL(15,2),
+    CONSTRAINT fk_cotacao_detalhe_fornecedor FOREIGN KEY (id_cotacao, id_fornecedor) REFERENCES fornecedor_cotacao(id_cotacao, id_fornecedor)
+      ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_cotacao_detalhe_produto FOREIGN KEY (id_produto) REFERENCES servico(id_produto)
+      ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 SET FOREIGN_KEY_CHECKS = 1;
+
