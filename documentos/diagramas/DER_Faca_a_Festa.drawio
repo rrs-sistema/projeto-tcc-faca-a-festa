@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net">
+  <diagram id="der-faca-a-festa" name="DER Faça a Festa">
+    <mxGraphModel dx="1484" dy="801" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+<mxCell id="2" value="<b>ESTADO</b><br/>uf (PK)<br/>nome" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="80" y="40" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="3" value="<b>CIDADE</b><br/>id_cidade (PK)<br/>nome<br/>uf (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="320" y="40" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="4" value="<b>USUARIO</b><br/>id_usuario (PK)<br/>nome<br/>email UNIQUE<br/>senha_hash<br/>cpf<br/>cnpj<br/>foto_perfil_url<br/>ativo" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="560" y="40" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="5" value="<b>USUARIO_ENDERECO</b><br/>id (PK)<br/>id_usuario (FK)<br/>id_cidade (FK)<br/>logradouro<br/>numero<br/>bairro<br/>cep<br/>complemento<br/>principal" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="800" y="40" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="6" value="<b>CATEGORIA_SERVICO</b><br/>id_categoria (PK)<br/>nome<br/>ativo" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="80" y="220" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="7" value="<b>FORNECEDOR</b><br/>id_fornecedor (PK)<br/>nome<br/>telefone<br/>email<br/>descricao<br/>ativo<br/>apto_para_operar<br/>id_usuario (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="320" y="220" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="8" value="<b>FORNECEDOR_ENDERECO</b><br/>id (PK)<br/>id_fornecedor (FK)<br/>id_cidade (FK)<br/>logradouro<br/>numero<br/>bairro<br/>cep<br/>complemento<br/>principal<br/>entrega<br/>cobranca<br/>correspondencia" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="560" y="220" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="9" value="<b>FORNECEDOR_FOTO</b><br/>id (PK)<br/>id_fornecedor (FK)<br/>url<br/>descricao<br/>ordem" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="800" y="220" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="10" value="<b>TERRITORIO</b><br/>id_territorio (PK)<br/>latitude<br/>longitude<br/>raio_km<br/>descricao<br/>ativo<br/>id_fornecedor (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="80" y="400" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="11" value="<b>SERVICO</b><br/>id_servico (PK)<br/>nome<br/>descricao<br/>valor<br/>unidade<br/>ativo<br/>id_fornecedor (FK)<br/>id_categoria (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="320" y="400" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="12" value="<b>SERVICO_FOTO</b><br/>id (PK)<br/>id_servico (FK)<br/>url<br/>descricao<br/>ordem" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="560" y="400" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="13" value="<b>AVALIACAO</b><br/>id_avaliacao (PK)<br/>nota<br/>comentario<br/>data_avaliacao<br/>ativo<br/>id_servico (FK)<br/>id_usuario (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="800" y="400" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="14" value="<b>EVENTO</b><br/>id_evento (PK)<br/>nome<br/>tipo<br/>data<br/>hora<br/>local<br/>descricao<br/>ativo<br/>id_organizador (FK)<br/>id_cidade (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="80" y="580" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="15" value="<b>CONVIDADO</b><br/>id_convidado (PK)<br/>nome<br/>email<br/>grupo<br/>ativo<br/>id_usuario (FK)<br/>id_evento (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="320" y="580" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="16" value="<b>TAREFA</b><br/>id_tarefa (PK)<br/>nome<br/>descricao<br/>data_prevista<br/>ativo<br/>id_evento (FK)<br/>id_responsavel (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="560" y="580" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="17" value="<b>REFERENCIA</b><br/>id_referencia (PK)<br/>imagem_url<br/>categoria<br/>favorito<br/>ativo<br/>id_evento (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="800" y="580" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="18" value="<b>FORNECEDOR_EVENTO</b><br/>id_fornecedor_evento (PK)<br/>categoria<br/>observacoes<br/>ativo<br/>id_evento (FK)<br/>id_fornecedor (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="80" y="760" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="19" value="<b>ORCAMENTO</b><br/>id_orcamento (PK)<br/>categoria<br/>item<br/>custo_estimado<br/>custo_real<br/>forma_pagamento<br/>anotacoes<br/>ativo<br/>id_evento (FK)<br/>id_fornecedor (FK)<br/>id_servico (FK)" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="320" y="760" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="20" value="<b>PAGAMENTO</b><br/>id_pagamento (PK)<br/>id_orcamento (FK)<br/>data_pagamento<br/>valor_pago<br/>forma_pagamento<br/>observacoes<br/>tipo_pagamento" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="560" y="760" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="21" value="<b>COMPRA_COTACAO</b><br/>id (PK)<br/>id_compra_requisicao<br/>data_cotacao<br/>descricao" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="800" y="760" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="22" value="<b>COMPRA_FORNECEDOR_COTACAO</b><br/>id (PK)<br/>id_compra_cotacao (FK)<br/>id_fornecedor (FK)<br/>codigo<br/>prazo_entrega<br/>condicoes_pagamento<br/>valor_subtotal<br/>valor_total" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="80" y="940" width="200" height="160" as="geometry"/>
+</mxCell>
+<mxCell id="23" value="<b>COMPRA_COTACAO_DETALHE</b><br/>id (PK)<br/>id_compra_fornecedor_cotacao (FK)<br/>id_produto<br/>quantidade<br/>valor_unitario<br/>valor_total" style="shape=rectangle;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" vertex="1" parent="1">
+  <mxGeometry x="320" y="940" width="200" height="160" as="geometry"/>
+</mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

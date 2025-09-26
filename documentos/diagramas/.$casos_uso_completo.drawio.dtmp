@@ -1,0 +1,582 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.1.2 Chrome/138.0.7204.243 Electron/37.4.0 Safari/537.36" version="28.1.2">
+  <diagram name="Casos de Uso - Sistema Faça a Festa" id="casosUso">
+    <mxGraphModel dx="45159" dy="23829" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="organizador" value="Organizador" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;" parent="1" vertex="1">
+          <mxGeometry x="40" y="90" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="convidado" value="Convidado" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;" parent="1" vertex="1">
+          <mxGeometry x="-180" y="495" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="fornecedor" value="Fornecedor" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;" parent="1" vertex="1">
+          <mxGeometry x="-100" y="690" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="administrador" value="Administrador" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;" parent="1" vertex="1">
+          <mxGeometry x="-280" y="1000" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="ia" value="Inteligência Artificial" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;" parent="1" vertex="1">
+          <mxGeometry x="1200" y="395" width="40" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="login" value="Login" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="330" y="-200" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cadastro" value="Cadastrar Usuário" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="620" y="-70" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="evento" value="Criar/Editar Evento" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1010" y="10" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="convite" value="Gerar Convite" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="190" y="590" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="pagamento" value="Efetuar Pagamento" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="535" y="680" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="presenca" value="Confirmar Presença" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="300" y="1000" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="selecionarItem" value="Selecionar Item para Cotação" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="160" y="495" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="gerarCotacao" value="Gerar Cotação" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="770" y="770" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="compararCotacoes" value="Comparar Respostas de Cotação" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="90" y="680" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cotacao" value="Responder Cotação" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="50" y="800" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="analisar" value="Analisar Cadastro de Fornecedor" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="70" y="1140" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="ia_sugestao" value="Sugerir Top 3 Fornecedores" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="980" y="265" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="erroLogin" value="Exibir Erro de Login" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="510" y="-290" width="70" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="recSenha" value="Recuperar Senha" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="605" y="-260" width="70" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="suporte" value="Solicitar Suporte" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="600" y="-195" width="80" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="restricaoIdade" value="Exibir Restrição de Idade" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="810" y="-200" width="90" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="validarCNPJ" value="Validar CNPJ" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="920" y="-110" width="80" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="pendenteAdm" value="Cadastro Pendente até Aprovação" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="930" y="-180" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="validarEvento" value="Validar Dados do Evento" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="1280" y="15" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="reenviarConvite" value="Reenviar Convite" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="350" y="725" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="corrigirTemplate" value="Editar Template" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="425" y="630" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="novoLink" value="Solicitar Novo Link" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="560" y="960" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="falhaPresenca" value="Falha no Registro" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="540" y="1050" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="novoPrazo" value="Solicitar Novo Prazo" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="20" y="920" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rascunho" value="Salvar como Rascunho" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="110" y="980" width="140" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="solicitarDoc" value="Solicitar Documentação Adicional" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="410" y="1140" width="220" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="rejeitarCadastro" value="Rejeitar Cadastro" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="390" y="1220" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="ranking" value="Exibir Ranking Completo" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="1407.5" y="195" width="105" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="maisInfo" value="Solicitar Mais Informações" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="1400" y="270" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="edge1" parent="1" source="organizador" target="login" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="60" />
+              <mxPoint x="60" y="-170" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge2" parent="1" source="convidado" target="login" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-10" y="515" />
+              <mxPoint x="-10" y="40" />
+              <mxPoint x="-10" y="-240" />
+              <mxPoint x="320" y="-240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge3" parent="1" source="fornecedor" target="login" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-80" y="260" />
+              <mxPoint x="-80" y="-120" />
+              <mxPoint x="280" y="-120" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge4" parent="1" source="organizador" target="cadastro" edge="1" />
+        <mxCell id="edge5" parent="1" source="fornecedor" target="cadastro" edge="1" />
+        <mxCell id="edge6" parent="1" source="administrador" target="cadastro" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-260" y="770" />
+              <mxPoint x="-260" y="440" />
+              <mxPoint x="-260" y="-30" />
+              <mxPoint x="160" y="-40" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge6a" parent="1" source="convidado" target="cadastro" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-160" y="440" />
+              <mxPoint x="-160" y="-30" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge6b" parent="1" source="organizador" target="cadastro" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="70" y="-20" />
+              <mxPoint x="290" y="-20" />
+              <mxPoint x="610" y="-20" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge6c" parent="1" source="checklistTarefas" target="cadastro" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_organizador_ia" parent="1" source="organizador" target="ia_sugestao" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="390" />
+              <mxPoint x="1030" y="390" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_ia_ia" parent="1" source="ia" target="ia_sugestao" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge7" parent="1" source="organizador" target="evento" edge="1" />
+        <mxCell id="edge8" parent="1" source="organizador" target="convite" edge="1" />
+        <mxCell id="edge_checklist_organizador" parent="1" source="organizador" target="checklistTarefas" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="200" y="130" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_checklist_convidado" parent="1" source="convidado" target="checklistTarefas" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-110" y="500" />
+              <mxPoint x="10" y="500" />
+              <mxPoint x="180" y="340" />
+              <mxPoint x="240" y="220" />
+              <mxPoint x="320" y="220" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_checklist_login" value="&lt;&lt;include&gt;&gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="checklistTarefas" target="login" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge9" parent="1" source="organizador" target="pagamento" edge="1" />
+        <mxCell id="edge10" parent="1" source="convidado" target="presenca" edge="1" />
+        <mxCell id="edge11" parent="1" source="fornecedor" target="cotacao" edge="1" />
+        <mxCell id="edge12" parent="1" source="administrador" target="analisar" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-200" y="1140" />
+              <mxPoint y="1140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge13" parent="1" source="ia" target="ia_sugestao" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge14" parent="1" source="organizador" target="ia_sugestao" edge="1" />
+        <mxCell id="edge_comparar_organizador" parent="1" source="organizador" target="compararCotacoes" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="60" y="650" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge21" parent="1" source="organizador" target="evento" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="240" y="40" />
+              <mxPoint x="630" y="40" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge22" parent="1" source="organizador" target="convite" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="80" y="210" />
+              <mxPoint x="80" y="620" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge23" parent="1" source="organizador" target="pagamento" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="570" y="350" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge24" parent="1" source="convidado" target="presenca" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-200" y="520" />
+              <mxPoint x="-200" y="1080" />
+              <mxPoint x="380" y="1080" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge25" parent="1" source="fornecedor" target="cotacao" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="20" y="730" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_item_organizador" parent="1" source="organizador" target="selecionarItem" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="100" y="220" />
+              <mxPoint x="100" y="530" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_item_ia" parent="1" source="gerirCotacao" target="ia_sugestao" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1060" y="520" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_item_sugestao" value="&amp;lt;include&amp;gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="gerirOrcamento" target="ia_sugestao" edge="1">
+          <mxGeometry x="-0.002" relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="950" y="460" />
+            </Array>
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_sugestao_gerar" value="&amp;lt;include&amp;gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="ia_sugestao" target="gerarCotacao" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1000" y="600" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_gerar_responder_corrigido" value="&lt;&lt;include&gt;&gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="gerarCotacao" target="cotacao" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="790" y="920" />
+              <mxPoint x="400" y="920" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_cotacao_comparar" parent="1" source="cotacao" target="compararCotacoes" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc1" value="&amp;lt;include&amp;gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="cadastro" target="analisar" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="720" y="-40" />
+              <mxPoint x="960" y="-40" />
+              <mxPoint x="1200" y="-40" />
+              <mxPoint x="1670" y="-40" />
+              <mxPoint x="1670" y="1330" />
+              <mxPoint x="1010" y="1320" />
+              <mxPoint x="210" y="1320" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc2" value="&lt;&lt;include&gt;&gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="evento" target="ia_sugestao" edge="1" />
+        <mxCell id="inc_evento_ia" value="&amp;lt;include&amp;gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="evento" target="ia_sugestao" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_organizador_gerirOrcamento" parent="1" source="organizador" target="gerirOrcamento" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_cotacao_to_comparar" parent="1" source="cotacao" target="compararCotacoes" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_orcamento_pagamento" value="&amp;lt;include&amp;gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="gerirOrcamento" target="pagamento" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ext1" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="login" target="erroLogin" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext2" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="login" target="recSenha" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext3" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="login" target="suporte" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext4" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="cadastro" target="restricaoIdade" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext5" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="cadastro" target="validarCNPJ" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext6" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="cadastro" target="pendenteAdm" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext7" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="evento" target="validarEvento" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext8" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="convite" target="reenviarConvite" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext9" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="convite" target="corrigirTemplate" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext10" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="pagamento" target="outroMetodo" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext11" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="pagamento" target="tentarNovamente" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext12" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="presenca" target="novoLink" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext13" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="presenca" target="falhaPresenca" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext14" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="cotacao" target="novoPrazo" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext15" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="cotacao" target="rascunho" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext16" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="analisar" target="solicitarDoc" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext17" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="analisar" target="rejeitarCadastro" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext18" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" parent="1" source="ia_sugestao" target="ranking" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1240" y="240" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ext19" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="ia_sugestao" target="maisInfo" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_checklist_atribuir" value="&amp;lt;extend&amp;gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="checklistTarefas" target="atribuirResponsavel" edge="1">
+          <mxGeometry x="-0.0004" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ext_checklist_status" value="&amp;lt;extend&amp;gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="checklistTarefas" target="atualizarStatus" edge="1">
+          <mxGeometry x="-0.0001" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="ext_checklist_excluir" value="&amp;lt;extend&amp;gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="checklistTarefas" target="excluirTarefa" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_checklist_visualizar" value="&amp;lt;extend&amp;gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="checklistTarefas" target="visualizarFinalizadas" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_status_convidado" parent="1" source="convidado" target="atualizarStatus" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-130" y="480" />
+              <mxPoint x="160" y="480" />
+              <mxPoint x="160" y="440" />
+              <mxPoint x="320" y="440" />
+              <mxPoint x="320" y="370" />
+              <mxPoint x="510" y="370" />
+              <mxPoint x="510" y="230" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="D8IBANZv1r2UBQJhHfL5-1" value="" parent="1" source="cotacao" target="tentarNovamente" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="559" y="784" as="sourcePoint" />
+            <mxPoint x="961" y="805" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="tentarNovamente" value="Tentar Novamente" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="530" y="830" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="D8IBANZv1r2UBQJhHfL5-2" value="" style="endArrow=block;dashed=1;html=1;" parent="1" source="gerarCotacao" target="outroMetodo" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="966" y="705" as="sourcePoint" />
+            <mxPoint x="554" y="769" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="outroMetodo" value="Selecionar Outro Método" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="730" y="580" width="180" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="atribuirResponsavel" value="Atribuir Responsável" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="670" y="50" width="80" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="atualizarStatus" value="Atualizar Status" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="730" y="195" width="80" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="excluirTarefa" value="Excluir Tarefa" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="620" y="230" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="visualizarFinalizadas" value="Visualizar Finalizadas" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="670" y="120" width="90" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="D8IBANZv1r2UBQJhHfL5-3" value="" style="endArrow=block;dashed=1;html=1;" parent="1" source="selecionarItem" target="gerirOrcamento" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="484" y="564" as="sourcePoint" />
+            <mxPoint x="990" y="467" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gerirOrcamento" value="Gerir Orçamento" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="350" y="415" width="140" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="avaliacoesRelatorios" value="Avaliações e Relatórios" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="910" y="830" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="avaliarFornecedor" value="Avaliar Fornecedor" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="1200" y="770" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="gerarRelatorios" value="Gerar Relatórios" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="920" y="1090" width="180" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="editarAvaliacao" value="Editar Avaliação" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="1430" y="835" width="80" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="desativarAvaliacao" value="Desativar Avaliação" style="ellipse;dashed=1;whiteSpace=wrap;" parent="1" vertex="1">
+          <mxGeometry x="1280" y="910" width="100" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="verAvaliacoesFornecedor" value="Ver Avaliações Recebidas" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="-180" y="870" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_org_avaliacoes" parent="1" source="organizador" target="avaliacoesRelatorios" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="640" y="440" />
+              <mxPoint x="760" y="560" />
+              <mxPoint x="880" y="560" />
+              <mxPoint x="920" y="620" />
+              <mxPoint x="960" y="680" />
+              <mxPoint x="1010" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_admin_relatorios" parent="1" source="administrador" target="gerarRelatorios" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-260" y="1360" />
+              <mxPoint x="400" y="1360" />
+              <mxPoint x="1010" y="1360" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="edge_forn_verAval" parent="1" source="fornecedor" target="verAvaliacoesFornecedor" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_evento_avaliacoes" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="evento" target="avaliacoesRelatorios" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1120" y="120" />
+              <mxPoint x="1600" y="120" />
+              <mxPoint x="1600" y="680" />
+              <mxPoint x="1200" y="680" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="inc_avaliacoes_avaliar" value="&lt;&lt;include&gt;&gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="avaliacoesRelatorios" target="avaliarFornecedor" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="inc_avaliacoes_relatorios" value="&lt;&lt;include&gt;&gt;" style="endArrow=block;dashed=1;html=1;" parent="1" source="avaliacoesRelatorios" target="gerarRelatorios" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_avaliar_editar" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="avaliarFornecedor" target="editarAvaliacao" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_avaliar_desativar" value="&lt;&lt;extend&gt;&gt;" style="endArrow=open;dashed=1;" parent="1" source="avaliarFornecedor" target="desativarAvaliacao" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="AMqnXJ_broqttR-A6_tg-5" value="" parent="1" source="fornecedor" target="checklistTarefas" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="80" y="617" as="sourcePoint" />
+            <mxPoint x="676" y="-81" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="-30" y="390" />
+              <mxPoint x="200" y="200" />
+              <mxPoint x="320" y="200" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="checklistTarefas" value="Checklist de Tarefas" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="330" y="110" width="160" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="responderCotacaoFornecedor" value="Responder Cotação Fornecedor" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="260" y="835" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="detalharItensCotacao" value="Detalhar Itens da Cotação" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="740" y="960" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_org_gerirCotacao" parent="1" source="organizador" target="gerirCotacao" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_forn_responderCotacao" parent="1" source="fornecedor" target="responderCotacaoFornecedor" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_responder_detalhar" parent="1" source="responderCotacaoFornecedor" target="detalharItensCotacao" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_gerirCotacao_orcamento" parent="1" source="gerirCotacao" target="gerirOrcamento" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_orcamento_pagamento" parent="1" source="gerirOrcamento" target="pagamento" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_org_orcamento" parent="1" source="organizador" target="gerirOrcamento" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="edge_org_pagamento" parent="1" source="organizador" target="pagamento" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="IjQnYW8EgP6txqm71GPg-1" value="" parent="1" source="selecionarItem" target="gerirCotacao" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points" />
+            <mxPoint x="360" y="524" as="sourcePoint" />
+            <mxPoint x="1086" y="325" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gerirCotacao" value="Gerir Cotação" style="ellipse;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="570" y="495" width="160" height="60" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
