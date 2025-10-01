@@ -1,0 +1,242 @@
+erDiagram
+    ESTADO {
+        char uf
+        varchar nome
+    }
+
+    CIDADE {
+        int id_cidade
+        varchar nome
+        char uf
+    }
+
+    USUARIO {
+        varchar id_usuario
+        varchar nome
+        varchar email
+        varchar senha_hash
+        varchar cpf
+        varchar cnpj
+        varchar foto_perfil_url
+        bool ativo
+    }
+
+    USUARIO_ENDERECO {
+        varchar id
+        varchar id_usuario
+        int id_cidade
+        varchar logradouro
+        varchar numero
+        varchar bairro
+        varchar cep
+        varchar complemento
+        bool principal
+    }
+
+    CATEGORIA_SERVICO {
+        varchar id_categoria
+        varchar nome
+        bool ativo
+    }
+
+    FORNECEDOR {
+        varchar id_fornecedor
+        varchar nome
+        varchar telefone
+        varchar email
+        varchar descricao
+        bool ativo
+        bool apto_para_operar
+        varchar id_usuario
+    }
+
+    FORNECEDOR_ENDERECO {
+        varchar id
+        varchar id_fornecedor
+        int id_cidade
+        varchar logradouro
+        varchar numero
+        varchar bairro
+        varchar cep
+        varchar complemento
+        bool principal
+        bool entrega
+        bool cobranca
+        bool correspondencia
+    }
+
+    FORNECEDOR_FOTO {
+        varchar id
+        varchar id_fornecedor
+        varchar url
+        varchar descricao
+        int ordem
+    }
+
+    TERRITORIO {
+        varchar id_territorio
+        float latitude
+        float longitude
+        float raio_km
+        varchar descricao
+        bool ativo
+        varchar id_fornecedor
+    }
+
+    SERVICO {
+        varchar id_servico
+        varchar nome
+        varchar descricao
+        float valor
+        varchar unidade
+        bool ativo
+        varchar id_fornecedor
+        varchar id_categoria
+    }
+
+    SERVICO_FOTO {
+        varchar id
+        varchar id_servico
+        varchar url
+        varchar descricao
+        int ordem
+    }
+
+    AVALIACAO {
+        varchar id_avaliacao
+        int nota
+        varchar comentario
+        datetime data_avaliacao
+        bool ativo
+        varchar id_servico
+        varchar id_usuario
+    }
+
+    EVENTO {
+        varchar id_evento
+        varchar nome
+        varchar tipo
+        date data
+        varchar hora
+        varchar local
+        varchar descricao
+        bool ativo
+        varchar id_organizador
+        int id_cidade
+    }
+
+    CONVIDADO {
+        varchar id_convidado
+        varchar nome
+        varchar email
+        varchar grupo
+        bool ativo
+        varchar id_usuario
+        varchar id_evento
+    }
+
+    TAREFA {
+        varchar id_tarefa
+        varchar nome
+        varchar descricao
+        date data_prevista
+        bool ativo
+        varchar id_evento
+        varchar id_responsavel
+    }
+
+    REFERENCIA {
+        varchar id_referencia
+        varchar imagem_url
+        varchar categoria
+        bool favorito
+        bool ativo
+        varchar id_evento
+    }
+
+    FORNECEDOR_EVENTO {
+        varchar id_fornecedor_evento
+        varchar categoria
+        varchar observacoes
+        bool ativo
+        varchar id_evento
+        varchar id_fornecedor
+    }
+
+    ORCAMENTO {
+        varchar id_orcamento
+        varchar categoria
+        varchar item
+        float custo_estimado
+        float custo_real
+        varchar forma_pagamento
+        varchar anotacoes
+        bool ativo
+        varchar id_evento
+        varchar id_fornecedor
+        varchar id_servico
+    }
+
+    PAGAMENTO {
+        varchar id_pagamento
+        varchar id_orcamento
+        date data_pagamento
+        float valor_pago
+        varchar forma_pagamento
+        varchar observacoes
+        varchar tipo_pagamento
+    }
+
+    COMPRA_COTACAO {
+        int id
+        int id_compra_requisicao
+        date data_cotacao
+        varchar descricao
+    }
+
+    COMPRA_FORNECEDOR_COTACAO {
+        int id
+        int id_compra_cotacao
+        varchar id_fornecedor
+        varchar codigo
+        varchar prazo_entrega
+        varchar condicoes_pagamento
+        float valor_subtotal
+        float valor_total
+    }
+
+    COMPRA_COTACAO_DETALHE {
+        int id
+        int id_compra_fornecedor_cotacao
+        int id_produto
+        float quantidade
+        float valor_unitario
+        float valor_total
+    }
+
+    ESTADO ||--o{ CIDADE : possui
+    CIDADE ||--o{ USUARIO_ENDERECO : contem
+    CIDADE ||--o{ FORNECEDOR_ENDERECO : contem
+    USUARIO ||--o{ USUARIO_ENDERECO : tem
+    USUARIO ||--o{ FORNECEDOR : gerencia
+    USUARIO ||--o{ EVENTO : organiza
+    USUARIO ||--o{ CONVIDADO : cadastra
+    USUARIO ||--o{ AVALIACAO : faz
+    USUARIO ||--o{ TAREFA : responsavel
+    FORNECEDOR ||--o{ FORNECEDOR_ENDERECO : possui
+    FORNECEDOR ||--o{ FORNECEDOR_FOTO : possui
+    FORNECEDOR ||--o{ TERRITORIO : cobre
+    FORNECEDOR ||--o{ SERVICO : oferece
+    FORNECEDOR ||--o{ FORNECEDOR_EVENTO : participa
+    SERVICO ||--o{ SERVICO_FOTO : possui
+    SERVICO ||--o{ AVALIACAO : recebe
+    SERVICO ||--o{ ORCAMENTO : vincula
+    EVENTO ||--o{ CONVIDADO : recebe
+    EVENTO ||--o{ TAREFA : contem
+    EVENTO ||--o{ REFERENCIA : possui
+    EVENTO ||--o{ FORNECEDOR_EVENTO : contrata
+    EVENTO ||--o{ ORCAMENTO : gera
+    ORCAMENTO ||--o{ PAGAMENTO : contem
+    COMPRA_COTACAO ||--o{ COMPRA_FORNECEDOR_COTACAO : gera
+    COMPRA_FORNECEDOR_COTACAO ||--o{ COMPRA_COTACAO_DETALHE : detalha
+    CATEGORIA_SERVICO ||--o{ SERVICO : classifica
