@@ -13,7 +13,7 @@ class GruposTab extends StatelessWidget {
         "icon": Icons.favorite_rounded,
         "color": Colors.pinkAccent,
         "convidados": [
-          {"nome": "Rivaldo & Jullia", "confirmado": true},
+          {"nome": "Lucas & Amanda", "confirmado": true},
           {"nome": "Carlos & Marta", "confirmado": true},
         ]
       },

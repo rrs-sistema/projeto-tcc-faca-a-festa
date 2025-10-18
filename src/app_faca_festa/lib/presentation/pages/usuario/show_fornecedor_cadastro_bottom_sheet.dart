@@ -5,12 +5,12 @@ import 'package:get/get.dart';
 import './../../widgets/custom_input_field.dart';
 
 Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
-  final empresaController = TextEditingController(text: 'Mist Eventos');
-  final categoriaController = TextEditingController(text: 'Recepção');
-  final emailController = TextEditingController(text: 'mist.eventos@gmail.com');
-  final telefoneController = TextEditingController(text: '(41) 99993-4578');
-  final cidadeController = TextEditingController(text: 'Curutiba');
-  final ufController = TextEditingController(text: 'PR');
+  final empresaController = TextEditingController(text: '');
+  final categoriaController = TextEditingController(text: '');
+  final emailController = TextEditingController(text: '');
+  final telefoneController = TextEditingController(text: '');
+  final cidadeController = TextEditingController(text: '');
+  final ufController = TextEditingController(text: '');
   final formKey = GlobalKey<FormState>();
 
   bool confirmado = false;

@@ -1,4 +1,4 @@
-package com.example.app_faca_festa
+package com.rrs.system.technology.facafesta
 
 import io.flutter.embedding.android.FlutterActivity
 

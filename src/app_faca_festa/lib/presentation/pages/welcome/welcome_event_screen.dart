@@ -1,29 +1,58 @@
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../fornecedor/fornecedor_home_screen.dart';
-import '../usuario/show_fornecedor_cadastro_bottom_sheet.dart';
-import '../usuario/show_user_info_bottom_sheet.dart';
+import '../../../role_selector_screen.dart';
+import './../../../controllers/event_theme_controller.dart';
+import './../usuario/cadastro_evento_bottom_sheet.dart';
+import './../../../controllers/app_controller.dart';
+import './../../../data/models/model.dart';
+import './../login/login_screen.dart';
 import './../home_event_screen.dart';
 
-class WelcomeEventScreen extends StatelessWidget {
+class WelcomeEventScreen extends StatefulWidget {
   const WelcomeEventScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final List<_EventType> eventTypes = [
-      _EventType("Casamento", "💍", Colors.pinkAccent),
-      _EventType("Festa Infantil", "🎈", Colors.orangeAccent),
-      _EventType("Chá de Bebê", "🍼", Colors.lightBlueAccent),
-      _EventType("Aniversário", "🎂", Colors.purpleAccent),
-      _EventType("Sou Fornecedor", "🧑‍🔧", Colors.greenAccent),
-    ];
+  State<WelcomeEventScreen> createState() => _WelcomeEventScreenState();
+}
 
+class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
+  final _db = FirebaseFirestore.instance;
+  final themeController = Get.put(EventThemeController());
+  final appController = Get.find<AppController>(); // ✅ usa o global
+
+  List<TipoEventoModel> _tiposEvento = [];
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarTiposEvento();
+  }
+
+  Future<void> _carregarTiposEvento() async {
+    try {
+      final snap = await _db.collection('tipo_evento').where('ativo', isEqualTo: true).get();
+      setState(() {
+        _tiposEvento = snap.docs.map((d) => TipoEventoModel.fromMap(d.data())).toList();
+        _loading = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Erro ao carregar tipos de evento: $e");
+      setState(() => _loading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // 🌸 Fundo alegre e colorido
+          // 🎉 Fundo de boas-vindas
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -33,27 +62,24 @@ class WelcomeEventScreen extends StatelessWidget {
             ),
           ),
 
-          // 🎨 Overlay festivo com gradiente vibrante
+          // 🎨 Overlay colorido e suave
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFFFFF9C4), // amarelo pastel
-                  Color(0xFFFFC1E3), // rosa suave
-                  Color(0xFFB3E5FC), // azul bebê
+                  Color(0xFFFFF9C4),
+                  Color(0xFFFFC1E3),
+                  Color(0xFFB3E5FC),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
             ),
           ),
-
-          // 🪄 Leve camada branca translúcida para suavizar
-          Container(color: Colors.white.withValues(alpha: 0.3)),
+          Container(color: Colors.white.withValues(alpha: 0.35)),
 
           SafeArea(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const SizedBox(height: 40),
                 Text(
@@ -62,10 +88,10 @@ class WelcomeEventScreen extends StatelessWidget {
                     fontSize: 32,
                     fontWeight: FontWeight.w800,
                     color: Colors.pink.shade800,
-                    letterSpacing: 1.3,
+                    letterSpacing: 1.2,
                     shadows: [
                       Shadow(
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: Colors.white.withValues(alpha: 0.7),
                         offset: const Offset(1, 1),
                         blurRadius: 3,
                       ),
@@ -82,67 +108,165 @@ class WelcomeEventScreen extends StatelessWidget {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 30),
 
-                // 🧩 Grid de opções coloridas
+                // 🧩 Grid de Tipos de Evento (carregado do Firebase)
                 Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 24,
-                      crossAxisSpacing: 24,
-                      childAspectRatio: 1,
-                    ),
-                    itemCount: eventTypes.length,
-                    itemBuilder: (context, index) {
-                      final item = eventTypes[index];
-                      return _EventTypeCard(
-                          data: item,
-                          onTap: () async {
-                            if (item.title == "Sou Fornecedor") {
-                              final confirmado = await showFornecedorCadastroBottomSheet(context);
-                              if (confirmado) {
-                                Get.to(
-                                  () => const FornecedorHomeScreen(),
-                                  transition: Transition.fadeIn,
-                                  duration: const Duration(milliseconds: 700),
-                                );
-                              }
-                            } else {
-                              final userInfo = await showUserInfoBottomSheet(
-                                context,
-                                tipoEvento: item.title,
-                              );
+                  child: _loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : GridView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 24,
+                            crossAxisSpacing: 24,
+                            childAspectRatio: 1,
+                          ),
+                          itemCount: _tiposEvento.length,
+                          itemBuilder: (context, index) {
+                            final tipo = _tiposEvento[index];
+                            return _EventTypeCard(
+                              nome: tipo.nome,
+                              cor: _getColorFromName(tipo.nome),
+                              onTap: () async {
+                                final appController = Get.find<AppController>();
 
-                              if (userInfo != null) {
-                                Get.to(
-                                  () => HomeEventScreen(
-                                    tipoEvento: item.title,
-                                    userInfo: userInfo,
-                                  ),
-                                  transition: Transition.fadeIn,
-                                  duration: const Duration(milliseconds: 700),
+                                final usuario = await appController.prepararUsuarioComEndereco();
+
+                                if (usuario == null) {
+                                  Get.snackbar(
+                                    'Sessão expirada',
+                                    'Por favor, faça login novamente.',
+                                    backgroundColor: Colors.redAccent,
+                                    colorText: Colors.white,
+                                  );
+                                  Get.offAll(() => const RoleSelectorScreen());
+                                  return;
+                                }
+
+                                // 🔹 Agora abre o cadastro com dados pré-carregados
+                                await showCadastroEventoBottomSheet(
+                                  context,
                                 );
-                              }
-                            }
-                          });
-                    },
-                  ),
+
+                                if (appController.eventoModel.value != null) {
+                                  // 🔹 Aplica o tema visual do tipo de evento
+                                  themeController.aplicarTemaPorNome(tipo.nome);
+
+                                  // 🔹 Busca o último evento do usuário no Firestore
+                                  await appController.buscarUltimoEvento(
+                                      appController.eventoModel.value!.idUsuario);
+
+                                  if (appController.eventoModel.value != null) {
+                                    // 👉 Evento encontrado: abre a HomeEventScreen com ele
+                                    Get.to(
+                                      () => HomeEventScreen(),
+                                      transition: Transition.fadeIn,
+                                      duration: const Duration(milliseconds: 700),
+                                    );
+                                  } else {
+                                    // 👉 Nenhum evento encontrado: cria um placeholder temporário
+                                    final novoEvento = EventoModel(
+                                      idEvento: DateTime.now().millisecondsSinceEpoch.toString(),
+                                      idTipoEvento: tipo.idTipoEvento,
+                                      idUsuario: appController.usuarioLogado.value!.idUsuario,
+                                      nome:
+                                          "Novo ${tipo.nome.replaceAll(RegExp(r'[^\w\sÀ-ú]'), '').trim()}",
+                                      data: DateTime.now().add(const Duration(days: 30)),
+                                    );
+
+                                    appController.eventoModel.value = novoEvento;
+
+                                    Get.to(
+                                      () => HomeEventScreen(),
+                                      transition: Transition.fadeIn,
+                                      duration: const Duration(milliseconds: 700),
+                                    );
+                                  }
+                                }
+                              },
+                            );
+                          },
+                        ),
                 ),
 
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Text(
-                    "por RRS System Technology",
-                    style: GoogleFonts.poppins(
-                      color: Colors.pink.shade800.withValues(alpha: 0.7),
-                      fontSize: 13,
-                      letterSpacing: 0.5,
-                      fontWeight: FontWeight.w500,
+                // ✨ Rodapé
+                Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          Get.to(
+                            () => const LoginScreen(),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 500),
+                          );
+                        },
+                        child: RichText(
+                          text: TextSpan(
+                            text: "Já tem uma conta? ",
+                            style: GoogleFonts.poppins(
+                              color: Colors.black87,
+                              fontSize: 14,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: "Entrar aqui",
+                                style: GoogleFonts.poppins(
+                                  color: Colors.pink.shade800,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          Get.to(
+                            () => const RoleSelectorScreen(),
+                            transition: Transition.fadeIn,
+                            duration: const Duration(milliseconds: 500),
+                          );
+                        },
+                        child: RichText(
+                          text: TextSpan(
+                            text: "Deseja voltar para o incicio? ",
+                            style: GoogleFonts.poppins(
+                              color: Colors.black87,
+                              fontSize: 14,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: "Clique aqui",
+                                style: GoogleFonts.poppins(
+                                  color: Colors.pink.shade800,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      "por RRS System Technology",
+                      style: GoogleFonts.poppins(
+                        color: Colors.pink.shade800.withValues(alpha: 0.7),
+                        fontSize: 13,
+                        letterSpacing: 0.5,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
+                const SizedBox(height: 30),
               ],
             ),
           ),
@@ -150,21 +274,30 @@ class WelcomeEventScreen extends StatelessWidget {
       ),
     );
   }
+
+  /// 💡 Extrai cor do nome (usando os mesmos tons que você usava)
+  Color _getColorFromName(String nome) {
+    final lower = nome.toLowerCase();
+    if (lower.contains("casamento")) return Colors.pinkAccent;
+    if (lower.contains("infantil")) return Colors.orangeAccent;
+    if (lower.contains("bebê")) return Colors.lightBlueAccent;
+    if (lower.contains("aniversário")) return Colors.purpleAccent;
+    if (lower.contains("fornecedor")) return Colors.greenAccent;
+    return Colors.teal;
+  }
 }
 
-class _EventType {
-  final String title;
-  final String emoji;
-  final Color color;
-
-  _EventType(this.title, this.emoji, this.color);
-}
-
+/// 🎀 Card de evento (moderno e animado)
 class _EventTypeCard extends StatefulWidget {
-  final _EventType data;
+  final String nome;
+  final Color cor;
   final VoidCallback onTap;
 
-  const _EventTypeCard({required this.data, required this.onTap});
+  const _EventTypeCard({
+    required this.nome,
+    required this.cor,
+    required this.onTap,
+  });
 
   @override
   State<_EventTypeCard> createState() => _EventTypeCardState();
@@ -175,7 +308,9 @@ class _EventTypeCardState extends State<_EventTypeCard> {
 
   @override
   Widget build(BuildContext context) {
-    final data = widget.data;
+    final nome = widget.nome;
+    final emoji = nome.characters.first; // 💍 Casamento → 💍
+    final texto = nome.replaceAll(RegExp(r'[^\w\sÀ-ú]'), '').trim(); // remove emoji
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -184,12 +319,11 @@ class _EventTypeCardState extends State<_EventTypeCard> {
       onTapUp: (_) => setState(() => _hovered = false),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              data.color.withValues(alpha: 0.9),
-              data.color.withValues(alpha: 0.8),
+              widget.cor.withValues(alpha: 0.9),
+              widget.cor.withValues(alpha: 0.7),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -197,7 +331,7 @@ class _EventTypeCardState extends State<_EventTypeCard> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: data.color.withValues(alpha: _hovered ? 0.6 : 0.4),
+              color: widget.cor.withValues(alpha: _hovered ? 0.5 : 0.3),
               blurRadius: _hovered ? 16 : 10,
               offset: const Offset(0, 6),
             ),
@@ -208,16 +342,13 @@ class _EventTypeCardState extends State<_EventTypeCard> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               AnimatedScale(
-                scale: _hovered ? 1.2 : 1.0,
+                scale: _hovered ? 1.15 : 1.0,
                 duration: const Duration(milliseconds: 200),
-                child: Text(
-                  data.emoji,
-                  style: const TextStyle(fontSize: 56),
-                ),
+                child: Text(emoji, style: const TextStyle(fontSize: 56)),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
-                data.title,
+                texto,
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,
@@ -225,7 +356,7 @@ class _EventTypeCardState extends State<_EventTypeCard> {
                   letterSpacing: 0.5,
                   shadows: [
                     Shadow(
-                      color: Colors.black.withValues(alpha: 0.25),
+                      color: Colors.black.withValues(alpha: 0.3),
                       offset: const Offset(1, 2),
                       blurRadius: 3,
                     ),

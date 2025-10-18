@@ -1,127 +1,162 @@
 import 'package:percent_indicator/linear_percent_indicator.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
+import '../../../controllers/event_theme_controller.dart';
+import '../../../controllers/fornecedor_controller.dart';
+
+/*
 class FornecedoresPage extends StatelessWidget {
   const FornecedoresPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<EventThemeController>();
+
+    // 🔹 Simulação de dados dinâmicos
     final fornecedores = [
       _FornecedorData(
-        icon: Icons.home_outlined,
-        image: 'assets/images/fornecedor_recepcao.jpeg',
+        image: 'assets/images/fornecedor_decoracao.jpg',
         title: 'Recepção',
-        subtitle: 'Buscar fornecedores',
-        color1: const Color(0xFF80CBC4),
-        color2: const Color(0xFF26A69A),
-        contratado: true,
+        subtitle: 'Do Jeito Certo',
+        status: 'Contratado',
       ),
       _FornecedorData(
         image: 'assets/images/fornecedor_buffet.jpeg',
         title: 'Buffet e Gastronomia',
-        subtitle: 'Buscar fornecedores',
-        color1: const Color(0xFFFFB74D),
-        color2: const Color(0xFFFF9800),
-        contratado: true,
+        subtitle: 'Buffet Ideal',
+        status: 'Em negociação',
       ),
       _FornecedorData(
         image: 'assets/images/fornecedor_fotografia.jpeg',
-        title: 'Fotografia',
+        title: 'Fotografia e Filmagem',
         subtitle: 'Franciesca Fotografias',
-        color1: const Color(0xFF9575CD),
-        color2: const Color(0xFF7E57C2),
-        contratado: true,
+        status: 'Contratado',
       ),
       _FornecedorData(
-        icon: Icons.videocam_outlined,
-        title: 'Vídeo',
-        subtitle: 'Buscar fornecedores',
-        color1: const Color(0xFF64B5F6),
-        color2: const Color(0xFF1E88E5),
-        contratado: false,
+        image: 'assets/images/fornecedor_decoracao.jpg',
+        title: 'Decoração e Flores',
+        subtitle: 'Lírio Branco Decorações',
+        status: 'Aguardando orçamento',
+      ),
+      _FornecedorData(
+        icon: Icons.music_note,
+        title: 'DJ e Iluminação',
+        subtitle: 'Som & Luz Eventos',
+        status: 'Aguardando orçamento',
       ),
     ];
+*/
+class FornecedoresPage extends StatelessWidget {
+  const FornecedoresPage({super.key});
 
-    final contratados = fornecedores.where((f) => f.contratado).length;
+  @override
+  Widget build(BuildContext context) {
+    final themeController = Get.find<EventThemeController>();
+    final fornecedoresController = Get.find<FornecedoreController>();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Meus Fornecedores',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
+    return Obx(() {
+      final primary = themeController.primaryColor.value;
+      final gradient = themeController.gradient.value;
+      final contratados = fornecedoresController.contratadosCount;
+      final total = fornecedoresController.fornecedores.length;
+
+      return Scaffold(
+        backgroundColor: Colors.grey.shade100,
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () => Navigator.pop(context),
           ),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                Color(0xFF26A69A), // verde-petróleo suave
-                Color(0xFF4CAF50), // verde vibrante
-                Color(0xFFCDDC39), // amarelo-lima sutil
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+          title: Text(
+            'Meus Fornecedores',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
             ),
           ),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle_outline, color: Colors.white),
-            tooltip: 'Adicionar Fornecedor',
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Indicador de progresso
-            _progressoServicos(contratados, fornecedores.length),
-            const SizedBox(height: 20),
-            const Text(
-              'Complete a sua equipe de fornecedores',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Encontre e reserve seus fornecedores passo a passo:',
-              style: TextStyle(fontSize: 14, color: Colors.black54),
-            ),
-            const SizedBox(height: 16),
-
-            // Lista de fornecedores
-            Expanded(
-              child: ListView.builder(
-                itemCount: fornecedores.length,
-                itemBuilder: (context, index) {
-                  final f = fornecedores[index];
-                  return _FornecedorCard(data: f)
-                      .animate()
-                      .fade(duration: 350.ms)
-                      .slideY(begin: 0.1, end: 0);
-                },
-              ),
+          centerTitle: true,
+          elevation: 0,
+          flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.add_circle_outline, color: Colors.black),
+              tooltip: 'Adicionar Fornecedor',
+              onPressed: () {
+                fornecedoresController.adicionarFornecedorSimulado();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('📝 Novo fornecedor simulado adicionado'),
+                    backgroundColor: primary,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
             ),
           ],
         ),
-      ),
-    );
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _progressoServicos(contratados, total, gradient),
+              const SizedBox(height: 20),
+              Text(
+                'Complete sua equipe de fornecedores',
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: primary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Acompanhe os fornecedores contratados, em negociação ou aguardando orçamento:',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: Obx(() {
+                  final fornecedores = fornecedoresController.fornecedores;
+                  return ListView.builder(
+                    itemCount: fornecedores.length,
+                    itemBuilder: (context, index) {
+                      final f = fornecedores[index];
+                      return _FornecedorCard(
+                        data: f,
+                        themeGradient: gradient,
+                        primaryColor: primary,
+                        onReservar: () => fornecedoresController.reservarFornecedor(index),
+                        onSolicitar: () => fornecedoresController.solicitarOrcamento(index),
+                        onAvaliar: () => fornecedoresController.avaliarFornecedor(index),
+                      ).animate().fade(duration: 350.ms).slideY(begin: 0.1, end: 0);
+                    },
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      );
+    });
   }
 }
 
-// Indicador de progresso estilizado com gradiente
-Widget _progressoServicos(int contratados, int total) {
+// ================================
+// 🔹 Indicador de progresso temático
+// ================================
+Widget _progressoServicos(int contratados, int total, LinearGradient gradient) {
   final double percent = total == 0 ? 0 : contratados / total;
 
   return Card(
-    elevation: 2,
+    elevation: 3,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     child: Padding(
       padding: const EdgeInsets.all(16),
@@ -132,21 +167,16 @@ Widget _progressoServicos(int contratados, int total) {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '$contratados de $total serviços contratados',
-                style: const TextStyle(fontWeight: FontWeight.w600),
+                '$contratados de $total contratados',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
               ),
               TextButton(
                 onPressed: () {},
-                child: const Text(
-                  'Ver todos',
-                  style: TextStyle(color: Colors.teal),
-                ),
+                child: const Text('Ver todos'),
               ),
             ],
           ),
           const SizedBox(height: 10),
-
-          // Barra de progresso com gradiente
           LinearPercentIndicator(
             lineHeight: 10,
             percent: percent,
@@ -154,23 +184,14 @@ Widget _progressoServicos(int contratados, int total) {
             barRadius: const Radius.circular(10),
             animation: true,
             animationDuration: 1000,
-            linearGradient: const LinearGradient(
-              colors: [
-                Color(0xFF26A69A), // Verde-petróleo
-                Color(0xFF4CAF50), // Verde vibrante
-                Color(0xFFCDDC39), // Amarelo-lima suave
-              ],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
+            linearGradient: gradient,
           ),
-
           const SizedBox(height: 8),
           Align(
             alignment: Alignment.centerRight,
             child: Text(
               '${(percent * 100).toStringAsFixed(0)}% dos serviços contratados',
-              style: const TextStyle(color: Colors.black54),
+              style: GoogleFonts.poppins(color: Colors.black54, fontSize: 12),
             ),
           ),
         ],
@@ -179,48 +200,51 @@ Widget _progressoServicos(int contratados, int total) {
   );
 }
 
-// Modelo de dados
-class _FornecedorData {
-  final IconData? icon;
-  final String? image;
-  final String title;
-  final String subtitle;
-  final Color color1;
-  final Color color2;
-  final bool contratado;
-
-  _FornecedorData({
-    this.icon,
-    this.image,
-    required this.title,
-    required this.subtitle,
-    required this.color1,
-    required this.color2,
-    required this.contratado,
-  });
-}
-
-// Card visual elegante
+// ================================
+// 🔹 Card elegante com interação
+// ================================
 class _FornecedorCard extends StatelessWidget {
-  final _FornecedorData data;
-  const _FornecedorCard({required this.data});
+  final FornecedorData data;
+  final LinearGradient themeGradient;
+  final Color primaryColor;
+  final VoidCallback onReservar;
+  final VoidCallback onSolicitar;
+  final VoidCallback onAvaliar;
+
+  const _FornecedorCard({
+    required this.data,
+    required this.themeGradient,
+    required this.primaryColor,
+    required this.onReservar,
+    required this.onSolicitar,
+    required this.onAvaliar,
+  });
+
+  Color _statusColor(String status) {
+    switch (status) {
+      case 'Contratado':
+        return Colors.green.shade600;
+      case 'Em negociação':
+        return Colors.orange.shade700;
+      default:
+        return Colors.grey.shade600;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final bool contratado = data.contratado;
+    final statusColor = _statusColor(data.status);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: contratado ? Colors.teal.shade300 : Colors.grey.shade300,
-          width: contratado ? 1.5 : 1.0,
-        ),
+        border: Border.all(color: statusColor.withValues(alpha: 0.3), width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 6,
+            color: Colors.black12.withValues(alpha: 0.05),
+            blurRadius: 4,
             offset: const Offset(0, 3),
           ),
         ],
@@ -240,55 +264,48 @@ class _FornecedorCard extends StatelessWidget {
                   width: 60,
                   height: 60,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [data.color1, data.color2],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
+                    gradient: themeGradient,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(data.icon, color: Colors.white, size: 30),
+                  child: const Icon(Icons.storefront, color: Colors.white, size: 30),
                 ),
         ),
         title: Text(
           data.title,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        subtitle: GestureDetector(
-          onTap: () {
-            // 🔹 Aqui você chama a função que abre a busca de fornecedores
-            // exemplo: Get.to(() => BuscarFornecedorPage(categoria: data.title));
-          },
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                contratado ? Icons.handshake_rounded : Icons.search_rounded,
-                size: 18,
-                color: contratado ? Colors.teal : Colors.grey[600],
-              ),
-              const SizedBox(width: 6),
-              Text(
-                data.subtitle,
-                style: TextStyle(
-                  color: contratado ? Colors.teal : Colors.grey[700],
-                  fontWeight: contratado ? FontWeight.w600 : FontWeight.w500,
-                  decoration: contratado ? TextDecoration.none : TextDecoration.underline,
-                ),
-              ),
-            ],
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
           ),
         ),
-        trailing: AnimatedSwitcher(
-          duration: 250.ms,
-          transitionBuilder: (child, anim) => ScaleTransition(scale: anim, child: child),
-          child: contratado
-              ? const Icon(Icons.check_circle_rounded, color: Colors.teal, key: ValueKey('ok'))
-              : const Icon(Icons.circle_outlined, color: Colors.grey, key: ValueKey('no')),
+        subtitle: Text(
+          '${data.subtitle} • ${data.status}',
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            color: _statusColor(data.status),
+            fontWeight: FontWeight.w500,
+          ),
         ),
-        onTap: () {
-          // ação ao clicar (abrir detalhes, editar, etc)
-        },
+        trailing: PopupMenuButton<String>(
+          onSelected: (value) {
+            switch (value) {
+              case 'Reservar':
+                onReservar();
+                break;
+              case 'Solicitar orçamento':
+                onSolicitar();
+                break;
+              case 'Avaliar':
+                onAvaliar();
+                break;
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(value: 'Reservar', child: Text('Reservar')),
+            const PopupMenuItem(value: 'Solicitar orçamento', child: Text('Solicitar orçamento')),
+            const PopupMenuItem(value: 'Avaliar', child: Text('Avaliar fornecedor')),
+          ],
+          icon: Icon(Icons.more_vert, color: statusColor),
+        ),
       ),
     );
   }

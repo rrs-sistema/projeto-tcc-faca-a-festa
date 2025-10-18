@@ -1,20 +1,23 @@
+import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 
-import './usuario/models/user_info_model.dart';
+import '../../controllers/app_controller.dart';
+import '../../controllers/event_theme_controller.dart';
+import '../../data/models/model.dart';
+import '../widgets/menu_drawer_faca_festa.dart';
+import './fornecedor/fornecedor_localizacao_screen.dart';
 import './components/festa_cards_widget.dart';
 import './components/festa_bottom_bar.dart';
+import 'comunidade/comunidade_screen.dart';
+import 'contador_evento.dart';
+import 'inspiracao/inspiracao_screen.dart';
 
 class HomeEventScreen extends StatefulWidget {
-  final UserInfoModel userInfo;
-  final String tipoEvento;
-
   const HomeEventScreen({
     super.key,
-    required this.tipoEvento,
-    required this.userInfo,
   });
 
   @override
@@ -22,57 +25,324 @@ class HomeEventScreen extends StatefulWidget {
 }
 
 class _HomeEventScreenState extends State<HomeEventScreen> {
-  final DateTime eventDate = DateTime(2026, 7, 11, 0, 0, 0);
   late Duration timeRemaining;
+  late Timer _timer;
   int _selectedIndex = 0;
-  late final List<String> _images;
   int _currentImageIndex = 0;
-  Timer? _timer;
+  late List<String> _images;
+  late EventoModel eventoModel;
 
-  late Color _temaCor;
-  late String _tituloCabecalho;
-  late IconData _iconeEvento;
+  final themeController = Get.put(EventThemeController());
+  final appController = Get.find<AppController>();
 
   @override
   void initState() {
     super.initState();
-    _images = getImageAssetsForTipo(widget.tipoEvento);
+    eventoModel = appController.eventoModel.value!;
 
-    // 🎨 Define o tema e ícone
-    switch (widget.tipoEvento.toLowerCase()) {
-      case 'casamento':
-        _temaCor = Colors.pinkAccent;
-        _iconeEvento = Icons.favorite;
-        _tituloCabecalho = "💍 Casamento dos Sonhos";
-        break;
-      case 'festa infantil':
-        _temaCor = Colors.orangeAccent;
-        _iconeEvento = Icons.celebration;
-        _tituloCabecalho = "🎈 Festa Infantil";
-        break;
-      case 'chá de bebê':
-        _temaCor = Colors.lightBlueAccent;
-        _iconeEvento = Icons.baby_changing_station;
-        _tituloCabecalho = "🍼 Chá de Bebê";
-        break;
-      case 'aniversário':
-        _temaCor = Colors.purpleAccent;
-        _iconeEvento = Icons.cake;
-        _tituloCabecalho = "🎂 Aniversário Especial";
-        break;
-      default:
-        _temaCor = Colors.teal;
-        _iconeEvento = Icons.star;
-        _tituloCabecalho = "🎉 Sua Festa Incrível";
-        break;
-    }
+    // 🔹 Aplica o tema baseado no ID do evento (com cache automático)
+    themeController.aplicarTemaPorId(eventoModel.idTipoEvento);
 
+    // 🔹 Continua com sua lógica normal
+    _images = getImageAssetsForTipo(eventoModel.nome);
     _updateTimeRemaining();
-
-    _timer = Timer.periodic(const Duration(seconds: 6), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 6), (_) {
       setState(() {
         _currentImageIndex = (_currentImageIndex + 1) % _images.length;
       });
+    });
+  }
+
+  void _updateTimeRemaining() {
+    setState(() {
+      timeRemaining = eventoModel.data.difference(DateTime.now());
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<Widget> pages = [
+      _buildOrganizadorPage(),
+      const FornecedorLocalizacaoScreen(),
+      InspiracaoScreen(tipoEvento: eventoModel.nome),
+      ComunidadeScreen(),
+      MenuDrawerFacaFesta(onLogout: appController.logoutFornecedor),
+    ];
+    double opacity = 0.075;
+    int alpha = (opacity * 10.05).round();
+
+    return Obx(() => Scaffold(
+          backgroundColor: themeController.primaryColor.value.withValues(alpha: alpha.toDouble()),
+          body: pages[_selectedIndex],
+          bottomNavigationBar: FestaBottomBar(
+            currentIndex: _selectedIndex,
+            onTap: (i) => setState(() => _selectedIndex = i),
+          ),
+        ));
+  }
+
+  // ===============================
+  // === PÁGINA ORGANIZADOR PRINCIPAL ===
+  // ===============================
+  Widget _buildOrganizadorPage() {
+    final nome = appController.usuarioLogado.value!.nome.split(' ').first;
+
+    return Obx(() {
+      final cor = themeController.primaryColor.value;
+      //final gradiente = themeController.gradient.value;
+      final icone = themeController.icon.value;
+      final titulo = themeController.tituloCabecalho.value;
+
+      return SafeArea(
+        top: false,
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // === HEADER ===
+              Stack(
+                children: [
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 1200),
+                    transitionBuilder: (child, animation) =>
+                        FadeTransition(opacity: animation, child: child),
+                    child: Container(
+                      key: ValueKey<int>(_currentImageIndex),
+                      height: 300,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        image: DecorationImage(
+                          image: AssetImage(_images[_currentImageIndex]),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    height: 300,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black.withValues(alpha: 0.6),
+                          Colors.black.withValues(alpha: 0.2),
+                          Colors.transparent,
+                        ],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    top: MediaQuery.of(context).padding.top + 12,
+                    right: 16,
+                    left: 16,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Icon(icone, color: Colors.white, size: 28),
+                        const Icon(Icons.mail_outline, color: Colors.white, size: 28),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 30,
+                    left: 20,
+                    right: 20,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(
+                          child: Text(
+                            _mensagemSaudacao(nome),
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Center(
+                          child: Text(
+                            titulo,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          DateFormat("dd 'de' MMMM yyyy", 'pt_BR').format(eventoModel.data),
+                          style: GoogleFonts.poppins(
+                            color: Colors.white70,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              // === CONTADOR ===
+              ContadorEvento(
+                dataEvento: eventoModel.data,
+                tipoEvento: eventoModel.nome, // 🔹 envia o tipo para personalizar
+              ),
+              const SizedBox(height: 20),
+              // === LINK / INFORMAÇÕES ===
+              GestureDetector(
+                onTap: () {
+                  // Abre mapa ou detalhes
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: cor.withValues(alpha: 0.15),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    children: [
+                      const SizedBox(height: 20),
+                      CircleAvatar(
+                        radius: 26,
+                        backgroundColor: cor.withValues(alpha: 0.1),
+                        child: Icon(themeController.icon.value, color: cor, size: 28),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Local do Evento",
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                color: cor,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              eventoModel.logradouro ??
+                                  "Defina o local na tela de edição do evento",
+                              style: GoogleFonts.poppins(
+                                color: Colors.grey.shade700,
+                                fontSize: 13.5,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            InkWell(
+                              onTap: () => Get.to(() => const FornecedorLocalizacaoScreen()),
+                              child: Text(
+                                "Ver mapa e fornecedores próximos",
+                                style: GoogleFonts.poppins(
+                                  color: Colors.blueAccent.shade700,
+                                  fontSize: 13,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              const FestaCardsWidget(),
+              const SizedBox(height: 20),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                child: Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        cor.withValues(alpha: 0.1),
+                        cor.withValues(alpha: 0.05),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _descricaoEvento(
+                        eventoModel.nome, appController.usuarioLogado.value!.nome.split(' ').first),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 15,
+                      height: 1.4,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+
+              Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  boxShadow: [
+                    BoxShadow(
+                      color: cor.withValues(alpha: 0.2),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      "✨ Seu ${eventoModel.nome.toLowerCase()} está ganhando vida! ✨",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: cor,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      "Continue acompanhando o progresso e aproveite cada detalhe.",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade600,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 100),
+            ],
+          ),
+        ),
+      );
     });
   }
 
@@ -111,263 +381,14 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
     }
   }
 
-  void _updateTimeRemaining() {
-    final now = DateTime.now();
-    setState(() => timeRemaining = eventDate.difference(now));
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final days = timeRemaining.inDays;
-    final hours = timeRemaining.inHours % 24;
-    final minutes = timeRemaining.inMinutes % 60;
-    final seconds = timeRemaining.inSeconds % 60;
-
-    final nome = widget.userInfo.nome.split(' ').first;
-
-    return Scaffold(
-      backgroundColor: Colors.grey.shade100,
-      body: SafeArea(
-        top: false,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // === HEADER ===
-              Stack(
-                children: [
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 1200),
-                    transitionBuilder: (child, animation) =>
-                        FadeTransition(opacity: animation, child: child),
-                    child: Container(
-                      key: ValueKey<int>(_currentImageIndex),
-                      height: 300,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(_images[_currentImageIndex]),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    height: 300,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.black.withValues(alpha: 0.5),
-                          Colors.black.withValues(alpha: 0.2),
-                          Colors.transparent
-                        ],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                      ),
-                    ),
-                  ),
-
-                  // === Ícones no topo ===
-                  Positioned(
-                    top: MediaQuery.of(context).padding.top + 12,
-                    right: 16,
-                    left: 16,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Icon(_iconeEvento, color: Colors.white, size: 28),
-                        const Icon(Icons.mail_outline, color: Colors.white, size: 28),
-                      ],
-                    ),
-                  ),
-
-                  // === Saudação principal ===
-                  Positioned(
-                    bottom: 30,
-                    left: 20,
-                    right: 20,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _mensagemSaudacao(nome),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            shadows: [
-                              const Shadow(
-                                color: Colors.black54,
-                                offset: Offset(1, 1),
-                                blurRadius: 3,
-                              )
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          _tituloCabecalho,
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 28,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          DateFormat("dd 'de' MMMM yyyy", 'pt_BR').format(eventDate),
-                          style: GoogleFonts.poppins(
-                            color: Colors.white70,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-
-              // === CONTADOR ===
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-                color: _temaCor.withValues(alpha: 0.85),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _contador("dias", days),
-                    _contador("horas", hours),
-                    _contador("min", minutes),
-                    _contador("s", seconds),
-                  ],
-                ),
-              ),
-
-              // === LINK / INFORMAÇÕES DO EVENTO ===
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                child: Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 26,
-                      backgroundColor: _temaCor.withValues(alpha: 0.15),
-                      child: Icon(_iconeEvento, color: _temaCor, size: 28),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            "🌍 Local do evento",
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w600,
-                              color: _temaCor,
-                              fontSize: 15,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          GestureDetector(
-                            onTap: () {},
-                            child: Text(
-                              "www.facafesta.com.br/${widget.tipoEvento.toLowerCase()}",
-                              style: GoogleFonts.poppins(
-                                color: Colors.blueAccent,
-                                fontSize: 13,
-                                decoration: TextDecoration.underline,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // === CARDS ===
-              const FestaCardsWidget(),
-
-              const SizedBox(height: 20),
-
-              // === RODAPÉ / FRASE ===
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _temaCor.withValues(alpha: 0.25),
-                      blurRadius: 10,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-                child: Text(
-                  "✨ Seu ${widget.tipoEvento.toLowerCase()} está sendo preparado com carinho ✨",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    color: _temaCor,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 100),
-            ],
-          ),
-        ),
-      ),
-      bottomNavigationBar: SafeArea(
-        child: FestaBottomBar(
-          currentIndex: _selectedIndex,
-          onTap: (i) => setState(() => _selectedIndex = i),
-        ),
-      ),
-    );
-  }
-
-  // === CONTADOR E TEXTO DE SAUDAÇÃO ===
-
-  Widget _contador(String label, int valor) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Column(
-        children: [
-          Text(
-            valor.toString().padLeft(2, '0'),
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              color: Colors.white70,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   String _mensagemSaudacao(String nome) {
-    switch (widget.tipoEvento.toLowerCase()) {
+    nome = _normalizeTipoEvento(nome);
+    final nomeswitch = _normalizeTipoEvento(eventoModel.nome.toLowerCase());
+
+    switch (nomeswitch) {
       case 'casamento':
-        return "💖 Bem-vindos, ${widget.userInfo.nome} & ${widget.userInfo.nomeParceiro ?? 'seu amor'}!";
+        //return "💖 Bem-vindos, ${widget.userInfo.nome} & ${eventoModel.nomeParceiro ?? 'seu amor'}!";
+        return "💖 Bem-vindos, ${eventoModel.nomeNoiva} & ${eventoModel.nomeNoivo}!";
       case 'festa infantil':
         return "🎈 Olá, $nome! A diversão está prestes a começar!";
       case 'chá de bebê':
@@ -377,5 +398,38 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
       default:
         return "🎉 Olá, $nome! Seu evento está ganhando vida!";
     }
+  }
+
+  String _descricaoEvento(String tipo, String nome) {
+    tipo = _normalizeTipoEvento(tipo);
+    switch (tipo.toLowerCase()) {
+      case 'casamento':
+        return "Um momento inesquecível está sendo preparado! 💍 "
+            "Cada detalhe do casamento de $nome está sendo organizado com amor e sofisticação.";
+      case 'festa infantil':
+        return "Diversão garantida para os pequenos! 🎈 "
+            "$nome está preparando uma festa cheia de cores, alegria e muita brincadeira.";
+      case 'chá de bebê':
+        return "🍼 Amor em cada detalhe! O chá de bebê de $nome "
+            "está sendo planejado para receber com carinho uma nova vida.";
+      case 'aniversário':
+        return "🎂 O grande dia de $nome está chegando! "
+            "Prepare-se para celebrar cada momento com estilo e alegria.";
+      case 'natal':
+        return "🎄 Magia e união! O Natal de $nome será repleto de amor, luzes e boas lembranças.";
+      case 'ano novo':
+        return "🎆 Um novo ciclo se aproxima! Que o Réveillon de $nome traga renovação e boas energias.";
+      default:
+        return "🎉 Seu evento está tomando forma! Tudo está sendo preparado com dedicação para um dia inesquecível.";
+    }
+  }
+
+  String _normalizeTipoEvento(String tipo) {
+    // Remove emojis e espaços extras
+    final cleaned = tipo
+        .replaceAll(RegExp(r'[^\w\s]'), '') // remove símbolos e emojis
+        .trim()
+        .toLowerCase();
+    return cleaned;
   }
 }
