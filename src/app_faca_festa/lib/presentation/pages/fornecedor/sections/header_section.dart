@@ -2,6 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../controllers/app_controller.dart';
 import '../../../../controllers/fornecedor_controller.dart';
 
 class HeaderSection extends StatelessWidget {
@@ -10,6 +11,7 @@ class HeaderSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<FornecedorController>();
+    final appController = Get.find<AppController>();
 
     return Container(
       decoration: const BoxDecoration(
@@ -100,8 +102,7 @@ class HeaderSection extends StatelessWidget {
                 ),
               );
               if (confirmar == true) {
-                Get.snackbar("Logout", "Sessão encerrada com sucesso",
-                    backgroundColor: Colors.redAccent, colorText: Colors.white);
+                await appController.logoutFornecedor();
               }
             },
           ),

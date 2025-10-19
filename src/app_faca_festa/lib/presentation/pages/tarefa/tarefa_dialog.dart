@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'dart:ui';
 
 import './../../../controllers/event_theme_controller.dart';
+import './../../../core/utils/biblioteca.dart';
 import './../../../data/models/model.dart';
 
 Future<void> showTarefaDialog({
@@ -22,8 +23,12 @@ Future<void> showTarefaDialog({
   final themeController = Get.find<EventThemeController>();
   final tituloController = TextEditingController(text: tituloInicial ?? '');
   final descricaoController = TextEditingController(text: descricaoInicial ?? '');
+  final dataController = TextEditingController(
+    text: DateFormat('dd/MM/yyyy').format(dataInicial ?? DateTime.now()),
+  );
   DateTime dataSelecionada = dataInicial ?? DateTime.now();
   UsuarioModel? responsavelSelecionado = responsavelInicial;
+  final bool isCelular = Biblioteca.isCelular(context);
 
   await showDialog(
     context: context,
@@ -71,10 +76,20 @@ Future<void> showTarefaDialog({
                               Container(
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  gradient: gradient,
+                                  gradient: isEdit
+                                      ? LinearGradient(
+                                          colors: [Colors.orange.shade400, Colors.deepOrangeAccent],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        )
+                                      : gradient,
                                 ),
                                 padding: const EdgeInsets.all(12),
-                                child: const Icon(Icons.task_alt, color: Colors.white, size: 26),
+                                child: Icon(
+                                  isEdit ? Icons.edit_note_rounded : Icons.task_alt,
+                                  color: Colors.white,
+                                  size: 26,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -93,7 +108,7 @@ Future<void> showTarefaDialog({
 
                           const SizedBox(height: 20),
 
-                          // === Campos de texto ===
+                          // === Campos ===
                           _buildInput(
                             context,
                             controller: tituloController,
@@ -102,7 +117,6 @@ Future<void> showTarefaDialog({
                             color: primary,
                           ),
                           const SizedBox(height: 14),
-
                           _buildInput(
                             context,
                             controller: descricaoController,
@@ -119,23 +133,25 @@ Future<void> showTarefaDialog({
                               final novaData = await showDatePicker(
                                 context: context,
                                 initialDate: dataSelecionada,
-                                firstDate: DateTime.now(),
+                                firstDate: DateTime(2000),
                                 lastDate: DateTime(2100),
                                 locale: const Locale('pt', 'BR'),
                                 helpText: 'Selecionar Data Prevista',
                               );
                               if (novaData != null) {
-                                setState(() => dataSelecionada = novaData);
+                                setState(() {
+                                  dataSelecionada = novaData;
+                                  dataController.text = DateFormat('dd/MM/yyyy').format(novaData);
+                                });
                               }
                             },
                             child: AbsorbPointer(
-                              child: _buildInput(
-                                context,
-                                label: 'Data Prevista',
-                                icon: Icons.calendar_today_outlined,
-                                color: primary,
-                                hintText: DateFormat('dd/MM/yyyy').format(dataSelecionada),
-                              ),
+                              child: _buildInput(context,
+                                  controller: dataController,
+                                  label: 'Data Prevista',
+                                  icon: Icons.calendar_today_outlined,
+                                  color: primary,
+                                  readOnly: true),
                             ),
                           ),
 
@@ -199,7 +215,7 @@ Future<void> showTarefaDialog({
                                                 radius: 28,
                                                 backgroundImage: NetworkImage(
                                                   usuario.fotoPerfilUrl ??
-                                                      'https://ui-avatars.com/api/?name=${usuario.nome}',
+                                                      'https://ui-avatars.com/api/?name=${Uri.encodeComponent(usuario.nome)}',
                                                 ),
                                               ),
                                               const SizedBox(height: 6),
@@ -227,54 +243,160 @@ Future<void> showTarefaDialog({
                           // === Botões ===
                           Padding(
                             padding: const EdgeInsets.only(top: 22),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                TextButton.icon(
-                                  onPressed: () => Navigator.pop(context),
-                                  icon: const Icon(Icons.close, color: Colors.grey),
-                                  label: const Text(
-                                    'Cancelar',
-                                    style: TextStyle(
-                                      color: Colors.grey,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                            child: isCelular
+                                ? Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        onPressed: () async {
+                                          if (tituloController.text.trim().isEmpty ||
+                                              responsavelSelecionado == null) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Preencha o título e selecione um responsável.',
+                                                ),
+                                                backgroundColor: Colors.redAccent,
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          onSave(
+                                            tituloController.text.trim(),
+                                            descricaoController.text.trim(),
+                                            dataSelecionada,
+                                            responsavelSelecionado!,
+                                          );
+
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                isEdit
+                                                    ? 'Tarefa atualizada com sucesso! ✅'
+                                                    : 'Tarefa criada com sucesso! 🎉',
+                                              ),
+                                              backgroundColor: primary,
+                                              behavior: SnackBarBehavior.floating,
+                                            ),
+                                          );
+
+                                          Navigator.pop(context);
+                                        },
+                                        icon: Icon(
+                                          isEdit ? Icons.save_rounded : Icons.add_task_rounded,
+                                          color: Colors.white,
+                                        ),
+                                        label: Text(
+                                          isEdit ? 'Salvar Alterações' : 'Adicionar',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: primary,
+                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(14),
+                                          ),
+                                          elevation: 4,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      OutlinedButton.icon(
+                                        onPressed: () => Navigator.pop(context),
+                                        icon: const Icon(Icons.close, color: Colors.grey),
+                                        label: const Text(
+                                          'Cancelar',
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        style: OutlinedButton.styleFrom(
+                                          padding: const EdgeInsets.symmetric(vertical: 14),
+                                          side: BorderSide(color: Colors.grey.shade300),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(14),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      TextButton.icon(
+                                        onPressed: () => Navigator.pop(context),
+                                        icon: const Icon(Icons.close, color: Colors.grey),
+                                        label: const Text(
+                                          'Cancelar',
+                                          style: TextStyle(
+                                            color: Colors.grey,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                      ElevatedButton.icon(
+                                        onPressed: () async {
+                                          if (tituloController.text.trim().isEmpty ||
+                                              responsavelSelecionado == null) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text(
+                                                  'Preencha o título e selecione um responsável.',
+                                                ),
+                                                backgroundColor: Colors.redAccent,
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          onSave(
+                                            tituloController.text.trim(),
+                                            descricaoController.text.trim(),
+                                            dataSelecionada,
+                                            responsavelSelecionado!,
+                                          );
+
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                isEdit
+                                                    ? 'Tarefa atualizada com sucesso! ✅'
+                                                    : 'Tarefa criada com sucesso! 🎉',
+                                              ),
+                                              backgroundColor: primary,
+                                              behavior: SnackBarBehavior.floating,
+                                            ),
+                                          );
+
+                                          Navigator.pop(context);
+                                        },
+                                        icon: Icon(
+                                          isEdit ? Icons.save_rounded : Icons.add_task_rounded,
+                                          color: Colors.white,
+                                        ),
+                                        label: Text(
+                                          isEdit ? 'Salvar Alterações' : 'Adicionar',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: primary,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 22, vertical: 12),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(14),
+                                          ),
+                                          elevation: 4,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                ),
-                                ElevatedButton.icon(
-                                  onPressed: () {
-                                    if (tituloController.text.trim().isEmpty ||
-                                        responsavelSelecionado == null) {
-                                      return;
-                                    }
-                                    onSave(
-                                      tituloController.text.trim(),
-                                      descricaoController.text.trim(),
-                                      dataSelecionada,
-                                      responsavelSelecionado!,
-                                    );
-                                    Navigator.pop(context);
-                                  },
-                                  icon: const Icon(Icons.save_outlined, color: Colors.white),
-                                  label: Text(
-                                    isEdit ? 'Salvar Alterações' : 'Adicionar',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: primary,
-                                    padding:
-                                        const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    elevation: 4,
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
                         ],
                       ),
@@ -291,18 +413,18 @@ Future<void> showTarefaDialog({
 }
 
 /// === Campo de entrada genérico ===
-Widget _buildInput(
-  BuildContext context, {
-  required String label,
-  required IconData icon,
-  required Color color,
-  TextEditingController? controller,
-  int maxLines = 1,
-  String? hintText,
-}) {
+Widget _buildInput(BuildContext context,
+    {required String label,
+    required IconData icon,
+    required Color color,
+    TextEditingController? controller,
+    int maxLines = 1,
+    String? hintText,
+    bool readOnly = false}) {
   return TextField(
     controller: controller,
     maxLines: maxLines,
+    readOnly: readOnly,
     decoration: InputDecoration(
       labelText: label,
       hintText: hintText,

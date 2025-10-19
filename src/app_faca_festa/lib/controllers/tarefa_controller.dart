@@ -10,9 +10,7 @@ class TarefaController extends GetxController {
   final RxList<UsuarioModel> usuarios = <UsuarioModel>[].obs;
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
-
-  /// 🔹 ID do evento ativo
-  String? idEvento; // 🔹 Pode ser setado depois
+  String? _idEvento;
 
   @override
   void onInit() {
@@ -20,8 +18,10 @@ class TarefaController extends GetxController {
     carregarUsuario();
   }
 
-  void setEvento(String id) {
-    idEvento = id;
+  /// 🔹 Configura o evento e inicia a escuta
+  void setEvento(String idEvento) {
+    if (_idEvento == idEvento) return; // evita recriar o listener
+    _idEvento = idEvento;
     listenTarefas();
   }
 
@@ -35,20 +35,25 @@ class TarefaController extends GetxController {
   // ======================================================
   // 🔹 Carregar tarefas em tempo real
   // ======================================================
-
   void listenTarefas() {
-    if (idEvento == null) return;
-
+    if (_idEvento == null) return;
     carregando.value = true;
+
     _db
         .collection('tarefa')
-        .where('id_evento_evento', isEqualTo: idEvento)
+        .where('id_evento_evento', isEqualTo: _idEvento)
         .orderBy('data_prevista', descending: false)
         .snapshots()
-        .listen((snapshot) {
-      tarefas.assignAll(
-        snapshot.docs.map((d) => TarefaModel.fromMap(d.data())).toList(),
-      );
+        .listen((snapshot) async {
+      final lista = <TarefaModel>[];
+
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final tarefa = TarefaModel.fromMap(data);
+        lista.add(tarefa);
+      }
+
+      tarefas.assignAll(lista);
       carregando.value = false;
     }, onError: (e) {
       erro.value = e.toString();
@@ -69,7 +74,7 @@ class TarefaController extends GetxController {
       final id = const Uuid().v4();
       final nova = TarefaModel(
         idTarefa: id,
-        idEvento: idEvento ?? '',
+        idEvento: _idEvento ?? '',
         titulo: nome,
         descricao: descricao,
         dataPrevista: dataPrevista,
@@ -83,16 +88,13 @@ class TarefaController extends GetxController {
     }
   }
 
-  // ======================================================
-  // 🔹 Atualizar status
-  // ======================================================
-  Future<void> atualizarStatus(String idTarefa, StatusTarefa novoStatus) async {
-    try {
-      await _db.collection('tarefa').doc(idTarefa).update({'status': novoStatus.firestoreValue});
-    } catch (e) {
-      erro.value = 'Erro ao atualizar status: $e';
-    }
+  double get progresso {
+    if (tarefas.isEmpty) return 0;
+    final concluidas = tarefas.where((t) => t.status == StatusTarefa.concluida).length;
+    return concluidas / tarefas.length;
   }
+
+  int get concluidas => tarefas.where((t) => t.status == StatusTarefa.concluida).length;
 
   // ======================================================
   // 🔹 Editar tarefa
@@ -105,25 +107,13 @@ class TarefaController extends GetxController {
     }
   }
 
-  // ======================================================
-  // 🔹 Excluir tarefa
-  // ======================================================
+  Future<void> atualizarStatus(String idTarefa, StatusTarefa novoStatus) async {
+    await _db.collection('tarefa').doc(idTarefa).update({
+      'status': novoStatus.firestoreValue,
+    });
+  }
+
   Future<void> excluirTarefa(String idTarefa) async {
-    try {
-      await _db.collection('tarefa').doc(idTarefa).delete();
-    } catch (e) {
-      erro.value = 'Erro ao excluir tarefa: $e';
-    }
+    await _db.collection('tarefa').doc(idTarefa).delete();
   }
-
-  // ======================================================
-  // 🔹 Indicadores de progresso
-  // ======================================================
-  double get progresso {
-    if (tarefas.isEmpty) return 0;
-    final concluidas = tarefas.where((t) => t.status == StatusTarefa.concluida).length;
-    return concluidas / tarefas.length;
-  }
-
-  int get concluidas => tarefas.where((t) => t.status == StatusTarefa.concluida).length;
 }
