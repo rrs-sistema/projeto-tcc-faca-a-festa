@@ -6,6 +6,7 @@ import 'dart:async';
 
 import '../../controllers/app_controller.dart';
 import '../../controllers/event_theme_controller.dart';
+import '../../controllers/evento_cadastro_controller.dart';
 import '../../data/models/model.dart';
 import '../widgets/menu_drawer_faca_festa.dart';
 import './fornecedor/fornecedor_localizacao_screen.dart';
@@ -31,7 +32,9 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
   int _currentImageIndex = 0;
   late List<String> _images;
   late EventoModel eventoModel;
+  late TipoEventoModel tipoEvento;
 
+  final eventoCadastroController = Get.find<EventoCadastroController>();
   final themeController = Get.put(EventThemeController());
   final appController = Get.find<AppController>();
 
@@ -39,6 +42,9 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
   void initState() {
     super.initState();
     eventoModel = appController.eventoModel.value!;
+    tipoEvento = eventoCadastroController.tiposEvento
+        .where((t) => t.idTipoEvento == eventoModel.idTipoEvento)
+        .first;
 
     // 🔹 Aplica o tema baseado no ID do evento (com cache automático)
     themeController.aplicarTemaPorId(eventoModel.idTipoEvento);
@@ -91,8 +97,6 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
   // === PÁGINA ORGANIZADOR PRINCIPAL ===
   // ===============================
   Widget _buildOrganizadorPage() {
-    final nome = appController.usuarioLogado.value!.nome.split(' ').first;
-
     return Obx(() {
       final cor = themeController.primaryColor.value;
       //final gradiente = themeController.gradient.value;
@@ -159,7 +163,7 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
                       children: [
                         Center(
                           child: Text(
-                            _mensagemSaudacao(nome),
+                            _mensagemSaudacao(),
                             textAlign: TextAlign.center,
                             style: GoogleFonts.poppins(
                               color: Colors.white,
@@ -381,9 +385,9 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
     }
   }
 
-  String _mensagemSaudacao(String nome) {
-    nome = _normalizeTipoEvento(nome);
-    final nomeswitch = _normalizeTipoEvento(eventoModel.nome.toLowerCase());
+  String _mensagemSaudacao() {
+    String nome = _normalizeTipoEvento(tipoEvento.nome.toLowerCase());
+    final nomeswitch = _normalizeTipoEvento(tipoEvento.nome.toLowerCase());
 
     switch (nomeswitch) {
       case 'casamento':

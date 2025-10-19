@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/utils/biblioteca.dart';
 import './../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_model.dart';
 import './../../../controllers/categoria_servico_controller.dart';
@@ -31,6 +32,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
   @override
   Widget build(BuildContext context) {
+    final bool isCelular = Biblioteca.isCelular(context);
     return Obx(() {
       final gradient = themeController.gradient.value;
 
@@ -114,11 +116,11 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                               child: GridView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2,
                                   mainAxisSpacing: 15,
                                   crossAxisSpacing: 15,
-                                  childAspectRatio: 0.53,
+                                  childAspectRatio: isCelular ? 0.53 : 0.70,
                                 ),
                                 itemCount: fornecedores.length,
                                 itemBuilder: (context, index) {
@@ -253,6 +255,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   ) {
     final fornecedor = f.fornecedor;
     final distancia = f.distanciaKm;
+    final bool isCelular = Biblioteca.isCelular(context);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -291,7 +294,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                   ? CachedNetworkImage(
                       imageUrl: fornecedor.bannerUrl!,
                       cacheManager: AdaptiveCacheManager.instance,
-                      height: 110,
+                      height: isCelular ? 110 : 210,
                       width: double.infinity,
                       fit: BoxFit.cover,
 

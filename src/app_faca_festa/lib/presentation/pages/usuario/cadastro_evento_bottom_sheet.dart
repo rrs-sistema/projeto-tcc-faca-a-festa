@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
 import './../../../controllers/evento_cadastro_controller.dart';
-import './../../../controllers/app_controller.dart';
 import './../../widgets/custom_input_field.dart';
 import './../endereco/endereco_section.dart';
 import './../../../data/models/model.dart';
@@ -15,23 +14,28 @@ Future<void> showCadastroEventoBottomSheet(
   BuildContext context, {
   EventoModel? eventoParaEdicao,
 }) async {
-  final appController = Get.find<AppController>();
   final controller = Get.find<EventoCadastroController>();
+
+  // 🔹 Carrega tipos de evento antes de abrir o formulário
   await controller.carregarTiposEvento();
 
+  // 🔹 Se estiver editando, carrega os dados do evento
   if (eventoParaEdicao != null) {
     controller.carregarEvento(eventoParaEdicao);
+  } else {
+    controller.limpar();
   }
 
-  // 🎨 Define cores por tipo
-  late final Color corPrincipal;
-  late final Color corSecundaria;
-  late final String emoji;
+  // 🔹 Define cores baseadas no tipo atual (ou padrão)
+  Color corPrincipal;
+  Color corSecundaria;
+  String emoji;
 
   final tipoNormalizado = controller.tipoEventoModel.value?.nome
-      .toLowerCase()
-      .replaceAll(RegExp(r'[^a-zá-úà-ùãõâêîôûç\s]'), '')
-      .trim();
+          .toLowerCase()
+          .replaceAll(RegExp(r'[^a-zá-úà-ùãõâêîôûç\s]'), '')
+          .trim() ??
+      '';
 
   switch (tipoNormalizado) {
     case 'casamento':
@@ -60,6 +64,9 @@ Future<void> showCadastroEventoBottomSheet(
       emoji = '🎉';
   }
 
+  // ===============================
+  // 🔹 ABRE O BOTTOM SHEET
+  // ===============================
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -77,13 +84,6 @@ Future<void> showCadastroEventoBottomSheet(
               end: Alignment.bottomRight,
             ),
             borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-            boxShadow: const [
-              BoxShadow(
-                color: Colors.black26,
-                blurRadius: 12,
-                offset: Offset(0, -4),
-              ),
-            ],
           ),
           child: SafeArea(
             top: false,
@@ -113,10 +113,9 @@ Future<void> showCadastroEventoBottomSheet(
                       ),
                       const SizedBox(height: 20),
 
-                      /// === Preview do nome ===
+                      /// === Preview dinâmico ===
                       Obx(() => AnimatedContainer(
                             duration: const Duration(milliseconds: 300),
-                            curve: Curves.easeInOut,
                             padding: const EdgeInsets.all(10),
                             margin: const EdgeInsets.only(bottom: 20),
                             decoration: BoxDecoration(
@@ -127,13 +126,6 @@ Future<void> showCadastroEventoBottomSheet(
                               ),
                               borderRadius: BorderRadius.circular(18),
                               border: Border.all(color: corPrincipal.withValues(alpha: 0.5)),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: corPrincipal.withValues(alpha: 0.2),
-                                  blurRadius: 6,
-                                  offset: const Offset(0, 3),
-                                )
-                              ],
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -142,7 +134,7 @@ Future<void> showCadastroEventoBottomSheet(
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    appController.eventoModel.value == null
+                                    controller.nomeEventoPreview.value.isEmpty
                                         ? 'Seu evento aparecerá aqui...'
                                         : controller.nomeEventoPreview.value,
                                     style: GoogleFonts.poppins(
@@ -156,15 +148,11 @@ Future<void> showCadastroEventoBottomSheet(
                             ),
                           )),
 
-                      /// === Campos dinâmicos ===
-                      ..._buildCamposPorTipo(
-                        corPrincipal,
-                        controller,
-                      ),
+                      ..._buildCamposPorTipo(corPrincipal, controller),
 
                       const SizedBox(height: 32),
 
-                      /// === Botão salvar ===
+                      /// === Botão de ação ===
                       Obx(() => Center(
                             child: ElevatedButton.icon(
                               icon: controller.carregando.value
@@ -176,16 +164,18 @@ Future<void> showCadastroEventoBottomSheet(
                                         color: Colors.white,
                                       ),
                                     )
-                                  : const Icon(
-                                      Icons.check_circle_outline,
+                                  : Icon(
+                                      controller.isEditando
+                                          ? Icons.update
+                                          : Icons.check_circle_outline,
                                       color: Colors.white,
-                                      size: 28,
+                                      size: 26,
                                     ),
                               label: Text(
                                 controller.isEditando ? 'Atualizar evento' : 'Salvar e continuar',
                                 style: GoogleFonts.poppins(
-                                  color: Colors.white,
                                   fontWeight: FontWeight.w600,
+                                  color: Colors.white,
                                 ),
                               ),
                               style: ElevatedButton.styleFrom(
@@ -200,38 +190,12 @@ Future<void> showCadastroEventoBottomSheet(
                                   : () => controller.salvarEvento(),
                             ),
                           )),
-                      const SizedBox(height: 20),
 
+                      const SizedBox(height: 20),
                       Center(
-                        child: ElevatedButton.icon(
-                          icon: controller.carregando.value
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Colors.white,
-                                  ),
-                                )
-                              : const Icon(
-                                  Icons.close,
-                                  color: Colors.white,
-                                  size: 28,
-                                ),
-                          label: Text(
-                            'Cancelar - Sair',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: corPrincipal,
-                            padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
+                        child: TextButton.icon(
+                          icon: const Icon(Icons.close, color: Colors.redAccent),
+                          label: const Text('Cancelar'),
                           onPressed: () => Get.back(),
                         ),
                       ),
@@ -423,7 +387,16 @@ List<Widget> _buildCamposPorTipo(
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: (v) {
         if (v == null || v.isEmpty) return "Informe o custo estimado";
-        final valor = double.tryParse(v.replaceAll('.', '').replaceAll(',', '.'));
+
+        // 🔹 Remove símbolos de moeda e espaços
+        final limpo = v
+            .replaceAll('R\$', '')
+            .replaceAll('r\$', '')
+            .replaceAll('.', '')
+            .replaceAll(',', '.')
+            .trim();
+
+        final valor = double.tryParse(limpo);
         if (valor == null || valor <= 0) return "Valor inválido";
         return null;
       },

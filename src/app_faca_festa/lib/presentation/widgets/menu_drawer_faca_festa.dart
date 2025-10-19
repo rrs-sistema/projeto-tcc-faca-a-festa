@@ -78,7 +78,7 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                     final evento = appController.eventoModel.value;
                     if (evento != null) {
                       eventoController.carregarEvento(evento);
-                      showCadastroEventoBottomSheet(context);
+                      showCadastroEventoBottomSheet(context, eventoParaEdicao: evento);
                     }
                   }),
                   _menuItem(Icons.group, "Convidados", color: primary),

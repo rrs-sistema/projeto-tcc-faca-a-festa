@@ -20,7 +20,7 @@ class EventoCadastroController extends GetxController {
   final Rx<TipoEventoModel?> tipoEventoModel = Rx<TipoEventoModel?>(null);
 
   /// ===============================
-  /// CAMPOS CONTROLADOS PELO CONTROLLER
+  /// 🔹 CAMPOS CONTROLADOS PELO CONTROLLER
   /// ===============================
   final idEvento = ''.obs;
   final nome = TextEditingController();
@@ -55,7 +55,6 @@ class EventoCadastroController extends GetxController {
   Future<void> carregarTiposEvento() async {
     try {
       final snapshot = await db.collection('tipo_evento').where('ativo', isEqualTo: true).get();
-
       tiposEvento.assignAll(
         snapshot.docs.map((d) => TipoEventoModel.fromMap(d.data())).toList(),
       );
@@ -122,47 +121,6 @@ class EventoCadastroController extends GetxController {
       default:
         nomeEventoPreview.value = '🎉 ${_capitalizar(tipoEventoModel.value!.nome)}';
     }
-
-    _sincronizarEndereco();
-  }
-
-  // ===============================
-  // 🔹 FUNÇÃO DE SINCRONIZAÇÃO DO ENDEREÇO
-  // ===============================
-  void _sincronizarEndereco() {
-    if (app.eventoModel.value != null && app.eventoModel.value!.logradouro == null) {
-      final endereco = enderecoController.value.toModel(app.usuarioLogado.value!.idUsuario);
-      app.eventoModel.value!.cep ?? endereco.cep;
-      app.eventoModel.value!.logradouro ?? endereco.logradouro;
-      app.eventoModel.value!.numero ?? endereco.numero;
-      app.eventoModel.value!.complemento ?? endereco.complemento;
-      app.eventoModel.value!.bairro ?? endereco.bairro;
-    } else {
-      enderecoController.value.cepController.text = app.enderecoPrincipal.value!.cep;
-      enderecoController.value.ufController.text = app.enderecoPrincipal.value!.uf ?? '';
-      enderecoController.value.nomeCidadeController.text =
-          app.enderecoPrincipal.value!.nomeCidade ?? '';
-      enderecoController.value.bairroController.text = app.enderecoPrincipal.value!.bairro ?? '';
-      enderecoController.value.logradouroController.text = app.enderecoPrincipal.value!.logradouro;
-      enderecoController.value.numeroController.text = app.enderecoPrincipal.value!.numero;
-      enderecoController.value.complementoController.text =
-          app.enderecoPrincipal.value!.complemento ?? '';
-    }
-  }
-
-  // ===============================
-  // 🔹 NORMALIZAR TIPO DE EVENTO
-  // ===============================
-  String _normalizeTipoEvento(String tipo) {
-    return tipo.replaceAll(RegExp(r'[^\w\s]'), '').trim().toLowerCase();
-  }
-
-  String _capitalizar(String nome) {
-    if (nome.isEmpty) return '';
-    return nome
-        .split(' ')
-        .map((p) => p.isEmpty ? '' : '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}')
-        .join(' ');
   }
 
   // ===============================
@@ -177,21 +135,16 @@ class EventoCadastroController extends GetxController {
   void removePadrinho(String nome) => padrinhos.remove(nome);
 
   // ===============================
-  // 🔹 CARREGAR EVENTO EXISTENTE
+  // 🔹 CARREGAR EVENTO EXISTENTE (EDIÇÃO)
   // ===============================
   void carregarEvento(EventoModel evento) {
     final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+
     idEvento.value = evento.idEvento;
     nome.text = evento.nomeNoiva ?? evento.nomeAniversariante ?? '';
     parceiro.text = evento.nomeNoivo ?? '';
     tema.text = evento.tema ?? '';
     idade.text = evento.idade?.toString() ?? '';
-    // ✅ Formata o custo estimado ao abrir para edição
-    if (evento.custoEstimado != null && evento.custoEstimado! > 0) {
-      custoEstimado.text = currencyFormat.format(evento.custoEstimado);
-    } else {
-      custoEstimado.text = '';
-    }
     bebe.text = evento.nomeBebe ?? '';
     tipoCerimonia.value = evento.tipoCerimonia ?? '';
     estiloCasamento.value = evento.estiloCasamento ?? '';
@@ -199,7 +152,14 @@ class EventoCadastroController extends GetxController {
     horaFesta.text = evento.hora ?? '';
     padrinhos.assignAll(evento.padrinhos ?? []);
 
-    // 🔹 Busca e seta o tipo de evento correspondente
+    // ✅ formata custo estimado no padrão BR
+    if (evento.custoEstimado != null && evento.custoEstimado! > 0) {
+      custoEstimado.text = currencyFormat.format(evento.custoEstimado);
+    } else {
+      custoEstimado.text = '';
+    }
+
+    // ✅ seleciona tipo de evento, se existir
     tipoEventoModel.value = tiposEvento.firstWhereOrNull(
       (t) => t.idTipoEvento == evento.idTipoEvento,
     );
@@ -208,7 +168,7 @@ class EventoCadastroController extends GetxController {
   }
 
   // ===============================
-  // 🔹 SALVAR EVENTO
+  // 🔹 SALVAR EVENTO (NOVO / EDIÇÃO)
   // ===============================
   Future<void> salvarEvento() async {
     if (!formKey.currentState!.validate()) return;
@@ -218,6 +178,7 @@ class EventoCadastroController extends GetxController {
       final user = app.usuarioLogado.value;
       if (user == null) throw Exception('Usuário não autenticado.');
 
+      // Data e hora
       final dataSelecionada = dataFesta.text.isNotEmpty
           ? DateFormat('dd/MM/yyyy', 'pt_BR').parse(dataFesta.text)
           : DateTime.now().add(const Duration(days: 30));
@@ -238,12 +199,17 @@ class EventoCadastroController extends GetxController {
 
       final endereco = enderecoController.value.toModel('');
       final tipoAtual = tipoEventoModel.value;
-
       if (tipoAtual == null) throw Exception('Tipo de evento não selecionado.');
 
+      // ✅ converte valor formatado (ex: "R$ 1.234,56")
       double? valor = 0.0;
       if (custoEstimado.text.isNotEmpty) {
-        valor = double.tryParse(custoEstimado.text.replaceAll(',', '.'));
+        final texto = custoEstimado.text
+            .replaceAll('R\$', '')
+            .replaceAll('.', '')
+            .replaceAll(',', '.')
+            .trim();
+        valor = double.tryParse(texto) ?? 0.0;
       }
 
       final evento = EventoModel(
@@ -269,6 +235,7 @@ class EventoCadastroController extends GetxController {
         bairro: endereco.bairro,
       );
 
+      // ✅ salva ou atualiza conforme idEvento
       await db.collection('evento').doc(evento.idEvento).set(evento.toMap());
 
       app.eventoModel.value = evento;
@@ -277,7 +244,7 @@ class EventoCadastroController extends GetxController {
 
       Get.snackbar(
         'Sucesso',
-        'Evento salvo com sucesso!',
+        isEditando ? 'Evento atualizado com sucesso!' : 'Evento salvo com sucesso!',
         backgroundColor: Colors.green.shade600,
         colorText: Colors.white,
       );
@@ -312,6 +279,22 @@ class EventoCadastroController extends GetxController {
     email.clear();
     celular.clear();
     padrinhos.clear();
+    custoEstimado.clear();
     nomeEventoPreview.value = '';
+  }
+
+  // ===============================
+  // 🔹 UTILITÁRIOS INTERNOS
+  // ===============================
+  String _normalizeTipoEvento(String tipo) {
+    return tipo.replaceAll(RegExp(r'[^\w\s]'), '').trim().toLowerCase();
+  }
+
+  String _capitalizar(String nome) {
+    if (nome.isEmpty) return '';
+    return nome
+        .split(' ')
+        .map((p) => p.isEmpty ? '' : '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}')
+        .join(' ');
   }
 }
