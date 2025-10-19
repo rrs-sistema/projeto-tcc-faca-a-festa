@@ -28,7 +28,6 @@ class CategoriaServicoController extends GetxController {
           .toList();
 
       categorias.assignAll(lista);
-      debugPrint('✅ ${lista.length} categorias carregadas.');
     } catch (e, s) {
       debugPrint('❌ Erro ao carregar categorias: $e\n$s');
     } finally {

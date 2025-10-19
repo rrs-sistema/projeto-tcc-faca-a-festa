@@ -1,31 +1,29 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'dart:ui';
 
 import './../../../controllers/event_theme_controller.dart';
-
-class Responsavel {
-  final String nome;
-  final String fotoUrl;
-  const Responsavel(this.nome, this.fotoUrl);
-}
+import './../../../data/models/model.dart';
 
 Future<void> showTarefaDialog({
   required BuildContext context,
+  String? idEvento,
   String? tituloInicial,
   String? descricaoInicial,
   DateTime? dataInicial,
-  Responsavel? responsavelInicial,
+  UsuarioModel? responsavelInicial,
+  required List<UsuarioModel> usuarios,
   bool isEdit = false,
-  required List<Responsavel> possiveisResponsaveis,
-  required void Function(String, String, DateTime, Responsavel) onSave,
+  required void Function(String, String, DateTime, UsuarioModel) onSave,
 }) async {
   final themeController = Get.find<EventThemeController>();
   final tituloController = TextEditingController(text: tituloInicial ?? '');
   final descricaoController = TextEditingController(text: descricaoInicial ?? '');
   DateTime dataSelecionada = dataInicial ?? DateTime.now();
-  Responsavel? responsavelSelecionado = responsavelInicial;
+  UsuarioModel? responsavelSelecionado = responsavelInicial;
 
   await showDialog(
     context: context,
@@ -47,7 +45,7 @@ Future<void> showTarefaDialog({
                 builder: (context, setState) {
                   return Container(
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.9),
+                      color: Colors.white.withValues(alpha: 0.95),
                       borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
@@ -157,63 +155,71 @@ Future<void> showTarefaDialog({
                           ),
                           const SizedBox(height: 10),
 
-                          SizedBox(
-                            height: 100,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: possiveisResponsaveis.length,
-                              separatorBuilder: (_, __) => const SizedBox(width: 14),
-                              itemBuilder: (context, index) {
-                                final resp = possiveisResponsaveis[index];
-                                final selecionado = responsavelSelecionado?.nome == resp.nome;
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() => responsavelSelecionado = resp);
-                                  },
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    curve: Curves.easeInOut,
-                                    padding: const EdgeInsets.all(4),
-                                    decoration: BoxDecoration(
-                                      gradient: selecionado ? gradient : null,
-                                      border: Border.all(
-                                        color:
-                                            selecionado ? Colors.transparent : Colors.grey.shade300,
-                                      ),
-                                      borderRadius: BorderRadius.circular(18),
-                                      boxShadow: [
-                                        if (selecionado)
-                                          BoxShadow(
-                                            color: primary.withValues(alpha: 0.25),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 3),
+                          usuarios.isEmpty
+                              ? const Text('Nenhum usuário disponível 😅')
+                              : SizedBox(
+                                  height: 110,
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    itemCount: usuarios.length,
+                                    separatorBuilder: (_, __) => const SizedBox(width: 14),
+                                    itemBuilder: (context, index) {
+                                      final usuario = usuarios[index];
+                                      final selecionado =
+                                          responsavelSelecionado?.idUsuario == usuario.idUsuario;
+                                      return GestureDetector(
+                                        onTap: () {
+                                          setState(() => responsavelSelecionado = usuario);
+                                        },
+                                        child: AnimatedContainer(
+                                          duration: const Duration(milliseconds: 200),
+                                          curve: Curves.easeInOut,
+                                          padding: const EdgeInsets.all(5),
+                                          decoration: BoxDecoration(
+                                            gradient: selecionado ? gradient : null,
+                                            border: Border.all(
+                                              color: selecionado
+                                                  ? Colors.transparent
+                                                  : Colors.grey.shade300,
+                                            ),
+                                            borderRadius: BorderRadius.circular(18),
+                                            boxShadow: [
+                                              if (selecionado)
+                                                BoxShadow(
+                                                  color: primary.withValues(alpha: 0.25),
+                                                  blurRadius: 8,
+                                                  offset: const Offset(0, 3),
+                                                ),
+                                            ],
                                           ),
-                                      ],
-                                    ),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        CircleAvatar(
-                                          radius: 28,
-                                          backgroundImage: NetworkImage(resp.fotoUrl),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          resp.nome.split(' ')[0],
-                                          style: TextStyle(
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
-                                            color:
-                                                selecionado ? Colors.white : Colors.grey.shade800,
+                                          child: Column(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: [
+                                              CircleAvatar(
+                                                radius: 28,
+                                                backgroundImage: NetworkImage(
+                                                  usuario.fotoPerfilUrl ??
+                                                      'https://ui-avatars.com/api/?name=${usuario.nome}',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 6),
+                                              Text(
+                                                usuario.nome.split(' ')[0],
+                                                style: TextStyle(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: selecionado
+                                                      ? Colors.white
+                                                      : Colors.grey.shade800,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ),
-                                      ],
-                                    ),
+                                      );
+                                    },
                                   ),
-                                );
-                              },
-                            ),
-                          ),
+                                ),
 
                           const SizedBox(height: 24),
                           const Divider(height: 1, color: Colors.grey),
@@ -284,7 +290,7 @@ Future<void> showTarefaDialog({
   );
 }
 
-// === Campo de entrada genérico com cor dinâmica ===
+/// === Campo de entrada genérico ===
 Widget _buildInput(
   BuildContext context, {
   required String label,

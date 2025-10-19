@@ -22,6 +22,7 @@ import 'controllers/evento_cadastro_controller.dart';
 import 'controllers/fornecedor_controller.dart';
 import 'controllers/orcamento_controller.dart';
 import 'controllers/orcamento_gasto_controller.dart';
+import 'controllers/tarefa_controller.dart';
 import 'presentation/pages/convidado/convidado_page.dart';
 import 'presentation/pages/fornecedor/orcamentos_screen.dart';
 import 'presentation/pages/login/guest_register_screen.dart';
@@ -67,6 +68,7 @@ class FacaFestaApp extends StatelessWidget {
         Get.put(FornecedorController(), permanent: true);
         Get.put(CategoriaServicoController(), permanent: true);
         Get.put(OrcamentoGastoController(), permanent: true);
+        Get.put(TarefaController(), permanent: true);
       }),
       initialRoute: '/splash',
       getPages: [
