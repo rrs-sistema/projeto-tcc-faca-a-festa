@@ -1,20 +1,26 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/event_theme_controller.dart';
-import '../../../controllers/fornecedor_localizacao_controller.dart';
+import '../../../core/utils/no_sqflite_cache_manager.dart';
+import './../../../data/models/DTO/fornecedor_detalhado_model.dart';
+import './../../../controllers/event_theme_controller.dart';
 import 'components/abrir_cotacao_bottom_sheet.dart';
 
 class FornecedorDetalheScreen extends StatelessWidget {
-  final FornecedorModel fornecedor;
-  const FornecedorDetalheScreen({super.key, required this.fornecedor});
+  final FornecedorDetalhadoModel fornecedorDetalhado;
+  const FornecedorDetalheScreen({super.key, required this.fornecedorDetalhado});
 
   @override
   Widget build(BuildContext context) {
     final themeController = Get.find<EventThemeController>();
     final gradient = themeController.gradient.value;
     final primary = themeController.primaryColor.value;
+
+    final fornecedor = fornecedorDetalhado.fornecedor;
+    final territorio = fornecedorDetalhado.territorio;
+    final distancia = fornecedorDetalhado.distanciaKm;
 
     return Scaffold(
       appBar: AppBar(
@@ -23,9 +29,12 @@ class FornecedorDetalheScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          fornecedor.nome,
-          style:
-              GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black, fontSize: 16),
+          fornecedor.razaoSocial,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+            fontSize: 16,
+          ),
         ),
         centerTitle: true,
         flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
@@ -36,46 +45,58 @@ class FornecedorDetalheScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // === Foto principal ===
+            // === Cabeçalho ===
+            // === Cabeçalho com banner ===
             ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.asset(
-                fornecedor.imagem ?? 'assets/images/fornecedor_default.jpg',
-                height: 220,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
+              borderRadius: BorderRadius.circular(18),
+              child: fornecedor.bannerUrl != null && fornecedor.bannerUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: fornecedor.bannerUrl!,
+                      cacheManager: AdaptiveCacheManager.instance,
+                      height: 180,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(color: Colors.grey.shade300),
+                      errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
+                      fadeInDuration: const Duration(milliseconds: 300),
+                    )
+                  : _bannerPlaceholder(primary),
             ),
             const SizedBox(height: 20),
 
-            // === Nome e Categoria ===
-            Text(
-              fornecedor.nome,
-              style: GoogleFonts.poppins(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: primary,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              fornecedor.categoria,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                color: Colors.grey.shade700,
+            Center(
+              child: Text(
+                fornecedor.razaoSocial,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: primary,
+                ),
               ),
             ),
 
-            const SizedBox(height: 16),
-            _infoTile(Icons.place_outlined, fornecedor.cidade ?? 'Cidade não informada'),
-            _infoTile(Icons.call_outlined, fornecedor.telefone ?? 'Telefone não informado'),
-            _infoTile(Icons.email_outlined, fornecedor.email ?? 'E-mail não informado'),
+            const SizedBox(height: 20),
+
+            // === Informações gerais ===
+            _infoTile(Icons.person_outline, "Responsável: ${fornecedor.idUsuario}"),
+            _infoTile(Icons.call_outlined, fornecedor.telefone),
+            _infoTile(Icons.email_outlined, fornecedor.email),
+
+            if (territorio?.descricao != null && territorio!.descricao!.isNotEmpty)
+              _infoTile(Icons.map_outlined, territorio.descricao!),
+
+            if (distancia != null)
+              _infoTile(
+                Icons.location_on_outlined,
+                '${distancia.toStringAsFixed(1)} km de distância',
+              ),
 
             const SizedBox(height: 20),
 
             // === Descrição ===
             Text(
-              'Descrição do serviço',
+              'Descrição do fornecedor',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
@@ -91,12 +112,14 @@ class FornecedorDetalheScreen extends StatelessWidget {
 
             const SizedBox(height: 30),
 
-            // === Botão para cotação ===
+            // === Botão de orçamento ===
             Center(
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.request_quote_rounded, color: Colors.white),
-                label: const Text('Solicitar Orçamento',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+                label: const Text(
+                  'Solicitar Orçamento',
+                  style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
                   padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
@@ -109,7 +132,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
                     builder: (_) => CotacaoBottomSheet(
-                      fornecedoresSelecionados: [fornecedor.id],
+                      fornecedoresSelecionados: [fornecedor.idFornecedor],
                       primary: primary,
                       gradient: gradient,
                     ),
@@ -123,9 +146,29 @@ class FornecedorDetalheScreen extends StatelessWidget {
     );
   }
 
+  Widget _bannerPlaceholder(Color primary) {
+    return Container(
+      height: 180,
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            primary.withValues(alpha: 0.4),
+            primary.withValues(alpha: 0.15),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      ),
+      child: const Center(
+        child: Icon(Icons.image_rounded, color: Colors.white54, size: 36),
+      ),
+    );
+  }
+
   Widget _infoTile(IconData icon, String text) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
           Icon(icon, size: 20, color: Colors.grey.shade600),

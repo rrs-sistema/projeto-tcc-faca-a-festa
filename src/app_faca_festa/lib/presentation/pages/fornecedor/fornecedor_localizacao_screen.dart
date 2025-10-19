@@ -1,14 +1,17 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:app_faca_festa/controllers/app_controller.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/utils/biblioteca.dart';
 import './../../../controllers/fornecedor_localizacao_controller.dart';
+import './../../../data/models/DTO/fornecedor_detalhado_model.dart';
+import './../../../controllers/categoria_servico_controller.dart';
+import './../../../core/utils/no_sqflite_cache_manager.dart';
 import './../../../controllers/event_theme_controller.dart';
 import './components/filtro_fornecedor_bottom_sheet.dart';
 import './components/abrir_cotacao_bottom_sheet.dart';
-import 'fornecedor_detalhe_screen.dart';
-import 'fornecedor_produtos_screen.dart';
+import './fornecedor_detalhe_screen.dart';
 
 class FornecedorLocalizacaoScreen extends StatefulWidget {
   const FornecedorLocalizacaoScreen({super.key});
@@ -20,18 +23,10 @@ class FornecedorLocalizacaoScreen extends StatefulWidget {
 class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScreen> {
   final themeController = Get.find<EventThemeController>();
   final controller = Get.put(FornecedorLocalizacaoController());
+  final controllerApp = Get.put(AppController());
+  final categoriaController = Get.put(CategoriaServicoController());
 
-  final List<String> categorias = [
-    'Buffet',
-    'Decoração',
-    'Fotografia',
-    'Música',
-    'Locação',
-    'Doces',
-    'Convites',
-  ];
-
-  String categoriaSelecionada = 'Buffet';
+  String? categoriaSelecionada;
   final RxSet<String> selecionados = <String>{}.obs; // 🔹 IDs selecionados
 
   @override
@@ -76,11 +71,13 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
             return const Center(child: CircularProgressIndicator());
           }
 
-          final fornecedoresPorCategoria = controller.fornecedoresFiltrados
-              .where((f) => f.categoria == categoriaSelecionada)
-              .toList();
+          final fornecedores = categoriaSelecionada == null
+              ? controller.fornecedoresFiltrados
+              : controller.fornecedoresFiltrados
+                  .where((f) => f.categoriaNome == categoriaSelecionada)
+                  .toList();
 
-          final selecionadosSet = selecionados; // observável aqui (já é RxSet)
+          final selecionadosSet = selecionados;
 
           return Stack(
             children: [
@@ -92,15 +89,15 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const SizedBox(height: 12),
-
                       _menuCategorias(primary, gradient),
                       const SizedBox(height: 20),
-
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 15),
                         child: Center(
                           child: Text(
-                            'Fornecedores de $categoriaSelecionada',
+                            categoriaSelecionada != null
+                                ? 'Fornecedores de $categoriaSelecionada'
+                                : 'Todos os Fornecedores',
                             style: GoogleFonts.poppins(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
@@ -110,40 +107,34 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                         ),
                       ),
                       const SizedBox(height: 12),
-
-                      // === GRID ===
-                      fornecedoresPorCategoria.isEmpty
+                      fornecedores.isEmpty
                           ? _mensagemVazia()
                           : Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
                               child: GridView.builder(
                                 shrinkWrap: true,
                                 physics: const NeverScrollableScrollPhysics(),
                                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                                   crossAxisCount: 2,
-                                  mainAxisSpacing: 18,
-                                  crossAxisSpacing: 10,
-                                  childAspectRatio: 0.55,
+                                  mainAxisSpacing: 15,
+                                  crossAxisSpacing: 15,
+                                  childAspectRatio: 0.53,
                                 ),
-                                itemCount: fornecedoresPorCategoria.length,
+                                itemCount: fornecedores.length,
                                 itemBuilder: (context, index) {
-                                  final f = fornecedoresPorCategoria[index];
-                                  final selecionado = selecionadosSet.contains(f.id);
+                                  final f = fornecedores[index];
+                                  final selecionado =
+                                      selecionadosSet.contains(f.fornecedor.idFornecedor);
 
                                   return GestureDetector(
                                     onTap: () {
                                       if (selecionado) {
-                                        selecionados.remove(f.id);
+                                        selecionados.remove(f.fornecedor.idFornecedor);
                                       } else {
-                                        selecionados.add(f.id);
+                                        selecionados.add(f.fornecedor.idFornecedor);
                                       }
                                     },
-                                    child: _cardFornecedor(
-                                      f,
-                                      primary,
-                                      gradient,
-                                      selecionado,
-                                    ),
+                                    child: _cardFornecedor(f, primary, gradient, selecionado),
                                   );
                                 },
                               ),
@@ -196,187 +187,259 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
   // === Menu de categorias ===
   Widget _menuCategorias(Color primary, LinearGradient gradient) {
-    final icones = {
-      'Buffet': Icons.restaurant_rounded,
-      'Decoração': Icons.style_rounded,
-      'Fotografia': Icons.photo_camera_rounded,
-      'Música': Icons.music_note_rounded,
-      'Locação': Icons.store_mall_directory_rounded,
-      'Doces': Icons.cake_rounded,
-      'Convites': Icons.mail_outline_rounded,
-    };
+    return Obx(() {
+      if (controller.categorias.isEmpty) {
+        return const Padding(
+          padding: EdgeInsets.all(20),
+          child: Center(child: Text('Nenhuma categoria encontrada 😕')),
+        );
+      }
 
-    return Container(
-      height: 45,
-      margin: const EdgeInsets.symmetric(vertical: 4),
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemCount: categorias.length,
-        itemBuilder: (context, index) {
-          final categoria = categorias[index];
-          final selected = categoriaSelecionada == categoria;
-          final icon = icones[categoria] ?? Icons.star_rounded;
+      final categorias = controller.categorias;
 
-          return GestureDetector(
-            onTap: () => setState(() => categoriaSelecionada = categoria),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeOutCubic,
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-              decoration: BoxDecoration(
-                gradient: selected ? gradient : null,
-                color: selected ? null : Colors.white,
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(
-                  color: selected ? Colors.transparent : Colors.grey.shade300,
-                  width: 1.0,
+      return SizedBox(
+        height: 45,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemCount: categorias.length,
+          itemBuilder: (context, index) {
+            final c = categorias[index];
+            final selected = categoriaSelecionada == c.nome;
+
+            return GestureDetector(
+              onTap: () => setState(() => categoriaSelecionada = selected ? null : c.nome),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  gradient: selected ? gradient : null,
+                  color: selected ? null : Colors.white,
+                  borderRadius: BorderRadius.circular(15),
+                  border: Border.all(
+                    color: selected ? Colors.transparent : Colors.grey.shade300,
+                    width: 1.0,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.category, size: 20, color: selected ? Colors.white : primary),
+                    const SizedBox(width: 6),
+                    Text(
+                      c.nome,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
+                        color: selected ? Colors.white : Colors.grey.shade800,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: Row(
+            );
+          },
+        ),
+      );
+    });
+  }
+
+  Widget _cardFornecedor(
+    FornecedorDetalhadoModel f,
+    Color primary,
+    LinearGradient gradient,
+    bool selecionado,
+  ) {
+    final fornecedor = f.fornecedor;
+    final distancia = f.distanciaKm;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(18),
+        gradient: selecionado
+            ? gradient
+            : LinearGradient(
+                colors: [Colors.white, Colors.grey.shade50],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        boxShadow: [
+          BoxShadow(
+            color: primary.withValues(alpha: selecionado ? 0.4 : 0.15),
+            blurRadius: selecionado ? 12 : 6,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: selecionado ? primary.withValues(alpha: 0.9) : Colors.grey.shade200,
+          width: selecionado ? 2 : 1,
+        ),
+      ),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () => Get.to(() => FornecedorDetalheScreen(fornecedorDetalhado: f)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 🔹 Banner otimizado com cache
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+              child: fornecedor.bannerUrl != null && fornecedor.bannerUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: fornecedor.bannerUrl!,
+                      cacheManager: AdaptiveCacheManager.instance,
+                      height: 110,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+
+                      // 🔹 Mostra fundo cinza enquanto carrega
+                      placeholder: (_, __) => Container(color: Colors.grey.shade300),
+
+                      // 🔹 Em caso de erro, mostra o banner placeholder temático
+                      errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
+
+                      memCacheHeight: 250,
+                      memCacheWidth: 250,
+                      fadeInDuration: const Duration(milliseconds: 250),
+                    )
+                  : _bannerPlaceholder(primary),
+            ),
+
+            // 🔹 Conteúdo do card
+            Padding(
+              padding: const EdgeInsets.all(14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Icon(icon, size: 20, color: selected ? Colors.white : primary),
-                  const SizedBox(width: 6),
+                  // Nome do fornecedor
                   Text(
-                    categoria,
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15.5,
-                      color: selected ? Colors.white : Colors.grey.shade800,
+                    fornecedor.razaoSocial,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13,
+                      color: selecionado ? Colors.white : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Descrição curta
+                  Text(
+                    fornecedor.descricao ?? 'Fornecedor parceiro do Faça a Festa',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      color: selecionado ? Colors.white70 : Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // Contato (email + telefone)
+                  Row(
+                    children: [
+                      Icon(Icons.email_outlined, size: 14, color: primary),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          fornecedor.email,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: selecionado ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Icon(Icons.phone_rounded, size: 14, color: primary),
+                      const SizedBox(width: 4),
+                      Text(
+                        fornecedor.telefone,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: selecionado ? Colors.white70 : Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  if (distancia != null) ...[
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined, size: 13, color: primary),
+                        const SizedBox(width: 3),
+                        Text(
+                          '${distancia.toStringAsFixed(1)} km de você',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: selecionado ? Colors.white70 : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+
+                  const SizedBox(height: 10),
+
+                  // 🔹 Botão de ação
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.info_outline_rounded, size: 18),
+                      label: const Text(
+                        'Ver Detalhes',
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: selecionado ? Colors.white : primary,
+                        foregroundColor: selecionado ? primary : Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () =>
+                          Get.to(() => FornecedorDetalheScreen(fornecedorDetalhado: f)),
                     ),
                   ),
                 ],
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
 
-  // === Card com estado de seleção ===
-  Widget _cardFornecedor(
-    FornecedorModel f,
-    Color primary,
-    LinearGradient gradient,
-    bool selecionado,
-  ) {
-    final isTablet = Biblioteca.isTablet(context);
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOutCubic,
+// 🔸 Placeholder elegante e leve
+  Widget _bannerPlaceholder(Color primary) {
+    return Container(
+      height: 110,
+      width: double.infinity,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        color: selecionado ? primary.withValues(alpha: 0.05) : Colors.white,
-        border: Border.all(
-          color: selecionado ? primary : Colors.grey.shade300,
-          width: selecionado ? 2 : 1,
+        gradient: LinearGradient(
+          colors: [
+            primary.withValues(alpha: 0.3),
+            primary.withValues(alpha: 0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withValues(alpha: selecionado ? 0.3 : 0.08),
-            blurRadius: selecionado ? 10 : 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min, // ✅ evita overflow
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // === Imagem do fornecedor ===
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: Image.asset(
-              f.imagem ?? 'assets/images/fornecedor_default.jpg',
-              height: isTablet ? 320 : 100,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          // === Dados principais ===
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  f.nome,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Icon(Icons.location_on_outlined, size: 13, color: primary),
-                    const SizedBox(width: 3),
-                    Expanded(
-                      child: Text(
-                        '${f.distanciaKm.toStringAsFixed(1)} km de você',
-                        style: const TextStyle(fontSize: 12, color: Colors.black54),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 6),
-
-          // === Botões de ação (um sobre o outro) ===
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.inventory_2_outlined, size: 18),
-                  label: const Text('Outros Produtos', style: TextStyle(fontSize: 13)),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0,
-                    backgroundColor: Colors.teal.shade50,
-                    foregroundColor: primary,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () {
-                    Get.to(() => FornecedorProdutosScreen(fornecedor: f));
-                  },
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.info_outline_rounded, size: 18),
-                  label: const Text('Ver Detalhes', style: TextStyle(fontSize: 13)),
-                  style: ElevatedButton.styleFrom(
-                    elevation: 0,
-                    backgroundColor: primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () {
-                    Get.to(() => FornecedorDetalheScreen(fornecedor: f));
-                  },
-                ),
-              ],
-            ),
-          ),
-        ],
+      child: const Center(
+        child: Icon(Icons.image_rounded, color: Colors.white54, size: 32),
       ),
     );
   }

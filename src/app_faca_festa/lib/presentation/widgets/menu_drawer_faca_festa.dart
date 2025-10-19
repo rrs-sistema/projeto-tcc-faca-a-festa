@@ -2,10 +2,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/app_controller.dart';
-import '../../controllers/evento_cadastro_controller.dart';
-import '../pages/usuario/cadastro_evento_bottom_sheet.dart';
+import './../../controllers/evento_cadastro_controller.dart';
+import './../pages/usuario/cadastro_evento_bottom_sheet.dart';
 import './../../controllers/event_theme_controller.dart';
+import './../../controllers/app_controller.dart';
 
 class MenuDrawerFacaFesta extends StatelessWidget {
   final VoidCallback onLogout;
@@ -18,112 +18,155 @@ class MenuDrawerFacaFesta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gradiente = themeController.gradient.value;
+    return Obx(() {
+      final gradient = themeController.gradient.value;
+      final primary = themeController.primaryColor.value;
+      final icon = themeController.icon.value;
+      final tituloCabecalho = themeController.tituloCabecalho.value;
 
-    return Drawer(
-      child: Column(
-        children: [
-          // ===== CABEÇALHO =====
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(
-              gradient: gradiente,
-            ),
-            currentAccountPicture: const CircleAvatar(
-              backgroundImage: AssetImage('assets/images/wedding_3.jpeg'), //logo_faca_festa.png
-            ),
-            accountName: Text(
-              "Faça a Festa",
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-                fontSize: 18,
+      return Drawer(
+        backgroundColor: Colors.grey.shade50,
+        child: Column(
+          children: [
+            // ===== CABEÇALHO TEMÁTICO =====
+            Container(
+              decoration: BoxDecoration(
+                gradient: gradient,
+                boxShadow: [
+                  BoxShadow(
+                    color: primary.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            ),
-            accountEmail: Text(
-              "O seu organizador digital de eventos",
-              style: GoogleFonts.poppins(
-                color: Colors.white70,
-                fontSize: 13,
-              ),
-            ),
-          ),
-
-          // ===== MENU PRINCIPAL =====
-          Expanded(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                _menuItem(Icons.event_note, "Meu Evento", onTap: () {
-                  appController.eventoModel;
-                  eventoController.carregarEvento(appController.eventoModel.value!);
-                  showCadastroEventoBottomSheet(
-                    context,
-                  );
-                }),
-                _menuItem(Icons.group, "Convidados", onTap: () {}),
-                _menuItem(Icons.attach_money, "Meu Orçamento", onTap: () {}),
-                _menuItem(Icons.storefront, "Fornecedores", onTap: () {}),
-                _menuItem(Icons.checklist, "Checklist de Tarefas", onTap: () {}),
-                _menuItem(Icons.image, "Minhas Referências", onTap: () {}),
-                const Divider(),
-
-                // ===== SEÇÕES EXTRAS =====
-                Padding(
-                  padding: const EdgeInsets.only(left: 16, top: 8),
-                  child: Text(
-                    "Inspiração & Comunidade",
+              padding: const EdgeInsets.only(top: 50, bottom: 24),
+              width: double.infinity,
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 38,
+                    backgroundColor: Colors.white,
+                    child: Icon(icon, size: 40, color: primary),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    tituloCabecalho,
                     style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                     ),
                   ),
-                ),
-                _menuItem(Icons.lightbulb_outline, "Ideias e Inspirações", onTap: () {}),
-                _menuItem(Icons.people_alt_outlined, "Comunidade", onTap: () {}),
-
-                const Divider(),
-              ],
+                  Text(
+                    "Seu organizador digital de eventos",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // ===== BOTÃO DE LOGOUT =====
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+            // ===== LISTA DE ITENS =====
+            Expanded(
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  _menuItem(Icons.event_note, "Meu Evento", color: primary, onTap: () {
+                    final evento = appController.eventoModel.value;
+                    if (evento != null) {
+                      eventoController.carregarEvento(evento);
+                      showCadastroEventoBottomSheet(context);
+                    }
+                  }),
+                  _menuItem(Icons.group, "Convidados", color: primary),
+                  _menuItem(Icons.attach_money, "Meu Orçamento", color: primary),
+                  _menuItem(Icons.storefront, "Fornecedores", color: primary),
+                  _menuItem(Icons.checklist, "Checklist de Tarefas", color: primary),
+                  _menuItem(Icons.image, "Minhas Referências", color: primary),
+                  const Divider(height: 24, thickness: 0.8),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16, top: 4, bottom: 4),
+                    child: Text(
+                      "Inspiração & Comunidade",
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.grey.shade700,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  _menuItem(Icons.lightbulb_outline, "Ideias e Inspirações", color: primary),
+                  _menuItem(Icons.people_alt_outlined, "Comunidade", color: primary),
+                ],
+              ),
+            ),
+
+            const Divider(height: 8, thickness: 0.8),
+
+            // ===== BOTÃO DE TEMA =====
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.pink.shade400,
+                  backgroundColor: primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                   ),
                   minimumSize: const Size(double.infinity, 48),
                 ),
-                onPressed: onLogout,
-                icon: const Icon(Icons.logout),
+                onPressed: () => themeController.mostrarSeletorDeTema(context),
+                icon: const Icon(Icons.color_lens_outlined),
                 label: Text(
-                  "Encerrar sessão",
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                  "Alterar tema",
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
-    );
+
+            // ===== BOTÃO DE LOGOUT =====
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red.shade400,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    minimumSize: const Size(double.infinity, 48),
+                  ),
+                  onPressed: onLogout,
+                  icon: const Icon(Icons.logout),
+                  label: Text(
+                    "Encerrar sessão",
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
   }
 
-  Widget _menuItem(IconData icon, String title, {VoidCallback? onTap}) {
+  Widget _menuItem(IconData icon, String title, {Color? color, VoidCallback? onTap}) {
     return ListTile(
-      leading: Icon(icon, color: Colors.pink.shade400),
+      leading: Icon(icon, color: color?.withValues(alpha: 0.9) ?? Colors.grey.shade700),
       title: Text(
         title,
         style: GoogleFonts.poppins(
           fontSize: 15,
           fontWeight: FontWeight.w500,
+          color: Colors.grey.shade800,
         ),
       ),
+      hoverColor: color?.withValues(alpha: 0.08),
       onTap: onTap,
     );
   }

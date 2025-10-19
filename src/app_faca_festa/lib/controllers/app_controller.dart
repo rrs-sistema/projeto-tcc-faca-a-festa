@@ -5,8 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../main.dart';
 import '../presentation/pages/convidado/convidado_page.dart';
+import '../presentation/widgets/splash.dart';
 import '../role_selector_screen.dart';
 import './../presentation/pages/usuario/show_fornecedor_cadastro_bottom_sheet.dart';
 import './../presentation/pages/convidado/area/area_convidado_home_screen.dart';
@@ -102,7 +102,7 @@ class AppController extends GetxController {
     _authSub = _auth.authStateChanges().listen((user) async {
       if (user == null) {
         usuarioLogado.value = null;
-        Get.offAll(() => const SplashScreen());
+        Get.offAll(() => const Splash());
         return;
       }
 
@@ -171,7 +171,7 @@ class AppController extends GetxController {
               }
 
               Get.offAll(
-                () => FornecedorHomeScreen(fornecedor: fornecedor),
+                () => FornecedorHomeScreen(),
                 transition: Transition.fadeIn,
                 duration: const Duration(milliseconds: 600),
               );
@@ -205,17 +205,7 @@ class AppController extends GetxController {
               }
 
               Get.offAll(
-                () => FornecedorHomeScreen(
-                  fornecedor: FornecedorModel(
-                    idFornecedor: usuario.idUsuario,
-                    idUsuario: usuario.idUsuario,
-                    razaoSocial: usuario.nome,
-                    telefone: usuario.email,
-                    email: usuario.email,
-                    aptoParaOperar: false,
-                    ativo: true,
-                  ),
-                ),
+                () => FornecedorHomeScreen(),
                 transition: Transition.fadeIn,
                 duration: const Duration(milliseconds: 600),
               );

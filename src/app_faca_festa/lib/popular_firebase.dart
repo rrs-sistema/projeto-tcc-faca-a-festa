@@ -1,10 +1,15 @@
 // ignore_for_file: unused_element
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import './data/models/model.dart';
+import 'data/models/servico_produto/categoria_servico_model.dart';
+import 'data/models/servico_produto/fornecedor_categoria_model.dart';
+import 'data/models/servico_produto/servico_foto.dart';
+import 'data/models/servico_produto/subcategoria_servico_model.dart';
 
 final _uuid = Uuid();
 final _db = FirebaseFirestore.instance;
@@ -15,6 +20,302 @@ Future<void> popularFirebase() async {
   //await _inserirEstadosECidades();
   //await _inserirInspiracoes();
   //await inserirPostsComunidade();
+  //await inserirDadosFornecedorTeste();
+  //await inserirOrcamentosTeste();
+  //await inserirDadosComRelacionamentos();
+
+  //await resetarEDepoisInserir();
+  //await _inserirFornecedoresPorCategoria();
+}
+
+Future<void> resetarEDepoisInserir() async {
+  /*
+  await limparColecoesFacaAFesta();
+  await _inserirTiposDeEvento();
+  await inserirDadosComRelacionamentos();
+  */
+}
+
+Future<void> _inserirFornecedoresPorCategoria() async {
+  final uuid = const Uuid();
+  final db = FirebaseFirestore.instance;
+
+  // ===========================================================
+  // 🔹 1. Lista de Categorias
+  // ===========================================================
+  final List<Map<String, dynamic>> categorias = [
+    {
+      'id': '3cbc7cb4-5538-4ce0-9313-36e35bb2834a',
+      'nome': 'Buffet',
+      'fornecedores': [
+        {
+          'razao': 'Sabor & Arte Buffet',
+          'email': 'contato@saborearte.com',
+          'tel': '(41) 99888-0001',
+          'desc':
+              'Buffet completo para casamentos e aniversários, com menu personalizado e equipe treinada.',
+          'banner': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5'
+        },
+        {
+          'razao': 'Bella Festa Gastronomia',
+          'email': 'eventos@bellafesta.com',
+          'tel': '(41) 99991-4432',
+          'desc': 'Gastronomia fina e moderna com opções gourmet e finger food.',
+          'banner': 'https://images.unsplash.com/photo-1551218808-94e220e084d2'
+        },
+        {
+          'razao': 'Delícias do Chef',
+          'email': 'contato@deliciasdochef.com',
+          'tel': '(41) 99123-8834',
+          'desc': 'Pratos sofisticados e atendimento de alto padrão.',
+          'banner': 'https://images.unsplash.com/photo-1565958011705-44e211b4a31f'
+        },
+        {
+          'razao': 'Buffet Tropical',
+          'email': 'atendimento@buffettropical.com',
+          'tel': '(41) 99771-2211',
+          'desc': 'Especialista em buffets tropicais e coquetéis refrescantes.',
+          'banner': 'https://images.unsplash.com/photo-1525610553991-2bede1a236e2'
+        },
+        {
+          'razao': 'Estilo & Sabor Eventos',
+          'email': 'contato@estilosabor.com',
+          'tel': '(41) 99666-5511',
+          'desc': 'Buffet contemporâneo com foco em experiência gastronômica.',
+          'banner': 'https://images.unsplash.com/photo-1600891964599-f61ba0e24092'
+        },
+      ],
+    },
+    {
+      'id': '5fd47622-8e80-4477-a86c-f4d9c4422164',
+      'nome': 'Confeitaria',
+      'fornecedores': [
+        {
+          'razao': 'Doce Encanto',
+          'email': 'contato@doceencanto.com',
+          'tel': '(41) 99944-7766',
+          'desc': 'Bolos artísticos e doces finos sob medida.',
+          'banner': 'https://images.unsplash.com/photo-1589308078053-f85d32b6e4a8'
+        },
+        {
+          'razao': 'Atelier dos Doces',
+          'email': 'pedidos@atelierdodoces.com',
+          'tel': '(41) 99551-8822',
+          'desc': 'Doces personalizados e mesas temáticas de festa.',
+          'banner': 'https://images.unsplash.com/photo-1612197527762-9b3db9e7e6a2'
+        },
+        {
+          'razao': 'Confeitaria Pura Magia',
+          'email': 'contato@puramagia.com',
+          'tel': '(41) 99773-4455',
+          'desc': 'Especialista em bolos cenográficos e cupcakes decorados.',
+          'banner': 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d'
+        },
+        {
+          'razao': 'Dona Brigadeiro',
+          'email': 'atendimento@donabrigadeiro.com',
+          'tel': '(41) 99888-1144',
+          'desc': 'Brigadeiros gourmet e lembranças doces.',
+          'banner': 'https://images.unsplash.com/photo-1551024709-8f23befc6cf7'
+        },
+        {
+          'razao': 'Sweet Moment',
+          'email': 'contato@sweetmoment.com',
+          'tel': '(41) 99922-1133',
+          'desc': 'Doces finos e sobremesas de casamento.',
+          'banner': 'https://images.unsplash.com/photo-1505253716362-afaea1b526b1'
+        },
+      ],
+    },
+    {
+      'id': 'd59ec1ca-2267-4cd1-89c8-5ad0712d450c',
+      'nome': 'Decoração',
+      'fornecedores': [
+        {
+          'razao': 'Studio Flor & Luz',
+          'email': 'contato@floreeluz.com',
+          'tel': '(41) 99433-6677',
+          'desc': 'Decoração floral para eventos com design contemporâneo.',
+          'banner': 'https://images.unsplash.com/photo-1504196606672-aef5c9cefc92'
+        },
+        {
+          'razao': 'Maison Decor',
+          'email': 'contato@maisondecor.com',
+          'tel': '(41) 99771-9088',
+          'desc': 'Locação de mobiliário e ambientação temática.',
+          'banner': 'https://images.unsplash.com/photo-1578301978693-85fa9c0320d3'
+        },
+        {
+          'razao': 'Glamour Eventos',
+          'email': 'eventos@glamour.com',
+          'tel': '(41) 99911-1212',
+          'desc': 'Decoração personalizada com foco em casamentos e debutantes.',
+          'banner': 'https://images.unsplash.com/photo-1519861531473-9200262188bf'
+        },
+        {
+          'razao': 'Natureza & Arte',
+          'email': 'contato@naturezaearte.com',
+          'tel': '(41) 99333-8899',
+          'desc': 'Decoração sustentável com flores naturais e materiais ecológicos.',
+          'banner': 'https://images.unsplash.com/photo-1506744038136-46273834b3fb'
+        },
+        {
+          'razao': 'Espaço Criativo',
+          'email': 'criativo@espacocriativo.com',
+          'tel': '(41) 99111-2323',
+          'desc': 'Produção visual e cenográfica para eventos.',
+          'banner': 'https://images.unsplash.com/photo-1499951360447-b19be8fe80f5'
+        },
+      ],
+    },
+    {
+      'id': '50d5aac7-8831-4fca-bfe3-cc2c1f94b509',
+      'nome': 'Fotografia e Filmagem',
+      'fornecedores': [
+        {
+          'razao': 'Studio Lumina',
+          'email': 'contato@lumina.com',
+          'tel': '(41) 99881-5511',
+          'desc': 'Fotografia artística e filmagem em 4K.',
+          'banner': 'https://images.unsplash.com/photo-1504208434309-cb69f4fe52b0'
+        },
+        {
+          'razao': 'Click & Love',
+          'email': 'atendimento@clicklove.com',
+          'tel': '(41) 99988-7711',
+          'desc': 'Ensaio pré-evento e cobertura completa.',
+          'banner': 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32'
+        },
+        {
+          'razao': 'Fotografia Em Cena',
+          'email': 'contato@emcena.com',
+          'tel': '(41) 99773-8822',
+          'desc': 'Produção de vídeos emocionais e making-of.',
+          'banner': 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f'
+        },
+        {
+          'razao': 'Olhar Sensível',
+          'email': 'olhar@fotostudio.com',
+          'tel': '(41) 99444-7788',
+          'desc': 'Cobertura documental e naturalista.',
+          'banner': 'https://images.unsplash.com/photo-1504208434309-cb69f4fe52b0'
+        },
+        {
+          'razao': 'Frame Story',
+          'email': 'frame@story.com',
+          'tel': '(41) 99111-0009',
+          'desc': 'Narrativas visuais com drones e cinema.',
+          'banner': 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f'
+        },
+      ],
+    },
+    {
+      'id': '0b5c0fee-2f33-4ae7-8b96-2bb25aedd669',
+      'nome': 'Música e Iluminação',
+      'fornecedores': [
+        {
+          'razao': 'DJ Sound Mix',
+          'email': 'contato@soundmix.com',
+          'tel': '(41) 99966-8833',
+          'desc': 'DJ profissional com som e luzes sincronizadas.',
+          'banner': 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819'
+        },
+        {
+          'razao': 'Banda Solaris',
+          'email': 'contato@solarisbanda.com',
+          'tel': '(41) 99771-3344',
+          'desc': 'Banda ao vivo com repertório personalizado.',
+          'banner': 'https://images.unsplash.com/photo-1507874457470-272b3c8d8ee2'
+        },
+        {
+          'razao': 'Light & Beats',
+          'email': 'contato@lightbeats.com',
+          'tel': '(41) 99551-2277',
+          'desc': 'Iluminação e sonorização profissional.',
+          'banner': 'https://images.unsplash.com/photo-1511379938547-c1f69419868d'
+        },
+        {
+          'razao': 'Festa Som & Luz',
+          'email': 'contato@festasomeluz.com',
+          'tel': '(41) 99112-7766',
+          'desc': 'Locação de equipamentos de som, luz e palco.',
+          'banner': 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4'
+        },
+        {
+          'razao': 'Ritmo Perfeito',
+          'email': 'contato@ritmoperfeito.com',
+          'tel': '(41) 99321-1122',
+          'desc': 'Música ao vivo, DJs e pista interativa.',
+          'banner': 'https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f'
+        },
+      ],
+    },
+  ];
+
+  // ===========================================================
+  // 🔹 2. Inserção no Firestore
+  // ===========================================================
+  for (final cat in categorias) {
+    for (final f in cat['fornecedores']) {
+      final idFornecedor = uuid.v4();
+
+      final model = FornecedorModel(
+        idFornecedor: idFornecedor,
+        idUsuario: 'u_teste_admin',
+        razaoSocial: f['razao']!,
+        telefone: f['tel']!,
+        email: f['email']!,
+        descricao: f['desc'],
+        bannerUrl: f['banner'],
+        aptoParaOperar: true,
+        ativo: true,
+      );
+
+      await db.collection('fornecedor').doc(model.idFornecedor).set(model.toMap());
+
+      final categoriaModel = FornecedorCategoriaModel(
+        idFornecedor: idFornecedor,
+        idCategoria: cat['id']!,
+      );
+      await db.collection('fornecedor_categoria').add(categoriaModel.toMap());
+
+      final territorioModel = TerritorioModel(
+        idTerritorio: uuid.v4(),
+        idFornecedor: idFornecedor,
+        descricao: 'Atendimento em Curitiba e Região Metropolitana',
+        raioKm: 50,
+        ativo: true,
+      );
+      await db
+          .collection('territorio')
+          .doc(territorioModel.idTerritorio)
+          .set(territorioModel.toMap());
+    }
+  }
+
+  debugPrint('✅ Fornecedores inseridos com sucesso!');
+}
+
+/// 🔥 Limpa todas as coleções principais do domínio antes de popular o banco.
+Future<void> limparColecoesFacaAFesta() async {
+  final colecoes = [
+    'categoria_servico',
+    'subcategoria_servico',
+    'fornecedor',
+    'fornecedor_categoria',
+    'fornecedor_servico',
+    'servico_produto',
+    'servico_foto',
+    'territorio',
+    'orcamento',
+    'tipo_evento',
+  ];
+
+  debugPrint('⚠️ Iniciando limpeza das coleções Firestore...');
+  for (final c in colecoes) {
+    await deletarColecao(c);
+  }
+  debugPrint('✅ Todas as coleções foram limpas com sucesso!');
 }
 
 Future<void> _inserirTiposDeEvento() async {
@@ -31,6 +332,322 @@ Future<void> _inserirTiposDeEvento() async {
       nome: '${tipo['emoji']} ${tipo['nome']}',
     );
     await _db.collection('tipo_evento').doc(model.idTipoEvento).set(model.toMap());
+  }
+}
+
+Future<void> inserirDadosComRelacionamentos() async {
+  try {
+    // ======================================
+    // 🔹 1. Categorias e Subcategorias base
+    // ======================================
+    final categorias = [
+      CategoriaServicoModel(
+        id: _uuid.v4(),
+        nome: 'Decoração',
+        descricao: 'Flores, locação e design de ambientes',
+      ),
+      CategoriaServicoModel(
+        id: _uuid.v4(),
+        nome: 'Buffet',
+        descricao: 'Comidas, bebidas e atendimento',
+      ),
+      CategoriaServicoModel(
+        id: _uuid.v4(),
+        nome: 'Fotografia e Filmagem',
+        descricao: 'Cobertura visual do evento',
+      ),
+      CategoriaServicoModel(
+        id: _uuid.v4(),
+        nome: 'Música e Iluminação',
+        descricao: 'Som, luzes e entretenimento',
+      ),
+      CategoriaServicoModel(
+        id: _uuid.v4(),
+        nome: 'Confeitaria',
+        descricao: 'Bolos e doces personalizados',
+      ),
+    ];
+
+    for (var cat in categorias) {
+      await _db.collection('categoria_servico').doc(cat.id).set(cat.toMap());
+    }
+
+    final subcategorias = [
+      SubcategoriaServicoModel(
+        id: _uuid.v4(),
+        idCategoria: categorias[0].id,
+        nome: 'Flores e Arranjos',
+      ),
+      SubcategoriaServicoModel(
+        id: _uuid.v4(),
+        idCategoria: categorias[0].id,
+        nome: 'Locação de Móveis',
+      ),
+      SubcategoriaServicoModel(
+        id: _uuid.v4(),
+        idCategoria: categorias[1].id,
+        nome: 'Buffet Completo',
+      ),
+      SubcategoriaServicoModel(
+        id: _uuid.v4(),
+        idCategoria: categorias[2].id,
+        nome: 'Fotografia',
+      ),
+      SubcategoriaServicoModel(
+        id: _uuid.v4(),
+        idCategoria: categorias[3].id,
+        nome: 'DJ e Iluminação',
+      ),
+      SubcategoriaServicoModel(
+        id: _uuid.v4(),
+        idCategoria: categorias[4].id,
+        nome: 'Bolos e Doces',
+      ),
+    ];
+
+    for (var sub in subcategorias) {
+      await _db.collection('subcategoria_servico').doc(sub.id).set(sub.toMap());
+    }
+
+    // ======================================
+    // 🔹 2. Fornecedores e Categorias
+    // ======================================
+    final List<Map<String, dynamic>> fornecedores = [
+      {
+        'razao': 'Stephanie Schor Eventos',
+        'email': 'contato@schoreventos.com',
+        'telefone': '(41) 99999-0000',
+        'cnpj': '12.345.678/0001-99',
+        'descricao': 'Especialista em casamentos e festas de alto padrão 💐',
+        'latitude': -25.4411,
+        'longitude': -49.2768,
+        'raio': 30.0,
+        'categorias': [categorias[0].id, categorias[2].id, categorias[3].id],
+      },
+      {
+        'razao': 'Buffet Encanto Infantil',
+        'email': 'buffet@encantoinfantil.com',
+        'telefone': '(41) 98888-4444',
+        'cnpj': '98.765.432/0001-11',
+        'descricao': 'Buffet especializado em festas infantis com recreação 🎈',
+        'latitude': -25.494,
+        'longitude': -49.291,
+        'raio': 25.0,
+        'categorias': [categorias[1].id, categorias[4].id],
+      },
+      {
+        'razao': 'Bolo & Arte Confeitaria',
+        'email': 'contato@boloearte.com',
+        'telefone': '(41) 99900-5566',
+        'cnpj': '45.678.910/0001-77',
+        'descricao': 'Bolos artísticos e doces personalizados para eventos 🎂',
+        'latitude': -25.390,
+        'longitude': -49.265,
+        'raio': 20.0,
+        'categorias': [categorias[4].id],
+      },
+    ];
+
+    // 🔹 Mapeia os IDs dos fornecedores criados
+    final Map<String, String> fornecedorIds = {};
+
+    for (final f in fornecedores) {
+      final idFornecedor = _uuid.v4();
+      fornecedorIds[f['razao']] = idFornecedor;
+
+      // Fornecedor principal
+      final fornecedor = FornecedorModel(
+        idFornecedor: idFornecedor,
+        idUsuario: 'user_${f['razao']!.split(' ').first.toLowerCase()}',
+        razaoSocial: f['razao']!,
+        telefone: f['telefone']!,
+        email: f['email']!,
+        cnpj: f['cnpj']!,
+        descricao: f['descricao']!,
+        aptoParaOperar: true,
+      );
+
+      await _db.collection('fornecedor').doc(idFornecedor).set(fornecedor.toMap());
+
+      // Relacionamento fornecedor <-> categorias
+      for (final idCat in f['categorias']) {
+        final vinculo = FornecedorCategoriaModel(
+          idFornecedor: idFornecedor,
+          idCategoria: idCat,
+        );
+        await _db.collection('fornecedor_categoria').add(vinculo.toMap());
+      }
+
+      // Território
+      final territorio = TerritorioModel(
+        idTerritorio: _uuid.v4(),
+        idFornecedor: idFornecedor,
+        latitude: f['latitude'],
+        longitude: f['longitude'],
+        raioKm: f['raio'],
+        descricao: 'Atendimento local e regional',
+      );
+      await _db.collection('territorio').doc(territorio.idTerritorio).set(territorio.toMap());
+    }
+
+    // ======================================
+    // 🔹 3. Serviços vinculados a subcategorias
+    // ======================================
+    final servicosBase = [
+      ServicoProdutoModel(
+        id: _uuid.v4(),
+        nome: 'Decoração Completa',
+        tipoMedida: 'Pacote',
+        descricao: 'Flores, iluminação e ambientação.',
+      ),
+      ServicoProdutoModel(
+        id: _uuid.v4(),
+        nome: 'Buffet Completo',
+        tipoMedida: 'Pacote',
+        descricao: 'Comidas e bebidas inclusas.',
+      ),
+      ServicoProdutoModel(
+        id: _uuid.v4(),
+        nome: 'Cobertura Fotográfica',
+        tipoMedida: 'Hora',
+        descricao: 'Fotografia profissional para eventos.',
+      ),
+      ServicoProdutoModel(
+        id: _uuid.v4(),
+        nome: 'DJ e Iluminação',
+        tipoMedida: 'Hora',
+        descricao: 'Música e iluminação ambiente.',
+      ),
+      ServicoProdutoModel(
+        id: _uuid.v4(),
+        nome: 'Bolos e Doces',
+        tipoMedida: 'Unidade',
+        descricao: 'Confeitaria artística.',
+      ),
+    ];
+
+    for (var s in servicosBase) {
+      await _db.collection('servico_produto').doc(s.id).set(s.toMap());
+    }
+
+    // ======================================
+    // 🔹 4. Vincular produtos aos fornecedores
+    // ======================================
+    for (final f in fornecedores) {
+      final idFornecedor = fornecedorIds[f['razao']]!;
+      List<ServicoProdutoModel> servicosFornecedor = [];
+
+      // vincular com base no tipo de categoria
+      if (f['categorias'].contains(categorias[0].id)) {
+        servicosFornecedor.add(servicosBase[0]); // Decoração
+      }
+      if (f['categorias'].contains(categorias[1].id)) {
+        servicosFornecedor.add(servicosBase[1]); // Buffet
+      }
+      if (f['categorias'].contains(categorias[2].id)) {
+        servicosFornecedor.add(servicosBase[2]); // Fotografia
+      }
+      if (f['categorias'].contains(categorias[3].id)) {
+        servicosFornecedor.add(servicosBase[3]); // DJ e Iluminação
+      }
+      if (f['categorias'].contains(categorias[4].id)) {
+        servicosFornecedor.add(servicosBase[4]); // Bolos e Doces
+      }
+
+      for (var servico in servicosFornecedor) {
+        final vinculo = FornecedorProdutoServicoModel(
+          idFornecedorServico: _uuid.v4(),
+          idProdutoServico: servico.id,
+          idFornecedor: idFornecedor,
+          preco: 1000 + (500 * (servicosFornecedor.indexOf(servico) + 1)),
+          precoPromocao: 900,
+        );
+        await _db
+            .collection('fornecedor_servico')
+            .doc(vinculo.idFornecedorServico)
+            .set(vinculo.toMap());
+      }
+    }
+
+    debugPrint('🛠️ Serviços vinculados aos fornecedores com sucesso!');
+
+    // ======================================
+    // 🔹 5. Inserir fotos para cada serviço
+    // ======================================
+    final fotosServicos = [
+      'https://images.unsplash.com/photo-1623428454614-abaf00244e52?fm=jpg&q=80&w=1600', // Bolos
+      'https://images.unsplash.com/photo-1486427944299-d1955d23e34d?fm=jpg&q=80&w=1600', // Bolos
+      'https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?fm=jpg&q=80&w=1600', // Bolos
+      'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?fm=jpg&q=80&w=1600', // Bolos
+      'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?fm=jpg&q=80&w=1600', // Tipo tapioca
+      'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800', // 🍾 Buffet de drinks e coquetéis
+      'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=800', // 🍝 Mesa de jantar elegante com pratos servidos
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800', // 🥂 Buffet de casamento com taças e flores
+      'https://images.unsplash.com/photo-1555243896-c709bfa0b564?w=800', // 🥗 Buffet self-service com variedade de saladas
+      'https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=800', // 🍽️ Pratos sendo servidos por garçom
+      'https://images.unsplash.com/photo-1520880867055-1e30d1cb001c?w=800',
+    ];
+
+    for (final servico in servicosBase) {
+      for (final entry in fornecedorIds.entries) {
+        for (int i = 0; i < 2; i++) {
+          final foto = ServicoFotoModel(
+            id: _uuid.v4(),
+            idProdutoServico: servico.id,
+            idFornecedor: entry.value,
+            url: fotosServicos[(i + servicosBase.indexOf(servico)) % fotosServicos.length],
+          );
+          await _db.collection('servico_foto').doc(foto.id).set(foto.toMap());
+        }
+      }
+    }
+
+    debugPrint('📸 Fotos adicionadas aos serviços com sucesso!');
+
+    // ======================================
+    // 🔹 6. Orçamentos de teste
+    // ======================================
+    const String idEvento = "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc";
+
+    final List<Map<String, dynamic>> orcamentosTeste = [
+      {
+        'idProdutoServico': servicosBase[0].id,
+        'idCategoria': categorias[0].id,
+        'descricao': 'Decoração completa com flores e iluminação ambiente',
+        'valor': 1200.0
+      },
+      {
+        'idProdutoServico': servicosBase[1].id,
+        'idCategoria': categorias[1].id,
+        'descricao': 'Buffet completo para até 100 convidados',
+        'valor': 2500.0
+      },
+      {
+        'idProdutoServico': servicosBase[2].id,
+        'idCategoria': categorias[2].id,
+        'descricao': 'Cobertura fotográfica + álbum digital',
+        'valor': 900.0
+      },
+    ];
+
+    for (final o in orcamentosTeste) {
+      final orcamento = OrcamentoModel(
+        idOrcamento: _uuid.v4(),
+        idEvento: idEvento,
+        idServicoFornecido: o['idProdutoServico']!,
+        idCategoria: o['idCategoria'],
+        custoEstimado: o['valor'],
+        orcamentoFechado: false,
+        anotacoes: o['descricao'],
+        status: StatusOrcamento.pendente,
+      );
+      await _db.collection('orcamento').doc(orcamento.idOrcamento).set(orcamento.toMap());
+    }
+
+    debugPrint(
+        '✅ Inserção completa — Categorias, fornecedores, serviços, fotos e orçamentos criados!');
+  } catch (e, s) {
+    debugPrint('❌ Erro ao inserir dados: $e\n$s');
   }
 }
 
@@ -294,4 +911,40 @@ Future<void> _inserirEstadosECidades() async {
   }
 
   debugPrint('✅ Estados e cidades inseridos com sucesso!');
+}
+
+/// 🔥 Deleta todos os documentos de uma coleção do Firestore.
+///
+/// [collectionPath] é o nome da coleção (ex: 'fornecedor').
+/// A função usa lotes (batches) de 500 docs para evitar limites do Firestore.
+Future<void> deletarColecao(String collectionPath) async {
+  const int batchSize = 500;
+  WriteBatch batch = _db.batch();
+
+  try {
+    final QuerySnapshot snapshot = await _db.collection(collectionPath).limit(batchSize).get();
+
+    if (snapshot.docs.isEmpty) {
+      if (kDebugMode) print('✅ Coleção "$collectionPath" já está vazia.');
+      return;
+    }
+
+    for (var doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+
+    if (kDebugMode) {
+      print('🗑️ Coleção "$collectionPath": ${snapshot.size} documentos deletados.');
+    }
+
+    // Chama novamente até apagar tudo (recursivo)
+    if (snapshot.size == batchSize) {
+      await Future.delayed(const Duration(milliseconds: 300));
+      await deletarColecao(collectionPath);
+    }
+  } catch (e, s) {
+    debugPrint('❌ Erro ao deletar coleção "$collectionPath": $e\n$s');
+  }
 }

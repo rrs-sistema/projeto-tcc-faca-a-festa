@@ -1,13 +1,18 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
+// ignore_for_file: use_build_context_synchronously
+
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 import './../../../../controllers/fornecedor_localizacao_controller.dart';
+import './../../../../controllers/app_controller.dart';
 
 class CotacaoBottomSheet extends StatelessWidget {
   final List<String> fornecedoresSelecionados;
-
   final Color primary;
   final LinearGradient gradient;
 
@@ -20,9 +25,69 @@ class CotacaoBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fornecedorLocalizacaoController = Get.put(FornecedorLocalizacaoController());
+    final fornecedorLocalizacaoController = Get.find<FornecedorLocalizacaoController>();
+    final appController = Get.find<AppController>();
     final TextEditingController observacaoController = TextEditingController();
     DateTime dataCotacao = DateTime.now().add(const Duration(days: 7));
+
+    final db = FirebaseFirestore.instance;
+
+    Future<void> enviarCotacao() async {
+      if (fornecedoresSelecionados.isEmpty) {
+        Get.snackbar(
+          'Atenção',
+          'Nenhum fornecedor selecionado.',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      EasyLoading.show(status: 'Enviando cotações...');
+
+      try {
+        final usuario = appController.usuarioLogado.value;
+        final evento = appController.eventoModel.value;
+
+        for (var idFornecedor in fornecedoresSelecionados) {
+          final cotacao = {
+            'id_evento': evento?.idEvento ?? '',
+            'id_usuario_solicitante': usuario?.idUsuario ?? '',
+            'id_fornecedor': idFornecedor,
+            'observacao': observacaoController.text.trim(),
+            'data_desejada': Timestamp.fromDate(dataCotacao),
+            'data_envio': Timestamp.now(),
+            'status': 'pendente',
+            'visualizado': false,
+          };
+
+          await db.collection('cotacao').add(cotacao);
+        }
+
+        EasyLoading.dismiss();
+        Navigator.pop(context);
+
+        Get.snackbar(
+          'Cotação enviada!',
+          'Solicitação enviada para ${fornecedoresSelecionados.length} fornecedor(es).',
+          backgroundColor: primary,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(12),
+        );
+      } catch (e, s) {
+        EasyLoading.dismiss();
+        if (kDebugMode) {
+          print('❌ Erro ao enviar cotação: $e\n$s');
+        }
+        Get.snackbar(
+          'Erro',
+          'Não foi possível enviar as cotações. Tente novamente.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+      }
+    }
 
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
@@ -94,8 +159,20 @@ class CotacaoBottomSheet extends StatelessWidget {
                   // === LISTA DE FORNECEDORES ===
                   Obx(() {
                     final selecionadosList = fornecedorLocalizacaoController.fornecedoresFiltrados
-                        .where((f) => fornecedoresSelecionados.contains(f.id))
+                        .where((f) => fornecedoresSelecionados.contains(f.fornecedor.idFornecedor))
                         .toList();
+
+                    if (selecionadosList.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Text(
+                            'Nenhum fornecedor encontrado.',
+                            style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade700),
+                          ),
+                        ),
+                      );
+                    }
 
                     return ListView.builder(
                       shrinkWrap: true,
@@ -103,6 +180,8 @@ class CotacaoBottomSheet extends StatelessWidget {
                       itemCount: selecionadosList.length,
                       itemBuilder: (context, index) {
                         final f = selecionadosList[index];
+                        final fornecedor = f.fornecedor;
+
                         return Container(
                           margin: const EdgeInsets.only(bottom: 10),
                           decoration: BoxDecoration(
@@ -118,31 +197,20 @@ class CotacaoBottomSheet extends StatelessWidget {
                             ],
                           ),
                           child: ListTile(
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.asset(
-                                f.imagem ?? 'assets/images/fornecedor_default.jpg',
-                                width: 50,
-                                height: 50,
-                                fit: BoxFit.cover,
-                              ),
+                            leading: CircleAvatar(
+                              backgroundColor: primary.withValues(alpha: 0.1),
+                              child: Icon(Icons.storefront, color: primary),
                             ),
                             title: Text(
-                              f.nome,
+                              fornecedor.razaoSocial,
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14.5,
                               ),
                             ),
-                            subtitle: Row(
-                              children: [
-                                Icon(Icons.star_rounded, color: Colors.amber.shade400, size: 16),
-                                const SizedBox(width: 4),
-                                Text(
-                                  f.avaliacao.toStringAsFixed(1),
-                                  style: GoogleFonts.poppins(fontSize: 13),
-                                ),
-                              ],
+                            subtitle: Text(
+                              fornecedor.email,
+                              style: GoogleFonts.poppins(fontSize: 13),
                             ),
                           ),
                         );
@@ -206,7 +274,7 @@ class CotacaoBottomSheet extends StatelessWidget {
                     );
                   }),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
                   // === BOTÃO ENVIAR ===
                   SizedBox(
@@ -226,17 +294,7 @@ class CotacaoBottomSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      onPressed: () {
-                        Navigator.pop(context);
-                        Get.snackbar(
-                          'Cotação enviada!',
-                          'Enviada para ${fornecedoresSelecionados.length} fornecedor(es).',
-                          backgroundColor: primary,
-                          colorText: Colors.white,
-                          snackPosition: SnackPosition.BOTTOM,
-                          margin: const EdgeInsets.all(12),
-                        );
-                      },
+                      onPressed: enviarCotacao,
                     ),
                   ),
                   const SizedBox(height: 35),

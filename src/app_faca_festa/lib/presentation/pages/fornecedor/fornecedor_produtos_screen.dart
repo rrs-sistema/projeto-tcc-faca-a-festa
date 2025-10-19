@@ -2,10 +2,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/utils/biblioteca.dart';
-import './../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../controllers/event_theme_controller.dart';
-import './components/abrir_cotacao_bottom_sheet.dart';
+import './../../../core/utils/biblioteca.dart';
+import './../../../data/models/model.dart';
+
+import 'package:app_faca_festa/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/controllers/app_controller.dart';
+import './../../dialogs/show_novo_orcamento_bottom_sheet.dart';
 
 class FornecedorProdutosScreen extends StatefulWidget {
   final FornecedorModel fornecedor;
@@ -16,7 +19,20 @@ class FornecedorProdutosScreen extends StatefulWidget {
 }
 
 class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
-  final RxSet<int> selecionados = <int>{}.obs;
+  final RxSet<String> selecionados = <String>{}.obs; // 🔹 IDs dos serviços selecionados
+  final fornecedorController = Get.find<FornecedorController>();
+  final appController = Get.find<AppController>();
+
+  @override
+  void initState() {
+    super.initState();
+    _carregarProdutos();
+  }
+
+  Future<void> _carregarProdutos() async {
+    // 🔹 Carrega todos os serviços vinculados a este fornecedor
+    fornecedorController.escutarServicosFornecedor(widget.fornecedor.idFornecedor);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -24,27 +40,31 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
     final gradient = themeController.gradient.value;
     final primary = themeController.primaryColor.value;
 
-    // Lista de produtos (simulada)
-    final produtos = widget.fornecedor.produtos ??
-        [
-          {
-            'nome': 'Bolo de Casamento',
-            'preco': 'R\$ 450,00',
-            'img': 'assets/images/bg_event_001.jpeg'
-          },
-          {
-            'nome': 'Docinhos Gourmet',
-            'preco': 'R\$ 320,00',
-            'img': 'assets/images/bg_event_002.jpeg'
-          },
-          {
-            'nome': 'Decoração Floral',
-            'preco': 'R\$ 1.200,00',
-            'img': 'assets/images/bg_event_003.jpg'
-          },
-        ];
-
     return Obx(() {
+      final servicos = fornecedorController.servicosFornecedor
+          .where((s) => s.idFornecedor == widget.fornecedor.idFornecedor)
+          .toList();
+
+      if (fornecedorController.carregando.value) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
+
+      // 🔹 Mapeia cada vínculo com seu produto do catálogo
+      final List<Map<String, dynamic>> produtos = servicos.map((fs) {
+        final produto = fornecedorController.buscarServicoPorId(fs.idProdutoServico);
+        return {
+          'id_servico': fs.idFornecedorServico,
+          'nome': produto?.nome ?? 'Serviço sem nome',
+          'preco': fs.preco,
+          'descricao': produto?.descricao ?? '',
+          'imagem': fornecedorController.fotosServico
+              .firstWhereOrNull((f) => f.idProdutoServico == fs.idProdutoServico)
+              ?.url,
+        };
+      }).toList();
+
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
@@ -52,7 +72,7 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
-            'Produtos de ${widget.fornecedor.nome}',
+            'Catálogo de ${widget.fornecedor.razaoSocial}',
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.bold,
               color: Colors.black,
@@ -64,32 +84,43 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
         ),
 
         // === GRID DE PRODUTOS ===
-        body: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-          child: GridView.builder(
-            itemCount: produtos.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              mainAxisSpacing: 18,
-              crossAxisSpacing: 18,
-              childAspectRatio: 0.65,
-            ),
-            itemBuilder: (context, index) {
-              final p = produtos[index];
-              final selecionado = selecionados.contains(index);
-              return GestureDetector(
-                onTap: () {
-                  if (selecionado) {
-                    selecionados.remove(index);
-                  } else {
-                    selecionados.add(index);
-                  }
-                },
-                child: _produtoCard(p, primary, gradient, selecionado),
-              );
-            },
-          ),
-        ),
+        body: produtos.isEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(30),
+                  child: Text(
+                    'Este fornecedor ainda não possui produtos cadastrados.',
+                    style: GoogleFonts.poppins(fontSize: 15, color: Colors.black54),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                child: GridView.builder(
+                  itemCount: produtos.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 18,
+                    crossAxisSpacing: 18,
+                    childAspectRatio: 0.65,
+                  ),
+                  itemBuilder: (context, index) {
+                    final p = produtos[index];
+                    final selecionado = selecionados.contains(p['id_servico']);
+                    return GestureDetector(
+                      onTap: () {
+                        if (selecionado) {
+                          selecionados.remove(p['id_servico']);
+                        } else {
+                          selecionados.add(p['id_servico']);
+                        }
+                      },
+                      child: _produtoCard(p, primary, gradient, selecionado),
+                    );
+                  },
+                ),
+              ),
 
         // === BOTÃO FIXO DE COTAÇÃO ===
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -107,17 +138,21 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   elevation: 6,
                 ),
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    isScrollControlled: true,
-                    backgroundColor: Colors.transparent,
-                    builder: (_) => CotacaoBottomSheet(
-                      fornecedoresSelecionados: [widget.fornecedor.id],
-                      primary: primary,
-                      gradient: gradient,
-                    ),
-                  );
+                onPressed: () async {
+                  // 🔹 Abre o BottomSheet de cotação passando os serviços selecionados
+                  for (var idServico in selecionados) {
+                    final servico = fornecedorController.servicosFornecedor
+                        .firstWhereOrNull((s) => s.idFornecedorServico == idServico);
+                    if (servico != null) {
+                      await showNovoOrcamentoBottomSheet(
+                        context: context,
+                        idEvento: appController.eventoModel.value?.idEvento ?? '',
+                        idFornecedor: widget.fornecedor.idFornecedor,
+                        servico: servico,
+                        statusInicial: StatusOrcamento.emNegociacao,
+                      );
+                    }
+                  }
                 },
               ),
       );
@@ -126,8 +161,16 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
 
   // === Card de produto com estado visual de seleção ===
   Widget _produtoCard(
-      Map<String, dynamic> p, Color primary, LinearGradient gradient, bool selecionado) {
+    Map<String, dynamic> p,
+    Color primary,
+    LinearGradient gradient,
+    bool selecionado,
+  ) {
     final isTablet = Biblioteca.isTablet(context);
+    final preco = (p['preco'] as double?) ?? 0.0;
+    final imagem = p['imagem'] ??
+        'https://cdn-icons-png.flaticon.com/512/2921/2921822.png'; // 🔹 fallback imagem
+
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
@@ -153,8 +196,8 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
             children: [
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                child: Image.asset(
-                  p['img']!,
+                child: Image.network(
+                  imagem,
                   height: isTablet ? 320 : 100,
                   width: double.infinity,
                   fit: BoxFit.cover,
@@ -166,14 +209,14 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      p['nome']!,
+                      p['nome'] ?? 'Sem nome',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      p['preco']!,
+                      'R\$ ${preco.toStringAsFixed(2)}',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,

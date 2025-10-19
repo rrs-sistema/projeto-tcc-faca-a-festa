@@ -20,129 +20,153 @@ class FiltroFornecedorBottomSheet extends StatelessWidget {
 
       return Padding(
         padding: const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 30),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // === BARRA DE ARRASTE ===
-            Center(
-              child: Container(
-                width: 50,
-                height: 5,
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-            ),
-
-            // === TÍTULO ===
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Filtrar Fornecedores',
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: primary,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // === BARRA DE ARRASTE ===
+              Center(
+                child: Container(
+                  width: 50,
+                  height: 5,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(3),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.close_rounded, color: Colors.grey),
-                  onPressed: () => Navigator.pop(context),
-                )
-              ],
-            ),
-            const SizedBox(height: 10),
-
-            // === SLIDER DE RAIO ===
-            Obx(() => Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Raio de busca: ${controller.raio.value.toStringAsFixed(1)} km',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade800,
-                      ),
-                    ),
-                    SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 6,
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
-                        activeTrackColor: primary,
-                        inactiveTrackColor: primary.withValues(alpha: 40),
-                        thumbColor: primary,
-                        overlayColor: primary.withValues(alpha: 40),
-                      ),
-                      child: Slider(
-                        value: controller.raio.value,
-                        min: 1,
-                        max: 50,
-                        divisions: 10,
-                        label: '${controller.raio.value.round()} km',
-                        onChanged: controller.atualizarRaio,
-                      ),
-                    ),
-                  ],
-                )),
-
-            const Divider(height: 24),
-
-            // === FILTRO DE AVALIAÇÃO ===
-            Text(
-              'Avaliação mínima:',
-              style: GoogleFonts.poppins(
-                color: Colors.grey.shade700,
-                fontWeight: FontWeight.w600,
               ),
-            ),
-            const SizedBox(height: 8),
-            _avaliacaoChips(controller, primary, gradient),
 
-            const Divider(height: 24),
-
-            // === BOTÃO APLICAR ===
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+              // === TÍTULO ===
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Filtrar Fornecedores',
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primary,
+                    ),
                   ),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  elevation: 4,
-                  shadowColor: primary.withValues(alpha: 60),
+                  IconButton(
+                    icon: const Icon(Icons.close_rounded, color: Colors.grey),
+                    onPressed: () => Navigator.pop(context),
+                  )
+                ],
+              ),
+              const SizedBox(height: 10),
+
+              // === RAIO DE BUSCA ===
+              Text(
+                'Raio de busca (${controller.raio.value.toStringAsFixed(1)} km)',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade800,
                 ),
-                onPressed: () {
-                  Navigator.pop(context);
-                  Get.snackbar(
-                    'Filtros aplicados',
-                    'Resultados atualizados para ${controller.raio.value.toStringAsFixed(0)} km',
-                    snackPosition: SnackPosition.BOTTOM,
+              ),
+              const SizedBox(height: 6),
+              SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  trackHeight: 6,
+                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+                  activeTrackColor: primary,
+                  inactiveTrackColor: primary.withValues(alpha: 40),
+                  thumbColor: primary,
+                  overlayColor: primary.withValues(alpha: 40),
+                ),
+                child: Slider(
+                  value: controller.raio.value,
+                  min: 1,
+                  max: 100,
+                  divisions: 20,
+                  label: '${controller.raio.value.round()} km',
+                  onChanged: controller.atualizarRaio,
+                ),
+              ),
+
+              // === BOTÃO EXIBIR TODOS ===
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton.icon(
+                  icon: const Icon(Icons.public_rounded, size: 18),
+                  label: const Text('Exibir todos os fornecedores'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: primary,
+                    textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  ),
+                  onPressed: () {
+                    controller.atualizarRaio(999);
+                    Get.snackbar(
+                      'Filtro atualizado',
+                      'Agora exibindo todos os fornecedores (raio ilimitado).',
+                      backgroundColor: primary,
+                      colorText: Colors.white,
+                      snackPosition: SnackPosition.BOTTOM,
+                      margin: const EdgeInsets.all(16),
+                      borderRadius: 14,
+                      duration: const Duration(seconds: 2),
+                    );
+                  },
+                ),
+              ),
+
+              const Divider(height: 28),
+
+              // === FILTRO DE AVALIAÇÃO ===
+              Text(
+                'Avaliação mínima:',
+                style: GoogleFonts.poppins(
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              _avaliacaoChips(controller, primary, gradient),
+
+              const Divider(height: 28),
+
+              // === BOTÃO APLICAR ===
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
                     backgroundColor: primary,
-                    colorText: Colors.white,
-                    margin: const EdgeInsets.all(16),
-                    borderRadius: 14,
-                    duration: const Duration(seconds: 2),
-                  );
-                },
-                icon: const Icon(Icons.done_rounded, color: Colors.white),
-                label: const Text(
-                  'Aplicar Filtros',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    elevation: 4,
+                    shadowColor: primary.withValues(alpha: 60),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Get.snackbar(
+                      'Filtros aplicados',
+                      'Mostrando fornecedores em até ${controller.raio.value.toStringAsFixed(0)} km',
+                      snackPosition: SnackPosition.BOTTOM,
+                      backgroundColor: primary,
+                      colorText: Colors.white,
+                      margin: const EdgeInsets.all(16),
+                      borderRadius: 14,
+                      duration: const Duration(seconds: 2),
+                    );
+                  },
+                  icon: const Icon(Icons.done_rounded, color: Colors.white),
+                  label: const Text(
+                    'Aplicar Filtros',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 25),
-          ],
+              const SizedBox(height: 25),
+            ],
+          ),
         ),
       );
     });
@@ -150,7 +174,10 @@ class FiltroFornecedorBottomSheet extends StatelessWidget {
 
   // 🔹 Chips para selecionar avaliação mínima com tema
   Widget _avaliacaoChips(
-      FornecedorLocalizacaoController controller, Color primary, LinearGradient gradient) {
+    FornecedorLocalizacaoController controller,
+    Color primary,
+    LinearGradient gradient,
+  ) {
     final opcoes = [5.0, 4.5, 4.0, 3.5];
     return Wrap(
       spacing: 8,

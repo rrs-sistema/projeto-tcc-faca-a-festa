@@ -12,6 +12,9 @@ class FornecedorModel {
   final bool ativo;
   final DateTime dataCadastro;
 
+  // 🔹 Novo campo
+  final String? bannerUrl;
+
   FornecedorModel({
     required this.idFornecedor,
     required this.idUsuario,
@@ -23,6 +26,7 @@ class FornecedorModel {
     this.aptoParaOperar = false,
     this.ativo = true,
     DateTime? dataCadastro,
+    this.bannerUrl, // <-- Novo
   }) : dataCadastro = dataCadastro ?? DateTime.now();
 
   Map<String, dynamic> toMap() {
@@ -37,6 +41,7 @@ class FornecedorModel {
       'apto_para_operar': aptoParaOperar,
       'ativo': ativo,
       'data_cadastro': Timestamp.fromDate(dataCadastro),
+      'banner_url': bannerUrl, // <-- Novo
     };
   }
 
@@ -54,6 +59,7 @@ class FornecedorModel {
       dataCadastro: map['data_cadastro'] is Timestamp
           ? (map['data_cadastro'] as Timestamp).toDate()
           : DateTime.now(),
+      bannerUrl: map['banner_url'], // <-- Novo
     );
   }
 
@@ -64,6 +70,7 @@ class FornecedorModel {
     String? descricao,
     bool? aptoParaOperar,
     bool? ativo,
+    String? bannerUrl, // <-- Novo
   }) {
     return FornecedorModel(
       idFornecedor: idFornecedor,
@@ -74,6 +81,7 @@ class FornecedorModel {
       descricao: descricao ?? this.descricao,
       aptoParaOperar: aptoParaOperar ?? this.aptoParaOperar,
       ativo: ativo ?? this.ativo,
+      bannerUrl: bannerUrl ?? this.bannerUrl,
     );
   }
 }

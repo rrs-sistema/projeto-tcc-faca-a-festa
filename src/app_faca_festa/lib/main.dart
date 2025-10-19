@@ -16,11 +16,16 @@ import './controllers/app_controller.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
 import './popular_firebase.dart';
+import 'controllers/categoria_servico_controller.dart';
 import 'controllers/event_theme_controller.dart';
 import 'controllers/evento_cadastro_controller.dart';
 import 'controllers/fornecedor_controller.dart';
+import 'controllers/orcamento_controller.dart';
+import 'controllers/orcamento_gasto_controller.dart';
 import 'presentation/pages/convidado/convidado_page.dart';
+import 'presentation/pages/fornecedor/orcamentos_screen.dart';
 import 'presentation/pages/login/guest_register_screen.dart';
+import 'presentation/widgets/splash.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,12 +62,15 @@ class FacaFestaApp extends StatelessWidget {
       initialBinding: BindingsBuilder(() {
         Get.put(AppController(), permanent: true);
         Get.put(EventThemeController(), permanent: true);
-        Get.put(FornecedoreController(), permanent: true);
+        Get.put(OrcamentoController(), permanent: true);
         Get.put(EventoCadastroController(), permanent: true).carregarTiposEvento();
+        Get.put(FornecedorController(), permanent: true);
+        Get.put(CategoriaServicoController(), permanent: true);
+        Get.put(OrcamentoGastoController(), permanent: true);
       }),
       initialRoute: '/splash',
       getPages: [
-        GetPage(name: '/splash', page: () => const SplashScreen()),
+        GetPage(name: '/splash', page: () => Splash()),
         GetPage(name: '/role', page: () => const RoleSelectorScreen()),
         GetPage(name: '/welcome', page: () => const WelcomeEventScreen()),
         GetPage(name: '/login', page: () => const LoginScreen()),
@@ -71,12 +79,14 @@ class FacaFestaApp extends StatelessWidget {
         GetPage(name: '/registerGuest', page: () => const GuestRegisterScreen()),
         GetPage(name: '/convidadosPage', page: () => const ConvidadosPage()),
         GetPage(
+          name: '/orcamentos',
+          page: () => const OrcamentosScreen(),
+          transition: Transition.cupertino,
+        ),
+        GetPage(
           name: '/fornecedor',
           page: () {
-            final args = Get.arguments as Map<String, dynamic>?;
-            return FornecedorHomeScreen(
-              fornecedor: args?['fornecedor'],
-            );
+            return FornecedorHomeScreen();
           },
         ),
         // 🔹 Corrigido: usa Get.arguments para receber parâmetros
@@ -108,89 +118,6 @@ class FacaFestaApp extends StatelessWidget {
         */
       ],
       builder: EasyLoading.init(),
-    );
-  }
-}
-
-/// =============================
-/// 🎬 SPLASH SCREEN
-/// =============================
-class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen> {
-  @override
-  void initState() {
-    super.initState();
-    _checkSession();
-  }
-
-  Future<void> _checkSession() async {
-    // ⏳ Espera 3 segundos antes de redirecionar
-    await Future.delayed(const Duration(seconds: 3));
-
-    final appController = Get.find<AppController>();
-
-    if (appController.usuarioLogado.value != null) {
-      if (appController.usuarioLogado.value!.tipo == 'F') {
-        final fornecedor =
-            await appController.buscarFornecedor(appController.usuarioLogado.value!.idUsuario);
-        Get.offAllNamed(
-          '/fornecedor',
-          arguments: {'fornecedor': fornecedor},
-        );
-      } else if (appController.usuarioLogado.value!.tipo == '') {
-        Get.offAllNamed('/role');
-      }
-    } else {
-      Get.offAllNamed('/role');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFFF9C4), Color(0xFFFFC1E3), Color(0xFFB3E5FC)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.celebration, color: Colors.pink, size: 80),
-              const SizedBox(height: 20),
-              Text(
-                "Faça a Festa",
-                style: TextStyle(
-                  color: Colors.pink.shade800,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              const CircularProgressIndicator(color: Colors.pinkAccent),
-              const SizedBox(height: 16),
-              Text(
-                "Carregando o seu evento...",
-                style: TextStyle(
-                  color: Colors.pink.shade800.withValues(alpha: 0.8),
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

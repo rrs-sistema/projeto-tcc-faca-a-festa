@@ -1,16 +1,28 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'dart:math';
 
+import './../data/models/servico_produto/fornecedor_categoria_model.dart';
+import './../data/models/servico_produto/categoria_servico_model.dart';
+import './../data/models/DTO/fornecedor_detalhado_model.dart';
+import './../data/models/model.dart';
+
 class FornecedorLocalizacaoController extends GetxController {
+  final db = FirebaseFirestore.instance;
+
+  // Estados reativos
   var userLatitude = 0.0.obs;
   var userLongitude = 0.0.obs;
-  var raio = 10.0.obs; // km
+  var raio = 10.0.obs;
   var avaliacaoMinima = 0.0.obs;
-  var fornecedores = <FornecedorModel>[].obs;
-  var fornecedoresFiltrados = <FornecedorModel>[].obs;
-  var categorias = <String>[].obs;
   var carregando = true.obs;
+
+  // Listas principais
+  var fornecedores = <FornecedorDetalhadoModel>[].obs;
+  var fornecedoresFiltrados = <FornecedorDetalhadoModel>[].obs;
+  var categorias = <CategoriaServicoModel>[].obs;
 
   @override
   void onInit() {
@@ -19,127 +31,150 @@ class FornecedorLocalizacaoController extends GetxController {
   }
 
   // ==========================================================
-  // === LOCALIZAÇÃO DO USUÁRIO
+  // === OBTÉM LOCALIZAÇÃO DO USUÁRIO
   // ==========================================================
   Future<void> _obterLocalizacaoUsuario() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      final permission = await Geolocator.checkPermission();
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+      if (!serviceEnabled ||
+          permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        await carregarDados();
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition();
+      userLatitude.value = pos.latitude;
+      userLongitude.value = pos.longitude;
+      await carregarDados();
+    } catch (e) {
+      if (kDebugMode) print('❌ Erro ao obter localização: $e');
+      await carregarDados();
     }
-
-    final pos = await Geolocator.getCurrentPosition();
-    userLatitude.value = pos.latitude;
-    userLongitude.value = pos.longitude;
-
-    await carregarFornecedores();
   }
 
   // ==========================================================
-  // === CARGA SIMULADA DE FORNECEDORES (mock para testes)
+  // === CARGA PRINCIPAL: PARALELISMO E OTIMIZAÇÃO
   // ==========================================================
-  Future<void> carregarFornecedores() async {
+  Future<void> carregarDados() async {
     carregando.value = true;
+    try {
+      // 🔹 1️⃣ Faz consultas em paralelo com Future.wait
+      final results = await Future.wait([
+        db.collection('categoria_servico').where('ativo', isEqualTo: true).get(),
+        db.collection('fornecedor').where('ativo', isEqualTo: true).get(),
+        db.collection('fornecedor_categoria').get(),
+        db.collection('territorio').get(),
+      ]);
 
-    final lat = userLatitude.value;
-    final lon = userLongitude.value;
+      final queryCategorias = results[0];
+      final queryFornecedores = results[1];
+      final queryRelacoes = results[2];
+      final queryTerritorios = results[3];
 
-    // 🔹 Simulação de fornecedores em categorias diferentes
-    fornecedores.value = [
-      FornecedorModel(
-        id: '01',
-        nome: 'Buffet Sabor & Arte',
-        categoria: 'Buffet',
-        imagem: 'assets/images/fornecedor_buffet.jpeg',
-        latitude: lat + 0.01,
-        longitude: lon + 0.02,
-        avaliacao: 4.8,
-        distanciaKm: 0,
-      ),
-      FornecedorModel(
-        id: '02',
-        nome: 'Delícias da Ana',
-        categoria: 'Buffet',
-        imagem: 'assets/images/fornecedor_recepcao.jpeg',
-        latitude: lat + 0.015,
-        longitude: lon - 0.01,
-        avaliacao: 4.6,
-        distanciaKm: 0,
-      ),
-      FornecedorModel(
-        id: '03',
-        nome: 'Florarte Decorações',
-        categoria: 'Decoração',
-        imagem: 'assets/images/fornecedor_decoracao.jpg',
-        latitude: lat + 0.03,
-        longitude: lon + 0.015,
-        avaliacao: 4.9,
-        distanciaKm: 0,
-      ),
-      FornecedorModel(
-        id: '04',
-        nome: 'Flash Studio',
-        categoria: 'Fotografia',
-        imagem: 'assets/images/fornecedor_fotografia.jpeg',
-        latitude: lat + 0.025,
-        longitude: lon - 0.02,
-        avaliacao: 4.7,
-        distanciaKm: 0,
-      ),
-      FornecedorModel(
-        id: '05',
-        nome: 'Som & Luz Eventos',
-        categoria: 'Música',
-        imagem: 'assets/images/fornecedor_musica_1.jpg',
-        latitude: lat - 0.015,
-        longitude: lon + 0.01,
-        avaliacao: 4.6,
-        distanciaKm: 0,
-      ),
-      FornecedorModel(
-        id: '06',
-        nome: 'Convite Criativo',
-        categoria: 'Convites',
-        imagem: 'assets/images/fornecedor_convite_1.jpg',
-        latitude: lat + 0.02,
-        longitude: lon - 0.015,
-        avaliacao: 4.5,
-        distanciaKm: 0,
-      ),
-    ];
+      // 🔹 2️⃣ Converte listas
+      final listaCategorias = queryCategorias.docs
+          .map((d) => CategoriaServicoModel.fromMap({'id': d.id, ...d.data()}))
+          .toList();
 
-    _filtrarPorRaio();
+      final listaFornecedores = queryFornecedores.docs
+          .map((d) => FornecedorModel.fromMap({...d.data(), 'id_fornecedor': d.id}))
+          .toList();
 
-    // 🔹 Extrai categorias únicas para o menu
-    categorias.value = fornecedores.map((f) => f.categoria).toSet().toList()..sort();
+      final relacoes =
+          queryRelacoes.docs.map((d) => FornecedorCategoriaModel.fromMap(d.data())).toList();
 
-    carregando.value = false;
+      final territorios =
+          queryTerritorios.docs.map((d) => TerritorioModel.fromMap(d.data())).toList();
+
+      categorias.assignAll(listaCategorias);
+
+      // 🔹 3️⃣ Usa Map para busca instantânea (O(1))
+      final relacaoPorFornecedor = {
+        for (var r in relacoes) r.idFornecedor: r,
+      };
+      final categoriaPorId = {
+        for (var c in listaCategorias) c.id: c.nome,
+      };
+      final territorioPorFornecedor = {
+        for (var t in territorios) t.idFornecedor: t,
+      };
+
+      // 🔹 4️⃣ Monta lista detalhada (sem travar a UI)
+      final List<FornecedorDetalhadoModel> listaDetalhada = [];
+
+      for (final f in listaFornecedores) {
+        final relacao = relacaoPorFornecedor[f.idFornecedor];
+        final categoriaNome = categoriaPorId[relacao?.idCategoria] ?? 'Outros';
+        final territorio = territorioPorFornecedor[f.idFornecedor];
+
+        double? distanciaKm;
+        if (territorio?.latitude != null && territorio?.longitude != null) {
+          distanciaKm = _calcularDistancia(
+            userLatitude.value,
+            userLongitude.value,
+            territorio!.latitude!,
+            territorio.longitude!,
+          );
+        }
+
+        listaDetalhada.add(
+          FornecedorDetalhadoModel(
+            fornecedor: f,
+            categoriaNome: categoriaNome,
+            territorio: territorio,
+            distanciaKm: distanciaKm,
+          ),
+        );
+      }
+
+      fornecedores.assignAll(listaDetalhada);
+
+      // 🔹 5️⃣ Filtra e atualiza interface após microdelay
+      await Future.delayed(const Duration(milliseconds: 100));
+      _filtrarPorRaio();
+
+      if (kDebugMode) {
+        print('✅ ${fornecedores.length} fornecedores carregados');
+      }
+    } catch (e, s) {
+      if (kDebugMode) print('❌ Erro ao carregar fornecedores: $e\n$s');
+    } finally {
+      carregando.value = false;
+    }
   }
 
   // ==========================================================
   // === FILTRO POR RAIO DE DISTÂNCIA
   // ==========================================================
   void _filtrarPorRaio() {
+    if (fornecedores.isEmpty) {
+      fornecedoresFiltrados.clear();
+      return;
+    }
+
+    final raioGlobal = raio.value;
     fornecedoresFiltrados.value = fornecedores.where((f) {
-      final dist = _calcularDistancia(
-        userLatitude.value,
-        userLongitude.value,
-        f.latitude,
-        f.longitude,
-      );
-      f.distanciaKm = dist;
-      return dist <= raio.value;
+      final distancia = f.distanciaKm;
+      final raioFornecedor = f.territorio?.raioKm ?? 999;
+
+      if (distancia == null) return true;
+      final limite = min(raioGlobal, raioFornecedor);
+      return distancia <= limite;
     }).toList();
+
+    if (kDebugMode) {
+      print('📍 ${fornecedoresFiltrados.length} fornecedores dentro do raio ($raioGlobal km)');
+    }
   }
 
   // ==========================================================
-  // === FUNÇÕES AUXILIARES
+  // === CÁLCULO DE DISTÂNCIA (Haversine)
   // ==========================================================
   double _calcularDistancia(double lat1, double lon1, double lat2, double lon2) {
-    const double R = 6371;
+    const R = 6371;
     final dLat = (lat2 - lat1) * (pi / 180);
     final dLon = (lon2 - lon1) * (pi / 180);
     final a = sin(dLat / 2) * sin(dLat / 2) +
@@ -148,109 +183,17 @@ class FornecedorLocalizacaoController extends GetxController {
     return R * c;
   }
 
+  // ==========================================================
+  // === FUNÇÕES DE APOIO
+  // ==========================================================
   void atualizarRaio(double novoRaio) {
     raio.value = novoRaio;
     _filtrarPorRaio();
   }
 
-  // 🔹 Novo: retorna fornecedores de uma categoria específica
-  List<FornecedorModel> fornecedoresPorCategoria(String categoria) {
+  List<FornecedorDetalhadoModel> fornecedoresPorCategoria(String nomeCategoria) {
     return fornecedoresFiltrados
-        .where((f) => f.categoria.toLowerCase() == categoria.toLowerCase())
+        .where((f) => f.categoriaNome.toLowerCase() == nomeCategoria.toLowerCase())
         .toList();
-  }
-}
-
-// ==========================================================
-// === MODELO DE DADOS
-// ==========================================================
-class FornecedorModel {
-  String id;
-  String nome;
-  String categoria;
-  double latitude;
-  double longitude;
-  double avaliacao;
-  double distanciaKm;
-  String? imagem;
-
-  // 🏢 Dados complementares
-  String? cnpj;
-  String? email;
-  String? telefone;
-  String? uf;
-  String? cidade;
-  String? bairro;
-  String? endereco;
-  String? descricao;
-
-  // 🛒 Produtos oferecidos (lista dinâmica)
-  List<Map<String, dynamic>>? produtos;
-
-  FornecedorModel({
-    required this.id,
-    required this.nome,
-    required this.categoria,
-    required this.latitude,
-    required this.longitude,
-    required this.avaliacao,
-    required this.distanciaKm,
-    this.imagem,
-    this.cnpj,
-    this.email,
-    this.telefone,
-    this.uf,
-    this.cidade,
-    this.bairro,
-    this.endereco,
-    this.descricao,
-    this.produtos,
-  });
-
-  // === Conversão para JSON (para Firestore ou API) ===
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'nome': nome,
-      'categoria': categoria,
-      'latitude': latitude,
-      'longitude': longitude,
-      'avaliacao': avaliacao,
-      'distanciaKm': distanciaKm,
-      'imagem': imagem,
-      'cnpj': cnpj,
-      'email': email,
-      'telefone': telefone,
-      'uf': uf,
-      'cidade': cidade,
-      'bairro': bairro,
-      'endereco': endereco,
-      'descricao': descricao,
-      'produtos': produtos,
-    };
-  }
-
-  // === Conversão a partir de JSON ===
-  factory FornecedorModel.fromJson(Map<String, dynamic> json) {
-    return FornecedorModel(
-      id: json['id'] ?? '',
-      nome: json['nome'] ?? '',
-      categoria: json['categoria'] ?? '',
-      latitude: (json['latitude'] ?? 0).toDouble(),
-      longitude: (json['longitude'] ?? 0).toDouble(),
-      avaliacao: (json['avaliacao'] ?? 0).toDouble(),
-      distanciaKm: (json['distanciaKm'] ?? 0).toDouble(),
-      imagem: json['imagem'],
-      cnpj: json['cnpj'],
-      email: json['email'],
-      telefone: json['telefone'],
-      uf: json['uf'],
-      cidade: json['cidade'],
-      bairro: json['bairro'],
-      endereco: json['endereco'],
-      descricao: json['descricao'],
-      produtos:
-          (json['produtos'] != null) ? List<Map<String, dynamic>>.from(json['produtos']) : null,
-    );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import './../data/models/evento/evento.dart';
 
@@ -103,5 +104,57 @@ class EventThemeController extends GetxController {
         tituloCabecalho.value = "🎉 Sua Festa Incrível";
         break;
     }
+  }
+
+  void mostrarSeletorDeTema(BuildContext context) {
+    final temas = [
+      {'nome': 'Casamento', 'icone': Icons.favorite_rounded},
+      {'nome': 'Festa Infantil', 'icone': Icons.celebration},
+      {'nome': 'Chá de Bebê', 'icone': Icons.baby_changing_station},
+      {'nome': 'Aniversário', 'icone': Icons.cake},
+      {'nome': 'Padrão', 'icone': Icons.star},
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) {
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                "🎨 Escolha o Tema",
+                style: GoogleFonts.poppins(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...temas.map((tema) {
+                return ListTile(
+                  leading: Icon(tema['icone'] as IconData, color: primaryColor.value),
+                  title: Text(
+                    tema['nome'] as String,
+                    style: GoogleFonts.poppins(fontSize: 16),
+                  ),
+                  onTap: () {
+                    aplicarTemaPorNome((tema['nome'] as String).toLowerCase());
+                    Navigator.pop(context);
+                  },
+                );
+              }),
+              const SizedBox(height: 55),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
