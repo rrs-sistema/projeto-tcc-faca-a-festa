@@ -4,14 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/utils/biblioteca.dart';
+import './../../../controllers/categoria/categoria_servico_controller.dart';
 import './../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_model.dart';
-import './../../../controllers/categoria_servico_controller.dart';
 import './../../../core/utils/no_sqflite_cache_manager.dart';
 import './../../../controllers/event_theme_controller.dart';
 import './components/filtro_fornecedor_bottom_sheet.dart';
 import './components/abrir_cotacao_bottom_sheet.dart';
+import '../../../core/utils/biblioteca.dart';
 import './fornecedor_detalhe_screen.dart';
 
 class FornecedorLocalizacaoScreen extends StatefulWidget {

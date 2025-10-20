@@ -142,7 +142,7 @@ class FornecedoresPage extends StatelessWidget {
                           .buscarServicoPorId(servicoFornecedor.idProdutoServico);
 
                       // 🔹 Carrega também uma imagem (opcional)
-                      final fornecedor = fornecedoresController.fornecedorres.firstWhereOrNull(
+                      final fornecedor = fornecedoresController.fornecedores.firstWhereOrNull(
                         (f) => f.idFornecedor == servicoFornecedor.idFornecedor,
                       );
 

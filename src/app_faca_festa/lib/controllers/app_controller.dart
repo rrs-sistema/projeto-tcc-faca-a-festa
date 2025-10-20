@@ -102,7 +102,7 @@ class AppController extends GetxController {
     _authSub = _auth.authStateChanges().listen((user) async {
       if (user == null) {
         usuarioLogado.value = null;
-        Get.offAll(() => const Splash());
+        Get.offAll(() => const AdminDashboardScreen());
         return;
       }
 
@@ -155,7 +155,7 @@ class AppController extends GetxController {
         // ======================================
         switch (usuario.tipo) {
           case 'F': // 🧑‍🔧 Fornecedor
-            final fornecedorDoc = await _db.collection('fornecedores').doc(usuario.idUsuario).get();
+            final fornecedorDoc = await _db.collection('fornecedor').doc(usuario.idUsuario).get();
 
             if (fornecedorDoc.exists && fornecedorDoc.data() != null) {
               final fornecedor = FornecedorModel.fromMap(fornecedorDoc.data()!);
@@ -173,7 +173,7 @@ class AppController extends GetxController {
               Get.offAll(
                 () => FornecedorHomeScreen(),
                 transition: Transition.fadeIn,
-                duration: const Duration(milliseconds: 600),
+                duration: const Duration(milliseconds: 200),
               );
             } else {
               // 🚨 Fornecedor ainda não cadastrou empresa
@@ -191,7 +191,7 @@ class AppController extends GetxController {
                 );
 
                 await _db
-                    .collection('fornecedores')
+                    .collection('fornecedor')
                     .doc(usuario.idUsuario)
                     .set(novoFornecedor.toMap());
 
@@ -207,7 +207,7 @@ class AppController extends GetxController {
               Get.offAll(
                 () => FornecedorHomeScreen(),
                 transition: Transition.fadeIn,
-                duration: const Duration(milliseconds: 600),
+                duration: const Duration(milliseconds: 200),
               );
             }
             break;
@@ -218,7 +218,7 @@ class AppController extends GetxController {
               Get.offAll(
                 () => AreaConvidadoHomeScreen(convidado: usuario, evento: eventoModel.value!),
                 transition: Transition.fadeIn,
-                duration: const Duration(milliseconds: 600),
+                duration: const Duration(milliseconds: 200),
               );
             } else {
               Get.snackbar(
@@ -235,7 +235,7 @@ class AppController extends GetxController {
             Get.offAll(
               () => const AdminDashboardScreen(),
               transition: Transition.fadeIn,
-              duration: const Duration(milliseconds: 600),
+              duration: const Duration(milliseconds: 200),
             );
             break;
 
@@ -245,7 +245,7 @@ class AppController extends GetxController {
               Get.offAll(
                 () => HomeEventScreen(),
                 transition: Transition.fadeIn,
-                duration: const Duration(milliseconds: 700),
+                duration: const Duration(milliseconds: 200),
               );
             } else {
               Get.offAll(() => const WelcomeEventScreen());
@@ -356,12 +356,12 @@ class AppController extends GetxController {
   // ===================================================
 
   Future<void> salvarFornecedor(FornecedorModel fornecedor) async {
-    await _db.collection('fornecedores').doc(fornecedor.idFornecedor).set(fornecedor.toMap());
+    await _db.collection('fornecedor').doc(fornecedor.idFornecedor).set(fornecedor.toMap());
   }
 
   Stream<List<FornecedorModel>> listarFornecedores() {
     return _db
-        .collection('fornecedores')
+        .collection('fornecedor')
         .where('ativo', isEqualTo: true)
         .snapshots()
         .map((snap) => snap.docs.map((d) => FornecedorModel.fromMap(d.data())).toList());
@@ -370,7 +370,7 @@ class AppController extends GetxController {
   Future<FornecedorModel?> buscarFornecedor(String idUsuario) async {
     try {
       final snapshot = await _db
-          .collection('fornecedores')
+          .collection('fornecedor')
           .where('id_usuario', isEqualTo: idUsuario)
           .limit(1)
           .get();

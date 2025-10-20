@@ -7,18 +7,19 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../data/models/servico_produto/fornecedor_categoria_model.dart';
 import '../data/models/servico_produto/servico_foto.dart';
 import '../presentation/dialogs/show_novo_orcamento_bottom_sheet.dart';
 import './../data/models/model.dart';
 import 'app_controller.dart';
 
 class FornecedorController extends GetxController {
-  final db = FirebaseFirestore.instance;
+  final _db = FirebaseFirestore.instance;
   StreamSubscription? _orcamentoSubscription;
 
   /// 🔹 Dados principais do fornecedor logado
   final Rx<FornecedorModel?> fornecedor = Rx<FornecedorModel?>(null);
-  final RxList<FornecedorModel> fornecedorres = <FornecedorModel>[].obs;
+  final RxList<FornecedorModel> fornecedores = <FornecedorModel>[].obs;
 
   /// 🔹 Serviços (coleção `fornecedor_servico`)
   final RxList<FornecedorProdutoServicoModel> servicosFornecedor =
@@ -44,6 +45,16 @@ class FornecedorController extends GetxController {
   final RxString erro = ''.obs;
   final app = Get.find<AppController>();
 
+  final filtroNome = ''.obs;
+  final filtroCidade = RxnString();
+  final filtroCategoria = RxnString();
+  final filtroAprovado = RxnBool();
+
+  final filtroAvaliacaoMinima = 0.0.obs;
+  // 🔹 Dados auxiliares carregados de outras coleções
+  final enderecos = <EnderecoUsuarioModel>[].obs;
+  final categoriasFornecedor = <FornecedorCategoriaModel>[].obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -53,6 +64,78 @@ class FornecedorController extends GetxController {
         carregarFornecedorLogado(usuario.idUsuario);
       }
     });
+  }
+
+  Future<void> carregarTodosFornecedores() async {
+    try {
+      carregando.value = true;
+      erro.value = '';
+
+      final snapshot = await _db.collection('fornecedor').get();
+
+      fornecedores.value = snapshot.docs.map((d) => FornecedorModel.fromMap(d.data())).toList();
+
+      fornecedoresFiltrados; // Chama o filtro
+    } catch (e) {
+      erro.value = 'Erro ao carregar fornecedores: $e';
+    } finally {
+      carregando.value = false;
+    }
+  }
+
+  Future<void> carregarFornecedoresComFiltros({
+    bool? ativo,
+    bool? aptoParaOperar,
+  }) async {
+    try {
+      carregando.value = true;
+      erro.value = '';
+
+      Query query = _db.collection('fornecedor');
+
+      if (ativo != null) query = query.where('ativo', isEqualTo: ativo);
+      if (aptoParaOperar != null) {
+        query = query.where('apto_para_operar', isEqualTo: aptoParaOperar);
+      }
+
+      final snapshot = await query.get();
+
+      fornecedores.value = snapshot.docs
+          .map((d) => FornecedorModel.fromMap(d.data() as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      erro.value = 'Erro ao filtrar fornecedores: $e';
+    } finally {
+      carregando.value = false;
+    }
+  }
+
+  Future<void> aprovarFornecedor(String idFornecedor) async {
+    try {
+      await _db.collection('fornecedor').doc(idFornecedor).update({
+        'apto_para_operar': true,
+        'ativo': true,
+      });
+      await carregarTodosFornecedores();
+      Get.snackbar('Fornecedor aprovado', 'O fornecedor foi liberado para operar.',
+          backgroundColor: Colors.green.shade100);
+    } catch (e) {
+      Get.snackbar('Erro', 'Falha ao aprovar fornecedor: $e', backgroundColor: Colors.red.shade100);
+    }
+  }
+
+  Future<void> desativarFornecedor(String idFornecedor) async {
+    try {
+      await _db.collection('fornecedor').doc(idFornecedor).update({
+        'ativo': false,
+      });
+      await carregarTodosFornecedores();
+      Get.snackbar('Fornecedor desativado', 'O fornecedor foi desativado com sucesso.',
+          backgroundColor: Colors.orange.shade100);
+    } catch (e) {
+      Get.snackbar('Erro', 'Falha ao desativar fornecedor: $e',
+          backgroundColor: Colors.red.shade100);
+    }
   }
 
   // ==========================================================
@@ -68,7 +151,7 @@ class FornecedorController extends GetxController {
 
       // 🔹 Busca orçamentos relacionados a esse evento
       final orcamentosSnap =
-          await db.collection('orcamento').where('id_evento', isEqualTo: idEvento).get();
+          await _db.collection('orcamento').where('id_evento', isEqualTo: idEvento).get();
 
       if (orcamentosSnap.docs.isEmpty) {
         erro.value = 'Nenhum fornecedor encontrado para este evento.';
@@ -90,7 +173,7 @@ class FornecedorController extends GetxController {
       }
 
       // 🔹 Busca todos os serviços que pertencem a esses fornecedores
-      final servicosSnap = await db
+      final servicosSnap = await _db
           .collection('fornecedor_servico')
           .where('id_fornecedor_servico', whereIn: fornecedoresIds)
           .get();
@@ -124,7 +207,7 @@ class FornecedorController extends GetxController {
       carregando.value = true;
       erro.value = '';
 
-      final query = await db
+      final query = await _db
           .collection('fornecedor')
           .where('id_usuario', isEqualTo: idUsuario)
           .limit(1)
@@ -150,10 +233,10 @@ class FornecedorController extends GetxController {
   // ==========================================================
   // === 🔹 Escuta os serviços de um fornecedor específico
   // ==========================================================
-  void escutarServicosFornecedor(String idFornecedor) {
+  Future<void> escutarServicosFornecedor(String idFornecedor) async {
     if (idFornecedor.isEmpty) return;
 
-    db
+    _db
         .collection('fornecedor_servico')
         .where('id_fornecedor', isEqualTo: idFornecedor)
         .snapshots()
@@ -169,13 +252,32 @@ class FornecedorController extends GetxController {
     });
   }
 
+  Future<void> listarServicosFornecedor(String idFornecedor) async {
+    try {
+      carregando.value = true;
+      erro.value = '';
+
+      final snapshot = await _db
+          .collection('fornecedor_servico')
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .get();
+
+      servicosFornecedor.value =
+          snapshot.docs.map((d) => FornecedorProdutoServicoModel.fromMap(d.data())).toList();
+    } catch (e) {
+      erro.value = 'Erro ao carregar serviços: $e';
+    } finally {
+      carregando.value = false;
+    }
+  }
+
   // ==========================================================
   // === 🔹 Carrega catálogo de serviços (coleção: servico_produto)
   // ==========================================================
   Future<void> carregarCatalogoServicos(List<String> idsProdutoServico) async {
     if (idsProdutoServico.isEmpty) return;
 
-    final snapshot = await db
+    final snapshot = await _db
         .collection('servico_produto')
         .where(FieldPath.documentId, whereIn: idsProdutoServico)
         .get();
@@ -196,7 +298,7 @@ class FornecedorController extends GetxController {
   Future<void> carregarFotosServicos(List<String> idsProdutoServico, String idFornecedor) async {
     if (idsProdutoServico.isEmpty) return;
 
-    final snapshot = await db
+    final snapshot = await _db
         .collection('servico_foto')
         .where('id_produto_servico', whereIn: idsProdutoServico)
         .where('id_fornecedor', isEqualTo: idFornecedor)
@@ -291,7 +393,7 @@ class FornecedorController extends GetxController {
           .where(FieldPath.documentId, whereIn: fornecidoIds)
           .get();
 
-      fornecedorres.assignAll(fornecedoresSnap.docs.map((d) {
+      fornecedores.assignAll(fornecedoresSnap.docs.map((d) {
         return FornecedorModel.fromMap(d.data());
       }).toList());
     } catch (e) {
@@ -306,7 +408,7 @@ class FornecedorController extends GetxController {
       // 🔸 Cancela qualquer escuta anterior para evitar duplicação
       await _orcamentoSubscription?.cancel();
 
-      _orcamentoSubscription = db
+      _orcamentoSubscription = _db
           .collection('orcamento')
           .where('id_evento', isEqualTo: idEvento)
           .snapshots()
@@ -316,7 +418,7 @@ class FornecedorController extends GetxController {
 
         if (lista.isEmpty) {
           servicosFornecedor.clear();
-          fornecedorres.clear();
+          fornecedores.clear();
           return;
         }
 
@@ -331,12 +433,12 @@ class FornecedorController extends GetxController {
         if (servicoFornecidoIds.isEmpty) {
           debugPrint('⚠️ Nenhum serviço de fornecedor vinculado a este evento.');
           servicosFornecedor.clear();
-          fornecedorres.clear();
+          fornecedores.clear();
           return;
         }
 
         // 🔹 Busca os serviços de fornecedor válidos
-        final fornecedorServicosSnap = await db
+        final fornecedorServicosSnap = await _db
             .collection('fornecedor_servico')
             .where(FieldPath.documentId, whereIn: servicoFornecidoIds)
             .get();
@@ -356,16 +458,16 @@ class FornecedorController extends GetxController {
 
         if (fornecidoIds.isEmpty) {
           debugPrint('⚠️ Nenhum fornecedor relacionado encontrado.');
-          fornecedorres.clear();
+          fornecedores.clear();
           return;
         }
 
-        final fornecedoresSnap = await db
+        final fornecedoresSnap = await _db
             .collection('fornecedor')
             .where(FieldPath.documentId, whereIn: fornecidoIds)
             .get();
 
-        fornecedorres.assignAll(
+        fornecedores.assignAll(
           fornecedoresSnap.docs.map((d) => FornecedorModel.fromMap(d.data())).toList(),
         );
 
@@ -378,6 +480,15 @@ class FornecedorController extends GetxController {
     }
   }
 
+  Future<void> vincularServico(FornecedorProdutoServicoModel model) async {
+    await _db.collection('fornecedor_servico').doc(model.idFornecedorServico).set(model.toMap());
+    await escutarServicosFornecedor(model.idFornecedor);
+  }
+
+  Future<void> excluirVinculo(String id) async {
+    await _db.collection('fornecedor_servico').doc(id).delete();
+  }
+
   // ==========================================================
   // === 🔹 Estatísticas básicas
   // ==========================================================
@@ -385,6 +496,58 @@ class FornecedorController extends GetxController {
     final fechados = orcamentos.where((o) => o.status == StatusOrcamento.fechado).length;
     ('✅ $fechados fornecedores contratados.');
     return fechados;
+  }
+
+  // 🔹 Métodos de filtro
+  void aplicarFiltros({
+    String? nome,
+    String? cidade,
+    String? categoria,
+    bool? aprovado,
+  }) {
+    filtroNome.value = nome ?? '';
+    filtroCidade.value = cidade ?? '';
+    filtroCategoria.value = categoria ?? '';
+    filtroAprovado.value = aprovado;
+  }
+
+  void limparFiltros() {
+    filtroNome.value = '';
+    filtroCidade.value = '';
+    filtroCategoria.value = '';
+    filtroAprovado.value = null;
+  }
+
+  // 🔹 Retorna lista filtrada combinando dados cruzados
+  List<FornecedorModel> get fornecedoresFiltrados {
+    return fornecedores.where((f) {
+      // 🔹 Busca o endereço do usuário associado ao fornecedor
+      final endereco = enderecos.firstWhereOrNull((e) => e.idUsuario == f.idUsuario);
+
+      // 🔹 Busca a categoria vinculada ao fornecedor
+      final cat = categoriasFornecedor
+          .firstWhereOrNull((c) => c.idFornecedor == f.idFornecedor)
+          ?.idCategoria;
+
+      // 🔹 Filtros
+      final matchNome = filtroNome.value.isEmpty ||
+          f.razaoSocial.toLowerCase().contains(filtroNome.value.toLowerCase()) ||
+          (f.descricao?.toLowerCase().contains(filtroNome.value.toLowerCase()) ?? false) ||
+          f.email.toLowerCase().contains(filtroNome.value.toLowerCase());
+
+      // ✅ Usa o filtroCidade (RxnString)
+      final matchCidade = filtroCidade.value == null ||
+          (endereco?.nomeCidade?.toLowerCase().contains(filtroCidade.value!.toLowerCase()) ??
+              false);
+
+      // ✅ Usa o filtroCategoria (RxnString)
+      final matchCategoria = filtroCategoria.value == null || cat == filtroCategoria.value;
+
+      final matchStatus = filtroAprovado.value == null || f.aptoParaOperar == filtroAprovado.value;
+
+      // ✅ Se todos os critérios combinarem, o fornecedor entra na lista filtrada
+      return matchNome && matchCidade && matchCategoria && matchStatus;
+    }).toList();
   }
 
   @override

@@ -12,6 +12,9 @@ class FornecedorProdutoServicoModel {
   /// ID do fornecedor (FK para fornecedor)
   final String idFornecedor;
 
+  /// ID da subcategoria (FK para subcategoria_servico)
+  final String? idSubcategoria; // 🔹 novo campo
+
   /// Preço padrão do serviço
   final double preco;
 
@@ -29,6 +32,7 @@ class FornecedorProdutoServicoModel {
     required this.idProdutoServico,
     required this.idFornecedor,
     required this.preco,
+    this.idSubcategoria,
     this.precoPromocao,
     this.ativo = true,
     DateTime? dataCadastro,
@@ -42,6 +46,7 @@ class FornecedorProdutoServicoModel {
       'id_fornecedor_servico': idFornecedorServico,
       'id_produto_servico': idProdutoServico,
       'id_fornecedor': idFornecedor,
+      'id_subcategoria': idSubcategoria, // ✅ novo
       'preco': preco,
       'preco_promocao': precoPromocao,
       'ativo': ativo,
@@ -57,6 +62,7 @@ class FornecedorProdutoServicoModel {
       idFornecedorServico: map['id_fornecedor_servico'] ?? '',
       idProdutoServico: map['id_produto_servico'] ?? '',
       idFornecedor: map['id_fornecedor'] ?? '',
+      idSubcategoria: map['id_subcategoria'], // ✅ novo
       preco: (map['preco'] as num?)?.toDouble() ?? 0.0,
       precoPromocao: (map['preco_promocao'] as num?)?.toDouble(),
       ativo: map['ativo'] ?? true,
@@ -71,6 +77,7 @@ class FornecedorProdutoServicoModel {
     double? preco,
     double? precoPromocao,
     bool? ativo,
+    String? idSubcategoria,
   }) {
     return FornecedorProdutoServicoModel(
       idFornecedorServico: idFornecedorServico,
@@ -79,12 +86,13 @@ class FornecedorProdutoServicoModel {
       preco: preco ?? this.preco,
       precoPromocao: precoPromocao ?? this.precoPromocao,
       ativo: ativo ?? this.ativo,
+      idSubcategoria: idSubcategoria ?? this.idSubcategoria,
       dataCadastro: dataCadastro,
     );
   }
 
   // ===========================================================
-  // 🔹 Função auxiliar para conversão de datas
+  // 🔹 Conversão de datas
   // ===========================================================
   static DateTime _toDateTime(dynamic value) {
     if (value == null) return DateTime.now();

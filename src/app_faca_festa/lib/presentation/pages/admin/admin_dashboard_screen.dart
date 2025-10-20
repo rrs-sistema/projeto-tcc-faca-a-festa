@@ -1,14 +1,42 @@
-import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/app_controller.dart';
+import './../cadastro/fornecedor/fornecedores_admin_list_screen.dart';
+import './../cadastro/categoria/categoria_servico_list_screen.dart';
+import './../cadastro/servico/servico_produto_list_screen.dart';
+import './../../../controllers/event_theme_controller.dart';
+import './../../../controllers/app_controller.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final themeController = Get.find<EventThemeController>();
+    final gradient = themeController.gradient.value;
+
+    final List<_AdminItem> items = [
+      _AdminItem(
+        title: 'Categorias',
+        icon: Icons.category_rounded,
+        color: Colors.deepPurple,
+        onTap: () => Get.to(() => const CategoriaServicoListScreen()),
+      ),
+      _AdminItem(
+        title: 'Serviços / Produtos',
+        icon: Icons.design_services_rounded,
+        color: Colors.pink,
+        onTap: () => Get.to(() => const ServicoProdutoListScreen()),
+      ),
+      _AdminItem(
+        title: 'Fornecedores',
+        icon: Icons.store_rounded,
+        color: Colors.orange,
+        onTap: () => Get.to(() => const FornecedoresAdminListScreen()),
+      ),
+    ];
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -19,15 +47,7 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFF6A1B9A), Color(0xFF8E24AA)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
-        ),
+        flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout, color: Colors.white),
@@ -36,51 +56,94 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ],
       ),
-      body: GridView.count(
-        padding: const EdgeInsets.all(24),
-        crossAxisCount: 2,
-        crossAxisSpacing: 20,
-        mainAxisSpacing: 20,
-        children: [
-          _buildCard('Usuários', Icons.people, Colors.indigo),
-          _buildCard('Eventos', Icons.event, Colors.pink),
-          _buildCard('Fornecedores', Icons.store, Colors.green),
-          _buildCard('Financeiro', Icons.monetization_on, Colors.orange),
-        ],
+      backgroundColor: Colors.grey.shade100,
+      body: Padding(
+        padding: const EdgeInsets.all(20),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final crossAxisCount = constraints.maxWidth < 600 ? 2 : 4;
+            return GridView.builder(
+              itemCount: items.length,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+                childAspectRatio: 1,
+              ),
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return _buildAnimatedCard(item);
+              },
+            );
+          },
+        ),
       ),
     );
   }
 
-  Widget _buildCard(String title, IconData icon, Color color) {
+  Widget _buildAnimatedCard(_AdminItem item) {
     return GestureDetector(
-      onTap: () {
-        Get.snackbar('🚧 Em desenvolvimento', 'A área $title estará disponível em breve!',
-            backgroundColor: color.withValues(alpha: 0.8),
-            colorText: Colors.white,
-            snackPosition: SnackPosition.TOP);
-      },
-      child: Container(
+      onTap: item.onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
         decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.15),
+          gradient: LinearGradient(
+            colors: [
+              item.color.withValues(alpha: 0.1),
+              item.color.withValues(alpha: 0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.withValues(alpha: 0.5), width: 1.2),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 48, color: color),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: color,
-              ),
+          border: Border.all(color: item.color.withValues(alpha: 0.4), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: item.color.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(2, 3),
             ),
           ],
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          splashColor: item.color.withValues(alpha: 0.2),
+          onTap: item.onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(item.icon, size: 48, color: item.color),
+                const SizedBox(height: 16),
+                Text(
+                  item.title,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: item.color,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
+}
+
+class _AdminItem {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onTap;
+
+  _AdminItem({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.onTap,
+  });
 }

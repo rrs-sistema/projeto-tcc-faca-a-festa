@@ -16,7 +16,8 @@ import './controllers/app_controller.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
 import './popular_firebase.dart';
-import 'controllers/categoria_servico_controller.dart';
+import 'controllers/categoria/categoria_servico_controller.dart';
+import 'controllers/categoria/subcategoria_servico_controller.dart';
 import 'controllers/event_theme_controller.dart';
 import 'controllers/evento_cadastro_controller.dart';
 import 'controllers/fornecedor_controller.dart';
@@ -66,11 +67,12 @@ class FacaFestaApp extends StatelessWidget {
         Get.put(OrcamentoController(), permanent: true);
         Get.put(EventoCadastroController(), permanent: true).carregarTiposEvento();
         Get.put(FornecedorController(), permanent: true);
-        Get.put(CategoriaServicoController(), permanent: true);
         Get.put(OrcamentoGastoController(), permanent: true);
         Get.put(TarefaController(), permanent: true);
+        Get.put(CategoriaServicoController(), permanent: true);
+        Get.put(SubcategoriaServicoController(), permanent: true);
       }),
-      initialRoute: '/splash',
+      initialRoute: '/admin',
       getPages: [
         GetPage(name: '/splash', page: () => Splash()),
         GetPage(name: '/role', page: () => const RoleSelectorScreen()),

@@ -3,12 +3,14 @@ class ServicoProdutoModel {
   final String nome;
   final String? tipoMedida; // E.g. 'U' = unidade, 'H' = hora, etc.
   final String? descricao;
+  final String? idSubcategoria; // 🔹 Novo campo de vínculo
 
   const ServicoProdutoModel({
     required this.id,
     required this.nome,
     this.tipoMedida,
     this.descricao,
+    this.idSubcategoria,
   });
 
   Map<String, dynamic> toMap() {
@@ -17,6 +19,7 @@ class ServicoProdutoModel {
       'nome': nome,
       'tipo_medida': tipoMedida,
       'descricao': descricao,
+      'id_subcategoria': idSubcategoria, // novo
     };
   }
 
@@ -26,6 +29,7 @@ class ServicoProdutoModel {
       nome: map['nome'] ?? '',
       tipoMedida: map['tipo_medida'],
       descricao: map['descricao'],
+      idSubcategoria: map['id_subcategoria'], // novo
     );
   }
 
@@ -33,12 +37,14 @@ class ServicoProdutoModel {
     String? nome,
     String? tipoMedida,
     String? descricao,
+    String? idSubcategoria,
   }) {
     return ServicoProdutoModel(
       id: id,
       nome: nome ?? this.nome,
       tipoMedida: tipoMedida ?? this.tipoMedida,
       descricao: descricao ?? this.descricao,
+      idSubcategoria: idSubcategoria ?? this.idSubcategoria,
     );
   }
 }
