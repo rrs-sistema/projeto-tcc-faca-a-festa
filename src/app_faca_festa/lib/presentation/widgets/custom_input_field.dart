@@ -15,6 +15,7 @@ class CustomInputField extends StatefulWidget {
   final double borderRadius;
   final EdgeInsets margin;
   final void Function(String)? onChanged;
+  final Widget? suffixIcon; // 👈 Novo campo
 
   const CustomInputField({
     super.key,
@@ -31,6 +32,7 @@ class CustomInputField extends StatefulWidget {
     this.borderRadius = 14,
     this.margin = const EdgeInsets.only(bottom: 16),
     this.onChanged,
+    this.suffixIcon, // 👈 Novo parâmetro
   });
 
   @override
@@ -117,6 +119,8 @@ class _CustomInputFieldState extends State<CustomInputField> {
                 ),
                 child: Icon(widget.icon, color: Colors.white, size: 20),
               ),
+              // 👇 Novo sufixo (ícone à direita)
+              suffixIcon: widget.suffixIcon,
               labelText: widget.label,
               labelStyle: GoogleFonts.poppins(
                 color: isFocused ? baseColor : Colors.grey.shade600,

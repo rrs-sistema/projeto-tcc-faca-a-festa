@@ -15,7 +15,8 @@ import '../../../core/utils/biblioteca.dart';
 import './fornecedor_detalhe_screen.dart';
 
 class FornecedorLocalizacaoScreen extends StatefulWidget {
-  const FornecedorLocalizacaoScreen({super.key});
+  final bool? showLeading;
+  const FornecedorLocalizacaoScreen({super.key, required this.showLeading});
 
   @override
   State<FornecedorLocalizacaoScreen> createState() => _FornecedorLocalizacaoScreenState();
@@ -35,11 +36,18 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     final bool isCelular = Biblioteca.isCelular(context);
     return Obx(() {
       final gradient = themeController.gradient.value;
-
+      bool automaticallyImplyLeading = widget.showLeading ?? false;
       return Scaffold(
         backgroundColor: Colors.grey.shade100,
         appBar: AppBar(
-          automaticallyImplyLeading: false,
+          automaticallyImplyLeading: automaticallyImplyLeading,
+          leading: automaticallyImplyLeading
+              ? IconButton(
+                  tooltip: 'Voltar',
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
+                  onPressed: () => Get.back(),
+                )
+              : SizedBox.shrink(),
           title: const Text(
             'Fornecedores',
             style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Colors.black),

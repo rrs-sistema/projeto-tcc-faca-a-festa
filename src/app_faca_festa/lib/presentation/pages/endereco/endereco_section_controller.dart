@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -30,6 +31,24 @@ class EnderecoSectionController {
       uf: ufController.text.trim(),
       principal: true,
     );
+  }
+
+  /// Retorna um Map pronto para salvar no Firestore
+  Map<String, dynamic> toEnderecoMap({String? idUsuario, bool? principal}) {
+    return {
+      'id': UniqueKey().toString(),
+      'id_usuario': idUsuario ?? '',
+      'id_cidade': ufCidadeController.idCidadeSelecionada ?? 0,
+      'cep': cepController.text.trim(),
+      'logradouro': logradouroController.text.trim(),
+      'numero': numeroController.text.trim(),
+      'complemento': complementoController.text.trim(),
+      'bairro': bairroController.text.trim(),
+      'nome_cidade': nomeCidadeController.text.trim(),
+      'uf': ufController.text.trim(),
+      'principal': principal ?? false,
+      'data_cadastro': FieldValue.serverTimestamp(),
+    };
   }
 
   void dispose() {

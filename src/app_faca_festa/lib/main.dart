@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'dart:async';
 
 import './presentation/pages/convidado/area/area_convidado_home_screen.dart';
@@ -16,6 +17,8 @@ import './controllers/app_controller.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
 import './popular_firebase.dart';
+import 'controllers/admin/eventos_admin_controller.dart';
+import 'controllers/admin/orcamentos_admin_controller.dart';
 import 'controllers/categoria/categoria_servico_controller.dart';
 import 'controllers/categoria/subcategoria_servico_controller.dart';
 import 'controllers/event_theme_controller.dart';
@@ -32,6 +35,7 @@ import 'presentation/widgets/splash.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await GetStorage.init();
+  await initializeDateFormatting('pt_BR', null);
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   configLoading();
@@ -71,6 +75,8 @@ class FacaFestaApp extends StatelessWidget {
         Get.put(TarefaController(), permanent: true);
         Get.put(CategoriaServicoController(), permanent: true);
         Get.put(SubcategoriaServicoController(), permanent: true);
+        Get.put(EventosAdminController(), permanent: true);
+        Get.put(OrcamentosAdminController(), permanent: true);
       }),
       initialRoute: '/admin',
       getPages: [

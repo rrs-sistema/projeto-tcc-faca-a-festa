@@ -33,7 +33,11 @@ class FornecedorController extends GetxController {
 
   final RxList<OrcamentoModel> orcamentos = <OrcamentoModel>[].obs;
 
+  final categoriasServico = <Map<String, dynamic>>[].obs;
+  final subcategoriasServico = <Map<String, dynamic>>[].obs;
+
   /// 🔹 Estatísticas do painel
+  final ordenacaoSelecionada = 'status'.obs; // status | nome | recentes
   final RxInt solicitacoesPendentes = 0.obs;
   final RxInt mensagensNaoLidas = 0.obs;
   final RxDouble avaliacaoMedia = 0.0.obs;
@@ -49,6 +53,7 @@ class FornecedorController extends GetxController {
   final filtroCidade = RxnString();
   final filtroCategoria = RxnString();
   final filtroAprovado = RxnBool();
+  final filtroAtivo = RxnBool();
 
   final filtroAvaliacaoMinima = 0.0.obs;
   // 🔹 Dados auxiliares carregados de outras coleções
@@ -71,70 +76,200 @@ class FornecedorController extends GetxController {
       carregando.value = true;
       erro.value = '';
 
-      final snapshot = await _db.collection('fornecedor').get();
+      // ================================
+      // 🔸 Fornecedores
+      // ================================
+      final fornecedoresSnap = await _db.collection('fornecedor').get();
+      final listaFornecedores =
+          fornecedoresSnap.docs.map((d) => FornecedorModel.fromMap(d.data())).toList();
 
-      fornecedores.value = snapshot.docs.map((d) => FornecedorModel.fromMap(d.data())).toList();
+      // ✅ ORDENAR: aprovados > pendentes > desativados, e nome A-Z
+      listaFornecedores.sort((a, b) {
+        // 1️⃣ Status ativo primeiro
+        if (a.ativo != b.ativo) return b.ativo ? 1 : -1;
 
-      fornecedoresFiltrados; // Chama o filtro
-    } catch (e) {
-      erro.value = 'Erro ao carregar fornecedores: $e';
-    } finally {
-      carregando.value = false;
-    }
-  }
+        // 2️⃣ Depois, aprovados primeiro
+        if (a.aptoParaOperar != b.aptoParaOperar) return b.aptoParaOperar ? 1 : -1;
 
-  Future<void> carregarFornecedoresComFiltros({
-    bool? ativo,
-    bool? aptoParaOperar,
-  }) async {
-    try {
-      carregando.value = true;
-      erro.value = '';
+        // 3️⃣ Por fim, ordem alfabética
+        return a.razaoSocial.toLowerCase().compareTo(b.razaoSocial.toLowerCase());
+      });
 
-      Query query = _db.collection('fornecedor');
+      fornecedores.value = listaFornecedores;
 
-      if (ativo != null) query = query.where('ativo', isEqualTo: ativo);
-      if (aptoParaOperar != null) {
-        query = query.where('apto_para_operar', isEqualTo: aptoParaOperar);
-      }
+      // ================================
+      // 🔸 Endereços (subcoleção)
+      // ================================
+      final endSnap = await _db.collectionGroup('enderecos').get();
+      enderecos.value = endSnap.docs.map((d) => EnderecoUsuarioModel.fromMap(d.data())).toList();
 
-      final snapshot = await query.get();
+      // ================================
+      // 🔸 Categorias do fornecedor
+      // ================================
+      final catSnap = await _db.collection('fornecedor_categoria').get();
+      categoriasFornecedor.value =
+          catSnap.docs.map((d) => FornecedorCategoriaModel.fromMap(d.data())).toList();
 
-      fornecedores.value = snapshot.docs
-          .map((d) => FornecedorModel.fromMap(d.data() as Map<String, dynamic>))
+      // ================================
+      // 🔸 Categorias principais
+      // ================================
+      final catServSnap = await _db.collection('categoria_servico').get();
+      categoriasServico.value = catServSnap.docs
+          .map((d) => {
+                'id': d['id'],
+                'nome': d['nome'],
+                'descricao': d['descricao'],
+                'ativo': d['ativo'],
+              })
+          .toList();
+
+      // ================================
+      // 🔸 Subcategorias
+      // ================================
+      final subcatSnap = await _db.collection('subcategoria_servico').get();
+      subcategoriasServico.value = subcatSnap.docs
+          .map((d) => {
+                'id': d['id'],
+                'nome': d['nome'],
+                'id_categoria': d['id_categoria'],
+                'descricao': d['descricao'],
+                'ativo': d['ativo'],
+              })
           .toList();
     } catch (e) {
-      erro.value = 'Erro ao filtrar fornecedores: $e';
+      erro.value = 'Erro ao carregar fornecedores: $e';
+      debugPrint('❌ [FornecedorController] Erro: $e');
     } finally {
       carregando.value = false;
     }
   }
 
+  // =============================================================
+  // 🔸 FILTROS
+  // =============================================================
+  void aplicarFiltros({
+    String? nome,
+    String? cidade,
+    String? categoria,
+    bool? aprovado,
+    bool? ativo,
+  }) {
+    filtroNome.value = nome ?? '';
+    filtroCidade.value = cidade?.isEmpty ?? true ? null : cidade;
+    filtroCategoria.value = categoria?.isEmpty ?? true ? null : categoria;
+    filtroAprovado.value = aprovado;
+    filtroAtivo.value = ativo;
+  }
+
+  void limparFiltros() {
+    filtroNome.value = '';
+    filtroCidade.value = null;
+    filtroCategoria.value = null;
+    filtroAprovado.value = null;
+    filtroAtivo.value = null;
+    update();
+  }
+
+  // =============================================================
+  // 🔸 LISTA FILTRADA
+  // =============================================================
+  List<FornecedorModel> get fornecedoresFiltrados {
+    final resultado = fornecedores.where((f) {
+      // 🔹 Busca endereço e categoria vinculados
+      final endereco = enderecos.firstWhereOrNull((e) => e.idUsuario == f.idUsuario);
+      final cat = categoriasFornecedor
+          .firstWhereOrNull((c) => c.idFornecedor == f.idFornecedor)
+          ?.idCategoria;
+
+      // 🔹 Avalia filtros
+      final matchNome = filtroNome.value.isEmpty ||
+          f.razaoSocial.toLowerCase().contains(filtroNome.value.toLowerCase()) ||
+          (f.descricao?.toLowerCase().contains(filtroNome.value.toLowerCase()) ?? false) ||
+          f.email.toLowerCase().contains(filtroNome.value.toLowerCase());
+
+      final matchCidade = filtroCidade.value == null ||
+          (endereco?.nomeCidade?.toLowerCase().contains(filtroCidade.value!.toLowerCase()) ??
+              false);
+
+      final matchCategoria = filtroCategoria.value == null || cat == filtroCategoria.value;
+
+      final matchStatusAprovacao =
+          filtroAprovado.value == null || f.aptoParaOperar == filtroAprovado.value;
+
+      final matchStatusAtivo = filtroAtivo.value == null || f.ativo == filtroAtivo.value;
+
+      final passou =
+          matchNome && matchCidade && matchCategoria && matchStatusAprovacao && matchStatusAtivo;
+
+      return passou;
+    }).toList();
+    return resultado;
+  }
+
+  void ordenarFornecedores() {
+    final lista = [...fornecedores];
+    switch (ordenacaoSelecionada.value) {
+      case 'nome':
+        lista.sort((a, b) => a.razaoSocial.toLowerCase().compareTo(b.razaoSocial.toLowerCase()));
+        break;
+      case 'recentes':
+        lista.sort((a, b) => (b.dataCadastro).compareTo(a.dataCadastro));
+        break;
+      default:
+        lista.sort((a, b) {
+          if (a.ativo != b.ativo) return b.ativo ? 1 : -1;
+          if (a.aptoParaOperar != b.aptoParaOperar) return b.aptoParaOperar ? 1 : -1;
+          return a.razaoSocial.toLowerCase().compareTo(b.razaoSocial.toLowerCase());
+        });
+    }
+    fornecedores.assignAll(lista);
+  }
+
+  // =============================================================
+  // 🔸 Aprovação e desativação
+  // =============================================================
   Future<void> aprovarFornecedor(String idFornecedor) async {
     try {
-      await _db.collection('fornecedor').doc(idFornecedor).update({
-        'apto_para_operar': true,
-        'ativo': true,
-      });
-      await carregarTodosFornecedores();
-      Get.snackbar('Fornecedor aprovado', 'O fornecedor foi liberado para operar.',
-          backgroundColor: Colors.green.shade100);
+      await _db.collection('fornecedor').doc(idFornecedor).update({'apto_para_operar': true});
+      final f = fornecedores.firstWhereOrNull((x) => x.idFornecedor == idFornecedor);
+      if (f != null) {
+        fornecedores[fornecedores.indexOf(f)] = f.copyWith(aptoParaOperar: true);
+      }
     } catch (e) {
-      Get.snackbar('Erro', 'Falha ao aprovar fornecedor: $e', backgroundColor: Colors.red.shade100);
+      debugPrint('❌ Erro ao aprovar fornecedor $idFornecedor: $e');
     }
   }
 
   Future<void> desativarFornecedor(String idFornecedor) async {
     try {
-      await _db.collection('fornecedor').doc(idFornecedor).update({
-        'ativo': false,
-      });
-      await carregarTodosFornecedores();
-      Get.snackbar('Fornecedor desativado', 'O fornecedor foi desativado com sucesso.',
-          backgroundColor: Colors.orange.shade100);
+      await _db.collection('fornecedor').doc(idFornecedor).update({'ativo': false});
+      fornecedores.removeWhere((f) => f.idFornecedor == idFornecedor);
     } catch (e) {
-      Get.snackbar('Erro', 'Falha ao desativar fornecedor: $e',
-          backgroundColor: Colors.red.shade100);
+      debugPrint('❌ Erro ao desativar fornecedor $idFornecedor: $e');
+    }
+  }
+
+  Future<void> reprovarFornecedor(String idFornecedor) async {
+    try {
+      await _db.collection('fornecedor').doc(idFornecedor).update({'apto_para_operar': false});
+      final f = fornecedores.firstWhereOrNull((x) => x.idFornecedor == idFornecedor);
+      if (f != null) {
+        fornecedores[fornecedores.indexOf(f)] = f.copyWith(aptoParaOperar: false);
+      }
+    } catch (e) {
+      debugPrint('❌ Erro ao reprovar fornecedor $idFornecedor: $e');
+    }
+  }
+
+  Future<void> ativarFornecedor(String idFornecedor) async {
+    try {
+      await _db.collection('fornecedor').doc(idFornecedor).update({'ativo': true});
+      final f = fornecedores.firstWhereOrNull((x) => x.idFornecedor == idFornecedor);
+      if (f != null) {
+        fornecedores[fornecedores.indexOf(f)] = f.copyWith(ativo: true);
+      }
+    } catch (e) {
+      debugPrint('❌ Erro ao ativar fornecedor $idFornecedor: $e');
     }
   }
 
@@ -166,11 +301,6 @@ class FornecedorController extends GetxController {
           .cast<String>()
           .toSet()
           .toList();
-
-      if (fornecedoresIds.isEmpty) {
-        debugPrint('⚠️ Nenhum serviço de fornecedor vinculado a este evento.');
-        return;
-      }
 
       // 🔹 Busca todos os serviços que pertencem a esses fornecedores
       final servicosSnap = await _db
@@ -371,7 +501,6 @@ class FornecedorController extends GetxController {
           .toList();
 
       if (servicoFornecidoIds.isEmpty) {
-        debugPrint('⚠️ Nenhum serviço de fornecedor vinculado a este evento.');
         return;
       }
 
@@ -431,7 +560,6 @@ class FornecedorController extends GetxController {
             .toList();
 
         if (servicoFornecidoIds.isEmpty) {
-          debugPrint('⚠️ Nenhum serviço de fornecedor vinculado a este evento.');
           servicosFornecedor.clear();
           fornecedores.clear();
           return;
@@ -457,7 +585,6 @@ class FornecedorController extends GetxController {
             .toList();
 
         if (fornecidoIds.isEmpty) {
-          debugPrint('⚠️ Nenhum fornecedor relacionado encontrado.');
           fornecedores.clear();
           return;
         }
@@ -496,58 +623,6 @@ class FornecedorController extends GetxController {
     final fechados = orcamentos.where((o) => o.status == StatusOrcamento.fechado).length;
     ('✅ $fechados fornecedores contratados.');
     return fechados;
-  }
-
-  // 🔹 Métodos de filtro
-  void aplicarFiltros({
-    String? nome,
-    String? cidade,
-    String? categoria,
-    bool? aprovado,
-  }) {
-    filtroNome.value = nome ?? '';
-    filtroCidade.value = cidade ?? '';
-    filtroCategoria.value = categoria ?? '';
-    filtroAprovado.value = aprovado;
-  }
-
-  void limparFiltros() {
-    filtroNome.value = '';
-    filtroCidade.value = '';
-    filtroCategoria.value = '';
-    filtroAprovado.value = null;
-  }
-
-  // 🔹 Retorna lista filtrada combinando dados cruzados
-  List<FornecedorModel> get fornecedoresFiltrados {
-    return fornecedores.where((f) {
-      // 🔹 Busca o endereço do usuário associado ao fornecedor
-      final endereco = enderecos.firstWhereOrNull((e) => e.idUsuario == f.idUsuario);
-
-      // 🔹 Busca a categoria vinculada ao fornecedor
-      final cat = categoriasFornecedor
-          .firstWhereOrNull((c) => c.idFornecedor == f.idFornecedor)
-          ?.idCategoria;
-
-      // 🔹 Filtros
-      final matchNome = filtroNome.value.isEmpty ||
-          f.razaoSocial.toLowerCase().contains(filtroNome.value.toLowerCase()) ||
-          (f.descricao?.toLowerCase().contains(filtroNome.value.toLowerCase()) ?? false) ||
-          f.email.toLowerCase().contains(filtroNome.value.toLowerCase());
-
-      // ✅ Usa o filtroCidade (RxnString)
-      final matchCidade = filtroCidade.value == null ||
-          (endereco?.nomeCidade?.toLowerCase().contains(filtroCidade.value!.toLowerCase()) ??
-              false);
-
-      // ✅ Usa o filtroCategoria (RxnString)
-      final matchCategoria = filtroCategoria.value == null || cat == filtroCategoria.value;
-
-      final matchStatus = filtroAprovado.value == null || f.aptoParaOperar == filtroAprovado.value;
-
-      // ✅ Se todos os critérios combinarem, o fornecedor entra na lista filtrada
-      return matchNome && matchCidade && matchCategoria && matchStatus;
-    }).toList();
   }
 
   @override

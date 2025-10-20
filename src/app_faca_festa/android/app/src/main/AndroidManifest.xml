@@ -19,7 +19,7 @@
     </queries>
 
     <application
-        android:label="Faca a Festa"
+        android:label="Faça a Festa"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
 

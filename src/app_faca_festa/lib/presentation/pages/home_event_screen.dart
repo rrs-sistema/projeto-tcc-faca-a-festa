@@ -75,7 +75,9 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
   Widget build(BuildContext context) {
     final List<Widget> pages = [
       _buildOrganizadorPage(),
-      const FornecedorLocalizacaoScreen(),
+      const FornecedorLocalizacaoScreen(
+        showLeading: false,
+      ),
       InspiracaoScreen(tipoEvento: eventoModel.nome),
       ComunidadeScreen(),
       MenuDrawerFacaFesta(onLogout: appController.logoutFornecedor),
@@ -224,49 +226,110 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
                   ),
                   child: Row(
                     children: [
-                      const SizedBox(height: 20),
-                      CircleAvatar(
-                        radius: 26,
-                        backgroundColor: cor.withValues(alpha: 0.1),
-                        child: Icon(themeController.icon.value, color: cor, size: 28),
-                      ),
-                      const SizedBox(width: 12),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "Local do Evento",
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w600,
-                                color: cor,
-                                fontSize: 15,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              eventoModel.logradouro ??
-                                  "Defina o local na tela de edição do evento",
-                              style: GoogleFonts.poppins(
-                                color: Colors.grey.shade700,
-                                fontSize: 13.5,
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: cor.withValues(alpha: 0.12),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Icon(
+                                      Icons.location_on_rounded,
+                                      color: cor,
+                                      size: 22,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    "Local do Evento",
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                      color: cor,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            InkWell(
-                              onTap: () => Get.to(() => const FornecedorLocalizacaoScreen()),
-                              child: Text(
-                                "Ver mapa e fornecedores próximos",
-                                style: GoogleFonts.poppins(
-                                  color: Colors.blueAccent.shade700,
-                                  fontSize: 13,
-                                  decoration: TextDecoration.underline,
+
+                              const SizedBox(height: 12),
+
+                              // 🔹 Endereço
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      (eventoModel.logradouro != null &&
+                                              eventoModel.logradouro!.isNotEmpty)
+                                          ? eventoModel.logradouro!
+                                          : "Defina o local do seu evento para encontrar fornecedores próximos.",
+                                      style: GoogleFonts.poppins(
+                                        color: (eventoModel.logradouro != null &&
+                                                eventoModel.logradouro!.isNotEmpty)
+                                            ? Colors.black87
+                                            : Colors.grey.shade600,
+                                        fontSize: 14,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // 🔹 Botão moderno de ação
+                              Center(
+                                child: Align(
+                                  alignment: Alignment.center,
+                                  child: ElevatedButton.icon(
+                                    icon: const Icon(Icons.store_mall_directory_rounded, size: 18),
+                                    label: Text(
+                                      "Ver fornecedores próximos",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13.5,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: cor.withValues(alpha: 0.12),
+                                      foregroundColor: cor,
+                                      elevation: 0,
+                                      padding:
+                                          const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    onPressed: () => Get.to(() => const FornecedorLocalizacaoScreen(
+                                          showLeading: true,
+                                        )),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
+                      )
                     ],
                   ),
                 ),

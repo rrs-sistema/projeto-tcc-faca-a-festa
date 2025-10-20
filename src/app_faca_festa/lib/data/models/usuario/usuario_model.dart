@@ -4,14 +4,12 @@ class UsuarioModel {
   final String idUsuario;
   final String nome;
   final String email;
-  final String? tipo;
+  final String? tipo; // Ex: organizador, fornecedor, convidado, admin
   final String? cpf;
   final String? fotoPerfilUrl;
   final String? senhaHash;
   final bool ativo;
   final DateTime? dataCadastro;
-
-  // Campos resumidos (para exibir na listagem)
   final String? cidade;
   final String? uf;
 
@@ -29,6 +27,9 @@ class UsuarioModel {
     this.uf,
   });
 
+  // =======================================================
+  // 🔹 Conversão para Map (Firestore)
+  // =======================================================
   Map<String, dynamic> toMap() {
     return {
       'id_usuario': idUsuario,
@@ -46,6 +47,9 @@ class UsuarioModel {
     };
   }
 
+  // =======================================================
+  // 🔹 Conversão de Map (Firestore → Model)
+  // =======================================================
   factory UsuarioModel.fromMap(Map<String, dynamic> map) {
     return UsuarioModel(
       idUsuario: map['id_usuario'] ?? '',
@@ -63,7 +67,9 @@ class UsuarioModel {
     );
   }
 
-  /// 🔹 Cria uma nova instância com alterações pontuais
+  // =======================================================
+  // 🔹 Atualização parcial (copyWith)
+  // =======================================================
   UsuarioModel copyWith({
     String? idUsuario,
     String? nome,
@@ -73,6 +79,7 @@ class UsuarioModel {
     String? fotoPerfilUrl,
     String? senhaHash,
     bool? ativo,
+    bool? isAdmin,
     DateTime? dataCadastro,
     String? cidade,
     String? uf,

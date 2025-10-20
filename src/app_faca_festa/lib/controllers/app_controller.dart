@@ -102,7 +102,7 @@ class AppController extends GetxController {
     _authSub = _auth.authStateChanges().listen((user) async {
       if (user == null) {
         usuarioLogado.value = null;
-        Get.offAll(() => const AdminDashboardScreen());
+        Get.offAll(() => const Splash());
         return;
       }
 

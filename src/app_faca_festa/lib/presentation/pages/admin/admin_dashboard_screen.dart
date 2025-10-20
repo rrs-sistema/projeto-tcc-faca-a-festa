@@ -7,6 +7,9 @@ import './../cadastro/categoria/categoria_servico_list_screen.dart';
 import './../cadastro/servico/servico_produto_list_screen.dart';
 import './../../../controllers/event_theme_controller.dart';
 import './../../../controllers/app_controller.dart';
+import './usuarios_admin_list_screen.dart';
+import 'eventos_admin_list_screen.dart';
+import 'orcamentos_admin_list_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -20,20 +23,38 @@ class AdminDashboardScreen extends StatelessWidget {
       _AdminItem(
         title: 'Categorias',
         icon: Icons.category_rounded,
-        color: Colors.deepPurple,
+        color: Colors.indigo.shade700, // Azul-escuro sofisticado
         onTap: () => Get.to(() => const CategoriaServicoListScreen()),
       ),
       _AdminItem(
         title: 'Serviços / Produtos',
         icon: Icons.design_services_rounded,
-        color: Colors.pink,
+        color: Colors.blue.shade700, // Azul padrão elegante
         onTap: () => Get.to(() => const ServicoProdutoListScreen()),
       ),
       _AdminItem(
         title: 'Fornecedores',
         icon: Icons.store_rounded,
-        color: Colors.orange,
+        color: Colors.cyan.shade700, // Azul turquesa (destaque)
         onTap: () => Get.to(() => const FornecedoresAdminListScreen()),
+      ),
+      _AdminItem(
+        title: 'Usuários',
+        icon: Icons.people_alt_rounded,
+        color: Colors.teal.shade600, // Azul-esverdeado equilibrado
+        onTap: () => Get.to(() => const UsuariosAdminListScreen()),
+      ),
+      _AdminItem(
+        title: 'Eventos',
+        icon: Icons.event_available_rounded,
+        color: Colors.lightBlue.shade700, // Azul médio para clareza visual
+        onTap: () => Get.to(() => const EventosAdminListScreen()),
+      ),
+      _AdminItem(
+        title: 'Orçamentos',
+        icon: Icons.request_quote_rounded,
+        color: Colors.blueAccent.shade700, // Azul vibrante para finanças
+        onTap: () => Get.to(() => const OrcamentosAdminListScreen()),
       ),
     ];
 

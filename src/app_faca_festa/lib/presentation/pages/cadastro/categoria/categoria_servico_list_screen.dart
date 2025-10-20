@@ -21,7 +21,19 @@ class CategoriaServicoListScreen extends StatelessWidget {
 
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Categorias de Serviços'),
+          automaticallyImplyLeading: false,
+          leading: IconButton(
+            tooltip: 'Voltar',
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            onPressed: () => Get.back(),
+          ),
+          title: Text(
+            'Categorias de Serviços',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
           centerTitle: true,
           flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
         ),

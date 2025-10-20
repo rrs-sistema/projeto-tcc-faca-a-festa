@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -63,11 +64,8 @@ class RegisterController extends GetxController {
           .doc(endereco.id)
           .set(endereco.toMap());
 
-      // 🔹 Salvar endereço adicional futuramente:
-      // await _db.collection('usuarios').doc(uid)
-      //   .collection('enderecos').add(EnderecoUsuarioModel(...).toMap());
-
-      EasyLoading.showSuccess('Usuário e endereço salvos com sucesso');
+      Get.snackbar('Sucesso', 'Usuário cadastrado com sucesso!',
+          backgroundColor: Colors.green.shade700, colorText: Colors.white);
 
       // 🚀 Redireciona conforme tipo
       if (tipo == 'F') {

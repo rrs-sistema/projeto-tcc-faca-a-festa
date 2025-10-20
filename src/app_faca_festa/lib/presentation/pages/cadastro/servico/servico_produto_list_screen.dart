@@ -28,11 +28,21 @@ class ServicoProdutoListScreen extends StatelessWidget {
 
       return Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
+          leading: IconButton(
+            tooltip: 'Voltar',
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            onPressed: () => Get.back(),
+          ),
           title: Text(
             'Serviços / Produtos',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
           ),
           flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
+          centerTitle: true,
         ),
         backgroundColor: Colors.grey.shade100,
         body: controller.carregando.value
