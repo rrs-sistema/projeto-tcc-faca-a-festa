@@ -27,8 +27,8 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.listarServicosFornecedor(widget.fornecedor.idFornecedor);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await controller.listarServicosFornecedor(widget.fornecedor.idFornecedor);
     });
   }
 
@@ -96,81 +96,96 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
             ],
           ),
         ),
-        body: controller.carregando.value
-            ? const Center(child: CircularProgressIndicator())
-            : controller.servicosFornecedor.isEmpty
-                ? Center(
-                    child: Text(
-                      'Nenhum serviço cadastrado para este fornecedor',
-                      style: GoogleFonts.poppins(color: Colors.grey.shade600),
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                    itemCount: controller.servicosFornecedor.length,
-                    itemBuilder: (_, i) {
-                      final s = controller.servicosFornecedor[i];
-                      final servicoBase = servicoController.buscarPorId(s.idProdutoServico);
-                      final nomeServico = servicoBase?.nome ?? 'Serviço não encontrado';
+        body: Obx(() {
+          // 🔹 Mostra carregamento geral
+          if (controller.carregando.value || servicoController.carregando.value) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 2,
-                        child: ListTile(
-                          title: Text(
-                            nomeServico,
-                            style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 6),
-                              Text(
-                                'Preço: R\$ ${s.preco.toStringAsFixed(2)}',
-                                style: GoogleFonts.poppins(fontSize: 13),
-                              ),
-                              if (s.precoPromocao != null)
-                                Text(
-                                  'Promoção: R\$ ${s.precoPromocao!.toStringAsFixed(2)}',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 13,
-                                    color: Colors.red.shade700,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              const SizedBox(height: 4),
-                              Text(
-                                s.ativo ? 'Ativo' : 'Inativo',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: s.ativo ? Colors.green : Colors.grey,
-                                ),
-                              ),
-                              Text(
-                                'Cadastrado em: ${DateFormat('dd/MM/yyyy').format(s.dataCadastro)}',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.orange),
-                            tooltip: 'Editar serviço',
-                            onPressed: () => showFornecedorServicoBottomSheet(
-                              context,
-                              widget.fornecedor.idFornecedor,
-                              vinculo: s,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+          // 🔹 Nenhum serviço encontrado
+          if (controller.servicosFornecedor.isEmpty) {
+            return Center(
+              child: Text(
+                'Nenhum serviço cadastrado para este fornecedor',
+                style: GoogleFonts.poppins(color: Colors.grey.shade600),
+              ),
+            );
+          }
+
+          // 🔹 Cache local para acesso rápido aos nomes
+          final mapaServicos = {
+            for (var s in servicoController.servicos) s.id: s.nome,
+          };
+
+          // 🔹 Lista de serviços
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+            itemCount: controller.servicosFornecedor.length,
+            itemBuilder: (_, i) {
+              final s = controller.servicosFornecedor[i];
+              final nomeServico = mapaServicos[s.idProdutoServico] ?? 'Carregando...';
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                elevation: 2,
+                child: ListTile(
+                  title: Text(
+                    nomeServico,
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                   ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 6),
+                      Text(
+                        'Preço: R\$ ${s.preco.toStringAsFixed(2)}',
+                        style: GoogleFonts.poppins(fontSize: 13),
+                      ),
+                      if (s.precoPromocao != null)
+                        Text(
+                          'Promoção: R\$ ${s.precoPromocao!.toStringAsFixed(2)}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            color: Colors.red.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      const SizedBox(height: 4),
+                      Text(
+                        s.ativo ? 'Ativo' : 'Inativo',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: s.ativo ? Colors.green : Colors.grey,
+                        ),
+                      ),
+                      Text(
+                        'Cadastrado em: ${DateFormat('dd/MM/yyyy').format(s.dataCadastro)}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.orange),
+                    tooltip: 'Editar serviço',
+                    onPressed: () => showFornecedorServicoBottomSheet(
+                      context,
+                      widget.fornecedor.idFornecedor,
+                      vinculo: s,
+                    ),
+                  ),
+                ),
+              );
+            },
+          );
+        }),
         floatingActionButton: FloatingActionButton(
           backgroundColor: primary,
           onPressed: () =>

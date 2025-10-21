@@ -9,6 +9,7 @@ import '../../../../../core/utils/no_sqflite_cache_manager.dart';
 import '../../../../../controllers/fornecedor_controller.dart';
 import '../../servico/fornecedor_servico_list_screen.dart';
 import '../../../../../data/models/model.dart';
+import 'territorio_atendimento.dart';
 
 class FornecedorListTile extends StatelessWidget {
   final FornecedorModel fornecedor;
@@ -184,7 +185,10 @@ class FornecedorListTile extends StatelessWidget {
                 color: Colors.indigo.shade700,
                 bgColor: Colors.indigo.shade50,
                 borderColor: Colors.indigo.shade300,
-                onTap: () => Get.to(() => FornecedorServicoListScreen(fornecedor: fornecedor)),
+                onTap: () async {
+                  await controller.listarServicosFornecedor(fornecedor.idFornecedor);
+                  Get.to(() => FornecedorServicoListScreen(fornecedor: fornecedor));
+                },
               ),
 
               const SizedBox(width: 10),
@@ -273,7 +277,20 @@ class FornecedorListTile extends StatelessWidget {
                     },
                   ),
                 ),
-              const SizedBox(width: 8), // margem final opcional
+              const SizedBox(width: 8),
+
+              // 🔹 Adicionar Território
+              _actionButton(
+                icon: Icons.map_outlined,
+                label: 'Território',
+                color: Colors.teal.shade700,
+                bgColor: Colors.teal.shade50,
+                borderColor: Colors.teal.shade300,
+                onTap: () async {
+                  await showAddTerritorioBottomSheet(context, fornecedor.idFornecedor);
+                },
+              ),
+              const SizedBox(width: 8),
             ],
           ),
         ),

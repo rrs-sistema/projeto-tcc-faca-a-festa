@@ -3,10 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/utils/no_sqflite_cache_manager.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_model.dart';
+import './../../../core/utils/no_sqflite_cache_manager.dart';
 import './../../../controllers/event_theme_controller.dart';
-import 'components/abrir_cotacao_bottom_sheet.dart';
+import './../../../controllers/fornecedor_controller.dart';
+import './components/abrir_cotacao_bottom_sheet.dart';
 
 class FornecedorDetalheScreen extends StatelessWidget {
   final FornecedorDetalhadoModel fornecedorDetalhado;
@@ -21,6 +22,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
     final fornecedor = fornecedorDetalhado.fornecedor;
     final territorio = fornecedorDetalhado.territorio;
     final distancia = fornecedorDetalhado.distanciaKm;
+    final fornecedorController = Get.find<FornecedorController>();
+    fornecedorController.escutarServicosFornecedor(fornecedorDetalhado.fornecedor.idFornecedor);
 
     return Scaffold(
       appBar: AppBar(
@@ -66,10 +69,10 @@ class FornecedorDetalheScreen extends StatelessWidget {
 
             Center(
               child: Text(
-                fornecedor.razaoSocial,
+                fornecedorDetalhado.categoriaNome,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
-                  fontSize: 22,
+                  fontSize: 16,
                   fontWeight: FontWeight.w700,
                   color: primary,
                 ),
@@ -79,7 +82,6 @@ class FornecedorDetalheScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // === Informações gerais ===
-            _infoTile(Icons.person_outline, "Responsável: ${fornecedor.idUsuario}"),
             _infoTile(Icons.call_outlined, fornecedor.telefone),
             _infoTile(Icons.email_outlined, fornecedor.email),
 
@@ -140,6 +142,122 @@ class FornecedorDetalheScreen extends StatelessWidget {
                 },
               ),
             ),
+
+            const SizedBox(height: 30),
+
+            // === Outros serviços do fornecedor ===
+            Text(
+              'Outros serviços oferecidos',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 16,
+                color: Colors.black87,
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            Obx(() {
+              final fornecedorController = Get.find<FornecedorController>();
+              final servicos = fornecedorController.catalogoServicos;
+              final fotos = fornecedorController.fotosServico;
+
+              if (fornecedorController.servicosFornecedor.isEmpty) {
+                return Text(
+                  'Este fornecedor ainda não cadastrou outros serviços.',
+                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54),
+                );
+              }
+
+              return SizedBox(
+                height: 170,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  separatorBuilder: (_, __) => const SizedBox(width: 12),
+                  itemCount: servicos.length,
+                  itemBuilder: (_, i) {
+                    final s = servicos[i];
+
+                    // tenta achar uma imagem correspondente
+                    final foto = fotos.firstWhereOrNull(
+                      (f) => f.idProdutoServico == s.id,
+                    );
+
+                    return Container(
+                      width: 150,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.white,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(2, 2),
+                          ),
+                        ],
+                      ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () {
+                          // Aqui você pode abrir uma tela de detalhes do serviço, se quiser
+                          // Navigator.push(context, MaterialPageRoute(
+                          //   builder: (_) => ServicoDetalheScreen(servico: s),
+                          // ));
+                        },
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                              child: foto != null && foto.url.isNotEmpty
+                                  ? CachedNetworkImage(
+                                      imageUrl: foto.url,
+                                      height: 90,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      placeholder: (_, __) =>
+                                          Container(color: Colors.grey.shade300),
+                                    )
+                                  : Container(
+                                      height: 90,
+                                      color: Colors.grey.shade300,
+                                      child: const Icon(
+                                        Icons.image_not_supported_outlined,
+                                        size: 40,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    s.nome,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w600, fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    s.descricao ?? 'Sem descrição',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: GoogleFonts.poppins(color: Colors.black54, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              );
+            }),
           ],
         ),
       ),

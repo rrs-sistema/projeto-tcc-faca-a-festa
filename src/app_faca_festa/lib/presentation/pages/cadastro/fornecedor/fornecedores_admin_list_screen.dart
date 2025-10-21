@@ -322,7 +322,6 @@ class FornecedoresAdminListScreen extends StatelessWidget {
 
                   // 🔹 Status de atividade
                   DropdownButtonFormField<String>(
-                    //value: ativo == null ? null : (ativo ?? false ? 'Ativos' : 'Desativados'),
                     value: ativo == null ? null : (ativo! ? 'Ativos' : 'Desativados'),
                     items: const [
                       DropdownMenuItem(value: 'Ativos', child: Text('Ativos')),

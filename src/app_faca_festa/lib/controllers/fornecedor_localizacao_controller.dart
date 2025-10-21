@@ -18,6 +18,10 @@ class FornecedorLocalizacaoController extends GetxController {
   var raio = 10.0.obs;
   var avaliacaoMinima = 0.0.obs;
   var carregando = true.obs;
+// Listas brutas (para reatividade)
+  final _fornecedoresRaw = <FornecedorModel>[].obs;
+  final _relacoesRaw = <FornecedorCategoriaModel>[].obs;
+  final _territoriosRaw = <TerritorioModel>[].obs;
 
   // Listas principais
   var fornecedores = <FornecedorDetalhadoModel>[].obs;
@@ -61,86 +65,48 @@ class FornecedorLocalizacaoController extends GetxController {
   Future<void> carregarDados() async {
     carregando.value = true;
     try {
-      // 🔹 1️⃣ Faz consultas em paralelo com Future.wait
-      final results = await Future.wait([
-        db.collection('categoria_servico').where('ativo', isEqualTo: true).get(),
-        db.collection('fornecedor').where('ativo', isEqualTo: true).get(),
-        db.collection('fornecedor_categoria').get(),
-        db.collection('territorio').get(),
-      ]);
+      // Escuta categorias ativas
+      db
+          .collection('categoria_servico')
+          .where('ativo', isEqualTo: true)
+          .snapshots()
+          .listen((snapshot) {
+        categorias.assignAll(snapshot.docs.map((d) {
+          return CategoriaServicoModel.fromMap({'id': d.id, ...d.data()});
+        }).toList());
+        _reconstruirLista();
+      });
 
-      final queryCategorias = results[0];
-      final queryFornecedores = results[1];
-      final queryRelacoes = results[2];
-      final queryTerritorios = results[3];
+      // Escuta fornecedores
+      db.collection('fornecedor').where('ativo', isEqualTo: true).snapshots().listen((snapshot) {
+        final lista = snapshot.docs.map((d) {
+          return FornecedorModel.fromMap({...d.data(), 'id_fornecedor': d.id});
+        }).toList();
+        _fornecedoresRaw.assignAll(lista);
+        _reconstruirLista();
+      });
 
-      // 🔹 2️⃣ Converte listas
-      final listaCategorias = queryCategorias.docs
-          .map((d) => CategoriaServicoModel.fromMap({'id': d.id, ...d.data()}))
-          .toList();
+      // Escuta relações fornecedor↔categoria
+      db.collection('fornecedor_categoria').snapshots().listen((snapshot) {
+        final lista = snapshot.docs.map((d) {
+          return FornecedorCategoriaModel.fromMap(d.data());
+        }).toList();
+        _relacoesRaw.assignAll(lista);
+        _reconstruirLista();
+      });
 
-      final listaFornecedores = queryFornecedores.docs
-          .map((d) => FornecedorModel.fromMap({...d.data(), 'id_fornecedor': d.id}))
-          .toList();
-
-      final relacoes =
-          queryRelacoes.docs.map((d) => FornecedorCategoriaModel.fromMap(d.data())).toList();
-
-      final territorios =
-          queryTerritorios.docs.map((d) => TerritorioModel.fromMap(d.data())).toList();
-
-      categorias.assignAll(listaCategorias);
-
-      // 🔹 3️⃣ Usa Map para busca instantânea (O(1))
-      final relacaoPorFornecedor = {
-        for (var r in relacoes) r.idFornecedor: r,
-      };
-      final categoriaPorId = {
-        for (var c in listaCategorias) c.id: c.nome,
-      };
-      final territorioPorFornecedor = {
-        for (var t in territorios) t.idFornecedor: t,
-      };
-
-      // 🔹 4️⃣ Monta lista detalhada (sem travar a UI)
-      final List<FornecedorDetalhadoModel> listaDetalhada = [];
-
-      for (final f in listaFornecedores) {
-        final relacao = relacaoPorFornecedor[f.idFornecedor];
-        final categoriaNome = categoriaPorId[relacao?.idCategoria] ?? 'Outros';
-        final territorio = territorioPorFornecedor[f.idFornecedor];
-
-        double? distanciaKm;
-        if (territorio?.latitude != null && territorio?.longitude != null) {
-          distanciaKm = _calcularDistancia(
-            userLatitude.value,
-            userLongitude.value,
-            territorio!.latitude!,
-            territorio.longitude!,
-          );
-        }
-
-        listaDetalhada.add(
-          FornecedorDetalhadoModel(
-            fornecedor: f,
-            categoriaNome: categoriaNome,
-            territorio: territorio,
-            distanciaKm: distanciaKm,
-          ),
-        );
-      }
-
-      fornecedores.assignAll(listaDetalhada);
-
-      // 🔹 5️⃣ Filtra e atualiza interface após microdelay
-      await Future.delayed(const Duration(milliseconds: 100));
-      _filtrarPorRaio();
-
-      if (kDebugMode) {
-        print('✅ ${fornecedores.length} fornecedores carregados');
-      }
+      // Escuta territórios
+      db.collection('territorio').snapshots().listen((snapshot) {
+        final lista = snapshot.docs.map((d) {
+          return TerritorioModel.fromMap(d.data());
+        }).toList();
+        _territoriosRaw.assignAll(lista);
+        _reconstruirLista();
+      });
     } catch (e, s) {
-      if (kDebugMode) print('❌ Erro ao carregar fornecedores: $e\n$s');
+      if (kDebugMode) {
+        print('❌ Erro na escuta reativa: $e - StackTrace $s');
+      }
     } finally {
       carregando.value = false;
     }
@@ -160,14 +126,16 @@ class FornecedorLocalizacaoController extends GetxController {
       final distancia = f.distanciaKm;
       final raioFornecedor = f.territorio?.raioKm ?? 999;
 
+      // 🔹 Mantém fornecedor SEM coordenadas ou fora do raio, se tiver categoria válida
+      if (f.categoriaNome.isNotEmpty && f.categoriaNome != 'Outros') {
+        return true;
+      }
+
+      // 🔹 Mantém apenas se dentro do raio
       if (distancia == null) return true;
       final limite = min(raioGlobal, raioFornecedor);
       return distancia <= limite;
     }).toList();
-
-    if (kDebugMode) {
-      print('📍 ${fornecedoresFiltrados.length} fornecedores dentro do raio ($raioGlobal km)');
-    }
   }
 
   // ==========================================================
@@ -192,8 +160,61 @@ class FornecedorLocalizacaoController extends GetxController {
   }
 
   List<FornecedorDetalhadoModel> fornecedoresPorCategoria(String nomeCategoria) {
-    return fornecedoresFiltrados
-        .where((f) => f.categoriaNome.toLowerCase() == nomeCategoria.toLowerCase())
-        .toList();
+    final termo = nomeCategoria.trim().toLowerCase();
+
+    // 🔹 Filtra fornecedores dentro do raio E com categoria correspondente
+    return fornecedoresFiltrados.where((f) {
+      return f.categoriaNome.split(',').map((c) => c.trim().toLowerCase()).contains(termo);
+    }).toList();
+  }
+
+  void _reconstruirLista() {
+    if (_fornecedoresRaw.isEmpty || categorias.isEmpty) return;
+
+    final relacoesPorFornecedor = <String, List<FornecedorCategoriaModel>>{};
+    for (final r in _relacoesRaw) {
+      relacoesPorFornecedor.putIfAbsent(r.idFornecedor, () => []).add(r);
+    }
+
+    final categoriaPorId = {for (var c in categorias) c.id: c.nome};
+    final territorioPorFornecedor = {for (var t in _territoriosRaw) t.idFornecedor: t};
+
+    final List<FornecedorDetalhadoModel> listaDetalhada = [];
+
+    for (final f in _fornecedoresRaw) {
+      final relacoesFornecedor = relacoesPorFornecedor[f.idFornecedor] ?? [];
+      if (relacoesFornecedor.isEmpty) continue;
+
+      final nomesCategorias = relacoesFornecedor
+          .map((r) => categoriaPorId[r.idCategoria])
+          .whereType<String>()
+          .toSet()
+          .join(', ');
+
+      if (nomesCategorias.isEmpty) continue;
+
+      final territorio = territorioPorFornecedor[f.idFornecedor];
+      double? distanciaKm;
+      if (territorio?.latitude != null && territorio?.longitude != null) {
+        distanciaKm = _calcularDistancia(
+          userLatitude.value,
+          userLongitude.value,
+          territorio!.latitude!,
+          territorio.longitude!,
+        );
+      }
+
+      listaDetalhada.add(
+        FornecedorDetalhadoModel(
+          fornecedor: f,
+          categoriaNome: nomesCategorias,
+          territorio: territorio,
+          distanciaKm: distanciaKm,
+        ),
+      );
+    }
+
+    fornecedores.assignAll(listaDetalhada);
+    _filtrarPorRaio();
   }
 }

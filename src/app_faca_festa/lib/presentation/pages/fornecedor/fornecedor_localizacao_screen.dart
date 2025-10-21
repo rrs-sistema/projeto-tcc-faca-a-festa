@@ -81,11 +81,32 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
             return const Center(child: CircularProgressIndicator());
           }
 
-          final fornecedores = categoriaSelecionada == null
-              ? controller.fornecedoresFiltrados
-              : controller.fornecedoresFiltrados
-                  .where((f) => f.categoriaNome == categoriaSelecionada)
-                  .toList();
+// 🔹 Filtro inteligente de fornecedores por categoria (com LOGs detalhados)
+          List<FornecedorDetalhadoModel> fornecedores;
+
+          if (categoriaSelecionada == null) {
+            fornecedores = controller.fornecedoresFiltrados;
+          } else {
+            final termo = categoriaSelecionada!.trim().toLowerCase();
+
+            fornecedores = [];
+
+            for (FornecedorDetalhadoModel f in controller.fornecedoresFiltrados) {
+              FornecedorDetalhadoModel detalheFornecedor = FornecedorDetalhadoModel(
+                  categoriaNome: categoriaSelecionada ?? '',
+                  fornecedor: f.fornecedor,
+                  distanciaKm: f.distanciaKm,
+                  territorio: f.territorio);
+              final categoriasFornecedor =
+                  f.categoriaNome.split(',').map((c) => c.trim().toLowerCase()).toList();
+
+              final contem = categoriasFornecedor.contains(termo);
+
+              if (contem) {
+                fornecedores.add(detalheFornecedor);
+              }
+            }
+          }
 
           final selecionadosSet = selecionados;
 
@@ -128,7 +149,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                                   crossAxisCount: 2,
                                   mainAxisSpacing: 15,
                                   crossAxisSpacing: 15,
-                                  childAspectRatio: isCelular ? 0.53 : 0.70,
+                                  childAspectRatio: isCelular ? 0.49 : 0.70,
                                 ),
                                 itemCount: fornecedores.length,
                                 itemBuilder: (context, index) {

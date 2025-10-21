@@ -30,18 +30,9 @@ class OrcamentosAdminController extends GetxController {
       final snap = await _db.collection('orcamento').get();
       final List<OrcamentoAdminModel> lista = [];
 
-      debugPrint("📦 Total de documentos em 'orcamento': ${snap.docs.length}");
-
       final futures = snap.docs.map((doc) async {
         final data = doc.data();
         final orcamento = OrcamentoModel.fromMap(data);
-
-        debugPrint("\n------------------------------");
-        debugPrint("🧾 Processando orçamento: ${orcamento.idOrcamento}");
-        debugPrint("Evento vinculado: ${orcamento.idEvento}");
-        debugPrint("Categoria vinculada: ${orcamento.idCategoria}");
-        debugPrint("Status: ${orcamento.status.label}");
-        debugPrint("Custo estimado inicial: ${orcamento.custoEstimado}");
 
         // === 🔹 Evento ===
         String eventoNome = 'Evento não identificado';
@@ -123,12 +114,6 @@ class OrcamentosAdminController extends GetxController {
             valorPago = somaPagos;
 
             _cacheCategorias[orcamento.idOrcamento] = categoriaNome;
-
-            debugPrint(
-                "💾 Subcoleção orcamento_gasto encontrada (${gastosSnap.docs.length} docs): $categoriaNome → custo $custoEstimado, pago $valorPago");
-          } else {
-            debugPrint(
-                "⚠️ Nenhum documento encontrado em orcamento_gasto para ${orcamento.idOrcamento}");
           }
         }
 
@@ -147,15 +132,11 @@ class OrcamentosAdminController extends GetxController {
           custoTotalEvento: orcamentoGeralEvento,
         );
 
-        debugPrint(
-            "✅ Concluído orçamento ${orcamento.idOrcamento}: ${model.eventoNome} / ${model.categoria} / Pago: ${model.pago}");
         return model;
       });
 
       lista.addAll(await Future.wait(futures));
       orcamentos.value = lista;
-
-      debugPrint("✅ Total processado: ${orcamentos.length}");
     } catch (e) {
       erro.value = 'Erro ao carregar orçamentos: $e';
       debugPrint("❌ Erro ao carregar orçamentos: $e");

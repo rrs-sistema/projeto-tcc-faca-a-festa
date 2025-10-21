@@ -229,12 +229,12 @@ Future<void> showServicoProdutoBottomSheet(
                       }
 
                       final model = ServicoProdutoModel(
-                        id: servico?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-                        nome: nomeCtrl.text.trim(),
-                        tipoMedida: tipoMedida.value.isEmpty ? null : tipoMedida.value,
-                        descricao: descCtrl.text.trim(),
-                        idSubcategoria: subcategoriaSelecionada.value!.id, // ✅ novo vínculo
-                      );
+                          id: servico?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                          nome: nomeCtrl.text.trim(),
+                          tipoMedida: tipoMedida.value.isEmpty ? null : tipoMedida.value,
+                          descricao: descCtrl.text.trim(),
+                          idSubcategoria: subcategoriaSelecionada.value!.id, // ✅ novo vínculo
+                          ativo: true);
 
                       await servicoController.salvarServico(model);
                       Get.back();

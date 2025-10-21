@@ -410,6 +410,7 @@ class FornecedorController extends GetxController {
     final snapshot = await _db
         .collection('servico_produto')
         .where(FieldPath.documentId, whereIn: idsProdutoServico)
+        .where('ativo', isEqualTo: true)
         .get();
 
     final lista = snapshot.docs.map((d) {
@@ -623,6 +624,55 @@ class FornecedorController extends GetxController {
     final fechados = orcamentos.where((o) => o.status == StatusOrcamento.fechado).length;
     ('✅ $fechados fornecedores contratados.');
     return fechados;
+  }
+
+  Future<void> atualizarEstatisticasFornecedor() async {
+    final f = fornecedor.value;
+    if (f == null) return;
+
+    try {
+      // === 🔹 Solicitações pendentes / em negociação ===
+      final orcSnap =
+          await _db.collection('orcamento').where('id_fornecedor', isEqualTo: f.idFornecedor).get();
+
+      final pendentes = orcSnap.docs.where((d) {
+        final status = d['status']?.toString().toLowerCase();
+        return status == 'pendente' || status == 'em_negociacao';
+      }).length;
+      solicitacoesPendentes.value = pendentes;
+
+      // === 🔹 Serviços ativos ===
+      final servSnap = await _db
+          .collection('fornecedor_servico')
+          .where('id_fornecedor', isEqualTo: f.idFornecedor)
+          .where('ativo', isEqualTo: true)
+          .get();
+      servicosFornecedor
+          .assignAll(servSnap.docs.map((d) => FornecedorProdutoServicoModel.fromMap(d.data())));
+
+      // === 🔹 Mensagens não lidas ===
+      final msgSnap = await _db
+          .collectionGroup('mensagens')
+          .where('id_fornecedor', isEqualTo: f.idFornecedor)
+          .where('lida', isEqualTo: false)
+          .get();
+      mensagensNaoLidas.value = msgSnap.docs.length;
+
+      // === 🔹 Avaliação média ===
+      final avalSnap = await _db
+          .collection('avaliacoes')
+          .where('id_fornecedor', isEqualTo: f.idFornecedor)
+          .get();
+
+      if (avalSnap.docs.isNotEmpty) {
+        final soma = avalSnap.docs.map((d) => (d['nota'] ?? 0).toDouble()).reduce((a, b) => a + b);
+        avaliacaoMedia.value = soma / avalSnap.docs.length;
+      } else {
+        avaliacaoMedia.value = 0;
+      }
+    } catch (e, s) {
+      debugPrint('❌ Erro ao atualizar estatísticas: $e\n$s');
+    }
   }
 
   @override
