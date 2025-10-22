@@ -1,20 +1,21 @@
-import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 import 'dart:async';
 
-import '../../controllers/app_controller.dart';
-import '../../controllers/event_theme_controller.dart';
-import '../../controllers/evento_cadastro_controller.dart';
-import '../../data/models/model.dart';
-import '../widgets/menu_drawer_faca_festa.dart';
+import './../../controllers/evento_cadastro_controller.dart';
+import './../../controllers/event_theme_controller.dart';
 import './fornecedor/fornecedor_localizacao_screen.dart';
+import './../../controllers/evento_controller.dart';
+import './../widgets/menu_drawer_faca_festa.dart';
+import './../../controllers/app_controller.dart';
 import './components/festa_cards_widget.dart';
+import './comunidade/comunidade_screen.dart';
+import './inspiracao/inspiracao_screen.dart';
 import './components/festa_bottom_bar.dart';
-import 'comunidade/comunidade_screen.dart';
-import 'contador_evento.dart';
-import 'inspiracao/inspiracao_screen.dart';
+import './../../data/models/model.dart';
+import './contador_evento.dart';
 
 class HomeEventScreen extends StatefulWidget {
   const HomeEventScreen({
@@ -37,11 +38,12 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
   final eventoCadastroController = Get.find<EventoCadastroController>();
   final themeController = Get.put(EventThemeController());
   final appController = Get.find<AppController>();
+  final eventoController = Get.find<EventoController>();
 
   @override
   void initState() {
     super.initState();
-    eventoModel = appController.eventoModel.value!;
+    eventoModel = eventoController.eventoAtual.value!;
     tipoEvento = eventoCadastroController.tiposEvento
         .where((t) => t.idTipoEvento == eventoModel.idTipoEvento)
         .first;
@@ -102,7 +104,7 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
     return Obx(() {
       final cor = themeController.primaryColor.value;
       //final gradiente = themeController.gradient.value;
-      final icone = themeController.icon.value;
+      //final icone = themeController.icon.value;
       final titulo = themeController.tituloCabecalho.value;
 
       return SafeArea(
@@ -151,7 +153,7 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Icon(icone, color: Colors.white, size: 28),
+                        SizedBox.shrink(),
                         const Icon(Icons.mail_outline, color: Colors.white, size: 28),
                       ],
                     ),
@@ -201,7 +203,7 @@ class _HomeEventScreenState extends State<HomeEventScreen> {
               ),
 
               // === CONTADOR ===
-              ContadorEvento(
+              ContadorEventoScreen(
                 dataEvento: eventoModel.data,
                 tipoEvento: eventoModel.nome, // 🔹 envia o tipo para personalizar
               ),

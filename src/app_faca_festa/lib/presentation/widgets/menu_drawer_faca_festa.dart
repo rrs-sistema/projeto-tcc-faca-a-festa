@@ -2,6 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../controllers/evento_controller.dart';
 import './../../controllers/evento_cadastro_controller.dart';
 import './../pages/usuario/cadastro_evento_bottom_sheet.dart';
 import './../../controllers/event_theme_controller.dart';
@@ -14,7 +15,8 @@ class MenuDrawerFacaFesta extends StatelessWidget {
 
   final themeController = Get.find<EventThemeController>();
   final appController = Get.find<AppController>();
-  final eventoController = Get.find<EventoCadastroController>();
+  final eventoCadastroController = Get.find<EventoCadastroController>();
+  final eventoController = Get.find<EventoController>();
 
   @override
   Widget build(BuildContext context) {
@@ -75,9 +77,9 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 children: [
                   _menuItem(Icons.event_note, "Meu Evento", color: primary, onTap: () {
-                    final evento = appController.eventoModel.value;
+                    final evento = eventoController.eventoAtual.value;
                     if (evento != null) {
-                      eventoController.carregarEvento(evento);
+                      eventoCadastroController.carregarEvento(evento);
                       showCadastroEventoBottomSheet(context, eventoParaEdicao: evento);
                     }
                   }),

@@ -1,110 +1,89 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
+import './../../../../controllers/convidado/cardapio_controller.dart';
+import './../../../../data/models/cardapio/cardapio_model.dart';
+
+/// --- Aba: Cardápios (versão dinâmica) ---
 class CardapiosTab extends StatelessWidget {
   const CardapiosTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final cardapios = [
-      {
-        "title": "Adultos",
-        "icon": Icons.local_dining_rounded,
-        "color": const Color(0xFF8B0000),
-        "items": [
-          {"nome": "Prato principal: Risoto de camarão", "confirmado": true},
-          {"nome": "Bebida: Vinho tinto seco", "confirmado": true},
-        ]
-      },
-      {
-        "title": "Crianças",
-        "icon": Icons.icecream_outlined,
-        "color": const Color(0xFFFFA000),
-        "items": [
-          {"nome": "Mini hambúrguer", "confirmado": true},
-          {"nome": "Suco natural", "confirmado": true},
-        ]
-      },
-      {
-        "title": "Livre",
-        "icon": Icons.restaurant_menu_rounded,
-        "color": Colors.teal,
-        "items": [
-          {"nome": "Buffet completo", "confirmado": true},
-          {"nome": "Sobremesa à vontade", "confirmado": true},
-        ]
-      },
-    ];
+    final controller = Get.find<CardapioController>();
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFFFF9F9), Color(0xFFFFFFFF)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+    return Obx(() {
+      if (controller.carregando.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      if (controller.cardapios.isEmpty) {
+        return const Center(
+          child: Text(
+            'Nenhum cardápio cadastrado ainda 🍽️',
+            style: TextStyle(color: Colors.black54, fontSize: 16),
+          ),
+        );
+      }
+
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFFFF9F9), Color(0xFFFFFFFF)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
-      ),
-      child: ListView(
-        padding: const EdgeInsets.all(18),
-        children: [
-          const SizedBox(height: 10),
-          const Center(
-            child: Text(
-              "🍽️ Cardápios do Evento",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+        child: ListView(
+          padding: const EdgeInsets.all(18),
+          children: [
+            const SizedBox(height: 10),
+            const Center(
+              child: Text(
+                "🍽️ Cardápios do Evento",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 20),
 
-          // Cards de categorias (Adultos, Crianças, Livre)
-          ...cardapios.map((c) => _CardapioCategoriaCard(
-                title: c["title"] as String,
-                icon: c["icon"] as IconData,
-                color: c["color"] as Color,
-                items: (c["items"] as List)
-                    .map((i) => _ConvidadoItem(
-                          nome: i["nome"] as String,
-                          confirmado: i["confirmado"] as bool,
-                        ))
-                    .toList(),
-              )),
-          const SizedBox(height: 20),
+            // 🔹 Lista de categorias de cardápio
+            ...controller.cardapios.map(
+              (cardapio) => _CardapioCategoriaCard(cardapio: cardapio),
+            ),
 
-          // Estatísticas rápidas
-          const _ResumoCardapioResumo(),
+            const SizedBox(height: 20),
 
-          const SizedBox(height: 32),
+            // 🔹 Resumo geral
+            _ResumoCardapioResumo(controller: controller),
 
-          // Gráfico visual
-          const _GraficoCardapio(),
+            const SizedBox(height: 32),
 
-          const SizedBox(height: 110),
-        ],
-      ),
-    );
+            // 🔹 Gráfico dinâmico
+            _GraficoCardapio(controller: controller),
+
+            const SizedBox(height: 110),
+          ],
+        ),
+      );
+    });
   }
 }
 
 /// === CARD de Categoria ===
 class _CardapioCategoriaCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Color color;
-  final List<Widget> items;
+  final CardapioModel cardapio;
 
-  const _CardapioCategoriaCard({
-    required this.title,
-    required this.icon,
-    required this.color,
-    required this.items,
-  });
+  const _CardapioCategoriaCard({required this.cardapio});
 
   @override
   Widget build(BuildContext context) {
+    final color = cardapio.cor ?? Colors.teal;
+
     return Card(
       elevation: 3,
       margin: const EdgeInsets.only(bottom: 18),
@@ -113,10 +92,10 @@ class _CardapioCategoriaCard extends StatelessWidget {
         backgroundColor: Colors.white,
         leading: CircleAvatar(
           backgroundColor: color.withValues(alpha: 0.15),
-          child: Icon(icon, color: color, size: 22),
+          child: Icon(cardapio.icone ?? Icons.restaurant_menu_rounded, color: color, size: 22),
         ),
         title: Text(
-          title,
+          cardapio.titulo,
           style: TextStyle(
             fontWeight: FontWeight.w600,
             color: color,
@@ -124,22 +103,40 @@ class _CardapioCategoriaCard extends StatelessWidget {
           ),
         ),
         subtitle: Text(
-          "${items.length} itens incluídos",
+          "${cardapio.itens.length} itens incluídos",
           style: const TextStyle(fontSize: 13, color: Colors.black54),
         ),
         childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        children: items,
+        children: cardapio.itens.isNotEmpty
+            ? cardapio.itens
+                .map((i) => _CardapioItemTile(nome: i.nome, confirmado: i.confirmado))
+                .toList()
+            : [
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.grey[400], size: 18),
+                      const SizedBox(width: 6),
+                      Text(
+                        "Nenhum item cadastrado neste cardápio.",
+                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
       ),
     );
   }
 }
 
-/// === ITEM de convidado/prato ===
-class _ConvidadoItem extends StatelessWidget {
+/// === ITEM de prato/bebida ===
+class _CardapioItemTile extends StatelessWidget {
   final String nome;
   final bool confirmado;
 
-  const _ConvidadoItem({required this.nome, required this.confirmado});
+  const _CardapioItemTile({required this.nome, required this.confirmado});
 
   @override
   Widget build(BuildContext context) {
@@ -158,17 +155,18 @@ class _ConvidadoItem extends StatelessWidget {
   }
 }
 
-/// === CARD de Resumo ===
+/// === CARD de Resumo Dinâmico ===
 class _ResumoCardapioResumo extends StatelessWidget {
-  const _ResumoCardapioResumo();
+  final CardapioController controller;
+  const _ResumoCardapioResumo({required this.controller});
 
   @override
   Widget build(BuildContext context) {
     final resumo = [
-      {"label": "Cardápios totais", "value": 3, "color": Colors.teal},
-      {"label": "Itens servidos", "value": 8, "color": Colors.orange},
-      {"label": "Bebidas", "value": 3, "color": Colors.blueAccent},
-      {"label": "Sobremesas", "value": 2, "color": Colors.pinkAccent},
+      {"label": "Cardápios totais", "value": controller.totalCardapios, "color": Colors.teal},
+      {"label": "Itens servidos", "value": controller.totalItens, "color": Colors.orange},
+      {"label": "Bebidas", "value": controller.totalBebidas, "color": Colors.blueAccent},
+      {"label": "Sobremesas", "value": controller.totalSobremesas, "color": Colors.pinkAccent},
     ];
 
     return Column(
@@ -202,12 +200,7 @@ class _ResumoCardapioResumo extends StatelessWidget {
     );
   }
 
-  Widget _metricCard(
-    BuildContext context,
-    String label,
-    String value,
-    Color color,
-  ) {
+  Widget _metricCard(BuildContext context, String label, String value, Color color) {
     final screenWidth = MediaQuery.of(context).size.width;
     final double cardWidth = (screenWidth / 2) - 28;
 
@@ -253,16 +246,28 @@ class _ResumoCardapioResumo extends StatelessWidget {
   }
 }
 
-/// === GRÁFICO ===
+/// === GRÁFICO dinâmico ===
 class _GraficoCardapio extends StatelessWidget {
-  const _GraficoCardapio();
+  final CardapioController controller;
+  const _GraficoCardapio({required this.controller});
 
   @override
   Widget build(BuildContext context) {
-    final comidas = 8.0;
-    final bebidas = 3.0;
-    final sobremesas = 2.0;
+    final comidas = controller.totalComidas.toDouble();
+    final bebidas = controller.totalBebidas.toDouble();
+    final sobremesas = controller.totalSobremesas.toDouble();
     final total = comidas + bebidas + sobremesas;
+
+    if (total == 0) {
+      return const Padding(
+        padding: EdgeInsets.all(24),
+        child: Text(
+          'Ainda não há dados suficientes para gerar o gráfico.',
+          style: TextStyle(color: Colors.black54, fontSize: 15),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
 
     return Column(
       children: [

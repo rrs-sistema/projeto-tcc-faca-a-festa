@@ -3,10 +3,12 @@
 // ================================
 import 'dart:async';
 
+import 'package:app_faca_festa/data/models/servico_produto/subcategoria_servico_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../data/models/servico_produto/categoria_servico_model.dart';
 import '../data/models/servico_produto/fornecedor_categoria_model.dart';
 import '../data/models/servico_produto/servico_foto.dart';
 import '../presentation/dialogs/show_novo_orcamento_bottom_sheet.dart';
@@ -15,7 +17,6 @@ import 'app_controller.dart';
 
 class FornecedorController extends GetxController {
   final _db = FirebaseFirestore.instance;
-  StreamSubscription? _orcamentoSubscription;
 
   /// 🔹 Dados principais do fornecedor logado
   final Rx<FornecedorModel?> fornecedor = Rx<FornecedorModel?>(null);
@@ -25,13 +26,18 @@ class FornecedorController extends GetxController {
   final RxList<FornecedorProdutoServicoModel> servicosFornecedor =
       <FornecedorProdutoServicoModel>[].obs;
 
+  final RxList<FornecedorProdutoServicoModel> allServicosFornecedor =
+      <FornecedorProdutoServicoModel>[].obs;
+
   /// 🔹 Catálogo global (`servico_produto`)
   final RxList<ServicoProdutoModel> catalogoServicos = <ServicoProdutoModel>[].obs;
 
   /// 🔹 Fotos dos serviços (`servico_foto`)
   final RxList<ServicoFotoModel> fotosServico = <ServicoFotoModel>[].obs;
 
-  final RxList<OrcamentoModel> orcamentos = <OrcamentoModel>[].obs;
+  final RxList<CategoriaServicoModel> categorias = <CategoriaServicoModel>[].obs;
+
+  final RxList<SubcategoriaServicoModel> subCategorias = <SubcategoriaServicoModel>[].obs;
 
   final categoriasServico = <Map<String, dynamic>>[].obs;
   final subcategoriasServico = <Map<String, dynamic>>[].obs;
@@ -47,7 +53,7 @@ class FornecedorController extends GetxController {
   final RxBool aptoParaOperar = false.obs;
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
-  final app = Get.find<AppController>();
+  late AppController appController; // 🔹 Define, mas sem inicializar aqui
 
   final filtroNome = ''.obs;
   final filtroCidade = RxnString();
@@ -63,11 +69,12 @@ class FornecedorController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // 🔹 Escuta o usuário logado — carrega o fornecedor quando mudar
-    ever(app.usuarioLogado, (usuario) {
-      if (usuario != null && usuario.idUsuario.isNotEmpty) {
-        carregarFornecedorLogado(usuario.idUsuario);
-      }
+
+    Future.delayed(Duration.zero, () {
+      appController = Get.find<AppController>();
+      ever(appController.usuarioLogado, (usuario) async {
+        carregarTodosFornecedores();
+      });
     });
   }
 
@@ -123,6 +130,9 @@ class FornecedorController extends GetxController {
               })
           .toList();
 
+      categorias.value =
+          catServSnap.docs.map((d) => CategoriaServicoModel.fromMap(d.data())).toList();
+
       // ================================
       // 🔸 Subcategorias
       // ================================
@@ -136,11 +146,38 @@ class FornecedorController extends GetxController {
                 'ativo': d['ativo'],
               })
           .toList();
+
+      subCategorias.value =
+          subcatSnap.docs.map((d) => SubcategoriaServicoModel.fromMap(d.data())).toList();
+
+      final servicosSnap = await _db.collection('fornecedor_servico').get();
+
+      final listaServicos =
+          servicosSnap.docs.map((d) => FornecedorProdutoServicoModel.fromMap(d.data())).toList();
+
+      allServicosFornecedor.assignAll(listaServicos);
     } catch (e) {
       erro.value = 'Erro ao carregar fornecedores: $e';
       debugPrint('❌ [FornecedorController] Erro: $e');
     } finally {
       carregando.value = false;
+    }
+  }
+
+  Future<FornecedorModel?> buscarFornecedor(String idUsuario) async {
+    try {
+      final snapshot = await _db
+          .collection('fornecedor')
+          .where('id_usuario', isEqualTo: idUsuario)
+          .limit(1)
+          .get();
+      if (snapshot.docs.isNotEmpty) {
+        return FornecedorModel.fromMap(snapshot.docs.first.data());
+      }
+      return null;
+    } catch (e) {
+      debugPrint("❌ Erro ao buscar último evento: $e");
+      return null;
     }
   }
 
@@ -315,7 +352,7 @@ class FornecedorController extends GetxController {
 
       // 🔹 Carrega o catálogo de produtos relacionados
       final idsProdutos = listaServicos.map((s) => s.idProdutoServico).toList();
-      await carregarCatalogoServicos(idsProdutos);
+      await carregarCatalogoServicos();
 
       // 🔹 (Opcional) Carrega as fotos
       for (final fornecedorId in fornecedoresIds) {
@@ -377,7 +414,7 @@ class FornecedorController extends GetxController {
       servicosFornecedor.assignAll(lista);
 
       final ids = lista.map((e) => e.idProdutoServico).toList();
-      await carregarCatalogoServicos(ids);
+      await carregarCatalogoServicos();
       await carregarFotosServicos(ids, idFornecedor);
     });
   }
@@ -404,14 +441,8 @@ class FornecedorController extends GetxController {
   // ==========================================================
   // === 🔹 Carrega catálogo de serviços (coleção: servico_produto)
   // ==========================================================
-  Future<void> carregarCatalogoServicos(List<String> idsProdutoServico) async {
-    if (idsProdutoServico.isEmpty) return;
-
-    final snapshot = await _db
-        .collection('servico_produto')
-        .where(FieldPath.documentId, whereIn: idsProdutoServico)
-        .where('ativo', isEqualTo: true)
-        .get();
+  Future<void> carregarCatalogoServicos() async {
+    final snapshot = await _db.collection('servico_produto').where('ativo', isEqualTo: true).get();
 
     final lista = snapshot.docs.map((d) {
       return ServicoProdutoModel.fromMap({
@@ -533,81 +564,6 @@ class FornecedorController extends GetxController {
     }
   }
 
-  Future<void> carregarOrcamentosDoEvento(String idEvento) async {
-    try {
-      // 🔸 Cancela qualquer escuta anterior para evitar duplicação
-      await _orcamentoSubscription?.cancel();
-
-      _orcamentoSubscription = _db
-          .collection('orcamento')
-          .where('id_evento', isEqualTo: idEvento)
-          .snapshots()
-          .listen((snapshot) async {
-        final lista = snapshot.docs.map((d) => OrcamentoModel.fromMap(d.data())).toList();
-        orcamentos.assignAll(lista);
-
-        if (lista.isEmpty) {
-          servicosFornecedor.clear();
-          fornecedores.clear();
-          return;
-        }
-
-        // 🔹 Busca serviços relacionados (somente IDs válidos)
-        final servicoFornecidoIds = lista
-            .map((d) => d.idServicoFornecido)
-            .where((id) => id != null && id.toString().isNotEmpty)
-            .cast<String>()
-            .toSet()
-            .toList();
-
-        if (servicoFornecidoIds.isEmpty) {
-          servicosFornecedor.clear();
-          fornecedores.clear();
-          return;
-        }
-
-        // 🔹 Busca os serviços de fornecedor válidos
-        final fornecedorServicosSnap = await _db
-            .collection('fornecedor_servico')
-            .where(FieldPath.documentId, whereIn: servicoFornecidoIds)
-            .get();
-
-        final servicosList = fornecedorServicosSnap.docs
-            .map((d) => FornecedorProdutoServicoModel.fromMap(d.data()))
-            .toList();
-        servicosFornecedor.assignAll(servicosList);
-
-        // 🔹 Busca fornecedores desses serviços (somente IDs válidos)
-        final fornecidoIds = fornecedorServicosSnap.docs
-            .map((d) => d.data()['id_fornecedor'])
-            .where((id) => id != null && id.toString().isNotEmpty)
-            .cast<String>()
-            .toSet()
-            .toList();
-
-        if (fornecidoIds.isEmpty) {
-          fornecedores.clear();
-          return;
-        }
-
-        final fornecedoresSnap = await _db
-            .collection('fornecedor')
-            .where(FieldPath.documentId, whereIn: fornecidoIds)
-            .get();
-
-        fornecedores.assignAll(
-          fornecedoresSnap.docs.map((d) => FornecedorModel.fromMap(d.data())).toList(),
-        );
-
-        // 🔹 Atualiza catálogo (se necessário)
-        final idsProdutos = servicosList.map((s) => s.idProdutoServico).toList();
-        await carregarCatalogoServicos(idsProdutos);
-      });
-    } catch (e, s) {
-      debugPrint('❌ Erro ao escutar orçamentos: $e\n$s');
-    }
-  }
-
   Future<void> vincularServico(FornecedorProdutoServicoModel model) async {
     await _db.collection('fornecedor_servico').doc(model.idFornecedorServico).set(model.toMap());
     await escutarServicosFornecedor(model.idFornecedor);
@@ -620,11 +576,6 @@ class FornecedorController extends GetxController {
   // ==========================================================
   // === 🔹 Estatísticas básicas
   // ==========================================================
-  int get contratadosCount {
-    final fechados = orcamentos.where((o) => o.status == StatusOrcamento.fechado).length;
-    ('✅ $fechados fornecedores contratados.');
-    return fechados;
-  }
 
   Future<void> atualizarEstatisticasFornecedor() async {
     final f = fornecedor.value;
@@ -673,11 +624,5 @@ class FornecedorController extends GetxController {
     } catch (e, s) {
       debugPrint('❌ Erro ao atualizar estatísticas: $e\n$s');
     }
-  }
-
-  @override
-  void onClose() {
-    _orcamentoSubscription?.cancel();
-    super.onClose();
   }
 }

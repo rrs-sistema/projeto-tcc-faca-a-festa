@@ -50,8 +50,9 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
           idConvidado: widget.convidado.idUsuario,
           idEvento: widget.evento.idEvento,
           nome: widget.convidado.nome,
+          contato: widget.convidado.nome,
           email: widget.convidado.email,
-          status: 'P',
+          status: StatusConvidado.pendente,
         );
         await _salvarConvidado(_convidadoModel!);
       }
@@ -73,7 +74,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
   }
 
   /// 🔹 Atualiza status de presença
-  Future<void> _atualizarStatus(String novoStatus) async {
+  Future<void> _atualizarStatus(StatusConvidado novoStatus) async {
     if (_convidadoModel == null) return;
 
     final atualizado = _convidadoModel!.copyWith(
@@ -85,15 +86,16 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     setState(() => _convidadoModel = atualizado);
 
     String msg = switch (novoStatus) {
-      'C' => '🎉 Presença Confirmada! Obrigado por confirmar.',
-      'N' => '🙁 Sentiremos sua falta, confirmação registrada.',
+      StatusConvidado.confirmado => '🎉 Presença Confirmada! Obrigado por confirmar.',
+      StatusConvidado.recusado => '🙁 Sentiremos sua falta, confirmação registrada.',
       _ => 'Status atualizado.'
     };
 
     Get.snackbar(
       'Atualizado',
       msg,
-      backgroundColor: novoStatus == 'C' ? Colors.green.shade400 : Colors.orange.shade400,
+      backgroundColor:
+          novoStatus == StatusConvidado.confirmado ? Colors.green.shade400 : Colors.orange.shade400,
       colorText: Colors.white,
     );
   }
@@ -292,7 +294,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                   ElevatedButton.icon(
                     icon: const Icon(Icons.check_circle_outline),
                     label: const Text('Confirmar Presença'),
-                    onPressed: () => _atualizarStatus('C'),
+                    onPressed: () => _atualizarStatus(StatusConvidado.confirmado),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.pinkAccent,
                       foregroundColor: Colors.white,
@@ -306,7 +308,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                   TextButton.icon(
                     icon: const Icon(Icons.cancel_outlined),
                     label: const Text('Não Poderei Ir'),
-                    onPressed: () => _atualizarStatus('N'),
+                    onPressed: () => _atualizarStatus(StatusConvidado.recusado),
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.grey.shade800,
                     ),

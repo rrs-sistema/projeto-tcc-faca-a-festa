@@ -9,7 +9,6 @@ import 'package:get/get.dart';
 
 import './../../../controllers/event_theme_controller.dart';
 import './../../../controllers/tarefa_controller.dart';
-import './../../../controllers/app_controller.dart';
 import './../../../data/models/model.dart';
 
 class TarefasScreen extends StatelessWidget {
@@ -18,11 +17,7 @@ class TarefasScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeController = Get.find<EventThemeController>();
-    final appController = Get.find<AppController>();
     final tarefaController = Get.find<TarefaController>();
-
-    final idEvento = appController.eventoModel.value!.idEvento;
-    tarefaController.setEvento(idEvento);
 
     return Obx(() {
       final primary = themeController.primaryColor.value;

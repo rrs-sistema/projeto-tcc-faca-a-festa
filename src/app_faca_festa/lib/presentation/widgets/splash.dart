@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../controllers/fornecedor_controller.dart';
 import './../../controllers/app_controller.dart';
 
 /// =============================
@@ -25,11 +26,11 @@ class _SplashState extends State<Splash> {
     await Future.delayed(const Duration(seconds: 3));
 
     final appController = Get.find<AppController>();
-
+    final fornecedorController = Get.find<FornecedorController>();
     if (appController.usuarioLogado.value != null) {
       if (appController.usuarioLogado.value!.tipo == 'F') {
-        final fornecedor =
-            await appController.buscarFornecedor(appController.usuarioLogado.value!.idUsuario);
+        final fornecedor = await fornecedorController
+            .buscarFornecedor(appController.usuarioLogado.value!.idUsuario);
         Get.offAllNamed(
           '/fornecedor',
           arguments: {'fornecedor': fornecedor},

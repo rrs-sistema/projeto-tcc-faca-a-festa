@@ -1,27 +1,147 @@
-import 'package:app_faca_festa/core/utils/biblioteca.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-import '../../../controllers/app_controller.dart';
-import '../../../controllers/event_theme_controller.dart';
-import '../../pages/orcamento/orcamento_screen.dart';
-import '../../pages/fornecedor/fornecedores_page.dart';
-import '../../pages/tarefa/tarefas_screen.dart';
-import '../convidado/convidado_page.dart';
+import './../../../controllers/convidado/convidado_controller.dart';
+import './../../../controllers/event_theme_controller.dart';
+import './../../../controllers/orcamento_controller.dart';
+import './../../pages/fornecedor/fornecedores_page.dart';
+import './../../pages/orcamento/orcamento_screen.dart';
+import './../../../controllers/tarefa_controller.dart';
+import './../../../controllers/evento_controller.dart';
+import './../../pages/tarefa/tarefas_screen.dart';
+import './../../../core/utils/biblioteca.dart';
+import './../convidado/convidado_page.dart';
 
 class FestaCardsWidget extends StatelessWidget {
   const FestaCardsWidget({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final appController = Get.find<AppController>();
     final themeController = Get.find<EventThemeController>();
-    final corBase = themeController.primaryColor.value;
-    final eventoModel = appController.eventoModel.value;
+    final eventoController = Get.find<EventoController>();
+    final orcamentoController = Get.find<OrcamentoController>();
+    final tarefaController = Get.find<TarefaController>();
+    final convidadoController = Get.find<ConvidadoController>();
 
-    // === Paletas harmônicas e contrastantes ===
+    // ✅ NÃO envolve tudo em Obx
+    final corBase = themeController.primaryColor.value;
+    final temaAtivo = themeController.tituloCabecalho.value.toLowerCase();
+
+    final paleta = _obterPaletaPorTema(temaAtivo, corBase);
+
+    return SizedBox(
+      height: 165,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        scrollDirection: Axis.horizontal,
+        itemCount: 4,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        itemBuilder: (context, index) {
+          switch (index) {
+            // === 1️⃣ Meus Fornecedores ===
+            case 0:
+              return Obx(() => _FestaInfoCard(
+                    card: _CardData(
+                      title: "Meus Fornecedores",
+                      subtitle:
+                          "${orcamentoController.contratadosCount.value} de: ${orcamentoController.fornecedorContatadoCount.value}",
+                      style: paleta[0],
+                    ),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const FornecedoresPage()),
+                    ),
+                  )
+                      .animate()
+                      .fadeIn(duration: 500.ms, delay: (index * 100).ms)
+                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOut));
+
+            // === 2️⃣ Orçamentos ===
+            case 1:
+              return _FestaInfoCard(
+                card: _CardData(title: "Orçamentos", subtitle: "", style: paleta[1]),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const OrcamentoScreen()),
+                ),
+                reactiveSubtitle: Obx(() {
+                  final custo = eventoController.eventoAtual.value?.custoEstimado ?? 0;
+                  return Text(
+                    Biblioteca.formatarValorDecimal(custo),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      color: paleta[1].text.withValues(alpha: 0.75),
+                      fontSize: 12.5,
+                    ),
+                  );
+                }),
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: (index * 100).ms)
+                  .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
+
+            // === 3️⃣ Convidados ===
+            case 2:
+              return _FestaInfoCard(
+                card: _CardData(title: "Convidados", subtitle: "", style: paleta[2]),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ConvidadosPage()),
+                ),
+                reactiveSubtitle: Obx(() {
+                  final total = convidadoController.totalConvidados;
+                  final conf = convidadoController.totalConfirmados;
+                  final pend = convidadoController.totalPendentes;
+                  return Text(
+                    "$conf confirmados de $total ($pend pendentes)",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      color: paleta[2].text.withValues(alpha: 0.75),
+                      fontSize: 12.5,
+                    ),
+                  );
+                }),
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: (index * 100).ms)
+                  .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
+
+            // === 4️⃣ Tarefas ===
+            case 3:
+              return _FestaInfoCard(
+                card: _CardData(title: "Tarefas", subtitle: "", style: paleta[3]),
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const TarefasScreen()),
+                ),
+                reactiveSubtitle: Obx(() {
+                  final concluidas = tarefaController.concluidas;
+                  final total = tarefaController.tarefas.length;
+                  return Text(
+                    "$concluidas de $total concluídas",
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      color: paleta[3].text.withValues(alpha: 0.75),
+                      fontSize: 12.5,
+                    ),
+                  );
+                }),
+              )
+                  .animate()
+                  .fadeIn(duration: 500.ms, delay: (index * 100).ms)
+                  .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
+
+            default:
+              return const SizedBox.shrink();
+          }
+        },
+      ),
+    );
+  }
+
+  List<_CardStyle> _obterPaletaPorTema(String temaAtivo, Color corBase) {
     final Map<String, List<_CardStyle>> paletaPorTema = {
       'casamento': [
         _CardStyle(bg: Colors.white, text: Colors.pink.shade700, icon: Icons.storefront_rounded),
@@ -93,9 +213,7 @@ class FestaCardsWidget extends StatelessWidget {
       ],
     };
 
-    // Detecta tema ativo
-    final temaAtivo = themeController.tituloCabecalho.value.toLowerCase();
-    final paleta = temaAtivo.contains('casamento')
+    return temaAtivo.contains('casamento')
         ? paletaPorTema['casamento']!
         : temaAtivo.contains('infantil')
             ? paletaPorTema['festa infantil']!
@@ -104,54 +222,6 @@ class FestaCardsWidget extends StatelessWidget {
                 : temaAtivo.contains('aniversário')
                     ? paletaPorTema['aniversário']!
                     : paletaPorTema['padrão']!;
-
-    final cards = [
-      _CardData(title: "Fornecedores", subtitle: "3 contratado", style: paleta[0]),
-      _CardData(
-          title: "Orçamentos",
-          subtitle: Biblioteca.formatarValorDecimal(eventoModel!.custoEstimado ?? 0),
-          style: paleta[1]),
-      _CardData(title: "Convidados", subtitle: "150 confirmados", style: paleta[2]),
-      _CardData(title: "Tarefas", subtitle: "12 concluídas", style: paleta[3]),
-    ];
-
-    return SizedBox(
-      height: 165,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        scrollDirection: Axis.horizontal,
-        itemCount: cards.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          final card = cards[index];
-          return _FestaInfoCard(
-            card: card,
-            onTap: () {
-              switch (card.title) {
-                case "Orçamentos":
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (_) => const OrcamentoScreen()));
-                  break;
-                case "Fornecedores":
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (_) => const FornecedoresPage()));
-                  break;
-                case "Convidados":
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (_) => const ConvidadosPage()));
-                  break;
-                case "Tarefas":
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => const TarefasScreen()));
-                  break;
-              }
-            },
-          )
-              .animate()
-              .fadeIn(duration: 500.ms, delay: (index * 100).ms)
-              .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
-        },
-      ),
-    );
   }
 }
 
@@ -174,8 +244,13 @@ class _CardStyle {
 class _FestaInfoCard extends StatelessWidget {
   final _CardData card;
   final VoidCallback onTap;
+  final Widget? reactiveSubtitle;
 
-  const _FestaInfoCard({required this.card, required this.onTap});
+  const _FestaInfoCard({
+    required this.card,
+    required this.onTap,
+    this.reactiveSubtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -196,29 +271,33 @@ class _FestaInfoCard extends StatelessWidget {
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(card.style.icon, color: card.style.text, size: 28),
-              const SizedBox(height: 14),
+              Icon(card.style.icon, color: card.style.text, size: 26),
+              const SizedBox(height: 10),
               Text(
                 card.title,
                 style: GoogleFonts.poppins(
                   color: card.style.text,
                   fontWeight: FontWeight.w700,
-                  fontSize: 15,
+                  fontSize: 14.5,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                card.subtitle,
-                style: GoogleFonts.poppins(
-                  color: card.style.text.withValues(alpha: 0.7),
-                  fontSize: 13.5,
-                ),
-              ),
+              const SizedBox(height: 6),
+              // 🔹 Aqui usamos o texto reativo, se existir
+              reactiveSubtitle != null
+                  ? reactiveSubtitle!
+                  : Text(
+                      card.subtitle,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: card.style.text.withValues(alpha: 0.75),
+                        fontSize: 12.5,
+                      ),
+                    ),
             ],
           ),
         ),

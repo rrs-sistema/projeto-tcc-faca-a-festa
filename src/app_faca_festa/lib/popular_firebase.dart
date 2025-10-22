@@ -6,6 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:uuid/uuid.dart';
 
 import './data/models/model.dart';
+import 'data/models/cardapio/cardapio_item_model.dart';
+import 'data/models/cardapio/cardapio_model.dart';
+import 'data/models/convidado/grupo_convidado_model.dart';
 import 'data/models/servico_produto/categoria_servico_model.dart';
 import 'data/models/servico_produto/fornecedor_categoria_model.dart';
 import 'data/models/servico_produto/servico_foto.dart';
@@ -26,6 +29,7 @@ Future<void> popularFirebase() async {
 
   //await resetarEDepoisInserir();
   //await _inserirFornecedoresPorCategoria();
+  await inserirConvidadosComRelacionamentos();
 }
 
 Future<void> resetarEDepoisInserir() async {
@@ -34,6 +38,329 @@ Future<void> resetarEDepoisInserir() async {
   await _inserirTiposDeEvento();
   await inserirDadosComRelacionamentos();
   */
+}
+
+Future<void> inserirConvidadosComRelacionamentos() async {
+  try {
+    const String idEvento = "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc";
+
+    // ===========================================
+    // 🔹 1. Grupos de Convidados (Famílias e Amigos)
+    // ===========================================
+    final grupos = [
+      GrupoConvidadoModel(
+        idGrupo: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Família Schor",
+        descricao: "Parentes próximos da organizadora",
+        icone: "family_restroom_rounded",
+        corHex: "#009688",
+      ),
+      GrupoConvidadoModel(
+        idGrupo: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Amigos da Faculdade",
+        descricao: "Colegas de Engenharia de Software",
+        icone: "group_rounded",
+        corHex: "#FF9800",
+      ),
+      GrupoConvidadoModel(
+        idGrupo: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Equipe RRS Sistemas",
+        descricao: "Colegas de trabalho e equipe técnica",
+        icone: "computer_rounded",
+        corHex: "#3F51B5",
+      ),
+      GrupoConvidadoModel(
+        idGrupo: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Família Marques",
+        descricao: "Convidados do lado paterno",
+        icone: "favorite_rounded",
+        corHex: "#E91E63",
+      ),
+    ];
+
+    for (var grupo in grupos) {
+      await _db.collection('grupos_convidado').doc(grupo.idGrupo).set(grupo.toMap());
+    }
+
+    // ===========================================
+    // 🔹 2. Cardápios do Evento
+    // ===========================================
+    final cardapios = [
+      CardapioModel(
+        idCardapio: _uuid.v4(),
+        idEvento: idEvento,
+        titulo: "Adultos",
+        icone: Icons.local_dining_rounded,
+        cor: const Color(0xFF8B0000),
+        itens: [
+          const CardapioItemModel(
+              idItem: "1",
+              nome: "Prato principal: Risoto de camarão",
+              confirmado: true,
+              tipo: "comida"),
+          const CardapioItemModel(
+              idItem: "2", nome: "Bebida: Vinho tinto seco", confirmado: true, tipo: "bebida"),
+          const CardapioItemModel(
+              idItem: "3", nome: "Sobremesa: Petit gâteau", confirmado: true, tipo: "sobremesa"),
+        ],
+      ),
+      CardapioModel(
+        idCardapio: _uuid.v4(),
+        idEvento: idEvento,
+        titulo: "Crianças",
+        icone: Icons.icecream_outlined,
+        cor: const Color(0xFFFFA000),
+        itens: [
+          const CardapioItemModel(
+              idItem: "4", nome: "Mini hambúrguer", confirmado: true, tipo: "comida"),
+          const CardapioItemModel(
+              idItem: "5", nome: "Suco natural", confirmado: true, tipo: "bebida"),
+          const CardapioItemModel(
+              idItem: "6", nome: "Picolé de chocolate", confirmado: true, tipo: "sobremesa"),
+        ],
+      ),
+      CardapioModel(
+        idCardapio: _uuid.v4(),
+        idEvento: idEvento,
+        titulo: "Livre",
+        icone: Icons.restaurant_menu_rounded,
+        cor: Colors.teal,
+        itens: [
+          const CardapioItemModel(
+              idItem: "7", nome: "Buffet completo", confirmado: true, tipo: "comida"),
+          const CardapioItemModel(
+              idItem: "8", nome: "Sobremesas variadas", confirmado: true, tipo: "sobremesa"),
+        ],
+      ),
+    ];
+
+    for (final c in cardapios) {
+      final docRef = _db.collection('cardapios').doc(c.idCardapio);
+      await docRef.set(c.toMap());
+
+      for (final item in c.itens) {
+        await docRef.collection('itens').doc(item.idItem).set(item.toMap());
+      }
+    }
+
+    // ===========================================
+    // 🔹 3. Convidados (20 pessoas)
+    // ===========================================
+    final convidados = [
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Stephanie Schor",
+        contato: "(41) 99999-1111",
+        email: "stephanie@facaafesta.com",
+        status: StatusConvidado.confirmado,
+        adulto: true,
+        grupoMesa: "Família Schor",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Murillo Pereira",
+        contato: "(41) 98888-2222",
+        email: "murillo@rrs.com",
+        status: StatusConvidado.confirmado,
+        adulto: true,
+        grupoMesa: "Equipe RRS Sistemas",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Jullia Acsa",
+        contato: "(41) 98765-3333",
+        email: "jullia.acsa@facaafesta.com",
+        status: StatusConvidado.confirmado,
+        adulto: true,
+        grupoMesa: "Amigos da Faculdade",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Rivaldo Roberto",
+        contato: "(41) 98654-4444",
+        email: "rivaldo@rrs.com",
+        status: StatusConvidado.confirmado,
+        adulto: true,
+        grupoMesa: "Equipe RRS Sistemas",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Carlos Marques",
+        contato: "(41) 98543-5555",
+        email: "carlos.marques@email.com",
+        status: StatusConvidado.pendente,
+        adulto: true,
+        grupoMesa: "Família Marques",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Marta Marques",
+        contato: "(41) 98432-6666",
+        email: "marta.marques@email.com",
+        status: StatusConvidado.confirmado,
+        adulto: true,
+        grupoMesa: "Família Marques",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Lucas e Amanda",
+        contato: "(41) 98321-7777",
+        email: "lucas.amanda@email.com",
+        status: StatusConvidado.confirmado,
+        adulto: true,
+        grupoMesa: "Amigos da Faculdade",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "João Silva",
+        contato: "(41) 98210-8888",
+        email: "joao.silva@email.com",
+        status: StatusConvidado.pendente,
+        adulto: true,
+        grupoMesa: "Amigos da Faculdade",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Gabriela Torres",
+        contato: "(41) 98123-9999",
+        email: "gabriela.torres@email.com",
+        status: StatusConvidado.confirmado,
+        adulto: true,
+        grupoMesa: "Amigos da Faculdade",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Victor Marques",
+        contato: "(41) 98011-0001",
+        email: "victor.marques@email.com",
+        status: StatusConvidado.confirmado,
+        adulto: false,
+        grupoMesa: "Família Marques",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Larissa Schor",
+        contato: "(41) 97999-0002",
+        email: "larissa.schor@email.com",
+        status: StatusConvidado.confirmado,
+        adulto: false,
+        grupoMesa: "Família Schor",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Pedro Henrique",
+        contato: "(41) 97888-0003",
+        email: "pedro.henrique@email.com",
+        status: StatusConvidado.pendente,
+        adulto: false,
+        grupoMesa: "Família Schor",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Marina Lopes",
+        contato: "(41) 97777-0004",
+        email: "marina.lopes@email.com",
+        status: StatusConvidado.confirmado,
+        adulto: true,
+        grupoMesa: "Amigos da Faculdade",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Caio Souza",
+        contato: "(41) 97666-0005",
+        email: "caio.souza@email.com",
+        status: StatusConvidado.recusado,
+        adulto: true,
+        grupoMesa: "Equipe RRS Sistemas",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Eduarda Lima",
+        contato: "(41) 97555-0006",
+        email: "eduarda.lima@email.com",
+        status: StatusConvidado.confirmado,
+        adulto: false,
+        grupoMesa: "Família Schor",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Renato Torres",
+        contato: "(41) 97444-0007",
+        email: "renato.torres@email.com",
+        status: StatusConvidado.confirmado,
+        adulto: true,
+        grupoMesa: "Equipe RRS Sistemas",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Camila Ribeiro",
+        contato: "(41) 97333-0008",
+        email: "camila.ribeiro@email.com",
+        status: StatusConvidado.pendente,
+        adulto: true,
+        grupoMesa: "Amigos da Faculdade",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Sofia Ribeiro",
+        contato: "(41) 97222-0009",
+        email: "sofia.ribeiro@email.com",
+        status: StatusConvidado.pendente,
+        adulto: false,
+        grupoMesa: "Amigos da Faculdade",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Helena Marques",
+        contato: "(41) 97111-0010",
+        email: "helena.marques@email.com",
+        status: StatusConvidado.confirmado,
+        adulto: false,
+        grupoMesa: "Família Marques",
+      ),
+      ConvidadoModel(
+        idConvidado: _uuid.v4(),
+        idEvento: idEvento,
+        nome: "Arthur Schor",
+        contato: "(41) 97000-0011",
+        email: "arthur.schor@email.com",
+        status: StatusConvidado.pendente,
+        adulto: false,
+        grupoMesa: "Família Schor",
+      ),
+    ];
+
+    for (final convidado in convidados) {
+      await _db.collection('convidado').doc(convidado.idConvidado).set(convidado.toMap());
+    }
+
+    debugPrint('🎉 20 convidados e relacionamentos inseridos com sucesso!');
+  } catch (e, s) {
+    debugPrint('❌ Erro ao inserir convidados: $e\n$s');
+  }
 }
 
 Future<void> _inserirFornecedoresPorCategoria() async {

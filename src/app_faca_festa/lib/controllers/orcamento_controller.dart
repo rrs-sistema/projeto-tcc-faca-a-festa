@@ -1,12 +1,43 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'dart:async';
 
 import './../data/models/model.dart';
 
 class OrcamentoController extends GetxController {
   final _db = FirebaseFirestore.instance;
   final RxList<OrcamentoModel> orcamentos = <OrcamentoModel>[].obs;
+
+  RxBool carregando = false.obs;
+  StreamSubscription? _orcamentoSubscription;
+  final RxInt fornecedorContatadoCount = 0.obs;
+  final RxInt contratadosCount = 0.obs;
+  final RxDouble totalCustoEstimado = 0.0.obs;
+
+  Future<void> carregarOrcamentosDoEvento(String idEvento) async {
+    try {
+      await _orcamentoSubscription?.cancel();
+
+      _orcamentoSubscription = _db
+          .collection('orcamento')
+          .where('id_evento', isEqualTo: idEvento)
+          .snapshots()
+          .listen((snapshot) async {
+        final lista = snapshot.docs.map((d) => OrcamentoModel.fromMap(d.data())).toList();
+        orcamentos.assignAll(lista);
+        _atualizarContagens(); // ✅ sempre recalcula
+      });
+    } catch (e, s) {
+      debugPrint('❌ Erro ao escutar orçamentos: $e\n$s');
+    }
+  }
+
+  void _atualizarContagens() {
+    fornecedorContatadoCount.value = orcamentos.where((o) => o.idServicoFornecido != null).length;
+    contratadosCount.value = orcamentos.where((o) => o.status == StatusOrcamento.fechado).length;
+    totalCustoEstimado.value = orcamentos.fold(0.0, (soma, o) => soma + (o.custoEstimado ?? 0.0));
+  }
 
   /// 🔹 Cria um novo orçamento
   Future<void> criarOrcamento(OrcamentoModel model) async {
@@ -70,5 +101,20 @@ class OrcamentoController extends GetxController {
       'orcamento_fechado': fechar,
       if (fechar) 'data_fechamento': FieldValue.serverTimestamp(),
     });
+  }
+
+  int get totalCount {
+    final fechados = orcamentos.where((o) => o.idServicoFornecido != null).length;
+    return fechados;
+  }
+
+  @override
+  void onClose() {
+    _orcamentoSubscription?.cancel();
+    super.onClose();
+  }
+
+  void reset() {
+    orcamentos.clear();
   }
 }

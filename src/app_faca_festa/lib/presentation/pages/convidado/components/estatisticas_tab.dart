@@ -1,5 +1,9 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import './../../../../controllers/convidado/convidado_controller.dart';
+import './../../../../data/models/model.dart';
 
 class EstatisticasTab extends StatefulWidget {
   const EstatisticasTab({super.key});
@@ -12,11 +16,7 @@ class _EstatisticasTabState extends State<EstatisticasTab> with SingleTickerProv
   late AnimationController _controller;
   bool _loaded = false;
 
-  final int total = 42;
-  final int homens = 18;
-  final int mulheres = 14;
-  final int criancas = 8;
-  final int bebes = 2;
+  final controller = Get.find<ConvidadoController>();
 
   @override
   void initState() {
@@ -33,128 +33,166 @@ class _EstatisticasTabState extends State<EstatisticasTab> with SingleTickerProv
 
   @override
   Widget build(BuildContext context) {
-    final percentConfirmados = 0.76;
-    final percentPendentes = 0.24;
+    return Obx(() {
+      final total = controller.totalConvidados;
+      final confirmados = controller.totalConfirmados;
+      final pendentes = controller.totalPendentes;
+      final recusados = controller.totalRecusados;
 
-    return AnimatedOpacity(
-      opacity: _loaded ? 1 : 0,
-      duration: const Duration(milliseconds: 800),
-      child: ListView(
-        padding: const EdgeInsets.all(20),
-        children: [
-          const SizedBox(height: 10),
-          const Center(
-            child: Text(
-              '📊 Estatísticas do Evento',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 22,
-                color: Colors.black87,
+      final totalAdultos = controller.totalAdultos;
+      final totalCriancas = controller.totalCriancas;
+      final totalBebes = (controller.convidados
+              .where((c) => (c.adulto == false && c.status == StatusConvidado.confirmado))
+              .length ~/
+          3); // regra opcional: 1/3 das crianças são bebês (ajuste se quiser)
+
+      final percentConfirmados = total > 0 ? confirmados / total : 0.0;
+      final percentPendentes = total > 0 ? pendentes / total : 0.0;
+
+      return AnimatedOpacity(
+        opacity: _loaded ? 1 : 0,
+        duration: const Duration(milliseconds: 800),
+        child: ListView(
+          padding: const EdgeInsets.all(20),
+          children: [
+            const SizedBox(height: 10),
+            const Center(
+              child: Text(
+                '📊 Estatísticas do Evento',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 22,
+                  color: Colors.black87,
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 30),
+            const SizedBox(height: 30),
 
-          /// === Gráfico de Pizza ===
-          AnimatedScale(
-            scale: _loaded ? 1 : 0.7,
-            duration: const Duration(milliseconds: 800),
-            curve: Curves.easeOutBack,
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.teal.withValues(alpha: 0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 250,
-                    child: PieChart(
-                      PieChartData(
-                        sectionsSpace: 3,
-                        centerSpaceRadius: 55,
-                        startDegreeOffset: -90,
-                        sections: _pieSections(),
+            /// === Gráfico de distribuição por faixa etária ===
+            AnimatedScale(
+              scale: _loaded ? 1 : 0.7,
+              duration: const Duration(milliseconds: 800),
+              curve: Curves.easeOutBack,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.teal.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 250,
+                      child: PieChart(
+                        PieChartData(
+                          sectionsSpace: 3,
+                          centerSpaceRadius: 55,
+                          startDegreeOffset: -90,
+                          sections: _pieSections(
+                            totalAdultos,
+                            totalCriancas,
+                            totalBebes,
+                          ),
+                        ),
+                        duration: const Duration(milliseconds: 900),
+                        curve: Curves.easeOutCubic,
                       ),
-                      duration: const Duration(milliseconds: 900),
-                      curve: Curves.easeOutCubic,
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Distribuição de convidados',
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w500,
+                    const SizedBox(height: 12),
+                    const Text(
+                      'Distribuição de convidados por faixa etária',
+                      style: TextStyle(
+                        color: Colors.black54,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
 
-          const SizedBox(height: 28),
+            const SizedBox(height: 28),
 
-          /// === Cards de Gênero e Idade ===
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _metricCard(Icons.male, 'Homens', homens, Colors.teal),
-              _metricCard(Icons.female, 'Mulheres', mulheres, Colors.pinkAccent),
-              _metricCard(Icons.child_care, 'Crianças', criancas, Colors.amber),
-              _metricCard(Icons.baby_changing_station, 'Bebês', bebes, Colors.deepPurple),
-            ],
-          ),
-
-          const SizedBox(height: 32),
-
-          /// === Barra de progresso: Confirmações ===
-          _progressCard(
-            title: "Confirmados",
-            value: percentConfirmados,
-            color: Colors.teal,
-            subtitle: "32 convidados confirmaram presença",
-          ),
-          const SizedBox(height: 16),
-          _progressCard(
-            title: "Pendentes",
-            value: percentPendentes,
-            color: Colors.orangeAccent,
-            subtitle: "10 convidados ainda não responderam",
-          ),
-
-          const SizedBox(height: 40),
-          const Center(
-            child: Text(
-              "📅 Estatísticas atualizadas automaticamente conforme as confirmações.",
-              style: TextStyle(fontSize: 12, color: Colors.grey),
-              textAlign: TextAlign.center,
+            /// === Cards de Faixa Etária ===
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                _metricCard(Icons.person, 'Adultos', totalAdultos, Colors.teal),
+                _metricCard(Icons.child_care, 'Crianças', totalCriancas, Colors.amber),
+                _metricCard(Icons.baby_changing_station, 'Bebês', totalBebes, Colors.deepPurple),
+              ],
             ),
-          ),
 
-          const SizedBox(height: 110),
-        ],
-      ),
-    );
+            const SizedBox(height: 32),
+
+            /// === Barras de Progresso ===
+            _progressCard(
+              title: "Confirmados",
+              value: percentConfirmados,
+              color: Colors.teal,
+              subtitle: "$confirmados de $total convidados confirmaram presença",
+            ),
+            const SizedBox(height: 16),
+            _progressCard(
+              title: "Pendentes",
+              value: percentPendentes,
+              color: Colors.orangeAccent,
+              subtitle: "$pendentes convidados ainda não responderam",
+            ),
+            const SizedBox(height: 16),
+            _progressCard(
+              title: "Recusados",
+              value: total > 0 ? recusados / total : 0.0,
+              color: Colors.redAccent,
+              subtitle: "$recusados convidados recusaram o convite",
+            ),
+
+            const SizedBox(height: 40),
+            const Center(
+              child: Text(
+                "📅 Estatísticas atualizadas automaticamente conforme as confirmações.",
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+                textAlign: TextAlign.center,
+              ),
+            ),
+
+            const SizedBox(height: 110),
+          ],
+        ),
+      );
+    });
   }
 
-  /// === Seções do gráfico ===
-  List<PieChartSectionData> _pieSections() {
-    final totalDouble = total.toDouble();
+  /// === Gráfico de Pizza (distribuição por faixa etária) ===
+  List<PieChartSectionData> _pieSections(
+    int adultos,
+    int criancas,
+    int bebes,
+  ) {
+    final total = (adultos + criancas + bebes).toDouble();
+    if (total == 0) {
+      return [
+        PieChartSectionData(
+          color: Colors.grey.shade300,
+          value: 1,
+          title: '0%',
+          radius: 60,
+          titleStyle: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold),
+        ),
+      ];
+    }
     return [
-      _section("Homens", homens / totalDouble, Colors.teal),
-      _section("Mulheres", mulheres / totalDouble, Colors.pinkAccent),
-      _section("Crianças", criancas / totalDouble, Colors.amber),
-      _section("Bebês", bebes / totalDouble, Colors.deepPurple),
+      _section("Adultos", adultos / total, Colors.teal),
+      _section("Crianças", criancas / total, Colors.amber),
+      _section("Bebês", bebes / total, Colors.deepPurple),
     ];
   }
 
@@ -195,8 +233,6 @@ class _EstatisticasTabState extends State<EstatisticasTab> with SingleTickerProv
   /// === Card de métrica ===
   Widget _metricCard(IconData icon, String label, int value, Color color) {
     final screenWidth = MediaQuery.of(context).size.width;
-
-    // Define largura dinâmica: 2 por linha, com espaçamento proporcional
     final double cardWidth = (screenWidth / 2) - 28;
 
     return AnimatedContainer(

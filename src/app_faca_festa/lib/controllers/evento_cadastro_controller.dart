@@ -23,7 +23,8 @@ class EventoCadastroController extends GetxController {
   /// 🔹 CAMPOS CONTROLADOS PELO CONTROLLER
   /// ===============================
   final idEvento = ''.obs;
-  final nome = TextEditingController();
+  final nomeEvento = TextEditingController();
+  final nomeNoiva = TextEditingController();
   final parceiro = TextEditingController();
   final idade = TextEditingController();
   final bebe = TextEditingController();
@@ -67,7 +68,7 @@ class EventoCadastroController extends GetxController {
   // 🔹 ATUALIZAR PRÉ-VISUALIZAÇÃO DO EVENTO
   // ===============================
   void atualizarPreview() {
-    final nomeStr = _capitalizar(nome.text);
+    final nomeStr = _capitalizar(nomeNoiva.text);
     final parceiroStr = _capitalizar(parceiro.text);
     final idadeStr = idade.text;
     final bebeStr = _capitalizar(bebe.text);
@@ -141,7 +142,8 @@ class EventoCadastroController extends GetxController {
     final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
     idEvento.value = evento.idEvento;
-    nome.text = evento.nomeNoiva ?? evento.nomeAniversariante ?? '';
+    nomeEvento.text = evento.nome;
+    nomeNoiva.text = evento.nomeNoiva ?? evento.nomeAniversariante ?? '';
     parceiro.text = evento.nomeNoivo ?? '';
     tema.text = evento.tema ?? '';
     idade.text = evento.idade?.toString() ?? '';
@@ -172,60 +174,90 @@ class EventoCadastroController extends GetxController {
   // ===============================
   Future<void> salvarEvento() async {
     if (!formKey.currentState!.validate()) return;
-    carregando.value = true;
 
+    final tipoAtual = tipoEventoModel.value;
+    final dataStr = dataFesta.text.trim();
+    final horaStr = horaFesta.text.trim();
+
+    // ✅ VALIDAÇÕES DE NEGÓCIO
+    if (tipoAtual == null) {
+      Get.snackbar(
+        'Atenção',
+        'Selecione o tipo de evento antes de salvar.',
+        backgroundColor: Colors.orange.shade600,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (dataStr.isEmpty) {
+      Get.snackbar(
+        'Atenção',
+        'Informe a data do evento.',
+        backgroundColor: Colors.orange.shade600,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (horaStr.isEmpty) {
+      Get.snackbar(
+        'Atenção',
+        'Informe a hora do evento.',
+        backgroundColor: Colors.orange.shade600,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // ✅ VALIDAÇÃO DO CUSTO ESTIMADO
+    double valor = 0.0;
+    if (custoEstimado.text.isNotEmpty) {
+      final texto =
+          custoEstimado.text.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim();
+      valor = double.tryParse(texto) ?? 0.0;
+    }
+
+    if (valor <= 1.0) {
+      Get.snackbar(
+        'Atenção',
+        'O custo estimado deve ser superior a R\$ 1,00.',
+        backgroundColor: Colors.orange.shade600,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    carregando.value = true;
     try {
       final user = app.usuarioLogado.value;
       if (user == null) throw Exception('Usuário não autenticado.');
 
-      // Data e hora
-      final dataSelecionada = dataFesta.text.isNotEmpty
-          ? DateFormat('dd/MM/yyyy', 'pt_BR').parse(dataFesta.text)
-          : DateTime.now().add(const Duration(days: 30));
-
-      DateTime dataCompleta = dataSelecionada;
-      if (horaFesta.text.isNotEmpty) {
-        final partes = horaFesta.text.split(':');
-        if (partes.length == 2) {
-          dataCompleta = DateTime(
-            dataSelecionada.year,
-            dataSelecionada.month,
-            dataSelecionada.day,
-            int.tryParse(partes[0]) ?? 0,
-            int.tryParse(partes[1]) ?? 0,
-          );
-        }
-      }
+      final dataSelecionada = DateFormat('dd/MM/yyyy', 'pt_BR').parse(dataStr);
+      final partesHora = horaStr.split(':');
+      final dataCompleta = DateTime(
+        dataSelecionada.year,
+        dataSelecionada.month,
+        dataSelecionada.day,
+        int.tryParse(partesHora[0]) ?? 0,
+        int.tryParse(partesHora[1]) ?? 0,
+      );
 
       final endereco = enderecoController.value.toModel('');
-      final tipoAtual = tipoEventoModel.value;
-      if (tipoAtual == null) throw Exception('Tipo de evento não selecionado.');
-
-      // ✅ converte valor formatado (ex: "R$ 1.234,56")
-      double? valor = 0.0;
-      if (custoEstimado.text.isNotEmpty) {
-        final texto = custoEstimado.text
-            .replaceAll('R\$', '')
-            .replaceAll('.', '')
-            .replaceAll(',', '.')
-            .trim();
-        valor = double.tryParse(texto) ?? 0.0;
-      }
-
       final evento = EventoModel(
         idEvento: idEvento.value.isEmpty ? uuid.v4() : idEvento.value,
         idTipoEvento: tipoAtual.idTipoEvento,
         idUsuario: user.idUsuario,
-        nome: nomeEventoPreview.value,
+        nome: nomeEvento.text.trim(),
         custoEstimado: valor,
         data: dataCompleta,
-        hora: horaFesta.text,
+        hora: horaStr,
         ativo: true,
         tema: tema.text,
         tipoCerimonia: tipoCerimonia.value,
         estiloCasamento: estiloCasamento.value,
         padrinhos: padrinhos.toList(),
-        nomeNoiva: nome.text,
+        nomeNoiva: nomeNoiva.text,
         nomeNoivo: parceiro.text,
         nomeResponsavel: user.nome,
         cep: endereco.cep,
@@ -235,10 +267,7 @@ class EventoCadastroController extends GetxController {
         bairro: endereco.bairro,
       );
 
-      // ✅ salva ou atualiza conforme idEvento
       await db.collection('evento').doc(evento.idEvento).set(evento.toMap());
-
-      app.eventoModel.value = evento;
       carregando.value = false;
       Get.back();
 
@@ -265,7 +294,7 @@ class EventoCadastroController extends GetxController {
   void limpar() {
     idEvento.value = '';
     tipoEventoModel.value = null;
-    nome.clear();
+    nomeNoiva.clear();
     parceiro.clear();
     idade.clear();
     bebe.clear();

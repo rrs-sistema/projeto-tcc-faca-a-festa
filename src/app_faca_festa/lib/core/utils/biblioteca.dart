@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -113,14 +113,21 @@ class Biblioteca {
     }
   }
 
-  /// define se a plataforma é desktop
   static bool isDesktop() {
-    return Platform.isWindows || Platform.isLinux || Platform.isMacOS;
+    if (kIsWeb) return false;
+    return [
+      TargetPlatform.macOS,
+      TargetPlatform.linux,
+      TargetPlatform.windows,
+    ].contains(defaultTargetPlatform);
   }
 
-  /// define se a plataforma é mobile
   static bool isMobile() {
-    return Platform.isAndroid || Platform.isIOS;
+    if (kIsWeb) return false;
+    return [
+      TargetPlatform.iOS,
+      TargetPlatform.android,
+    ].contains(defaultTargetPlatform);
   }
 
   /// Verifica se é um celular
@@ -209,15 +216,6 @@ class Biblioteca {
     return cnpj;
   }
 
-  static Future<bool> hasNetwork() async {
-    try {
-      final result = await InternetAddress.lookup('t2ti.com');
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } on SocketException catch (_) {
-      return false;
-    }
-  }
-
   /// Calcula a diagonal em polegadas
   static double _calculateScreenDiagonalInInches(
     double widthPx,
@@ -229,5 +227,21 @@ class Biblioteca {
     final widthInches = widthDp / 160;
     final heightInches = heightDp / 160;
     return sqrt(pow(widthInches, 2) + pow(heightInches, 2));
+  }
+
+  static Color gerarCorPorChaves(List<String> chaves) {
+    // Junta tudo em uma única string
+    final combinado = chaves.join('-').toLowerCase();
+
+    int hash = combinado.codeUnits.fold(0, (prev, elem) => (prev * 37 + elem) % 360);
+
+    final hslColor = HSLColor.fromAHSL(
+      1.0,
+      hash.toDouble(),
+      0.55,
+      0.55,
+    );
+
+    return hslColor.toColor();
   }
 }

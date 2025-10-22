@@ -1,57 +1,62 @@
-import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
+import 'package:get/get.dart';
+import 'dart:async';
 
-import '../data/models/model.dart';
+import './../data/models/model.dart';
 
 class TarefaController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+
+  // 🔹 Observáveis reativos
   final RxList<TarefaModel> tarefas = <TarefaModel>[].obs;
   final RxList<UsuarioModel> usuarios = <UsuarioModel>[].obs;
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
-  String? _idEvento;
+
+  // 🔹 Assinatura para cancelamento de escuta
+  StreamSubscription? _tarefasSubscription;
 
   @override
   void onInit() {
     super.onInit();
-    carregarUsuario();
+    carregarUsuarios();
   }
 
-  /// 🔹 Configura o evento e inicia a escuta
-  void setEvento(String idEvento) {
-    if (_idEvento == idEvento) return; // evita recriar o listener
-    _idEvento = idEvento;
-    listenTarefas();
+  // ==========================================================
+  // 🔹 Escuta tarefas em tempo real (reatividade total)
+  // ==========================================================
+
+  Future<void> listenTarefas(String idEvento) async {
+    if (idEvento.isEmpty) return;
+
+    _db.collection('tarefa').where('id_evento', isEqualTo: idEvento).snapshots().listen((snapshot) {
+      final lista = snapshot.docs.map((d) {
+        final data = d.data();
+        return TarefaModel.fromMap(data);
+      }).toList();
+
+      tarefas.assignAll(lista);
+    }, onError: (e) {
+      erro.value = 'Erro ao carregar tarefas: $e';
+    });
   }
 
-  Future<void> carregarUsuario() async {
-    final snapshot = await _db.collection('usuarios').where('ativo', isEqualTo: true).get();
-
-    final lista = snapshot.docs.map((d) => UsuarioModel.fromMap(d.data())).toList();
-    usuarios.assignAll(lista);
-  }
-
-  // ======================================================
-  // 🔹 Carregar tarefas em tempo real
-  // ======================================================
-  void listenTarefas() {
-    if (_idEvento == null) return;
+  void listenTarefas00(String? idEvento) {
+    if (idEvento == null) return;
     carregando.value = true;
 
-    _db
+    // Cancela escuta anterior, se existir
+    _tarefasSubscription?.cancel();
+
+    // Cria nova stream com bind direto na RxList
+    _tarefasSubscription = _db
         .collection('tarefa')
-        .where('id_evento_evento', isEqualTo: _idEvento)
+        .where('id_evento', isEqualTo: idEvento) // 🔹 campo correto
         .orderBy('data_prevista', descending: false)
         .snapshots()
-        .listen((snapshot) async {
-      final lista = <TarefaModel>[];
-
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        final tarefa = TarefaModel.fromMap(data);
-        lista.add(tarefa);
-      }
+        .listen((snapshot) {
+      final lista = snapshot.docs.map((doc) => TarefaModel.fromMap(doc.data())).toList();
 
       tarefas.assignAll(lista);
       carregando.value = false;
@@ -61,20 +66,35 @@ class TarefaController extends GetxController {
     });
   }
 
-  // ======================================================
-  // 🔹 Adicionar nova tarefa
-  // ======================================================
-  Future<void> adicionarTarefa({
-    required String nome,
-    String? descricao,
-    DateTime? dataPrevista,
-    String? idResponsavel,
-  }) async {
+  // ==========================================================
+  // 🔹 Carrega usuários ativos (para seleção de responsáveis)
+  // ==========================================================
+  Future<void> carregarUsuarios() async {
+    try {
+      final snapshot = await _db.collection('usuarios').where('ativo', isEqualTo: true).get();
+
+      final lista = snapshot.docs.map((d) => UsuarioModel.fromMap(d.data())).toList();
+
+      usuarios.assignAll(lista);
+    } catch (e) {
+      erro.value = 'Erro ao carregar usuários: $e';
+    }
+  }
+
+  // ==========================================================
+  // 🔹 Adiciona nova tarefa
+  // ==========================================================
+  Future<void> adicionarTarefa(
+      {required String nome,
+      String? descricao,
+      DateTime? dataPrevista,
+      String? idResponsavel,
+      String? idEvento}) async {
     try {
       final id = const Uuid().v4();
       final nova = TarefaModel(
         idTarefa: id,
-        idEvento: _idEvento ?? '',
+        idEvento: idEvento ?? '',
         titulo: nome,
         descricao: descricao,
         dataPrevista: dataPrevista,
@@ -88,17 +108,9 @@ class TarefaController extends GetxController {
     }
   }
 
-  double get progresso {
-    if (tarefas.isEmpty) return 0;
-    final concluidas = tarefas.where((t) => t.status == StatusTarefa.concluida).length;
-    return concluidas / tarefas.length;
-  }
-
-  int get concluidas => tarefas.where((t) => t.status == StatusTarefa.concluida).length;
-
-  // ======================================================
-  // 🔹 Editar tarefa
-  // ======================================================
+  // ==========================================================
+  // 🔹 Editar / Atualizar tarefa
+  // ==========================================================
   Future<void> editarTarefa(TarefaModel tarefa) async {
     try {
       await _db.collection('tarefa').doc(tarefa.idTarefa).update(tarefa.toMap());
@@ -108,12 +120,53 @@ class TarefaController extends GetxController {
   }
 
   Future<void> atualizarStatus(String idTarefa, StatusTarefa novoStatus) async {
-    await _db.collection('tarefa').doc(idTarefa).update({
-      'status': novoStatus.firestoreValue,
-    });
+    try {
+      await _db.collection('tarefa').doc(idTarefa).update({
+        'status': novoStatus.firestoreValue,
+      });
+    } catch (e) {
+      erro.value = 'Erro ao atualizar status: $e';
+    }
   }
 
+  // ==========================================================
+  // 🔹 Excluir tarefa
+  // ==========================================================
   Future<void> excluirTarefa(String idTarefa) async {
-    await _db.collection('tarefa').doc(idTarefa).delete();
+    try {
+      await _db.collection('tarefa').doc(idTarefa).delete();
+    } catch (e) {
+      erro.value = 'Erro ao excluir tarefa: $e';
+    }
+  }
+
+  // ==========================================================
+  // 🔹 Cálculos reativos de progresso
+  // ==========================================================
+  double get progresso {
+    if (tarefas.isEmpty) return 0;
+    final concluidas = tarefas.where((t) => t.status == StatusTarefa.concluida).length;
+    return concluidas / tarefas.length;
+  }
+
+  int get concluidas => tarefas.where((t) => t.status == StatusTarefa.concluida).length;
+  int get pendentes => tarefas.where((t) => t.status != StatusTarefa.concluida).length;
+
+  // ==========================================================
+  // 🔹 Resetar controller
+  // ==========================================================
+  void reset() {
+    _tarefasSubscription?.cancel();
+    tarefas.clear();
+    usuarios.clear();
+  }
+
+  // ==========================================================
+  // 🔹 Fechamento seguro do controller
+  // ==========================================================
+  @override
+  void onClose() {
+    _tarefasSubscription?.cancel();
+    super.onClose();
   }
 }

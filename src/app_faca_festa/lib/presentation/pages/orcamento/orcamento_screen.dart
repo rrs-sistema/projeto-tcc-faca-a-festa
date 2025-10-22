@@ -3,10 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../controllers/evento_controller.dart';
 import '../../../controllers/orcamento_gasto_controller.dart';
 import './../../../controllers/event_theme_controller.dart';
 import './../../../controllers/orcamento_controller.dart';
-import './../../../controllers/app_controller.dart';
 import './../../../data/models/model.dart';
 
 class OrcamentoScreen extends StatelessWidget {
@@ -16,8 +16,9 @@ class OrcamentoScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeController = Get.find<EventThemeController>();
     final orcamentoController = Get.put(OrcamentoController());
-    final appController = Get.find<AppController>();
-    final idEvento = appController.eventoModel.value?.idEvento ?? '';
+    final eventoController = Get.find<EventoController>();
+
+    final idEvento = eventoController.eventoAtual.value?.idEvento ?? '';
 
     // Escuta orçamentos do evento atual
     WidgetsBinding.instance.addPostFrameCallback((_) {

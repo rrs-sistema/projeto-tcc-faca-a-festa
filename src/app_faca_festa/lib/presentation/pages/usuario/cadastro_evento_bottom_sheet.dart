@@ -114,39 +114,40 @@ Future<void> showCadastroEventoBottomSheet(
                       const SizedBox(height: 20),
 
                       /// === Preview dinâmico ===
-                      Obx(() => AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            padding: const EdgeInsets.all(10),
-                            margin: const EdgeInsets.only(bottom: 20),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [corPrincipal.withValues(alpha: 0.15), Colors.white],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                      if (eventoParaEdicao != null && eventoParaEdicao.idEvento.isNotEmpty)
+                        Obx(() => AnimatedContainer(
+                              duration: const Duration(milliseconds: 300),
+                              padding: const EdgeInsets.all(10),
+                              margin: const EdgeInsets.only(bottom: 20),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [corPrincipal.withValues(alpha: 0.15), Colors.white],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: corPrincipal.withValues(alpha: 0.5)),
                               ),
-                              borderRadius: BorderRadius.circular(18),
-                              border: Border.all(color: corPrincipal.withValues(alpha: 0.5)),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(emoji, style: const TextStyle(fontSize: 38)),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    controller.nomeEventoPreview.value.isEmpty
-                                        ? 'Seu evento aparecerá aqui...'
-                                        : controller.nomeEventoPreview.value,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: corPrincipal,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(emoji, style: const TextStyle(fontSize: 38)),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      controller.nomeEventoPreview.value.isEmpty
+                                          ? 'Seu evento aparecerá aqui...'
+                                          : controller.nomeEvento.text,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: corPrincipal,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          )),
+                                ],
+                              ),
+                            )),
 
                       ..._buildCamposPorTipo(corPrincipal, controller),
 
@@ -261,12 +262,20 @@ List<Widget> _buildCamposPorTipo(
         );
       }),
     ),
+    CustomInputField(
+      label: "Nome do evento",
+      icon: Icons.celebration,
+      controller: controller.nomeEvento,
+      color: corPrincipal,
+      validator: (v) => v == null || v.trim().isEmpty ? "Informe o nome do evento" : null,
+      onChanged: (_) => controller.atualizarPreview(),
+    ),
 
     if (tipoNormalizado == 'casamento') ...[
       CustomInputField(
         label: "Nome da noiva",
         icon: Icons.female,
-        controller: controller.nome,
+        controller: controller.nomeNoiva,
         color: corPrincipal,
         validator: (v) => v!.isEmpty ? "Informe o nome da noiva" : null,
         onChanged: (_) => controller.atualizarPreview(),
@@ -356,7 +365,7 @@ List<Widget> _buildCamposPorTipo(
       CustomInputField(
         label: "Nome da criança",
         icon: Icons.child_care,
-        controller: controller.nome,
+        controller: controller.nomeNoiva,
         color: corPrincipal,
         validator: (v) => v!.isEmpty ? "Informe o nome da criança" : null,
         onChanged: (_) => controller.atualizarPreview(),
@@ -436,7 +445,7 @@ List<Widget> _buildCamposPorTipo(
           context: Get.context!,
           initialDate: hoje.add(const Duration(days: 30)),
           firstDate: hoje,
-          lastDate: DateTime(hoje.year + 2),
+          lastDate: DateTime(hoje.year + 5),
           locale: const Locale('pt', 'BR'),
         );
         if (picked != null) {

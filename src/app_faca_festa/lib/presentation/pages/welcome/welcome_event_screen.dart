@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../controllers/evento_controller.dart';
 import '../../../role_selector_screen.dart';
 import './../../../controllers/event_theme_controller.dart';
 import './../usuario/cadastro_evento_bottom_sheet.dart';
@@ -23,7 +24,8 @@ class WelcomeEventScreen extends StatefulWidget {
 class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
   final _db = FirebaseFirestore.instance;
   final themeController = Get.put(EventThemeController());
-  final appController = Get.find<AppController>(); // ✅ usa o global
+  final appController = Get.find<AppController>();
+  final eventoController = Get.find<EventoController>();
 
   List<TipoEventoModel> _tiposEvento = [];
   bool _loading = true;
@@ -149,40 +151,31 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                                   context,
                                 );
 
-                                if (appController.eventoModel.value != null) {
+                                if (eventoController.eventoAtual.value != null) {
                                   // 🔹 Aplica o tema visual do tipo de evento
                                   themeController.aplicarTemaPorNome(tipo.nome);
 
                                   // 🔹 Busca o último evento do usuário no Firestore
-                                  await appController.buscarUltimoEvento(
-                                      appController.eventoModel.value!.idUsuario);
+                                  await eventoController.buscarUltimoEvento(
+                                      eventoController.eventoAtual.value!.idUsuario);
+                                } else {
+                                  // 👉 Nenhum evento encontrado: cria um placeholder temporário
+                                  final novoEvento = EventoModel(
+                                    idEvento: DateTime.now().millisecondsSinceEpoch.toString(),
+                                    idTipoEvento: tipo.idTipoEvento,
+                                    idUsuario: appController.usuarioLogado.value!.idUsuario,
+                                    nome:
+                                        "Novo ${tipo.nome.replaceAll(RegExp(r'[^\w\sÀ-ú]'), '').trim()}",
+                                    data: DateTime.now().add(const Duration(days: 30)),
+                                  );
 
-                                  if (appController.eventoModel.value != null) {
-                                    // 👉 Evento encontrado: abre a HomeEventScreen com ele
-                                    Get.to(
-                                      () => HomeEventScreen(),
-                                      transition: Transition.fadeIn,
-                                      duration: const Duration(milliseconds: 700),
-                                    );
-                                  } else {
-                                    // 👉 Nenhum evento encontrado: cria um placeholder temporário
-                                    final novoEvento = EventoModel(
-                                      idEvento: DateTime.now().millisecondsSinceEpoch.toString(),
-                                      idTipoEvento: tipo.idTipoEvento,
-                                      idUsuario: appController.usuarioLogado.value!.idUsuario,
-                                      nome:
-                                          "Novo ${tipo.nome.replaceAll(RegExp(r'[^\w\sÀ-ú]'), '').trim()}",
-                                      data: DateTime.now().add(const Duration(days: 30)),
-                                    );
+                                  eventoController.eventoAtual.value = novoEvento;
 
-                                    appController.eventoModel.value = novoEvento;
-
-                                    Get.to(
-                                      () => HomeEventScreen(),
-                                      transition: Transition.fadeIn,
-                                      duration: const Duration(milliseconds: 700),
-                                    );
-                                  }
+                                  Get.to(
+                                    () => HomeEventScreen(),
+                                    transition: Transition.fadeIn,
+                                    duration: const Duration(milliseconds: 700),
+                                  );
                                 }
                               },
                             );

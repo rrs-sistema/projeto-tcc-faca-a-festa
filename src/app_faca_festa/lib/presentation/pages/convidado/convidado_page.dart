@@ -2,13 +2,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/app_controller.dart';
 import './../../../controllers/event_theme_controller.dart';
+import './../../../controllers/app_controller.dart';
 import './components/estatisticas_tab.dart';
+import 'area/lista_convidados_screen.dart';
 import './components/cardapios_tab.dart';
 import './components/grupos_tab.dart';
-import './components/mesa_tab.dart';
 import 'enviar_convites_screen.dart';
+import './components/mesa_tab.dart';
 
 class ConvidadosPage extends StatefulWidget {
   const ConvidadosPage({super.key});
@@ -61,7 +62,9 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
             IconButton(
               icon: const Icon(Icons.search, color: Colors.black),
               tooltip: 'Pesquisar convidados',
-              onPressed: () {},
+              onPressed: () {
+                Get.to(() => const ListaConvidadosScreen());
+              },
             ),
           ],
           bottom: PreferredSize(

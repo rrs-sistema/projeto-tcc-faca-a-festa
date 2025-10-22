@@ -10,9 +10,9 @@ import './../../../data/models/DTO/fornecedor_detalhado_model.dart';
 import './../../../core/utils/no_sqflite_cache_manager.dart';
 import './../../../controllers/event_theme_controller.dart';
 import './components/filtro_fornecedor_bottom_sheet.dart';
-import './components/abrir_cotacao_bottom_sheet.dart';
 import '../../../core/utils/biblioteca.dart';
 import './fornecedor_detalhe_screen.dart';
+import 'components/abrir_cotacao_bottom_sheet.dart';
 
 class FornecedorLocalizacaoScreen extends StatefulWidget {
   final bool? showLeading;
@@ -81,7 +81,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
             return const Center(child: CircularProgressIndicator());
           }
 
-// 🔹 Filtro inteligente de fornecedores por categoria (com LOGs detalhados)
+          // 🔹 Filtro inteligente de fornecedores por categoria (com LOGs detalhados)
           List<FornecedorDetalhadoModel> fornecedores;
 
           if (categoriaSelecionada == null) {
@@ -149,7 +149,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                                   crossAxisCount: 2,
                                   mainAxisSpacing: 15,
                                   crossAxisSpacing: 15,
-                                  childAspectRatio: isCelular ? 0.49 : 0.70,
+                                  childAspectRatio: isCelular ? 0.49 : 0.66,
                                 ),
                                 itemCount: fornecedores.length,
                                 itemBuilder: (context, index) {
@@ -203,7 +203,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                         builder: (_) => CotacaoBottomSheet(
                           fornecedoresSelecionados: selecionados.toList(),
                           primary: primary,
-                          gradient: gradient,
+                          idProdutoSelecionado: '',
+                          nomeProdutoSelecionado: '',
                         ),
                       );
                     },

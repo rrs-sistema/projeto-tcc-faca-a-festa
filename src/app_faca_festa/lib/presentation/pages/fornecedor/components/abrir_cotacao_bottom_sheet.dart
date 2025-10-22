@@ -8,28 +8,32 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
+import '../../../../controllers/evento_controller.dart';
 import './../../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../../controllers/app_controller.dart';
 
 class CotacaoBottomSheet extends StatelessWidget {
   final List<String> fornecedoresSelecionados;
+  final String? idProdutoSelecionado;
+  final String? nomeProdutoSelecionado;
   final Color primary;
-  final LinearGradient gradient;
 
   const CotacaoBottomSheet({
     super.key,
     required this.fornecedoresSelecionados,
+    required this.idProdutoSelecionado,
+    required this.nomeProdutoSelecionado,
     required this.primary,
-    required this.gradient,
   });
 
   @override
   Widget build(BuildContext context) {
     final fornecedorLocalizacaoController = Get.find<FornecedorLocalizacaoController>();
     final appController = Get.find<AppController>();
+    final eventoController = Get.find<EventoController>();
+
     final TextEditingController observacaoController = TextEditingController();
     DateTime dataCotacao = DateTime.now().add(const Duration(days: 7));
-
     final db = FirebaseFirestore.instance;
 
     Future<void> enviarCotacao() async {
@@ -43,17 +47,19 @@ class CotacaoBottomSheet extends StatelessWidget {
         return;
       }
 
-      EasyLoading.show(status: 'Enviando cotações...');
+      EasyLoading.show(status: 'Enviando cotação...');
 
       try {
         final usuario = appController.usuarioLogado.value;
-        final evento = appController.eventoModel.value;
+        final evento = eventoController.eventoAtual.value;
 
         for (var idFornecedor in fornecedoresSelecionados) {
           final cotacao = {
             'id_evento': evento?.idEvento ?? '',
             'id_usuario_solicitante': usuario?.idUsuario ?? '',
             'id_fornecedor': idFornecedor,
+            'id_produto_servico': idProdutoSelecionado, // 🔹 produto vinculado
+            'nome_produto_servico': nomeProdutoSelecionado,
             'observacao': observacaoController.text.trim(),
             'data_desejada': Timestamp.fromDate(dataCotacao),
             'data_envio': Timestamp.now(),
@@ -69,7 +75,7 @@ class CotacaoBottomSheet extends StatelessWidget {
 
         Get.snackbar(
           'Cotação enviada!',
-          'Solicitação enviada para ${fornecedoresSelecionados.length} fornecedor(es).',
+          'Solicitação de orçamento para "$nomeProdutoSelecionado" enviada com sucesso.',
           backgroundColor: primary,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
@@ -82,7 +88,7 @@ class CotacaoBottomSheet extends StatelessWidget {
         }
         Get.snackbar(
           'Erro',
-          'Não foi possível enviar as cotações. Tente novamente.',
+          'Não foi possível enviar a cotação. Tente novamente.',
           backgroundColor: Colors.redAccent,
           colorText: Colors.white,
         );
@@ -136,7 +142,7 @@ class CotacaoBottomSheet extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Fazer Cotação',
+                        'Solicitar Orçamento',
                         style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
@@ -151,7 +157,23 @@ class CotacaoBottomSheet extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Revise os fornecedores selecionados e adicione observações:',
+                    'Produto selecionado:',
+                    style: GoogleFonts.poppins(
+                        fontSize: 13.5, color: Colors.grey.shade700, fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    nomeProdutoSelecionado ?? '',
+                    style: GoogleFonts.poppins(
+                      fontSize: 15,
+                      color: primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  Text(
+                    'Revise o fornecedor e adicione observações:',
                     style: GoogleFonts.poppins(fontSize: 13.5, color: Colors.grey.shade700),
                   ),
                   const SizedBox(height: 16),
@@ -284,8 +306,10 @@ class CotacaoBottomSheet extends StatelessWidget {
                       icon: const Icon(Icons.send_rounded, color: Colors.white),
                       label: Text(
                         'Enviar Cotação',
-                        style:
-                            GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),

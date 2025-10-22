@@ -120,35 +120,45 @@ class OrcamentoModel {
     };
   }
 
-  // ===========================================================
-  // 🔹 Conversão a partir do Firestore
-  // ===========================================================
+// ===========================================================
+// 🔹 Conversão a partir do Firestore
+// ===========================================================
   factory OrcamentoModel.fromMap(Map<String, dynamic> map) {
     return OrcamentoModel(
       idOrcamento: map['id_orcamento'] ?? '',
       idEvento: map['id_evento'] ?? '',
-      idServicoFornecido: map['id_servico_fornecido'] ?? '',
+      idServicoFornecido: map['id_servico_fornecido'],
       idCategoria: map['id_categoria'],
       idTipoPagamento: map['id_tipo_pagamento'],
       custoEstimado:
           (map['custo_estimado'] is num) ? (map['custo_estimado'] as num).toDouble() : null,
       orcamentoFechado: map['orcamento_fechado'] ?? false,
       anotacoes: map['anotacoes'],
-      status: StatusOrcamento.fromString(map['status']), // ✅ converte string → enum
-      dataCadastro: _toDateTime(map['data_cadastro']),
-      dataFechamento: _toDateTime(map['data_fechamento']),
+      status: StatusOrcamento.fromString(map['status']),
+      dataCadastro: _toDateTimeOrNow(map['data_cadastro']), // nunca deve ser nula
+      dataFechamento: _toNullableDate(map['data_fechamento']), // pode ser nula
       fechadoPor: map['fechado_por'],
     );
   }
 
-  // ===========================================================
-  // 🔹 Função auxiliar para conversão de datas
-  // ===========================================================
-  static DateTime _toDateTime(dynamic value) {
+// ===========================================================
+// 🔹 Converte Firestore Timestamp/String → DateTime
+// ===========================================================
+  static DateTime _toDateTimeOrNow(dynamic value) {
     if (value == null) return DateTime.now();
     if (value is Timestamp) return value.toDate();
     if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
     return DateTime.now();
+  }
+
+// ===========================================================
+// 🔹 Converte para DateTime?, retornando null se for nula
+// ===========================================================
+  static DateTime? _toNullableDate(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value);
+    return null;
   }
 
   // ===========================================================

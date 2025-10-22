@@ -2,12 +2,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../controllers/evento_controller.dart';
+import '../../../controllers/fornecedor_controller.dart';
 import './../../../controllers/event_theme_controller.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../../data/models/model.dart';
 
-import 'package:app_faca_festa/controllers/fornecedor_controller.dart';
-import 'package:app_faca_festa/controllers/app_controller.dart';
 import './../../dialogs/show_novo_orcamento_bottom_sheet.dart';
 
 class FornecedorProdutosScreen extends StatefulWidget {
@@ -21,7 +21,7 @@ class FornecedorProdutosScreen extends StatefulWidget {
 class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
   final RxSet<String> selecionados = <String>{}.obs; // 🔹 IDs dos serviços selecionados
   final fornecedorController = Get.find<FornecedorController>();
-  final appController = Get.find<AppController>();
+  final eventoController = Get.find<EventoController>();
 
   @override
   void initState() {
@@ -146,7 +146,7 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
                     if (servico != null) {
                       await showNovoOrcamentoBottomSheet(
                         context: context,
-                        idEvento: appController.eventoModel.value?.idEvento ?? '',
+                        idEvento: eventoController.eventoAtual.value?.idEvento ?? '',
                         idFornecedor: widget.fornecedor.idFornecedor,
                         servico: servico,
                         statusInicial: StatusOrcamento.emNegociacao,

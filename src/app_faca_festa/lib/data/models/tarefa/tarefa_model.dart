@@ -87,7 +87,7 @@ class TarefaModel {
   Map<String, dynamic> toMap() {
     return {
       'id_tarefa': idTarefa,
-      'id_evento_evento': idEvento,
+      'id_evento': idEvento,
       'id_responsavel': idResponsavel,
       'titulo': titulo,
       'descricao': descricao,
@@ -101,7 +101,7 @@ class TarefaModel {
   factory TarefaModel.fromMap(Map<String, dynamic> map) {
     return TarefaModel(
       idTarefa: map['id_tarefa'] ?? '',
-      idEvento: map['id_evento_evento'] ?? '',
+      idEvento: map['id_evento'] ?? '',
       idResponsavel: map['id_responsavel'],
       titulo: map['titulo'] ?? '',
       descricao: map['descricao'],

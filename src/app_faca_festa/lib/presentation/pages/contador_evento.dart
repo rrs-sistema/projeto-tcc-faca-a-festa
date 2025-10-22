@@ -2,21 +2,21 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 
-class ContadorEvento extends StatefulWidget {
+class ContadorEventoScreen extends StatefulWidget {
   final DateTime dataEvento;
   final String tipoEvento; // 🔹 novo: tipo do evento
 
-  const ContadorEvento({
+  const ContadorEventoScreen({
     super.key,
     required this.dataEvento,
     required this.tipoEvento,
   });
 
   @override
-  State<ContadorEvento> createState() => _ContadorEventoState();
+  State<ContadorEventoScreen> createState() => _ContadorEventoScreenState();
 }
 
-class _ContadorEventoState extends State<ContadorEvento> {
+class _ContadorEventoScreenState extends State<ContadorEventoScreen> {
   late Timer _timer;
   Duration _duracaoRestante = Duration.zero;
 

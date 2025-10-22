@@ -5,10 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../controllers/evento_controller.dart';
+import '../../../controllers/orcamento_controller.dart';
 import '../../../data/models/model.dart';
 import './../../../controllers/event_theme_controller.dart';
 import './../../../controllers/fornecedor_controller.dart';
-import './../../../controllers/app_controller.dart';
 
 class FornecedoresPage extends StatelessWidget {
   const FornecedoresPage({super.key});
@@ -17,12 +18,13 @@ class FornecedoresPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeController = Get.find<EventThemeController>();
     final fornecedoresController = Get.find<FornecedorController>();
-    final controllerApp = Get.find<AppController>();
-    final idEvento = controllerApp.eventoModel.value?.idEvento;
+    final orcamentoController = Get.find<OrcamentoController>();
+    final eventoController = Get.find<EventoController>();
+    final idEvento = eventoController.eventoAtual.value?.idEvento;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (idEvento != null) {
-        fornecedoresController.carregarOrcamentosDoEvento(idEvento);
+        //fornecedoresController.carregarOrcamentosDoEvento(idEvento);
         fornecedoresController.carregarServicosPorEvento(idEvento);
       }
     });
@@ -30,8 +32,8 @@ class FornecedoresPage extends StatelessWidget {
     return Obx(() {
       final primary = themeController.primaryColor.value;
       final gradient = themeController.gradient.value;
-      final contratados = fornecedoresController.contratadosCount;
-      final total = fornecedoresController.servicosFornecedor.length;
+      final contratados = orcamentoController.contratadosCount;
+      final total = orcamentoController.totalCount;
 
       // 🔹 Estados reativos de carregamento e erro
       if (fornecedoresController.carregando.value) {
@@ -74,7 +76,7 @@ class FornecedoresPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _progressoServicos(contratados, total, gradient),
+              _progressoServicos(contratados.value, total, gradient),
               const SizedBox(height: 20),
 
               Row(
@@ -146,7 +148,7 @@ class FornecedoresPage extends StatelessWidget {
                         (f) => f.idFornecedor == servicoFornecedor.idFornecedor,
                       );
 
-                      final orcamento = fornecedoresController.orcamentos.firstWhereOrNull((f) =>
+                      final orcamento = orcamentoController.orcamentos.firstWhereOrNull((f) =>
                           f.idEvento == idEvento &&
                           f.idServicoFornecido == servicoFornecedor.idFornecedorServico);
                       return _FornecedorCard(

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import './../data/models/evento/evento.dart';
 
@@ -57,7 +57,6 @@ class EventThemeController extends GetxController {
           end: Alignment.bottomRight,
         );
         icon.value = Icons.favorite_rounded;
-        tituloCabecalho.value = "💍 Casamento dos Sonhos";
         break;
 
       case 'festa infantil':
@@ -68,7 +67,6 @@ class EventThemeController extends GetxController {
           end: Alignment.bottomRight,
         );
         icon.value = Icons.celebration;
-        tituloCabecalho.value = "🎈 Festa Infantil";
         break;
 
       case 'chá de bebê':
@@ -79,7 +77,6 @@ class EventThemeController extends GetxController {
           end: Alignment.bottomRight,
         );
         icon.value = Icons.baby_changing_station;
-        tituloCabecalho.value = "🍼 Chá de Bebê";
         break;
 
       case 'aniversário':
@@ -90,7 +87,6 @@ class EventThemeController extends GetxController {
           end: Alignment.bottomRight,
         );
         icon.value = Icons.cake;
-        tituloCabecalho.value = "🎂 Aniversário Especial";
         break;
 
       default:
@@ -101,7 +97,6 @@ class EventThemeController extends GetxController {
           end: Alignment.bottomRight,
         );
         icon.value = Icons.star;
-        tituloCabecalho.value = "🎉 Sua Festa Incrível";
         break;
     }
   }

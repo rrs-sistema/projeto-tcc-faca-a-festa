@@ -1,3 +1,4 @@
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 
@@ -15,7 +16,8 @@ class CustomInputField extends StatefulWidget {
   final double borderRadius;
   final EdgeInsets margin;
   final void Function(String)? onChanged;
-  final Widget? suffixIcon; // 👈 Novo campo
+  final Widget? suffixIcon;
+  final bool autoFormat; // 👈 Novo recurso (para aplicar máscaras automaticamente)
 
   const CustomInputField({
     super.key,
@@ -32,7 +34,8 @@ class CustomInputField extends StatefulWidget {
     this.borderRadius = 14,
     this.margin = const EdgeInsets.only(bottom: 16),
     this.onChanged,
-    this.suffixIcon, // 👈 Novo parâmetro
+    this.suffixIcon,
+    this.autoFormat = true, // 👈 por padrão habilita formatação
   });
 
   @override
@@ -41,6 +44,45 @@ class CustomInputField extends StatefulWidget {
 
 class _CustomInputFieldState extends State<CustomInputField> {
   bool isFocused = false;
+  MaskTextInputFormatter? maskFormatter;
+  TextInputType? keyboardType;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.autoFormat) _configurarMascara();
+  }
+
+  void _configurarMascara() {
+    final label = widget.label.toLowerCase();
+
+    // 🔹 Define máscara automática conforme o tipo do campo
+    if (label.contains('telefone') || label.contains('celular')) {
+      maskFormatter = MaskTextInputFormatter(
+        mask: '(##) #####-####',
+        filter: {"#": RegExp(r'[0-9]')},
+      );
+      keyboardType = TextInputType.phone;
+    } else if (label.contains('cpf')) {
+      maskFormatter = MaskTextInputFormatter(
+        mask: '###.###.###-##',
+        filter: {"#": RegExp(r'[0-9]')},
+      );
+      keyboardType = TextInputType.number;
+    } else if (label.contains('cep')) {
+      maskFormatter = MaskTextInputFormatter(
+        mask: '#####-###',
+        filter: {"#": RegExp(r'[0-9]')},
+      );
+      keyboardType = TextInputType.number;
+    } else if (label.contains('e-mail') || label.contains('email')) {
+      keyboardType = TextInputType.emailAddress;
+    } else if (label.contains('valor') || label.contains('número')) {
+      keyboardType = TextInputType.number;
+    } else {
+      keyboardType = widget.keyboardType ?? TextInputType.text;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -93,9 +135,10 @@ class _CustomInputFieldState extends State<CustomInputField> {
             onChanged: widget.onChanged,
             readOnly: widget.readOnly,
             onTap: widget.onTap,
-            keyboardType: widget.keyboardType,
-            maxLength: widget.maxLength,
             obscureText: widget.obscureText,
+            keyboardType: keyboardType ?? widget.keyboardType,
+            inputFormatters: maskFormatter != null ? [maskFormatter!] : [],
+            maxLength: widget.maxLength,
             cursorColor: focusColor,
             style: GoogleFonts.poppins(
               fontSize: 15.5,
@@ -105,7 +148,8 @@ class _CustomInputFieldState extends State<CustomInputField> {
             decoration: InputDecoration(
               prefixIcon: AnimatedContainer(
                 duration: const Duration(milliseconds: 250),
-                margin: const EdgeInsets.only(right: 8),
+                margin: const EdgeInsets.only(left: 8, right: 8),
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   gradient: LinearGradient(
@@ -119,8 +163,12 @@ class _CustomInputFieldState extends State<CustomInputField> {
                 ),
                 child: Icon(widget.icon, color: Colors.white, size: 20),
               ),
-              // 👇 Novo sufixo (ícone à direita)
-              suffixIcon: widget.suffixIcon,
+              suffixIcon: widget.suffixIcon != null
+                  ? Padding(
+                      padding: const EdgeInsets.only(left: 10),
+                      child: widget.suffixIcon,
+                    )
+                  : null,
               labelText: widget.label,
               labelStyle: GoogleFonts.poppins(
                 color: isFocused ? baseColor : Colors.grey.shade600,
