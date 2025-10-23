@@ -140,6 +140,24 @@ class TarefaController extends GetxController {
     }
   }
 
+// ==========================================================
+// 🔹 Lista de tarefas com data mais próxima (ordenadas)
+// ==========================================================
+  List<TarefaModel> tarefasProximas({int diasLimite = 30}) {
+    final hoje = DateTime.now().subtract(Duration(days: 150));
+    final limite = hoje.add(Duration(days: diasLimite));
+
+    final proximas = tarefas
+        .where((t) =>
+            t.dataPrevista != null &&
+            t.dataPrevista!.isAfter(hoje.subtract(const Duration(days: 1))) &&
+            t.dataPrevista!.isBefore(limite))
+        .toList();
+
+    proximas.sort((a, b) => a.dataPrevista!.compareTo(b.dataPrevista!));
+    return proximas;
+  }
+
   // ==========================================================
   // 🔹 Cálculos reativos de progresso
   // ==========================================================
@@ -149,6 +167,7 @@ class TarefaController extends GetxController {
     return concluidas / tarefas.length;
   }
 
+  int get total => tarefas.length;
   int get concluidas => tarefas.where((t) => t.status == StatusTarefa.concluida).length;
   int get pendentes => tarefas.where((t) => t.status != StatusTarefa.concluida).length;
 

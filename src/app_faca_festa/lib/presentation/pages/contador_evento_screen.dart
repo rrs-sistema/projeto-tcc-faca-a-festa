@@ -308,7 +308,7 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
                     ],
                   ),
                   child: Text(
-                    '⏳ Faltam ${dias > 0 ? '$dias dias' : 'poucas horas!'} para o evento',
+                    '⏳ Faltam ${dias > 0 ? '$dias dias' : 'poucas horas!'} para o seu ${widget.tipoEvento}',
                   ),
                 ),
                 const SizedBox(height: 10),

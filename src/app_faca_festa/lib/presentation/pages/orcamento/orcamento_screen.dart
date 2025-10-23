@@ -121,33 +121,33 @@ class OrcamentoScreen extends StatelessWidget {
                           : gastos.map((g) => _gastoItem(g.nome, g.custo, g.pago)).toList();
 
                       return _categoriaCard(
-                        context,
-                        orcamento.idOrcamento,
-                        orcamento.anotacoes ?? 'Serviço',
-                        orcamento.custoEstimado ?? 0,
-                        primary,
-                        gastosWidgets,
-                      );
+                          context,
+                          orcamento.idOrcamento,
+                          orcamento.anotacoes ?? 'Serviço',
+                          orcamento.custoEstimado ?? 0,
+                          primary,
+                          gastosWidgets,
+                          orcamento.idServicoFornecido == null);
                     });
                   }
 
                   // 🔹 Caso tenha fornecedor vinculado, mantém layout padrão
                   return _categoriaCard(
-                    context,
-                    orcamento.idOrcamento,
-                    orcamento.anotacoes ?? 'Serviço',
-                    orcamento.custoEstimado ?? 0,
-                    primary,
-                    [
-                      _gastoItem(
-                        orcamento.status.label,
-                        orcamento.custoEstimado ?? 0,
-                        orcamento.status == StatusOrcamento.fechado
-                            ? (orcamento.custoEstimado ?? 0)
-                            : 0,
-                      ),
-                    ],
-                  );
+                      context,
+                      orcamento.idOrcamento,
+                      orcamento.anotacoes ?? 'Serviço',
+                      orcamento.custoEstimado ?? 0,
+                      primary,
+                      [
+                        _gastoItem(
+                          orcamento.status.label,
+                          orcamento.custoEstimado ?? 0,
+                          orcamento.status == StatusOrcamento.fechado
+                              ? (orcamento.custoEstimado ?? 0)
+                              : 0,
+                        ),
+                      ],
+                      orcamento.idServicoFornecido == null);
                 }),
               ],
             ),
@@ -158,14 +158,8 @@ class OrcamentoScreen extends StatelessWidget {
   }
 
 // === CATEGORIA EXPANSÍVEL (Versão Premium) ===
-  Widget _categoriaCard(
-    BuildContext context,
-    String idOrcamento,
-    String nome,
-    double total,
-    Color primary,
-    List<Widget> gastos,
-  ) {
+  Widget _categoriaCard(BuildContext context, String idOrcamento, String nome, double total,
+      Color primary, List<Widget> gastos, bool mostrarBotaoAddGasto) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -243,24 +237,25 @@ class OrcamentoScreen extends StatelessWidget {
             children: [
               ...gastos,
               const SizedBox(height: 10),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  ),
-                  onPressed: () => _showAddGastoDialog(context, idOrcamento, nome),
-                  icon: const Icon(Icons.add_circle_outline, size: 18),
-                  label: Text(
-                    'Adicionar Gasto',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13.5,
+              if (mostrarBotaoAddGasto)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: primary,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    ),
+                    onPressed: () => _showAddGastoDialog(context, idOrcamento, nome),
+                    icon: const Icon(Icons.add_circle_outline, size: 18),
+                    label: Text(
+                      'Adicionar Gasto',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
+                      ),
                     ),
                   ),
                 ),
-              ),
             ],
           ),
         ),

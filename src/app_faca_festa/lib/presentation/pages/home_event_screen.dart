@@ -1,17 +1,24 @@
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:get/get.dart';
-import 'package:animate_do/animate_do.dart';
-import '../../../controllers/event_theme_controller.dart';
-import '../../controllers/convidado/convidado_controller.dart';
-import '../../controllers/evento_controller.dart';
-import '../../controllers/orcamento_controller.dart';
-import '../../controllers/tarefa_controller.dart';
-import 'contador_evento_screen.dart';
-import 'package:flutter/services.dart';
+import 'dart:ui';
 
+import 'package:google_fonts/google_fonts.dart';
+import 'package:animate_do/animate_do.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
+import 'package:get/get.dart';
+import 'package:shimmer/shimmer.dart';
+
+import '../../core/utils/biblioteca.dart';
+import './../../controllers/convidado/convidado_controller.dart';
+import './../../../controllers/event_theme_controller.dart';
+import './fornecedor/fornecedor_localizacao_screen.dart';
+import './../../controllers/orcamento_controller.dart';
+import './../../controllers/tarefa_controller.dart';
+import './../../controllers/evento_controller.dart';
+import './../../data/models/model.dart';
+import './contador_evento_screen.dart';
 import 'convidado/convidado_page.dart';
-import 'fornecedor/fornecedor_localizacao_screen.dart';
 import 'fornecedor/fornecedores_page.dart';
 import 'orcamento/orcamento_screen.dart';
 import 'tarefa/tarefas_screen.dart';
@@ -30,21 +37,40 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   final orcamentoController = Get.find<OrcamentoController>();
   final tarefaController = Get.find<TarefaController>();
   final eventoController = Get.find<EventoController>();
+  bool isCelular = false;
+  bool _carregandoFornecedor = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Get.find<EventThemeController>();
+    isCelular = Biblioteca.isCelular(context);
 
     return Scaffold(
       backgroundColor: theme.primaryColor.value.withValues(alpha: 0.03),
       body: SafeArea(
         child: PageView(
           controller: pageController,
-          onPageChanged: (i) => setState(() => _currentIndex = i),
+          onPageChanged: (i) async {
+            setState(() => _currentIndex = i);
+            if (i == 1) {
+              setState(() => _carregandoFornecedor = true);
+              await Future.delayed(const Duration(milliseconds: 800));
+              setState(() => _carregandoFornecedor = false);
+            }
+          },
           children: [
             _buildHome(theme),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 500),
+              switchInCurve: Curves.easeInOutCubic,
+              child: _currentIndex == 1 && !_carregandoFornecedor
+                  ? FadeInRight(
+                      duration: const Duration(milliseconds: 600),
+                      child: _buildFornecedorLocalizacao(theme),
+                    )
+                  : _buildFornecedorShimmer(theme),
+            ),
             _buildInspiration(theme),
-            _buildFornecedorLocalizacao(theme)
           ],
         ),
       ),
@@ -54,108 +80,202 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
 
   Widget _buildHome(EventThemeController theme) {
     final eventoModel = eventoController.eventoAtual.value!;
+    final tipoEventoModel = eventoController.tipoEventoAtual.value;
     final ScrollController scrollController = ScrollController();
 
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        // notifica o ContadorEventoScreen da rolagem
-        return false;
-      },
-      child: CustomScrollView(
-        controller: scrollController,
-        slivers: [
-          // === Banner Animado ===
-          _buildAnimatedHeader(theme),
-
-          // === Contador com mudança de cor ===
-          SliverPersistentHeader(
-            pinned: true,
-            floating: false,
-            delegate: ContadorEventoHeaderDelegate(
-              scrollController: scrollController,
-              child: ContadorEventoScreen(
-                dataEvento: eventoModel.data,
-                tipoEvento: eventoModel.nome, // 🔹 envia o tipo para personalizar
-                scrollController: scrollController,
+    return Column(
+      children: [
+        _buildAnimatedHeader(theme),
+        Expanded(
+          child: CustomScrollView(
+            controller: scrollController,
+            slivers: [
+              SliverPersistentHeader(
+                pinned: true,
+                floating: false,
+                delegate: ContadorEventoHeaderDelegate(
+                  scrollController: scrollController,
+                  child: ContadorEventoScreen(
+                    dataEvento: eventoModel.data,
+                    tipoEvento: tipoEventoModel?.nome ?? eventoModel.nome,
+                    scrollController: scrollController,
+                  ),
+                ),
               ),
-            ),
+              SliverToBoxAdapter(child: const SizedBox(height: 16)),
+              _buildQuickActions(theme),
+              _buildProgressCards(theme),
+              _buildUpcomingTasks(tarefaController, theme),
+              _buildBudgetChart(
+                  eventoController.eventoAtual, orcamentoController.totalCustoEstimado, theme),
+              _buildSuppliersCarousel(theme),
+              _buildMotivationalQuote(theme),
+              const SliverToBoxAdapter(child: SizedBox(height: 45)),
+            ],
           ),
-
-          SliverToBoxAdapter(child: const SizedBox(height: 16)),
-          _buildQuickActions(theme),
-          _buildProgressCards(theme),
-          _buildSuppliersCarousel(theme),
-          _buildInspirationGrid(theme),
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildAnimatedHeader(EventThemeController theme) {
-    return SliverAppBar(
-      expandedHeight: 260,
-      backgroundColor: theme.primaryColor.value,
-      pinned: true,
-      flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-        title: FadeInDown(
-          duration: const Duration(milliseconds: 900),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.35),
-              borderRadius: BorderRadius.circular(14),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
+    final eventoController = Get.find<EventoController>();
+    final isCelular = Get.context!.width < 650;
+    final corPrincipal = theme.primaryColor.value;
+
+    return Obx(() {
+      final evento = eventoController.eventoAtual.value;
+      final tipoEvento = eventoController.tipoEventoAtual.value;
+
+      return Container(
+        height: 220,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: corPrincipal,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.celebration_rounded, color: Colors.white, size: 20),
-                const SizedBox(width: 8),
-                Text(
-                  'Bem-vindo ao Faça a Festa',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15.5,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          ],
         ),
-        background: Hero(
-          tag: 'event_header',
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset('assets/images/event_generic_1.jpeg', fit: BoxFit.cover),
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.black.withValues(alpha: 0.6),
-                      Colors.black.withValues(alpha: 0.2),
-                      Colors.transparent,
-                    ],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 🔹 Imagem de fundo
+            Hero(
+              tag: 'event_header',
+              child: Image.asset(
+                'assets/images/event_generic_1.jpeg',
+                fit: BoxFit.cover,
+              ),
+            ),
+
+            // 🔹 Gradiente e blur
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
+              child: Container(color: Colors.black.withValues(alpha: 0.2)),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    corPrincipal.withValues(alpha: 0.6),
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.7),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+
+            // 🔹 Conteúdo (Nome e Tipo de Evento)
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 75,
+              child: FadeInDown(
+                duration: const Duration(milliseconds: 900),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.celebration_rounded, color: Colors.white, size: 18),
+                            const SizedBox(width: 6),
+                            Text(
+                              tipoEvento?.nome ?? 'Faça a Festa',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: isCelular ? 12 : 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          evento?.nome ?? 'Seu evento especial',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: isCelular ? 13.5 : 17,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.3,
+                            shadows: const [
+                              Shadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+
+            // 🔹 Informações rápidas (data e local)
+            Positioned(
+              bottom: 10,
+              left: 20,
+              right: 20,
+              child: FadeInUp(
+                duration: const Duration(milliseconds: 1000),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_month, color: Colors.white, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          evento?.data != null
+                              ? DateFormat("d 'de' MMMM", 'pt_BR').format(evento!.data)
+                              : 'Data a definir',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        const Icon(Icons.place_rounded, color: Colors.white, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          evento?.logradouro ?? 'Local não definido',
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildQuickActions(EventThemeController theme) {
@@ -189,15 +309,14 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     'icon': Icons.people_alt_rounded,
                     'label': 'Convidados',
                     'color': Colors.pinkAccent,
-                    'value':
-                        "${convidadoController.totalConfirmados} de ${convidadoController.totalConvidados}",
+                    'value': "${convidadoController.totalConvidados}",
                   },
                   {
                     'icon': Icons.payments_rounded,
                     'label': 'Orçamento',
                     'color': Colors.tealAccent,
                     'value':
-                        "R\$ ${orcamentoController.totalCustoEstimado.value.toStringAsFixed(2).replaceAll('.', ',')}",
+                        "R\$ ${Biblioteca.formatarValorDecimal(orcamentoController.totalCustoEstimado.value)}",
                   },
                   {
                     'icon': Icons.storefront_rounded,
@@ -295,7 +414,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
                                       shape: BoxShape.circle,
-                                      color: Colors.white.withValues(alpha: 0.25),
+                                      color: Colors.grey.withValues(alpha: 0.35),
                                       border: Border.all(
                                         color: Colors.white.withValues(alpha: 0.4),
                                         width: 1,
@@ -312,9 +431,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                                     item['label'] as String,
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.poppins(
-                                      fontSize: isTablet ? 13.5 : 12,
+                                      fontSize: isTablet ? 16.5 : 14.5,
                                       fontWeight: FontWeight.w600,
-                                      color: Colors.white,
+                                      color: Colors.black,
                                       shadows: const [
                                         Shadow(
                                           offset: Offset(0, 1),
@@ -330,7 +449,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                                     item['value'].toString(),
                                     textAlign: TextAlign.center,
                                     style: GoogleFonts.poppins(
-                                      fontSize: 11.5,
+                                      fontSize: 14,
                                       color: Colors.black,
                                       fontWeight: FontWeight.w500,
                                     ),
@@ -366,7 +485,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         child: Column(
           children: [
-            // === CONVIDADOS ===
             Obx(() {
               final confirmados = convidadoController.totalConfirmados;
               final total = convidadoController.totalConvidados;
@@ -386,10 +504,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 ),
               );
             }),
-
             const SizedBox(height: 10),
-
-            // === ORÇAMENTO ===
             Obx(() {
               final totalUsado = orcamentoController.totalCustoEstimado.value;
               final limite = eventoModel.custoEstimado ?? 0.0;
@@ -409,10 +524,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 ),
               );
             }),
-
             const SizedBox(height: 10),
-
-            // === TAREFAS ===
             Obx(() {
               final concluidas = tarefaController.concluidas;
               final total = (tarefaController.pendentes + tarefaController.concluidas);
@@ -489,37 +601,80 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   }
 
   Widget _buildInspiration(EventThemeController theme) {
-    final eventoModel = eventoController.eventoAtual.value!;
     final ScrollController scrollController = ScrollController();
-
     return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        return false;
-      },
+      onNotification: (notification) => false,
       child: CustomScrollView(
         controller: scrollController,
         slivers: [
-          // 🔹 Mesmo cabeçalho animado do Home
-          _buildAnimatedHeader(theme),
-
-          // 🔹 Mesmo contador do evento — replicado aqui
-          SliverPersistentHeader(
-            pinned: true,
-            floating: false,
-            delegate: ContadorEventoHeaderDelegate(
-              scrollController: scrollController,
-              child: ContadorEventoScreen(
-                dataEvento: eventoModel.data,
-                tipoEvento: eventoModel.nome,
-                scrollController: scrollController,
-              ),
-            ),
+          SliverToBoxAdapter(
+            child: _buildAnimatedHeader(theme),
           ),
-
-          // 🔹 Conteúdo da aba de inspirações
+          // 🔹 Grade de inspirações
           _buildInspirationGrid(theme),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInspirationGrid(EventThemeController theme) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      sliver: SliverGrid(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => GestureDetector(
+            onTap: () {},
+            child: FadeIn(
+              duration: Duration(milliseconds: 400 + (index * 100)),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Hero(
+                      tag: 'inspiracao_$index',
+                      child: Image.asset(
+                        'assets/images/kids_party_${(index % 3) + 1}.jpeg',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.black.withValues(alpha: 0.4), Colors.transparent],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Text(
+                          'Inspiração ${index + 1}',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          childCount: 6,
+        ),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 1,
+        ),
       ),
     );
   }
@@ -532,15 +687,12 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       child: CustomScrollView(
         controller: scrollController,
         slivers: [
-          // 🔹 Tela de localização dos fornecedores (como SliverToBoxAdapter)
           SliverToBoxAdapter(
             child: SizedBox(
               height: MediaQuery.of(context).size.height,
               child: FornecedorLocalizacaoScreen(showLeading: false),
             ),
           ),
-
-          // 🔹 Espaço extra no final
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
         ],
       ),
@@ -548,68 +700,37 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   }
 }
 
-Widget _buildInspirationGrid(EventThemeController theme) {
-  return SliverPadding(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    sliver: SliverGrid(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) => GestureDetector(
-          onTap: () {},
-          child: FadeIn(
-            duration: Duration(milliseconds: 400 + (index * 100)),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Hero(
-                    tag: 'inspiracao_$index',
-                    child: Image.asset(
-                      'assets/images/kids_party_${(index % 3) + 1}.jpeg',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.black.withValues(alpha: 0.4), Colors.transparent],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Text(
-                        'Inspiração ${index + 1}',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+// === FRASE MOTIVACIONAL ===
+Widget _buildMotivationalQuote(EventThemeController theme) {
+  final frases = [
+    "🎉 Cada detalhe é um passo rumo ao seu sonho!",
+    "💍 Organizar é transformar amor em celebração.",
+    "✨ Tudo pronto para um momento inesquecível?",
+    "🎶 Que cada escolha conte uma história linda.",
+  ];
+
+  final frase = frases[DateTime.now().second % frases.length];
+  return SliverToBoxAdapter(
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Center(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 700),
+          child: Text(
+            frase,
+            key: ValueKey(frase),
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              color: theme.primaryColor.value,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ),
-        childCount: 6,
-      ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 1,
       ),
     ),
   );
 }
-
-// === Header fixável do Contador ===
 
 class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
@@ -885,6 +1006,237 @@ class _AnimatedProgressCardState extends State<_AnimatedProgressCard>
   }
 }
 
+// === GRÁFICO DE ORÇAMENTO APRIMORADO ===
+Widget _buildBudgetChart(
+  Rx<EventoModel?> eventoAtual,
+  RxDouble totalCustoEstimado,
+  EventThemeController theme,
+) {
+  return SliverToBoxAdapter(
+    child: Obx(() {
+      final total = totalCustoEstimado.value;
+      final limite = eventoAtual.value?.custoEstimado ?? 0.0;
+      final usado = limite > 0 ? (total / limite).clamp(0, 1) : 0.0;
+
+      final primary = theme.primaryColor.value;
+      final usadoValor = Biblioteca.formatarValorDecimal((usado * 100));
+
+      return Container(
+        margin: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 🔹 Título
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Distribuição do Orçamento',
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: Colors.black87,
+                  ),
+                ),
+                Icon(Icons.pie_chart_rounded, color: primary, size: 22),
+              ],
+            ),
+            const SizedBox(height: 16),
+
+            // 🔹 Gráfico
+            SizedBox(
+              height: 180,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  PieChart(
+                    PieChartData(
+                      startDegreeOffset: 270,
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 60,
+                      borderData: FlBorderData(show: false),
+                      sections: [
+                        PieChartSectionData(
+                          value: usado * 100,
+                          color: primary,
+                          radius: 60,
+                          title: '',
+                          gradient: LinearGradient(
+                            colors: [
+                              primary.withValues(alpha: 0.9),
+                              primary.withValues(alpha: 0.6),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                        ),
+                        PieChartSectionData(
+                          value: (1 - usado) * 100,
+                          color: Colors.grey.shade200,
+                          title: '',
+                          radius: 60,
+                        ),
+                      ],
+                    ),
+                    duration: const Duration(milliseconds: 800),
+                    curve: Curves.easeOutCubic,
+                  ),
+
+                  // 🔹 Valor central
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '$usadoValor%',
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: primary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Usado',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+            //final usadoValor = Biblioteca.formatarValorDecimal((usado * 100));
+            // 🔹 Legenda e valores
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _LegendItem(
+                  color: primary,
+                  label: "Usado",
+                  value: "R\$ ${Biblioteca.formatarValorDecimal(total)}",
+                ),
+                _LegendItem(
+                  color: Colors.grey.shade300,
+                  label: "Disponível",
+                  value:
+                      "R\$ ${Biblioteca.formatarValorDecimal((limite - total).clamp(0, limite))}",
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // 🔹 Linha de progresso horizontal complementar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: LinearProgressIndicator(
+                value: usado.toDouble(),
+                minHeight: 10,
+                backgroundColor: Colors.grey.shade200,
+                valueColor: AlwaysStoppedAnimation(
+                  primary.withValues(alpha: 0.8),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }),
+  );
+}
+
+// === ITEM DE LEGENDA (COMPONENTE) ===
+class _LegendItem extends StatelessWidget {
+  final Color color;
+  final String label;
+  final String value;
+  const _LegendItem({
+    required this.color,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+            width: 14, height: 14, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label,
+                style: GoogleFonts.poppins(
+                    fontSize: 13, color: Colors.black87, fontWeight: FontWeight.w500)),
+            Text(value, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// === TAREFAS PRÓXIMAS ===
+Widget _buildUpcomingTasks(TarefaController tarefaController, EventThemeController theme) {
+  return SliverToBoxAdapter(
+    child: Obx(() {
+      final proximas = tarefaController.tarefasProximas();
+      if (proximas.isEmpty) return const SizedBox.shrink();
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Text('Tarefas próximas',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                )),
+          ),
+          ...proximas.take(3).map((t) => ListTile(
+                leading: const Icon(Icons.check_box_outline_blank, color: Colors.grey),
+                title: Text('t.titulo'),
+                subtitle: Text(
+                  _formatarDataTarefa(t.dataPrevista),
+                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.red.shade600),
+                ),
+              )),
+        ],
+      );
+    }),
+  );
+}
+
+String _formatarDataTarefa(DateTime? data) {
+  if (data == null) return 'Sem data definida';
+  final agora = DateTime.now();
+  final formatador = DateFormat("EEEE, d 'de' MMMM 'às' HH:mm", 'pt_BR');
+  final textoData = formatador.format(data);
+
+  final diferenca = data.difference(agora).inDays;
+  if (diferenca == 0) return "Hoje • ${DateFormat('HH:mm').format(data)}";
+  if (diferenca == 1) return "Amanhã • ${DateFormat('HH:mm').format(data)}";
+  return textoData[0].toUpperCase() + textoData.substring(1); // capitaliza
+}
+
 Widget _buildSuppliersCarousel(EventThemeController theme) {
   final cor = theme.primaryColor.value;
   return SliverToBoxAdapter(
@@ -954,6 +1306,112 @@ Widget _buildSuppliersCarousel(EventThemeController theme) {
           )
         ],
       ),
+    ),
+  );
+}
+
+Widget _buildFornecedorShimmer(EventThemeController theme) {
+  final primary = theme.primaryColor.value;
+
+  return Container(
+    color: Colors.grey.shade100,
+    padding: const EdgeInsets.all(20),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const SizedBox(height: 30),
+        Text(
+          'Carregando fornecedores...',
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            color: primary,
+          ),
+        ),
+        const SizedBox(height: 20),
+
+        // === Grade shimmer (2 colunas)
+        Expanded(
+          child: GridView.builder(
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 6,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: 0.55,
+            ),
+            itemBuilder: (context, index) {
+              return Shimmer.fromColors(
+                baseColor: Colors.grey.shade300,
+                highlightColor: Colors.grey.shade100,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(18),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 6,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Banner do fornecedor
+                      Container(
+                        height: 110,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              height: 14,
+                              width: 100,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Container(
+                              height: 10,
+                              width: 80,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+                            Container(
+                              height: 28,
+                              width: double.infinity,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     ),
   );
 }
