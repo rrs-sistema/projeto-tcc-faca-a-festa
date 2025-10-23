@@ -42,6 +42,7 @@ dependencies:
   collection: ^1.19.0
   interactive_country_map: ^0.0.6
   mask_text_input_formatter: ^2.9.0
+  animate_do: ^4.2.0
 
 dev_dependencies:
   flutter_test:
