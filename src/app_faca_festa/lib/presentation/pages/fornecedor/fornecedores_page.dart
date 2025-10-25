@@ -10,6 +10,7 @@ import '../../../controllers/orcamento_controller.dart';
 import '../../../data/models/model.dart';
 import './../../../controllers/event_theme_controller.dart';
 import './../../../controllers/fornecedor_controller.dart';
+import 'fornecedor_localizacao_screen.dart';
 
 class FornecedoresPage extends StatelessWidget {
   const FornecedoresPage({super.key});
@@ -24,7 +25,6 @@ class FornecedoresPage extends StatelessWidget {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (idEvento != null) {
-        //fornecedoresController.carregarOrcamentosDoEvento(idEvento);
         fornecedoresController.carregarServicosPorEvento(idEvento);
       }
     });
@@ -35,30 +35,21 @@ class FornecedoresPage extends StatelessWidget {
       final contratados = orcamentoController.contratadosCount;
       final total = orcamentoController.totalCount;
 
-      // 🔹 Estados reativos de carregamento e erro
-      if (fornecedoresController.carregando.value) {
-        return const Scaffold(
-          body: Center(child: CircularProgressIndicator()),
-        );
-      }
-
-      if (fornecedoresController.erro.isNotEmpty) {
-        return Scaffold(
-          body: Center(
-            child: Text(
-              fornecedoresController.erro.value,
-              style: GoogleFonts.poppins(color: Colors.redAccent, fontSize: 16),
-            ),
-          ),
-        );
-      }
-
       return Scaffold(
         backgroundColor: Colors.grey.shade100,
         appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => Navigator.pop(context),
+          automaticallyImplyLeading: false,
+          leading: Container(
+            margin: const EdgeInsets.only(left: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.25),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
+              onPressed: Get.back,
+              tooltip: 'Voltar',
+            ),
           ),
           title: Text(
             'Meus Fornecedores',
@@ -71,130 +62,251 @@ class FornecedoresPage extends StatelessWidget {
           elevation: 0,
           flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _progressoServicos(contratados.value, total, gradient),
-              const SizedBox(height: 20),
 
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 6,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      gradient: themeController.gradient.value,
-                      borderRadius: BorderRadius.circular(4),
+        /// === CORPO PRINCIPAL COM ESTADOS REATIVOS ===
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 400),
+          child: fornecedoresController.carregando.value
+              ? _buildLoadingState(primary)
+              : fornecedoresController.erro.isNotEmpty
+                  ? _buildErrorState(fornecedoresController.erro.value, primary)
+                  : _buildFornecedorContent(
+                      context,
+                      primary,
+                      gradient,
+                      contratados.value,
+                      total,
+                      fornecedoresController,
+                      orcamentoController,
+                      eventoController,
+                      idEvento,
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'Complete sua equipe de fornecedores',
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: primary,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 6),
-
-              // 🔹 Subtítulo descritivo com leve transparência
-              Center(
-                child: Text(
-                  'Acompanhe o andamento dos seus fornecedores — contratados, em negociação ou aguardando orçamento.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    color: Colors.grey.shade700.withValues(alpha: 0.9),
-                    height: 1.4,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 18),
-              Divider(
-                color: primary.withValues(alpha: 0.15),
-                thickness: 1,
-                indent: 4,
-                endIndent: 4,
-              ),
-              const SizedBox(height: 10),
-
-              // 🔹 Lista de fornecedores
-              Expanded(
-                child: Obx(() {
-                  final servicos = fornecedoresController.servicosFornecedor;
-
-                  if (servicos.isEmpty) {
-                    return _mensagemVazia(primary, gradient);
-                  }
-                  return ListView.builder(
-                    itemCount: servicos.length,
-                    itemBuilder: (context, index) {
-                      final servicoFornecedor = servicos[index];
-                      final servicoProduto = fornecedoresController
-                          .buscarServicoPorId(servicoFornecedor.idProdutoServico);
-
-                      // 🔹 Carrega também uma imagem (opcional)
-                      final fornecedor = fornecedoresController.fornecedores.firstWhereOrNull(
-                        (f) => f.idFornecedor == servicoFornecedor.idFornecedor,
-                      );
-
-                      final orcamento = orcamentoController.orcamentos.firstWhereOrNull((f) =>
-                          f.idEvento == idEvento &&
-                          f.idServicoFornecido == servicoFornecedor.idFornecedorServico);
-                      return _FornecedorCard(
-                        nomeServico: servicoProduto?.nome ?? 'Serviço desconhecido',
-                        descricao: servicoProduto?.descricao ?? 'Sem descrição',
-                        preco: servicoFornecedor.preco,
-                        precoPromocao: servicoFornecedor.precoPromocao,
-                        imagem: fornecedor?.bannerUrl,
-                        status: orcamento?.status ?? StatusOrcamento.pendente, // ✅ agora dinâmico
-                        themeGradient: gradient,
-                        primaryColor: primary,
-                        onReservar: () => fornecedoresController.abrirCotacao(
-                          context: context,
-                          idEvento: idEvento ?? '',
-                          servicoFornecedor: servicoFornecedor,
-                          acao: 'reservar',
-                          idOrcamento: orcamento?.idOrcamento,
-                        ),
-                        onSolicitar: () => fornecedoresController.abrirCotacao(
-                          context: context,
-                          idEvento: idEvento ?? '',
-                          servicoFornecedor: servicoFornecedor,
-                          acao: 'solicitar',
-                          idOrcamento: orcamento?.idOrcamento,
-                        ),
-                        onAvaliar: () {
-                          Get.snackbar(
-                            "Avaliação enviada",
-                            "Você avaliou ${servicoProduto?.nome ?? 'o fornecedor'}.",
-                            backgroundColor: primary,
-                            colorText: Colors.white,
-                          );
-                        },
-                      ).animate().fade(duration: 350.ms).slideY(begin: 0.1, end: 0);
-                    },
-                  );
-                }),
-              ),
-            ],
-          ),
         ),
       );
     });
   }
 
-  Widget _mensagemVazia(Color primary, LinearGradient gradient) {
+  Widget _buildLoadingState(Color primary) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+            color: primary,
+            strokeWidth: 3.5,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Carregando fornecedores...',
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildErrorState(String mensagem, Color primary) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error_outline_rounded, color: Colors.redAccent.shade200, size: 48),
+          const SizedBox(height: 12),
+          Text(
+            'Ops! Algo deu errado 😕',
+            style: GoogleFonts.poppins(
+              fontSize: 17,
+              fontWeight: FontWeight.w600,
+              color: Colors.redAccent.shade400,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            mensagem,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primary,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              final eventoController = Get.find<EventoController>();
+              final fornecedoresController = Get.find<FornecedorController>();
+              final idEvento = eventoController.eventoAtual.value?.idEvento;
+              if (idEvento != null) fornecedoresController.carregarServicosPorEvento(idEvento);
+            },
+            icon: const Icon(Icons.refresh_rounded),
+            label: Text(
+              'Tentar novamente',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFornecedorContent(
+    BuildContext context,
+    Color primary,
+    LinearGradient gradient,
+    int contratados,
+    int total,
+    FornecedorController fornecedoresController,
+    OrcamentoController orcamentoController,
+    EventoController eventoController,
+    String? idEvento,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (fornecedoresController.servicosFornecedor.isNotEmpty)
+            _progressoServicos(contratados, total, gradient),
+          const SizedBox(height: 20),
+          _cabecalho(primary, gradient),
+          const SizedBox(height: 18),
+          Divider(color: primary.withValues(alpha: 0.15), thickness: 1, indent: 4, endIndent: 4),
+          const SizedBox(height: 10),
+          Expanded(
+            child: Obx(() {
+              final servicos = fornecedoresController.servicosFornecedor;
+              if (servicos.isEmpty) {
+                return _mensagemVazia(context, primary, gradient);
+              }
+              return ListView.builder(
+                itemCount: servicos.length,
+                itemBuilder: (context, index) {
+                  final servicoFornecedor = servicos[index];
+                  final servicoProduto =
+                      fornecedoresController.buscarServicoPorId(servicoFornecedor.idProdutoServico);
+
+                  final fornecedor = fornecedoresController.fornecedores.firstWhereOrNull(
+                    (f) => f.idFornecedor == servicoFornecedor.idFornecedor,
+                  );
+
+                  final orcamento = orcamentoController.orcamentos.firstWhereOrNull((f) =>
+                      f.idEvento == idEvento &&
+                      f.idServicoFornecido == servicoFornecedor.idFornecedorServico);
+
+                  return _FornecedorCard(
+                    nomeServico: servicoProduto?.nome ?? 'Serviço desconhecido',
+                    descricao: servicoProduto?.descricao ?? 'Sem descrição',
+                    preco: servicoFornecedor.preco,
+                    precoPromocao: servicoFornecedor.precoPromocao,
+                    imagem: fornecedor?.bannerUrl,
+                    status: orcamento?.status ?? StatusOrcamento.pendente,
+                    themeGradient: gradient,
+                    primaryColor: primary,
+                    onReservar: () => fornecedoresController.abrirCotacao(
+                      context: context,
+                      idEvento: idEvento ?? '',
+                      servicoFornecedor: servicoFornecedor,
+                      acao: 'reservar',
+                      idOrcamento: orcamento?.idOrcamento,
+                    ),
+                    onSolicitar: () => fornecedoresController.abrirCotacao(
+                      context: context,
+                      idEvento: idEvento ?? '',
+                      servicoFornecedor: servicoFornecedor,
+                      acao: 'solicitar',
+                      idOrcamento: orcamento?.idOrcamento,
+                    ),
+                    onAvaliar: () {
+                      Get.snackbar(
+                        "Avaliação enviada",
+                        "Você avaliou ${servicoProduto?.nome ?? 'o fornecedor'}.",
+                        backgroundColor: primary,
+                        colorText: Colors.white,
+                      );
+                    },
+                  ).animate().fade(duration: 350.ms).slideY(begin: 0.1, end: 0);
+                },
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _cabecalho(Color primary, Gradient gradient) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 🔹 Ícone animado com gradiente (representa parcerias e negócios)
+            Container(
+              decoration: BoxDecoration(
+                gradient: gradient,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: primary.withValues(alpha: 0.25),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(8),
+              child: const Icon(
+                Icons.handshake_rounded, // 🤝 Representa negociação e parceria
+                color: Colors.white,
+                size: 26,
+              ),
+            ),
+            const SizedBox(width: 10),
+
+            Expanded(
+              child: Text(
+                'Gerencie seus Orçamentos e Fornecedores',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: primary,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        // 🔹 Subtítulo mais inspirador e profissional
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Text(
+            'Negocie com confiança, acompanhe cada fornecedor e monte a equipe ideal para o sucesso do seu evento.',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              color: Colors.grey.shade700.withValues(alpha: 0.9),
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _mensagemVazia(BuildContext context, Color primary, LinearGradient gradient) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -235,11 +347,10 @@ class FornecedoresPage extends StatelessWidget {
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () {
-                Get.snackbar(
-                  "Explore fornecedores",
-                  "Acesse a aba de busca para encontrar serviços ideais.",
-                  backgroundColor: primary,
-                  colorText: Colors.white,
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const FornecedorLocalizacaoScreen(showLeading: true)),
                 );
               },
               icon: const Icon(Icons.search),

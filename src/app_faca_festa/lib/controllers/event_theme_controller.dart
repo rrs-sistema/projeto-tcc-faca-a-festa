@@ -177,7 +177,7 @@ class EventThemeController extends GetxController {
     primaryColor.value = primary;
     primaryColor.value = bg;
     gradient.value = LinearGradient(
-      colors: [bg.withOpacity(0.9), Colors.white],
+      colors: [bg.withValues(alpha: 0.9), Colors.white],
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
     );

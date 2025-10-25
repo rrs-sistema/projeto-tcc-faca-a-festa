@@ -69,7 +69,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
       leading: Container(
         margin: const EdgeInsets.only(left: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.85),
+          color: Colors.white.withValues(alpha: 0.25),
           shape: BoxShape.circle,
         ),
         child: IconButton(
@@ -398,10 +398,10 @@ class ServicoCardHorizontal extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(servico.nome,
+                Text(servico.nome + '--' + servico.id,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13.5)),
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 11.5)),
                 const SizedBox(height: 4),
                 Text(servico.descricao ?? 'Sem descrição',
                     maxLines: 2,
@@ -436,7 +436,7 @@ class ServicoCardHorizontal extends StatelessWidget {
 
   Widget _botaoOrcar() => ElevatedButton.icon(
         icon: const Icon(Icons.request_quote_rounded, size: 16, color: Colors.white),
-        label: Text('Orçar',
+        label: Text('Orçar Serviço',
             style: GoogleFonts.poppins(
                 fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
         style: ElevatedButton.styleFrom(

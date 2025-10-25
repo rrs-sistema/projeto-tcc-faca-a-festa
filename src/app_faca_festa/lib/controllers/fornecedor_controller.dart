@@ -326,7 +326,6 @@ class FornecedorController extends GetxController {
           await _db.collection('orcamento').where('id_evento', isEqualTo: idEvento).get();
 
       if (orcamentosSnap.docs.isEmpty) {
-        erro.value = 'Nenhum fornecedor encontrado para este evento.';
         servicosFornecedor.clear();
         return;
       }

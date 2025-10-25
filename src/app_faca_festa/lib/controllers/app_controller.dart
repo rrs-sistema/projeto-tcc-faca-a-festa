@@ -173,10 +173,9 @@ class AppController extends GetxController {
                   snackPosition: SnackPosition.TOP,
                 );
               }
-            } else {
-              await _criarCadastroFornecedorBasico(usuario);
+              fornecedorController.fornecedor.value = fornecedor;
+              fornecedorController.escutarServicosFornecedor(fornecedor.idUsuario);
             }
-
             destino = FornecedorHomeScreen();
             break;
 
@@ -229,32 +228,6 @@ class AppController extends GetxController {
         Get.offAllNamed('/role');
       }
     });
-  }
-
-  // ------------------------------------------------------------
-  // 🔹 Cria cadastro básico de fornecedor (se não existir)
-  // ------------------------------------------------------------
-  Future<void> _criarCadastroFornecedorBasico(UsuarioModel usuario) async {
-    final novoFornecedor = FornecedorModel(
-      idFornecedor: usuario.idUsuario,
-      idUsuario: usuario.idUsuario,
-      razaoSocial: usuario.nome,
-      telefone: '(00) 00000-0000',
-      email: usuario.email,
-      descricao: 'Cadastro pendente de aprovação',
-      aptoParaOperar: false,
-      ativo: true,
-    );
-
-    await _db.collection('fornecedor').doc(usuario.idUsuario).set(novoFornecedor.toMap());
-
-    Get.snackbar(
-      "Cadastro enviado",
-      "Seu cadastro foi enviado para aprovação.",
-      backgroundColor: Colors.green.shade400,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-    );
   }
 
   // ------------------------------------------------------------

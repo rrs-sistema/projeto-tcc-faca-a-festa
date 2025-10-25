@@ -9,7 +9,9 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../controllers/app_controller.dart';
 import '../../core/utils/biblioteca.dart';
+import '../widgets/menu_drawer_faca_festa.dart';
 import './../../controllers/convidado/convidado_controller.dart';
 import './../../../controllers/event_theme_controller.dart';
 import './fornecedor/fornecedor_localizacao_screen.dart';
@@ -32,8 +34,9 @@ class HomeEventScreen extends StatefulWidget {
 
 class _HomeEventScreenModernState extends State<HomeEventScreen> {
   int _currentIndex = 1;
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   PageController pageController = PageController();
-  // 🔹 Controlador persistente para o scroll da Home
+  final appController = Get.find<AppController>();
   final ScrollController _scrollControllerHome = ScrollController();
   final convidadoController = Get.find<ConvidadoController>();
   final orcamentoController = Get.find<OrcamentoController>();
@@ -48,8 +51,16 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     isCelular = Biblioteca.isCelular(context);
 
     return Scaffold(
+      key: _scaffoldKey, // ✅ chave do Scaffold
+      extendBody: true,
       backgroundColor: theme.primaryColor.value.withValues(alpha: 0.03),
+
+      // ✅ Drawer lateral
+      endDrawerEnableOpenDragGesture: false, // só abre pelo botão
+      endDrawer: MenuDrawerFacaFesta(onLogout: appController.logoutFornecedor),
+
       body: SafeArea(
+        bottom: true,
         child: PageView(
           controller: pageController,
           onPageChanged: (i) async {
@@ -76,7 +87,16 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: _buildAnimatedBottomBar(theme.primaryColor.value),
+
+      // ✅ BottomBar flutuante com padding dinâmico
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewPadding.bottom > 0
+              ? MediaQuery.of(context).viewPadding.bottom
+              : 8,
+        ),
+        child: _buildAnimatedBottomBar(theme.primaryColor.value),
+      ),
     );
   }
 
@@ -89,7 +109,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
         _buildAnimatedHeader(theme),
         Expanded(
           child: CustomScrollView(
-            controller: _scrollControllerHome, // ✅ mesmo controller sempre
+            controller: _scrollControllerHome,
             slivers: [
               SliverPersistentHeader(
                 pinned: true,
@@ -99,11 +119,11 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                   child: ContadorEventoScreen(
                     dataEvento: eventoModel.data,
                     tipoEvento: tipoEventoModel?.nome ?? eventoModel.nome,
-                    scrollController: _scrollControllerHome, // ✅ persistente
+                    scrollController: _scrollControllerHome,
                   ),
                 ),
               ),
-              SliverToBoxAdapter(child: const SizedBox(height: 16)),
+              SliverToBoxAdapter(child: const SizedBox(height: 4)),
               _buildQuickActions(theme),
               _buildProgressCards(theme),
               _buildUpcomingTasks(tarefaController, theme),
@@ -114,7 +134,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
               ),
               _buildSuppliersCarousel(theme),
               _buildMotivationalQuote(theme),
-              const SliverToBoxAdapter(child: SizedBox(height: 45)),
+              const SliverToBoxAdapter(child: SizedBox(height: 15)),
             ],
           ),
         ),
@@ -145,8 +165,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   Widget _buildAnimatedBottomBar(Color cor) {
     final itens = [
       {'icon': Icons.home_rounded, 'label': 'Home'},
-      {'icon': Icons.storefront_rounded, 'label': 'Fornecedores'}, // 🏬 novo ícone
+      {'icon': Icons.storefront_rounded, 'label': 'Fornecedores'},
       {'icon': Icons.lightbulb_rounded, 'label': 'Inspiração'},
+      {'icon': Icons.menu_rounded, 'label': 'Menu'}, // 🔹 Novo botão
     ];
 
     return AnimatedContainer(
@@ -169,7 +190,13 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
           final selected = _currentIndex == i;
 
           return GestureDetector(
-            onTap: () {
+            onTap: () async {
+              if (i == 3) {
+                // 🔹 Abre o Drawer com a GlobalKey
+                _scaffoldKey.currentState?.openEndDrawer();
+                return;
+              }
+
               if (_currentIndex != i) {
                 setState(() => _currentIndex = i);
                 pageController.animateToPage(
@@ -184,9 +211,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
               curve: Curves.easeInOut,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
               decoration: BoxDecoration(
-                color: selected ? cor.withValues(alpha: 0.08) : Colors.transparent,
+                color: selected && i != 3 ? cor.withValues(alpha: 0.08) : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
-                boxShadow: selected
+                boxShadow: selected && i != 3
                     ? [
                         BoxShadow(
                           color: cor.withValues(alpha: 0.35),
@@ -199,10 +226,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 🔹 Ícone com efeito de gradiente e brilho
                   ShaderMask(
                     shaderCallback: (bounds) => LinearGradient(
-                      colors: selected
+                      colors: selected && i != 3
                           ? [cor.withValues(alpha: 1), cor.withValues(alpha: 0.7)]
                           : [Colors.grey.shade500, Colors.grey.shade600],
                       begin: Alignment.topLeft,
@@ -220,7 +246,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     style: TextStyle(
                       fontSize: selected ? 13.5 : 12,
                       fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                      color: selected ? cor : Colors.grey.shade600,
+                      color: selected && i != 3 ? cor : Colors.grey.shade600,
                     ),
                     child: Text(itens[i]['label'] as String),
                   ),
@@ -432,7 +458,7 @@ Widget _buildQuickActions(EventThemeController theme) {
                   'label': 'Orçamento',
                   'color': Colors.tealAccent,
                   'value':
-                      "R\$ ${Biblioteca.formatarValorDecimal(orcamentoController.totalCustoEstimado.value)}",
+                      "R\$ ${Biblioteca.formatoValorSemDecimal(orcamentoController.totalCustoEstimado.value)}",
                 },
                 {
                   'icon': Icons.storefront_rounded,

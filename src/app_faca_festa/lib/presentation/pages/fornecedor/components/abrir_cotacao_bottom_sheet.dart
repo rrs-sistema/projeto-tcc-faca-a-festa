@@ -12,7 +12,7 @@ import '../../../../controllers/evento_controller.dart';
 import './../../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../../controllers/app_controller.dart';
 
-class CotacaoBottomSheet extends StatelessWidget {
+class CotacaoBottomSheet extends StatefulWidget {
   final List<String> fornecedoresSelecionados;
   final String? idProdutoSelecionado;
   final String? nomeProdutoSelecionado;
@@ -27,17 +27,34 @@ class CotacaoBottomSheet extends StatelessWidget {
   });
 
   @override
+  State<CotacaoBottomSheet> createState() => _CotacaoBottomSheetState();
+}
+
+class _CotacaoBottomSheetState extends State<CotacaoBottomSheet> {
+  final TextEditingController observacaoController = TextEditingController();
+  late DateTime dataCotacao;
+
+  @override
+  void initState() {
+    super.initState();
+    dataCotacao = DateTime.now().add(const Duration(days: 7));
+  }
+
+  @override
+  void dispose() {
+    observacaoController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final fornecedorLocalizacaoController = Get.find<FornecedorLocalizacaoController>();
     final appController = Get.find<AppController>();
     final eventoController = Get.find<EventoController>();
-
-    final TextEditingController observacaoController = TextEditingController();
-    DateTime dataCotacao = DateTime.now().add(const Duration(days: 7));
     final db = FirebaseFirestore.instance;
 
     Future<void> enviarCotacao() async {
-      if (fornecedoresSelecionados.isEmpty) {
+      if (widget.fornecedoresSelecionados.isEmpty) {
         Get.snackbar(
           'Atenção',
           'Nenhum fornecedor selecionado.',
@@ -53,13 +70,13 @@ class CotacaoBottomSheet extends StatelessWidget {
         final usuario = appController.usuarioLogado.value;
         final evento = eventoController.eventoAtual.value;
 
-        for (var idFornecedor in fornecedoresSelecionados) {
+        for (var idFornecedor in widget.fornecedoresSelecionados) {
           final cotacao = {
             'id_evento': evento?.idEvento ?? '',
             'id_usuario_solicitante': usuario?.idUsuario ?? '',
             'id_fornecedor': idFornecedor,
-            'id_produto_servico': idProdutoSelecionado, // 🔹 produto vinculado
-            'nome_produto_servico': nomeProdutoSelecionado,
+            'id_produto_servico': widget.idProdutoSelecionado,
+            'nome_produto_servico': widget.nomeProdutoSelecionado,
             'observacao': observacaoController.text.trim(),
             'data_desejada': Timestamp.fromDate(dataCotacao),
             'data_envio': Timestamp.now(),
@@ -75,17 +92,15 @@ class CotacaoBottomSheet extends StatelessWidget {
 
         Get.snackbar(
           'Cotação enviada!',
-          'Solicitação de orçamento para "$nomeProdutoSelecionado" enviada com sucesso.',
-          backgroundColor: primary,
+          'Solicitação para "${widget.nomeProdutoSelecionado}" enviada com sucesso.',
+          backgroundColor: widget.primary,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
           margin: const EdgeInsets.all(12),
         );
       } catch (e, s) {
         EasyLoading.dismiss();
-        if (kDebugMode) {
-          print('❌ Erro ao enviar cotação: $e\n$s');
-        }
+        if (kDebugMode) print('❌ Erro ao enviar cotação: $e\n$s');
         Get.snackbar(
           'Erro',
           'Não foi possível enviar a cotação. Tente novamente.',
@@ -107,7 +122,7 @@ class CotacaoBottomSheet extends StatelessWidget {
             borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
             boxShadow: [
               BoxShadow(
-                color: primary.withValues(alpha: 0.2),
+                color: widget.primary.withValues(alpha: 0.2),
                 blurRadius: 20,
                 offset: const Offset(0, -4),
               ),
@@ -126,7 +141,6 @@ class CotacaoBottomSheet extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // === CABEÇALHO ===
                   Center(
                     child: Container(
                       width: 50,
@@ -146,7 +160,7 @@ class CotacaoBottomSheet extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: primary,
+                          color: widget.primary,
                         ),
                       ),
                       IconButton(
@@ -159,13 +173,16 @@ class CotacaoBottomSheet extends StatelessWidget {
                   Text(
                     'Produto selecionado:',
                     style: GoogleFonts.poppins(
-                        fontSize: 13.5, color: Colors.grey.shade700, fontWeight: FontWeight.w600),
+                      fontSize: 13.5,
+                      color: Colors.grey.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   Text(
-                    nomeProdutoSelecionado ?? '',
+                    widget.nomeProdutoSelecionado ?? '',
                     style: GoogleFonts.poppins(
                       fontSize: 15,
-                      color: primary,
+                      color: widget.primary,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -173,15 +190,19 @@ class CotacaoBottomSheet extends StatelessWidget {
                   const SizedBox(height: 16),
 
                   Text(
-                    'Revise o fornecedor e adicione observações:',
-                    style: GoogleFonts.poppins(fontSize: 13.5, color: Colors.grey.shade700),
+                    'Revise os fornecedores e adicione observações:',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.5,
+                      color: Colors.grey.shade700,
+                    ),
                   ),
                   const SizedBox(height: 16),
 
                   // === LISTA DE FORNECEDORES ===
                   Obx(() {
                     final selecionadosList = fornecedorLocalizacaoController.fornecedoresFiltrados
-                        .where((f) => fornecedoresSelecionados.contains(f.fornecedor.idFornecedor))
+                        .where((f) =>
+                            widget.fornecedoresSelecionados.contains(f.fornecedor.idFornecedor))
                         .toList();
 
                     if (selecionadosList.isEmpty) {
@@ -208,7 +229,7 @@ class CotacaoBottomSheet extends StatelessWidget {
                           margin: const EdgeInsets.only(bottom: 10),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: primary.withValues(alpha: 0.3)),
+                            border: Border.all(color: widget.primary.withValues(alpha: 0.3)),
                             color: Colors.white,
                             boxShadow: [
                               BoxShadow(
@@ -220,8 +241,8 @@ class CotacaoBottomSheet extends StatelessWidget {
                           ),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: primary.withValues(alpha: 0.1),
-                              child: Icon(Icons.storefront, color: primary),
+                              backgroundColor: widget.primary.withValues(alpha: 0.1),
+                              child: Icon(Icons.storefront, color: widget.primary),
                             ),
                             title: Text(
                               fornecedor.razaoSocial,
@@ -247,7 +268,7 @@ class CotacaoBottomSheet extends StatelessWidget {
                     controller: observacaoController,
                     decoration: InputDecoration(
                       labelText: 'Observações adicionais',
-                      prefixIcon: Icon(Icons.edit_note_rounded, color: primary),
+                      prefixIcon: Icon(Icons.edit_note_rounded, color: widget.primary),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -261,40 +282,38 @@ class CotacaoBottomSheet extends StatelessWidget {
                   const SizedBox(height: 14),
 
                   // === DATA DESEJADA ===
-                  StatefulBuilder(builder: (context, setState) {
-                    return GestureDetector(
-                      onTap: () async {
-                        final novaData = await showDatePicker(
-                          context: context,
-                          initialDate: dataCotacao,
-                          firstDate: DateTime.now(),
-                          lastDate: DateTime(2100),
-                          locale: const Locale('pt', 'BR'),
-                        );
-                        if (novaData != null) {
-                          setState(() => dataCotacao = novaData);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade50,
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: primary.withValues(alpha: 0.3)),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.calendar_today_outlined, color: primary, size: 20),
-                            const SizedBox(width: 10),
-                            Text(
-                              'Data desejada: ${DateFormat("dd/MM/yyyy").format(dataCotacao)}',
-                              style: GoogleFonts.poppins(fontSize: 14),
-                            ),
-                          ],
-                        ),
+                  GestureDetector(
+                    onTap: () async {
+                      final novaData = await showDatePicker(
+                        context: context,
+                        initialDate: dataCotacao,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime(2100),
+                        locale: const Locale('pt', 'BR'),
+                      );
+                      if (novaData != null) {
+                        setState(() => dataCotacao = novaData);
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: widget.primary.withValues(alpha: 0.3)),
                       ),
-                    );
-                  }),
+                      child: Row(
+                        children: [
+                          Icon(Icons.calendar_today_outlined, color: widget.primary, size: 20),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Data desejada: ${DateFormat("dd/MM/yyyy").format(dataCotacao)}',
+                            style: GoogleFonts.poppins(fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
 
                   const SizedBox(height: 24),
 
@@ -313,7 +332,7 @@ class CotacaoBottomSheet extends StatelessWidget {
                       ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        backgroundColor: primary,
+                        backgroundColor: widget.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),

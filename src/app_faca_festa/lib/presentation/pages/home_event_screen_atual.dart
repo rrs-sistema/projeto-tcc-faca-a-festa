@@ -316,7 +316,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     'label': 'Orçamento',
                     'color': Colors.tealAccent,
                     'value':
-                        "R\$ ${Biblioteca.formatarValorDecimal(orcamentoController.totalCustoEstimado.value)}",
+                        "R\$ ${Biblioteca.formatoValorSemDecimal(orcamentoController.totalCustoEstimado.value)}",
                   },
                   {
                     'icon': Icons.storefront_rounded,

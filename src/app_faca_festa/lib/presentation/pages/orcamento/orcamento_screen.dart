@@ -44,9 +44,18 @@ class OrcamentoScreen extends StatelessWidget {
       return Scaffold(
         backgroundColor: Colors.grey.shade100,
         appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
-            onPressed: () => Navigator.pop(context),
+          automaticallyImplyLeading: false,
+          leading: Container(
+            margin: const EdgeInsets.only(left: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.25),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
+              onPressed: Get.back,
+              tooltip: 'Voltar',
+            ),
           ),
           title: Text(
             'Meu Orçamento',
@@ -68,10 +77,35 @@ class OrcamentoScreen extends StatelessWidget {
         ),
         body: Obx(() {
           if (orcamentoController.orcamentos.isEmpty) {
-            return const Center(
-              child: Text(
-                'Nenhum orçamento encontrado.',
-                style: TextStyle(color: Colors.black54),
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.receipt_long_rounded,
+                    size: 50,
+                    color: Colors.tealAccent.shade700.withValues(alpha: 0.8),
+                  ),
+                  const SizedBox(height: 14),
+                  Text(
+                    'Nenhum orçamento encontrado',
+                    style: GoogleFonts.poppins(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Crie seu primeiro orçamento e acompanhe seus fornecedores com facilidade!',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      color: Colors.grey.shade500,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
               ),
             );
           }

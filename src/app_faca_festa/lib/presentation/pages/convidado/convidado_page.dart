@@ -39,11 +39,20 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
       return Scaffold(
         backgroundColor: Colors.grey.shade100,
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           leading: usuarioLogado!.tipo != 'C'
-              ? IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.black),
-                  tooltip: 'Voltar',
-                  onPressed: () => Navigator.pop(context),
+              ? Container(
+                  margin: const EdgeInsets.only(left: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                        color: Colors.black87, size: 20),
+                    onPressed: Get.back,
+                    tooltip: 'Voltar',
+                  ),
                 )
               : SizedBox.shrink(),
           title: Text(

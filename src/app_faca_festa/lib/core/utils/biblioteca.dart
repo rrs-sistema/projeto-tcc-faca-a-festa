@@ -5,7 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class Biblioteca {
-  static final formatoDecimalValor = NumberFormat('#,##0.00', 'pt_BR');
+  static final _formatoDecimalValor = NumberFormat('#,##0.00', 'pt_BR');
+  static final _formatoValorSemDecimal = NumberFormat('#,##0', 'pt_BR');
 
   /// singleton
   factory Biblioteca() {
@@ -94,7 +95,11 @@ class Biblioteca {
   }
 
   static String formatarValorDecimal(double? valor) {
-    return formatoDecimalValor.format(valor ?? 0);
+    return _formatoDecimalValor.format(valor ?? 0);
+  }
+
+  static String formatoValorSemDecimal(double? valor) {
+    return _formatoValorSemDecimal.format(valor ?? 0);
   }
 
   static DateTime converteDataInicioParaFiltro(DateTime data) {

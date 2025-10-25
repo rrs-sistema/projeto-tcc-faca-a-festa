@@ -123,17 +123,88 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                       _menuCategorias(primary, gradient),
                       const SizedBox(height: 20),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15),
-                        child: Center(
-                          child: Text(
-                            categoriaSelecionada != null
-                                ? 'Fornecedores de $categoriaSelecionada'
-                                : 'Todos os Fornecedores',
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: primary,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 400),
+                          switchInCurve: Curves.easeInOut,
+                          switchOutCurve: Curves.easeInOut,
+                          transitionBuilder: (child, animation) => FadeTransition(
+                            opacity: animation,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.1, 0),
+                                end: Offset.zero,
+                              ).animate(animation),
+                              child: child,
                             ),
+                          ),
+                          child: Column(
+                            key: ValueKey(categoriaSelecionada),
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    categoriaSelecionada != null
+                                        ? Icons.storefront_rounded
+                                        : Icons.all_inclusive_rounded,
+                                    color: primary.withValues(alpha: 0.85),
+                                    size: 22,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      categoriaSelecionada != null
+                                          ? 'Fornecedores de ${categoriaSelecionada!}'
+                                          : 'Todos os Fornecedores',
+                                      overflow: TextOverflow.clip,
+                                      maxLines: 1,
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                        color: primary,
+                                        letterSpacing: 0.3,
+                                        shadows: [
+                                          Shadow(
+                                            color: primary.withValues(alpha: 0.2),
+                                            offset: const Offset(0, 1),
+                                            blurRadius: 3,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 450),
+                                curve: Curves.easeInOutCubic,
+                                height: 3,
+                                width: categoriaSelecionada != null ? 140 : 100,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      primary.withValues(alpha: 0.9),
+                                      primary.withValues(alpha: 0.6),
+                                      primary.withValues(alpha: 0.3),
+                                    ],
+                                    begin: Alignment.centerLeft,
+                                    end: Alignment.centerRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: primary.withValues(alpha: 0.25),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ),
