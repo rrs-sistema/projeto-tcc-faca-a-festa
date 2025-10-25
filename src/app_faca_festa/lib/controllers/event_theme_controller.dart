@@ -152,4 +152,35 @@ class EventThemeController extends GetxController {
       },
     );
   }
+
+  void aplicarTemaPorFirestore(String nomeTipoEvento) {
+    final emoji = nomeTipoEvento.isNotEmpty ? nomeTipoEvento.characters.first : "";
+    switch (emoji) {
+      case '👶':
+        _setTheme(const Color(0xFFFFC1CC), const Color(0xFFFFE6E6), Icons.child_friendly_rounded);
+        break;
+      case '🎉':
+        _setTheme(const Color(0xFFFF9800), const Color(0xFFFFE0B2), Icons.cake_rounded);
+        break;
+      case '🎈':
+        _setTheme(const Color(0xFF8E24AA), const Color(0xFFE1BEE7), Icons.toys_rounded);
+        break;
+      case '💍':
+        _setTheme(const Color(0xFFB388FF), const Color(0xFFF3E5F5), Icons.favorite_rounded);
+        break;
+      default:
+        _setTheme(Colors.blueAccent, Colors.white, Icons.event);
+    }
+  }
+
+  void _setTheme(Color primary, Color bg, IconData icone) {
+    primaryColor.value = primary;
+    primaryColor.value = bg;
+    gradient.value = LinearGradient(
+      colors: [bg.withOpacity(0.9), Colors.white],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    );
+    icon.value = icone;
+  }
 }

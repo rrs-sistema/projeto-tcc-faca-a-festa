@@ -33,8 +33,6 @@ class HomeEventScreen extends StatefulWidget {
 class _HomeEventScreenModernState extends State<HomeEventScreen> {
   int _currentIndex = 1;
   PageController pageController = PageController();
-  // 🔹 Controlador persistente para o scroll da Home
-  final ScrollController _scrollControllerHome = ScrollController();
   final convidadoController = Get.find<ConvidadoController>();
   final orcamentoController = Get.find<OrcamentoController>();
   final tarefaController = Get.find<TarefaController>();
@@ -83,23 +81,24 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   Widget _buildHome(EventThemeController theme) {
     final eventoModel = eventoController.eventoAtual.value!;
     final tipoEventoModel = eventoController.tipoEventoAtual.value;
+    final ScrollController scrollController = ScrollController();
 
     return Column(
       children: [
         _buildAnimatedHeader(theme),
         Expanded(
           child: CustomScrollView(
-            controller: _scrollControllerHome, // ✅ mesmo controller sempre
+            controller: scrollController,
             slivers: [
               SliverPersistentHeader(
                 pinned: true,
                 floating: false,
                 delegate: ContadorEventoHeaderDelegate(
-                  scrollController: _scrollControllerHome,
+                  scrollController: scrollController,
                   child: ContadorEventoScreen(
                     dataEvento: eventoModel.data,
                     tipoEvento: tipoEventoModel?.nome ?? eventoModel.nome,
-                    scrollController: _scrollControllerHome, // ✅ persistente
+                    scrollController: scrollController,
                   ),
                 ),
               ),
@@ -108,10 +107,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
               _buildProgressCards(theme),
               _buildUpcomingTasks(tarefaController, theme),
               _buildBudgetChart(
-                eventoController.eventoAtual,
-                orcamentoController.totalCustoEstimado,
-                theme,
-              ),
+                  eventoController.eventoAtual, orcamentoController.totalCustoEstimado, theme),
               _buildSuppliersCarousel(theme),
               _buildMotivationalQuote(theme),
               const SliverToBoxAdapter(child: SizedBox(height: 45)),
@@ -119,6 +115,567 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildAnimatedHeader(EventThemeController theme) {
+    final eventoController = Get.find<EventoController>();
+    final isCelular = Get.context!.width < 650;
+    final corPrincipal = theme.primaryColor.value;
+
+    return Obx(() {
+      final evento = eventoController.eventoAtual.value;
+      final tipoEvento = eventoController.tipoEventoAtual.value;
+
+      return Container(
+        height: 220,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: corPrincipal,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 🔹 Imagem de fundo
+            Hero(
+              tag: 'event_header',
+              child: Image.asset(
+                'assets/images/event_generic_1.jpeg',
+                fit: BoxFit.cover,
+              ),
+            ),
+
+            // 🔹 Gradiente e blur
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
+              child: Container(color: Colors.black.withValues(alpha: 0.2)),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    corPrincipal.withValues(alpha: 0.6),
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.7),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+
+            // 🔹 Conteúdo (Nome e Tipo de Evento)
+            Positioned(
+              left: 20,
+              right: 20,
+              bottom: 75,
+              child: FadeInDown(
+                duration: const Duration(milliseconds: 900),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.celebration_rounded, color: Colors.white, size: 18),
+                            const SizedBox(width: 6),
+                            Text(
+                              tipoEvento?.nome ?? 'Faça a Festa',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                                fontSize: isCelular ? 12 : 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          evento?.nome ?? 'Seu evento especial',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: isCelular ? 13.5 : 17,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.3,
+                            shadows: const [
+                              Shadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            // 🔹 Informações rápidas (data e local)
+            Positioned(
+              bottom: 10,
+              left: 20,
+              right: 20,
+              child: FadeInUp(
+                duration: const Duration(milliseconds: 1000),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      children: [
+                        const Icon(Icons.calendar_month, color: Colors.white, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          evento?.data != null
+                              ? DateFormat("d 'de' MMMM", 'pt_BR').format(evento!.data)
+                              : 'Data a definir',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        const Icon(Icons.place_rounded, color: Colors.white, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          evento?.logradouro ?? 'Local não definido',
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildQuickActions(EventThemeController theme) {
+    final convidadoController = Get.find<ConvidadoController>();
+    final orcamentoController = Get.find<OrcamentoController>();
+    final tarefaController = Get.find<TarefaController>();
+
+    return SliverToBoxAdapter(
+      child: FadeInUp(
+        duration: const Duration(milliseconds: 800),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final bool isTablet = constraints.maxWidth > 560;
+              final int crossAxisCount = isTablet ? 4 : 2;
+              final double spacing = 18;
+
+              // 🔹 Usa um único Obx externo para atualizar os dados de todos os cards
+              return Obx(() {
+                final double percentOrcamento = (orcamentoController.totalCount == 0)
+                    ? 0
+                    : orcamentoController.contratadosCount.value / orcamentoController.totalCount;
+
+                final int concluidas = tarefaController.concluidas;
+                final int totalTarefa = tarefaController.pendentes + tarefaController.concluidas;
+                final double progress = totalTarefa > 0 ? concluidas / totalTarefa : 0.0;
+
+                final List<Map<String, dynamic>> itens = [
+                  {
+                    'icon': Icons.people_alt_rounded,
+                    'label': 'Convidados',
+                    'color': Colors.pinkAccent,
+                    'value': "${convidadoController.totalConvidados}",
+                  },
+                  {
+                    'icon': Icons.payments_rounded,
+                    'label': 'Orçamento',
+                    'color': Colors.tealAccent,
+                    'value':
+                        "R\$ ${Biblioteca.formatarValorDecimal(orcamentoController.totalCustoEstimado.value)}",
+                  },
+                  {
+                    'icon': Icons.storefront_rounded,
+                    'label': 'Fornecedores',
+                    'color': Colors.orangeAccent,
+                    'value': "${(percentOrcamento * 100).toStringAsFixed(0)}%",
+                  },
+                  {
+                    'icon': Icons.check_circle_outline,
+                    'label': 'Checklist',
+                    'color': Colors.blueAccent,
+                    'value': "${(progress * 100).toStringAsFixed(0)}%",
+                  },
+                ];
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: itens.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: spacing,
+                    mainAxisSpacing: spacing,
+                    childAspectRatio: isTablet ? 1.1 : 1.0,
+                  ),
+                  itemBuilder: (context, index) {
+                    final item = itens[index];
+                    final Color corItem = item['color'] as Color;
+                    final ValueNotifier<bool> pressed = ValueNotifier(false);
+
+                    return GestureDetector(
+                      onTapDown: (_) {
+                        HapticFeedback.lightImpact();
+                        pressed.value = true;
+                        Future.delayed(
+                          const Duration(milliseconds: 250),
+                          () => pressed.value = false,
+                        );
+                      },
+                      onTap: () {
+                        switch (index) {
+                          case 0:
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const ConvidadosPage()),
+                            );
+                          case 1:
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const OrcamentoScreen()),
+                            );
+                          case 2:
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const FornecedoresPage()),
+                            );
+                          case 3:
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (_) => const TarefasScreen()),
+                            );
+                        }
+                      },
+                      child: ValueListenableBuilder<bool>(
+                        valueListenable: pressed,
+                        builder: (context, isPressed, _) {
+                          return AnimatedScale(
+                            scale: isPressed ? 0.93 : 1.0,
+                            duration: const Duration(milliseconds: 150),
+                            curve: Curves.easeOutBack,
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 350),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(22),
+                                gradient: LinearGradient(
+                                  colors: [
+                                    corItem.withValues(alpha: isPressed ? 0.7 : 0.9),
+                                    corItem.withValues(alpha: isPressed ? 0.4 : 0.55),
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: corItem.withValues(alpha: 0.4),
+                                    blurRadius: isPressed ? 6 : 10,
+                                    offset: const Offset(0, 5),
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: Colors.grey.withValues(alpha: 0.35),
+                                      border: Border.all(
+                                        color: Colors.white.withValues(alpha: 0.4),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      item['icon'] as IconData,
+                                      size: isTablet ? 32 : 26,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    item['label'] as String,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: isTablet ? 16.5 : 14.5,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black,
+                                      shadows: const [
+                                        Shadow(
+                                          offset: Offset(0, 1),
+                                          blurRadius: 3,
+                                          color: Colors.black38,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  // ✅ Valor reativo agora seguro
+                                  Text(
+                                    item['value'].toString(),
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                );
+              });
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressCards(EventThemeController theme) {
+    final cor = theme.primaryColor.value;
+
+    // 🔹 Controllers GetX (dados reativos)
+    final convidadoController = Get.find<ConvidadoController>();
+    final orcamentoController = Get.find<OrcamentoController>();
+    final tarefaController = Get.find<TarefaController>();
+    final eventoModel = eventoController.eventoAtual.value!;
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Column(
+          children: [
+            Obx(() {
+              final confirmados = convidadoController.totalConfirmados;
+              final total = convidadoController.totalConvidados;
+              final progress = total > 0 ? confirmados / total : 0.0;
+
+              return FadeInUp(
+                duration: const Duration(milliseconds: 700),
+                child: _AnimatedProgressCard(
+                  icon: Icons.people_alt_rounded,
+                  title: 'Convidados',
+                  value: confirmados,
+                  total: total,
+                  label: 'Confirmados',
+                  progress: progress,
+                  color: Colors.pinkAccent,
+                  corPrincipal: cor,
+                ),
+              );
+            }),
+            const SizedBox(height: 10),
+            Obx(() {
+              final totalUsado = orcamentoController.totalCustoEstimado.value;
+              final limite = eventoModel.custoEstimado ?? 0.0;
+              final progress = limite > 0 ? totalUsado / limite : 0.0;
+
+              return FadeInUp(
+                duration: const Duration(milliseconds: 800),
+                child: _AnimatedProgressCard(
+                  icon: Icons.payments_rounded,
+                  title: 'Orçamento',
+                  value: totalUsado.toInt(),
+                  total: limite.toInt(),
+                  label: 'Usado',
+                  progress: progress.clamp(0, 1),
+                  color: Colors.tealAccent.shade400,
+                  corPrincipal: cor,
+                ),
+              );
+            }),
+            const SizedBox(height: 10),
+            Obx(() {
+              final concluidas = tarefaController.concluidas;
+              final total = (tarefaController.pendentes + tarefaController.concluidas);
+              final progress = total > 0 ? concluidas / total : 0.0;
+
+              return FadeInUp(
+                duration: const Duration(milliseconds: 900),
+                child: _AnimatedProgressCard(
+                  icon: Icons.check_circle_outline,
+                  title: 'Tarefas',
+                  value: concluidas,
+                  total: total,
+                  label: 'Concluídas',
+                  progress: progress,
+                  color: Colors.orangeAccent,
+                  corPrincipal: cor,
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAnimatedBottomBar(Color cor) {
+    final itens = [
+      Icons.home_rounded,
+      Icons.lightbulb_rounded,
+    ];
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 400),
+      height: 65,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: cor.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          )
+        ],
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: List.generate(itens.length, (i) {
+          final selected = _currentIndex == i;
+          return GestureDetector(
+            onTap: () {
+              pageController.animateToPage(
+                i,
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+              );
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: selected ? cor.withValues(alpha: 0.1) : Colors.transparent,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(
+                itens[i],
+                color: selected ? cor : Colors.grey.shade600,
+                size: selected ? 28 : 24,
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildInspiration(EventThemeController theme) {
+    final ScrollController scrollController = ScrollController();
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) => false,
+      child: CustomScrollView(
+        controller: scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: _buildAnimatedHeader(theme),
+          ),
+          // 🔹 Grade de inspirações
+          _buildInspirationGrid(theme),
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInspirationGrid(EventThemeController theme) {
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      sliver: SliverGrid(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => GestureDetector(
+            onTap: () {},
+            child: FadeIn(
+              duration: Duration(milliseconds: 400 + (index * 100)),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Hero(
+                      tag: 'inspiracao_$index',
+                      child: Image.asset(
+                        'assets/images/kids_party_${(index % 3) + 1}.jpeg',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.black.withValues(alpha: 0.4), Colors.transparent],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.bottomLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.all(10),
+                        child: Text(
+                          'Inspiração ${index + 1}',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          childCount: 6,
+        ),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 1,
+        ),
+      ),
     );
   }
 
@@ -141,609 +698,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       ),
     );
   }
-
-  Widget _buildAnimatedBottomBar(Color cor) {
-    final itens = [
-      {'icon': Icons.home_rounded, 'label': 'Home'},
-      {'icon': Icons.storefront_rounded, 'label': 'Fornecedores'}, // 🏬 novo ícone
-      {'icon': Icons.lightbulb_rounded, 'label': 'Inspiração'},
-    ];
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      height: 70,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: cor.withValues(alpha: 0.25),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(itens.length, (i) {
-          final selected = _currentIndex == i;
-
-          return GestureDetector(
-            onTap: () {
-              if (_currentIndex != i) {
-                setState(() => _currentIndex = i);
-                pageController.animateToPage(
-                  i,
-                  duration: const Duration(milliseconds: 450),
-                  curve: Curves.easeInOut,
-                );
-              }
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-              decoration: BoxDecoration(
-                color: selected ? cor.withValues(alpha: 0.08) : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: selected
-                    ? [
-                        BoxShadow(
-                          color: cor.withValues(alpha: 0.35),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ]
-                    : [],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // 🔹 Ícone com efeito de gradiente e brilho
-                  ShaderMask(
-                    shaderCallback: (bounds) => LinearGradient(
-                      colors: selected
-                          ? [cor.withValues(alpha: 1), cor.withValues(alpha: 0.7)]
-                          : [Colors.grey.shade500, Colors.grey.shade600],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ).createShader(bounds),
-                    child: Icon(
-                      itens[i]['icon'] as IconData,
-                      size: selected ? 30 : 25,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 300),
-                    style: TextStyle(
-                      fontSize: selected ? 13.5 : 12,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                      color: selected ? cor : Colors.grey.shade600,
-                    ),
-                    child: Text(itens[i]['label'] as String),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
-}
-
-Widget _buildAnimatedHeader(EventThemeController theme) {
-  final eventoController = Get.find<EventoController>();
-  final isCelular = Get.context!.width < 650;
-  final corPrincipal = theme.primaryColor.value;
-
-  return Obx(() {
-    final evento = eventoController.eventoAtual.value;
-    final tipoEvento = eventoController.tipoEventoAtual.value;
-
-    return Container(
-      height: 220,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: corPrincipal,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          // 🔹 Imagem de fundo
-          Hero(
-            tag: 'event_header',
-            child: Image.asset(
-              'assets/images/event_generic_1.jpeg',
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          // 🔹 Gradiente e blur
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
-            child: Container(color: Colors.black.withValues(alpha: 0.2)),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  corPrincipal.withValues(alpha: 0.6),
-                  Colors.transparent,
-                  Colors.black.withValues(alpha: 0.7),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-
-          // 🔹 Conteúdo (Nome e Tipo de Evento)
-          Positioned(
-            left: 20,
-            right: 20,
-            bottom: 75,
-            child: FadeInDown(
-              duration: const Duration(milliseconds: 900),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.celebration_rounded, color: Colors.white, size: 18),
-                          const SizedBox(width: 6),
-                          Text(
-                            tipoEvento?.nome ?? 'Faça a Festa',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: isCelular ? 12 : 16,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        evento?.nome ?? 'Seu evento especial',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: isCelular ? 13.5 : 17,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.3,
-                          shadows: const [
-                            Shadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          // 🔹 Informações rápidas (data e local)
-          Positioned(
-            bottom: 10,
-            left: 20,
-            right: 20,
-            child: FadeInUp(
-              duration: const Duration(milliseconds: 1000),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                ),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.calendar_month, color: Colors.white, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        evento?.data != null
-                            ? DateFormat("d 'de' MMMM", 'pt_BR').format(evento!.data)
-                            : 'Data a definir',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      const Icon(Icons.place_rounded, color: Colors.white, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        evento?.logradouro ?? 'Local não definido',
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  });
-}
-
-Widget _buildQuickActions(EventThemeController theme) {
-  final convidadoController = Get.find<ConvidadoController>();
-  final orcamentoController = Get.find<OrcamentoController>();
-  final tarefaController = Get.find<TarefaController>();
-
-  return SliverToBoxAdapter(
-    child: FadeInUp(
-      duration: const Duration(milliseconds: 800),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final bool isTablet = constraints.maxWidth > 560;
-            final int crossAxisCount = isTablet ? 4 : 2;
-            final double spacing = 18;
-
-            // 🔹 Usa um único Obx externo para atualizar os dados de todos os cards
-            return Obx(() {
-              final double percentOrcamento = (orcamentoController.totalCount == 0)
-                  ? 0
-                  : orcamentoController.contratadosCount.value / orcamentoController.totalCount;
-
-              final int concluidas = tarefaController.concluidas;
-              final int totalTarefa = tarefaController.pendentes + tarefaController.concluidas;
-              final double progress = totalTarefa > 0 ? concluidas / totalTarefa : 0.0;
-
-              final List<Map<String, dynamic>> itens = [
-                {
-                  'icon': Icons.people_alt_rounded,
-                  'label': 'Convidados',
-                  'color': Colors.pinkAccent,
-                  'value': "${convidadoController.totalConvidados}",
-                },
-                {
-                  'icon': Icons.payments_rounded,
-                  'label': 'Orçamento',
-                  'color': Colors.tealAccent,
-                  'value':
-                      "R\$ ${Biblioteca.formatarValorDecimal(orcamentoController.totalCustoEstimado.value)}",
-                },
-                {
-                  'icon': Icons.storefront_rounded,
-                  'label': 'Fornecedores',
-                  'color': Colors.orangeAccent,
-                  'value': "${(percentOrcamento * 100).toStringAsFixed(0)}%",
-                },
-                {
-                  'icon': Icons.check_circle_outline,
-                  'label': 'Checklist',
-                  'color': Colors.blueAccent,
-                  'value': "${(progress * 100).toStringAsFixed(0)}%",
-                },
-              ];
-
-              return GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: itens.length,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  crossAxisSpacing: spacing,
-                  mainAxisSpacing: spacing,
-                  childAspectRatio: isTablet ? 1.1 : 1.0,
-                ),
-                itemBuilder: (context, index) {
-                  final item = itens[index];
-                  final Color corItem = item['color'] as Color;
-                  final ValueNotifier<bool> pressed = ValueNotifier(false);
-
-                  return GestureDetector(
-                    onTapDown: (_) {
-                      HapticFeedback.lightImpact();
-                      pressed.value = true;
-                      Future.delayed(
-                        const Duration(milliseconds: 250),
-                        () => pressed.value = false,
-                      );
-                    },
-                    onTap: () {
-                      switch (index) {
-                        case 0:
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const ConvidadosPage()),
-                          );
-                        case 1:
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const OrcamentoScreen()),
-                          );
-                        case 2:
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const FornecedoresPage()),
-                          );
-                        case 3:
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const TarefasScreen()),
-                          );
-                      }
-                    },
-                    child: ValueListenableBuilder<bool>(
-                      valueListenable: pressed,
-                      builder: (context, isPressed, _) {
-                        return AnimatedScale(
-                          scale: isPressed ? 0.93 : 1.0,
-                          duration: const Duration(milliseconds: 150),
-                          curve: Curves.easeOutBack,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 350),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(22),
-                              gradient: LinearGradient(
-                                colors: [
-                                  corItem.withValues(alpha: isPressed ? 0.7 : 0.9),
-                                  corItem.withValues(alpha: isPressed ? 0.4 : 0.55),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: corItem.withValues(alpha: 0.4),
-                                  blurRadius: isPressed ? 6 : 10,
-                                  offset: const Offset(0, 5),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(12),
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: Colors.grey.withValues(alpha: 0.35),
-                                    border: Border.all(
-                                      color: Colors.white.withValues(alpha: 0.4),
-                                      width: 1,
-                                    ),
-                                  ),
-                                  child: Icon(
-                                    item['icon'] as IconData,
-                                    size: isTablet ? 32 : 26,
-                                    color: Colors.white,
-                                  ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  item['label'] as String,
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: isTablet ? 16.5 : 14.5,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black,
-                                    shadows: const [
-                                      Shadow(
-                                        offset: Offset(0, 1),
-                                        blurRadius: 3,
-                                        color: Colors.black38,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                // ✅ Valor reativo agora seguro
-                                Text(
-                                  item['value'].toString(),
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: Colors.black,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  );
-                },
-              );
-            });
-          },
-        ),
-      ),
-    ),
-  );
-}
-
-Widget _buildProgressCards(EventThemeController theme) {
-  final cor = theme.primaryColor.value;
-
-  // 🔹 Controllers GetX (dados reativos)
-  final convidadoController = Get.find<ConvidadoController>();
-  final orcamentoController = Get.find<OrcamentoController>();
-  final tarefaController = Get.find<TarefaController>();
-  final eventoController = Get.find<EventoController>();
-  final eventoModel = eventoController.eventoAtual.value!;
-
-  return SliverToBoxAdapter(
-    child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      child: Column(
-        children: [
-          Obx(() {
-            final confirmados = convidadoController.totalConfirmados;
-            final total = convidadoController.totalConvidados;
-            final progress = total > 0 ? confirmados / total : 0.0;
-
-            return FadeInUp(
-              duration: const Duration(milliseconds: 700),
-              child: _AnimatedProgressCard(
-                icon: Icons.people_alt_rounded,
-                title: 'Convidados',
-                value: confirmados,
-                total: total,
-                label: 'Confirmados',
-                progress: progress,
-                color: Colors.pinkAccent,
-                corPrincipal: cor,
-              ),
-            );
-          }),
-          const SizedBox(height: 10),
-          Obx(() {
-            final totalUsado = orcamentoController.totalCustoEstimado.value;
-            final limite = eventoModel.custoEstimado ?? 0.0;
-            final progress = limite > 0 ? totalUsado / limite : 0.0;
-
-            return FadeInUp(
-              duration: const Duration(milliseconds: 800),
-              child: _AnimatedProgressCard(
-                icon: Icons.payments_rounded,
-                title: 'Orçamento',
-                value: totalUsado.toInt(),
-                total: limite.toInt(),
-                label: 'Usado',
-                progress: progress.clamp(0, 1),
-                color: Colors.tealAccent.shade400,
-                corPrincipal: cor,
-              ),
-            );
-          }),
-          const SizedBox(height: 10),
-          Obx(() {
-            final concluidas = tarefaController.concluidas;
-            final total = (tarefaController.pendentes + tarefaController.concluidas);
-            final progress = total > 0 ? concluidas / total : 0.0;
-
-            return FadeInUp(
-              duration: const Duration(milliseconds: 900),
-              child: _AnimatedProgressCard(
-                icon: Icons.check_circle_outline,
-                title: 'Tarefas',
-                value: concluidas,
-                total: total,
-                label: 'Concluídas',
-                progress: progress,
-                color: Colors.orangeAccent,
-                corPrincipal: cor,
-              ),
-            );
-          }),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget _buildInspiration(EventThemeController theme) {
-  final ScrollController scrollController = ScrollController();
-  return NotificationListener<ScrollNotification>(
-    onNotification: (notification) => false,
-    child: CustomScrollView(
-      controller: scrollController,
-      slivers: [
-        SliverToBoxAdapter(
-          child: _buildAnimatedHeader(theme),
-        ),
-        // 🔹 Grade de inspirações
-        _buildInspirationGrid(theme),
-        const SliverToBoxAdapter(child: SizedBox(height: 100)),
-      ],
-    ),
-  );
-}
-
-Widget _buildInspirationGrid(EventThemeController theme) {
-  return SliverPadding(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    sliver: SliverGrid(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) => GestureDetector(
-          onTap: () {},
-          child: FadeIn(
-            duration: Duration(milliseconds: 400 + (index * 100)),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Hero(
-                    tag: 'inspiracao_$index',
-                    child: Image.asset(
-                      'assets/images/kids_party_${(index % 3) + 1}.jpeg',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.black.withValues(alpha: 0.4), Colors.transparent],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Text(
-                        'Inspiração ${index + 1}',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        childCount: 6,
-      ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 1,
-      ),
-    ),
-  );
 }
 
 // === FRASE MOTIVACIONAL ===

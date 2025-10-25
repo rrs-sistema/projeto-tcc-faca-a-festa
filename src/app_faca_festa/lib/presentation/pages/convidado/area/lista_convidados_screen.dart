@@ -186,8 +186,9 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
+          // 🔹 Campo de busca ocupa 70% do espaço
           Expanded(
-            flex: 3,
+            flex: 7,
             child: TextField(
               onChanged: (value) => controller.termoBusca.value = value,
               decoration: InputDecoration(
@@ -204,10 +205,13 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
             ),
           ),
           const SizedBox(width: 8),
-          Expanded(
-            flex: 2,
+
+          // 🔹 Dropdown ocupa o espaço restante de forma segura
+          Flexible(
+            flex: 4,
             child: Obx(() => DropdownButtonFormField<String>(
                   value: _filtroStatus.value,
+                  isExpanded: true, // 🔹 evita overflow interno do dropdown
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
@@ -257,14 +261,16 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
             ),
           ],
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _resumoItem('✔ Confirmados', confirmados, Colors.green.shade700),
-            _resumoItem('⏳ Pendentes', pendentes, Colors.orange.shade700),
-            _resumoItem('❌ Recusados', recusados, Colors.red.shade700),
-            _resumoItem('👥 Total', total, Colors.blueGrey.shade700),
-          ],
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              _resumoItem('✔ Confirmados', confirmados, Colors.green.shade700),
+              _resumoItem('⏳ Pendentes', pendentes, Colors.orange.shade700),
+              _resumoItem('❌ Recusados', recusados, Colors.red.shade700),
+              _resumoItem('👥 Total', total, Colors.blueGrey.shade700),
+            ],
+          ),
         ),
       );
     });
