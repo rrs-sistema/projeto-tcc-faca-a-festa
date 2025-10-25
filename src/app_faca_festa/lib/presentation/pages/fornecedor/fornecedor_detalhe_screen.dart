@@ -1,13 +1,15 @@
 import 'package:cached_network_image/cached_network_image.dart';
+
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
-import '../../../data/models/model.dart';
-import '../../../data/models/DTO/fornecedor_detalhado_model.dart';
-import '../../../controllers/event_theme_controller.dart';
-import '../../../controllers/fornecedor_controller.dart';
-import './components/abrir_cotacao_bottom_sheet.dart';
+import './../../../data/models/DTO/fornecedor_detalhado_model.dart';
+import './../../../controllers/event_theme_controller.dart';
+import './../../../controllers/fornecedor_controller.dart';
+import './../../../data/models/DTO/servico_cotado.dart';
+import './../../../controllers/app_controller.dart';
+import './../../../data/models/model.dart';
 
 class FornecedorDetalheScreen extends StatelessWidget {
   final FornecedorDetalhadoModel fornecedorDetalhado;
@@ -35,7 +37,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _tituloCategoria(fornecedorDetalhado.categoriaNome, primary),
+            if (fornecedorDetalhado.categoriaNome.isNotEmpty)
+              _tituloCategoria(fornecedorDetalhado.categoriaNome, primary),
             const SizedBox(height: 22),
             _divider('Serviço selecionado'),
             const SizedBox(height: 16),
@@ -333,28 +336,30 @@ class ServicoCardPrincipal extends StatelessWidget {
       );
 
   Widget _botaoOrcamento(String label) => ElevatedButton.icon(
-        icon: const Icon(Icons.request_quote_rounded, color: Colors.white, size: 18),
-        label: Text(label,
-            style: GoogleFonts.poppins(
-                fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          backgroundColor: primary,
-          shadowColor: primary.withValues(alpha: 0.3),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        onPressed: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => CotacaoBottomSheet(
-            fornecedoresSelecionados: [fornecedorId],
-            idProdutoSelecionado: servico.id,
-            nomeProdutoSelecionado: servico.nome,
-            primary: primary,
-          ),
-        ),
-      );
+      icon: const Icon(Icons.request_quote_rounded, color: Colors.white, size: 18),
+      label: Text(label,
+          style:
+              GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        backgroundColor: primary,
+        shadowColor: primary.withValues(alpha: 0.3),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      onPressed: () {
+        final appController = Get.find<AppController>();
+        final servicoCotado = ServicoCotado(idProduto: servico.id, nomeProduto: servico.nome);
+
+        if (appController.isServicoSelecionado(servico.id)) {
+          appController.removerServico(servico.id);
+          Get.snackbar('Removido', 'Serviço removido da lista de cotação.',
+              backgroundColor: Colors.orange, colorText: Colors.white);
+        } else {
+          appController.adicionarServico(servicoCotado);
+          Get.snackbar('Adicionado', 'Serviço adicionado à lista de cotação.',
+              backgroundColor: Colors.green, colorText: Colors.white);
+        }
+      });
 }
 
 class ServicoCardHorizontal extends StatelessWidget {
@@ -398,7 +403,7 @@ class ServicoCardHorizontal extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(servico.nome + '--' + servico.id,
+                Text(servico.nome,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 11.5)),
@@ -435,27 +440,29 @@ class ServicoCardHorizontal extends StatelessWidget {
       );
 
   Widget _botaoOrcar() => ElevatedButton.icon(
-        icon: const Icon(Icons.request_quote_rounded, size: 16, color: Colors.white),
-        label: Text('Orçar Serviço',
-            style: GoogleFonts.poppins(
-                fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-        onPressed: () => showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => CotacaoBottomSheet(
-            fornecedoresSelecionados: [fornecedorId],
-            idProdutoSelecionado: servico.id,
-            nomeProdutoSelecionado: servico.nome,
-            primary: primary,
-          ),
-        ),
-      );
+      icon: const Icon(Icons.request_quote_rounded, size: 16, color: Colors.white),
+      label: Text('Orçar Serviço',
+          style:
+              GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primary,
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      onPressed: () {
+        final appController = Get.find<AppController>();
+        final servicoCotado = ServicoCotado(idProduto: servico.id, nomeProduto: servico.nome);
+
+        if (appController.isServicoSelecionado(servico.id)) {
+          appController.removerServico(servico.id);
+          Get.snackbar('Removido', 'Serviço removido da lista de cotação.',
+              backgroundColor: Colors.orange, colorText: Colors.white);
+        } else {
+          appController.adicionarServico(servicoCotado);
+          Get.snackbar('Adicionado', 'Serviço adicionado à lista de cotação.',
+              backgroundColor: Colors.green, colorText: Colors.white);
+        }
+      });
 }
 
 class _InfoTile extends StatelessWidget {

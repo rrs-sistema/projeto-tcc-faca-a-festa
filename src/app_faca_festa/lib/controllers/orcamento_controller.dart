@@ -12,6 +12,7 @@ class OrcamentoController extends GetxController {
   RxBool carregando = false.obs;
   StreamSubscription? _orcamentoSubscription;
   final RxInt fornecedorContatadoCount = 0.obs;
+  final RxInt totalCount = 0.obs;
   final RxInt contratadosCount = 0.obs;
   final RxDouble totalCustoEstimado = 0.0.obs;
 
@@ -37,6 +38,7 @@ class OrcamentoController extends GetxController {
     fornecedorContatadoCount.value = orcamentos.where((o) => o.idServicoFornecido != null).length;
     contratadosCount.value = orcamentos.where((o) => o.status == StatusOrcamento.fechado).length;
     totalCustoEstimado.value = orcamentos.fold(0.0, (soma, o) => soma + (o.custoEstimado ?? 0.0));
+    totalCount.value = orcamentos.where((o) => o.idServicoFornecido != null).length;
   }
 
   /// 🔹 Cria um novo orçamento
@@ -101,11 +103,6 @@ class OrcamentoController extends GetxController {
       'orcamento_fechado': fechar,
       if (fechar) 'data_fechamento': FieldValue.serverTimestamp(),
     });
-  }
-
-  int get totalCount {
-    final fechados = orcamentos.where((o) => o.idServicoFornecido != null).length;
-    return fechados;
   }
 
   @override

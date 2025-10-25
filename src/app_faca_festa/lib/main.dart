@@ -32,6 +32,7 @@ import './presentation/widgets/splash.dart';
 import './controllers/app_controller.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
+import 'controllers/contacao/cotacao_controller.dart';
 import 'controllers/convidado/cardapio_controller.dart';
 import 'controllers/convidado/convidado_controller.dart';
 import 'controllers/convidado/grupo_convidado_controller.dart';
@@ -64,6 +65,7 @@ Future<void> main() async {
   Get.put(ConvidadoController(), permanent: true);
   Get.put(CardapioController(), permanent: true);
   Get.put(GrupoConvidadoController(), permanent: true);
+  Get.put(CotacaoController(), permanent: true);
 
   runApp(const FacaFestaApp());
 }

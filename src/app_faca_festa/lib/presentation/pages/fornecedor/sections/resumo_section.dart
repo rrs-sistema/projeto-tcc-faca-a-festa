@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
+import '../components/show_responder_cotacao_bottom_sheet.dart';
 import './../../cadastro/servico/fornecedor_servico_list_screen.dart';
 import './../../../../controllers/event_theme_controller.dart';
 import './../../../../controllers/fornecedor_controller.dart';
@@ -27,6 +30,93 @@ class ResumoSection extends StatelessWidget {
           color2: const Color(0xFF388E3C),
           value: controller.solicitacoesPendentes.value,
           description: "pendentes",
+          onTap: () async {
+            final fornecedorController = Get.find<FornecedorController>();
+            final solicitacoes = await fornecedorController.buscarSolicitacoesPendentesDetalhadas();
+
+            if (solicitacoes.isEmpty) {
+              Get.snackbar(
+                "Sem solicitações",
+                "Você não possui solicitações pendentes no momento.",
+                backgroundColor: Colors.orange.shade100,
+                colorText: Colors.black87,
+              );
+              return;
+            }
+
+            // === Mostra lista de solicitações pendentes ===
+            Get.bottomSheet(
+              Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                padding: const EdgeInsets.all(20),
+                child: SafeArea(
+                  top: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 50,
+                        height: 5,
+                        margin: const EdgeInsets.only(bottom: 12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      Text(
+                        "Solicitações Pendentes",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Flexible(
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: solicitacoes.length,
+                          itemBuilder: (context, index) {
+                            final s = solicitacoes[index];
+                            final dataEnvio = s['dataEnvio'] is Timestamp
+                                ? DateFormat("dd/MM/yyyy")
+                                    .format((s['dataEnvio'] as Timestamp).toDate())
+                                : '';
+
+                            return ListTile(
+                              leading: const Icon(Icons.assignment_outlined, color: Colors.green),
+                              title: Text(
+                                s['categoriaNome'],
+                                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                              ),
+                              subtitle: Text(
+                                "Enviada em $dataEnvio",
+                                style:
+                                    GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+                              ),
+                              trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+                              onTap: () {
+                                Get.back(); // fecha a lista
+                                showResponderCotacaoBottomSheet(
+                                  context: context,
+                                  idCotacao: s['idCotacao'],
+                                  categoriaNome: s['categoriaNome'],
+                                  descricao: s['descricao'],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              isScrollControlled: true,
+            );
+          },
         ),
         _ResumoCardData(
           title: "Serviços Ativos",

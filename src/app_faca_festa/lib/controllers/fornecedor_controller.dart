@@ -42,6 +42,8 @@ class FornecedorController extends GetxController {
   final categoriasServico = <Map<String, dynamic>>[].obs;
   final subcategoriasServico = <Map<String, dynamic>>[].obs;
 
+  StreamSubscription? _solicitacoesSub;
+
   /// 🔹 Estatísticas do painel
   final ordenacaoSelecionada = 'status'.obs; // status | nome | recentes
   final RxInt solicitacoesPendentes = 0.obs;
@@ -178,6 +180,32 @@ class FornecedorController extends GetxController {
     } catch (e) {
       debugPrint("❌ Erro ao buscar último evento: $e");
       return null;
+    }
+  }
+
+  /// 🔹 Escuta em tempo real todas as solicitações com status = 'aguardando'
+  Future<void> escutarSolicitacoesPendentes() async {
+    final f = fornecedor.value;
+    if (f == null) return;
+
+    // Cancela a escuta anterior, se já existir
+    await _solicitacoesSub?.cancel();
+
+    try {
+      erro.value = '';
+
+      _solicitacoesSub = _db
+          .collectionGroup('fornecedores')
+          .where('id_fornecedor', isEqualTo: f.idFornecedor)
+          .where('status', isEqualTo: 'aguardando')
+          .snapshots()
+          .listen((snapshot) {
+        // 🔹 Atualiza automaticamente o valor reativo
+        solicitacoesPendentes.value = snapshot.docs.length;
+      });
+    } catch (e, s) {
+      debugPrint('❌ Erro ao escutar solicitações pendentes: $e\n$s');
+      erro.value = 'Erro ao escutar solicitações pendentes';
     }
   }
 
@@ -366,37 +394,6 @@ class FornecedorController extends GetxController {
   }
 
   // ==========================================================
-  // === 🔹 2. Busca produtos pelo CÓDIGO DO FORNECEDOR (login)
-  // ==========================================================
-  Future<void> carregarFornecedorLogado(String idUsuario) async {
-    try {
-      carregando.value = true;
-      erro.value = '';
-
-      final query = await _db
-          .collection('fornecedor')
-          .where('id_usuario', isEqualTo: idUsuario)
-          .limit(1)
-          .get();
-
-      if (query.docs.isEmpty) {
-        erro.value = 'Nenhum fornecedor encontrado para o usuário atual.';
-        return;
-      }
-
-      fornecedor.value = FornecedorModel.fromMap(query.docs.first.data());
-      aptoParaOperar.value = fornecedor.value?.aptoParaOperar ?? false;
-
-      escutarServicosFornecedor(fornecedor.value!.idFornecedor);
-    } catch (e, s) {
-      erro.value = 'Erro ao carregar fornecedor: $e';
-      debugPrint('❌ $e\n$s');
-    } finally {
-      carregando.value = false;
-    }
-  }
-
-  // ==========================================================
   // === 🔹 Escuta os serviços de um fornecedor específico
   // ==========================================================
   Future<void> escutarServicosFornecedor(String idFornecedor) async {
@@ -415,6 +412,7 @@ class FornecedorController extends GetxController {
       final ids = lista.map((e) => e.idProdutoServico).toList();
       await carregarCatalogoServicos();
       await carregarFotosServicos(ids, idFornecedor);
+      await escutarSolicitacoesPendentes();
     });
   }
 
@@ -623,5 +621,52 @@ class FornecedorController extends GetxController {
     } catch (e, s) {
       debugPrint('❌ Erro ao atualizar estatísticas: $e\n$s');
     }
+  }
+
+  Future<List<Map<String, dynamic>>> buscarSolicitacoesPendentesDetalhadas() async {
+    final f = fornecedor.value;
+    if (f == null) return [];
+
+    final resultado = <Map<String, dynamic>>[];
+
+    // 🔹 Busca todos os registros "aguardando" em qualquer cotação
+    final snapshot = await FirebaseFirestore.instance
+        .collectionGroup('fornecedores')
+        .where('id_fornecedor', isEqualTo: f.idFornecedor)
+        .where('status', isEqualTo: 'aguardando')
+        .get();
+
+    for (final doc in snapshot.docs) {
+      final dataFornecedor = doc.data();
+      final cotacaoRef = doc.reference.parent.parent; // cotacao/{id}
+      if (cotacaoRef == null) continue;
+
+      final cotacaoSnap = await cotacaoRef.get();
+      if (!cotacaoSnap.exists) continue;
+
+      final dataCotacao = cotacaoSnap.data() as Map<String, dynamic>;
+
+      resultado.add({
+        'idCotacao': cotacaoRef.id,
+        'categoriaNome': dataCotacao['categoria_nome'] ?? 'Cotação',
+        'descricao': dataCotacao['observacao'] ?? '',
+        'dataEnvio': dataCotacao['data_envio'],
+        'dataLimite': dataCotacao['data_limite_resposta'],
+        'status': dataCotacao['status'],
+        'idEvento': dataCotacao['id_evento'],
+        'idUsuarioSolicitante': dataCotacao['id_usuario_solicitante'],
+        'prazoEntrega': dataFornecedor['prazo_entrega'],
+        'condicaoPagamento': dataFornecedor['condicao_pagamento'],
+        'observacaoFornecedor': dataFornecedor['observacao_fornecedor'],
+      });
+    }
+
+    return resultado;
+  }
+
+  @override
+  void onClose() {
+    _solicitacoesSub?.cancel();
+    super.onClose();
   }
 }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
+import '../data/models/DTO/servico_cotado.dart';
 import './../presentation/pages/convidado/area/area_convidado_home_screen.dart';
 import './../presentation/pages/fornecedor/fornecedor_home_screen.dart';
 import './../presentation/pages/admin/admin_dashboard_screen.dart';
@@ -13,6 +14,7 @@ import './../presentation/pages/home_event_screen.dart';
 import './../role_selector_screen.dart';
 import './../data/models/model.dart';
 
+import 'contacao/cotacao_controller.dart';
 import 'evento_controller.dart';
 import 'fornecedor_controller.dart';
 import 'orcamento_controller.dart';
@@ -27,12 +29,16 @@ class AppController extends GetxController {
   final Rx<EnderecoUsuarioModel?> enderecoPrincipal = Rx<EnderecoUsuarioModel?>(null);
   final RxList<EnderecoUsuarioModel> enderecosUsuario = <EnderecoUsuarioModel>[].obs;
 
+  /// 🔹 Lista global de serviços selecionados para cotação
+  final RxList<ServicoCotado> servicosSelecionados = <ServicoCotado>[].obs;
+
   final RxBool carregando = false.obs;
   StreamSubscription<User?>? _authSub;
 
   // ✅ Injeção de controladores auxiliares
   final eventoController = Get.put(EventoController());
   final orcamentoController = Get.put(OrcamentoController());
+  final cotacaoController = Get.put(CotacaoController());
   final fornecedorController = Get.put(FornecedorController());
   final tarefaController = Get.put(TarefaController());
 
@@ -201,7 +207,10 @@ class AppController extends GetxController {
 
             if (evento != null) {
               debugPrint('🔹 Carregando dados do evento ${evento.nome}...');
+              fornecedorController.carregarServicosPorEvento(evento.idEvento);
               await orcamentoController.carregarOrcamentosDoEvento(evento.idEvento);
+              cotacaoController.ouvirMinhasCotacoes();
+
               debugPrint('✅ Evento ${evento.nome} carregado com sucesso!');
               destino = HomeEventScreen();
             } else {
@@ -273,6 +282,28 @@ class AppController extends GetxController {
   // ------------------------------------------------------------
   Future<void> excluirDocumento(String colecao, String idDocumento) async {
     await _db.collection(colecao).doc(idDocumento).delete();
+  }
+
+  /// 🔹 Adiciona serviço à lista (evita duplicatas)
+  void adicionarServico(ServicoCotado servico) {
+    if (!servicosSelecionados.any((s) => s.idProduto == servico.idProduto)) {
+      servicosSelecionados.add(servico);
+    }
+  }
+
+  /// 🔹 Remove serviço da lista
+  void removerServico(String idProduto) {
+    servicosSelecionados.removeWhere((s) => s.idProduto == idProduto);
+  }
+
+  /// 🔹 Limpa todos os serviços selecionados
+  void limparServicosSelecionados() {
+    servicosSelecionados.clear();
+  }
+
+  /// 🔹 Verifica se um serviço está selecionado
+  bool isServicoSelecionado(String idProduto) {
+    return servicosSelecionados.any((s) => s.idProduto == idProduto);
   }
 
   @override

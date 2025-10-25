@@ -296,9 +296,10 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
 
               // 🔹 Usa um único Obx externo para atualizar os dados de todos os cards
               return Obx(() {
-                final double percentOrcamento = (orcamentoController.totalCount == 0)
+                final double percentOrcamento = (orcamentoController.totalCount.value == 0)
                     ? 0
-                    : orcamentoController.contratadosCount.value / orcamentoController.totalCount;
+                    : orcamentoController.contratadosCount.value /
+                        orcamentoController.totalCount.value;
 
                 final int concluidas = tarefaController.concluidas;
                 final int totalTarefa = tarefaController.pendentes + tarefaController.concluidas;

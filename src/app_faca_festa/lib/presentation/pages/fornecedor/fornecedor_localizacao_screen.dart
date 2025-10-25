@@ -1,9 +1,11 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:app_faca_festa/controllers/app_controller.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../data/models/DTO/servico_cotado.dart';
 import './../../../controllers/categoria/categoria_servico_controller.dart';
 import './../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_model.dart';
@@ -246,41 +248,143 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                 ),
               ),
 
-              // === BOTÃO FIXO ===
-              if (selecionados.isNotEmpty)
+              // === CONTADOR FLUTUANTE + BOTÃO FIXO ===
+              if (selecionados.isNotEmpty) ...[
+                // 🔹 Contador flutuante
+                Positioned(
+                  bottom: 80,
+                  right: 20,
+                  child: AnimatedScale(
+                    duration: const Duration(milliseconds: 300),
+                    scale: 1,
+                    child: AnimatedOpacity(
+                      opacity: selecionados.isNotEmpty ? 1 : 0,
+                      duration: const Duration(milliseconds: 250),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                        decoration: BoxDecoration(
+                          gradient: gradient,
+                          borderRadius: BorderRadius.circular(22),
+                          boxShadow: [
+                            BoxShadow(
+                              color: primary.withValues(alpha: 0.25),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.store_mall_directory_rounded,
+                                color: Colors.white, size: 18),
+                            const SizedBox(width: 6),
+                            Text(
+                              '${selecionados.length} fornecedor${selecionados.length > 1 ? 'es' : ''} selecionado${selecionados.length > 1 ? 's' : ''}',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 🔹 Botão fixo de cotação
                 Positioned(
                   bottom: 20,
                   left: 16,
                   right: 16,
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.request_quote_rounded, color: Colors.white),
-                    label: Text(
-                      'Fazer Cotação (${selecionados.length})',
-                      style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                    label: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Fazer Cotação',
+                          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                        ),
+                        const SizedBox(width: 8),
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '${selecionados.length}',
+                            style:
+                                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                     ),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       backgroundColor: primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      elevation: 5,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 8,
                     ),
                     onPressed: () {
+                      final appCtrl = Get.find<AppController>();
+
+                      // 🔹 Verifica se o usuário escolheu uma categoria
+                      if (categoriaSelecionada == null) {
+                        Get.snackbar(
+                          'Escolha uma categoria',
+                          'Selecione uma categoria antes de fazer uma cotação.',
+                          backgroundColor: Colors.orangeAccent,
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          margin: const EdgeInsets.all(12),
+                          duration: const Duration(seconds: 3),
+                          icon: const Icon(Icons.info_outline_rounded, color: Colors.white),
+                        );
+                        return;
+                      }
+
+                      // 🔹 Se não houver serviços selecionados, cria um genérico com base na categoria
+                      if (appCtrl.servicosSelecionados.isEmpty) {
+                        final servicoGenerico = ServicoCotado(
+                          idProduto:
+                              'generico_${categoriaSelecionada!.toLowerCase().replaceAll(' ', '_')}',
+                          nomeProduto: 'Serviço da categoria ${categoriaSelecionada!}',
+                          quantidade: 1,
+                          valor: 0.0,
+                        );
+                        appCtrl.adicionarServico(servicoGenerico);
+                      }
+
+                      // 🔹 Abre o bottom sheet de cotação
                       showModalBottomSheet(
                         context: context,
                         isScrollControlled: true,
                         backgroundColor: Colors.transparent,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                        ),
                         builder: (_) => CotacaoBottomSheet(
+                          tipoEventoNome: categoriaSelecionada!,
                           fornecedoresSelecionados: selecionados.toList(),
+                          servicosSelecionados: appCtrl.servicosSelecionados.toList(),
                           primary: primary,
-                          idProdutoSelecionado: '',
-                          nomeProdutoSelecionado: '',
+                          onCotacaoFinalizada: () {
+                            setState(() {
+                              selecionados.clear(); // ✅ limpa visualmente os fornecedores
+                            });
+                            appCtrl.limparServicosSelecionados(); // ✅ limpa também os serviços
+                          },
                         ),
                       );
                     },
                   ),
                 ),
+              ],
             ],
           );
         }),
@@ -358,58 +462,106 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     final distancia = f.distanciaKm;
     final bool isCelular = Biblioteca.isCelular(context);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOutCubic,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        gradient: selecionado
-            ? gradient
-            : LinearGradient(
-                colors: [Colors.white, Colors.grey.shade50],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withValues(alpha: selecionado ? 0.4 : 0.15),
-            blurRadius: selecionado ? 12 : 6,
-            offset: const Offset(0, 4),
+    return GestureDetector(
+      onTap: () {
+        // 👉 Ao clicar, alterna seleção (sem abrir detalhe)
+        if (selecionado) {
+          selecionados.remove(fornecedor.idFornecedor);
+          HapticFeedback.lightImpact();
+        } else {
+          selecionados.add(fornecedor.idFornecedor);
+          HapticFeedback.mediumImpact();
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          gradient: selecionado
+              ? gradient
+              : LinearGradient(
+                  colors: [Colors.white, Colors.grey.shade50],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+          boxShadow: [
+            BoxShadow(
+              color: primary.withValues(alpha: selecionado ? 0.4 : 0.15),
+              blurRadius: selecionado ? 12 : 6,
+              offset: const Offset(0, 4),
+            ),
+          ],
+          border: Border.all(
+            color: selecionado ? primary.withValues(alpha: 0.9) : Colors.grey.shade200,
+            width: selecionado ? 2 : 1,
           ),
-        ],
-        border: Border.all(
-          color: selecionado ? primary.withValues(alpha: 0.9) : Colors.grey.shade200,
-          width: selecionado ? 2 : 1,
         ),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () => Get.to(() => FornecedorDetalheScreen(fornecedorDetalhado: f)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔹 Banner otimizado com cache
-            ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
-              child: fornecedor.bannerUrl != null && fornecedor.bannerUrl!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: fornecedor.bannerUrl!,
-                      cacheManager: AdaptiveCacheManager.instance,
-                      height: isCelular ? 110 : 210,
-                      width: double.infinity,
-                      fit: BoxFit.cover,
+            // 🔹 Banner com indicador de seleção
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                  child: fornecedor.bannerUrl != null && fornecedor.bannerUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: fornecedor.bannerUrl!,
+                          cacheManager: AdaptiveCacheManager.instance,
+                          height: isCelular ? 110 : 210,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(color: Colors.grey.shade300),
+                          errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
+                          memCacheHeight: 250,
+                          memCacheWidth: 250,
+                          fadeInDuration: const Duration(milliseconds: 250),
+                        )
+                      : _bannerPlaceholder(primary),
+                ),
 
-                      // 🔹 Mostra fundo cinza enquanto carrega
-                      placeholder: (_, __) => Container(color: Colors.grey.shade300),
+                // 🔸 Escurecimento sutil quando selecionado
+                if (selecionado)
+                  Container(
+                    height: isCelular ? 110 : 210,
+                    decoration: BoxDecoration(
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                      gradient: LinearGradient(
+                        colors: [Colors.black.withValues(alpha: 0.25), Colors.transparent],
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                      ),
+                    ),
+                  ),
 
-                      // 🔹 Em caso de erro, mostra o banner placeholder temático
-                      errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
-
-                      memCacheHeight: 250,
-                      memCacheWidth: 250,
-                      fadeInDuration: const Duration(milliseconds: 250),
-                    )
-                  : _bannerPlaceholder(primary),
+                // 🔸 Ícone de check flutuante
+                AnimatedPositioned(
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutBack,
+                  top: selecionado ? 8 : -40,
+                  right: 8,
+                  child: AnimatedOpacity(
+                    opacity: selecionado ? 1 : 0,
+                    duration: const Duration(milliseconds: 250),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(Icons.check_circle_rounded, color: primary, size: 22),
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             // 🔹 Conteúdo do card
@@ -496,7 +648,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
                   const SizedBox(height: 10),
 
-                  // 🔹 Botão de ação
+                  // 🔹 Botão de ação (abre detalhes)
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
