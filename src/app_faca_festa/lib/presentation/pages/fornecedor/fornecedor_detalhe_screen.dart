@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:carousel_slider/carousel_slider.dart';
 
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
@@ -168,12 +169,22 @@ class FornecedorDetalheScreen extends StatelessWidget {
       }
 
       final servico = servicos.firstWhereOrNull((s) => s.id == servicoFornecedor.idProdutoServico);
-      final foto = fotos.firstWhereOrNull((f) => f.idProdutoServico == servico?.id);
+      // Filtra todas as fotos relacionadas ao serviço selecionado
+      // Lista reativa de URLs de fotos
+      final RxList<String> fotosUrls = <String>[].obs;
+
+      // Filtra as fotos relacionadas ao serviço atual
+      final relacionadas =
+          fotos.where((f) => f.idProdutoServico == servico?.id).map((f) => f.url).toList();
+
+      // Atualiza a lista observável apenas com as URLs
+      fotosUrls.assignAll(relacionadas);
+
       if (servico == null) return _textoVazio('Serviço não encontrado.');
 
       return ServicoCardPrincipal(
         servico: servico,
-        fotoUrl: foto?.url,
+        urls: fotosUrls,
         primary: primary,
         gradient: gradient,
         fornecedorId: detalhe.fornecedor.idFornecedor,
@@ -249,7 +260,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
 
 class ServicoCardPrincipal extends StatelessWidget {
   final ServicoProdutoModel servico;
-  final String? fotoUrl;
+  final List<String>? urls;
   final Color primary;
   final Gradient gradient;
   final String fornecedorId;
@@ -258,7 +269,7 @@ class ServicoCardPrincipal extends StatelessWidget {
   const ServicoCardPrincipal({
     super.key,
     required this.servico,
-    required this.fotoUrl,
+    required this.urls,
     required this.primary,
     required this.gradient,
     required this.fornecedorId,
@@ -283,7 +294,7 @@ class ServicoCardPrincipal extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _imagem(),
+          imagensCarousel(),
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -305,35 +316,88 @@ class ServicoCardPrincipal extends StatelessWidget {
     );
   }
 
-  Widget _imagem() => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        child: Stack(
-          children: [
-            CachedNetworkImage(
-              imageUrl: fotoUrl ?? '',
-              height: 200,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              placeholder: (_, __) => Container(color: Colors.grey.shade200),
-              errorWidget: (_, __, ___) => Container(
+  Widget imagensCarousel() {
+    if (urls == null || urls!.isEmpty) {
+      return Container(
+        height: 200,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          color: Colors.grey.shade200,
+        ),
+        alignment: Alignment.center,
+        child: const Icon(Icons.image_not_supported_outlined, size: 60, color: Colors.grey),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      child: Stack(
+        children: [
+          CarouselSlider.builder(
+            itemCount: urls!.length,
+            itemBuilder: (context, index, _) {
+              final url = urls![index];
+              return CachedNetworkImage(
+                imageUrl: url,
                 height: 200,
-                color: Colors.grey.shade300,
-                child: const Icon(Icons.image_not_supported_outlined, size: 50, color: Colors.grey),
+                width: double.infinity,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => Container(color: Colors.grey.shade100),
+                errorWidget: (_, __, ___) => Container(
+                  color: Colors.grey.shade300,
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 50),
+                ),
+              );
+            },
+            options: CarouselOptions(
+              height: 200,
+              autoPlay: urls!.length > 1,
+              viewportFraction: 1.0,
+              enableInfiniteScroll: urls!.length > 1,
+              autoPlayInterval: const Duration(seconds: 4),
+              autoPlayAnimationDuration: const Duration(milliseconds: 800),
+            ),
+          ),
+
+          // 🔹 Gradiente sutil sobre as imagens
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.black.withValues(alpha: 0.25), Colors.transparent],
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
               ),
             ),
-            Container(
-              height: 200,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.black.withValues(alpha: 0.25), Colors.transparent],
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
+          ),
+
+          // 🔹 Indicadores de posição (bolinhas)
+          Positioned(
+            bottom: 10,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                urls!.length,
+                (i) => Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
                 ),
               ),
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _botaoOrcamento(String label) => ElevatedButton.icon(
       icon: const Icon(Icons.request_quote_rounded, color: Colors.white, size: 18),

@@ -31,6 +31,7 @@ dependencies:
   google_maps_flutter: ^2.11.0
   font_awesome_flutter: ^10.9.1
   cloud_firestore: ^6.0.3
+  firebase_storage: ^13.0.3
   flutter_easyloading: ^3.0.5
   get_storage: ^2.1.1
   provider: ^6.1.5+1
@@ -43,7 +44,8 @@ dependencies:
   interactive_country_map: ^0.0.6
   mask_text_input_formatter: ^2.9.0
   animate_do: ^4.2.0
-
+  image_picker: ^1.2.0
+  
 dev_dependencies:
   flutter_test:
     sdk: flutter

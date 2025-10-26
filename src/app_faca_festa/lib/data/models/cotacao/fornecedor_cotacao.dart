@@ -9,7 +9,6 @@ enum StatusFornecedorCotacao {
   recusado,
   fechado;
 
-  /// 🔸 Rótulo legível para exibição na interface
   String get label {
     switch (this) {
       case StatusFornecedorCotacao.aguardando:
@@ -23,7 +22,6 @@ enum StatusFornecedorCotacao {
     }
   }
 
-  /// 🔸 Valor que será salvo no Firestore
   String get firestoreValue {
     switch (this) {
       case StatusFornecedorCotacao.aguardando:
@@ -37,32 +35,31 @@ enum StatusFornecedorCotacao {
     }
   }
 
-  /// 🔸 Converte string do Firestore → enum
   static StatusFornecedorCotacao fromString(String? value) {
     if (value == null) return StatusFornecedorCotacao.aguardando;
-    final normalized = value.trim().toLowerCase();
-
-    switch (normalized) {
+    switch (value.trim().toLowerCase()) {
       case 'respondido':
         return StatusFornecedorCotacao.respondido;
       case 'recusado':
         return StatusFornecedorCotacao.recusado;
       case 'fechado':
         return StatusFornecedorCotacao.fechado;
-      case 'aguardando':
       default:
         return StatusFornecedorCotacao.aguardando;
     }
   }
 }
 
+// ===========================================================
+// 🔹 Modelo FornecedorCotacaoModel
+// ===========================================================
 class FornecedorCotacaoModel {
   final String id;
   final String idCotacao;
   final String idFornecedor;
-  final String? prazoEntrega;
+  final DateTime? prazoEntrega; // ✅ Alterado para DateTime
   final String? condicaoPagamento;
-  final StatusFornecedorCotacao status; // ✅ Agora é enum
+  final StatusFornecedorCotacao status;
   final String? observacaoFornecedor;
   final DateTime? dataResposta;
 
@@ -85,9 +82,9 @@ class FornecedorCotacaoModel {
       'id': id,
       'id_cotacao': idCotacao,
       'id_fornecedor': idFornecedor,
-      'prazo_entrega': prazoEntrega,
+      'prazo_entrega': prazoEntrega != null ? Timestamp.fromDate(prazoEntrega!) : null,
       'condicao_pagamento': condicaoPagamento,
-      'status': status.firestoreValue, // ✅ salva como string
+      'status': status.firestoreValue,
       'observacao_fornecedor': observacaoFornecedor,
       'data_resposta': dataResposta != null ? Timestamp.fromDate(dataResposta!) : null,
     };
@@ -101,7 +98,9 @@ class FornecedorCotacaoModel {
       id: map['id']?.toString() ?? '',
       idCotacao: map['id_cotacao']?.toString() ?? '',
       idFornecedor: map['id_fornecedor']?.toString() ?? '',
-      prazoEntrega: map['prazo_entrega'],
+      prazoEntrega: map['prazo_entrega'] is Timestamp
+          ? (map['prazo_entrega'] as Timestamp).toDate()
+          : DateTime.tryParse(map['prazo_entrega']?.toString() ?? ''),
       condicaoPagamento: map['condicao_pagamento'],
       status: StatusFornecedorCotacao.fromString(map['status']),
       observacaoFornecedor: map['observacao_fornecedor'],
@@ -115,7 +114,7 @@ class FornecedorCotacaoModel {
   // 🔹 Atualização parcial
   // ===========================================================
   FornecedorCotacaoModel copyWith({
-    String? prazoEntrega,
+    DateTime? prazoEntrega,
     String? condicaoPagamento,
     StatusFornecedorCotacao? status,
     String? observacaoFornecedor,

@@ -4,14 +4,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../data/models/servico_produto/servico_foto.dart';
 import './../../../../data/models/servico_produto/subcategoria_servico_model.dart';
 import './../../../../controllers/categoria/subcategoria_servico_controller.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
 import './../../../../controllers/categoria/categoria_servico_controller.dart';
+import './../../../../controllers/servico/servico_foto_controller.dart';
 import './../../../../controllers/servico_produto_controller.dart';
 import './../../../../controllers/event_theme_controller.dart';
 import './../../../../controllers/fornecedor_controller.dart';
-
 import './../../../../data/models/model.dart';
 
 Future<void> showFornecedorServicoBottomSheet(
@@ -24,6 +25,7 @@ Future<void> showFornecedorServicoBottomSheet(
   final categoriaController = Get.find<CategoriaServicoController>();
   final subcategoriaController = Get.find<SubcategoriaServicoController>();
   final servicoController = Get.find<ServicoProdutoController>();
+  final fotoController = Get.put(ServicoFotoController());
 
   final primary = themeController.primaryColor.value;
 
@@ -33,6 +35,7 @@ Future<void> showFornecedorServicoBottomSheet(
   final promocaoCtrl = TextEditingController(
     text: vinculo?.precoPromocao?.toStringAsFixed(2) ?? '',
   );
+  final urlController = TextEditingController();
 
   final categoriaSelecionada = Rxn<CategoriaServicoModel>();
   final subcategoriaSelecionada = Rxn<SubcategoriaServicoModel>();
@@ -69,6 +72,9 @@ Future<void> showFornecedorServicoBottomSheet(
     categoriaSelecionada.value = categoria;
     subcategoriaSelecionada.value = subcategoria;
     servicoSelecionado.value = servico;
+    if (servico != null) {
+      await fotoController.carregarFotos(idFornecedor, servico.id);
+    }
   }
 
   // ============================================================
@@ -254,6 +260,143 @@ Future<void> showFornecedorServicoBottomSheet(
                 ),
                 const SizedBox(height: 24),
 
+                // ============================================================
+                // 🔹 Campo para colar URL de imagem externa
+                // ============================================================
+
+                if (servicoSelecionado.value != null) ...[
+                  const SizedBox(height: 16),
+                  Text(
+                    'Imagens do serviço vinculado',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // === Lista de imagens ===
+                  Obx(() {
+                    final fotos = fotoController.fotos;
+                    if (fotos.isEmpty) {
+                      return Container(
+                        height: 100,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Text('Nenhuma imagem vinculada ainda',
+                            style: GoogleFonts.poppins(color: Colors.black54)),
+                      );
+                    }
+
+                    return SizedBox(
+                      height: 100,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: fotos.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 10),
+                        itemBuilder: (_, i) {
+                          final f = fotos[i];
+                          return Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Image.network(
+                                  f.url,
+                                  width: 120,
+                                  height: 100,
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 4,
+                                right: 4,
+                                child: GestureDetector(
+                                  onTap: () => fotoController.removerFoto(f),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    padding: const EdgeInsets.all(4),
+                                    child: const Icon(Icons.close_rounded,
+                                        color: Colors.white, size: 18),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    );
+                  }),
+
+                  const SizedBox(height: 16),
+
+                  // === Campo para colar URL manualmente ===
+                  TextField(
+                    controller: urlController,
+                    decoration: InputDecoration(
+                      labelText: 'Cole aqui o link da imagem (URL)',
+                      prefixIcon: const Icon(Icons.link_rounded),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey.shade50,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  // === Botão para salvar URL manual ===
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add_link_rounded),
+                    label: const Text('Adicionar imagem via URL'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    onPressed: () async {
+                      final url = urlController.text.trim();
+                      if (url.isEmpty) {
+                        Get.snackbar('Atenção', 'Informe uma URL válida antes de salvar');
+                        return;
+                      }
+
+                      final novaFoto = ServicoFotoModel(
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
+                        idProdutoServico: servicoSelecionado.value!.id,
+                        idFornecedor: idFornecedor,
+                        url: url,
+                        dataUpload: DateTime.now(),
+                      );
+
+                      await fotoController.adicionarFotoDireto(novaFoto);
+                      urlController.clear();
+                    },
+                  ),
+                  const SizedBox(height: 8),
+
+                  // === Botão para upload do Storage ===
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.add_a_photo_outlined),
+                    label: const Text('Enviar imagem do dispositivo'),
+                    onPressed: () async {
+                      await fotoController.adicionarFoto(
+                        idFornecedor: idFornecedor,
+                        idProdutoServico: servicoSelecionado.value!.id,
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo.shade400,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
