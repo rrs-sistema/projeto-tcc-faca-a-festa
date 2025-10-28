@@ -205,7 +205,7 @@ Future<void> showNovoOrcamentoBottomSheet({
                               final orcamento = OrcamentoModel(
                                 idOrcamento: uuid.v4(),
                                 idEvento: idEvento,
-                                idServicoFornecido: servicoFornecedor.idFornecedorServico,
+                                idServicoFornecido: servicoFornecedor.id,
                                 custoEstimado: valorEstimado ?? servicoFornecedor.preco,
                                 anotacoes: anotacoesController.text,
                                 orcamentoFechado: false,

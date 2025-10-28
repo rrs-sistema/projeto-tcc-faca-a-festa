@@ -9,6 +9,7 @@ import './../../../../controllers/fornecedor_controller.dart';
 
 Future<void> showResponderCotacaoBottomSheet({
   required BuildContext context,
+  required String nomeSolicitante,
   required String idCotacao,
   required String categoriaNome,
   required String descricao,
@@ -78,6 +79,27 @@ Future<void> showResponderCotacaoBottomSheet({
                             color: Colors.white.withValues(alpha: 0.9),
                             fontSize: 13,
                           ),
+                        ),
+                        const SizedBox(height: 10),
+
+                        // 👇 Novo trecho: nome do organizador
+                        Row(
+                          children: [
+                            Icon(Icons.person_rounded,
+                                color: Colors.white.withValues(alpha: 0.9), size: 18),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                'Solicitado por: $nomeSolicitante',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontSize: 13,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

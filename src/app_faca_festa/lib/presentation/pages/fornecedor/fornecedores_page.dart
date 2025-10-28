@@ -1,16 +1,18 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/fornecedor_controller.dart';
 import './../../../controllers/contacao/cotacao_controller.dart';
 import './../../../controllers/event_theme_controller.dart';
+import './../../../controllers/fornecedor_controller.dart';
 import './../../../controllers/orcamento_controller.dart';
+import './../../../controllers/app_controller.dart';
+import './../../../core/utils/biblioteca.dart';
 import './../../../data/models/model.dart';
 
 class FornecedoresPage extends StatelessWidget {
@@ -19,7 +21,6 @@ class FornecedoresPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Get.find<EventThemeController>();
-    final orcamentoCtrl = Get.find<OrcamentoController>();
     final cotacaoCtrl = Get.find<CotacaoController>();
 
     final primary = theme.primaryColor.value;
@@ -30,8 +31,8 @@ class FornecedoresPage extends StatelessWidget {
       appBar: _buildElegantAppBar(gradient),
       body: Obx(() {
         final cotacoes = cotacaoCtrl.cotacoes;
-        final contratados = orcamentoCtrl.contratadosCount.value;
-        final total = orcamentoCtrl.totalCount.value;
+        final contratados = cotacaoCtrl.contratadosCount.value;
+        final total = cotacaoCtrl.totalCount.value;
         final progresso = total == 0 ? 0.0 : contratados / total;
 
         return ListView(
@@ -243,8 +244,8 @@ class FornecedoresPage extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         ...cotacoes.map((cotacao) {
-          final icone = _iconePorCategoria(cotacao.categoriaNome);
-          final corIcone = _corPorCategoria(cotacao.categoriaNome);
+          final icone = Biblioteca.iconePorCategoria(cotacao.categoriaNome);
+          final corIcone = Biblioteca.corPorCategoria(cotacao.categoriaNome);
 
           return Card(
             margin: const EdgeInsets.only(bottom: 10),
@@ -315,58 +316,14 @@ class FornecedoresPage extends StatelessWidget {
     );
   }
 
-  IconData _iconePorCategoria(String? nome) {
-    final lower = nome?.toLowerCase() ?? '';
-
-    if (lower.contains('buffet') || lower.contains('gastronomia')) {
-      return Icons.restaurant_menu_rounded;
-    } else if (lower.contains('decoração') || lower.contains('flores')) {
-      return Icons.local_florist_rounded;
-    } else if (lower.contains('música') || lower.contains('dj') || lower.contains('som')) {
-      return Icons.music_note_rounded;
-    } else if (lower.contains('fotografia') || lower.contains('foto') || lower.contains('vídeo')) {
-      return Icons.camera_alt_rounded;
-    } else if (lower.contains('espaço') || lower.contains('local') || lower.contains('salão')) {
-      return Icons.location_city_rounded;
-    } else if (lower.contains('convite') || lower.contains('papelaria')) {
-      return Icons.mail_rounded;
-    } else if (lower.contains('transporte') || lower.contains('carro')) {
-      return Icons.directions_car_rounded;
-    } else if (lower.contains('bebida') || lower.contains('bar')) {
-      return Icons.local_bar_rounded;
-    } else if (lower.contains('bolo') || lower.contains('doce') || lower.contains('confeitaria')) {
-      return Icons.cake_rounded;
-    } else if (lower.contains('segurança') || lower.contains('porteiro')) {
-      return Icons.shield_rounded;
-    }
-    return Icons.request_quote_rounded; // padrão
-  }
-
-  Color _corPorCategoria(String? nome) {
-    final lower = nome?.toLowerCase() ?? '';
-
-    if (lower.contains('buffet')) return Colors.deepOrange;
-    if (lower.contains('decoração')) return Colors.pinkAccent;
-    if (lower.contains('música')) return Colors.purple;
-    if (lower.contains('fotografia')) return Colors.indigo;
-    if (lower.contains('espaço')) return Colors.teal;
-    if (lower.contains('convite')) return Colors.blueGrey;
-    if (lower.contains('transporte')) return Colors.blue;
-    if (lower.contains('bebida')) return Colors.brown;
-    if (lower.contains('bolo')) return Colors.amber.shade800;
-    if (lower.contains('segurança')) return Colors.green.shade700;
-
-    return Colors.grey.shade700; // cor neutra padrão
-  }
-
   void _mostrarDetalhesCotacao(CotacaoModel cotacao) {
     final fornecedorController = Get.find<FornecedorController>();
     final theme = Get.find<EventThemeController>();
     final primary = theme.primaryColor.value;
     final gradient = theme.gradient.value;
 
-    final icone = _iconePorCategoria(cotacao.categoriaNome);
-    final corIcone = _corPorCategoria(cotacao.categoriaNome);
+    final icone = Biblioteca.iconePorCategoria(cotacao.categoriaNome);
+    final corIcone = Biblioteca.corPorCategoria(cotacao.categoriaNome);
 
     Get.bottomSheet(
       Container(
@@ -766,6 +723,10 @@ class FornecedoresPage extends StatelessWidget {
   ) async {
     final db = FirebaseFirestore.instance;
     final cotacaoRef = db.collection('cotacao').doc(idCotacao);
+    final fornecedorController = Get.find<FornecedorController>();
+    final appController = Get.find<AppController>();
+    final fornecedor =
+        fornecedorController.fornecedores.where((f) => f.idFornecedor == idFornecedor).first;
 
     try {
       EasyLoading.show(status: 'Fechando negócio...');
@@ -804,7 +765,7 @@ class FornecedoresPage extends StatelessWidget {
 
       // 🔹 Atualiza cotação principal
       batch.update(cotacaoRef, {
-        'status': 'fechado',
+        'status': StatusCotacao.concluida.firestoreValue,
         'data_fechamento': Timestamp.now(),
         'fechado_por': idUsuarioSolicitante,
       });
@@ -815,6 +776,10 @@ class FornecedoresPage extends StatelessWidget {
         idOrcamento: orcamentoRef.id,
         idEvento: idEvento,
         idServicoFornecido: idFornecedor,
+        idFornecedor: idFornecedor,
+        nomeFornecedor: fornecedor.razaoSocial,
+        idSolicitante: appController.usuarioLogado.value?.idUsuario ?? 'NoID',
+        nomeSolicitante: appController.usuarioLogado.value?.nome ?? 'NoName',
         idCategoria: categoriaNome,
         idTipoPagamento: null,
         custoEstimado: valorTotal,

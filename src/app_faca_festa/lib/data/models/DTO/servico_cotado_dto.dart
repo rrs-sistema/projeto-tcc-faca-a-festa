@@ -1,10 +1,10 @@
-class ServicoCotado {
+class ServicoCotadoDto {
   final String idProduto;
   final String nomeProduto;
   final int quantidade;
   final double? valor;
 
-  ServicoCotado({
+  ServicoCotadoDto({
     required this.idProduto,
     required this.nomeProduto,
     this.quantidade = 1,
@@ -18,7 +18,7 @@ class ServicoCotado {
         'valor': valor,
       };
 
-  factory ServicoCotado.fromMap(Map<String, dynamic> map) => ServicoCotado(
+  factory ServicoCotadoDto.fromMap(Map<String, dynamic> map) => ServicoCotadoDto(
         idProduto: map['id_produto'],
         nomeProduto: map['nome_produto'],
         quantidade: map['quantidade'] ?? 1,

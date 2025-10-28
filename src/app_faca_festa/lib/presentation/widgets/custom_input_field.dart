@@ -1,12 +1,15 @@
+import 'package:get/get.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+
+import '../../controllers/event_theme_controller.dart';
 
 class CustomInputField extends StatefulWidget {
   final String label;
   final IconData icon;
   final TextEditingController controller;
-  final Color color;
+  final Color? color;
   final bool readOnly;
   final VoidCallback? onTap;
   final TextInputType? keyboardType;
@@ -17,7 +20,7 @@ class CustomInputField extends StatefulWidget {
   final EdgeInsets margin;
   final void Function(String)? onChanged;
   final Widget? suffixIcon;
-  final bool autoFormat; // 👈 Novo recurso (para aplicar máscaras automaticamente)
+  final bool autoFormat;
 
   const CustomInputField({
     super.key,
@@ -43,14 +46,19 @@ class CustomInputField extends StatefulWidget {
 }
 
 class _CustomInputFieldState extends State<CustomInputField> {
+  final themeController = Get.find<EventThemeController>();
   bool isFocused = false;
   MaskTextInputFormatter? maskFormatter;
   TextInputType? keyboardType;
+  late LinearGradient gradient;
+  late Color primary;
 
   @override
   void initState() {
     super.initState();
     if (widget.autoFormat) _configurarMascara();
+    gradient = themeController.gradient.value;
+    primary = themeController.primaryColor.value;
   }
 
   void _configurarMascara() {
@@ -86,7 +94,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
 
   @override
   Widget build(BuildContext context) {
-    final baseColor = widget.color;
+    final baseColor = widget.color ?? primary;
     final focusColor = baseColor.withValues(alpha: 0.85);
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(widget.borderRadius),

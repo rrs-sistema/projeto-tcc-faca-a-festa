@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../controllers/avaliacao/avaliacao_controller.dart';
 import '../components/show_responder_cotacao_bottom_sheet.dart';
 import './../../cadastro/servico/fornecedor_servico_list_screen.dart';
 import './../../../../controllers/event_theme_controller.dart';
@@ -16,6 +17,7 @@ class ResumoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<FornecedorController>();
     final themeController = Get.find<EventThemeController>();
+    final avaliacaoController = Get.find<AvaliacaoController>();
 
     // 🔹 Cores e gradiente principal
     final gradient = themeController.gradient.value;
@@ -24,8 +26,8 @@ class ResumoSection extends StatelessWidget {
       // 🔹 Atualiza automaticamente quando algo mudar no controlador
       final stats = [
         _ResumoCardData(
-          title: "Solicitações",
-          icon: Icons.pending_actions_outlined,
+          title: "🗂️ Cotações",
+          icon: Icons.receipt_long_outlined,
           color1: const Color(0xFF81C784),
           color2: const Color(0xFF388E3C),
           value: controller.solicitacoesPendentes.value,
@@ -44,7 +46,6 @@ class ResumoSection extends StatelessWidget {
               return;
             }
 
-            // === Mostra lista de solicitações pendentes ===
             Get.bottomSheet(
               Container(
                 decoration: const BoxDecoration(
@@ -104,6 +105,7 @@ class ResumoSection extends StatelessWidget {
                                   idCotacao: s['idCotacao'],
                                   categoriaNome: s['categoriaNome'],
                                   descricao: s['descricao'],
+                                  nomeSolicitante: s['nomeSolicitante'],
                                 );
                               },
                             );
@@ -119,7 +121,7 @@ class ResumoSection extends StatelessWidget {
           },
         ),
         _ResumoCardData(
-          title: "Serviços Ativos",
+          title: "🛠️ Serviços Ativos",
           icon: Icons.home_repair_service_outlined,
           color1: const Color(0xFFA5D6A7),
           color2: const Color(0xFF43A047),
@@ -130,12 +132,10 @@ class ResumoSection extends StatelessWidget {
             if (fornecedor != null) {
               controller.carregando.value = true;
               await controller.listarServicosFornecedor(fornecedor.idFornecedor);
+              controller.carregando.value = false;
 
-              ever(controller.carregando, (loading) {
-                if (loading == false) {
-                  Get.to(() => FornecedorServicoListScreen(fornecedor: fornecedor));
-                }
-              });
+              // Navega imediatamente após carregar
+              Get.to(() => FornecedorServicoListScreen(fornecedor: fornecedor));
             } else {
               Get.snackbar(
                 "Atenção",
@@ -147,7 +147,7 @@ class ResumoSection extends StatelessWidget {
           },
         ),
         _ResumoCardData(
-          title: "Mensagens",
+          title: "📩 Mensagens - EM BREVE",
           icon: Icons.chat_bubble_outline,
           color1: const Color(0xFFB2DFDB),
           color2: const Color(0xFF00796B),
@@ -155,11 +155,11 @@ class ResumoSection extends StatelessWidget {
           description: "não lidas",
         ),
         _ResumoCardData(
-          title: "Avaliação Média",
+          title: "🏆 Avaliação Média",
           icon: Icons.star_border_rounded,
           color1: const Color(0xFFC5E1A5),
           color2: const Color(0xFF558B2F),
-          value: controller.avaliacaoMedia.value.round(),
+          value: avaliacaoController.media.value.round(),
           description: "estrelas",
         ),
       ];

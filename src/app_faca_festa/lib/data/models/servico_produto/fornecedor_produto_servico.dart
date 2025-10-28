@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 /// Cada fornecedor pode oferecer múltiplos serviços com preços próprios.
 class FornecedorProdutoServicoModel {
   /// Identificador único do vínculo (documento Firestore)
-  final String idFornecedorServico;
+  final String id;
 
   /// ID do produto/serviço base (FK para servico_produto)
   final String idProdutoServico;
@@ -28,7 +28,7 @@ class FornecedorProdutoServicoModel {
   final DateTime dataCadastro;
 
   FornecedorProdutoServicoModel({
-    required this.idFornecedorServico,
+    required this.id,
     required this.idProdutoServico,
     required this.idFornecedor,
     required this.preco,
@@ -43,7 +43,7 @@ class FornecedorProdutoServicoModel {
   // ===========================================================
   Map<String, dynamic> toMap() {
     return {
-      'id_fornecedor_servico': idFornecedorServico,
+      'id_fornecedor_servico': id,
       'id_produto_servico': idProdutoServico,
       'id_fornecedor': idFornecedor,
       'id_subcategoria': idSubcategoria, // ✅ novo
@@ -59,7 +59,7 @@ class FornecedorProdutoServicoModel {
   // ===========================================================
   factory FornecedorProdutoServicoModel.fromMap(Map<String, dynamic> map) {
     return FornecedorProdutoServicoModel(
-      idFornecedorServico: map['id_fornecedor_servico'] ?? '',
+      id: map['id_fornecedor_servico'] ?? '',
       idProdutoServico: map['id_produto_servico'] ?? '',
       idFornecedor: map['id_fornecedor'] ?? '',
       idSubcategoria: map['id_subcategoria'], // ✅ novo
@@ -80,7 +80,7 @@ class FornecedorProdutoServicoModel {
     String? idSubcategoria,
   }) {
     return FornecedorProdutoServicoModel(
-      idFornecedorServico: idFornecedorServico,
+      id: id,
       idProdutoServico: idProdutoServico,
       idFornecedor: idFornecedor,
       preco: preco ?? this.preco,

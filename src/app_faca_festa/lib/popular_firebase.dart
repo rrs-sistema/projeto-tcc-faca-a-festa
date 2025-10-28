@@ -883,16 +883,13 @@ Future<void> inserirDadosComRelacionamentos() async {
 
       for (var servico in servicosFornecedor) {
         final vinculo = FornecedorProdutoServicoModel(
-          idFornecedorServico: _uuid.v4(),
+          id: _uuid.v4(),
           idProdutoServico: servico.id,
           idFornecedor: idFornecedor,
           preco: 1000 + (500 * (servicosFornecedor.indexOf(servico) + 1)),
           precoPromocao: 900,
         );
-        await _db
-            .collection('fornecedor_servico')
-            .doc(vinculo.idFornecedorServico)
-            .set(vinculo.toMap());
+        await _db.collection('fornecedor_servico').doc(vinculo.id).set(vinculo.toMap());
       }
     }
 

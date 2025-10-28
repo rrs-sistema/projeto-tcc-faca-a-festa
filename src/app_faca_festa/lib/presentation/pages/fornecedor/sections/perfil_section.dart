@@ -1,7 +1,9 @@
+import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../dialogs/edit_fornecedor_bottom_sheet.dart';
 import './../../../../controllers/fornecedor_controller.dart';
 
 class PerfilSection extends StatelessWidget {
@@ -74,7 +76,7 @@ class PerfilSection extends StatelessWidget {
                       const Icon(Icons.badge_outlined, color: Color(0xFF388E3C)),
                       const SizedBox(width: 10),
                       Text(
-                        fornecedor?.cnpj ?? '',
+                        Biblioteca.formatarCnpj(fornecedor?.cnpj),
                         style: GoogleFonts.poppins(
                           color: Colors.grey.shade700,
                           fontSize: 13.5,
@@ -92,7 +94,7 @@ class PerfilSection extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        fornecedor?.telefone ?? '',
+                        Biblioteca.formatarCelular(fornecedor?.telefone),
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           color: Colors.grey.shade700,
@@ -180,11 +182,31 @@ class PerfilSection extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     OutlinedButton.icon(
-                      onPressed: () => Get.snackbar(
-                        "Editar Perfil",
-                        "Abrindo formulário de edição...",
-                        backgroundColor: Colors.orange.shade700,
-                        colorText: Colors.white,
+                      onPressed: () => showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) {
+                          return DraggableScrollableSheet(
+                            expand: false,
+                            initialChildSize: 0.75, // tamanho inicial do bottomsheet
+                            minChildSize: 0.5, // tamanho mínimo ao arrastar pra baixo
+                            maxChildSize: 0.95, // tamanho máximo ao arrastar pra cima
+                            builder: (context, scrollController) {
+                              return Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                                ),
+                                child: SingleChildScrollView(
+                                  controller:
+                                      scrollController, // 🔹 importante para rolagem sincronizada
+                                  child: EditFornecedorBottomSheet(fornecedor: fornecedor!),
+                                ),
+                              );
+                            },
+                          );
+                        },
                       ),
                       icon: const Icon(Icons.edit_outlined, size: 18),
                       label: Text(

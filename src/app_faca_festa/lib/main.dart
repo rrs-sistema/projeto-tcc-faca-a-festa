@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -32,12 +34,23 @@ import './presentation/widgets/splash.dart';
 import './controllers/app_controller.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
+import 'controllers/avaliacao/avaliacao_controller.dart';
 import 'controllers/contacao/cotacao_controller.dart';
 import 'controllers/convidado/cardapio_controller.dart';
 import 'controllers/convidado/convidado_controller.dart';
 import 'controllers/convidado/grupo_convidado_controller.dart';
 import 'controllers/evento_controller.dart';
+import 'controllers/servico/servico_foto_controller.dart';
 //import 'popular_firebase.dart';
+
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    final client = super.createHttpClient(context);
+    client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    return client;
+  }
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -66,6 +79,10 @@ Future<void> main() async {
   Get.put(CardapioController(), permanent: true);
   Get.put(GrupoConvidadoController(), permanent: true);
   Get.put(CotacaoController(), permanent: true);
+  Get.put(AvaliacaoController(), permanent: true);
+  Get.put(ServicoFotoController(), permanent: true);
+
+  HttpOverrides.global = MyHttpOverrides();
 
   runApp(const FacaFestaApp());
 }

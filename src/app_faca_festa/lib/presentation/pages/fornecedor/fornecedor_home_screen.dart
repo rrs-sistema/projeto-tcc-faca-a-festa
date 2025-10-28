@@ -5,7 +5,6 @@ import './../../../controllers/fornecedor_controller.dart';
 import './sections/solicitacoes_section.dart';
 import './sections/avaliacoes_section.dart';
 import './sections/financeiro_section.dart';
-import './sections/mensagens_section.dart';
 import './sections/insights_section.dart';
 import './sections/header_section.dart';
 import './sections/resumo_section.dart';
@@ -31,8 +30,10 @@ class FornecedorHomeScreen extends StatelessWidget {
               const ResumoSection(),
               const SizedBox(height: 20),
               const SolicitacoesSection(),
+              /*
               const SizedBox(height: 20),
               const MensagensSection(),
+              */
               const SizedBox(height: 20),
               const AvaliacoesSection(),
               const SizedBox(height: 20),

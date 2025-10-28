@@ -100,7 +100,7 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                solicitacao.evento,
+                                solicitacao.cliente,
                                 style: GoogleFonts.poppins(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 15.5,

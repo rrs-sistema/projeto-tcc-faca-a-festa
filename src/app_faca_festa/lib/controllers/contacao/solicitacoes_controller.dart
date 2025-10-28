@@ -6,16 +6,35 @@ import 'package:intl/intl.dart';
 import './../../data/models/model.dart';
 
 class SolicitacoesController extends GetxController {
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
   final solicitacoes = <SolicitacaoModel>[].obs;
+
   final carregando = false.obs;
   final erro = ''.obs;
+
+  Future<UsuarioModel?> getUsuarioSolicitante(String idUsuario) async {
+    UsuarioModel? usuarioSolicitante = UsuarioModel(idUsuario: idUsuario, nome: '', email: '');
+    try {
+      final snapshot =
+          await _db.collection('usuarios').where('id_usuario', isEqualTo: idUsuario).get();
+
+      if (snapshot.docs.isNotEmpty) {
+        usuarioSolicitante = UsuarioModel.fromMap(snapshot.docs.first.data());
+      } else {
+        usuarioSolicitante = null;
+      }
+    } catch (e) {
+      debugPrint('❌ Erro ao carregar tipos de evento: $e');
+    }
+    return usuarioSolicitante;
+  }
 
   Future<void> carregarSolicitacoes(String idFornecedor) async {
     try {
       carregando.value = true;
       erro.value = '';
 
-      final snapshot = await FirebaseFirestore.instance
+      final snapshot = await _db
           .collectionGroup('fornecedores')
           .where('id_fornecedor', isEqualTo: idFornecedor)
           .get();
@@ -54,10 +73,12 @@ class SolicitacoesController extends GetxController {
             cotacaoSnap.id,
           );
 
+          final solicitante = await getUsuarioSolicitante(cotacao.idUsuarioSolicitante);
+
           resultado.add(
             SolicitacaoModel(
               id: cotacao.id,
-              cliente: cotacao.idUsuarioSolicitante,
+              cliente: solicitante?.nome ?? solicitante?.idUsuario ?? '',
               evento: cotacao.categoriaNome ?? 'Cotação',
               data: cotacao.dataCadastro,
               status: fornecData.status.firestoreValue,

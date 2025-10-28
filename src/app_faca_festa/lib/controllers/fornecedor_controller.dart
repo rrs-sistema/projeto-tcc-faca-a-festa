@@ -2,9 +2,12 @@
 // 🔹 Controller reativo GetX
 // ================================
 import 'dart:async';
+import 'dart:io';
 
 import 'package:app_faca_festa/data/models/servico_produto/subcategoria_servico_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,6 +20,7 @@ import 'app_controller.dart';
 
 class FornecedorController extends GetxController {
   final _db = FirebaseFirestore.instance;
+  final FirebaseStorage _storage = FirebaseStorage.instance;
 
   /// 🔹 Dados principais do fornecedor logado
   final Rx<FornecedorModel?> fornecedor = Rx<FornecedorModel?>(null);
@@ -42,6 +46,11 @@ class FornecedorController extends GetxController {
   final categoriasServico = <Map<String, dynamic>>[].obs;
   final subcategoriasServico = <Map<String, dynamic>>[].obs;
 
+  //tempoMedioResposta
+
+  final isLoadingServicos = false.obs;
+  final isLoadingFotos = false.obs;
+
   StreamSubscription? _solicitacoesSub;
 
   /// 🔹 Estatísticas do painel
@@ -50,6 +59,9 @@ class FornecedorController extends GetxController {
   final RxInt mensagensNaoLidas = 0.obs;
   final RxDouble avaliacaoMedia = 0.0.obs;
   final RxDouble faturamentoMes = 0.0.obs;
+
+  final RxInt totalFotos = 0.obs;
+  final RxDouble tempoMedioResposta = 0.0.obs;
 
   /// 🔹 Estado geral
   final RxBool aptoParaOperar = false.obs;
@@ -78,6 +90,32 @@ class FornecedorController extends GetxController {
         carregarTodosFornecedores();
       });
     });
+  }
+
+  /// 🔹 Atualiza os dados de um fornecedor existente no Firestore
+  Future<void> atualizarFornecedor(FornecedorModel fornecedor) async {
+    try {
+      await _db.collection('fornecedor').doc(fornecedor.idFornecedor).update(fornecedor.toMap());
+    } catch (e) {
+      throw Exception("Erro ao atualizar fornecedor: $e");
+    }
+  }
+
+  /// 🔹 Faz upload de imagem para o Firebase Storage e retorna a URL pública
+  Future<String> uploadBanner(File imageFile) async {
+    try {
+      final String fileName =
+          'banners_fornecedores/${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+      final Reference ref = _storage.ref().child(fileName);
+
+      final UploadTask uploadTask = ref.putFile(imageFile);
+      final TaskSnapshot snapshot = await uploadTask.whenComplete(() => null);
+
+      final String downloadUrl = await snapshot.ref.getDownloadURL();
+      return downloadUrl;
+    } catch (e) {
+      throw Exception("Erro ao enviar banner: $e");
+    }
   }
 
   Future<void> carregarTodosFornecedores() async {
@@ -457,14 +495,22 @@ class FornecedorController extends GetxController {
   Future<void> carregarFotosServicos(List<String> idsProdutoServico, String idFornecedor) async {
     if (idsProdutoServico.isEmpty) return;
 
-    final snapshot = await _db
-        .collection('servico_foto')
-        .where('id_produto_servico', whereIn: idsProdutoServico)
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .get();
+    try {
+      isLoadingFotos.value = true;
 
-    final lista = snapshot.docs.map((d) => ServicoFotoModel.fromMap(d.data())).toList();
-    fotosServico.assignAll(lista);
+      final snapshot = await _db
+          .collection('servico_foto')
+          .where('id_produto_servico', whereIn: idsProdutoServico)
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .get();
+
+      final lista = snapshot.docs.map((d) => ServicoFotoModel.fromMap(d.data())).toList();
+      fotosServico.assignAll(lista);
+    } catch (e) {
+      if (kDebugMode) print('Erro ao carregar fotos: $e');
+    } finally {
+      isLoadingFotos.value = false;
+    }
   }
 
   // ==========================================================
@@ -562,7 +608,7 @@ class FornecedorController extends GetxController {
   }
 
   Future<void> vincularServico(FornecedorProdutoServicoModel model) async {
-    await _db.collection('fornecedor_servico').doc(model.idFornecedorServico).set(model.toMap());
+    await _db.collection('fornecedor_servico').doc(model.id).set(model.toMap());
     await escutarServicosFornecedor(model.idFornecedor);
   }
 
@@ -658,6 +704,7 @@ class FornecedorController extends GetxController {
         'prazoEntrega': dataFornecedor['prazo_entrega'],
         'condicaoPagamento': dataFornecedor['condicao_pagamento'],
         'observacaoFornecedor': dataFornecedor['observacao_fornecedor'],
+        'nomeSolicitante': dataCotacao['nome_usuario_solicitante'],
       });
     }
 

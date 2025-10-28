@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:intl/intl.dart';
 
 class Biblioteca {
@@ -248,5 +249,113 @@ class Biblioteca {
     );
 
     return hslColor.toColor();
+  }
+
+  static IconData iconePorCategoria(String? nome) {
+    final lower = nome?.toLowerCase() ?? '';
+
+    if (lower.contains('buffet') || lower.contains('gastronomia') || lower.contains('culinária')) {
+      return FontAwesomeIcons.utensils;
+    } else if (lower.contains('decoração') ||
+        lower.contains('flores') ||
+        lower.contains('ambientação')) {
+      return FontAwesomeIcons.palette;
+    } else if (lower.contains('música') ||
+        lower.contains('dj') ||
+        lower.contains('som') ||
+        lower.contains('banda')) {
+      return FontAwesomeIcons.music;
+    } else if (lower.contains('fotografia') ||
+        lower.contains('foto') ||
+        lower.contains('vídeo') ||
+        lower.contains('filmagem')) {
+      return FontAwesomeIcons.cameraRetro;
+    } else if (lower.contains('espaço') ||
+        lower.contains('local') ||
+        lower.contains('salão') ||
+        lower.contains('chácara')) {
+      return FontAwesomeIcons.building;
+    } else if (lower.contains('convite') ||
+        lower.contains('papelaria') ||
+        lower.contains('lembrança')) {
+      return FontAwesomeIcons.envelopeOpenText;
+    } else if (lower.contains('transporte') ||
+        lower.contains('carro') ||
+        lower.contains('limousine')) {
+      return FontAwesomeIcons.carSide;
+    } else if (lower.contains('bebida') || lower.contains('bar') || lower.contains('coquetel')) {
+      return FontAwesomeIcons.champagneGlasses;
+    } else if (lower.contains('bolo') || lower.contains('doce') || lower.contains('confeitaria')) {
+      return FontAwesomeIcons.cakeCandles;
+    } else if (lower.contains('segurança') ||
+        lower.contains('porteiro') ||
+        lower.contains('vigia')) {
+      return FontAwesomeIcons.shieldHalved;
+    } else if (lower.contains('cabelo') ||
+        lower.contains('maquiagem') ||
+        lower.contains('beleza') ||
+        lower.contains('salão')) {
+      return FontAwesomeIcons.spa; // salão de beleza
+    } else if (lower.contains('cerimonial') ||
+        lower.contains('assessoria') ||
+        lower.contains('organização')) {
+      return FontAwesomeIcons.calendarCheck;
+    } else if (lower.contains('iluminação') ||
+        lower.contains('efeito') ||
+        lower.contains('painel')) {
+      return FontAwesomeIcons.lightbulb;
+    } else if (lower.contains('terno') ||
+        lower.contains('vestido') ||
+        lower.contains('roupa') ||
+        lower.contains('moda')) {
+      return FontAwesomeIcons.personDress;
+    } else if (lower.contains('igreja') ||
+        lower.contains('cerimônia') ||
+        lower.contains('pastor')) {
+      return FontAwesomeIcons.church;
+    } else if (lower.contains('infantil') ||
+        lower.contains('brinquedo') ||
+        lower.contains('animação')) {
+      return FontAwesomeIcons.children;
+    } else if (lower.contains('foto cabine') || lower.contains('cabine')) {
+      return FontAwesomeIcons.camera;
+    } else if (lower.contains('viagem') ||
+        lower.contains('lua de mel') ||
+        lower.contains('turismo')) {
+      return FontAwesomeIcons.planeDeparture;
+    } else if (lower.contains('joia') || lower.contains('aliança') || lower.contains('bijuteria')) {
+      return FontAwesomeIcons.ring;
+    } else if (lower.contains('pet') || lower.contains('animal') || lower.contains('mascote')) {
+      return FontAwesomeIcons.paw;
+    }
+    return FontAwesomeIcons.clipboardList; // padrão genérico
+  }
+
+  static Color corPorCategoria(String? nome) {
+    final lower = nome?.toLowerCase() ?? '';
+
+    if (lower.contains('buffet')) return Colors.deepOrange;
+    if (lower.contains('decoração')) return Colors.pinkAccent;
+    if (lower.contains('música')) return Colors.purple;
+    if (lower.contains('fotografia')) return Colors.indigo;
+    if (lower.contains('espaço')) return Colors.teal;
+    if (lower.contains('convite')) return Colors.blueGrey;
+    if (lower.contains('transporte')) return Colors.blue;
+    if (lower.contains('bebida')) return Colors.brown;
+    if (lower.contains('bolo')) return Colors.amber.shade800;
+    if (lower.contains('segurança')) return Colors.green.shade700;
+    if (lower.contains('cabelo') || lower.contains('maquiagem') || lower.contains('beleza')) {
+      return Colors.pink.shade400;
+    }
+    if (lower.contains('cerimonial')) return Colors.deepPurpleAccent;
+    if (lower.contains('iluminação')) return Colors.yellow.shade700;
+    if (lower.contains('terno') || lower.contains('vestido')) return Colors.cyan.shade600;
+    if (lower.contains('igreja') || lower.contains('cerimônia')) return Colors.redAccent;
+    if (lower.contains('infantil')) return Colors.lightBlueAccent;
+    if (lower.contains('viagem') || lower.contains('lua de mel')) return Colors.orangeAccent;
+    if (lower.contains('joia')) return Colors.amber;
+    if (lower.contains('pet')) return Colors.lightGreen;
+
+    return Colors.grey.shade700;
   }
 }

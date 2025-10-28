@@ -11,54 +11,83 @@ class CotacaoController extends GetxController {
   final carregando = false.obs;
 
   StreamSubscription? _cotacaoStream;
-  final Map<String, StreamSubscription> _subStreams = {}; // 🔹 listeners por cotação
+  final Map<String, StreamSubscription> _subStreams = {};
+  final RxInt totalCount = 0.obs;
+  final RxInt contratadosCount = 0.obs;
+
+  void _atualizarContagens() {
+    contratadosCount.value = cotacoes.where((o) => o.status == StatusCotacao.concluida).length;
+    totalCount.value = cotacoes.length;
+  }
 
   void ouvirMinhasCotacoes() async {
     final idUsuario = Get.find<AppController>().usuarioLogado.value?.idUsuario;
     if (idUsuario == null) return;
 
     carregando.value = true;
-    _cotacaoStream?.cancel(); // evita duplicidade
-    _cancelarSubStreams(); // limpa listeners anteriores
+    _cotacaoStream?.cancel();
+    _cancelarSubStreams();
 
     _cotacaoStream = FirebaseFirestore.instance
         .collection('cotacao')
         .where('id_usuario_solicitante', isEqualTo: idUsuario)
         .orderBy('data_envio', descending: true)
         .snapshots()
-        .listen((snapshot) {
-      final lista = snapshot.docs.map((doc) {
-        final data = doc.data();
-        final cotacao = CotacaoModel(
-          id: doc.id,
-          idEvento: data['id_evento'],
-          idUsuarioSolicitante: data['id_usuario_solicitante'],
-          categoriaNome: data['categoria_nome'] ?? '',
-          descricao: data['observacao'] ?? data['descricao'],
-          dataLimiteResposta: (data['data_limite_resposta'] as Timestamp?)?.toDate(),
-          dataCadastro: (data['data_envio'] as Timestamp?)?.toDate() ?? DateTime.now(),
-          status: StatusCotacao.fromString(data['status']),
-          fornecedores: List<String>.from(data['fornecedores'] ?? []),
-          servicos: List<String>.from(data['servicos'] ?? []),
-        );
+        .listen((snapshot) async {
+      try {
+        final List<CotacaoModel> lista = [];
 
-        // 🔹 Inicia escuta da subcoleção de fornecedores, se ainda não estiver ouvindo
-        if (!_subStreams.containsKey(doc.id)) {
-          _ouvirFornecedoresDaCotacao(doc.id);
+        // 🔹 Percorre todas as cotações do snapshot
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+
+          // 🔸 Busca a subcoleção "servicos" e soma o valor_estimado
+          double totalEstimado = 0.0;
+          try {
+            final servicosSnap = await doc.reference.collection('servicos').get();
+            for (final s in servicosSnap.docs) {
+              final valor = (s.data()['valor_estimado'] ?? 0);
+              if (valor is num) totalEstimado += valor.toDouble();
+            }
+          } catch (e) {
+            debugPrint('⚠️ Erro ao carregar serviços da cotação ${doc.id}: $e');
+          }
+
+          final cotacao = CotacaoModel(
+            id: doc.id,
+            idEvento: data['id_evento'],
+            idUsuarioSolicitante: data['id_usuario_solicitante'],
+            categoriaNome: data['categoria_nome'] ?? '',
+            descricao: data['observacao'] ?? data['descricao'],
+            dataLimiteResposta: (data['data_limite_resposta'] as Timestamp?)?.toDate(),
+            dataCadastro: (data['data_envio'] as Timestamp?)?.toDate() ?? DateTime.now(),
+            status: StatusCotacao.fromString(data['status']),
+            fornecedores: List<String>.from(data['fornecedores'] ?? []),
+            servicos: List<String>.from(data['servicos'] ?? []),
+            valorEstimadoTotal: totalEstimado, // ✅ Soma total da subcoleção
+          );
+
+          if (!_subStreams.containsKey(doc.id)) {
+            _ouvirFornecedoresDaCotacao(doc.id);
+          }
+
+          lista.add(cotacao);
         }
 
-        return cotacao;
-      }).toList();
-
-      cotacoes.assignAll(lista);
-      carregando.value = false;
+        // 🔹 Atualiza a lista principal reativamente
+        cotacoes.assignAll(lista);
+        _atualizarContagens();
+      } catch (e, s) {
+        debugPrint('❌ Erro ao processar cotações: $e\n$s');
+      } finally {
+        carregando.value = false;
+      }
     }, onError: (e) {
       carregando.value = false;
       debugPrint('❌ Erro ao escutar cotações: $e');
     });
   }
 
-  /// Escuta alterações na subcoleção `fornecedores` de uma cotação específica
   void _ouvirFornecedoresDaCotacao(String idCotacao) {
     final stream = FirebaseFirestore.instance
         .collection('cotacao')
@@ -76,7 +105,6 @@ class CotacaoController extends GetxController {
         };
       }).toList();
 
-      // 🔹 Atualiza o status visual da cotação se houver respostas
       final cotacaoIndex = cotacoes.indexWhere((c) => c.id == idCotacao);
       if (cotacaoIndex != -1) {
         final cotacao = cotacoes[cotacaoIndex];
@@ -86,7 +114,6 @@ class CotacaoController extends GetxController {
           cotacoes[cotacaoIndex] = cotacao.copyWith(status: StatusCotacao.respondida);
           cotacoes.refresh();
 
-          // ✅ Notificação visual sutil para o organizador
           Get.snackbar(
             'Nova resposta recebida!',
             'Um fornecedor respondeu à sua cotação em "${cotacao.categoriaNome}".',

@@ -55,7 +55,7 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
       final List<Map<String, dynamic>> produtos = servicos.map((fs) {
         final produto = fornecedorController.buscarServicoPorId(fs.idProdutoServico);
         return {
-          'id_servico': fs.idFornecedorServico,
+          'id_servico': fs.id,
           'nome': produto?.nome ?? 'Serviço sem nome',
           'preco': fs.preco,
           'descricao': produto?.descricao ?? '',
@@ -142,7 +142,7 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
                   // 🔹 Abre o BottomSheet de cotação passando os serviços selecionados
                   for (var idServico in selecionados) {
                     final servico = fornecedorController.servicosFornecedor
-                        .firstWhereOrNull((s) => s.idFornecedorServico == idServico);
+                        .firstWhereOrNull((s) => s.id == idServico);
                     if (servico != null) {
                       await showNovoOrcamentoBottomSheet(
                         context: context,

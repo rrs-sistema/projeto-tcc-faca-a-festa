@@ -1,71 +1,170 @@
+import 'package:percent_indicator/linear_percent_indicator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
 
 import './../../../../controllers/fornecedor_controller.dart';
 
-class InsightsSection extends StatelessWidget {
+class InsightsSection extends StatefulWidget {
   const InsightsSection({super.key});
+
+  @override
+  State<InsightsSection> createState() => _InsightsSectionState();
+}
+
+class _InsightsSectionState extends State<InsightsSection> {
+  final tts = FlutterTts();
+  bool _falando = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _configurarTTS();
+  }
+
+  Future<void> _configurarTTS() async {
+    await tts.setLanguage("pt-BR");
+    await tts.setSpeechRate(0.9);
+    await tts.setPitch(1.1);
+    await tts.setVolume(1.0);
+  }
+
+  Future<void> _falar(String texto) async {
+    setState(() => _falando = true);
+    await tts.speak(texto);
+    tts.setCompletionHandler(() {
+      setState(() => _falando = false);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<FornecedorController>();
+    final insights = _gerarInsights(controller);
 
-    // 🔹 Mock de insights — futuramente gerado via IA / Firebase Analytics
-    final insights = [
-      _InsightModel(
-        icone: Icons.bolt_rounded,
-        titulo: "Tempo de resposta excelente!",
-        descricao:
-            "Você responde 90% das solicitações em menos de 1 hora. Continue assim para manter o selo de fornecedor destaque.",
-        cor: Colors.green.shade700,
+    final saudacao = _gerarSaudacao(controller.fornecedor.value!.razaoSocial);
+
+    // Mensagem inicial da LIA
+    final mensagemFalada = "${saudacao['titulo']} ${saudacao['mensagem']}";
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // === Avatar da LIA ===
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 90,
+                height: 90,
+                child: Lottie.asset(
+                  _falando ? 'assets/lottie/lia_talking.json' : 'assets/lottie/lia_idle.json',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(saudacao['titulo']!,
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                        )),
+                    const SizedBox(height: 6),
+                    Text(
+                      saudacao['mensagem']!,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade700,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo.shade600,
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () => _falar(mensagemFalada),
+                      icon: const Icon(Icons.volume_up_rounded, size: 18),
+                      label: const Text("Ouvir a LIA"),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 22),
+
+          // === Insights Inteligentes ===
+          Text(
+            "💡 Dicas da LIA",
+            style: GoogleFonts.poppins(
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey.shade800,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          ...insights.map((i) => _InsightCard(insight: i)),
+        ],
       ),
+    );
+  }
+
+  Map<String, String> _gerarSaudacao(String nome) {
+    final hora = DateTime.now().hour;
+    String cumprimento;
+    if (hora < 12) {
+      cumprimento = "Bom dia, $nome! ☀️";
+    } else if (hora < 18) {
+      cumprimento = "Boa tarde, $nome! 🌤️";
+    } else {
+      cumprimento = "Boa noite, $nome! 🌙";
+    }
+    return {
+      'titulo': cumprimento,
+      'mensagem':
+          "Eu analisei suas métricas e preparei sugestões personalizadas para o seu sucesso. 🎯"
+    };
+  }
+
+  List<_InsightModel> _gerarInsights(FornecedorController c) {
+    return [
       _InsightModel(
-        icone: Icons.photo_camera_back_outlined,
-        titulo: "Adicione mais fotos aos serviços",
-        descricao: "Serviços com 3 ou mais imagens recebem 40% mais visualizações e orçamentos.",
-        cor: Colors.teal.shade700,
+        icone: Icons.flash_on_rounded,
+        titulo: "Agilidade impressionante ⚡",
+        descricao: "Você responde orçamentos em menos de ${c.tempoMedioResposta.value} minutos!",
+        progresso: 0.95,
+        cor: Colors.green.shade700,
+        fraseIa: "LIA diz: sua rapidez aumenta em até 40% suas chances de fechar novos contratos!",
       ),
       _InsightModel(
         icone: Icons.star_rate_rounded,
-        titulo: "Avaliação acima da média!",
-        descricao:
-            "Sua média atual é ${controller.avaliacaoMedia.value.toStringAsFixed(1)}⭐. Isso te coloca entre os 10% melhores fornecedores do app.",
-        cor: Colors.amber.shade700,
+        titulo: "Reputação excelente 🌟",
+        descricao: "Sua média é ${c.avaliacaoMedia.value.toStringAsFixed(1)}⭐ — impressionante!",
+        progresso: 0.9,
+        cor: Colors.teal.shade700,
+        fraseIa: "LIA diz: continue pedindo avaliações, você está entre os melhores do app. 💚",
       ),
       _InsightModel(
-        icone: Icons.campaign_rounded,
-        titulo: "Divulgue seu perfil nas redes",
+        icone: Icons.photo_camera_rounded,
+        titulo: "Mais imagens, mais clientes 📸",
         descricao:
-            "Compartilhe o link do seu perfil no Instagram e Facebook para atrair novos clientes locais.",
+            "Você tem ${c.totalFotos.value} fotos publicadas. Perfis com 5+ fotos têm o dobro de visualizações.",
+        progresso: 0.6,
         cor: Colors.blue.shade700,
+        fraseIa:
+            "LIA diz: adicione fotos dos bastidores, elas criam conexão emocional com os organizadores. 💡",
       ),
     ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "💡 Insights Inteligentes",
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey.shade800,
-          ),
-        ),
-        const SizedBox(height: 12),
-        ListView.separated(
-          itemCount: insights.length,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          separatorBuilder: (_, __) => const SizedBox(height: 12),
-          itemBuilder: (context, index) {
-            final i = insights[index];
-            return _InsightCard(insight: i);
-          },
-        ),
-      ],
-    );
   }
 }
 
@@ -76,51 +175,59 @@ class _InsightCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: insight.cor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: insight.cor.withValues(alpha: 0.3), width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: insight.cor.withValues(alpha: 0.15),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: insight.cor.withValues(alpha: 0.25)),
       ),
-      child: Row(
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: insight.cor.withValues(alpha: 0.15),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(insight.icone, color: insight.cor, size: 24),
+          Row(
+            children: [
+              Icon(insight.icone, color: insight.cor, size: 26),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(insight.titulo,
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700, fontSize: 15.5, color: insight.cor)),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 8),
+          Text(insight.descricao,
+              style: GoogleFonts.poppins(fontSize: 13.5, color: Colors.grey.shade700, height: 1.4)),
+          const SizedBox(height: 10),
+          LinearPercentIndicator(
+            percent: insight.progresso,
+            lineHeight: 6,
+            barRadius: const Radius.circular(10),
+            progressColor: insight.cor,
+            backgroundColor: Colors.grey.shade200,
+            animation: true,
+          ),
+          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            decoration: BoxDecoration(
+              color: insight.cor.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
               children: [
-                Text(
-                  insight.titulo,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700,
-                    color: insight.cor,
-                    fontSize: 14.5,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  insight.descricao,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13.5,
-                    height: 1.5,
-                    color: Colors.grey.shade700,
+                const Icon(Icons.psychology_alt_rounded, size: 18, color: Colors.black54),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    insight.fraseIa,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      color: Colors.black87,
+                      height: 1.4,
+                    ),
                   ),
                 ),
               ],
@@ -136,12 +243,16 @@ class _InsightModel {
   final IconData icone;
   final String titulo;
   final String descricao;
+  final double progresso;
   final Color cor;
+  final String fraseIa;
 
   _InsightModel({
     required this.icone,
     required this.titulo,
     required this.descricao,
+    required this.progresso,
     required this.cor,
+    required this.fraseIa,
   });
 }

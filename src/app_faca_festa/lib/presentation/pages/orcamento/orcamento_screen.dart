@@ -1,10 +1,13 @@
+import 'package:app_faca_festa/controllers/app_controller.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../controllers/avaliacao/avaliacao_controller.dart';
 import '../../../controllers/evento_controller.dart';
 import '../../../controllers/orcamento_gasto_controller.dart';
+import '../../../data/models/avaliacao/avaliacao_model.dart';
 import './../../../controllers/event_theme_controller.dart';
 import './../../../controllers/orcamento_controller.dart';
 import './../../../data/models/model.dart';
@@ -23,7 +26,7 @@ class OrcamentoScreen extends StatelessWidget {
     // Escuta orçamentos do evento atual
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (idEvento.isNotEmpty) {
-        orcamentoController.escutarOrcamentosPorEvento(idEvento);
+        orcamentoController.carregarOrcamentosDoEvento(idEvento);
       }
     });
 
@@ -32,10 +35,7 @@ class OrcamentoScreen extends StatelessWidget {
       final gradient = themeController.gradient.value;
       final orcamentos = orcamentoController.orcamentos;
 
-      final double custoEstimado = orcamentos.fold(
-        0.0,
-        (s, o) => s + (o.custoEstimado ?? 0),
-      );
+      final double custoEstimado = eventoController.eventoAtual.value?.custoEstimado ?? 0.0;
 
       final double custoFinal = orcamentos
           .where((o) => o.status == StatusOrcamento.fechado)
@@ -115,7 +115,7 @@ class OrcamentoScreen extends StatelessWidget {
             physics: const BouncingScrollPhysics(),
             child: Column(
               children: [
-                resumoCardElegante(
+                resumoCard(
                   gradient,
                   custoEstimado: custoEstimado,
                   custoFinal: custoFinal,
@@ -154,13 +154,7 @@ class OrcamentoScreen extends StatelessWidget {
                             ]
                           : gastos.map((g) => _gastoItem(g.nome, g.custo, g.pago)).toList();
 
-                      return _categoriaCard(
-                          context,
-                          orcamento.idOrcamento,
-                          orcamento.anotacoes ?? 'Serviço',
-                          orcamento.custoEstimado ?? 0,
-                          primary,
-                          gastosWidgets,
+                      return _categoriaCard(context, orcamento, primary, gastosWidgets,
                           orcamento.idServicoFornecido == null);
                     });
                   }
@@ -168,9 +162,7 @@ class OrcamentoScreen extends StatelessWidget {
                   // 🔹 Caso tenha fornecedor vinculado, mantém layout padrão
                   return _categoriaCard(
                       context,
-                      orcamento.idOrcamento,
-                      orcamento.anotacoes ?? 'Serviço',
-                      orcamento.custoEstimado ?? 0,
+                      orcamento,
                       primary,
                       [
                         _gastoItem(
@@ -192,8 +184,8 @@ class OrcamentoScreen extends StatelessWidget {
   }
 
 // === CATEGORIA EXPANSÍVEL (Versão Premium) ===
-  Widget _categoriaCard(BuildContext context, String idOrcamento, String nome, double total,
-      Color primary, List<Widget> gastos, bool mostrarBotaoAddGasto) {
+  Widget _categoriaCard(BuildContext context, OrcamentoModel orcamento, Color primary,
+      List<Widget> gastos, bool mostrarBotaoAddGasto) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
@@ -244,7 +236,7 @@ class OrcamentoScreen extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    nome,
+                    orcamento.anotacoes ?? 'Not Anotation',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
@@ -258,7 +250,7 @@ class OrcamentoScreen extends StatelessWidget {
             subtitle: Padding(
               padding: const EdgeInsets.only(left: 44, top: 4),
               child: Text(
-                'Total previsto: R\$ ${total.toStringAsFixed(2)}',
+                'Total previsto: R\$ ${orcamento.custoEstimado?.toStringAsFixed(2)}',
                 style: GoogleFonts.poppins(
                   fontSize: 13,
                   color: Colors.grey.shade700,
@@ -279,10 +271,31 @@ class OrcamentoScreen extends StatelessWidget {
                       foregroundColor: primary,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     ),
-                    onPressed: () => _showAddGastoDialog(context, idOrcamento, nome),
+                    onPressed: () => _showAddGastoDialog(
+                        context, orcamento.idOrcamento, orcamento.anotacoes ?? ''),
                     icon: const Icon(Icons.add_circle_outline, size: 18),
                     label: Text(
                       'Adicionar Gasto',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                  ),
+                ),
+              // --- Botão de Avaliação ---
+              if (!mostrarBotaoAddGasto)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.amber.shade800,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    ),
+                    onPressed: () => _showAvaliacaoDialog(context, orcamento),
+                    icon: const Icon(Icons.star_rate_rounded, size: 18),
+                    label: Text(
+                      'Avaliar Fornecedor',
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.w600,
                         fontSize: 13.5,
@@ -564,7 +577,7 @@ class OrcamentoScreen extends StatelessWidget {
     );
   }
 
-  Widget resumoCardElegante(
+  Widget resumoCard(
     LinearGradient gradient, {
     required double custoEstimado,
     required double custoFinal,
@@ -877,4 +890,182 @@ class OrcamentoScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+void _showAvaliacaoDialog(BuildContext context, OrcamentoModel orcamento) {
+  final themeController = Get.find<EventThemeController>();
+  final avaliacaoController = Get.find<AvaliacaoController>();
+
+  final primary = themeController.primaryColor.value;
+  final comentarioCtrl = TextEditingController();
+  int nota = 0;
+
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+    ),
+    builder: (context) {
+      return DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.75,
+        minChildSize: 0.5,
+        maxChildSize: 0.95,
+        builder: (_, scrollController) {
+          return Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            child: SafeArea(
+              top: false,
+              child: SingleChildScrollView(
+                controller: scrollController,
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // --- Cabeçalho ---
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: primary.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.star_rounded, color: primary, size: 38),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      "Avaliar Fornecedor",
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: Colors.grey.shade900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      orcamento.anotacoes ?? 'No Anotation',
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // --- Avaliação de estrelas ---
+                    StatefulBuilder(
+                      builder: (context, setState) {
+                        return Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: List.generate(5, (index) {
+                            return IconButton(
+                              icon: Icon(
+                                index < nota ? Icons.star_rounded : Icons.star_border_rounded,
+                                color: Colors.amber,
+                                size: 34,
+                              ),
+                              onPressed: () => setState(() => nota = index + 1),
+                            );
+                          }),
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 10),
+                    TextField(
+                      controller: comentarioCtrl,
+                      maxLines: 4,
+                      decoration: InputDecoration(
+                        labelText: 'Deixe seu comentário',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        hintText: 'Conte sua experiência com este fornecedor...',
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // --- Botão de Envio ---
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primary,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                        icon: const Icon(Icons.send_rounded, color: Colors.white),
+                        label: Text(
+                          'Enviar Avaliação',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
+                        onPressed: () async {
+                          if (nota == 0) {
+                            Get.snackbar('Atenção', 'Selecione uma nota antes de enviar.',
+                                backgroundColor: Colors.orange.shade200, colorText: Colors.black87);
+                            return;
+                          }
+
+                          final eventoController = Get.find<EventoController>();
+                          final appController = Get.find<AppController>();
+                          final usuario = appController.usuarioLogado.value;
+
+                          final novaAvaliacao = AvaliacaoModel(
+                            id: DateTime.now().millisecondsSinceEpoch.toString(),
+                            idFornecedor: orcamento.idFornecedor ?? '',
+                            nomeFornecedor: orcamento.nomeFornecedor ?? '',
+                            idCliente: usuario?.idUsuario ?? '',
+                            nomeCliente: usuario?.nome ?? '',
+                            evento: eventoController.eventoAtual.value?.nome ?? '',
+                            nota: nota,
+                            comentario: comentarioCtrl.text,
+                            data: DateTime.now(),
+                          );
+
+                          await avaliacaoController.adicionarAvaliacao(novaAvaliacao);
+                          Get.back();
+
+                          Get.snackbar(
+                            'Avaliação enviada',
+                            'Obrigado por compartilhar sua opinião!',
+                            backgroundColor: primary,
+                            colorText: Colors.white,
+                            duration: const Duration(seconds: 3),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextButton(
+                      onPressed: () => Get.back(),
+                      child: Text(
+                        "Cancelar",
+                        style: GoogleFonts.poppins(
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    },
+  );
 }

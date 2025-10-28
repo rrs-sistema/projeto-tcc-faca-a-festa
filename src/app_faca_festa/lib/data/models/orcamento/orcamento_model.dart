@@ -1,11 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// Representa um orçamento vinculado a um evento e a um serviço de fornecedor.
-///
-/// Cada orçamento indica o interesse de um cliente (evento)
-/// em contratar um serviço específico de um fornecedor.// ===========================================================
-// 🔹 Enum de Status do Orçamento
-// ===========================================================
+/// ===========================================================
+/// 🔹 Enum de Status do Orçamento
+/// ===========================================================
 enum StatusOrcamento {
   pendente,
   emNegociacao,
@@ -41,7 +38,6 @@ enum StatusOrcamento {
   }
 
   /// Converte uma string do Firestore em enum
-  /// Converte uma string do Firestore em enum
   static StatusOrcamento fromString(String? value) {
     if (value == null) return StatusOrcamento.pendente;
 
@@ -68,66 +64,93 @@ enum StatusOrcamento {
   }
 }
 
-// ===========================================================
-// 🔹 Modelo OrcamentoModel com enum aplicado
-// ===========================================================
+/// ===========================================================
+/// 🔹 Modelo OrcamentoModel completo com melhorias
+/// ===========================================================
 class OrcamentoModel {
   final String idOrcamento;
   final String idEvento;
+  final String? idFornecedor;
+  final String? nomeFornecedor;
+  final String? idSolicitante;
+  final String? nomeSolicitante;
   final String? idServicoFornecido;
   final String? idCategoria;
   final String? idTipoPagamento;
   final double? custoEstimado;
   final bool orcamentoFechado;
   final String? anotacoes;
+  final StatusOrcamento status;
   final DateTime dataCadastro;
-  final StatusOrcamento status; // ✅ Agora é ENUM
   final DateTime? dataFechamento;
   final String? fechadoPor;
 
+  /// ===========================================================
+  /// 🔸 Construtor principal
+  /// ===========================================================
   OrcamentoModel({
     required this.idOrcamento,
     required this.idEvento,
     required this.idServicoFornecido,
+    this.idFornecedor,
+    this.nomeFornecedor,
+    this.idSolicitante,
+    this.nomeSolicitante,
     this.idCategoria,
     this.idTipoPagamento,
     this.custoEstimado,
     this.orcamentoFechado = false,
     this.anotacoes,
-    this.status = StatusOrcamento.pendente, // ✅ Valor padrão
+    this.status = StatusOrcamento.pendente,
+    DateTime? dataCadastro,
     this.dataFechamento,
     this.fechadoPor,
-    DateTime? dataCadastro,
   }) : dataCadastro = dataCadastro ?? DateTime.now();
 
-  // ===========================================================
-  // 🔹 Conversão para Firestore
-  // ===========================================================
+  /// ===========================================================
+  /// 🔸 Helpers de negócio
+  /// ===========================================================
+  bool get isFechado => status == StatusOrcamento.fechado;
+
+  /// Usa dataFechamento se existir; senão, dataCadastro
+  DateTime get dataEfetivaFechamento => dataFechamento ?? dataCadastro;
+
+  /// ===========================================================
+  /// 🔸 Conversão para Firestore
+  /// ===========================================================
   Map<String, dynamic> toMap() {
     return {
       'id_orcamento': idOrcamento,
       'id_evento': idEvento,
       'id_servico_fornecido': idServicoFornecido,
       'id_categoria': idCategoria,
+      'id_fornecedor': idFornecedor,
+      'nome_fornecedor': nomeFornecedor,
+      'id_solicitante': idSolicitante,
+      'nome_solicitante': nomeSolicitante,
       'id_tipo_pagamento': idTipoPagamento,
       'custo_estimado': custoEstimado,
       'orcamento_fechado': orcamentoFechado,
       'anotacoes': anotacoes,
-      'status': status.firestoreValue, // ✅ salva como string no Firestore
+      'status': status.firestoreValue,
       'data_cadastro': Timestamp.fromDate(dataCadastro),
       'data_fechamento': dataFechamento != null ? Timestamp.fromDate(dataFechamento!) : null,
       'fechado_por': fechadoPor,
     };
   }
 
-// ===========================================================
-// 🔹 Conversão a partir do Firestore
-// ===========================================================
-  factory OrcamentoModel.fromMap(Map<String, dynamic> map) {
+  /// ===========================================================
+  /// 🔸 Conversão a partir do Firestore
+  /// ===========================================================
+  factory OrcamentoModel.fromMap(Map<String, dynamic> map, {String? docId}) {
     return OrcamentoModel(
-      idOrcamento: map['id_orcamento'] ?? '',
+      idOrcamento: map['id_orcamento'] ?? docId ?? '',
       idEvento: map['id_evento'] ?? '',
       idServicoFornecido: map['id_servico_fornecido'],
+      idFornecedor: map['id_fornecedor'],
+      nomeFornecedor: map['nome_fornecedor'],
+      idSolicitante: map['id_solicitante'],
+      nomeSolicitante: map['nome_solicitante'],
       idCategoria: map['id_categoria'],
       idTipoPagamento: map['id_tipo_pagamento'],
       custoEstimado:
@@ -135,15 +158,15 @@ class OrcamentoModel {
       orcamentoFechado: map['orcamento_fechado'] ?? false,
       anotacoes: map['anotacoes'],
       status: StatusOrcamento.fromString(map['status']),
-      dataCadastro: _toDateTimeOrNow(map['data_cadastro']), // nunca deve ser nula
-      dataFechamento: _toNullableDate(map['data_fechamento']), // pode ser nula
+      dataCadastro: _toDateTimeOrNow(map['data_cadastro']),
+      dataFechamento: _toNullableDate(map['data_fechamento']),
       fechadoPor: map['fechado_por'],
     );
   }
 
-// ===========================================================
-// 🔹 Converte Firestore Timestamp/String → DateTime
-// ===========================================================
+  /// ===========================================================
+  /// 🔸 Conversores de data (Timestamp / String)
+  /// ===========================================================
   static DateTime _toDateTimeOrNow(dynamic value) {
     if (value == null) return DateTime.now();
     if (value is Timestamp) return value.toDate();
@@ -151,9 +174,6 @@ class OrcamentoModel {
     return DateTime.now();
   }
 
-// ===========================================================
-// 🔹 Converte para DateTime?, retornando null se for nula
-// ===========================================================
   static DateTime? _toNullableDate(dynamic value) {
     if (value == null) return null;
     if (value is Timestamp) return value.toDate();
@@ -161,11 +181,14 @@ class OrcamentoModel {
     return null;
   }
 
-  // ===========================================================
-  // 🔹 Atualização parcial (para Firestore .update())
-  // ===========================================================
+  /// ===========================================================
+  /// 🔸 Atualização parcial (para update no Firestore)
+  /// ===========================================================
   OrcamentoModel copyWith({
     String? idFornecedor,
+    String? nomeFornecedor,
+    String? idSolicitante,
+    String? nomeSolicitante,
     String? idCategoria,
     String? idTipoPagamento,
     double? custoEstimado,
@@ -179,7 +202,11 @@ class OrcamentoModel {
     return OrcamentoModel(
       idOrcamento: idOrcamento,
       idEvento: idEvento,
-      idServicoFornecido: idServicoFornecido,
+      idServicoFornecido: idServicoFornecido ?? this.idServicoFornecido,
+      idFornecedor: idFornecedor ?? this.idFornecedor,
+      nomeFornecedor: nomeFornecedor ?? this.nomeFornecedor,
+      idSolicitante: idSolicitante ?? this.idSolicitante,
+      nomeSolicitante: nomeSolicitante ?? this.nomeSolicitante,
       idCategoria: idCategoria ?? this.idCategoria,
       idTipoPagamento: idTipoPagamento ?? this.idTipoPagamento,
       custoEstimado: custoEstimado ?? this.custoEstimado,

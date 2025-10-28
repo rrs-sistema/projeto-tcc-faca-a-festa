@@ -52,7 +52,7 @@ class SolicitacoesSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "📩 Solicitações Recentes",
+            "🗂️ Cotações Recentes",
             style: GoogleFonts.poppins(
               fontSize: 18,
               fontWeight: FontWeight.w700,

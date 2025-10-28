@@ -4,9 +4,10 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'dart:math';
 
+import '../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../data/models/servico_produto/fornecedor_categoria_model.dart';
 import './../data/models/servico_produto/categoria_servico_model.dart';
-import './../data/models/DTO/fornecedor_detalhado_model.dart';
+import '../data/models/DTO/fornecedor_detalhado_dto.dart';
 import './../data/models/model.dart';
 
 class FornecedorLocalizacaoController extends GetxController {
@@ -24,14 +25,87 @@ class FornecedorLocalizacaoController extends GetxController {
   final _territoriosRaw = <TerritorioModel>[].obs;
 
   // Listas principais
-  var fornecedores = <FornecedorDetalhadoModel>[].obs;
-  var fornecedoresFiltrados = <FornecedorDetalhadoModel>[].obs;
+  var fornecedores = <FornecedorDetalhadoDto>[].obs;
+  var fornecedoresFiltrados = <FornecedorDetalhadoDto>[].obs;
   var categorias = <CategoriaServicoModel>[].obs;
+  var servicosFornecedor = <FornecedorServicoDetalhadoDto>[].obs;
+  var carregandoServicosFornecedor = false.obs;
+  final RxnString servicoSelecionadoId = RxnString();
 
   @override
   void onInit() {
     super.onInit();
     _obterLocalizacaoUsuario();
+  }
+
+  Future<void> escutarServicosFornecedor({
+    required List<String> idsFornecedores,
+    required String idCategoria,
+  }) async {
+    carregandoServicosFornecedor.value = true;
+    final db = FirebaseFirestore.instance;
+
+    db
+        .collection('fornecedor_servico')
+        .where('id_fornecedor', whereIn: idsFornecedores)
+        .snapshots()
+        .listen((snapshot) async {
+      List<FornecedorServicoDetalhadoDto> lista = [];
+
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+        final idSubcategoria = data['id_subcategoria'];
+        final idProdutoServico = data['id_produto_servico'];
+        final idFornecedor = data['id_fornecedor'];
+
+        // 🔹 Busca o serviço base
+        final servicoSnap = await db.collection('servico_produto').doc(idProdutoServico).get();
+        final servicoData = servicoSnap.data();
+
+        // 🔹 Busca subcategoria e categoria
+        String? nomeSubcategoria;
+        String? nomeCategoria;
+
+        if (idSubcategoria != null && idSubcategoria.isNotEmpty) {
+          final subSnap = await db.collection('subcategoria_servico').doc(idSubcategoria).get();
+          nomeSubcategoria = subSnap.data()?['nome'];
+
+          final idCat = subSnap.data()?['id_categoria'];
+          if (idCat != null) {
+            final catSnap = await db.collection('categoria_servico').doc(idCat).get();
+            nomeCategoria = catSnap.data()?['nome'];
+          }
+        }
+
+        // 🔹 Busca imagem (opcional)
+        final fotoSnap = await db
+            .collection('servico_foto')
+            .where('id_fornecedor', isEqualTo: idFornecedor)
+            .where('id_produto_servico', isEqualTo: idProdutoServico)
+            .limit(1)
+            .get();
+        final imagemUrl =
+            fotoSnap.docs.isNotEmpty ? fotoSnap.docs.first.data()['url'] as String? : null;
+
+        // 🔹 Filtra apenas se pertencer à categoria visualizada
+        lista.add(FornecedorServicoDetalhadoDto(
+          idFornecedorServico: doc.id,
+          idFornecedor: data['id_fornecedor'],
+          idProdutoServico: idProdutoServico,
+          idSubcategoria: idSubcategoria,
+          nomeServico: servicoData?['nome'],
+          descricaoServico: servicoData?['descricao'],
+          preco: (data['preco'] as num?)?.toDouble() ?? 0.0,
+          precoPromocao: (data['preco_promocao'] as num?)?.toDouble(),
+          nomeSubcategoria: nomeSubcategoria,
+          nomeCategoria: nomeCategoria,
+          imagemUrl: imagemUrl,
+        ));
+      }
+
+      servicosFornecedor.assignAll(lista);
+      carregandoServicosFornecedor.value = false;
+    });
   }
 
   // ==========================================================
@@ -159,7 +233,7 @@ class FornecedorLocalizacaoController extends GetxController {
     _filtrarPorRaio();
   }
 
-  List<FornecedorDetalhadoModel> fornecedoresPorCategoria(String nomeCategoria) {
+  List<FornecedorDetalhadoDto> fornecedoresPorCategoria(String nomeCategoria) {
     final termo = nomeCategoria.trim().toLowerCase();
 
     // 🔹 Filtra fornecedores dentro do raio E com categoria correspondente
@@ -179,19 +253,21 @@ class FornecedorLocalizacaoController extends GetxController {
     final categoriaPorId = {for (var c in categorias) c.id: c.nome};
     final territorioPorFornecedor = {for (var t in _territoriosRaw) t.idFornecedor: t};
 
-    final List<FornecedorDetalhadoModel> listaDetalhada = [];
+    final List<FornecedorDetalhadoDto> listaDetalhada = [];
 
     for (final f in _fornecedoresRaw) {
       final relacoesFornecedor = relacoesPorFornecedor[f.idFornecedor] ?? [];
       if (relacoesFornecedor.isEmpty) continue;
 
-      final nomesCategorias = relacoesFornecedor
+      final relacao = relacoesFornecedor.first;
+
+      final nomeCategoria = relacoesFornecedor
           .map((r) => categoriaPorId[r.idCategoria])
           .whereType<String>()
           .toSet()
           .join(', ');
 
-      if (nomesCategorias.isEmpty) continue;
+      if (nomeCategoria.isEmpty) continue;
 
       final territorio = territorioPorFornecedor[f.idFornecedor];
       double? distanciaKm;
@@ -205,9 +281,10 @@ class FornecedorLocalizacaoController extends GetxController {
       }
 
       listaDetalhada.add(
-        FornecedorDetalhadoModel(
+        FornecedorDetalhadoDto(
           fornecedor: f,
-          categoriaNome: nomesCategorias,
+          categoriaNome: nomeCategoria,
+          categoriaId: relacao.idCategoria,
           territorio: territorio,
           distanciaKm: distanciaKm,
         ),

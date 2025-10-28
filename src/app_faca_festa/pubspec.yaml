@@ -45,6 +45,8 @@ dependencies:
   mask_text_input_formatter: ^2.9.0
   animate_do: ^4.2.0
   image_picker: ^1.2.0
+  flutter_tts: ^4.2.3
+  lottie: ^3.3.1
   
 dev_dependencies:
   flutter_test:
@@ -64,6 +66,9 @@ flutter:
     - assets/images/bg_event_002.jpeg
     - assets/images/bg_event_003.jpg
     - assets/lottie/location-pin.json
+    - assets/lottie/lia_idle.json
+    - assets/lottie/lia_talking.json
+
 
   fonts:
     - family: Caveat

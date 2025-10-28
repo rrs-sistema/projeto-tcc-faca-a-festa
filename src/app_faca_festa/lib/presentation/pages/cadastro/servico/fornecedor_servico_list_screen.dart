@@ -1,9 +1,13 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
+import '../../../../controllers/servico/servico_foto_controller.dart';
 import './../../../../controllers/servico_produto_controller.dart';
 import './../../../../core/utils/no_sqflite_cache_manager.dart';
 import './../../../../controllers/event_theme_controller.dart';
@@ -20,6 +24,7 @@ class FornecedorServicoListScreen extends StatefulWidget {
 }
 
 class _FornecedorServicoListScreenState extends State<FornecedorServicoListScreen> {
+  final fotoController = Get.put(ServicoFotoController());
   final controller = Get.put(FornecedorController());
   final servicoController = Get.put(ServicoProdutoController());
   final theme = Get.find<EventThemeController>();
@@ -175,11 +180,17 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
                   trailing: IconButton(
                     icon: const Icon(Icons.edit, color: Colors.orange),
                     tooltip: 'Editar serviço',
-                    onPressed: () => showFornecedorServicoBottomSheet(
-                      context,
-                      widget.fornecedor.idFornecedor,
-                      vinculo: s,
-                    ),
+                    onPressed: () async {
+                      EasyLoading.show(status: 'Processando...');
+                      await fotoController.carregarFotos(
+                          widget.fornecedor.idFornecedor, s.idProdutoServico);
+                      await EasyLoading.dismiss();
+                      showFornecedorServicoBottomSheet(
+                        context,
+                        widget.fornecedor.idFornecedor,
+                        vinculo: s,
+                      );
+                    },
                   ),
                 ),
               );

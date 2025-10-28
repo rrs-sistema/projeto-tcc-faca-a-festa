@@ -63,25 +63,46 @@ class CotacaoModel {
   final String idEvento;
   final String idUsuarioSolicitante;
   final String? descricao;
-  final String? categoriaNome; // 🔹 Novo campo
+  final String? categoriaNome;
   final DateTime? dataLimiteResposta;
   final DateTime dataCadastro;
   final StatusCotacao status;
   final List<String> fornecedores;
   final List<String> servicos;
+  final double? valorEstimadoTotal; // 🔹 Novo campo
 
   CotacaoModel({
     required this.id,
     required this.idEvento,
     required this.idUsuarioSolicitante,
     this.descricao,
-    this.categoriaNome, // ✅ novo
+    this.categoriaNome,
     this.dataLimiteResposta,
     required this.dataCadastro,
     required this.status,
     required this.fornecedores,
     required this.servicos,
+    this.valorEstimadoTotal,
   });
+
+  CotacaoModel copyWith({
+    double? valorEstimadoTotal,
+    StatusCotacao? status,
+  }) {
+    return CotacaoModel(
+      id: id,
+      idEvento: idEvento,
+      idUsuarioSolicitante: idUsuarioSolicitante,
+      descricao: descricao,
+      categoriaNome: categoriaNome,
+      dataLimiteResposta: dataLimiteResposta,
+      dataCadastro: dataCadastro,
+      status: status ?? this.status,
+      fornecedores: fornecedores,
+      servicos: servicos,
+      valorEstimadoTotal: valorEstimadoTotal ?? this.valorEstimadoTotal,
+    );
+  }
 
   factory CotacaoModel.fromMap(Map<String, dynamic> map, String id) {
     return CotacaoModel(
@@ -114,26 +135,4 @@ class CotacaoModel {
         'fornecedores': fornecedores,
         'servicos': servicos,
       };
-
-  CotacaoModel copyWith({
-    String? descricao,
-    String? categoriaNome, // ✅ novo
-    DateTime? dataLimiteResposta,
-    StatusCotacao? status,
-    List<String>? fornecedores,
-    List<String>? servicos,
-  }) {
-    return CotacaoModel(
-      id: id,
-      idEvento: idEvento,
-      idUsuarioSolicitante: idUsuarioSolicitante,
-      descricao: descricao ?? this.descricao,
-      categoriaNome: categoriaNome ?? this.categoriaNome, // ✅ novo
-      dataLimiteResposta: dataLimiteResposta ?? this.dataLimiteResposta,
-      dataCadastro: dataCadastro,
-      status: status ?? this.status,
-      fornecedores: fornecedores ?? this.fornecedores,
-      servicos: servicos ?? this.servicos,
-    );
-  }
 }

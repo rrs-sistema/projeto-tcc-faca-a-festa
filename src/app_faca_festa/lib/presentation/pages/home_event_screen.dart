@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:app_faca_festa/controllers/contacao/cotacao_controller.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -423,6 +424,7 @@ Widget _buildAnimatedHeader(EventThemeController theme) {
 Widget _buildQuickActions(EventThemeController theme) {
   final convidadoController = Get.find<ConvidadoController>();
   final orcamentoController = Get.find<OrcamentoController>();
+  final cotacaoController = Get.find<CotacaoController>();
   final tarefaController = Get.find<TarefaController>();
 
   return SliverToBoxAdapter(
@@ -438,11 +440,6 @@ Widget _buildQuickActions(EventThemeController theme) {
 
             // 🔹 Usa um único Obx externo para atualizar os dados de todos os cards
             return Obx(() {
-              final double percentOrcamento = (orcamentoController.totalCount.value == 0)
-                  ? 0
-                  : orcamentoController.contratadosCount.value /
-                      orcamentoController.totalCount.value;
-
               final int concluidas = tarefaController.concluidas;
               final int totalTarefa = tarefaController.pendentes + tarefaController.concluidas;
               final double progress = totalTarefa > 0 ? concluidas / totalTarefa : 0.0;
@@ -465,7 +462,7 @@ Widget _buildQuickActions(EventThemeController theme) {
                   'icon': Icons.storefront_rounded,
                   'label': 'Minhas Cotações',
                   'color': Colors.orangeAccent,
-                  'value': "${(percentOrcamento * 100).toStringAsFixed(0)}%",
+                  'value': "${cotacaoController.totalCount.value}",
                 },
                 {
                   'icon': Icons.check_circle_outline,

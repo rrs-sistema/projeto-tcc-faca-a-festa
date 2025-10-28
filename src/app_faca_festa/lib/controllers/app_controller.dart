@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import '../data/models/DTO/servico_cotado.dart';
+import '../data/models/DTO/servico_cotado_dto.dart';
 import './../presentation/pages/convidado/area/area_convidado_home_screen.dart';
 import './../presentation/pages/fornecedor/fornecedor_home_screen.dart';
 import './../presentation/pages/admin/admin_dashboard_screen.dart';
@@ -14,6 +14,7 @@ import './../presentation/pages/home_event_screen.dart';
 import './../role_selector_screen.dart';
 import './../data/models/model.dart';
 
+import 'avaliacao/avaliacao_controller.dart';
 import 'contacao/cotacao_controller.dart';
 import 'evento_controller.dart';
 import 'fornecedor_controller.dart';
@@ -30,7 +31,7 @@ class AppController extends GetxController {
   final RxList<EnderecoUsuarioModel> enderecosUsuario = <EnderecoUsuarioModel>[].obs;
 
   /// 🔹 Lista global de serviços selecionados para cotação
-  final RxList<ServicoCotado> servicosSelecionados = <ServicoCotado>[].obs;
+  final RxList<ServicoCotadoDto> servicosSelecionados = <ServicoCotadoDto>[].obs;
 
   final RxBool carregando = false.obs;
   StreamSubscription<User?>? _authSub;
@@ -41,6 +42,7 @@ class AppController extends GetxController {
   final cotacaoController = Get.put(CotacaoController());
   final fornecedorController = Get.put(FornecedorController());
   final tarefaController = Get.put(TarefaController());
+  final avaliacaoController = Get.put(AvaliacaoController());
 
   @override
   void onInit() {
@@ -181,6 +183,8 @@ class AppController extends GetxController {
               }
               fornecedorController.fornecedor.value = fornecedor;
               fornecedorController.escutarServicosFornecedor(fornecedor.idUsuario);
+              orcamentoController.escutarOrcamentos(fornecedor.idUsuario);
+              avaliacaoController.listenAvaliacoes(fornecedor.idUsuario);
             }
             destino = FornecedorHomeScreen();
             break;
@@ -285,7 +289,7 @@ class AppController extends GetxController {
   }
 
   /// 🔹 Adiciona serviço à lista (evita duplicatas)
-  void adicionarServico(ServicoCotado servico) {
+  void adicionarServico(ServicoCotadoDto servico) {
     if (!servicosSelecionados.any((s) => s.idProduto == servico.idProduto)) {
       servicosSelecionados.add(servico);
     }

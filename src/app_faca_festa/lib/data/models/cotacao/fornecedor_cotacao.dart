@@ -57,6 +57,7 @@ class FornecedorCotacaoModel {
   final String id;
   final String idCotacao;
   final String idFornecedor;
+  final String nomeFornecedor;
   final DateTime? prazoEntrega; // ✅ Alterado para DateTime
   final String? condicaoPagamento;
   final StatusFornecedorCotacao status;
@@ -67,6 +68,7 @@ class FornecedorCotacaoModel {
     required this.id,
     required this.idCotacao,
     required this.idFornecedor,
+    required this.nomeFornecedor,
     this.prazoEntrega,
     this.condicaoPagamento,
     this.status = StatusFornecedorCotacao.aguardando,
@@ -82,6 +84,7 @@ class FornecedorCotacaoModel {
       'id': id,
       'id_cotacao': idCotacao,
       'id_fornecedor': idFornecedor,
+      'nome_fornecedor': nomeFornecedor,
       'prazo_entrega': prazoEntrega != null ? Timestamp.fromDate(prazoEntrega!) : null,
       'condicao_pagamento': condicaoPagamento,
       'status': status.firestoreValue,
@@ -98,6 +101,7 @@ class FornecedorCotacaoModel {
       id: map['id']?.toString() ?? '',
       idCotacao: map['id_cotacao']?.toString() ?? '',
       idFornecedor: map['id_fornecedor']?.toString() ?? '',
+      nomeFornecedor: map['nome_fornecedor']?.toString() ?? '',
       prazoEntrega: map['prazo_entrega'] is Timestamp
           ? (map['prazo_entrega'] as Timestamp).toDate()
           : DateTime.tryParse(map['prazo_entrega']?.toString() ?? ''),
@@ -114,6 +118,8 @@ class FornecedorCotacaoModel {
   // 🔹 Atualização parcial
   // ===========================================================
   FornecedorCotacaoModel copyWith({
+    String? idFornecedor,
+    String? nomeFornecedor,
     DateTime? prazoEntrega,
     String? condicaoPagamento,
     StatusFornecedorCotacao? status,
@@ -123,7 +129,8 @@ class FornecedorCotacaoModel {
     return FornecedorCotacaoModel(
       id: id,
       idCotacao: idCotacao,
-      idFornecedor: idFornecedor,
+      idFornecedor: idFornecedor ?? this.idFornecedor,
+      nomeFornecedor: nomeFornecedor ?? this.nomeFornecedor,
       prazoEntrega: prazoEntrega ?? this.prazoEntrega,
       condicaoPagamento: condicaoPagamento ?? this.condicaoPagamento,
       status: status ?? this.status,

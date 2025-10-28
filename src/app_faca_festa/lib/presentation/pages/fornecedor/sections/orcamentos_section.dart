@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/controllers/app_controller.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,15 +8,14 @@ import './../dialogs/show_responder_orcamento_dialog.dart';
 import './../../../../data/models/model.dart';
 
 class OrcamentosSection extends StatelessWidget {
-  const OrcamentosSection({super.key});
+  OrcamentosSection({super.key});
+
+  final controller = Get.find<OrcamentoController>();
+  final appController = Get.find<AppController>();
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<OrcamentoController>();
-
     // Exemplo de ID de fornecedor — use o real no app
-    const idFornecedor = 'id_fornecedor_teste';
-    controller.escutarOrcamentos(idFornecedor);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -110,7 +110,7 @@ class _OrcamentoCard extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  orcamento.idOrcamento.toUpperCase(),
+                  orcamento.nomeSolicitante!.toUpperCase(),
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,

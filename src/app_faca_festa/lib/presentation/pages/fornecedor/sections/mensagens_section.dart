@@ -122,7 +122,7 @@ class MensagensSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // 🔹 Subcomponente dinâmico
-                const OrcamentosSection(),
+                OrcamentosSection(),
 
                 const SizedBox(height: 12),
                 Align(

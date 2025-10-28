@@ -3,143 +3,164 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/fornecedor_controller.dart';
+import './../../../../controllers/avaliacao/avaliacao_controller.dart';
+import './../../../../data/models/avaliacao/avaliacao_model.dart';
 
 class AvaliacoesSection extends StatelessWidget {
   const AvaliacoesSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<FornecedorController>();
+    final avaliacaoController = Get.find<AvaliacaoController>();
 
-    // 🔹 Mock de avaliações (futuro: Firestore)
-    final avaliacoes = [
-      _AvaliacaoModel(
-        cliente: 'Ana Souza',
-        evento: 'Casamento Ana & Pedro',
-        nota: 5,
-        comentario: 'Trabalho impecável! Tudo perfeito do início ao fim.',
-        data: DateTime.now().subtract(const Duration(days: 2)),
-      ),
-      _AvaliacaoModel(
-        cliente: 'Lucas Ferreira',
-        evento: 'Aniversário 30 anos',
-        nota: 4,
-        comentario: 'Boa comunicação e ótimo serviço, apenas pequeno atraso.',
-        data: DateTime.now().subtract(const Duration(days: 6)),
-      ),
-      _AvaliacaoModel(
-        cliente: 'Beatriz Lima',
-        evento: 'Chá Revelação',
-        nota: 5,
-        comentario: 'Decoração linda! Super recomendo 💖',
-        data: DateTime.now().subtract(const Duration(days: 10)),
-      ),
-    ];
+    return Obx(() {
+      final avaliacoes = avaliacaoController.avaliacoes;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "⭐ Avaliações Recebidas",
-          style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey.shade800,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Obx(() {
-          final media = controller.avaliacaoMedia.value;
-
-          return Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "⭐ Avaliações Recebidas",
+            style: GoogleFonts.poppins(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey.shade800,
             ),
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              children: [
-                // 🔹 Nota média
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+          ),
+          const SizedBox(height: 12),
+
+          // 🔹 Painel de resumo sempre aparece
+          _buildResumo(avaliacaoController),
+          const SizedBox(height: 16),
+
+          Text(
+            "Últimos feedbacks",
+            style: GoogleFonts.poppins(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade800,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // 🔹 Exibe avaliações (ou mensagem amigável)
+          if (avaliacoes.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Icon(
+                      Icons.reviews_outlined,
+                      size: 56,
+                      color: Colors.teal.shade300,
+                    ),
+                    const SizedBox(height: 12),
                     Text(
-                      media.toStringAsFixed(1),
+                      "Ainda não há avaliações 😄",
                       style: GoogleFonts.poppins(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal.shade700,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade700,
                       ),
                     ),
-                    Row(
-                      children: List.generate(
-                        5,
-                        (index) => Icon(
-                          index < media.round() ? Icons.star_rounded : Icons.star_border_rounded,
-                          color: Colors.amber,
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
-                      "Média geral",
+                      "Quando os organizadores começarem a avaliar seu trabalho,\n"
+                      "as notas e comentários aparecerão aqui.",
+                      textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
-                        fontSize: 13,
+                        fontSize: 13.5,
                         color: Colors.grey.shade600,
+                        height: 1.4,
                       ),
                     ),
                   ],
                 ),
+              ),
+            )
+          else
+            ListView.separated(
+              itemCount: avaliacoes.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+              itemBuilder: (context, index) => _AvaliacaoTile(avaliacao: avaliacoes[index]),
+            ),
+        ],
+      );
+    });
+  }
 
-                const SizedBox(width: 30),
+  Widget _buildResumo(AvaliacaoController c) {
+    return Obx(() {
+      final media = c.media.value.isNaN ? 0.0 : c.media.value;
 
-                // 🔹 Barra visual de desempenho
-                Expanded(
-                  child: Column(
-                    children: [
-                      _barraAvaliacoes(5, 0.65),
-                      _barraAvaliacoes(4, 0.25),
-                      _barraAvaliacoes(3, 0.08),
-                      _barraAvaliacoes(2, 0.02),
-                      _barraAvaliacoes(1, 0.00),
-                    ],
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.all(20),
+        child: Row(
+          children: [
+            // 🔹 Média de estrelas
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  media.toStringAsFixed(1),
+                  style: GoogleFonts.poppins(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.teal.shade700,
+                  ),
+                ),
+                Row(
+                  children: List.generate(
+                    5,
+                    (index) => Icon(
+                      index < media.round() ? Icons.star_rounded : Icons.star_border_rounded,
+                      color: Colors.amber,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Média geral",
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
                   ),
                 ),
               ],
             ),
-          );
-        }),
-        const SizedBox(height: 16),
-        Text(
-          "Últimos feedbacks",
-          style: GoogleFonts.poppins(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade800,
-          ),
+
+            const SizedBox(width: 30),
+
+            // 🔹 Barras de distribuição (mesmo se vazias)
+            Expanded(
+              child: Column(
+                children: List.generate(5, (i) {
+                  final estrelas = 5 - i;
+                  final percentual = c.distribuicao[estrelas] ?? 0.0;
+                  return _barraAvaliacoes(estrelas, percentual);
+                }),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
-        ListView.separated(
-          itemCount: avaliacoes.length,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
-          itemBuilder: (context, index) {
-            final a = avaliacoes[index];
-            return _AvaliacaoTile(avaliacao: a);
-          },
-        ),
-      ],
-    );
+      );
+    });
   }
 
   Widget _barraAvaliacoes(int estrelas, double percentual) {
@@ -160,7 +181,7 @@ class AvaliacoesSection extends StatelessWidget {
           Expanded(
             child: LinearPercentIndicator(
               lineHeight: 8,
-              percent: percentual,
+              percent: percentual.isNaN ? 0.0 : percentual,
               progressColor: Colors.teal.shade700,
               backgroundColor: Colors.grey.shade200,
               barRadius: const Radius.circular(6),
@@ -174,14 +195,34 @@ class AvaliacoesSection extends StatelessWidget {
 }
 
 class _AvaliacaoTile extends StatelessWidget {
-  final _AvaliacaoModel avaliacao;
+  final AvaliacaoModel avaliacao;
   const _AvaliacaoTile({required this.avaliacao});
 
   String _tempoRelativo(DateTime data) {
-    final diff = DateTime.now().difference(data);
-    if (diff.inDays == 0) return 'Hoje';
-    if (diff.inDays == 1) return 'Ontem';
-    return '${diff.inDays} dias atrás';
+    final hoje = DateTime.now();
+
+    // 🔹 Normaliza ambas as datas para o mesmo formato (sem horas)
+    final dataLimpa = DateTime(data.year, data.month, data.day);
+    final hojeLimpo = DateTime(hoje.year, hoje.month, hoje.day);
+
+    final diff = hojeLimpo.difference(dataLimpa);
+    final dias = diff.inDays;
+
+    if (dias <= 0) return 'Hoje';
+    if (dias == 1) return 'Ontem';
+    if (dias == 2) return 'Antes de ontem';
+    if (dias < 7) return 'Há $dias dias';
+    if (dias < 30) {
+      final semanas = (dias / 7).floor();
+      return 'Há $semanas ${semanas == 1 ? 'semana' : 'semanas'}';
+    }
+    if (dias < 365) {
+      final meses = (dias / 30).floor();
+      return 'Há $meses ${meses == 1 ? 'mês' : 'meses'}';
+    }
+
+    final anos = (dias / 365).floor();
+    return 'Há $anos ${anos == 1 ? 'ano' : 'anos'}';
   }
 
   @override
@@ -194,12 +235,15 @@ class _AvaliacaoTile extends StatelessWidget {
       ),
       title: Row(
         children: [
-          Text(
-            avaliacao.cliente,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              fontSize: 15,
-              color: Colors.grey.shade800,
+          Expanded(
+            child: Text(
+              avaliacao.nomeCliente,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+                fontSize: 15,
+                color: Colors.grey.shade800,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(width: 6),
@@ -229,39 +273,26 @@ class _AvaliacaoTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
-              "${avaliacao.evento} • ${_tempoRelativo(avaliacao.data)}",
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.grey.shade500,
+            RichText(
+              text: TextSpan(
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.grey.shade500,
+                ),
+                children: [
+                  TextSpan(
+                    text: 'Evento: ',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: avaliacao.evento),
+                  const TextSpan(text: ' • '),
+                  TextSpan(text: _tempoRelativo(avaliacao.data)),
+                ],
               ),
             ),
           ],
         ),
       ),
-      onTap: () => Get.snackbar(
-        "Avaliação",
-        "Abrindo detalhes de ${avaliacao.cliente}",
-        backgroundColor: Colors.teal.shade700,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 2),
-      ),
     );
   }
-}
-
-class _AvaliacaoModel {
-  final String cliente;
-  final String evento;
-  final int nota;
-  final String comentario;
-  final DateTime data;
-
-  _AvaliacaoModel({
-    required this.cliente,
-    required this.evento,
-    required this.nota,
-    required this.comentario,
-    required this.data,
-  });
 }

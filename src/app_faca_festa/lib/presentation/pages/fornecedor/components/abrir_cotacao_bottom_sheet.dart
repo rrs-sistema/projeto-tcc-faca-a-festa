@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:app_faca_festa/controllers/fornecedor_controller.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -10,14 +11,14 @@ import 'package:get/get.dart';
 
 import '../../../../data/models/model.dart';
 import './../../../../controllers/fornecedor_localizacao_controller.dart';
-import './../../../../data/models/DTO/servico_cotado.dart';
+import '../../../../data/models/DTO/servico_cotado_dto.dart';
 import './../../../../controllers/evento_controller.dart';
 import './../../../../controllers/app_controller.dart';
 
 class CotacaoBottomSheet extends StatefulWidget {
   final String tipoEventoNome;
   final List<String> fornecedoresSelecionados;
-  final List<ServicoCotado> servicosSelecionados;
+  final List<ServicoCotadoDto> servicosSelecionados;
   final VoidCallback? onCotacaoFinalizada;
 
   final Color primary;
@@ -36,6 +37,7 @@ class CotacaoBottomSheet extends StatefulWidget {
 }
 
 class _CotacaoBottomSheetState extends State<CotacaoBottomSheet> {
+  final fornecedorController = Get.find<FornecedorController>();
   final TextEditingController observacaoController = TextEditingController();
   late DateTime dataLimite;
   bool expandirServicos = false;
@@ -96,7 +98,7 @@ class _CotacaoBottomSheetState extends State<CotacaoBottomSheet> {
       final qtd = int.tryParse(qtdControllers[i].text) ?? 1;
       final valor = double.tryParse(valorControllers[i].text.replaceAll(',', '.')) ?? 0.0;
 
-      widget.servicosSelecionados[i] = ServicoCotado(
+      widget.servicosSelecionados[i] = ServicoCotadoDto(
         idProduto: widget.servicosSelecionados[i].idProduto,
         nomeProduto: widget.servicosSelecionados[i].nomeProduto,
         quantidade: qtd,
@@ -111,6 +113,7 @@ class _CotacaoBottomSheetState extends State<CotacaoBottomSheet> {
       final cotacaoRef = await db.collection('cotacao').add({
         'id_evento': evento?.idEvento ?? '',
         'id_usuario_solicitante': usuario?.idUsuario ?? '',
+        'nome_usuario_solicitante': usuario?.nome ?? '',
         'observacao': observacaoController.text.trim(),
         'data_limite_resposta': Timestamp.fromDate(dataLimite),
         'data_envio': Timestamp.now(),
@@ -134,10 +137,13 @@ class _CotacaoBottomSheetState extends State<CotacaoBottomSheet> {
 
       // 🔹 3️⃣ Subcoleção de fornecedores participantes
       for (final idFornecedor in widget.fornecedoresSelecionados) {
+        final fornecedor =
+            fornecedorController.fornecedores.where((f) => f.idFornecedor == idFornecedor).first;
         final fornecedorCotacao = FornecedorCotacaoModel(
           id: db.collection('cotacao/${cotacaoRef.id}/fornecedores').doc().id,
           idCotacao: cotacaoRef.id,
           idFornecedor: idFornecedor,
+          nomeFornecedor: fornecedor.razaoSocial,
           status: StatusFornecedorCotacao.aguardando,
         );
 
@@ -401,7 +407,7 @@ class _CotacaoBottomSheetState extends State<CotacaoBottomSheet> {
     );
   }
 
-  Widget _buildServicoItem(ServicoCotado servico, int index) {
+  Widget _buildServicoItem(ServicoCotadoDto servico, int index) {
     final qtdController = qtdControllers[index];
     final valorController = valorControllers[index];
 
@@ -452,7 +458,7 @@ class _CotacaoBottomSheetState extends State<CotacaoBottomSheet> {
                   onChanged: (v) {
                     final qtd = int.tryParse(v) ?? 1;
                     setState(() {
-                      widget.servicosSelecionados[index] = ServicoCotado(
+                      widget.servicosSelecionados[index] = ServicoCotadoDto(
                         idProduto: servico.idProduto,
                         nomeProduto: servico.nomeProduto,
                         quantidade: qtd,
@@ -480,7 +486,7 @@ class _CotacaoBottomSheetState extends State<CotacaoBottomSheet> {
                   onChanged: (v) {
                     final valor = double.tryParse(v.replaceAll(',', '.')) ?? servico.valor ?? 0.0;
                     setState(() {
-                      widget.servicosSelecionados[index] = ServicoCotado(
+                      widget.servicosSelecionados[index] = ServicoCotadoDto(
                         idProduto: servico.idProduto,
                         nomeProduto: servico.nomeProduto,
                         quantidade: servico.quantidade,
