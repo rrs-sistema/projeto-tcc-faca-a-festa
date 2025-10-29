@@ -4,6 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
+import '../data/models/servico_produto/categoria_servico_model.dart';
+import '../data/models/servico_produto/fornecedor_categoria_model.dart';
+import '../data/models/servico_produto/subcategoria_servico_model.dart';
 import './../presentation/pages/endereco/endereco_section_controller.dart';
 import './../data/models/model.dart';
 import 'app_controller.dart';
@@ -12,10 +15,17 @@ class RegisterController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final AppController appController = Get.find<AppController>();
+  // 🔹 Categorias e subcategorias selecionadas
+  RxList<FornecedorCategoriaModel> categoriasSelecionadas = <FornecedorCategoriaModel>[].obs;
 
   var nome = ''.obs;
   var email = ''.obs;
   var senha = ''.obs;
+  var cnpj = ''.obs;
+  var telefone = ''.obs;
+  var categoriaSelecionada = ''.obs;
+  var subcategoriaSelecionada = ''.obs;
+
   var carregando = false.obs;
   RxBool exibirSenha = false.obs;
 
@@ -30,7 +40,6 @@ class RegisterController extends GetxController {
     try {
       carregando.value = true;
 
-      // Cria usuário Firebase Auth
       final credencial = await _auth.createUserWithEmailAndPassword(
         email: email.value.trim(),
         password: senha.value.trim(),
@@ -39,10 +48,8 @@ class RegisterController extends GetxController {
       final uid = credencial.user!.uid;
       final tipo = (Get.arguments?['tipo'] ?? 'O') as String;
 
-      // 📍 Monta endereço principal
       final endereco = enderecoController.value.toModel(uid);
 
-      // Salva usuário principal
       final novoUsuario = UsuarioModel(
         idUsuario: uid,
         nome: nome.value,
@@ -55,8 +62,6 @@ class RegisterController extends GetxController {
       );
 
       await _db.collection('usuarios').doc(uid).set(novoUsuario.toMap());
-
-      // 🔹 Subcoleção de endereços
       await _db
           .collection('usuarios')
           .doc(uid)
@@ -64,18 +69,36 @@ class RegisterController extends GetxController {
           .doc(endereco.id)
           .set(endereco.toMap());
 
-      Get.snackbar('Sucesso', 'Usuário cadastrado com sucesso!',
-          backgroundColor: Colors.green.shade700, colorText: Colors.white);
-
-      // 🚀 Redireciona conforme tipo
       if (tipo == 'F') {
-        Get.offAllNamed('/fornecedor_home');
-      }
-      if (tipo == 'C') {
+        // 🔹 Cria fornecedor com categorias
+        final novoFornecedor = FornecedorModel(
+          idFornecedor: uid,
+          idUsuario: uid,
+          razaoSocial: nome.value,
+          telefone: telefone.value,
+          email: email.value,
+          aptoParaOperar: false,
+          ativo: true,
+          bannerUrl: null,
+          cnpj: cnpj.value,
+          descricao: '',
+          dataCadastro: DateTime.now(),
+        );
+
+        await _db.collection('fornecedor').doc(uid).set(novoFornecedor.toMap());
+
+        for (final cat in categoriasSelecionadas) {
+          final catUpdate = cat.copyWith(idFornecedor: uid);
+          await _db.collection('fornecedor_categoria').add(catUpdate.toMap());
+        }
+      } else if (tipo == 'C') {
         Get.offAllNamed('/convidadosPage');
       } else {
         Get.offAllNamed('/welcome');
       }
+
+      Get.snackbar('Sucesso', 'Usuário cadastrado com sucesso!',
+          backgroundColor: Colors.green.shade700, colorText: Colors.white);
     } on FirebaseAuthException catch (e) {
       EasyLoading.showError(_traduzErro(e.code));
     } catch (e) {
@@ -83,6 +106,37 @@ class RegisterController extends GetxController {
     } finally {
       carregando.value = false;
     }
+  }
+
+  void adicionarCategoria(CategoriaServicoModel cat) {
+    categoriasSelecionadas.add(
+      FornecedorCategoriaModel(
+        idFornecedor: '',
+        idCategoria: cat.id,
+        nomeCategoria: cat.nome,
+      ),
+    );
+  }
+
+  void alternarSubcategoria(
+      FornecedorCategoriaModel catSel, SubcategoriaServicoModel sub, bool selected) {
+    final index = categoriasSelecionadas.indexWhere((c) => c.idCategoria == catSel.idCategoria);
+    if (index == -1) return;
+
+    final atual = categoriasSelecionadas[index];
+    final subcats = List<Map<String, dynamic>>.from((atual as dynamic).subcategorias ?? []);
+
+    if (selected) {
+      subcats.add({
+        'idSubcategoria': sub.id,
+        'nomeSubcategoria': sub.nome,
+      });
+    } else {
+      subcats.removeWhere((s) => s['idSubcategoria'] == sub.id);
+    }
+
+    categoriasSelecionadas[index] =
+        atual.copyWith(subcategorias: subcats.cast<Map<String, dynamic>>());
   }
 
   String _traduzErro(String code) {

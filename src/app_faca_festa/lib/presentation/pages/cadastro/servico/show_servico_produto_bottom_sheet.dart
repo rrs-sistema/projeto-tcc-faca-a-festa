@@ -209,8 +209,9 @@ Future<void> showServicoProdutoBottomSheet(
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.save_rounded),
-                    label: const Text('Salvar', style: TextStyle(fontSize: 16)),
+                    icon: const Icon(Icons.save_rounded, color: Colors.white),
+                    label:
+                        const Text('Salvar', style: TextStyle(fontSize: 16, color: Colors.white)),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -247,11 +248,11 @@ Future<void> showServicoProdutoBottomSheet(
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.close_rounded),
-                    label: const Text('Sair', style: TextStyle(fontSize: 16)),
+                    icon: const Icon(Icons.close_rounded, color: Colors.white),
+                    label: const Text('Sair', style: TextStyle(fontSize: 16, color: Colors.white)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey.shade200,
-                      foregroundColor: Colors.grey.shade800,
+                      backgroundColor: Colors.grey.shade800,
+                      foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       elevation: 0,

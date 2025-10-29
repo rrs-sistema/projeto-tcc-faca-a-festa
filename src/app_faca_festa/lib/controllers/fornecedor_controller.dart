@@ -92,6 +92,50 @@ class FornecedorController extends GetxController {
     });
   }
 
+  Future<List<ServicoProdutoModel>> buscarServicosFornecedorPorCategorias(
+      String idFornecedor) async {
+    final db = FirebaseFirestore.instance;
+
+    try {
+      // 🔹 1. Buscar categorias selecionadas pelo fornecedor
+      final catSnap = await db
+          .collection('fornecedor_categoria')
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .get();
+
+      if (catSnap.docs.isEmpty) return [];
+
+      // 🔹 2. Extrair todas as subcategorias dessas categorias
+      final List<String> subcategoriasIds = [];
+      for (var doc in catSnap.docs) {
+        final data = doc.data();
+        final subs = (data['subcategorias'] as List?)
+                ?.map((s) => s['idSubcategoria']?.toString())
+                .whereType<String>()
+                .toList() ??
+            [];
+        subcategoriasIds.addAll(subs);
+      }
+
+      if (subcategoriasIds.isEmpty) return [];
+
+      // 🔹 3. Buscar serviços/produtos ativos ligados a essas subcategorias
+      final servSnap = await db
+          .collection('servico_produto')
+          .where('id_subcategoria', whereIn: subcategoriasIds)
+          .where('ativo', isEqualTo: true)
+          .get();
+
+      final servicos =
+          servSnap.docs.map((d) => ServicoProdutoModel.fromMap({'id': d.id, ...d.data()})).toList();
+
+      return servicos;
+    } catch (e) {
+      debugPrint('Erro ao buscar serviços por categoria: $e');
+      return [];
+    }
+  }
+
   /// 🔹 Atualiza os dados de um fornecedor existente no Firestore
   Future<void> atualizarFornecedor(FornecedorModel fornecedor) async {
     try {

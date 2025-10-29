@@ -12,6 +12,8 @@ class FornecedorServicoDetalhadoDto {
   final String? nomeSubcategoria;
   final String? nomeCategoria;
   final String? imagemUrl;
+  final String? tipoMedida;
+  final bool ativo;
 
   FornecedorServicoDetalhadoDto({
     required this.idFornecedorServico,
@@ -25,5 +27,7 @@ class FornecedorServicoDetalhadoDto {
     this.nomeSubcategoria,
     this.nomeCategoria,
     this.imagemUrl,
+    this.tipoMedida,
+    required this.ativo,
   });
 }

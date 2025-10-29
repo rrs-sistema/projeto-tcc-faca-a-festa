@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
+import '../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../data/models/DTO/servico_cotado_dto.dart';
 import './../presentation/pages/convidado/area/area_convidado_home_screen.dart';
 import './../presentation/pages/fornecedor/fornecedor_home_screen.dart';
@@ -19,6 +20,7 @@ import 'contacao/cotacao_controller.dart';
 import 'evento_controller.dart';
 import 'fornecedor_controller.dart';
 import 'orcamento_controller.dart';
+import 'servico_produto_controller.dart';
 import 'tarefa_controller.dart';
 
 class AppController extends GetxController {
@@ -43,6 +45,7 @@ class AppController extends GetxController {
   final fornecedorController = Get.put(FornecedorController());
   final tarefaController = Get.put(TarefaController());
   final avaliacaoController = Get.put(AvaliacaoController());
+  final servicoController = Get.put(ServicoProdutoController());
 
   @override
   void onInit() {
@@ -182,6 +185,12 @@ class AppController extends GetxController {
                 );
               }
               fornecedorController.fornecedor.value = fornecedor;
+              final List<ServicoProdutoModel> servicos = await fornecedorController
+                  .buscarServicosFornecedorPorCategorias(fornecedor.idUsuario);
+              servicoController.converterServicosComDetalhes(fornecedor.idUsuario, servicos);
+
+              servicoController.converterServicosComDetalhes(fornecedor.idUsuario, servicos);
+
               fornecedorController.escutarServicosFornecedor(fornecedor.idUsuario);
               orcamentoController.escutarOrcamentos(fornecedor.idUsuario);
               avaliacaoController.listenAvaliacoes(fornecedor.idUsuario);

@@ -1,9 +1,9 @@
+import 'package:app_faca_festa/role_selector_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../controllers/login_controller.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -119,7 +119,7 @@ class LoginScreen extends StatelessWidget {
 
                     // Link para cadastro
                     GestureDetector(
-                      onTap: () => Get.to(() => const RegisterScreen()),
+                      onTap: () => Get.to(() => const RoleSelectorScreen()),
                       child: RichText(
                         text: TextSpan(
                           text: "Ainda não tem uma conta? ",
@@ -140,8 +140,6 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 40),
-
                     const SizedBox(height: 40),
 
                     Text(

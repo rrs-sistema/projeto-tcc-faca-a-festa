@@ -14,6 +14,7 @@ class CustomInputField extends StatefulWidget {
   final VoidCallback? onTap;
   final TextInputType? keyboardType;
   final int? maxLength;
+  final int? maxLines;
   final String? Function(String?)? validator;
   final bool obscureText;
   final double borderRadius;
@@ -32,6 +33,7 @@ class CustomInputField extends StatefulWidget {
     this.onTap,
     this.keyboardType,
     this.maxLength,
+    this.maxLines,
     this.validator,
     this.obscureText = false,
     this.borderRadius = 14,
@@ -147,6 +149,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
             keyboardType: keyboardType ?? widget.keyboardType,
             inputFormatters: maskFormatter != null ? [maskFormatter!] : [],
             maxLength: widget.maxLength,
+            maxLines: widget.maxLines ?? 1,
             cursorColor: focusColor,
             style: GoogleFonts.poppins(
               fontSize: 15.5,

@@ -45,7 +45,8 @@ class HeaderSection extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    fornecedor?.razaoSocial ?? 'Não localizado ID: ${fornecedor?.idFornecedor}',
+                    fornecedor?.razaoSocial ??
+                        'Estamos analisando o seu cadastro, aguarde nosso retorno.',
                     style: GoogleFonts.poppins(
                       color: Colors.white,
                       fontSize: 20,

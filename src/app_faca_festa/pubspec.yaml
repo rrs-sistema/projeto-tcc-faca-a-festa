@@ -45,8 +45,9 @@ dependencies:
   mask_text_input_formatter: ^2.9.0
   animate_do: ^4.2.0
   image_picker: ^1.2.0
-  flutter_tts: ^4.2.3
   lottie: ^3.3.1
+  smooth_page_indicator: ^1.2.1
+  flutter_tts: ^4.2.3
   
 dev_dependencies:
   flutter_test:

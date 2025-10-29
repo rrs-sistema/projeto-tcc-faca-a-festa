@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../controllers/avaliacao/avaliacao_controller.dart';
+import '../../../../controllers/servico_produto_controller.dart';
 import '../components/show_responder_cotacao_bottom_sheet.dart';
 import './../../cadastro/servico/fornecedor_servico_list_screen.dart';
 import './../../../../controllers/event_theme_controller.dart';
@@ -18,6 +19,7 @@ class ResumoSection extends StatelessWidget {
     final controller = Get.find<FornecedorController>();
     final themeController = Get.find<EventThemeController>();
     final avaliacaoController = Get.find<AvaliacaoController>();
+    final servicoController = Get.find<ServicoProdutoController>();
 
     // 🔹 Cores e gradiente principal
     final gradient = themeController.gradient.value;
@@ -125,7 +127,7 @@ class ResumoSection extends StatelessWidget {
           icon: Icons.home_repair_service_outlined,
           color1: const Color(0xFFA5D6A7),
           color2: const Color(0xFF43A047),
-          value: controller.servicosFornecedor.length,
+          value: servicoController.servicosFornecedor.length,
           description: "publicados",
           onTap: () async {
             final fornecedor = controller.fornecedor.value;

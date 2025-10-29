@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import './../../data/models/servico_produto/subcategoria_servico_model.dart';
@@ -9,10 +10,35 @@ class SubcategoriaServicoController extends GetxController {
   // 🔹 Listas observáveis
   final subcategorias = <SubcategoriaServicoModel>[].obs;
   final subcategoriasFiltradas = <SubcategoriaServicoModel>[].obs;
+  RxMap<String, List<SubcategoriaServicoModel>> subcategoriasPorCategoria =
+      <String, List<SubcategoriaServicoModel>>{}.obs;
 
   // 🔹 Estados
   final carregando = false.obs;
   final erro = ''.obs;
+
+  /// 🔹 Carrega subcategorias de uma categoria e atualiza o mapa
+  Future<void> carregarSubcategoriasPorCategoria(String idCategoria) async {
+    try {
+      final snap = await _db
+          .collection('subcategoria_servico')
+          .where('id_categoria', isEqualTo: idCategoria)
+          .get();
+
+      final lista = snap.docs.map((d) {
+        final data = d.data();
+        data['id'] = d.id;
+        return SubcategoriaServicoModel.fromMap(data);
+      }).toList();
+
+      subcategorias.assignAll(lista); // mantém compatibilidade
+      subcategoriasPorCategoria[idCategoria] = lista; // ✅ novo mapeamento
+    } catch (e) {
+      if (kDebugMode) {
+        print('Erro ao carregar subcategorias da categoria $idCategoria: $e');
+      }
+    }
+  }
 
   // ================================================================
   // 🔹 Carrega todas as subcategorias ou filtra por categoria
@@ -44,13 +70,6 @@ class SubcategoriaServicoController extends GetxController {
     } finally {
       carregando.value = false;
     }
-  }
-
-  // ================================================================
-  // 🔹 Carrega apenas subcategorias de uma categoria específica
-  // ================================================================
-  Future<void> carregarSubcategoriasPorCategoria(String idCategoria) async {
-    await carregarSubcategorias(idCategoria);
   }
 
   // ================================================================

@@ -116,7 +116,7 @@ class SubcategoriaServicoListScreen extends StatelessWidget {
           backgroundColor: primary,
           icon: const Icon(Icons.add),
           label: const Text('Nova Subcategoria'),
-          onPressed: () => showSubcategoriaServicoBottomSheet(context),
+          onPressed: () => showSubcategoriaServicoBottomSheet(context, null, categoria),
         ),
       );
     });

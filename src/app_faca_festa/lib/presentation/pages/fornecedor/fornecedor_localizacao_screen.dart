@@ -1,21 +1,23 @@
 // ignore_for_file: use_build_context_synchronously
-
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/services.dart';
+import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:animate_do/animate_do.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
-import '../../../controllers/fornecedor_localizacao_controller.dart';
-import '../../../core/utils/biblioteca.dart';
-import '../../../data/models/DTO/fornecedor_detalhado_dto.dart';
-import '../../../data/models/model.dart';
-import './../../../../controllers/event_theme_controller.dart';
-import './../../../../controllers/categoria/categoria_servico_controller.dart';
-import './../../../../controllers/app_controller.dart';
+import '../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
-import 'cotacao/servicos_categoria_screen.dart';
-import 'fornecedor_detalhe_screen.dart';
+import './../../../../controllers/categoria/categoria_servico_controller.dart';
+import './../../../controllers/fornecedor_localizacao_controller.dart';
+import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
+import './../../../../controllers/event_theme_controller.dart';
+import './../../../../controllers/app_controller.dart';
+import './cotacao/servicos_categoria_screen.dart';
+import './../../../core/utils/biblioteca.dart';
+import './../../../data/models/model.dart';
+import './fornecedor_detalhe_screen.dart';
 
 class FornecedorLocalizacaoScreen extends StatefulWidget {
   final bool? showLeading;
@@ -33,6 +35,18 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
   CategoriaServicoModel? categoriaSelecionada;
   final RxSet<String> selecionados = <String>{}.obs;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (categoriaSelecionada != null) {
+        controllerLocalizacao.buscarServicosPorCategoria(categoriaSelecionada!.id);
+      } else {
+        controllerLocalizacao.buscarServicosPorCategoria('1760923921063');
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +123,6 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                                 final f = fornecedores[index];
                                 final selecionado =
                                     selecionadosSet.contains(f.fornecedor.idFornecedor);
-
                                 return Padding(
                                   padding: EdgeInsets.symmetric(
                                     horizontal: isCelular ? 12 : 4,
@@ -131,6 +144,10 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                               },
                             ),
                           ),
+
+                    // 🟢 COLOQUE O CARROSSEL AQUI
+                    const SizedBox(height: 30),
+                    _carrosselServicos(themeController, controllerLocalizacao),
                   ],
                 ),
               ),
@@ -206,6 +223,218 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
         }),
       );
     });
+  }
+
+  Widget _carrosselServicos(
+    EventThemeController themeController,
+    FornecedorLocalizacaoController controllerLocalizacao,
+  ) {
+    return Obx(() {
+      if (controllerLocalizacao.carregandoServicosFornecedor.value) {
+        return const Center(
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 40),
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          ),
+        );
+      }
+
+      final lista = controllerLocalizacao.servicosFornecedor;
+      if (lista.isEmpty) return const SizedBox();
+
+      final primary = themeController.primaryColor.value;
+
+      return FadeInUp(
+        duration: const Duration(milliseconds: 800),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                'Serviços disponíveis',
+                style: GoogleFonts.poppins(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 210,
+              child: PageView.builder(
+                controller: PageController(viewportFraction: 0.78),
+                physics: const BouncingScrollPhysics(),
+                itemCount: lista.length,
+                itemBuilder: (_, index) {
+                  final s = lista[index];
+                  return AnimatedPadding(
+                    duration: const Duration(milliseconds: 400),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    child: Hero(
+                      tag: 'servico_${s.idFornecedorServico}',
+                      child: _cardServicoCarrossel(s, primary),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            Center(
+              child: SmoothPageIndicator(
+                controller: PageController(viewportFraction: 0.78),
+                count: lista.length,
+                effect: ExpandingDotsEffect(
+                  activeDotColor: primary,
+                  dotHeight: 8,
+                  dotWidth: 8,
+                  spacing: 5,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _cardServicoCarrossel(FornecedorServicoDetalhadoDto s, Color primary) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
+        child: Stack(
+          children: [
+            // === IMAGEM PRINCIPAL ===
+            s.imagemUrl != null && s.imagemUrl!.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: s.imagemUrl!,
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    placeholder: (_, __) => Container(
+                      color: Colors.grey.shade200,
+                      child: const Center(
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                    errorWidget: (_, __, ___) => Container(
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.image_not_supported_outlined,
+                          color: Colors.grey, size: 40),
+                    ),
+                  )
+                : Container(
+                    color: Colors.grey.shade200,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.image_rounded, size: 40, color: Colors.grey),
+                  ),
+
+            // === GRADIENTE SOBREPOSTO ===
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.transparent,
+                    Colors.black.withValues(alpha: 0.7),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+
+            // === INFORMAÇÕES (NOME + CATEGORIA + BOTÃO) ===
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(22),
+                  ),
+                  gradient: LinearGradient(
+                    colors: [
+                      primary.withValues(alpha: 0.85),
+                      primary.withValues(alpha: 0.6),
+                    ],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      s.nomeServico ?? 'Serviço sem nome',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      s.nomeCategoria ?? s.nomeSubcategoria ?? '',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          // 👉 Aqui você pode abrir a tela de cotação, por exemplo:
+                          // Get.to(() => DetalheServicoScreen(servico: s));
+                          Get.snackbar('Serviço selecionado', s.nomeServico ?? '',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: primary,
+                              colorText: Colors.white);
+                        },
+                        icon: const Icon(Icons.design_services_rounded, size: 16),
+                        label: const Text(
+                          'Ver mais',
+                          style: TextStyle(fontSize: 12.5),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: primary,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 2,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // === Cabeçalho de categorias ===

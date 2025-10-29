@@ -28,20 +28,23 @@ class FornecedorHomeScreen extends StatelessWidget {
               const HeaderSection(),
               const SizedBox(height: 20),
               const ResumoSection(),
-              const SizedBox(height: 20),
-              const SolicitacoesSection(),
-              /*
+              if (controller.fornecedor.value != null &&
+                  controller.fornecedor.value?.aptoParaOperar == true) ...[
+                /*
               const SizedBox(height: 20),
               const MensagensSection(),
               */
-              const SizedBox(height: 20),
-              const AvaliacoesSection(),
-              const SizedBox(height: 20),
-              const FinanceiroSection(),
-              const SizedBox(height: 20),
-              const PerfilSection(),
-              const SizedBox(height: 20),
-              const InsightsSection(),
+                const SizedBox(height: 20),
+                const SolicitacoesSection(),
+                const SizedBox(height: 20),
+                const AvaliacoesSection(),
+                const SizedBox(height: 20),
+                const FinanceiroSection(),
+                const SizedBox(height: 20),
+                const PerfilSection(),
+                const SizedBox(height: 20),
+                const InsightsSection(),
+              ]
             ],
           ),
         ),

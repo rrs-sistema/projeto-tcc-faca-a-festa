@@ -55,50 +55,51 @@ class _InsightsSectionState extends State<InsightsSection> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // === Avatar da LIA ===
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(
-                width: 90,
-                height: 90,
-                child: Lottie.asset(
-                  _falando ? 'assets/lottie/lia_talking.json' : 'assets/lottie/lia_idle.json',
+          if (controller.fornecedor.value?.aptoParaOperar ?? false)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 90,
+                  height: 90,
+                  child: Lottie.asset(
+                    _falando ? 'assets/lottie/lia_talking.json' : 'assets/lottie/lia_idle.json',
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(saudacao['titulo']!,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(saudacao['titulo']!,
+                          style: GoogleFonts.poppins(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                          )),
+                      const SizedBox(height: 6),
+                      Text(
+                        saudacao['mensagem']!,
                         style: GoogleFonts.poppins(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                        )),
-                    const SizedBox(height: 6),
-                    Text(
-                      saudacao['mensagem']!,
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey.shade700,
-                        fontSize: 13.5,
+                          color: Colors.grey.shade700,
+                          fontSize: 13.5,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.indigo.shade600,
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      const SizedBox(height: 8),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.indigo.shade600,
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        ),
+                        onPressed: () => _falar(mensagemFalada),
+                        icon: const Icon(Icons.volume_up_rounded, size: 18),
+                        label: const Text("Ouvir a LIA"),
                       ),
-                      onPressed: () => _falar(mensagemFalada),
-                      icon: const Icon(Icons.volume_up_rounded, size: 18),
-                      label: const Text("Ouvir a LIA"),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
 
           const SizedBox(height: 22),
 

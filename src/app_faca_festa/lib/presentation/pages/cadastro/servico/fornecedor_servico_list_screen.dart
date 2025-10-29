@@ -30,14 +30,6 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
   final theme = Get.find<EventThemeController>();
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      await controller.listarServicosFornecedor(widget.fornecedor.idFornecedor);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Obx(() {
       final gradient = theme.gradient.value;
@@ -103,14 +95,14 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
         ),
         body: Obx(() {
           // 🔹 Mostra carregamento geral
-          if (controller.carregando.value || servicoController.carregando.value) {
+          if (servicoController.carregando.value || servicoController.carregando.value) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
 
           // 🔹 Nenhum serviço encontrado
-          if (controller.servicosFornecedor.isEmpty) {
+          if (servicoController.servicosFornecedor.isEmpty) {
             return Center(
               child: Text(
                 'Nenhum serviço cadastrado para este fornecedor',
@@ -127,9 +119,9 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
           // 🔹 Lista de serviços
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            itemCount: controller.servicosFornecedor.length,
+            itemCount: servicoController.servicosFornecedor.length,
             itemBuilder: (_, i) {
-              final s = controller.servicosFornecedor[i];
+              final s = servicoController.servicosFornecedor[i];
               final nomeServico = mapaServicos[s.idProdutoServico] ?? 'Carregando...';
 
               return Card(
@@ -168,13 +160,6 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
                           color: s.ativo ? Colors.green : Colors.grey,
                         ),
                       ),
-                      Text(
-                        'Cadastrado em: ${DateFormat('dd/MM/yyyy').format(s.dataCadastro)}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
                     ],
                   ),
                   trailing: IconButton(
@@ -185,10 +170,17 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
                       await fotoController.carregarFotos(
                           widget.fornecedor.idFornecedor, s.idProdutoServico);
                       await EasyLoading.dismiss();
+                      FornecedorProdutoServicoModel vinculo = FornecedorProdutoServicoModel(
+                        id: s.idProdutoServico,
+                        idProdutoServico: s.idProdutoServico,
+                        idFornecedor: s.idFornecedor,
+                        preco: s.preco,
+                      );
+
                       showFornecedorServicoBottomSheet(
                         context,
                         widget.fornecedor.idFornecedor,
-                        vinculo: s,
+                        vinculo: vinculo,
                       );
                     },
                   ),

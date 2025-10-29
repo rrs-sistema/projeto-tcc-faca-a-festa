@@ -89,23 +89,99 @@ class FornecedorLocalizacaoController extends GetxController {
 
         // 🔹 Filtra apenas se pertencer à categoria visualizada
         lista.add(FornecedorServicoDetalhadoDto(
-          idFornecedorServico: doc.id,
-          idFornecedor: data['id_fornecedor'],
-          idProdutoServico: idProdutoServico,
-          idSubcategoria: idSubcategoria,
-          nomeServico: servicoData?['nome'],
-          descricaoServico: servicoData?['descricao'],
-          preco: (data['preco'] as num?)?.toDouble() ?? 0.0,
-          precoPromocao: (data['preco_promocao'] as num?)?.toDouble(),
-          nomeSubcategoria: nomeSubcategoria,
-          nomeCategoria: nomeCategoria,
-          imagemUrl: imagemUrl,
-        ));
+            idFornecedorServico: doc.id,
+            idFornecedor: data['id_fornecedor'],
+            idProdutoServico: idProdutoServico,
+            idSubcategoria: idSubcategoria,
+            nomeServico: servicoData?['nome'],
+            descricaoServico: servicoData?['descricao'],
+            preco: (data['preco'] as num?)?.toDouble() ?? 0.0,
+            precoPromocao: (data['preco_promocao'] as num?)?.toDouble(),
+            nomeSubcategoria: nomeSubcategoria,
+            nomeCategoria: nomeCategoria,
+            imagemUrl: imagemUrl,
+            ativo: true));
       }
 
       servicosFornecedor.assignAll(lista);
       carregandoServicosFornecedor.value = false;
     });
+  }
+
+  /// 🔹 Busca todos os serviços de uma categoria específica, independente do fornecedor
+  Future<void> buscarServicosPorCategoria(String idCategoria) async {
+    try {
+      carregandoServicosFornecedor.value = true;
+      final db = FirebaseFirestore.instance;
+
+      servicosFornecedor.clear();
+
+      final subSnap = await db
+          .collection('subcategoria_servico')
+          .where('id_categoria', isEqualTo: idCategoria)
+          .get();
+
+      final subIds = subSnap.docs.map((d) => d.id).toList();
+      if (subIds.isEmpty) {
+        servicosFornecedor.clear();
+        carregandoServicosFornecedor.value = false;
+        return;
+      }
+
+      final fornServSnap =
+          await db.collection('fornecedor_servico').where('id_subcategoria', whereIn: subIds).get();
+
+      List<FornecedorServicoDetalhadoDto> lista = [];
+
+      for (final doc in fornServSnap.docs) {
+        final data = doc.data();
+        final idSubcategoria = data['id_subcategoria'];
+        final idProdutoServico = data['id_produto_servico'];
+        final idFornecedor = data['id_fornecedor'];
+
+        final servicoSnap = await db.collection('servico_produto').doc(idProdutoServico).get();
+        final servicoData = servicoSnap.data();
+
+        String? nomeSubcategoria;
+        if (idSubcategoria != null && idSubcategoria.isNotEmpty) {
+          final subData = subSnap.docs.firstWhere((s) => s.id == idSubcategoria).data();
+          nomeSubcategoria = subData['nome'];
+        }
+
+        final catSnap = await db.collection('categoria_servico').doc(idCategoria).get();
+        final nomeCategoria = catSnap.data()?['nome'];
+
+        final fotoSnap = await db
+            .collection('servico_foto')
+            .where('id_fornecedor', isEqualTo: idFornecedor)
+            .where('id_produto_servico', isEqualTo: idProdutoServico)
+            .limit(1)
+            .get();
+        final imagemUrl =
+            fotoSnap.docs.isNotEmpty ? fotoSnap.docs.first.data()['url'] as String? : null;
+
+        lista.add(FornecedorServicoDetalhadoDto(
+            idFornecedorServico: doc.id,
+            idFornecedor: idFornecedor,
+            idProdutoServico: idProdutoServico,
+            idSubcategoria: idSubcategoria,
+            nomeServico: servicoData?['nome'],
+            descricaoServico: servicoData?['descricao'],
+            preco: (data['preco'] as num?)?.toDouble() ?? 0.0,
+            precoPromocao: (data['preco_promocao'] as num?)?.toDouble(),
+            nomeSubcategoria: nomeSubcategoria,
+            nomeCategoria: nomeCategoria,
+            imagemUrl: imagemUrl,
+            ativo: true));
+      }
+
+      servicosFornecedor.assignAll(lista);
+    } catch (e) {
+      debugPrint('Erro ao buscar serviços por categoria: $e');
+      servicosFornecedor.clear();
+    } finally {
+      carregandoServicosFornecedor.value = false;
+    }
   }
 
   // ==========================================================
