@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:app_faca_festa/controllers/contacao/cotacao_controller.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -11,7 +12,9 @@ import 'package:get/get.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../controllers/app_controller.dart';
+import '../../controllers/fornecedor_localizacao_controller.dart';
 import '../../core/utils/biblioteca.dart';
+import '../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import '../widgets/menu_drawer_faca_festa.dart';
 import './../../controllers/convidado/convidado_controller.dart';
 import './../../../controllers/event_theme_controller.dart';
@@ -22,6 +25,7 @@ import './../../controllers/evento_controller.dart';
 import './../../data/models/model.dart';
 import './contador_evento_screen.dart';
 import 'convidado/convidado_page.dart';
+import 'fornecedor/fornecedor_detalhe_screen.dart';
 import 'fornecedor/fornecedores_page.dart';
 import 'orcamento/orcamento_screen.dart';
 import 'tarefa/tarefas_screen.dart';
@@ -43,6 +47,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   final orcamentoController = Get.find<OrcamentoController>();
   final tarefaController = Get.find<TarefaController>();
   final eventoController = Get.find<EventoController>();
+  final fornecedorController = Get.put(FornecedorLocalizacaoController());
   bool isCelular = false;
   bool _carregandoFornecedor = false;
 
@@ -436,7 +441,7 @@ Widget _buildQuickActions(EventThemeController theme) {
           builder: (context, constraints) {
             final bool isTablet = constraints.maxWidth > 560;
             final int crossAxisCount = isTablet ? 4 : 2;
-            final double spacing = 18;
+            final double spacing = isTablet ? 12 : 16;
 
             // 🔹 Usa um único Obx externo para atualizar os dados de todos os cards
             return Obx(() {
@@ -460,7 +465,7 @@ Widget _buildQuickActions(EventThemeController theme) {
                 },
                 {
                   'icon': Icons.storefront_rounded,
-                  'label': 'Minhas Cotações',
+                  'label': 'Cotações',
                   'color': Colors.orangeAccent,
                   'value': "${cotacaoController.totalCount.value}",
                 },
@@ -1308,13 +1313,16 @@ String _formatarDataTarefa(DateTime? data) {
 }
 
 Widget _buildSuppliersCarousel(EventThemeController theme) {
+  final fornecedorController = Get.put(FornecedorLocalizacaoController());
   final cor = theme.primaryColor.value;
+
   return SliverToBoxAdapter(
     child: FadeInUp(
       duration: const Duration(milliseconds: 900),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 🔹 Título
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             child: Text(
@@ -1326,54 +1334,182 @@ Widget _buildSuppliersCarousel(EventThemeController theme) {
               ),
             ),
           ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 500),
-            child: SizedBox(
-              height: 160,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                itemBuilder: (_, index) => Hero(
-                  tag: 'fornecedor_$index',
-                  child: Container(
+
+          // 🔹 Listagem reativa
+          Obx(() {
+            final carregando = fornecedorController.carregandoServicosFornecedor.value;
+            final fornecedores = fornecedorController.fornecedores;
+
+            if (carregando) {
+              return SizedBox(
+                height: 160,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: 5,
+                  separatorBuilder: (_, __) => const SizedBox(width: 14),
+                  itemBuilder: (_, __) => Container(
                     width: 130,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: Colors.grey.shade200,
                       borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: cor.withValues(alpha: 0.1),
-                          blurRadius: 6,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
-                      image: DecorationImage(
-                        image: AssetImage('assets/images/wedding_${(index % 3) + 1}.jpeg'),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.45),
-                          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
-                        ),
-                        padding: const EdgeInsets.all(8),
-                        child: Text(
-                          'Fornecedor ${index + 1}',
-                          style: GoogleFonts.poppins(color: Colors.white, fontSize: 12),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
                     ),
                   ),
                 ),
+              );
+            }
+
+            if (fornecedores.isEmpty) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                child: Text(
+                  'Nenhum fornecedor encontrado por perto.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              );
+            }
+
+            return SizedBox(
+              height: 180,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: fornecedores.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 14),
-                itemCount: 5,
+                itemBuilder: (_, index) {
+                  final fornecedorDetalhe = fornecedores[index];
+                  final fornecedor = FornecedorModel(
+                    idFornecedor: fornecedorDetalhe.fornecedor.idFornecedor,
+                    idUsuario: fornecedorDetalhe.fornecedor.idUsuario,
+                    razaoSocial: fornecedorDetalhe.fornecedor.razaoSocial,
+                    telefone: fornecedorDetalhe.fornecedor.telefone,
+                    email: fornecedorDetalhe.fornecedor.email,
+                  );
+
+                  return GestureDetector(
+                    onTap: () {
+                      final fornecedorDetalhado = FornecedorDetalhadoDto(
+                          fornecedor: fornecedor, categoriaId: '', categoriaNome: '');
+                      Get.to(
+                          () => FornecedorDetalheScreen(fornecedorDetalhado: fornecedorDetalhado));
+                    },
+                    child: Hero(
+                      tag: 'fornecedor_${fornecedor.idFornecedor}',
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        width: 140,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.white,
+                              Colors.grey.shade50,
+                              cor.withValues(alpha: 0.05),
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: cor.withValues(alpha: 0.1),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Stack(
+                            alignment: Alignment.bottomCenter,
+                            children: [
+                              // 📸 Banner do fornecedor
+                              CachedNetworkImage(
+                                imageUrl: fornecedorDetalhe.fornecedor.bannerUrl ??
+                                    'https://cdn-icons-png.flaticon.com/512/6799/6799605.png',
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                placeholder: (_, __) => Container(
+                                  color: Colors.grey.shade200,
+                                ),
+                                errorWidget: (_, __, ___) => Container(
+                                  color: Colors.grey.shade200,
+                                  child: const Icon(Icons.store_mall_directory,
+                                      size: 40, color: Colors.grey),
+                                ),
+                              ),
+
+                              // ✨ Gradiente de brilho
+                              Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withValues(alpha: 0.6),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              // 📋 Nome do fornecedor e botão
+                              Padding(
+                                padding: const EdgeInsets.all(8),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      fornecedorDetalhe.fornecedor.razaoSocial,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 12.5,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding:
+                                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: cor.withValues(alpha: 0.9),
+                                        borderRadius: BorderRadius.circular(10),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: cor.withValues(alpha: 0.4),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        'Detalhes',
+                                        style: GoogleFonts.poppins(
+                                          color: Colors.white,
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
               ),
-            ),
-          )
+            );
+          }),
         ],
       ),
     ),

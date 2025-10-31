@@ -1,22 +1,24 @@
 // ================================
 // 🔹 Controller reativo GetX
 // ================================
-import 'dart:async';
-import 'dart:io';
+// ignore_for_file: avoid_print
 
-import 'package:app_faca_festa/data/models/servico_produto/subcategoria_servico_model.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'dart:async';
+import 'dart:io';
 
-import '../data/models/servico_produto/categoria_servico_model.dart';
-import '../data/models/servico_produto/fornecedor_categoria_model.dart';
-import '../data/models/servico_produto/servico_foto.dart';
-import '../presentation/dialogs/show_novo_orcamento_bottom_sheet.dart';
+import '../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
+import './../data/models/servico_produto/subcategoria_servico_model.dart';
+import './../data/models/servico_produto/fornecedor_categoria_model.dart';
+import './../presentation/dialogs/show_novo_orcamento_bottom_sheet.dart';
+import './../data/models/servico_produto/categoria_servico_model.dart';
+import './../data/models/servico_produto/servico_foto.dart';
 import './../data/models/model.dart';
-import 'app_controller.dart';
+import './app_controller.dart';
 
 class FornecedorController extends GetxController {
   final _db = FirebaseFirestore.instance;
@@ -29,6 +31,9 @@ class FornecedorController extends GetxController {
   /// 🔹 Serviços (coleção `fornecedor_servico`)
   final RxList<FornecedorProdutoServicoModel> servicosFornecedor =
       <FornecedorProdutoServicoModel>[].obs;
+
+  final RxList<FornecedorServicoDetalhadoDto> servicosDetalhado =
+      <FornecedorServicoDetalhadoDto>[].obs;
 
   final RxList<FornecedorProdutoServicoModel> allServicosFornecedor =
       <FornecedorProdutoServicoModel>[].obs;
@@ -45,6 +50,7 @@ class FornecedorController extends GetxController {
 
   final categoriasServico = <Map<String, dynamic>>[].obs;
   final subcategoriasServico = <Map<String, dynamic>>[].obs;
+  StreamSubscription<QuerySnapshot>? _fornecedorSubscription;
 
   //tempoMedioResposta
 
@@ -80,6 +86,22 @@ class FornecedorController extends GetxController {
   final enderecos = <EnderecoUsuarioModel>[].obs;
   final categoriasFornecedor = <FornecedorCategoriaModel>[].obs;
 
+  Future<void> logoutFornecedor() async {
+    fornecedores.clear();
+    servicosFornecedor.clear();
+    servicosFornecedor.clear();
+    servicosDetalhado.clear();
+    allServicosFornecedor.clear();
+    catalogoServicos.clear();
+    fotosServico.clear();
+    categorias.clear();
+    subCategorias.clear();
+    categoriasServico.clear();
+    subcategoriasServico.clear();
+    _solicitacoesSub?.cancel();
+    fornecedor.value = null;
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -92,12 +114,48 @@ class FornecedorController extends GetxController {
     });
   }
 
+  /// 🟢 Inicia o listener do fornecedor logado
+  void iniciarListenerFornecedor(String idFornecedor) {
+    final db = FirebaseFirestore.instance;
+
+    print('📡 Iniciando listener para fornecedor $idFornecedor...');
+
+    // Cancela qualquer listener anterior
+    _fornecedorSubscription?.cancel();
+
+    _fornecedorSubscription = db
+        .collection('fornecedor')
+        .where('id_fornecedor', isEqualTo: idFornecedor)
+        .where('ativo', isEqualTo: true)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data();
+        fornecedor.value = FornecedorModel.fromMap(data);
+        print('✅ Fornecedor atualizado: ${fornecedor.value!.razaoSocial}');
+      } else {
+        print('⚠️ Nenhum fornecedor ativo encontrado.');
+        fornecedor.value = null;
+      }
+    }, onError: (e) {
+      print('❌ Erro ao escutar fornecedor: $e');
+    });
+  }
+
+  /// 🛑 Cancela o listener (ex: ao sair da conta)
+  Future<void> pararListenerFornecedor() async {
+    print('🛑 Parando listener de fornecedor...');
+    await _fornecedorSubscription?.cancel();
+    _fornecedorSubscription = null;
+    fornecedor.value = null;
+  }
+
   Future<List<ServicoProdutoModel>> buscarServicosFornecedorPorCategorias(
       String idFornecedor) async {
     final db = FirebaseFirestore.instance;
 
     try {
-      // 🔹 1. Buscar categorias selecionadas pelo fornecedor
+      // 1️⃣ Buscar todas as categorias vinculadas ao fornecedor
       final catSnap = await db
           .collection('fornecedor_categoria')
           .where('id_fornecedor', isEqualTo: idFornecedor)
@@ -105,7 +163,7 @@ class FornecedorController extends GetxController {
 
       if (catSnap.docs.isEmpty) return [];
 
-      // 🔹 2. Extrair todas as subcategorias dessas categorias
+      // 2️⃣ Extrair todas as subcategorias (agora dentro do mesmo documento)
       final List<String> subcategoriasIds = [];
       for (var doc in catSnap.docs) {
         final data = doc.data();
@@ -119,19 +177,20 @@ class FornecedorController extends GetxController {
 
       if (subcategoriasIds.isEmpty) return [];
 
-      // 🔹 3. Buscar serviços/produtos ativos ligados a essas subcategorias
+      // 3️⃣ Buscar os serviços/produtos vinculados às subcategorias
       final servSnap = await db
           .collection('servico_produto')
           .where('id_subcategoria', whereIn: subcategoriasIds)
           .where('ativo', isEqualTo: true)
           .get();
 
+      // 4️⃣ Converter o resultado em lista de modelos
       final servicos =
           servSnap.docs.map((d) => ServicoProdutoModel.fromMap({'id': d.id, ...d.data()})).toList();
 
       return servicos;
-    } catch (e) {
-      debugPrint('Erro ao buscar serviços por categoria: $e');
+    } catch (e, s) {
+      debugPrint('Erro ao buscar serviços do fornecedor: $e\n$s');
       return [];
     }
   }
@@ -266,9 +325,8 @@ class FornecedorController extends GetxController {
   }
 
   /// 🔹 Escuta em tempo real todas as solicitações com status = 'aguardando'
-  Future<void> escutarSolicitacoesPendentes() async {
-    final f = fornecedor.value;
-    if (f == null) return;
+  Future<void> escutarSolicitacoesPendentes(String? idFornecedor) async {
+    if (idFornecedor == null) return;
 
     // Cancela a escuta anterior, se já existir
     await _solicitacoesSub?.cancel();
@@ -278,7 +336,7 @@ class FornecedorController extends GetxController {
 
       _solicitacoesSub = _db
           .collectionGroup('fornecedores')
-          .where('id_fornecedor', isEqualTo: f.idFornecedor)
+          .where('id_fornecedor', isEqualTo: idFornecedor)
           .where('status', isEqualTo: 'aguardando')
           .snapshots()
           .listen((snapshot) {
@@ -289,32 +347,6 @@ class FornecedorController extends GetxController {
       debugPrint('❌ Erro ao escutar solicitações pendentes: $e\n$s');
       erro.value = 'Erro ao escutar solicitações pendentes';
     }
-  }
-
-  // =============================================================
-  // 🔸 FILTROS
-  // =============================================================
-  void aplicarFiltros({
-    String? nome,
-    String? cidade,
-    String? categoria,
-    bool? aprovado,
-    bool? ativo,
-  }) {
-    filtroNome.value = nome ?? '';
-    filtroCidade.value = cidade?.isEmpty ?? true ? null : cidade;
-    filtroCategoria.value = categoria?.isEmpty ?? true ? null : categoria;
-    filtroAprovado.value = aprovado;
-    filtroAtivo.value = ativo;
-  }
-
-  void limparFiltros() {
-    filtroNome.value = '';
-    filtroCidade.value = null;
-    filtroCategoria.value = null;
-    filtroAprovado.value = null;
-    filtroAtivo.value = null;
-    update();
   }
 
   // =============================================================
@@ -421,9 +453,6 @@ class FornecedorController extends GetxController {
   }
 
   // ==========================================================
-  // === 🔹 Carrega o fornecedor logado
-  // ==========================================================
-  // ==========================================================
   // === 🔹 1. Busca produtos do fornecedor pelo CÓDIGO DO EVENTO
   // ==========================================================
   Future<void> carregarServicosPorEvento(String idEvento) async {
@@ -494,7 +523,7 @@ class FornecedorController extends GetxController {
       final ids = lista.map((e) => e.idProdutoServico).toList();
       await carregarCatalogoServicos();
       await carregarFotosServicos(ids, idFornecedor);
-      await escutarSolicitacoesPendentes();
+      await escutarSolicitacoesPendentes(idFornecedor);
     });
   }
 
@@ -502,16 +531,113 @@ class FornecedorController extends GetxController {
     try {
       carregando.value = true;
       erro.value = '';
+      servicosDetalhado.clear();
 
-      final snapshot = await _db
-          .collection('fornecedor_servico')
-          .where('id_fornecedor', isEqualTo: idFornecedor)
+      debugPrint('📡 Buscando serviços do fornecedor $idFornecedor ...');
+
+      // 1️⃣ Buscar categorias do fornecedor
+      final allSnap = await _db.collection('fornecedor_categoria').get();
+
+      final catDocs = allSnap.docs.where((d) {
+        final data = d.data();
+        final idForn = (data['id_fornecedor'] ?? '').toString().trim();
+        return idForn == idFornecedor.trim();
+      }).toList();
+
+      debugPrint('📄 Documentos realmente do fornecedor: ${catDocs.length}');
+
+      if (catDocs.isEmpty) {
+        debugPrint('⚠️ Nenhuma categoria encontrada para o fornecedor $idFornecedor');
+        return;
+      }
+
+      // 2️⃣ Mapear subcategorias e vínculos
+      final Map<String, String> mapaSubcategorias = {};
+      final Map<String, String> mapaCategorias = {};
+      final Map<String, String> mapaSubParaCat = {};
+      final List<String> subcategoriasIds = [];
+
+      for (var doc in catDocs) {
+        final data = doc.data();
+        final idCat = (data['id_categoria'] ?? '').toString();
+        final nomeCat = (data['nome_categoria'] ?? '').toString();
+        mapaCategorias[idCat] = nomeCat;
+
+        final subs = (data['subcategorias'] as List?) ?? [];
+        for (final sub in subs) {
+          if (sub is Map<String, dynamic>) {
+            final idSub = (sub['idSubcategoria'] ?? '').toString();
+            final nomeSub = (sub['nomeSubcategoria'] ?? '').toString();
+            if (idSub.isNotEmpty) {
+              mapaSubcategorias[idSub] = nomeSub;
+              mapaSubParaCat[idSub] = idCat;
+              subcategoriasIds.add(idSub);
+            }
+          }
+        }
+      }
+
+      debugPrint('📊 Subcategorias válidas: ${subcategoriasIds.length}');
+
+      if (subcategoriasIds.isEmpty) {
+        debugPrint('⚠️ Nenhuma subcategoria encontrada para o fornecedor $idFornecedor');
+        return;
+      }
+
+      // 3️⃣ Buscar serviços das subcategorias
+      final servSnap = await _db
+          .collection('servico_produto')
+          .where('id_subcategoria', whereIn: subcategoriasIds)
+          .where('ativo', isEqualTo: true)
           .get();
 
-      servicosFornecedor.value =
-          snapshot.docs.map((d) => FornecedorProdutoServicoModel.fromMap(d.data())).toList();
-    } catch (e) {
+      debugPrint('📄 Serviços encontrados: ${servSnap.docs.length}');
+
+      if (servSnap.docs.isEmpty) {
+        debugPrint('⚠️ Nenhum serviço encontrado para o fornecedor $idFornecedor');
+        return;
+      }
+
+      // 4️⃣ Montar lista final
+      final List<FornecedorServicoDetalhadoDto> lista = [];
+
+      for (final d in servSnap.docs) {
+        final data = d.data();
+
+        final idSub = (data['id_subcategoria'] ?? '').toString();
+        final idCat = mapaSubParaCat[idSub] ?? '';
+        final nomeServico = (data['nome'] ?? 'Serviço sem nome').toString();
+        final descricao = (data['descricao'] ?? '').toString();
+        final preco = (data['preco'] as num?)?.toDouble() ?? 0.0;
+        final precoPromocao = (data['preco_promocao'] as num?)?.toDouble();
+        final ativo = data['ativo'] ?? true;
+        final nomeCat = mapaCategorias[idCat] ?? 'Sem categoria';
+        final nomeSub = mapaSubcategorias[idSub] ?? 'Sem subcategoria';
+
+        // Log detalhado do serviço
+        debugPrint('🔗 Serviço: $nomeServico | Cat: $nomeCat | Sub: $nomeSub | Preço: $preco');
+
+        lista.add(FornecedorServicoDetalhadoDto(
+          id: d.id,
+          idFornecedor: idFornecedor,
+          idProdutoServico: d.id, // ✅ correto agora
+          idSubcategoria: idSub,
+          nomeServico: nomeServico,
+          descricaoServico: descricao,
+          preco: preco,
+          precoPromocao: precoPromocao,
+          nomeCategoria: nomeCat,
+          nomeSubcategoria: nomeSub,
+          ativo: ativo,
+        ));
+      }
+
+      servicosDetalhado.assignAll(lista);
+
+      debugPrint('✅ ${lista.length} serviços carregados para fornecedor $idFornecedor');
+    } catch (e, s) {
       erro.value = 'Erro ao carregar serviços: $e';
+      debugPrint('❌ Erro ao listar serviços: $e\n$s');
     } finally {
       carregando.value = false;
     }
@@ -571,7 +697,7 @@ class FornecedorController extends GetxController {
     required BuildContext context,
     required String idEvento,
     required FornecedorProdutoServicoModel servicoFornecedor,
-    String acao = 'solicitar', // 👈 padrão
+    String acao = 'solicitar',
     String? idOrcamento,
   }) async {
     final servicoProduto = buscarServicoPorId(servicoFornecedor.idProdutoServico);
@@ -592,12 +718,13 @@ class FornecedorController extends GetxController {
             : StatusOrcamento.pendente;
 
     await showNovoOrcamentoBottomSheet(
-        context: context,
-        idEvento: idEvento,
-        idFornecedor: servicoFornecedor.idFornecedor,
-        servico: servicoFornecedor,
-        statusInicial: statusInicial, // 👈 envia o enum
-        idOrcamento: idOrcamento);
+      context: context,
+      idEvento: idEvento,
+      idFornecedor: servicoFornecedor.idFornecedor,
+      servico: servicoFornecedor,
+      statusInicial: statusInicial,
+      idOrcamento: idOrcamento,
+    );
   }
 
   Future<void> carregarFornecedoresDoEvento(String idEvento) async {
@@ -611,7 +738,7 @@ class FornecedorController extends GetxController {
           .where('id_evento', isEqualTo: idEvento)
           .get();
 
-// 🔹 Extrai IDs válidos dos serviços fornecidos (filtrando nulos)
+      // 🔹 Extrai IDs válidos dos serviços fornecidos (filtrando nulos)
       final servicoFornecidoIds = orcamentosSnap.docs
           .map((d) => d.data()['id_servico_fornecido'])
           .where((id) => id != null && id.toString().isNotEmpty)
@@ -651,9 +778,161 @@ class FornecedorController extends GetxController {
     }
   }
 
+  Future<void> limparDuplicatasFornecedorCategoria() async {
+    final db = FirebaseFirestore.instance;
+    print('🧹 Iniciando limpeza da coleção fornecedor_categoria...');
+
+    final snap = await db.collection('fornecedor_categoria').get();
+    final docs = snap.docs;
+
+    print('📄 Total de documentos encontrados: ${docs.length}');
+    final Map<String, List<QueryDocumentSnapshot>> agrupados = {};
+
+    // 🔹 Agrupa por fornecedor + categoria
+    for (final doc in docs) {
+      final data = doc.data();
+      final fornecedor = data['id_fornecedor'] ?? '';
+      final categoria = data['id_categoria'] ?? '';
+      if (fornecedor.isEmpty || categoria.isEmpty) continue;
+
+      final chave = '$fornecedor|$categoria';
+      agrupados.putIfAbsent(chave, () => []);
+      agrupados[chave]!.add(doc);
+    }
+
+    int duplicatasRemovidas = 0;
+
+    for (final entry in agrupados.entries) {
+      final lista = entry.value;
+      if (lista.length <= 1) continue; // ✅ Sem duplicata
+
+      // 🔹 Ordena por data_cadastro (mantém o mais antigo)
+      lista.sort((a, b) {
+        final da = (a.data() as Map<String, dynamic>)['data_cadastro'];
+        final dbt = (b.data() as Map<String, dynamic>)['data_cadastro'];
+        return da.toString().compareTo(dbt.toString());
+      });
+
+      final principal = lista.first;
+      final idPrincipal = principal.id;
+      final dataPrincipal = Map<String, dynamic>.from(principal.data() as Map<String, dynamic>);
+      final subcategoriasPrincipais =
+          List<Map<String, dynamic>>.from(dataPrincipal['subcategorias'] ?? []);
+
+      print('🧩 Unificando duplicatas para fornecedor_categoria [$idPrincipal]');
+
+      // 🔹 Mescla subcategorias das duplicatas
+      for (final duplicada in lista.skip(1)) {
+        final dataDup = Map<String, dynamic>.from(duplicada.data() as Map<String, dynamic>);
+        final subs = List<Map<String, dynamic>>.from(dataDup['subcategorias'] ?? []);
+
+        for (final sub in subs) {
+          final idSub = sub['idSubcategoria'];
+          final jaExiste = subcategoriasPrincipais.any((s) => s['idSubcategoria'] == idSub);
+          if (!jaExiste) {
+            subcategoriasPrincipais.add(sub);
+            print('   ➕ Subcategoria adicionada: ${sub['nomeSubcategoria']}');
+          }
+        }
+
+        // 🔹 Remove duplicata
+        await db.collection('fornecedor_categoria').doc(duplicada.id).delete();
+        duplicatasRemovidas++;
+        print('   ❌ Documento duplicado removido: ${duplicada.id}');
+      }
+
+      // 🔹 Atualiza documento principal consolidado
+      await db.collection('fornecedor_categoria').doc(idPrincipal).update({
+        'subcategorias': subcategoriasPrincipais,
+        'nome_categoria': dataPrincipal['nome_categoria'] ?? '',
+      });
+
+      print(
+          '✅ Documento principal atualizado com ${subcategoriasPrincipais.length} subcategorias.');
+    }
+
+    print('🧹 Limpeza concluída! Duplicatas removidas: $duplicatasRemovidas');
+  }
+
   Future<void> vincularServico(FornecedorProdutoServicoModel model) async {
-    await _db.collection('fornecedor_servico').doc(model.id).set(model.toMap());
+    print('💾 [SALVAR VÍNCULO DE SERVIÇO]');
+    print('   → ID Produto Serviço: ${model.idProdutoServico}');
+    print('   → ID Subcategoria: ${model.idSubcategoria}');
+    print('   → ID Fornecedor: ${model.idFornecedor}');
+    print('   → Preço: ${model.preco}');
+    print('   → Preço Promocional: ${model.precoPromocao}');
+    print('   → Ativo: ${model.ativo}');
+
+    // 🔹 Define ID composto único para evitar duplicatas
+    final vinculoId = '${model.idFornecedor}_${model.idProdutoServico}';
+
+    // 🔹 Garante que todos os vínculos tenham data
+    final data = model.toMap();
+    data['data_atualizacao'] = FieldValue.serverTimestamp();
+
+    // 🔹 Cria ou atualiza com merge
+    await _db.collection('fornecedor_servico').doc(vinculoId).set(data, SetOptions(merge: true));
+
+    print('🟢 Vínculo salvo/atualizado com sucesso (ID: $vinculoId)');
+
+    // 🔹 Atualiza categoria vinculada
+    await _atualizarFornecedorCategoria(model);
+
+    // 🔹 Atualiza lista em tempo real
     await escutarServicosFornecedor(model.idFornecedor);
+  }
+
+  Future<void> _atualizarFornecedorCategoria(FornecedorProdutoServicoModel model) async {
+    final subSnap = await _db.collection('subcategoria_servico').doc(model.idSubcategoria).get();
+
+    if (!subSnap.exists) {
+      print('⚠️ Subcategoria ${model.idSubcategoria} não encontrada.');
+      return;
+    }
+
+    final sub = subSnap.data()!;
+    final idCategoria = sub['id_categoria'] ?? sub['idCategoria'];
+    if (idCategoria == null) {
+      print('⚠️ Subcategoria sem categoria associada.');
+      return;
+    }
+
+    String nomeCategoria = sub['nome_categoria'] ?? sub['nomeCategoria'] ?? '';
+    final nomeSub = sub['nome'] ?? sub['nomeSubcategoria'] ?? 'Subcategoria sem nome';
+
+    // 🔹 Recupera nome da categoria se faltar
+    if (nomeCategoria.isEmpty) {
+      final catSnap = await _db.collection('categoria_servico').doc(idCategoria).get();
+      if (catSnap.exists) {
+        nomeCategoria = catSnap.data()?['nome'] ?? '';
+      }
+    }
+
+    // 🔹 ID fixo da categoria vinculada ao fornecedor
+    final idDoc = '${model.idFornecedor}_$idCategoria';
+
+    final docSnap = await _db.collection('fornecedor_categoria').doc(idDoc).get();
+    final dataAtual = docSnap.exists ? docSnap.data() ?? {} : {};
+
+    final List<Map<String, dynamic>> subs =
+        List<Map<String, dynamic>>.from(dataAtual['subcategorias'] ?? []);
+    final existe = subs.any((s) => s['idSubcategoria'] == model.idSubcategoria);
+
+    if (!existe) {
+      subs.add({'idSubcategoria': model.idSubcategoria, 'nomeSubcategoria': nomeSub});
+      print('✅ Subcategoria adicionada: $nomeSub');
+    } else {
+      print('ℹ️ Subcategoria já existente: $nomeSub');
+    }
+
+    // 🔹 Cria ou atualiza o documento da categoria
+    await _db.collection('fornecedor_categoria').doc(idDoc).set({
+      'id_fornecedor': model.idFornecedor,
+      'id_categoria': idCategoria,
+      'nome_categoria': nomeCategoria,
+      'subcategorias': subs,
+      'data_atualizacao': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
   }
 
   Future<void> excluirVinculo(String id) async {
@@ -755,9 +1034,36 @@ class FornecedorController extends GetxController {
     return resultado;
   }
 
+  // =============================================================
+  // 🔸 FILTROS
+  // =============================================================
+  void aplicarFiltros({
+    String? nome,
+    String? cidade,
+    String? categoria,
+    bool? aprovado,
+    bool? ativo,
+  }) {
+    filtroNome.value = nome ?? '';
+    filtroCidade.value = cidade?.isEmpty ?? true ? null : cidade;
+    filtroCategoria.value = categoria?.isEmpty ?? true ? null : categoria;
+    filtroAprovado.value = aprovado;
+    filtroAtivo.value = ativo;
+  }
+
+  void limparFiltros() {
+    filtroNome.value = '';
+    filtroCidade.value = null;
+    filtroCategoria.value = null;
+    filtroAprovado.value = null;
+    filtroAtivo.value = null;
+    update();
+  }
+
   @override
   void onClose() {
     _solicitacoesSub?.cancel();
+    pararListenerFornecedor();
     super.onClose();
   }
 }

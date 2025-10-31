@@ -1,4 +1,3 @@
-import 'package:percent_indicator/percent_indicator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -11,10 +10,11 @@ class AvaliacoesSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final avaliacaoController = Get.find<AvaliacaoController>();
+    final c = Get.find<AvaliacaoController>();
 
     return Obx(() {
-      final avaliacoes = avaliacaoController.avaliacoes;
+      final avaliacoes = c.avaliacoes;
+      final carregando = c.carregando.value;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -29,8 +29,8 @@ class AvaliacoesSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // 🔹 Painel de resumo sempre aparece
-          _buildResumo(avaliacaoController),
+          // 🔹 Painel de resumo reativo
+          _buildResumo(c),
           const SizedBox(height: 16),
 
           Text(
@@ -43,51 +43,23 @@ class AvaliacoesSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // 🔹 Exibe avaliações (ou mensagem amigável)
-          if (avaliacoes.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
-              child: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.reviews_outlined,
-                      size: 56,
-                      color: Colors.teal.shade300,
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Ainda não há avaliações 😄",
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      "Quando os organizadores começarem a avaliar seu trabalho,\n"
-                      "as notas e comentários aparecerão aqui.",
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13.5,
-                        color: Colors.grey.shade600,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
+          if (carregando)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: CircularProgressIndicator(),
               ),
             )
+          else if (avaliacoes.isEmpty)
+            _buildMensagemVazia()
           else
-            ListView.separated(
-              itemCount: avaliacoes.length,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
-              itemBuilder: (context, index) => _AvaliacaoTile(avaliacao: avaliacoes[index]),
-            ),
+            Obx(() => ListView.separated(
+                  itemCount: c.avaliacoes.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+                  itemBuilder: (_, i) => _AvaliacaoTile(avaliacao: c.avaliacoes[i]),
+                )),
         ],
       );
     });
@@ -112,7 +84,7 @@ class AvaliacoesSection extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
-            // 🔹 Média de estrelas
+            // 🔹 Média geral
             Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -127,8 +99,8 @@ class AvaliacoesSection extends StatelessWidget {
                 Row(
                   children: List.generate(
                     5,
-                    (index) => Icon(
-                      index < media.round() ? Icons.star_rounded : Icons.star_border_rounded,
+                    (i) => Icon(
+                      i < media.round() ? Icons.star_rounded : Icons.star_border_rounded,
                       color: Colors.amber,
                       size: 22,
                     ),
@@ -147,15 +119,15 @@ class AvaliacoesSection extends StatelessWidget {
 
             const SizedBox(width: 30),
 
-            // 🔹 Barras de distribuição (mesmo se vazias)
+            // 🔹 Distribuição reativa
             Expanded(
-              child: Column(
-                children: List.generate(5, (i) {
-                  final estrelas = 5 - i;
-                  final percentual = c.distribuicao[estrelas] ?? 0.0;
-                  return _barraAvaliacoes(estrelas, percentual);
-                }),
-              ),
+              child: Obx(() => Column(
+                    children: List.generate(5, (i) {
+                      final estrelas = 5 - i;
+                      final percentual = c.distribuicao[estrelas] ?? 0.0;
+                      return _barraAvaliacoes(estrelas, percentual);
+                    }),
+                  )),
             ),
           ],
         ),
@@ -179,16 +151,48 @@ class AvaliacoesSection extends StatelessWidget {
           const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
           const SizedBox(width: 6),
           Expanded(
-            child: LinearPercentIndicator(
-              lineHeight: 8,
-              percent: percentual.isNaN ? 0.0 : percentual,
-              progressColor: Colors.teal.shade700,
+            child: LinearProgressIndicator(
+              value: percentual.isNaN ? 0.0 : percentual,
               backgroundColor: Colors.grey.shade200,
-              barRadius: const Radius.circular(6),
-              animation: true,
+              color: Colors.teal.shade700,
+              borderRadius: const BorderRadius.all(Radius.circular(6)),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMensagemVazia() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.reviews_outlined, size: 56, color: Colors.teal.shade300),
+            const SizedBox(height: 12),
+            Text(
+              "Ainda não há avaliações 😄",
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade700,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              "Quando os organizadores começarem a avaliar seu trabalho,\n"
+              "as notas e comentários aparecerão aqui.",
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 13.5,
+                color: Colors.grey.shade600,
+                height: 1.4,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -197,17 +201,13 @@ class AvaliacoesSection extends StatelessWidget {
 class _AvaliacaoTile extends StatelessWidget {
   final AvaliacaoModel avaliacao;
   const _AvaliacaoTile({required this.avaliacao});
-
   String _tempoRelativo(DateTime data) {
     final hoje = DateTime.now();
 
-    // 🔹 Normaliza ambas as datas para o mesmo formato (sem horas)
     final dataLimpa = DateTime(data.year, data.month, data.day);
     final hojeLimpo = DateTime(hoje.year, hoje.month, hoje.day);
-
     final diff = hojeLimpo.difference(dataLimpa);
     final dias = diff.inDays;
-
     if (dias <= 0) return 'Hoje';
     if (dias == 1) return 'Ontem';
     if (dias == 2) return 'Antes de ontem';
@@ -220,7 +220,6 @@ class _AvaliacaoTile extends StatelessWidget {
       final meses = (dias / 30).floor();
       return 'Há $meses ${meses == 1 ? 'mês' : 'meses'}';
     }
-
     final anos = (dias / 365).floor();
     return 'Há $anos ${anos == 1 ? 'ano' : 'anos'}';
   }

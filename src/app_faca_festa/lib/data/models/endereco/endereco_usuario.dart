@@ -66,4 +66,34 @@ class EnderecoUsuarioModel {
           map['data_cadastro'] is Timestamp ? (map['data_cadastro'] as Timestamp).toDate() : null,
     );
   }
+
+  EnderecoUsuarioModel copyWith({
+    String? id,
+    String? idUsuario,
+    int? idCidade,
+    String? cep,
+    String? logradouro,
+    String? numero,
+    String? complemento,
+    String? bairro,
+    String? nomeCidade,
+    String? uf,
+    bool? principal,
+    DateTime? dataCadastro,
+  }) {
+    return EnderecoUsuarioModel(
+      id: id ?? this.id,
+      idUsuario: idUsuario ?? this.idUsuario,
+      idCidade: idCidade ?? this.idCidade,
+      cep: cep ?? this.cep,
+      logradouro: logradouro ?? this.logradouro,
+      numero: numero ?? this.numero,
+      complemento: complemento ?? this.complemento,
+      bairro: bairro ?? this.bairro,
+      nomeCidade: nomeCidade ?? this.nomeCidade,
+      uf: uf ?? this.uf,
+      principal: principal ?? this.principal,
+      dataCadastro: dataCadastro ?? this.dataCadastro,
+    );
+  }
 }

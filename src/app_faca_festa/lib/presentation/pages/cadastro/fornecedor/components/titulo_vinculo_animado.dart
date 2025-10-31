@@ -44,7 +44,7 @@ class _TituloVinculoAnimadoState extends State<TituloVinculoAnimado>
 
   @override
   Widget build(BuildContext context) {
-    final titulo = widget.isEdicao ? 'Editar Vínculo' : 'Vincular Serviço';
+    final titulo = widget.isEdicao ? 'Editando Serviço' : 'Cadastrar Serviço';
     final primary = widget.primary;
 
     return FadeTransition(
@@ -60,14 +60,14 @@ class _TituloVinculoAnimadoState extends State<TituloVinculoAnimado>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.design_services_rounded, color: primary, size: 22),
+              Icon(Icons.design_services_rounded, color: Colors.white, size: 22),
               const SizedBox(width: 10),
               Text(
                 titulo,
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: primary,
+                  color: Colors.white,
                   letterSpacing: 0.3,
                 ),
               ),

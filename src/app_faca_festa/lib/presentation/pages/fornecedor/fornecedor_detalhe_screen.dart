@@ -42,8 +42,6 @@ class FornecedorDetalheScreen extends StatelessWidget {
           children: [
             if (fornecedorDetalhado.categoriaNome.isNotEmpty)
               _tituloCategoria(fornecedorDetalhado.categoriaNome, primary),
-            const SizedBox(height: 22),
-            _divider('Serviço selecionado'),
             const SizedBox(height: 16),
             _buildServicoPrincipal(
                 fornecedorDetalhado, fornecedorController, primary, gradient, context),
@@ -285,7 +283,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
                   final foto = fotos.firstWhereOrNull((f) => f.idProdutoServico == s.id);
                   final fotoUrl = (foto?.url.isNotEmpty ?? false)
                       ? foto!.url
-                      : 'https://via.placeholder.com/300x200?text=Imagem+Indispon%C3%ADvel';
+                      : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media&token=6a769a8b-b604-41d0-ac63-ebd38b4af5f6';
 
                   // 🔹 Localiza o fornecedor correspondente ao serviço
                   final fornecedorDoServico = controller.fornecedores.firstWhereOrNull((f) =>
@@ -346,7 +344,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
       }
 
       // 🔹 Caso ainda não tenha fotos
-      if (controller.fotosServico.isEmpty) {
+      if (idServicoPrincipal == null || controller.fotosServico.isEmpty) {
         return _textoVazio('Este fornecedor ainda não cadastrou fotos para os serviços.');
       }
 
@@ -391,7 +389,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
               final foto = fotos.firstWhereOrNull((f) => f.idProdutoServico == s.id);
               final fotoUrl = (foto?.url.isNotEmpty ?? false)
                   ? foto!.url
-                  : 'https://via.placeholder.com/300x200?text=Imagem+Indispon%C3%ADvel';
+                  : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media&token=6a769a8b-b604-41d0-ac63-ebd38b4af5f6';
 
               return _cardServicoCarrossel(
                 servico: s,

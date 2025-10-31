@@ -188,7 +188,7 @@ class ServicoCardPrincipal extends StatelessWidget {
               fornecedoresSelecionados: [fornecedorId],
               servicosSelecionados: [
                 FornecedorServicoDetalhadoDto(
-                  idFornecedorServico: fornecedorId,
+                  id: fornecedorId,
                   idFornecedor: fornecedorId,
                   idProdutoServico: servico.idProdutoServico,
                   preco: servico.preco,

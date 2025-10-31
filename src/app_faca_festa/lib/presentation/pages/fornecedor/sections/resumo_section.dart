@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../controllers/avaliacao/avaliacao_controller.dart';
-import '../../../../controllers/servico_produto_controller.dart';
-import '../components/show_responder_cotacao_bottom_sheet.dart';
-import './../../cadastro/servico/fornecedor_servico_list_screen.dart';
+import './../../../../controllers/avaliacao/avaliacao_controller.dart';
+import './../../../../controllers/servico_produto_controller.dart';
+import './../../cadastro/servico/servico_produto_list_screen.dart';
+import './../components/show_responder_cotacao_bottom_sheet.dart';
 import './../../../../controllers/event_theme_controller.dart';
 import './../../../../controllers/fornecedor_controller.dart';
 
@@ -21,11 +21,9 @@ class ResumoSection extends StatelessWidget {
     final avaliacaoController = Get.find<AvaliacaoController>();
     final servicoController = Get.find<ServicoProdutoController>();
 
-    // 🔹 Cores e gradiente principal
     final gradient = themeController.gradient.value;
 
     return Obx(() {
-      // 🔹 Atualiza automaticamente quando algo mudar no controlador
       final stats = [
         _ResumoCardData(
           title: "🗂️ Cotações",
@@ -70,7 +68,7 @@ class ResumoSection extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        "Solicitações Pendentes",
+                        "Cotações Pendentes",
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
                           fontSize: 16,
@@ -101,7 +99,7 @@ class ResumoSection extends StatelessWidget {
                               ),
                               trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
                               onTap: () {
-                                Get.back(); // fecha a lista
+                                Get.back();
                                 showResponderCotacaoBottomSheet(
                                   context: context,
                                   idCotacao: s['idCotacao'],
@@ -133,11 +131,10 @@ class ResumoSection extends StatelessWidget {
             final fornecedor = controller.fornecedor.value;
             if (fornecedor != null) {
               controller.carregando.value = true;
-              await controller.listarServicosFornecedor(fornecedor.idFornecedor);
+              await controller.escutarServicosFornecedor(fornecedor.idFornecedor);
               controller.carregando.value = false;
-
-              // Navega imediatamente após carregar
-              Get.to(() => FornecedorServicoListScreen(fornecedor: fornecedor));
+              //await servicoController.buscarServicosPorFornecedor(fornecedor.idFornecedor);
+              Get.to(() => ServicoProdutoListScreen(fornecedorId: fornecedor.idFornecedor));
             } else {
               Get.snackbar(
                 "Atenção",

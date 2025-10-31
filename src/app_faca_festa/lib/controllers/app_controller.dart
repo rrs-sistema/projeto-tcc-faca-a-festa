@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import '../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../data/models/DTO/servico_cotado_dto.dart';
 import './../presentation/pages/convidado/area/area_convidado_home_screen.dart';
 import './../presentation/pages/fornecedor/fornecedor_home_screen.dart';
@@ -185,15 +184,18 @@ class AppController extends GetxController {
                 );
               }
               fornecedorController.fornecedor.value = fornecedor;
-              final List<ServicoProdutoModel> servicos = await fornecedorController
-                  .buscarServicosFornecedorPorCategorias(fornecedor.idUsuario);
-              servicoController.converterServicosComDetalhes(fornecedor.idUsuario, servicos);
+              //await fornecedorController.buscarServicosFornecedorPorCategorias(fornecedor.idUsuario);
+              //servicoController.converterServicosComDetalhes(fornecedor.idUsuario);
 
-              servicoController.converterServicosComDetalhes(fornecedor.idUsuario, servicos);
+              fornecedorController.iniciarListenerFornecedor(fornecedor.idUsuario);
+              fornecedorController.escutarSolicitacoesPendentes(fornecedor.idUsuario);
 
-              fornecedorController.escutarServicosFornecedor(fornecedor.idUsuario);
               orcamentoController.escutarOrcamentos(fornecedor.idUsuario);
               avaliacaoController.listenAvaliacoes(fornecedor.idUsuario);
+              servicoController.carregarServicosOtimizado(
+                  filtrarPorFornecedor: true, idFornecedor: fornecedor.idUsuario);
+
+              await servicoController.buscarServicosPorFornecedorLogado(fornecedor.idUsuario);
             }
             destino = FornecedorHomeScreen();
             break;
@@ -211,6 +213,7 @@ class AppController extends GetxController {
             break;
 
           case 'A': // 🛠️ Administrador
+            servicoController.iniciarListenerServicosAdmin();
             destino = const AdminDashboardScreen();
             break;
 
@@ -236,7 +239,7 @@ class AppController extends GetxController {
         Get.offAll(
           () => destino,
           transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 250),
+          duration: const Duration(milliseconds: 550),
         );
       } catch (e, s) {
         carregando.value = false;
@@ -272,6 +275,7 @@ class AppController extends GetxController {
     eventoController.reset();
     orcamentoController.reset();
     tarefaController.reset();
+    fornecedorController.logoutFornecedor();
     Get.offAll(() => const RoleSelectorScreen());
     _monitorarSessao(); // Reativa sessão
   }

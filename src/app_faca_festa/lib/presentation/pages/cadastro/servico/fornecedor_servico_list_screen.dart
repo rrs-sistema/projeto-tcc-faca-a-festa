@@ -4,11 +4,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
-import '../../../../controllers/servico/servico_foto_controller.dart';
-import './../../../../controllers/servico_produto_controller.dart';
+import './../../../../controllers/servico/servico_foto_controller.dart';
 import './../../../../core/utils/no_sqflite_cache_manager.dart';
 import './../../../../controllers/event_theme_controller.dart';
 import './../../../../controllers/fornecedor_controller.dart';
@@ -26,8 +24,16 @@ class FornecedorServicoListScreen extends StatefulWidget {
 class _FornecedorServicoListScreenState extends State<FornecedorServicoListScreen> {
   final fotoController = Get.put(ServicoFotoController());
   final controller = Get.put(FornecedorController());
-  final servicoController = Get.put(ServicoProdutoController());
   final theme = Get.find<EventThemeController>();
+
+  @override
+  void initState() {
+    super.initState();
+    final fornecedorId = widget.fornecedor.idFornecedor;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      controller.escutarServicosFornecedor(fornecedorId);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,14 +101,14 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
         ),
         body: Obx(() {
           // 🔹 Mostra carregamento geral
-          if (servicoController.carregando.value || servicoController.carregando.value) {
+          if (controller.carregando.value || controller.carregando.value) {
             return const Center(
               child: CircularProgressIndicator(),
             );
           }
 
           // 🔹 Nenhum serviço encontrado
-          if (servicoController.servicosFornecedor.isEmpty) {
+          if (controller.servicosDetalhado.isEmpty) {
             return Center(
               child: Text(
                 'Nenhum serviço cadastrado para este fornecedor',
@@ -111,18 +117,12 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
             );
           }
 
-          // 🔹 Cache local para acesso rápido aos nomes
-          final mapaServicos = {
-            for (var s in servicoController.servicos) s.id: s.nome,
-          };
-
           // 🔹 Lista de serviços
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-            itemCount: servicoController.servicosFornecedor.length,
+            itemCount: controller.servicosDetalhado.length,
             itemBuilder: (_, i) {
-              final s = servicoController.servicosFornecedor[i];
-              final nomeServico = mapaServicos[s.idProdutoServico] ?? 'Carregando...';
+              final s = controller.servicosDetalhado[i];
 
               return Card(
                 margin: const EdgeInsets.only(bottom: 12),
@@ -132,7 +132,7 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
                 elevation: 2,
                 child: ListTile(
                   title: Text(
-                    nomeServico,
+                    s.nomeServico ?? '',
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
                   ),
                   subtitle: Column(

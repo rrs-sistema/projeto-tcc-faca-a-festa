@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:app_faca_festa/presentation/pages/cadastro/fornecedor/components/titulo_vinculo_animado.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -122,14 +123,7 @@ Future<void> showFornecedorServicoBottomSheet(
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            vinculo == null ? 'Vincular Serviço' : 'Editar Vínculo',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 18,
-                            ),
-                          ),
+                          TituloVinculoAnimado(isEdicao: vinculo != null, primary: primary),
                           Text(
                             'Preencha os dados do serviço com atenção',
                             style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13),
@@ -377,8 +371,38 @@ Future<void> showFornecedorServicoBottomSheet(
                       );
 
                       await fornecedorController.vincularServico(vinculoNovo);
+
+                      //await fornecedorController.limparDuplicatasFornecedorCategoria();
                       Get.back();
                     },
+
+                    /*
+                    onPressed: () async {
+                      if (servicoSelecionado.value == null) {
+                        Get.snackbar(
+                          'Atenção',
+                          'Selecione um serviço antes de salvar',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.red.shade100,
+                          colorText: Colors.black87,
+                        );
+                        return;
+                      }
+
+                      final vinculoNovo = FornecedorProdutoServicoModel(
+                        id: vinculo?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                        idProdutoServico: servicoSelecionado.value!.id,
+                        idSubcategoria: subcategoriaSelecionada.value!.id,
+                        idFornecedor: idFornecedor,
+                        preco: double.tryParse(precoCtrl.text.replaceAll(',', '.')) ?? 0.0,
+                        precoPromocao: double.tryParse(promocaoCtrl.text.replaceAll(',', '.')),
+                        ativo: ativo.value,
+                      );
+
+                      await fornecedorController.vincularServico(vinculoNovo);
+                      Get.back();
+                    },
+                    */
                   ),
                 ),
                 const SizedBox(height: 12),

@@ -42,8 +42,7 @@ class _ServicosCategoriaScreenState extends State<ServicosCategoriaScreen> {
 
     // 🔹 Escuta serviços dos fornecedores selecionados na categoria escolhida
     fornecedorController.escutarServicosFornecedor(
-      idsFornecedores: widget.fornecedoresSelecionados,
-      idCategoria: widget.idCategoria,
+      widget.fornecedoresSelecionados[0],
     );
   }
 
@@ -96,15 +95,15 @@ class _ServicosCategoriaScreenState extends State<ServicosCategoriaScreen> {
                 ),
                 itemBuilder: (context, index) {
                   final servico = servicos[index];
-                  final selecionado = selecionados.contains(servico.idFornecedorServico);
+                  final selecionado = selecionados.contains(servico.id);
 
                   return GestureDetector(
                     onTap: () {
                       if (selecionado) {
-                        selecionados.remove(servico.idFornecedorServico);
+                        selecionados.remove(servico.id);
                         HapticFeedback.lightImpact();
                       } else {
-                        selecionados.add(servico.idFornecedorServico);
+                        selecionados.add(servico.id);
                         HapticFeedback.mediumImpact();
                       }
                     },
@@ -136,9 +135,8 @@ class _ServicosCategoriaScreenState extends State<ServicosCategoriaScreen> {
                     elevation: 8,
                   ),
                   onPressed: () {
-                    final servicosSelecionados = servicos
-                        .where((s) => selecionados.contains(s.idFornecedorServico))
-                        .toList();
+                    final servicosSelecionados =
+                        servicos.where((s) => selecionados.contains(s.id)).toList();
 
                     if (servicosSelecionados.isEmpty) return;
 

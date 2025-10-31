@@ -41,6 +41,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.1"
+  br_validators:
+    dependency: "direct main"
+    description:
+      name: br_validators
+      sha256: "4f15d0bf460a9ad2dd9ea1e9a8b54c9ebdb15d6aa5f1588e5b69962e8d696585"
+      url: "https://pub.dev"
+    source: hosted
+    version: "2.0.4"
   cached_network_image:
     dependency: "direct main"
     description:
@@ -161,6 +169,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.0"
+  email_validator:
+    dependency: "direct main"
+    description:
+      name: email_validator
+      sha256: b19aa5d92fdd76fbc65112060c94d45ba855105a28bb6e462de7ff03b12fa1fb
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.0.0"
   equatable:
     dependency: transitive
     description:

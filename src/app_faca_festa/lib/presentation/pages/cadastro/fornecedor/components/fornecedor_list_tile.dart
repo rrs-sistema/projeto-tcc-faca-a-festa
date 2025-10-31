@@ -5,10 +5,11 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../../controllers/servico_produto_controller.dart';
 import '../../../../../core/utils/no_sqflite_cache_manager.dart';
 import '../../../../../controllers/fornecedor_controller.dart';
-import '../../servico/fornecedor_servico_list_screen.dart';
 import '../../../../../data/models/model.dart';
+import '../../servico/servico_produto_list_screen.dart';
 import 'territorio_atendimento.dart';
 
 class FornecedorListTile extends StatelessWidget {
@@ -65,20 +66,26 @@ class FornecedorListTile extends StatelessWidget {
   }
 
   Widget _buildBanner() {
+    final url = fornecedor.bannerUrl?.trim();
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: SizedBox(
+      child: Container(
         width: isCelular ? 70 : 100,
         height: isCelular ? 70 : 100,
-        child: fornecedor.bannerUrl != null && fornecedor.bannerUrl!.isNotEmpty
+        color: Colors.grey.shade200, // fundo base
+        child: (url != null && url.isNotEmpty)
             ? CachedNetworkImage(
-                imageUrl: fornecedor.bannerUrl!,
+                imageUrl: url,
                 cacheManager: AdaptiveCacheManager.instance,
                 fit: BoxFit.cover,
-                placeholder: (_, __) => Container(color: Colors.grey.shade300),
-                errorWidget: (_, __, ___) => _bannerPlaceholder(),
-                memCacheHeight: 250,
-                memCacheWidth: 250,
+                placeholder: (_, __) => const Center(
+                  child: CircularProgressIndicator(strokeWidth: 1.5),
+                ),
+                errorWidget: (_, __, ___) {
+                  debugPrint('❌ Erro ao carregar imagem: $url');
+                  return _bannerPlaceholder();
+                },
                 fadeInDuration: const Duration(milliseconds: 250),
               )
             : _bannerPlaceholder(),
@@ -86,12 +93,11 @@ class FornecedorListTile extends StatelessWidget {
     );
   }
 
-  Widget _bannerPlaceholder() {
-    return Container(
-      color: primary.withValues(alpha: 0.15),
-      child: Icon(Icons.store_mall_directory, color: primary, size: 36),
-    );
-  }
+  Widget _bannerPlaceholder() => Container(
+        color: Colors.grey.shade300,
+        alignment: Alignment.center,
+        child: const Icon(Icons.image_rounded, color: Colors.white54, size: 32),
+      );
 
   Widget _buildInfo(BuildContext context, String linkWhatsapp, bool aprovado, bool ativo) {
     return Column(
@@ -178,7 +184,6 @@ class FornecedorListTile extends StatelessWidget {
                 },
               ),
               const SizedBox(width: 10),
-
               _actionButton(
                 icon: Icons.design_services_outlined,
                 label: 'Serviços',
@@ -186,8 +191,14 @@ class FornecedorListTile extends StatelessWidget {
                 bgColor: Colors.indigo.shade50,
                 borderColor: Colors.indigo.shade300,
                 onTap: () async {
-                  await controller.listarServicosFornecedor(fornecedor.idFornecedor);
-                  Get.to(() => FornecedorServicoListScreen(fornecedor: fornecedor));
+                  final servicoProdutoController = Get.put(ServicoProdutoController());
+                  // 🔹 Chama apenas o carregamento se quiser pré-aquecer os dados
+                  await servicoProdutoController.toggleListenerFornecedor(
+                      idFornecedor: fornecedor.idFornecedor);
+                  //await servicoProdutoController.buscarServicosDoFornecedorPeloAdmin(fornecedor.idFornecedor);
+
+                  // 🔹 Abre a tela de lista de serviços (a mesma que o admin usa)
+                  Get.to(() => ServicoProdutoListScreen(fornecedorId: fornecedor.idFornecedor));
                 },
               ),
 

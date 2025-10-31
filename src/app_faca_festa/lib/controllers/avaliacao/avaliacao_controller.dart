@@ -8,29 +8,41 @@ class AvaliacaoController extends GetxController {
   final RxList<AvaliacaoModel> avaliacoes = <AvaliacaoModel>[].obs;
   final RxDouble media = 0.0.obs;
   final RxMap<int, double> distribuicao = <int, double>{}.obs;
+  final RxBool carregando = false.obs;
+  final RxString erro = ''.obs;
 
-  StreamSubscription? _subscription;
+  StreamSubscription<QuerySnapshot>? _subscription;
 
-  /// 🔹 Inicia a escuta das avaliações de um fornecedor
+  /// 🟢 Escuta em tempo real todas as avaliações do fornecedor logado
   void listenAvaliacoes(String idFornecedor) {
-    _subscription?.cancel();
+    _subscription?.cancel(); // Cancela anterior
+    carregando.value = true;
+    erro.value = '';
 
     _subscription = FirebaseFirestore.instance
         .collection('avaliacoes')
         .where('id_fornecedor', isEqualTo: idFornecedor)
         .snapshots()
-        .listen((snapshot) {
-      final lista = snapshot.docs.map((d) => AvaliacaoModel.fromSnapshot(d)).toList();
-      avaliacoes.assignAll(lista);
-      _calcularMediaEDistribuicao();
-    });
+        .listen(
+      (snapshot) {
+        final lista = snapshot.docs.map((d) => AvaliacaoModel.fromSnapshot(d)).toList();
+
+        avaliacoes.assignAll(lista);
+        _calcularMediaEDistribuicao();
+        carregando.value = false;
+      },
+      onError: (e) {
+        erro.value = 'Erro ao carregar avaliações: $e';
+        carregando.value = false;
+      },
+    );
   }
 
-  /// 🔹 Cálculo da média e da distribuição por estrelas
+  /// 🧮 Cálculo da média e distribuição de estrelas (reativo)
   void _calcularMediaEDistribuicao() {
     if (avaliacoes.isEmpty) {
       media.value = 0;
-      distribuicao.assignAll({for (var i = 1; i <= 5; i++) i: 0});
+      distribuicao.assignAll({for (var i = 1; i <= 5; i++) i: 0.0});
       return;
     }
 
@@ -38,8 +50,9 @@ class AvaliacaoController extends GetxController {
     final counts = {for (var i = 1; i <= 5; i++) i: 0};
 
     for (var a in avaliacoes) {
-      soma += a.nota;
-      counts[a.nota] = counts[a.nota]! + 1;
+      final nota = a.nota.clamp(1, 5); // evita valores fora do range
+      soma += nota;
+      counts[nota] = counts[nota]! + 1;
     }
 
     media.value = soma / avaliacoes.length;
@@ -48,12 +61,22 @@ class AvaliacaoController extends GetxController {
     });
   }
 
-  /// 🔹 Adicionar nova avaliação
+  /// ✳️ Adiciona nova avaliação (com tratamento de erro)
   Future<void> adicionarAvaliacao(AvaliacaoModel avaliacao) async {
-    await FirebaseFirestore.instance
-        .collection('avaliacoes')
-        .doc(avaliacao.id)
-        .set(avaliacao.toMap());
+    try {
+      await FirebaseFirestore.instance
+          .collection('avaliacoes')
+          .doc(avaliacao.id)
+          .set(avaliacao.toMap());
+    } catch (e) {
+      erro.value = 'Erro ao salvar avaliação: $e';
+    }
+  }
+
+  /// 🔁 Permite reiniciar a escuta (ex: trocar fornecedor logado)
+  Future<void> reiniciarListener(String idFornecedor) async {
+    await _subscription?.cancel();
+    listenAvaliacoes(idFornecedor);
   }
 
   @override

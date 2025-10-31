@@ -2,6 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../controllers/servico_produto_controller.dart';
 import './../cadastro/fornecedor/fornecedores_admin_list_screen.dart';
 import './../cadastro/categoria/categoria_servico_list_screen.dart';
 import './../cadastro/servico/servico_produto_list_screen.dart';
@@ -30,7 +31,13 @@ class AdminDashboardScreen extends StatelessWidget {
         title: 'Serviços / Produtos',
         icon: Icons.design_services_rounded,
         color: Colors.blue.shade700, // Azul padrão elegante
-        onTap: () => Get.to(() => const ServicoProdutoListScreen()),
+        onTap: () async {
+          final servicoProdutoController = Get.put(ServicoProdutoController());
+          // 🔹 Chama apenas o carregamento se quiser pré-aquecer os dados
+          await servicoProdutoController.toggleListenerAdmin();
+          Get.to(() => const ServicoProdutoListScreen());
+        },
+        //onTap: () => Get.to(() => const ServicoProdutoListScreen()),
       ),
       _AdminItem(
         title: 'Fornecedores',

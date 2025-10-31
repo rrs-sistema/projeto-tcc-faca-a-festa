@@ -66,32 +66,99 @@ class _CustomInputFieldState extends State<CustomInputField> {
   void _configurarMascara() {
     final label = widget.label.toLowerCase();
 
-    // 🔹 Define máscara automática conforme o tipo do campo
+    debugPrint('🧩 [_configurarMascara] Configurando máscara para "$label"...');
+
+    // TELEFONE
     if (label.contains('telefone') || label.contains('celular')) {
       maskFormatter = MaskTextInputFormatter(
         mask: '(##) #####-####',
         filter: {"#": RegExp(r'[0-9]')},
       );
       keyboardType = TextInputType.phone;
-    } else if (label.contains('cpf')) {
-      maskFormatter = MaskTextInputFormatter(
-        mask: '###.###.###-##',
-        filter: {"#": RegExp(r'[0-9]')},
-      );
+      return;
+    }
+
+    // ✅ CPF / CNPJ automáticos (sem limite inicial)
+    if (label.contains('cpf') || label.contains('cnpj')) {
+      debugPrint('🧾 Campo identificado como CPF/CNPJ dinâmico');
       keyboardType = TextInputType.number;
-    } else if (label.contains('cep')) {
+
+      widget.controller.addListener(() {
+        final text = widget.controller.text;
+        final digits = text.replaceAll(RegExp(r'[^0-9]'), '');
+        final length = digits.length;
+
+        debugPrint('🔢 Texto atual: "$text" | Dígitos: $length');
+
+        String formatted = digits;
+        if (length <= 11) {
+          // Formata como CPF
+          formatted = _formatCpf(digits);
+        } else if (length <= 14) {
+          // Formata como CNPJ
+          formatted = _formatCnpj(digits);
+        }
+
+        // Atualiza o texto somente se houver diferença
+        if (formatted != text) {
+          final pos = formatted.length;
+          widget.controller.value = TextEditingValue(
+            text: formatted,
+            selection: TextSelection.collapsed(offset: pos),
+          );
+        }
+      });
+
+      return;
+    }
+
+    // CEP
+    if (label.contains('cep')) {
       maskFormatter = MaskTextInputFormatter(
         mask: '#####-###',
         filter: {"#": RegExp(r'[0-9]')},
       );
       keyboardType = TextInputType.number;
-    } else if (label.contains('e-mail') || label.contains('email')) {
-      keyboardType = TextInputType.emailAddress;
-    } else if (label.contains('valor') || label.contains('número')) {
-      keyboardType = TextInputType.number;
-    } else {
-      keyboardType = widget.keyboardType ?? TextInputType.text;
+      return;
     }
+
+    // EMAIL
+    if (label.contains('e-mail') || label.contains('email')) {
+      keyboardType = TextInputType.emailAddress;
+      return;
+    }
+
+    // VALORES
+    if (label.contains('valor') || label.contains('número')) {
+      keyboardType = TextInputType.number;
+      return;
+    }
+
+    // TEXTO padrão
+    keyboardType = widget.keyboardType ?? TextInputType.text;
+  }
+
+// 🔹 Formatação manual CPF
+  String _formatCpf(String numbers) {
+    final buffer = StringBuffer();
+    for (int i = 0; i < numbers.length; i++) {
+      if (i == 3 || i == 6) buffer.write('.');
+      if (i == 9) buffer.write('-');
+      buffer.write(numbers[i]);
+    }
+    return buffer.toString();
+  }
+
+// 🔹 Formatação manual CNPJ
+  String _formatCnpj(String numbers) {
+    final buffer = StringBuffer();
+    for (int i = 0; i < numbers.length; i++) {
+      if (i == 2 || i == 5) buffer.write('.');
+      if (i == 8) buffer.write('/');
+      if (i == 12) buffer.write('-');
+      buffer.write(numbers[i]);
+    }
+    return buffer.toString();
   }
 
   @override

@@ -274,7 +274,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                     duration: const Duration(milliseconds: 400),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     child: Hero(
-                      tag: 'servico_${s.idFornecedorServico}',
+                      tag: 'servico_${s.id}',
                       child: _cardServicoCarrossel(s, primary),
                     ),
                   );
@@ -550,7 +550,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     );
   }
 
-// === CARD HORIZONTAL (CELULAR)
+// === CARD HORIZONTAL COM GLAMOUR ✨
   Widget _buildHorizontalCard(
     FornecedorDetalhadoDto fornecedor,
     Color primary,
@@ -558,100 +558,186 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     double? distancia,
     bool selecionado,
   ) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // 📸 Imagem lateral
-        ClipRRect(
-          borderRadius: BorderRadius.only(
-            topLeft: cardRadius.topLeft,
-            bottomLeft: cardRadius.bottomLeft,
+    final isSelected = selecionado;
+    final glamGradient = LinearGradient(
+      colors: [
+        Colors.white,
+        Colors.grey.shade50,
+        Colors.grey.shade100,
+        primary.withValues(alpha: 0.05),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 10),
+      decoration: BoxDecoration(
+        gradient: glamGradient,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isSelected ? primary.withValues(alpha: 0.4) : Colors.grey.shade200,
+          width: isSelected ? 1.8 : 1.0,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: primary.withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
           ),
-          child:
-              fornecedor.fornecedor.bannerUrl != null && fornecedor.fornecedor.bannerUrl!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: fornecedor.fornecedor.bannerUrl!,
+          if (isSelected)
+            BoxShadow(
+              color: primary.withValues(alpha: 0.25),
+              blurRadius: 20,
+              spreadRadius: 1,
+            ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 📸 Coluna com imagem + botão
+            Column(
+              children: [
+                // Banner com leve brilho
+                Stack(
+                  alignment: Alignment.bottomCenter,
+                  children: [
+                    Container(
                       width: 110,
                       height: 110,
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: Colors.grey.shade300),
-                      errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
-                    )
-                  : _bannerPlaceholder(primary),
-        ),
-
-        // 📋 Informações
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  fornecedor.fornecedor.razaoSocial,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: selecionado ? Colors.white : Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  fornecedor.fornecedor.descricao ?? 'Fornecedor parceiro do Faça a Festa',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: selecionado ? Colors.white70 : Colors.grey.shade700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                if (distancia != null)
-                  Row(
-                    children: [
-                      Icon(Icons.location_on_outlined, size: 13, color: primary),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${distancia.toStringAsFixed(1)} km',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: selecionado ? Colors.white70 : Colors.black54,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withValues(alpha: 0.05),
+                            Colors.transparent,
+                          ],
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
                         ),
                       ),
-                    ],
-                  ),
-                const SizedBox(height: 10),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.info_outline_rounded, size: 16),
-                    label: const Text('Detalhes', style: TextStyle(fontSize: 12.5)),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      backgroundColor: selecionado ? Colors.white : primary,
-                      foregroundColor: selecionado ? primary : Colors.white,
-                      minimumSize: const Size(80, 30),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                      child: ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(14),
+                        ),
+                        child: fornecedor.fornecedor.bannerUrl != null &&
+                                fornecedor.fornecedor.bannerUrl!.isNotEmpty
+                            ? CachedNetworkImage(
+                                imageUrl: fornecedor.fornecedor.bannerUrl!,
+                                fit: BoxFit.cover,
+                                placeholder: (_, __) => Container(color: Colors.grey.shade200),
+                                errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
+                              )
+                            : _bannerPlaceholder(primary),
                       ),
                     ),
-                    onPressed: () {
-                      controllerLocalizacao.servicoSelecionadoId.value = fornecedor.categoriaId;
-                      Get.to(() => FornecedorDetalheScreen(fornecedorDetalhado: fornecedor));
-                    },
+                    // Reflexo suave sobre a imagem
+                    Container(
+                      width: 110,
+                      height: 110,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.25),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                // ✨ Botão Detalhes com brilho
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.info_outline_rounded, size: 16),
+                  label: const Text('Detalhes', style: TextStyle(fontSize: 12.5)),
+                  style: ElevatedButton.styleFrom(
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    backgroundColor: isSelected ? Colors.white : primary.withValues(alpha: 0.95),
+                    foregroundColor: isSelected ? primary : Colors.white.withValues(alpha: 0.95),
+                    minimumSize: const Size(100, 32),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(
+                        color: isSelected ? primary.withValues(alpha: 0.5) : Colors.transparent,
+                      ),
+                    ),
                   ),
+                  onPressed: () {
+                    controllerLocalizacao.servicoSelecionadoId.value = fornecedor.categoriaId;
+                    Get.to(() => FornecedorDetalheScreen(fornecedorDetalhado: fornecedor));
+                  },
                 ),
               ],
             ),
-          ),
+
+            // 📋 Informações do Fornecedor
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      fornecedor.fornecedor.razaoSocial,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: isSelected ? primary : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      fornecedor.fornecedor.descricao ?? 'Fornecedor parceiro do Faça a Festa',
+                      maxLines: 4,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color:
+                            isSelected ? Colors.black.withValues(alpha: 0.7) : Colors.grey.shade700,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    if (distancia != null)
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 14,
+                            color: primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${distancia.toStringAsFixed(1)} km',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color:
+                                  isSelected ? Colors.black.withValues(alpha: 0.6) : Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 
-// === CARD VERTICAL (TABLET / DESKTOP)
+// === CARD VERTICAL (TABLET / DESKTOP) — COM GLAMOUR ✨
   Widget _buildVerticalCard(
     FornecedorModel fornecedor,
     Color primary,
@@ -659,67 +745,168 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     double? distancia,
     bool selecionado,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.vertical(top: cardRadius.topLeft),
-          child: fornecedor.bannerUrl != null && fornecedor.bannerUrl!.isNotEmpty
-              ? CachedNetworkImage(
-                  imageUrl: fornecedor.bannerUrl!,
-                  height: 110,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => Container(color: Colors.grey.shade300),
-                  errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
-                )
-              : _bannerPlaceholder(primary),
+    final isSelected = selecionado;
+
+    final glamGradient = LinearGradient(
+      colors: [
+        Colors.white,
+        Colors.grey.shade50,
+        Colors.grey.shade100,
+        primary.withValues(alpha: 0.05),
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+      margin: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        gradient: glamGradient,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isSelected ? primary.withValues(alpha: 0.4) : Colors.grey.shade200,
+          width: isSelected ? 1.8 : 1.0,
         ),
-        Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                fornecedor.razaoSocial,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                  color: selecionado ? Colors.white : Colors.black87,
+        boxShadow: [
+          BoxShadow(
+            color: primary.withValues(alpha: 0.12),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+          if (isSelected)
+            BoxShadow(
+              color: primary.withValues(alpha: 0.25),
+              blurRadius: 18,
+              spreadRadius: 1,
+            ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 📸 Banner com reflexo
+            Stack(
+              alignment: Alignment.bottomCenter,
+              children: [
+                SizedBox(
+                  height: 140,
+                  width: double.infinity,
+                  child: fornecedor.bannerUrl != null && fornecedor.bannerUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: fornecedor.bannerUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) => Container(color: Colors.grey.shade200),
+                          errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
+                        )
+                      : _bannerPlaceholder(primary),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                fornecedor.descricao ?? 'Fornecedor parceiro do Faça a Festa',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: selecionado ? Colors.white70 : Colors.grey.shade700,
-                ),
-              ),
-              if (distancia != null) ...[
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    Icon(Icons.location_on_outlined, size: 13, color: primary),
-                    const SizedBox(width: 3),
-                    Text(
-                      '${distancia.toStringAsFixed(1)} km de você',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: selecionado ? Colors.white70 : Colors.black54,
-                      ),
+                // Reflexo suave sobre a imagem
+                Container(
+                  height: 140,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.white.withValues(alpha: 0.25),
+                        Colors.transparent,
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ],
-            ],
-          ),
+            ),
+
+            // 📋 Conteúdo
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    fornecedor.razaoSocial,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 14,
+                      color: isSelected ? primary : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    fornecedor.descricao ?? 'Fornecedor parceiro do Faça a Festa',
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.4,
+                      color:
+                          isSelected ? Colors.black.withValues(alpha: 0.7) : Colors.grey.shade700,
+                    ),
+                  ),
+                  if (distancia != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.location_on_outlined,
+                          size: 14,
+                          color: primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${distancia.toStringAsFixed(1)} km de você',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color:
+                                isSelected ? Colors.black.withValues(alpha: 0.6) : Colors.black54,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 14),
+
+                  // ✨ Botão Detalhes centralizado
+                  Align(
+                    alignment: Alignment.center,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.info_outline_rounded, size: 16),
+                      label: const Text('Detalhes', style: TextStyle(fontSize: 13)),
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        backgroundColor:
+                            isSelected ? Colors.white : primary.withValues(alpha: 0.95),
+                        foregroundColor:
+                            isSelected ? primary : Colors.white.withValues(alpha: 0.95),
+                        minimumSize: const Size(120, 36),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: isSelected ? primary.withValues(alpha: 0.5) : Colors.transparent,
+                          ),
+                        ),
+                      ),
+                      onPressed: () {
+                        Get.to(() => FornecedorDetalheScreen(
+                              fornecedorDetalhado: FornecedorDetalhadoDto(
+                                  fornecedor: fornecedor, categoriaId: '', categoriaNome: ''),
+                            ));
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 

@@ -38,74 +38,75 @@ class FornecedorLocalizacaoController extends GetxController {
     _obterLocalizacaoUsuario();
   }
 
-  Future<void> escutarServicosFornecedor({
-    required List<String> idsFornecedores,
-    required String idCategoria,
-  }) async {
+  Future<void> escutarServicosFornecedor(String idFornecedor) async {
     carregandoServicosFornecedor.value = true;
     final db = FirebaseFirestore.instance;
 
-    db
-        .collection('fornecedor_servico')
-        .where('id_fornecedor', whereIn: idsFornecedores)
-        .snapshots()
-        .listen((snapshot) async {
-      List<FornecedorServicoDetalhadoDto> lista = [];
+    try {
+      db
+          .collection('fornecedor_categoria')
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .snapshots()
+          .listen((snapshot) async {
+        List<FornecedorServicoDetalhadoDto> lista = [];
 
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-        final idSubcategoria = data['id_subcategoria'];
-        final idProdutoServico = data['id_produto_servico'];
-        final idFornecedor = data['id_fornecedor'];
+        for (final doc in snapshot.docs) {
+          final data = doc.data();
+          final nomeCategoria = data['nome_categoria'] ?? '';
+          final subcategorias = (data['subcategorias'] as List?) ?? [];
 
-        // 🔹 Busca o serviço base
-        final servicoSnap = await db.collection('servico_produto').doc(idProdutoServico).get();
-        final servicoData = servicoSnap.data();
+          for (final sub in subcategorias) {
+            final idSub = sub['idSubcategoria'];
+            final nomeSub = sub['nomeSubcategoria'] ?? 'Sem subcategoria';
 
-        // 🔹 Busca subcategoria e categoria
-        String? nomeSubcategoria;
-        String? nomeCategoria;
+            if (idSub == null || idSub.isEmpty) continue;
 
-        if (idSubcategoria != null && idSubcategoria.isNotEmpty) {
-          final subSnap = await db.collection('subcategoria_servico').doc(idSubcategoria).get();
-          nomeSubcategoria = subSnap.data()?['nome'];
+            // 🔹 Busca serviços da subcategoria
+            final servSnap = await db
+                .collection('servico_produto')
+                .where('id_subcategoria', isEqualTo: idSub)
+                .where('ativo', isEqualTo: true)
+                .get();
 
-          final idCat = subSnap.data()?['id_categoria'];
-          if (idCat != null) {
-            final catSnap = await db.collection('categoria_servico').doc(idCat).get();
-            nomeCategoria = catSnap.data()?['nome'];
+            for (final servDoc in servSnap.docs) {
+              final servData = servDoc.data();
+
+              // 🔹 Busca imagem (opcional)
+              final fotoSnap = await db
+                  .collection('servico_foto')
+                  .where('id_fornecedor', isEqualTo: idFornecedor)
+                  .where('id_produto_servico', isEqualTo: servDoc.id)
+                  .limit(1)
+                  .get();
+
+              final imagemUrl =
+                  fotoSnap.docs.isNotEmpty ? fotoSnap.docs.first.data()['url'] as String? : null;
+
+              lista.add(FornecedorServicoDetalhadoDto(
+                id: '${idFornecedor}_${servDoc.id}',
+                idFornecedor: idFornecedor,
+                idProdutoServico: servDoc.id,
+                idSubcategoria: idSub,
+                nomeServico: servData['nome'],
+                descricaoServico: servData['descricao'],
+                preco: (servData['preco'] as num?)?.toDouble() ?? 0.0,
+                precoPromocao: (servData['preco_promocao'] as num?)?.toDouble(),
+                nomeSubcategoria: nomeSub,
+                nomeCategoria: nomeCategoria,
+                imagemUrl: imagemUrl,
+                ativo: servData['ativo'] ?? true,
+              ));
+            }
           }
         }
 
-        // 🔹 Busca imagem (opcional)
-        final fotoSnap = await db
-            .collection('servico_foto')
-            .where('id_fornecedor', isEqualTo: idFornecedor)
-            .where('id_produto_servico', isEqualTo: idProdutoServico)
-            .limit(1)
-            .get();
-        final imagemUrl =
-            fotoSnap.docs.isNotEmpty ? fotoSnap.docs.first.data()['url'] as String? : null;
-
-        // 🔹 Filtra apenas se pertencer à categoria visualizada
-        lista.add(FornecedorServicoDetalhadoDto(
-            idFornecedorServico: doc.id,
-            idFornecedor: data['id_fornecedor'],
-            idProdutoServico: idProdutoServico,
-            idSubcategoria: idSubcategoria,
-            nomeServico: servicoData?['nome'],
-            descricaoServico: servicoData?['descricao'],
-            preco: (data['preco'] as num?)?.toDouble() ?? 0.0,
-            precoPromocao: (data['preco_promocao'] as num?)?.toDouble(),
-            nomeSubcategoria: nomeSubcategoria,
-            nomeCategoria: nomeCategoria,
-            imagemUrl: imagemUrl,
-            ativo: true));
-      }
-
-      servicosFornecedor.assignAll(lista);
+        servicosFornecedor.assignAll(lista);
+        carregandoServicosFornecedor.value = false;
+      });
+    } catch (e, s) {
       carregandoServicosFornecedor.value = false;
-    });
+      debugPrint('❌ [FornecedorController] Erro ao escutar serviços fornecedor: $e\n$s');
+    }
   }
 
   /// 🔹 Busca todos os serviços de uma categoria específica, independente do fornecedor
@@ -161,7 +162,7 @@ class FornecedorLocalizacaoController extends GetxController {
             fotoSnap.docs.isNotEmpty ? fotoSnap.docs.first.data()['url'] as String? : null;
 
         lista.add(FornecedorServicoDetalhadoDto(
-            idFornecedorServico: doc.id,
+            id: doc.id,
             idFornecedor: idFornecedor,
             idProdutoServico: idProdutoServico,
             idSubcategoria: idSubcategoria,

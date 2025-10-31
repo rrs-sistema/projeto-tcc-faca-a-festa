@@ -1,7 +1,7 @@
 // lib/data/models/fornecedor_servico_detalhado_model.dart
 
 class FornecedorServicoDetalhadoDto {
-  final String idFornecedorServico;
+  final String id;
   final String idFornecedor;
   final String idProdutoServico;
   final String? idSubcategoria;
@@ -16,7 +16,7 @@ class FornecedorServicoDetalhadoDto {
   final bool ativo;
 
   FornecedorServicoDetalhadoDto({
-    required this.idFornecedorServico,
+    required this.id,
     required this.idFornecedor,
     required this.idProdutoServico,
     this.idSubcategoria,

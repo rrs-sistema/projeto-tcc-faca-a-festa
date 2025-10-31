@@ -57,7 +57,7 @@ class ServicoProdutoModel {
   ) {
     return servicos.map((s) {
       return FornecedorServicoDetalhadoDto(
-          idFornecedorServico: 'vinc_${s.id}_$idFornecedor', // 🔹 ID temporário de vínculo
+          id: s.id,
           idFornecedor: idFornecedor,
           idProdutoServico: s.id,
           idSubcategoria: s.idSubcategoria,
