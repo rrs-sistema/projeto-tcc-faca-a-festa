@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../../core/utils/no_sqflite_cache_manager.dart';
-import './../../../../controllers/event_theme_controller.dart';
+import '../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/fornecedor_controller.dart';
 import './../../../../controllers/app_controller.dart';
 

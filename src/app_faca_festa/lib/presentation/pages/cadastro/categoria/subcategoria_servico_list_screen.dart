@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../data/models/servico_produto/categoria_servico_model.dart';
 import './../../../../controllers/categoria/subcategoria_servico_controller.dart';
-import './../../../../../controllers/event_theme_controller.dart';
+import '../../../../controllers/tema/event_theme_controller.dart';
 import './show_subcategoria_servico_bottom_sheet.dart';
 
 class SubcategoriaServicoListScreen extends StatelessWidget {

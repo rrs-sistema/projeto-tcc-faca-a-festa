@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
 import './../../../controllers/contacao/cotacao_controller.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/fornecedor_controller.dart';
 import './../../../controllers/orcamento_controller.dart';
 import './../../../controllers/app_controller.dart';

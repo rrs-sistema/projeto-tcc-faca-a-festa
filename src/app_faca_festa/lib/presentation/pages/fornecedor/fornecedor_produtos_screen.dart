@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 import '../../../controllers/evento_controller.dart';
 import '../../../controllers/fornecedor_controller.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../../data/models/model.dart';
 

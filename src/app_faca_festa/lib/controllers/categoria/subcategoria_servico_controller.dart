@@ -9,9 +9,33 @@ class SubcategoriaServicoController extends GetxController {
 
   // 🔹 Listas observáveis
   final subcategorias = <SubcategoriaServicoModel>[].obs;
+  final todasSubcategorias = <SubcategoriaServicoModel>[].obs;
   final subcategoriasFiltradas = <SubcategoriaServicoModel>[].obs;
   RxMap<String, List<SubcategoriaServicoModel>> subcategoriasPorCategoria =
       <String, List<SubcategoriaServicoModel>>{}.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+
+    Future.delayed(Duration.zero, () {
+      carregarTodasSubcategoria();
+    });
+  }
+
+  Future<void> carregarTodasSubcategoria() async {
+    try {
+      final snap = await _db.collection('subcategoria_servico').get();
+
+      final lista = snap.docs.map((d) {
+        final data = d.data();
+        data['id'] = d.id;
+        return SubcategoriaServicoModel.fromMap(data);
+      }).toList();
+
+      todasSubcategorias.assignAll(lista);
+    } catch (_) {}
+  }
 
   // 🔹 Estados
   final carregando = false.obs;

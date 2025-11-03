@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import '../../controllers/evento_controller.dart';
 import './../../controllers/evento_cadastro_controller.dart';
 import './../pages/usuario/cadastro_evento_bottom_sheet.dart';
-import './../../controllers/event_theme_controller.dart';
+import '../../controllers/tema/event_theme_controller.dart';
 import './../../controllers/app_controller.dart';
 
 class MenuDrawerFacaFesta extends StatelessWidget {

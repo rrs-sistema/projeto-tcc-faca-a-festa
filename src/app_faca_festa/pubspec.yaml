@@ -71,6 +71,7 @@ flutter:
     - assets/lottie/location-pin.json
     - assets/lottie/lia_idle.json
     - assets/lottie/lia_talking.json
+    - assets/animations/confetti_background.json
 
 
   fonts:

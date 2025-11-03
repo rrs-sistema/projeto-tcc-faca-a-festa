@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 
 import './../../../controllers/admin/orcamentos_admin_controller.dart';
 import './../../../data/models/admin/orcamento_admin_model.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 
 class OrcamentosAdminListScreen extends StatelessWidget {
   const OrcamentosAdminListScreen({super.key});

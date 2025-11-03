@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 
 import '../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../components/abrir_nova_cotacao_bottom_sheet.dart';
-import './../../../../controllers/event_theme_controller.dart';
+import '../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/app_controller.dart';
 
 import './../../../../controllers/fornecedor_localizacao_controller.dart';

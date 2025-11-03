@@ -4,13 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/fornecedor_localizacao_controller.dart';
-import '../../../data/models/DTO/fornecedor_detalhado_dto.dart';
+import './../../../controllers/fornecedor_localizacao_controller.dart';
+import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import './../../../core/utils/no_sqflite_cache_manager.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
+import './../../../data/models/DTO/servico_cotado_dto.dart';
 import './../../../controllers/fornecedor_controller.dart';
 import './sections/fornecedor/servico_card_principal.dart';
-import '../../../data/models/DTO/servico_cotado_dto.dart';
 import './../../../controllers/app_controller.dart';
 import './../../../data/models/model.dart';
 

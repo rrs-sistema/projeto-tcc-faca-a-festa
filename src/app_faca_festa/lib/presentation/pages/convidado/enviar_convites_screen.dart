@@ -6,7 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../../controllers/convidado/grupo_convidado_controller.dart';
 import '../../widgets/custom_input_field.dart';
 import './../../../controllers/convidado/convidado_controller.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/evento_controller.dart';
 import './../../../data/models/model.dart';
 

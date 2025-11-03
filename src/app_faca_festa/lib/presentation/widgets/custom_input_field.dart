@@ -3,7 +3,7 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 
-import '../../controllers/event_theme_controller.dart';
+import '../../controllers/tema/event_theme_controller.dart';
 
 class CustomInputField extends StatefulWidget {
   final String label;

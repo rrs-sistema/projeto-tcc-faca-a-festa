@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import '../../../controllers/usuario/usuario_controller.dart';
 import '../endereco/endereco_section.dart';
 import '../endereco/endereco_section_controller.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../data/models/model.dart';
 
 import '../../widgets/custom_input_field.dart'; // seu componente de input elegante

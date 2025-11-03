@@ -17,7 +17,7 @@ import '../../core/utils/biblioteca.dart';
 import '../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import '../widgets/menu_drawer_faca_festa.dart';
 import './../../controllers/convidado/convidado_controller.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../controllers/tema/event_theme_controller.dart';
 import './fornecedor/fornecedor_localizacao_screen.dart';
 import './../../controllers/orcamento_controller.dart';
 import './../../controllers/tarefa_controller.dart';

@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import './tarefa_dialog.dart';
 import 'package:get/get.dart';
 
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/tarefa_controller.dart';
 import './../../../data/models/model.dart';
 

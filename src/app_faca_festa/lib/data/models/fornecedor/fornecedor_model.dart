@@ -74,7 +74,7 @@ class FornecedorModel {
   // =======================================================
   // 🔹 Conversão de Firestore → Model
   // =======================================================
-  factory FornecedorModel.fromMap(Map<String, dynamic> map) {
+  factory FornecedorModel.fromMap(Map<String, dynamic> map, {String? documentId}) {
     final data = map['data_cadastro'];
     DateTime parsedDate;
 
@@ -87,7 +87,8 @@ class FornecedorModel {
     }
 
     return FornecedorModel(
-      idFornecedor: map['id_fornecedor'] ?? '',
+      // ✅ Usa id_fornecedor OU o documentId
+      idFornecedor: map['id_fornecedor'] ?? documentId ?? '',
       idUsuario: map['id_usuario'] ?? '',
       razaoSocial: map['razao_social'] ?? '',
       telefone: map['telefone'] ?? '',
@@ -114,7 +115,7 @@ class FornecedorModel {
     bool? aptoParaOperar,
     bool? ativo,
     String? bannerUrl,
-    List<Map<String, dynamic>>? categorias, // ✅ novo parâmetro
+    List<Map<String, dynamic>>? categorias,
   }) {
     return FornecedorModel(
       idFornecedor: idFornecedor,

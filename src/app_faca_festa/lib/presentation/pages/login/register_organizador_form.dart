@@ -2,7 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/register_controller.dart';
 import './../../widgets/custom_input_field.dart';
 import './../endereco/endereco_section.dart';

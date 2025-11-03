@@ -5,12 +5,13 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../../controllers/servico_produto_controller.dart';
-import '../../../../../core/utils/no_sqflite_cache_manager.dart';
-import '../../../../../controllers/fornecedor_controller.dart';
-import '../../../../../data/models/model.dart';
-import '../../servico/servico_produto_list_screen.dart';
-import 'territorio_atendimento.dart';
+import './../../../../../controllers/fornecedor_localizacao_controller.dart';
+import './../../../../../controllers/servico_produto_controller.dart';
+import './../../../../../core/utils/no_sqflite_cache_manager.dart';
+import './../../../../../controllers/fornecedor_controller.dart';
+import './../../servico/servico_produto_list_screen.dart';
+import './../../../../../data/models/model.dart';
+import './territorio_atendimento_screen.dart';
 
 class FornecedorListTile extends StatelessWidget {
   final FornecedorModel fornecedor;
@@ -298,7 +299,12 @@ class FornecedorListTile extends StatelessWidget {
                 bgColor: Colors.teal.shade50,
                 borderColor: Colors.teal.shade300,
                 onTap: () async {
-                  await showAddTerritorioBottomSheet(context, fornecedor.idFornecedor);
+                  final fornecedorLocalizacaoController =
+                      Get.put(FornecedorLocalizacaoController());
+                  final territorio = fornecedorLocalizacaoController.territoriosFornecedores
+                      .firstWhereOrNull((t) => t.idFornecedor == fornecedor.idFornecedor);
+                  await showAddTerritorioBottomSheet(context, fornecedor.idFornecedor,
+                      existente: territorio);
                 },
               ),
               const SizedBox(width: 8),

@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:app_faca_festa/presentation/pages/cadastro/fornecedor/components/titulo_vinculo_animado.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -12,7 +13,7 @@ import './../../../../controllers/categoria/categoria_servico_controller.dart';
 import './../../../../controllers/servico/servico_foto_controller.dart';
 import './../../../../data/models/servico_produto/servico_foto.dart';
 import './../../../../controllers/servico_produto_controller.dart';
-import './../../../../controllers/event_theme_controller.dart';
+import '../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/fornecedor_controller.dart';
 import './../../../../data/models/model.dart';
 
@@ -298,6 +299,7 @@ Future<void> showFornecedorServicoBottomSheet(
                               Get.snackbar('Atenção', 'Informe uma URL válida antes de salvar');
                               return;
                             }
+                            EasyLoading.show(status: 'Processando...');
                             final novaFoto = ServicoFotoModel(
                               id: DateTime.now().millisecondsSinceEpoch.toString(),
                               idProdutoServico: servicoSelecionado.value!.id,
@@ -306,6 +308,7 @@ Future<void> showFornecedorServicoBottomSheet(
                               dataUpload: DateTime.now(),
                             );
                             await fotoController.adicionarFotoDireto(novaFoto);
+                            EasyLoading.dismiss();
                             urlController.clear();
                           },
                         ),
@@ -321,10 +324,12 @@ Future<void> showFornecedorServicoBottomSheet(
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           onPressed: () async {
+                            EasyLoading.show(status: 'Processando...');
                             await fotoController.adicionarFoto(
                               idFornecedor: idFornecedor,
                               idProdutoServico: servicoSelecionado.value!.id,
                             );
+                            EasyLoading.dismiss();
                           },
                         ),
                       ),
@@ -339,7 +344,7 @@ Future<void> showFornecedorServicoBottomSheet(
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.save_rounded),
                     label: const Text(
-                      'Salvar vínculo',
+                      'Salvar',
                       style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                     ),
                     style: ElevatedButton.styleFrom(
@@ -359,7 +364,7 @@ Future<void> showFornecedorServicoBottomSheet(
                         );
                         return;
                       }
-
+                      EasyLoading.show(status: 'Salvando as informações...');
                       final vinculoNovo = FornecedorProdutoServicoModel(
                         id: vinculo?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
                         idProdutoServico: servicoSelecionado.value!.id,
@@ -371,6 +376,7 @@ Future<void> showFornecedorServicoBottomSheet(
                       );
 
                       await fornecedorController.vincularServico(vinculoNovo);
+                      EasyLoading.dismiss();
 
                       //await fornecedorController.limparDuplicatasFornecedorCategoria();
                       Get.back();

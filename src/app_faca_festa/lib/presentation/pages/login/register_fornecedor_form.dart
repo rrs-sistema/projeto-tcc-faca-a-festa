@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'dart:io';
 
 import './components/categoria_subcategoria_servico_section.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/fornecedor_controller.dart';
 import './../../../controllers/register_controller.dart';
 import './../../widgets/primary_action_button.dart';

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../controllers/convidado/convidado_controller.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/orcamento_controller.dart';
 import './../../pages/fornecedor/fornecedores_page.dart';
 import './../../pages/orcamento/orcamento_screen.dart';

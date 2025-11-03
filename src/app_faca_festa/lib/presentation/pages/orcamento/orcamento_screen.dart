@@ -8,7 +8,7 @@ import '../../../controllers/avaliacao/avaliacao_controller.dart';
 import '../../../controllers/evento_controller.dart';
 import '../../../controllers/orcamento_gasto_controller.dart';
 import '../../../data/models/avaliacao/avaliacao_model.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/orcamento_controller.dart';
 import './../../../data/models/model.dart';
 

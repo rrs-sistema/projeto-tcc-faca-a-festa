@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'dart:ui';
 
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../../data/models/model.dart';
 

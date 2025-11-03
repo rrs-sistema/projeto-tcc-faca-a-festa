@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 
 import '../../../controllers/evento_controller.dart';
 import '../../../role_selector_screen.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../usuario/cadastro_evento_bottom_sheet.dart';
 import './../../../controllers/app_controller.dart';
 import './../../../data/models/model.dart';

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../../controllers/convidado/convidado_controller.dart';
-import './../../../../controllers/event_theme_controller.dart';
+import '../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../data/models/model.dart';
 
 class ListaConvidadosScreen extends StatefulWidget {

@@ -1,16 +1,18 @@
-// ignore_for_file: avoid_print
+// ignore_for_file: avoid_print, use_build_context_synchronously
 
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../controllers/app_controller.dart';
 import '../../../../controllers/fornecedor_controller.dart';
+import '../../../../controllers/servico/servico_foto_controller.dart';
 import '../../../../data/models/model.dart';
 import '../fornecedor/fornecedor_servico_bottom_sheet.dart';
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../../controllers/servico_produto_controller.dart';
-import './../../../../controllers/event_theme_controller.dart';
+import '../../../../controllers/tema/event_theme_controller.dart';
 import './show_servico_produto_bottom_sheet.dart';
 
 class ServicoProdutoListScreen extends StatefulWidget {
@@ -24,6 +26,7 @@ class ServicoProdutoListScreen extends StatefulWidget {
 class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
   final controller = Get.put(ServicoProdutoController());
   final fornecedorController = Get.find<FornecedorController>();
+  final fotoController = Get.put(ServicoFotoController());
   final appController = Get.put(AppController());
 
   final theme = Get.find<EventThemeController>();
@@ -182,24 +185,20 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                               primary: primary,
                               currentPage: _currentPage,
                               rowsPerPage: _rowsPerPage,
-                              onEditar: (s) {
+                              onEditar: (s) async {
                                 if (appController.usuarioLogado.value?.tipo == 'F') {
+                                  fotoController.fotos.clear();
+                                  await fotoController.carregarFotos(
+                                      s.idFornecedor, s.idProdutoServico);
                                   final vinculo = FornecedorProdutoServicoModel(
-                                      id: s.id,
-                                      idProdutoServico: s.idProdutoServico,
-                                      idFornecedor: s.idFornecedor,
-                                      preco: s.preco,
-                                      precoPromocao: s.precoPromocao,
-                                      idSubcategoria: s.idSubcategoria,
-                                      ativo: s.ativo);
-
-                                  print('📝 [EDITAR SERVIÇO]');
-                                  print('   → ID: ${vinculo.idProdutoServico}');
-                                  print('   → Nome: ${s.nomeServico}');
-                                  print('   → Tipo de Medida: ${s.tipoMedida}');
-                                  print('   → Descrição: ${s.descricaoServico}');
-                                  print('   → ID Subcategoria: ${s.idSubcategoria}');
-                                  print('   → Ativo: ${s.ativo}');
+                                    id: s.id,
+                                    idProdutoServico: s.idProdutoServico,
+                                    idFornecedor: s.idFornecedor,
+                                    preco: s.preco,
+                                    precoPromocao: s.precoPromocao,
+                                    idSubcategoria: s.idSubcategoria,
+                                    ativo: s.ativo,
+                                  );
                                   showFornecedorServicoBottomSheet(
                                     context,
                                     widget.fornecedorId ?? '',
@@ -214,11 +213,10 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                               onExcluir: (id) {
                                 if (appController.usuarioLogado.value?.tipo == 'F') {
                                   fornecedorController.excluirVinculo(id);
-                                } else {
+                                } else if (appController.usuarioLogado.value?.tipo == 'A') {
                                   //controller.excluirServico(id);
                                 }
                               },
-                              //onExcluir: (id) => controller.excluirServico(id),
                             ),
                           ),
                         ),
@@ -412,9 +410,14 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
           children: [
             IconButton(
               icon: const Icon(Icons.edit_rounded, color: Colors.blueAccent),
-              onPressed: () {
+              onPressed: () async {
+                EasyLoading.show(status: 'Buscando as informações...');
+
                 final servico =
                     controller.servicos.firstWhereOrNull((p) => p.id == s.idProdutoServico);
+
+                fotoController.fotos.clear();
+                await fotoController.carregarFotos(s.idFornecedor, s.idProdutoServico);
 
                 if (appController.usuarioLogado.value?.tipo == 'F') {
                   final vinculo = FornecedorProdutoServicoModel(
@@ -426,14 +429,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                     idSubcategoria: s.idSubcategoria,
                     ativo: s.ativo,
                   );
-
-                  print('📝 [EDITAR SERVIÇO]');
-                  print('   → ID: ${vinculo.idProdutoServico}');
-                  print('   → Nome: ${s.nomeServico}');
-                  print('   → Tipo de Medida: ${s.tipoMedida}');
-                  print('   → Descrição: ${s.descricaoServico}');
-                  print('   → ID Subcategoria: ${s.idSubcategoria}');
-                  print('   → Ativo: ${s.ativo}');
+                  EasyLoading.dismiss();
 
                   showFornecedorServicoBottomSheet(
                     context,

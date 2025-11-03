@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 
 import './../../../controllers/admin/eventos_admin_controller.dart';
 import './../../../data/models/admin/evento_com_tipo_model.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 
 class EventosAdminListScreen extends StatelessWidget {
   const EventosAdminListScreen({super.key});

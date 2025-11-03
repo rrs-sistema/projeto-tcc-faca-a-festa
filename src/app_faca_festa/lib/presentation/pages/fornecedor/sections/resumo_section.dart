@@ -8,7 +8,7 @@ import './../../../../controllers/avaliacao/avaliacao_controller.dart';
 import './../../../../controllers/servico_produto_controller.dart';
 import './../../cadastro/servico/servico_produto_list_screen.dart';
 import './../components/show_responder_cotacao_bottom_sheet.dart';
-import './../../../../controllers/event_theme_controller.dart';
+import '../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/fornecedor_controller.dart';
 
 class ResumoSection extends StatelessWidget {

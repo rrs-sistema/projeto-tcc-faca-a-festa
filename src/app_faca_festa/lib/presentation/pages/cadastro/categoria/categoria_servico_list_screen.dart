@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../../controllers/categoria/categoria_servico_controller.dart';
-import './../../../../../controllers/event_theme_controller.dart';
+import '../../../../controllers/tema/event_theme_controller.dart';
 import './subcategoria_servico_list_screen.dart';
 import './categoria_servico_bottom_sheet.dart';
 

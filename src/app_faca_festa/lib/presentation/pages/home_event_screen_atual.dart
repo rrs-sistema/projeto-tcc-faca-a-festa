@@ -11,7 +11,7 @@ import 'package:shimmer/shimmer.dart';
 
 import '../../core/utils/biblioteca.dart';
 import './../../controllers/convidado/convidado_controller.dart';
-import './../../../controllers/event_theme_controller.dart';
+import '../../controllers/tema/event_theme_controller.dart';
 import './fornecedor/fornecedor_localizacao_screen.dart';
 import './../../controllers/orcamento_controller.dart';
 import './../../controllers/tarefa_controller.dart';

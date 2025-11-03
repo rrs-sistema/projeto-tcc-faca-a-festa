@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../data/models/evento/evento.dart';
+import '../../data/models/evento/evento.dart';
 
 class EventThemeController extends GetxController {
   final Rx<Color> primaryColor = const Color(0xFF009688).obs;

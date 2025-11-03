@@ -2,7 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/event_theme_controller.dart';
+import '../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/fornecedor_controller.dart';
 import './../../../../core/utils/biblioteca.dart';
 import './components/fornecedor_list_tile.dart';

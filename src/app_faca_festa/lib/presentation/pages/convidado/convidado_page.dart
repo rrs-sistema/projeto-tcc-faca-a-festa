@@ -2,7 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../controllers/event_theme_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/app_controller.dart';
 import './components/estatisticas_tab.dart';
 import 'area/lista_convidados_screen.dart';

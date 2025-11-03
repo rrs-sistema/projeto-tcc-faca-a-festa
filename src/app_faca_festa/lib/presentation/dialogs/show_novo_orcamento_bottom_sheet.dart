@@ -8,7 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
-import './../../controllers/event_theme_controller.dart';
+import '../../controllers/tema/event_theme_controller.dart';
 import './../../controllers/fornecedor_controller.dart';
 import './../../data/models/model.dart';
 
