@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
 import 'dart:math';
 
 import './../data/models/servico_produto/fornecedor_categoria_model.dart';
@@ -199,6 +200,8 @@ class FornecedorLocalizacaoController extends GetxController {
   // ==========================================================
   void _reconstruirLista() {
     if (_fornecedoresRaw.isEmpty || categorias.isEmpty || territoriosFornecedores.isEmpty) return;
+    final userLat = userLatitude.value;
+    final userLon = userLongitude.value;
 
     final relacoesPorFornecedor = <String, List<FornecedorCategoriaModel>>{};
     for (final r in _relacoesRaw) {
@@ -226,16 +229,33 @@ class FornecedorLocalizacaoController extends GetxController {
 
       final territorio = territorioPorFornecedor[f.idFornecedor.trim()];
       double? distanciaKm;
+      if (territorio != null) {
+        if (territorio.tipoCobertura == 'raio' &&
+            territorio.latitude != null &&
+            territorio.longitude != null) {
+          // 🔹 Cálculo padrão de distância
+          distanciaKm = _calcularDistancia(
+            userLat,
+            userLon,
+            territorio.latitude!,
+            territorio.longitude!,
+          );
+        } else if (territorio.tipoCobertura == 'regiao' &&
+            territorio.regioes != null &&
+            territorio.regioes!.isNotEmpty) {
+          final dentro = _pontoDentroDaRegiao(userLat, userLon, territorio.regioes!);
 
-      if (territorio?.latitude != null && territorio?.longitude != null) {
-        final userLat = userLatitude.value;
-        final userLon = userLongitude.value;
-        final lat2 = territorio!.latitude!;
-        final lon2 = territorio.longitude!;
+          if (dentro) {
+            distanciaKm = 0.0;
+          } else {
+            // 🔹 Calcula a distância mínima até as arestas do polígono
+            distanciaKm = _distanciaAteRegiao(userLat, userLon, territorio.regioes!);
+          }
 
-        distanciaKm = _calcularDistancia(userLat, userLon, lat2, lon2);
-        debugPrint(
-            '📏 ${f.razaoSocial} → Distância: ${distanciaKm.toStringAsFixed(2)} km | Território: ($lat2, $lon2)');
+          debugPrint('🗺️ ${f.razaoSocial} → Região '
+              '(${territorio.regioes!.length} pontos) '
+              '${dentro ? "✅ Dentro da área" : "📏 Fora — ${distanciaKm?.toStringAsFixed(2)} km"}');
+        }
       }
 
       listaDetalhada.add(
@@ -501,6 +521,78 @@ class FornecedorLocalizacaoController extends GetxController {
     }
   }
 
+  bool _pontoDentroDaRegiao(double lat, double lon, List<String> regioes) {
+    final pontos = regioes.map((r) {
+      final parts = r.split(',');
+      return LatLng(double.parse(parts[0]), double.parse(parts[1]));
+    }).toList();
+
+    bool dentro = false;
+    for (int i = 0, j = pontos.length - 1; i < pontos.length; j = i++) {
+      final xi = pontos[i].latitude, yi = pontos[i].longitude;
+      final xj = pontos[j].latitude, yj = pontos[j].longitude;
+
+      final intersect = ((yi > lon) != (yj > lon)) &&
+          (lat < (xj - xi) * (lon - yi) / ((yj - yi) + 0.0000001) + xi);
+      if (intersect) dentro = !dentro;
+    }
+    return dentro;
+  }
+
+  double _distanciaAteRegiao(double lat, double lon, List<String> regioes) {
+    final pontos = regioes.map((r) {
+      final parts = r.split(',');
+      return LatLng(double.parse(parts[0]), double.parse(parts[1]));
+    }).toList();
+
+    double menorDistancia = double.infinity;
+
+    for (int i = 0; i < pontos.length; i++) {
+      final p1 = pontos[i];
+      final p2 = pontos[(i + 1) % pontos.length];
+
+      final distancia = _distanciaPontoParaSegmento(lat, lon, p1, p2);
+      if (distancia < menorDistancia) menorDistancia = distancia;
+    }
+
+    return menorDistancia;
+  }
+
+  /// 🔹 Calcula a distância mínima entre um ponto e um segmento de reta (em km)
+  double _distanciaPontoParaSegmento(double lat, double lon, LatLng p1, LatLng p2) {
+    const R = 6371; // Raio da Terra em km
+
+    // Converter coordenadas para radianos
+    final lat1 = p1.latitude * pi / 180;
+    final lon1 = p1.longitude * pi / 180;
+    final lat2 = p2.latitude * pi / 180;
+    final lon2 = p2.longitude * pi / 180;
+    final latP = lat * pi / 180;
+    final lonP = lon * pi / 180;
+
+    // Vetores
+    final A = [cos(lat1) * cos(lon1), cos(lat1) * sin(lon1), sin(lat1)];
+    final B = [cos(lat2) * cos(lon2), cos(lat2) * sin(lon2), sin(lat2)];
+    final P = [cos(latP) * cos(lonP), cos(latP) * sin(lonP), sin(latP)];
+
+    // Projeção de P sobre o segmento AB
+    final AB = [B[0] - A[0], B[1] - A[1], B[2] - A[2]];
+    final AP = [P[0] - A[0], P[1] - A[1], P[2] - A[2]];
+    final t = (AP[0] * AB[0] + AP[1] * AB[1] + AP[2] * AB[2]) /
+        (AB[0] * AB[0] + AB[1] * AB[1] + AB[2] * AB[2]);
+
+    // Clampeia t (para ficar dentro do segmento)
+    final tClamped = t.clamp(0.0, 1.0);
+    final proj = [A[0] + AB[0] * tClamped, A[1] + AB[1] * tClamped, A[2] + AB[2] * tClamped];
+
+    // Distância entre P e projeção
+    final d = acos((P[0] * proj[0] + P[1] * proj[1] + P[2] * proj[2]) /
+        (sqrt(P[0] * P[0] + P[1] * P[1] + P[2] * P[2]) *
+            sqrt(proj[0] * proj[0] + proj[1] * proj[1] + proj[2] * proj[2])));
+
+    return R * d;
+  }
+
   // ==========================================================
   // === FILTRO POR RAIO
   // ==========================================================
@@ -511,13 +603,33 @@ class FornecedorLocalizacaoController extends GetxController {
     }
 
     final raioGlobal = raio.value;
+
     fornecedoresFiltrados.value = fornecedores.where((f) {
+      final territorio = f.territorio;
       final distancia = f.distanciaKm;
-      final raioFornecedor = f.territorio?.raioKm ?? 999;
-      if (distancia == null) return false;
-      final limite = min(raioGlobal, raioFornecedor);
-      return distancia <= limite;
+
+      if (territorio == null) return false;
+
+      // 🔹 Caso o território seja "região"
+      if (territorio.tipoCobertura == 'regiao') {
+        // Se estiver dentro da região, sempre exibe
+        if (distancia == 0.0) return true;
+
+        // Se estiver fora, mostra se estiver próximo da borda
+        return distancia != null && distancia <= raioGlobal;
+      }
+
+      // 🔹 Caso o território seja "raio"
+      if (territorio.tipoCobertura == 'raio') {
+        final raioFornecedor = territorio.raioKm ?? raioGlobal;
+        if (distancia == null) return false;
+        return distancia <= min(raioGlobal, raioFornecedor);
+      }
+
+      return false;
     }).toList();
+
+    debugPrint('✅ Fornecedores filtrados: ${fornecedoresFiltrados.length}');
   }
 
   // ==========================================================
@@ -541,11 +653,21 @@ class FornecedorLocalizacaoController extends GetxController {
 
     fornecedoresProximos.value = fornecedores.where((f) {
       final t = f.territorio;
-      if (t?.latitude == null || t?.longitude == null) return false;
+      if (t == null) return false;
       if (f.distanciaKm == null) return false;
 
-      final limite = (t?.raioKm ?? raio.value) + 2.0; // ✅ tolerância + raio do território
-      return f.distanciaKm! <= limite;
+      // 🔹 Tipo raio → mesma lógica de antes
+      if (t.tipoCobertura == 'raio') {
+        final limite = (t.raioKm ?? raio.value) + 2.0;
+        return f.distanciaKm! <= limite;
+      }
+
+      // 🔹 Tipo região → mostrar se dentro da área ou muito próximo
+      if (t.tipoCobertura == 'regiao') {
+        return f.distanciaKm == 0.0 || (f.distanciaKm ?? 9999) <= raio.value;
+      }
+
+      return false;
     }).toList();
 
     fornecedoresDestaque.value = fornecedores.where((f) {
