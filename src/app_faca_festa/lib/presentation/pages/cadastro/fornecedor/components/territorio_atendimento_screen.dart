@@ -1,7 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:lottie/lottie.dart' hide Marker;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -10,8 +10,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
-import '../../../../../controllers/admin/admin_territorio_controller.dart';
-import '../../../../../controllers/tema/event_theme_controller.dart';
+import './../../../../../controllers/admin/admin_territorio_controller.dart';
+import './../../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../../data/models/model.dart';
 
 import 'dart:ui';
@@ -286,6 +286,7 @@ Future<void> showAddTerritorioBottomSheet(
                                         backgroundColor: Colors.orange, colorText: Colors.white);
                                     return;
                                   }
+                                  EasyLoading.show(status: 'Salvando as informações...');
 
                                   final model = TerritorioModel(
                                     idTerritorio: existente?.idTerritorio ?? const Uuid().v4(),
@@ -309,16 +310,9 @@ Future<void> showAddTerritorioBottomSheet(
 
                                   await controller.salvarTerritorio(model);
                                   Get.back();
-
-                                  Get.dialog(Center(
-                                    child: Lottie.asset(
-                                      'assets/animations/success.json',
-                                      width: 180,
-                                      repeat: false,
-                                    ),
-                                  ));
-                                  await Future.delayed(const Duration(seconds: 2));
+                                  await Future.delayed(const Duration(seconds: 1));
                                   Get.back();
+                                  EasyLoading.dismiss();
                                 },
                               ),
                             ),

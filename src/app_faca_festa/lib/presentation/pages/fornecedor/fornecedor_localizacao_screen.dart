@@ -7,13 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/categoria/subcategoria_servico_controller.dart';
-import '../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
 import './../../../../controllers/categoria/categoria_servico_controller.dart';
+import './../../../controllers/categoria/subcategoria_servico_controller.dart';
+import './../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/app_controller.dart';
 import './cotacao/servicos_categoria_screen.dart';
 import './../../../core/utils/biblioteca.dart';
@@ -85,160 +85,169 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
           final selecionadosSet = selecionados;
 
-          return Stack(
+          return Column(
             children: [
-              SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.only(bottom: 100),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 12),
-                    _menuCategorias(primary, gradient),
-                    const SizedBox(height: 12),
+              // 🔹 Cabeçalho fixo no topo
+              Container(
+                color: Colors.grey.shade100,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: _menuCategorias(primary, gradient),
+              ),
 
-                    Obx(() {
-                      List<FornecedorDetalhadoDto> proximos =
-                          controllerLocalizacao.fornecedoresProximos;
-                      List<FornecedorDetalhadoDto> destaque =
-                          controllerLocalizacao.fornecedoresDestaque;
+              // 🔹 Conteúdo rolável abaixo
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.only(bottom: 100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      Obx(() {
+                        List<FornecedorDetalhadoDto> proximos =
+                            controllerLocalizacao.fornecedoresProximos;
+                        List<FornecedorDetalhadoDto> destaque =
+                            controllerLocalizacao.fornecedoresDestaque;
 
-                      if (categoriaSelecionada != null) {
-                        final termo = categoriaSelecionada!.nome.trim().toLowerCase();
+                        if (categoriaSelecionada != null) {
+                          final termo = categoriaSelecionada!.nome.trim().toLowerCase();
 
-                        proximos = proximos.where((f) {
-                          final nomeCategoria = f.categoriaNome.toLowerCase();
-                          return nomeCategoria.contains(termo) ||
-                              f.categoriaId == categoriaSelecionada!.id;
-                        }).toList();
+                          proximos = proximos.where((f) {
+                            final nomeCategoria = f.categoriaNome.toLowerCase();
+                            return nomeCategoria.contains(termo) ||
+                                f.categoriaId == categoriaSelecionada!.id;
+                          }).toList();
 
-                        destaque = destaque.where((f) {
-                          final nomeCategoria = f.categoriaNome.toLowerCase();
-                          return nomeCategoria.contains(termo) ||
-                              f.categoriaId == categoriaSelecionada!.id;
-                        }).toList();
-                      }
+                          destaque = destaque.where((f) {
+                            final nomeCategoria = f.categoriaNome.toLowerCase();
+                            return nomeCategoria.contains(termo) ||
+                                f.categoriaId == categoriaSelecionada!.id;
+                          }).toList();
+                        }
 
-                      if (proximos.isEmpty && destaque.isEmpty) {
-                        return _mensagemVazia();
-                      }
+                        if (proximos.isEmpty && destaque.isEmpty) {
+                          return _mensagemVazia();
+                        }
 
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if (proximos.isNotEmpty) ...[
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              child: Text(
-                                'Fornecedores próximos a você',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87,
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (proximos.isNotEmpty) ...[
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                child: Text(
+                                  'Fornecedores próximos a você',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                  ),
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              height: 240,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                physics: const BouncingScrollPhysics(),
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
-                                itemCount: proximos.length,
-                                itemBuilder: (context, index) {
-                                  final f = proximos[index];
-                                  final selecionado =
-                                      selecionadosSet.contains(f.fornecedor.idFornecedor);
-                                  return GestureDetector(
-                                    onTap: () {
-                                      if (selecionado) {
-                                        selecionados.remove(f.fornecedor.idFornecedor);
-                                        HapticFeedback.lightImpact();
-                                      } else {
-                                        selecionados.add(f.fornecedor.idFornecedor);
-                                        HapticFeedback.mediumImpact();
-                                      }
-                                    },
-                                    child: AnimatedPadding(
-                                      duration: const Duration(milliseconds: 300),
-                                      padding: const EdgeInsets.only(right: 16),
-                                      child: SizedBox(
-                                        width: isCelular ? 300 : 350,
-                                        child: _cardFornecedor(f, primary, gradient),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                height: 250, // já ajustado
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  itemCount: proximos.length,
+                                  itemBuilder: (context, index) {
+                                    final f = proximos[index];
+                                    final selecionado =
+                                        selecionadosSet.contains(f.fornecedor.idFornecedor);
+                                    return GestureDetector(
+                                      onTap: () {
+                                        if (selecionado) {
+                                          selecionados.remove(f.fornecedor.idFornecedor);
+                                          HapticFeedback.lightImpact();
+                                        } else {
+                                          selecionados.add(f.fornecedor.idFornecedor);
+                                          HapticFeedback.mediumImpact();
+                                        }
+                                      },
+                                      child: AnimatedPadding(
+                                        duration: const Duration(milliseconds: 300),
+                                        padding: const EdgeInsets.only(right: 16),
+                                        child: SizedBox(
+                                          width: isCelular ? 300 : 350,
+                                          child: _cardFornecedor(f, primary, gradient),
+                                        ),
                                       ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: 30),
-                          ],
-                          if (destaque.isNotEmpty) ...[
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 20),
-                              child: Text(
-                                'Fornecedores em destaque ⭐',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.black87,
+                                    );
+                                  },
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              height: 240,
-                              child: ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                physics: const BouncingScrollPhysics(),
-                                padding: const EdgeInsets.symmetric(horizontal: 14),
-                                itemCount: destaque.length,
-                                itemBuilder: (context, index) {
-                                  final f = destaque[index];
-                                  final selecionado =
-                                      selecionadosSet.contains(f.fornecedor.idFornecedor);
-
-                                  return GestureDetector(
-                                    onTap: () {
-                                      if (selecionado) {
-                                        selecionados.remove(f.fornecedor.idFornecedor);
-                                        HapticFeedback.lightImpact();
-                                      } else {
-                                        selecionados.add(f.fornecedor.idFornecedor);
-                                        HapticFeedback.mediumImpact();
-                                      }
-                                    },
-                                    child: AnimatedPadding(
-                                      duration: const Duration(milliseconds: 300),
-                                      padding: const EdgeInsets.only(right: 16),
-                                      child: SizedBox(
-                                        width: isCelular ? 300 : 350,
-                                        child: _cardFornecedor(f, primary, gradient),
-                                      ),
-                                    ),
-                                  );
-                                },
+                              const SizedBox(height: 30),
+                            ],
+                            if (destaque.isNotEmpty) ...[
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                child: Text(
+                                  'Fornecedores em destaque ⭐',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.black87,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
-                        ],
-                      );
-                    }),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                height: 250,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  physics: const BouncingScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                                  itemCount: destaque.length,
+                                  itemBuilder: (context, index) {
+                                    final f = destaque[index];
+                                    final selecionado =
+                                        selecionadosSet.contains(f.fornecedor.idFornecedor);
 
-                    // 🟢 COLOQUE O CARROSSEL AQUI
-                    const SizedBox(height: 30),
-                    if (categoriaSelecionada != null)
-                      _carrosselServicos(themeController, controllerLocalizacao,
-                          subCategoriaController, categoriaSelecionada!),
-                  ],
+                                    return GestureDetector(
+                                      onTap: () {
+                                        if (selecionado) {
+                                          selecionados.remove(f.fornecedor.idFornecedor);
+                                          HapticFeedback.lightImpact();
+                                        } else {
+                                          selecionados.add(f.fornecedor.idFornecedor);
+                                          HapticFeedback.mediumImpact();
+                                        }
+                                      },
+                                      child: AnimatedPadding(
+                                        duration: const Duration(milliseconds: 300),
+                                        padding: const EdgeInsets.only(right: 16),
+                                        child: SizedBox(
+                                          width: isCelular ? 300 : 350,
+                                          child: _cardFornecedor(f, primary, gradient),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+                      }),
+                      const SizedBox(height: 30),
+                      if (categoriaSelecionada != null)
+                        _carrosselServicos(
+                          themeController,
+                          controllerLocalizacao,
+                          subCategoriaController,
+                          categoriaSelecionada!,
+                        ),
+                    ],
+                  ),
                 ),
               ),
+
+              // 🔹 Botão flutuante inferior
               if (selecionados.isNotEmpty)
-                Positioned(
-                  bottom: 20,
-                  left: 16,
-                  right: 16,
+                Padding(
+                  padding: const EdgeInsets.all(12),
                   child: SafeArea(
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.design_services_rounded, color: Colors.white),
@@ -327,11 +336,32 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
           .where((s) => s.idCategoria == categoria.id)
           .toList();
 
-      final lista = controllerLocalizacao.allService
-          .where((servico) => subCategorias.any((sub) => sub.id == servico.idSubcategoria))
-          .toList();
+      debugPrint('🔍 Categoria selecionada: ${categoria.nome}');
+      debugPrint('📦 Subcategorias encontradas (${subCategorias.length}):');
+      for (final sub in subCategorias) {
+        debugPrint('   • ${sub.id} → ${sub.nome}');
+      }
 
-      if (lista.isEmpty) return const SizedBox();
+      debugPrint('📡 Total de serviços em allService: ${controllerLocalizacao.allService.length}');
+
+      final lista = controllerLocalizacao.allService.where((servico) {
+        final match = subCategorias.any((sub) => sub.id == servico.idSubcategoria);
+        if (match) {
+          debugPrint('✅ Serviço compatível: ${servico.nomeServico} '
+              '(Fornecedor: ${servico.idFornecedor}, Subcategoria: ${servico.idSubcategoria})');
+        } else {
+          debugPrint('⛔ Ignorado: ${servico.nomeServico} (${servico.idSubcategoria})');
+        }
+        return match;
+      }).toList();
+
+      debugPrint('🎯 Total de serviços encontrados: ${lista.length}');
+      debugPrint('--------------------------------------------');
+
+      if (lista.isEmpty) {
+        debugPrint('⚠️ Nenhum serviço encontrado para esta categoria.');
+        return const SizedBox();
+      }
 
       final primary = themeController.primaryColor.value;
 
@@ -354,7 +384,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
             ),
             const SizedBox(height: 12),
             SizedBox(
-              height: 210,
+              height: 260,
               child: PageView.builder(
                 controller: PageController(viewportFraction: 0.78),
                 physics: const BouncingScrollPhysics(),
@@ -393,6 +423,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
   Widget _cardServicoCarrossel(FornecedorServicoDetalhadoDto s, Color primary) {
     return AnimatedContainer(
+      height: 250,
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(22),
@@ -433,16 +464,24 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                     child: const Icon(Icons.image_rounded, size: 40, color: Colors.grey),
                   ),
 
-            // === GRADIENTE SOBREPOSTO ===
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.7),
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
+            // === GRADIENTE SOBREPOSTO (mais leve e menor) ===
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 130, // ocupa apenas a parte inferior
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.75),
+                      primary.withValues(alpha: 0.85),
+                    ],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    stops: const [0.0, 0.5, 1.0],
+                  ),
                 ),
               ),
             ),
@@ -453,100 +492,111 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
               left: 0,
               right: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                constraints: const BoxConstraints(maxHeight: 160),
+                decoration: const BoxDecoration(
+                  borderRadius: BorderRadius.vertical(
                     bottom: Radius.circular(22),
-                  ),
-                  gradient: LinearGradient(
-                    colors: [
-                      primary.withValues(alpha: 0.85),
-                      primary.withValues(alpha: 0.6),
-                    ],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
                   ),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          s.nomeServico ?? 'Serviço sem nome',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
+                    // === Nome do serviço ===
+                    Text(
+                      s.nomeServico ?? 'Serviço sem nome',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 14.5,
+                        fontWeight: FontWeight.w600,
+                        shadows: [
+                          const Shadow(
+                            offset: Offset(0, 1),
+                            blurRadius: 3,
+                            color: Colors.black45,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          s.nomeCategoria ?? s.nomeSubcategoria ?? '',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
+                        ],
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
 
-                        // 💰 VALOR DO SERVIÇO
-                        if (s.preco > 0)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'A partir de R\$ ${Biblioteca.formatarValorDecimal(s.preco)}',
+                    // === Categoria/Subcategoria ===
+                    Text(
+                      s.nomeCategoria ?? s.nomeSubcategoria ?? '',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 12.5,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+
+                    // === Valor e promoção ===
+                    if (s.preco > 0) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 2,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          Text(
+                            'A partir de R\$ ${Biblioteca.formatarValorDecimal(s.preco)}',
+                            style: GoogleFonts.poppins(
+                              color: Colors.red.shade600,
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                          if (s.precoPromocao != null && s.precoPromocao! > 0)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                'Promoção R\$ ${Biblioteca.formatarValorDecimal(s.precoPromocao!)}',
                                 style: GoogleFonts.poppins(
-                                  color: Colors.yellowAccent.shade100,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
+                                  color: Colors.yellowAccent.shade700,
+                                  fontSize: 12,
                                 ),
                               ),
-                              if (s.precoPromocao != null && s.precoPromocao! > 0)
-                                Text(
-                                  'Promoção: R\$ ${Biblioteca.formatarValorDecimal(s.precoPromocao!)}',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontSize: 12,
-                                    decoration: TextDecoration.lineThrough,
-                                  ),
-                                ),
-                            ],
-                          ),
+                            ),
+                        ],
+                      ),
+                    ],
 
-                        const SizedBox(height: 8),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Get.snackbar('Serviço selecionado', s.nomeServico ?? '',
-                                  snackPosition: SnackPosition.BOTTOM,
-                                  backgroundColor: primary,
-                                  colorText: Colors.white);
-                            },
-                            icon: const Icon(Icons.design_services_rounded, size: 16),
-                            label: const Text(
-                              'Ver mais',
-                              style: TextStyle(fontSize: 12.5),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: primary,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              elevation: 2,
-                            ),
-                          ),
+                    const Spacer(),
+
+                    // === Botão "Ver mais" ===
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Get.snackbar('Serviço selecionado', s.nomeServico ?? '',
+                              snackPosition: SnackPosition.BOTTOM,
+                              backgroundColor: primary,
+                              colorText: Colors.white);
+                        },
+                        icon: const Icon(Icons.design_services_rounded, size: 16),
+                        label: const Text(
+                          'Ver mais',
+                          style: TextStyle(fontSize: 12.5),
                         ),
-                      ],
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: primary,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          elevation: 2,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -558,7 +608,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     );
   }
 
-  // === Cabeçalho de categorias ===
+// === Cabeçalho de categorias ===
   Widget _menuCategorias(Color primary, LinearGradient gradient) {
     return Obx(() {
       final categorias = controllerLocalizacao.categorias;
@@ -569,11 +619,28 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
         );
       }
 
-      return SizedBox(
-        height: 52,
+      return Container(
+        height: 64, // 🔹 um pouco mais alto para dar respiro
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              gradient.colors.first.withValues(alpha: 0.25),
+              gradient.colors.last.withValues(alpha: 0.10),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
           separatorBuilder: (_, __) => const SizedBox(width: 12),
           itemCount: categorias.length,
           itemBuilder: (context, index) {
@@ -850,8 +917,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                       ],
                     ),
                   ElevatedButton.icon(
-                    icon: const Icon(Icons.info_outline_rounded, size: 15),
-                    label: const Text('Detalhes', style: TextStyle(fontSize: 12)),
+                    icon: const Icon(Icons.info_outline_rounded, size: 15, color: Colors.white),
+                    label: const Text('Serviços do fornecedor', style: TextStyle(fontSize: 12)),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       backgroundColor: primary.withValues(alpha: 0.95),

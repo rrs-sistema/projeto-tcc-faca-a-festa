@@ -4,14 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import './../../../data/models/servico_produto/categoria_servico_model.dart';
 import './../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../core/utils/no_sqflite_cache_manager.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
-import './../../../data/models/DTO/servico_cotado_dto.dart';
 import './../../../controllers/fornecedor_controller.dart';
-import './sections/fornecedor/servico_card_principal.dart';
-import './../../../controllers/app_controller.dart';
+import './cotacao/servicos_categoria_screen.dart';
 import './../../../data/models/model.dart';
 
 class FornecedorDetalheScreen extends StatelessWidget {
@@ -32,94 +31,206 @@ class FornecedorDetalheScreen extends StatelessWidget {
     final primary = themeController.primaryColor.value;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FB),
-      appBar: _buildAppBar(fornecedor.razaoSocial, gradient),
-      body: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: const Color(0xFFF7F8FA),
+      extendBodyBehindAppBar: true,
+      appBar: _buildAppBar(context, fornecedor, gradient),
+      body: Obx(() {
+        final fotos = fornecedorController.fotosServico
+            .where((f) => f.idFornecedor == fornecedor.idFornecedor)
+            .toList();
+
+        final fotoCapaService = fotos.isNotEmpty
+            ? fotos.first.url
+            : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media&token=6a769a8b-b604-41d0-ac63-ebd38b4af5f6';
+
+        final fotoCapa = fornecedor.bannerUrl ?? fotoCapaService;
+
+        return Stack(
           children: [
-            if (fornecedorDetalhado.categoriaNome.isNotEmpty)
-              _tituloCategoria(fornecedorDetalhado.categoriaNome, primary),
-            const SizedBox(height: 16),
-            _buildServicoPrincipal(
-                fornecedorDetalhado, fornecedorController, primary, gradient, context),
-            _buildServicosMesmaCategoria(
-                fornecedorDetalhado, fornecedorController, primary, gradient, context),
-            if (fornecedorDetalhado.categoriaNome.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              _divider('Outros serviços do mesmo fornecedor'),
-            ],
-            const SizedBox(height: 16),
-            _buildOutrosServicos(
-                fornecedorDetalhado, fornecedorController, primary, gradient, context),
-            const SizedBox(height: 28),
-            _divider('Informações de contato'),
-            const SizedBox(height: 10),
-            _InfoTile(Icons.call_outlined, fornecedor.telefone),
-            _InfoTile(Icons.email_outlined, fornecedor.email),
-            if (territorio?.descricao?.isNotEmpty ?? false)
-              _InfoTile(Icons.map_outlined, territorio!.descricao!),
-            if (distancia != null)
-              _InfoTile(
-                  Icons.location_on_outlined, '${distancia.toStringAsFixed(1)} km de distância'),
+            // 🔹 Capa principal
+            CachedNetworkImage(
+              imageUrl: fotoCapa,
+              fit: BoxFit.cover,
+              width: double.infinity,
+              height: 280,
+              placeholder: (_, __) => Container(color: Colors.grey.shade200),
+              errorWidget: (_, __, ___) => Container(
+                height: 280,
+                color: Colors.grey.shade300,
+                alignment: Alignment.center,
+                child: const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 50),
+              ),
+            ),
+
+            // 🔹 Gradiente sobre a imagem
+            Container(
+              height: 280,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.black.withValues(alpha: 0.4), Colors.transparent],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+              ),
+            ),
+
+            // 🔹 Corpo principal
+            SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.only(top: 240),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 🔹 Cabeçalho
+                    _headerFornecedorCategoria(fornecedor, fornecedorDetalhado, primary),
+                    const SizedBox(height: 20),
+
+                    // 🔹 Descrição
+                    if (fornecedor.descricao?.isNotEmpty ?? false)
+                      Text(
+                        fornecedor.descricao!,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          height: 1.5,
+                          color: Colors.black87.withValues(alpha: 0.75),
+                        ),
+                      ),
+
+                    const SizedBox(height: 24),
+                    _divider('Serviço Principal'),
+                    const SizedBox(height: 12),
+                    _buildServicoPrincipal(
+                        fornecedorDetalhado, fornecedorController, primary, gradient, context),
+
+                    const SizedBox(height: 24),
+                    _divider('Outros serviços da mesma categoria'),
+                    _buildServicosMesmaCategoria(
+                        fornecedorDetalhado, fornecedorController, primary, gradient, context),
+
+                    const SizedBox(height: 28),
+                    _divider('Informações de contato'),
+                    const SizedBox(height: 10),
+                    if (fornecedor.telefone.isNotEmpty)
+                      _InfoTile(Icons.call_outlined, fornecedor.telefone),
+                    if (fornecedor.email.isNotEmpty)
+                      _InfoTile(Icons.email_outlined, fornecedor.email),
+                    if (territorio?.descricao?.isNotEmpty ?? false)
+                      _InfoTile(Icons.map_outlined, territorio!.descricao!),
+                    if (distancia != null)
+                      _InfoTile(Icons.location_on_outlined,
+                          '${distancia.toStringAsFixed(1)} km de distância'),
+                  ],
+                ),
+              ),
+            ),
           ],
-        ),
-      ),
+        );
+      }),
     );
   }
 
-  AppBar _buildAppBar(String title, Gradient gradient) {
+  // -------------------------
+  // 🔹 AppBar
+  // -------------------------
+  AppBar _buildAppBar(BuildContext context, FornecedorModel fornecedor, Gradient gradient) {
     return AppBar(
       elevation: 0,
       backgroundColor: Colors.transparent,
-      leading: Container(
-        margin: const EdgeInsets.only(left: 8),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.25),
-          shape: BoxShape.circle,
-        ),
-        child: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
-          onPressed: Get.back,
-        ),
-      ),
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(
-          fontWeight: FontWeight.w700,
-          color: Colors.black87,
-          fontSize: 17,
+      leadingWidth: 65,
+      leading: Padding(
+        padding: const EdgeInsets.only(left: 10, top: 4),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.2),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8),
+            ],
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+            onPressed: () => Get.back(),
+          ),
         ),
       ),
-      centerTitle: true,
-      flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
     );
   }
 
-  Widget _tituloCategoria(String nome, Color primary) => Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(colors: [primary.withValues(alpha: 0.8), primary]),
-            borderRadius: BorderRadius.circular(24),
-          ),
-          child: Text(
-            nome,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-              fontSize: 14,
-              letterSpacing: 0.3,
+  // -------------------------
+  // 🔹 Cabeçalho elegante
+  // -------------------------
+  Widget _headerFornecedorCategoria(
+      FornecedorModel fornecedor, FornecedorDetalhadoDto detalhe, Color primary) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            fornecedor.razaoSocial,
+            style: GoogleFonts.playfairDisplay(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF1E1E1E),
+              height: 1.25,
+              letterSpacing: 0.2,
             ),
           ),
-        ),
-      );
+          const SizedBox(height: 6),
+          if (detalhe.categoriaNome.isNotEmpty)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 1.4,
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [primary.withValues(alpha: 0.8), primary.withValues(alpha: 0.1)],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Flexible(
+                  child: Text(
+                    detalhe.categoriaNome,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade700,
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
 
+  // -------------------------
+  // 🔹 Divider estilizado
+  // -------------------------
   Widget _divider(String titulo) => Row(
         children: [
-          Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+          Expanded(child: Divider(color: Colors.grey.shade300)),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             child: Text(
@@ -131,19 +242,13 @@ class FornecedorDetalheScreen extends StatelessWidget {
               ),
             ),
           ),
-          Expanded(child: Divider(color: Colors.grey.shade300, thickness: 1)),
+          Expanded(child: Divider(color: Colors.grey.shade300)),
         ],
       );
 
-  Widget _textoVazio(String text) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        child: Text(
-          text,
-          style:
-              GoogleFonts.poppins(fontSize: 14, color: Colors.black54, fontStyle: FontStyle.italic),
-        ),
-      );
-
+  // -------------------------
+  // 🔹 Serviço principal
+  // -------------------------
   Widget _buildServicoPrincipal(
     FornecedorDetalhadoDto detalhe,
     FornecedorController controller,
@@ -159,8 +264,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
       final fotos = controller.fotosServico;
 
       final categoria = categorias.firstWhereOrNull(
-        (c) => c.nome.toLowerCase().contains(detalhe.categoriaNome.toLowerCase()),
-      );
+          (c) => c.nome.toLowerCase().contains(detalhe.categoriaNome.toLowerCase()));
       if (categoria == null) return _textoVazio('Nenhum serviço principal encontrado.');
 
       final subCategoria = subCategorias.firstWhereOrNull((s) => s.idCategoria == categoria.id);
@@ -173,22 +277,15 @@ class FornecedorDetalheScreen extends StatelessWidget {
       }
 
       final servico = servicos.firstWhereOrNull((s) => s.id == servicoFornecedor.idProdutoServico);
-      // Filtra todas as fotos relacionadas ao serviço selecionado
-      // Lista reativa de URLs de fotos
-      final RxList<String> fotosUrls = <String>[].obs;
-
-      // Filtra as fotos relacionadas ao serviço atual
-      final relacionadas =
+      final fotosUrls =
           fotos.where((f) => f.idProdutoServico == servico?.id).map((f) => f.url).toList();
-
-      // Atualiza a lista observável apenas com as URLs
-      fotosUrls.assignAll(relacionadas);
 
       if (servico == null) return _textoVazio('Serviço não encontrado.');
 
-      return ServicoCardPrincipal(
+      return _cardServicoCarrossel(
         servico: servico,
-        urls: fotosUrls,
+        categoria: categoria,
+        fotoUrl: fotosUrls.isNotEmpty ? fotosUrls.first : '',
         primary: primary,
         gradient: gradient,
         fornecedorId: detalhe.fornecedor.idFornecedor,
@@ -197,6 +294,9 @@ class FornecedorDetalheScreen extends StatelessWidget {
     });
   }
 
+  // -------------------------
+  // 🔹 Serviços semelhantes
+  // -------------------------
   Widget _buildServicosMesmaCategoria(
     FornecedorDetalhadoDto detalhe,
     FornecedorController controller,
@@ -205,7 +305,6 @@ class FornecedorDetalheScreen extends StatelessWidget {
     BuildContext context,
   ) {
     final categoriaNome = detalhe.categoriaNome;
-    final categoriaId = detalhe.categoriaId;
     final fornecedor = detalhe.fornecedor;
 
     return Obx(() {
@@ -218,22 +317,17 @@ class FornecedorDetalheScreen extends StatelessWidget {
         );
       }
 
-      // 🔹 Busca a categoria atual
-      final categoria = controller.categorias.firstWhereOrNull(
-        (c) => c.nome.toLowerCase().contains(categoriaNome.toLowerCase()),
-      );
-
+      final categoria = controller.categorias
+          .firstWhereOrNull((c) => c.nome.toLowerCase().contains(categoriaNome.toLowerCase()));
       if (categoria == null) {
         return _textoVazio('Nenhum serviço encontrado nesta categoria.');
       }
 
-      // 🔹 Descobre subcategorias ligadas a essa categoria
       final subCategoriasRelacionadas = controller.subCategorias
           .where((s) => s.idCategoria == categoria.id)
           .map((s) => s.id)
           .toList();
 
-      // 🔹 Busca todos os serviços (de qualquer fornecedor) ligados a essas subcategorias
       final servicosRelacionados = controller.allServicosFornecedor
           .where((sf) => subCategoriasRelacionadas.contains(sf.idSubcategoria))
           .toList();
@@ -242,14 +336,12 @@ class FornecedorDetalheScreen extends StatelessWidget {
         return _textoVazio('Nenhum serviço semelhante encontrado.');
       }
 
-      // 🔹 Identifica o serviço principal (o que já está no topo)
       final servicoPrincipal = controller.allServicosFornecedor.firstWhereOrNull((sf) =>
           sf.idFornecedor == fornecedor.idFornecedor &&
           subCategoriasRelacionadas.contains(sf.idSubcategoria));
 
       final idServicoPrincipal = servicoPrincipal?.idProdutoServico;
 
-      // 🔹 Cria lista de serviços semelhantes, excluindo o principal
       final idsServicosRelacionados = servicosRelacionados
           .map((sf) => sf.idProdutoServico)
           .whereType<String>()
@@ -260,385 +352,309 @@ class FornecedorDetalheScreen extends StatelessWidget {
           controller.catalogoServicos.where((s) => idsServicosRelacionados.contains(s.id)).toList();
 
       if (servicosMesmaCategoria.isEmpty) {
-        return SizedBox.shrink();
+        return const SizedBox.shrink();
       }
 
       final fotos = controller.fotosServico;
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SizedBox(height: 28),
-          _divider('Serviços da mesma categoria'),
-          const SizedBox(height: 16),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            child: SizedBox(
-              key: ValueKey(servicosMesmaCategoria.length),
-              height: 260,
-              child: CarouselSlider.builder(
-                itemCount: servicosMesmaCategoria.length,
-                itemBuilder: (context, index, _) {
-                  final s = servicosMesmaCategoria[index];
-                  final foto = fotos.firstWhereOrNull((f) => f.idProdutoServico == s.id);
-                  final fotoUrl = (foto?.url.isNotEmpty ?? false)
-                      ? foto!.url
-                      : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media&token=6a769a8b-b604-41d0-ac63-ebd38b4af5f6';
+      return SizedBox(
+        height: 300,
+        child: CarouselSlider.builder(
+          itemCount: servicosMesmaCategoria.length,
+          itemBuilder: (context, index, _) {
+            final s = servicosMesmaCategoria[index];
+            final foto = fotos.firstWhereOrNull((f) => f.idProdutoServico == s.id);
+            final fotoUrl = (foto?.url.isNotEmpty ?? false)
+                ? foto!.url
+                : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media&token=6a769a8b-b604-41d0-ac63-ebd38b4af5f6';
 
-                  // 🔹 Localiza o fornecedor correspondente ao serviço
-                  final fornecedorDoServico = controller.fornecedores.firstWhereOrNull((f) =>
-                      f.idFornecedor ==
-                      servicosRelacionados
-                          .firstWhereOrNull((sf) => sf.idProdutoServico == s.id)
-                          ?.idFornecedor);
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
+              curve: Curves.easeOutCubic,
+              margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.1),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(22),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // 🔹 Imagem principal
+                    CachedNetworkImage(
+                      imageUrl: fotoUrl,
+                      fit: BoxFit.cover,
+                      fadeInDuration: const Duration(milliseconds: 500),
+                      placeholder: (_, __) => Container(color: Colors.grey.shade200),
+                      errorWidget: (_, __, ___) => Container(
+                        color: Colors.grey.shade300,
+                        alignment: Alignment.center,
+                        child:
+                            const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 48),
+                      ),
+                    ),
 
-                  return _cardServicoCarrosselSemelhante(
-                    categoriaNome: categoriaNome,
-                    categoriaId: categoriaId,
-                    servico: s,
-                    fotoUrl: fotoUrl,
-                    primary: primary,
-                    gradient: gradient,
-                    fornecedor: fornecedorDoServico,
-                    context: context,
-                  );
-                },
-                options: CarouselOptions(
-                  height: 250,
-                  autoPlay: servicosMesmaCategoria.length > 1,
-                  enlargeCenterPage: true,
-                  viewportFraction: 0.82,
-                  enableInfiniteScroll: servicosMesmaCategoria.length > 1,
-                  autoPlayInterval: const Duration(seconds: 4),
-                  autoPlayAnimationDuration: const Duration(milliseconds: 800),
+                    // 🔹 Gradiente sutil para contraste
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.black.withValues(alpha: 0.05),
+                            Colors.black.withValues(alpha: 0.6)
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+
+                    // 🔹 “Frosted glass” overlay para o conteúdo
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
+                          //backdropFilter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              s.nome,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              s.descricao ?? 'Sem descrição disponível',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                color: Colors.white.withValues(alpha: 0.85),
+                                fontSize: 13,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+
+                            // 🔹 Botão elegante com transparência
+                            Center(
+                              child: ElevatedButton.icon(
+                                icon: const Icon(Icons.request_quote_rounded,
+                                    size: 18, color: Colors.white),
+                                label: Text(
+                                  'Solicitar Orçamento',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primary.withValues(alpha: 0.85),
+                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: BorderSide(
+                                        color: Colors.white.withValues(alpha: 0.3), width: 1),
+                                  ),
+                                  shadowColor: primary.withValues(alpha: 0.3),
+                                  elevation: 5,
+                                ),
+                                onPressed: () {
+                                  final controllerLocalizacao =
+                                      Get.put(FornecedorLocalizacaoController());
+
+                                  final serviceComplet =
+                                      controllerLocalizacao.allService.firstWhereOrNull(
+                                    (sev) =>
+                                        sev.idProdutoServico == s.id &&
+                                        sev.idFornecedor == fornecedor.idFornecedor &&
+                                        sev.idSubcategoria == s.idSubcategoria,
+                                  );
+
+                                  if (serviceComplet == null) return;
+
+                                  controllerLocalizacao.servicosFornecedor.removeWhere(
+                                    (sev) =>
+                                        sev.idProdutoServico == s.id &&
+                                        sev.idFornecedor == fornecedor.idFornecedor &&
+                                        sev.idSubcategoria == s.idSubcategoria,
+                                  );
+                                  controllerLocalizacao.servicosFornecedor.add(serviceComplet);
+
+                                  Get.to(() => ServicosCategoriaScreen(
+                                        idCategoria: categoria.id,
+                                        nomeCategoria: categoria.nome,
+                                        fornecedoresSelecionados: [fornecedor.idFornecedor],
+                                      ));
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ),
-        ],
-      );
-    });
-  }
-
-  Widget _buildOutrosServicos(
-    FornecedorDetalhadoDto detalhe,
-    FornecedorController controller,
-    Color primary,
-    Gradient gradient,
-    BuildContext context,
-  ) {
-    final controllerLocalizacao = Get.put(FornecedorLocalizacaoController());
-    final fornecedor = detalhe.fornecedor;
-    final idServicoPrincipal =
-        controllerLocalizacao.servicoSelecionadoId.value; // 👈 defina esse valor no controller
-
-    return Obx(() {
-      // 🔹 Enquanto as fotos estão carregando
-      if (controller.isLoadingFotos.value) {
-        return const Center(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 40),
-            child: CircularProgressIndicator(strokeWidth: 2.5),
-          ),
-        );
-      }
-
-      // 🔹 Caso ainda não tenha fotos
-      if (idServicoPrincipal == null || controller.fotosServico.isEmpty) {
-        return _textoVazio('Este fornecedor ainda não cadastrou fotos para os serviços.');
-      }
-
-      // 🔹 Todos os vínculos de serviços deste fornecedor
-      final servicosFornecedorAtuais = controller.servicosFornecedor
-          .where((sf) => sf.idFornecedor == fornecedor.idFornecedor)
-          .toList();
-
-      if (servicosFornecedorAtuais.isEmpty) {
-        return _textoVazio('Este fornecedor ainda não cadastrou serviços.');
-      }
-
-      // 🔹 Pega todos os IDs de serviços vinculados a esse fornecedor
-      final idsServicosFornecedor =
-          servicosFornecedorAtuais.map((sf) => sf.idProdutoServico).whereType<String>().toList();
-
-      // 🔹 Carrega os serviços do catálogo
-      final servicos =
-          controller.catalogoServicos.where((s) => idsServicosFornecedor.contains(s.id)).toList();
-
-      final idSubCategoria =
-          controller.subCategorias.where((s) => s.idCategoria == idServicoPrincipal).first.id;
-
-      // 🔹 Remove o serviço principal (o já exibido no topo)
-      servicos.removeWhere((s) => s.idSubcategoria == idSubCategoria);
-
-      if (servicos.isEmpty) {
-        return SizedBox.shrink();
-      }
-
-      final fotos = controller.fotosServico;
-
-      return AnimatedSwitcher(
-        duration: const Duration(milliseconds: 400),
-        child: SizedBox(
-          key: ValueKey(servicos.length),
-          height: 260,
-          child: CarouselSlider.builder(
-            itemCount: servicos.length,
-            itemBuilder: (context, index, _) {
-              final s = servicos[index];
-              final foto = fotos.firstWhereOrNull((f) => f.idProdutoServico == s.id);
-              final fotoUrl = (foto?.url.isNotEmpty ?? false)
-                  ? foto!.url
-                  : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media&token=6a769a8b-b604-41d0-ac63-ebd38b4af5f6';
-
-              return _cardServicoCarrossel(
-                servico: s,
-                fotoUrl: fotoUrl,
-                primary: primary,
-                gradient: gradient,
-                fornecedorId: fornecedor.idFornecedor,
-                context: context,
-              );
-            },
-            options: CarouselOptions(
-              height: 250,
-              autoPlay: servicos.length > 1,
-              enlargeCenterPage: true,
-              viewportFraction: 0.82,
-              enableInfiniteScroll: servicos.length > 1,
-              autoPlayInterval: const Duration(seconds: 4),
-              autoPlayAnimationDuration: const Duration(milliseconds: 800),
-            ),
+            );
+          },
+          options: CarouselOptions(
+            height: 300,
+            enlargeCenterPage: true,
+            viewportFraction: 0.82,
+            enableInfiniteScroll: servicosMesmaCategoria.length > 1,
+            autoPlay: servicosMesmaCategoria.length > 1,
+            autoPlayInterval: const Duration(seconds: 5),
+            autoPlayAnimationDuration: const Duration(milliseconds: 800),
           ),
         ),
       );
     });
   }
+
+  Widget _textoVazio(String text) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(
+          text,
+          style:
+              GoogleFonts.poppins(fontSize: 14, color: Colors.black54, fontStyle: FontStyle.italic),
+        ),
+      );
 }
 
 Widget _cardServicoCarrossel({
   required ServicoProdutoModel servico,
+  required CategoriaServicoModel categoria,
   required String fotoUrl,
   required Color primary,
   required Gradient gradient,
   required String fornecedorId,
   required BuildContext context,
 }) {
-  return ClipRRect(
-    borderRadius: BorderRadius.circular(18),
-    child: Stack(
-      fit: StackFit.expand,
-      children: [
-        // 🔹 Imagem principal
-        CachedNetworkImage(
-          imageUrl: fotoUrl,
-          cacheManager: AdaptiveCacheManager.instance,
-          fit: BoxFit.cover,
-          fadeInDuration: const Duration(milliseconds: 400),
-          placeholder: (_, __) => Container(color: Colors.grey.shade200),
-          errorWidget: (_, __, ___) => Container(
-            color: Colors.grey.shade300,
-            alignment: Alignment.center,
-            child: const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 50),
-          ),
-        ),
-
-        // 🔹 Gradiente escuro para destacar o texto
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.black.withValues(alpha: 0.05), Colors.black54],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
+  return SizedBox(
+    height: 250, // 🔹 Altura fixa para evitar BoxConstraints infinitos
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          CachedNetworkImage(
+            imageUrl: fotoUrl,
+            cacheManager: AdaptiveCacheManager.instance,
+            fit: BoxFit.cover,
+            fadeInDuration: const Duration(milliseconds: 400),
+            placeholder: (_, __) => Container(color: Colors.grey.shade200),
+            errorWidget: (_, __, ___) => Container(
+              color: Colors.grey.shade300,
+              alignment: Alignment.center,
+              child: const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 50),
             ),
           ),
-        ),
-
-        // 🔹 Informações do serviço
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                servico.nome,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                  shadows: const [
-                    Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(1, 1)),
-                  ],
-                ),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.black.withValues(alpha: 0.05), Colors.black54],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
               ),
-              const SizedBox(height: 6),
-              Text(
-                servico.descricao ?? 'Sem descrição disponível',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                  color: Colors.white70,
-                  fontSize: 13,
-                  height: 1.4,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // 🔹 Botão para solicitar orçamento
-              ElevatedButton.icon(
-                icon: const Icon(Icons.request_quote_rounded, size: 18, color: Colors.white),
-                label: Text('Orçar Serviço',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    )),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primary.withValues(alpha: 0.9),
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () {
-                  final appController = Get.find<AppController>();
-                  final servicoCotado =
-                      ServicoCotadoDto(idProduto: servico.id, nomeProduto: servico.nome);
-
-                  if (appController.isServicoSelecionado(servico.id)) {
-                    appController.removerServico(servico.id);
-                    Get.snackbar('Removido', 'Serviço removido da lista de cotação.',
-                        backgroundColor: Colors.orange, colorText: Colors.white);
-                  } else {
-                    appController.adicionarServico(servicoCotado);
-                    Get.snackbar('Adicionado', 'Serviço adicionado à lista de cotação.',
-                        backgroundColor: Colors.green, colorText: Colors.white);
-                  }
-                },
-              ),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _cardServicoCarrosselSemelhante({
-  required ServicoProdutoModel servico,
-  required String categoriaNome,
-  required String categoriaId,
-  required String fotoUrl,
-  required Color primary,
-  required Gradient gradient,
-  required FornecedorModel? fornecedor,
-  required BuildContext context,
-}) {
-  return ClipRRect(
-    borderRadius: BorderRadius.circular(18),
-    child: Stack(
-      fit: StackFit.expand,
-      children: [
-        CachedNetworkImage(
-          imageUrl: fotoUrl,
-          cacheManager: AdaptiveCacheManager.instance,
-          fit: BoxFit.cover,
-          fadeInDuration: const Duration(milliseconds: 400),
-          placeholder: (_, __) => Container(color: Colors.grey.shade200),
-          errorWidget: (_, __, ___) => Container(
-            color: Colors.grey.shade300,
-            alignment: Alignment.center,
-            child: const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 50),
-          ),
-        ),
-        Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.black.withValues(alpha: 0.05), Colors.black54],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                servico.nome,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 15,
-                  shadows: const [
-                    Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(1, 1)),
-                  ],
-                ),
-              ),
-              if (fornecedor != null) ...[
-                const SizedBox(height: 2),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
                 Text(
-                  fornecedor.razaoSocial,
+                  servico.nome,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
-                    color: Colors.white70,
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    shadows: const [
+                      Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(1, 1)),
+                    ],
                   ),
                 ),
-              ],
-              const SizedBox(height: 6),
-              Text(
-                servico.descricao ?? 'Sem descrição disponível',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                  color: Colors.white70,
-                  fontSize: 13,
-                  height: 1.4,
+                const SizedBox(height: 6),
+                Text(
+                  servico.descricao ?? 'Sem descrição disponível',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white70,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton.icon(
-                icon: const Icon(Icons.info_outline_rounded, size: 18, color: Colors.white),
-                label: Text('Ver detalhes',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    )),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primary.withValues(alpha: 0.9),
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                ),
-                onPressed: () {
-                  if (fornecedor != null) {
-                    Get.to(() => FornecedorDetalheScreen(
-                          fornecedorDetalhado: FornecedorDetalhadoDto(
-                            fornecedor: fornecedor,
-                            categoriaNome: categoriaNome,
-                            categoriaId: categoriaId,
-                            territorio: null,
-                          ),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.request_quote_rounded, size: 18, color: Colors.white),
+                  label: Text('Orçar Serviço',
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      )),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary.withValues(alpha: 0.9),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                  onPressed: () {
+                    final controllerLocalizacao = Get.put(FornecedorLocalizacaoController());
+
+                    final serviceComplet = controllerLocalizacao.allService.firstWhereOrNull(
+                      (s) =>
+                          s.idProdutoServico == servico.id &&
+                          s.idFornecedor == fornecedorId &&
+                          s.idSubcategoria == servico.idSubcategoria,
+                    );
+
+                    if (serviceComplet == null) return;
+
+                    controllerLocalizacao.servicosFornecedor.add(serviceComplet);
+
+                    Get.to(() => ServicosCategoriaScreen(
+                          idCategoria: categoria.id,
+                          nomeCategoria: categoria.nome,
+                          fornecedoresSelecionados: [fornecedorId],
                         ));
-                  }
-                },
-              ),
-            ],
+                  },
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }
 
+// -------------------------
+// 🔹 Tile de informações
+// -------------------------
 class _InfoTile extends StatelessWidget {
   final IconData icon;
   final String text;

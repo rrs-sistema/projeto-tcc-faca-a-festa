@@ -377,38 +377,8 @@ Future<void> showFornecedorServicoBottomSheet(
 
                       await fornecedorController.vincularServico(vinculoNovo);
                       EasyLoading.dismiss();
-
-                      //await fornecedorController.limparDuplicatasFornecedorCategoria();
                       Get.back();
                     },
-
-                    /*
-                    onPressed: () async {
-                      if (servicoSelecionado.value == null) {
-                        Get.snackbar(
-                          'Atenção',
-                          'Selecione um serviço antes de salvar',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.red.shade100,
-                          colorText: Colors.black87,
-                        );
-                        return;
-                      }
-
-                      final vinculoNovo = FornecedorProdutoServicoModel(
-                        id: vinculo?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-                        idProdutoServico: servicoSelecionado.value!.id,
-                        idSubcategoria: subcategoriaSelecionada.value!.id,
-                        idFornecedor: idFornecedor,
-                        preco: double.tryParse(precoCtrl.text.replaceAll(',', '.')) ?? 0.0,
-                        precoPromocao: double.tryParse(promocaoCtrl.text.replaceAll(',', '.')),
-                        ativo: ativo.value,
-                      );
-
-                      await fornecedorController.vincularServico(vinculoNovo);
-                      Get.back();
-                    },
-                    */
                   ),
                 ),
                 const SizedBox(height: 12),

@@ -1338,7 +1338,9 @@ Widget _buildSuppliersCarousel(EventThemeController theme) {
           // 🔹 Listagem reativa
           Obx(() {
             final carregando = fornecedorController.carregandoServicosFornecedor.value;
-            final fornecedores = fornecedorController.fornecedores;
+            final fornecedores = fornecedorController.fornecedores
+                .where((f) => f.fornecedor.ativo && f.fornecedor.aptoParaOperar)
+                .toList();
 
             if (carregando) {
               return SizedBox(

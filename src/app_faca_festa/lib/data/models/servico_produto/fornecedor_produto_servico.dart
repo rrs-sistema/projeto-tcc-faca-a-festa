@@ -57,12 +57,25 @@ class FornecedorProdutoServicoModel {
   // ===========================================================
   // 🔹 Conversão a partir do Firestore
   // ===========================================================
-  factory FornecedorProdutoServicoModel.fromMap(Map<String, dynamic> map) {
+  factory FornecedorProdutoServicoModel.fromMap01(Map<String, dynamic> map) {
     return FornecedorProdutoServicoModel(
       id: map['id_fornecedor_servico'] ?? '',
       idProdutoServico: map['id_produto_servico'] ?? '',
       idFornecedor: map['id_fornecedor'] ?? '',
       idSubcategoria: map['id_subcategoria'], // ✅ novo
+      preco: (map['preco'] as num?)?.toDouble() ?? 0.0,
+      precoPromocao: (map['preco_promocao'] as num?)?.toDouble(),
+      ativo: map['ativo'] ?? true,
+      dataCadastro: _toDateTime(map['data_cadastro']),
+    );
+  }
+
+  factory FornecedorProdutoServicoModel.fromMap(Map<String, dynamic> map) {
+    return FornecedorProdutoServicoModel(
+      id: map['id_fornecedor_servico'] ?? map['id'] ?? '',
+      idProdutoServico: map['id_produto_servico'] ?? map['idProdutoServico'] ?? '',
+      idFornecedor: map['id_fornecedor'] ?? map['idFornecedor'] ?? '',
+      idSubcategoria: map['id_subcategoria'] ?? map['idSubcategoria'],
       preco: (map['preco'] as num?)?.toDouble() ?? 0.0,
       precoPromocao: (map['preco_promocao'] as num?)?.toDouble(),
       ativo: map['ativo'] ?? true,
@@ -95,6 +108,13 @@ class FornecedorProdutoServicoModel {
   // 🔹 Conversão de datas
   // ===========================================================
   static DateTime _toDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is Timestamp) return value.toDate();
+    if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
+    return DateTime.now();
+  }
+
+  static DateTime toDateTime(dynamic value) {
     if (value == null) return DateTime.now();
     if (value is Timestamp) return value.toDate();
     if (value is String) return DateTime.tryParse(value) ?? DateTime.now();

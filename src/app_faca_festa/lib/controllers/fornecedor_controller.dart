@@ -295,9 +295,39 @@ class FornecedorController extends GetxController {
 
       final servicosSnap = await _db.collection('fornecedor_servico').get();
 
-      final listaServicos =
-          servicosSnap.docs.map((d) => FornecedorProdutoServicoModel.fromMap(d.data())).toList();
+      final listaServicos = servicosSnap.docs.map((doc) {
+        final data = doc.data();
+        final idDoc = doc.id;
 
+        // 🔹 Captura os dois padrões de campos (camelCase e snake_case)
+        final idFornecedor = data['id_fornecedor'] ?? data['id_fornecedor'] ?? '';
+        final idProdutoServico = data['id_produto_servico'] ?? data['idProdutoServico'] ?? '';
+        final idSubcategoria = data['id_subcategoria'] ?? data['idSubcategoria'];
+        final preco = (data['preco'] as num?)?.toDouble() ?? 0.0;
+        final precoPromocao = (data['preco_promocao'] as num?)?.toDouble();
+        final ativo = data['ativo'] ?? true;
+
+        // 🔹 Logs para diagnóstico detalhado
+        debugPrint('📄 Documento: $idDoc');
+        debugPrint('   id_fornecedor: $idFornecedor');
+        debugPrint('   id_produto_servico: $idProdutoServico');
+        debugPrint('   id_subcategoria: $idSubcategoria');
+        debugPrint('   preco: $preco | promocao: $precoPromocao');
+        debugPrint('------------------------------------');
+
+        return FornecedorProdutoServicoModel(
+          id: idDoc, // ✅ usa o ID real do documento Firestore
+          idFornecedor: idFornecedor,
+          idProdutoServico: idProdutoServico,
+          idSubcategoria: idSubcategoria,
+          preco: preco,
+          precoPromocao: precoPromocao,
+          ativo: ativo,
+          dataCadastro: FornecedorProdutoServicoModel.toDateTime(data['data_cadastro']),
+        );
+      }).toList();
+
+      debugPrint('✅ Total de vínculos carregados: ${listaServicos.length}');
       allServicosFornecedor.assignAll(listaServicos);
     } catch (e) {
       erro.value = 'Erro ao carregar fornecedores: $e';

@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:get/get.dart';
 import 'dart:math';
 
 import './../data/models/servico_produto/fornecedor_categoria_model.dart';
@@ -15,12 +15,13 @@ class FornecedorLocalizacaoController extends GetxController {
   final db = FirebaseFirestore.instance;
 
   // Estados reativos
-  var userLatitude = 0.0.obs;
-  var userLongitude = 0.0.obs;
-  var raio = 10.0.obs;
+
   var avaliacaoMinima = 0.0.obs;
-  var carregando = true.obs;
   bool _dadosCarregados = false;
+  var userLongitude = 0.0.obs;
+  var userLatitude = 0.0.obs;
+  var carregando = true.obs;
+  var raio = 10.0.obs;
 
   // Listas brutas (para reatividade)
   final _fornecedoresRaw = <FornecedorModel>[].obs;
@@ -254,7 +255,7 @@ class FornecedorLocalizacaoController extends GetxController {
 
           debugPrint('🗺️ ${f.razaoSocial} → Região '
               '(${territorio.regioes!.length} pontos) '
-              '${dentro ? "✅ Dentro da área" : "📏 Fora — ${distanciaKm?.toStringAsFixed(2)} km"}');
+              '${dentro ? "✅ Dentro da área" : "📏 Fora — ${distanciaKm.toStringAsFixed(2)} km"}');
         }
       }
 
@@ -342,6 +343,7 @@ class FornecedorLocalizacaoController extends GetxController {
         List<FornecedorServicoDetalhadoDto> lista = [];
         for (final doc in snapshot.docs) {
           final data = doc.data();
+          final idFornecedor = data['id_fornecedor'] ?? '';
           final nomeCategoria = data['nome_categoria'] ?? '';
           final subcategorias = (data['subcategorias'] as List?) ?? [];
           for (final sub in subcategorias) {
@@ -353,24 +355,42 @@ class FornecedorLocalizacaoController extends GetxController {
                 .where('id_subcategoria', isEqualTo: idSub)
                 .where('ativo', isEqualTo: true)
                 .get();
+
+            final servFornSnap = await db
+                .collection('fornecedor_servico')
+                .where('id_fornecedor', isEqualTo: idFornecedor)
+                .where('id_subcategoria', isEqualTo: idSub)
+                .limit(1)
+                .get();
+
+            final preco = servFornSnap.docs.isNotEmpty
+                ? (servFornSnap.docs.first.data()['preco'] as num?)?.toDouble() ?? 0.0
+                : 0.0;
+            final precoPromocao = servFornSnap.docs.isNotEmpty
+                ? (servFornSnap.docs.first.data()['preco_promocao'] as num?)?.toDouble() ?? 0.0
+                : 0.0;
+
             for (final servDoc in servSnap.docs) {
               final servData = servDoc.data();
               final fotoSnap = await db
                   .collection('servico_foto')
+                  .where('id_fornecedor', isEqualTo: idFornecedor ?? '')
                   .where('id_produto_servico', isEqualTo: servDoc.id)
                   .limit(1)
                   .get();
+
               final imagemUrl =
                   fotoSnap.docs.isNotEmpty ? fotoSnap.docs.first.data()['url'] as String? : null;
+
               lista.add(FornecedorServicoDetalhadoDto(
                 id: servDoc.id,
-                idFornecedor: '',
+                idFornecedor: idFornecedor ?? '',
                 idProdutoServico: servDoc.id,
                 idSubcategoria: idSub,
                 nomeServico: servData['nome'],
                 descricaoServico: servData['descricao'],
-                preco: (servData['preco'] as num?)?.toDouble() ?? 0.0,
-                precoPromocao: (servData['preco_promocao'] as num?)?.toDouble(),
+                preco: preco,
+                precoPromocao: precoPromocao,
                 nomeSubcategoria: nomeSub,
                 nomeCategoria: nomeCategoria,
                 imagemUrl: imagemUrl,
@@ -560,7 +580,7 @@ class FornecedorLocalizacaoController extends GetxController {
 
   /// 🔹 Calcula a distância mínima entre um ponto e um segmento de reta (em km)
   double _distanciaPontoParaSegmento(double lat, double lon, LatLng p1, LatLng p2) {
-    const R = 6371; // Raio da Terra em km
+    const r = 6371; // Raio da Terra em km
 
     // Converter coordenadas para radianos
     final lat1 = p1.latitude * pi / 180;
@@ -571,26 +591,26 @@ class FornecedorLocalizacaoController extends GetxController {
     final lonP = lon * pi / 180;
 
     // Vetores
-    final A = [cos(lat1) * cos(lon1), cos(lat1) * sin(lon1), sin(lat1)];
-    final B = [cos(lat2) * cos(lon2), cos(lat2) * sin(lon2), sin(lat2)];
-    final P = [cos(latP) * cos(lonP), cos(latP) * sin(lonP), sin(latP)];
+    final a = [cos(lat1) * cos(lon1), cos(lat1) * sin(lon1), sin(lat1)];
+    final b = [cos(lat2) * cos(lon2), cos(lat2) * sin(lon2), sin(lat2)];
+    final p = [cos(latP) * cos(lonP), cos(latP) * sin(lonP), sin(latP)];
 
     // Projeção de P sobre o segmento AB
-    final AB = [B[0] - A[0], B[1] - A[1], B[2] - A[2]];
-    final AP = [P[0] - A[0], P[1] - A[1], P[2] - A[2]];
-    final t = (AP[0] * AB[0] + AP[1] * AB[1] + AP[2] * AB[2]) /
-        (AB[0] * AB[0] + AB[1] * AB[1] + AB[2] * AB[2]);
+    final ab = [b[0] - a[0], b[1] - a[1], b[2] - a[2]];
+    final ap = [p[0] - a[0], p[1] - a[1], p[2] - a[2]];
+    final t = (ap[0] * ab[0] + ap[1] * ab[1] + ap[2] * ab[2]) /
+        (ab[0] * ab[0] + ab[1] * ab[1] + ab[2] * ab[2]);
 
     // Clampeia t (para ficar dentro do segmento)
     final tClamped = t.clamp(0.0, 1.0);
-    final proj = [A[0] + AB[0] * tClamped, A[1] + AB[1] * tClamped, A[2] + AB[2] * tClamped];
+    final proj = [a[0] + ab[0] * tClamped, a[1] + ab[1] * tClamped, a[2] + ab[2] * tClamped];
 
     // Distância entre P e projeção
-    final d = acos((P[0] * proj[0] + P[1] * proj[1] + P[2] * proj[2]) /
-        (sqrt(P[0] * P[0] + P[1] * P[1] + P[2] * P[2]) *
+    final d = acos((p[0] * proj[0] + p[1] * proj[1] + p[2] * proj[2]) /
+        (sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]) *
             sqrt(proj[0] * proj[0] + proj[1] * proj[1] + proj[2] * proj[2])));
 
-    return R * d;
+    return r * d;
   }
 
   // ==========================================================
@@ -636,13 +656,13 @@ class FornecedorLocalizacaoController extends GetxController {
   // === DISTÂNCIA (Haversine)
   // ==========================================================
   double _calcularDistancia(double lat1, double lon1, double lat2, double lon2) {
-    const R = 6371;
+    const r = 6371;
     final dLat = (lat2 - lat1) * (pi / 180);
     final dLon = (lon2 - lon1) * (pi / 180);
     final a = sin(dLat / 2) * sin(dLat / 2) +
         cos(lat1 * pi / 180) * cos(lat2 * pi / 180) * sin(dLon / 2) * sin(dLon / 2);
     final c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    return R * c;
+    return r * c;
   }
 
   // ==========================================================
@@ -685,5 +705,14 @@ class FornecedorLocalizacaoController extends GetxController {
   void atualizarRaio(double novoRaio) {
     raio.value = novoRaio;
     _filtrarPorRaio();
+  }
+
+  void removerServico(String idProdutoServico, String idFornecedor, String idSubcategoria) {
+    servicosFornecedor.removeWhere(
+      (sev) =>
+          sev.idProdutoServico == idProdutoServico &&
+          sev.idFornecedor == idFornecedor &&
+          sev.idSubcategoria == idSubcategoria,
+    );
   }
 }
