@@ -1,4 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
+import 'dart:ui';
+
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,10 +18,11 @@ import './../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/app_controller.dart';
-import './cotacao/servicos_categoria_screen.dart';
+import 'cotacao/servicos_para_cotacao_screen.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../../data/models/model.dart';
 import './fornecedor_detalhe_screen.dart';
+import 'cotacao/servico_detalhe_screen.dart';
 
 class FornecedorLocalizacaoScreen extends StatefulWidget {
   final bool? showLeading;
@@ -87,14 +91,12 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
           return Column(
             children: [
-              // 🔹 Cabeçalho fixo no topo
               Container(
                 color: Colors.grey.shade100,
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: _menuCategorias(primary, gradient),
               ),
 
-              // 🔹 Conteúdo rolável abaixo
               Expanded(
                 child: SingleChildScrollView(
                   physics: const BouncingScrollPhysics(),
@@ -146,7 +148,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                               ),
                               const SizedBox(height: 12),
                               SizedBox(
-                                height: 250, // já ajustado
+                                height: 250,
                                 child: ListView.builder(
                                   scrollDirection: Axis.horizontal,
                                   physics: const BouncingScrollPhysics(),
@@ -232,13 +234,15 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                         );
                       }),
                       const SizedBox(height: 30),
-                      if (categoriaSelecionada != null)
+                      if (categoriaSelecionada != null) ...[
                         _carrosselServicos(
                           themeController,
                           controllerLocalizacao,
                           subCategoriaController,
                           categoriaSelecionada!,
                         ),
+                        const SizedBox(height: 45),
+                      ],
                     ],
                   ),
                 ),
@@ -301,7 +305,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                           return;
                         }
 
-                        Get.to(() => ServicosCategoriaScreen(
+                        Get.to(() => ServicosParaCotacaoScreen(
                               idCategoria: categoriaSelecionada!.id,
                               nomeCategoria: categoriaSelecionada!.nome,
                               fornecedoresSelecionados: selecionados.toList(),
@@ -344,16 +348,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
       debugPrint('📡 Total de serviços em allService: ${controllerLocalizacao.allService.length}');
 
-      final lista = controllerLocalizacao.allService.where((servico) {
-        final match = subCategorias.any((sub) => sub.id == servico.idSubcategoria);
-        if (match) {
-          debugPrint('✅ Serviço compatível: ${servico.nomeServico} '
-              '(Fornecedor: ${servico.idFornecedor}, Subcategoria: ${servico.idSubcategoria})');
-        } else {
-          debugPrint('⛔ Ignorado: ${servico.nomeServico} (${servico.idSubcategoria})');
-        }
-        return match;
-      }).toList();
+      final lista = controllerLocalizacao.servicosPorCategoria.toList();
 
       debugPrint('🎯 Total de serviços encontrados: ${lista.length}');
       debugPrint('--------------------------------------------');
@@ -395,7 +390,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                     duration: const Duration(milliseconds: 400),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     child: Hero(
-                      tag: 'servico_${s.id}',
+                      tag: 'servico_${s.id}fornecedor_${s.idFornecedor}',
                       child: _cardServicoCarrossel(s, primary),
                     ),
                   );
@@ -423,193 +418,220 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
   Widget _cardServicoCarrossel(FornecedorServicoDetalhadoDto s, Color primary) {
     return AnimatedContainer(
-      height: 250,
       duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOutCubic,
+      height: 260,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(24),
         child: Stack(
           children: [
-            // === IMAGEM PRINCIPAL ===
-            s.imagemUrl != null && s.imagemUrl!.isNotEmpty
-                ? CachedNetworkImage(
-                    imageUrl: s.imagemUrl!,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    height: double.infinity,
-                    placeholder: (_, __) => Container(
-                      color: Colors.grey.shade200,
-                      child: const Center(
-                        child: CircularProgressIndicator(strokeWidth: 2),
+            // === IMAGEM DE FUNDO ===
+            Positioned.fill(
+              child: s.imagemUrl != null && s.imagemUrl!.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: s.imagemUrl!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity,
+                      placeholder: (_, __) => Container(
+                        color: Colors.grey.shade200,
+                        child: const Center(
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
                       ),
+                      errorWidget: (_, __, ___) => Container(
+                        color: Colors.grey.shade200,
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.image_not_supported_rounded,
+                            color: Colors.grey, size: 42),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.grey.shade300,
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.image_rounded, size: 42, color: Colors.grey),
                     ),
-                    errorWidget: (_, __, ___) => Container(
-                      color: Colors.grey.shade200,
-                      child: const Icon(Icons.image_not_supported_outlined,
-                          color: Colors.grey, size: 40),
-                    ),
-                  )
-                : Container(
-                    color: Colors.grey.shade200,
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.image_rounded, size: 40, color: Colors.grey),
-                  ),
+            ),
 
-            // === GRADIENTE SOBREPOSTO (mais leve e menor) ===
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              height: 130, // ocupa apenas a parte inferior
-              child: Container(
+            // === GRADIENTE SUAVE SUPERIOR + INFERIOR ===
+            Positioned.fill(
+              child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.75),
-                      primary.withValues(alpha: 0.85),
-                    ],
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    stops: const [0.0, 0.5, 1.0],
+                    colors: [
+                      Colors.black.withValues(alpha: 0.05),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.65),
+                    ],
+                    stops: const [0.0, 0.4, 1.0],
                   ),
                 ),
               ),
             ),
 
-            // === INFORMAÇÕES (NOME + CATEGORIA + BOTÃO) ===
+            // === RODAPÉ COM INFORMAÇÕES (FROSTED GLASS) ===
             Positioned(
-              bottom: 0,
               left: 0,
               right: 0,
+              bottom: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                constraints: const BoxConstraints(maxHeight: 160),
-                decoration: const BoxDecoration(
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(22),
-                  ),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+                  color: Colors.black.withValues(alpha: 0.45),
+                  backgroundBlendMode: BlendMode.darken,
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // === Nome do serviço ===
-                    Text(
-                      s.nomeServico ?? 'Serviço sem nome',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 14.5,
-                        fontWeight: FontWeight.w600,
-                        shadows: [
-                          const Shadow(
-                            offset: Offset(0, 1),
-                            blurRadius: 3,
-                            color: Colors.black45,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // === Nome do serviço ===
+                        Text(
+                          s.nomeServico ?? 'Serviço sem nome',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            fontSize: 15.5,
+                            shadows: const [
+                              Shadow(
+                                offset: Offset(0, 1.5),
+                                blurRadius: 4,
+                                color: Colors.black54,
+                              )
+                            ],
                           ),
-                        ],
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
 
-                    // === Categoria/Subcategoria ===
-                    Text(
-                      s.nomeCategoria ?? s.nomeSubcategoria ?? '',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white.withValues(alpha: 0.9),
-                        fontSize: 12.5,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-
-                    // === Valor e promoção ===
-                    if (s.preco > 0) ...[
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 2,
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        children: [
-                          Text(
-                            'A partir de R\$ ${Biblioteca.formatarValorDecimal(s.preco)}',
-                            style: GoogleFonts.poppins(
-                              color: Colors.red.shade600,
-                              fontSize: 13.5,
-                              fontWeight: FontWeight.w600,
-                              decoration: TextDecoration.lineThrough,
-                            ),
+                        // === Categoria ===
+                        Text(
+                          s.nomeCategoria ?? s.nomeSubcategoria ?? '',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 12.5,
                           ),
-                          if (s.precoPromocao != null && s.precoPromocao! > 0)
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: Text(
-                                'Promoção R\$ ${Biblioteca.formatarValorDecimal(s.precoPromocao!)}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+
+                        const SizedBox(height: 6),
+
+                        // === Preços ===
+                        if (s.preco > 0)
+                          Row(
+                            children: [
+                              if (s.precoPromocao != null && s.precoPromocao! > 0)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.greenAccent.withValues(alpha: 0.2),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'R\$ ${Biblioteca.formatarValorDecimal(s.precoPromocao!)}',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.greenAccent,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'R\$ ${Biblioteca.formatarValorDecimal(s.preco)}',
                                 style: GoogleFonts.poppins(
-                                  color: Colors.yellowAccent.shade700,
-                                  fontSize: 12,
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                  fontSize: 12.5,
+                                  decoration: s.precoPromocao != null && s.precoPromocao! > 0
+                                      ? TextDecoration.lineThrough
+                                      : null,
                                 ),
                               ),
-                            ),
-                        ],
-                      ),
-                    ],
-
-                    const Spacer(),
-
-                    // === Botão "Ver mais" ===
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Get.snackbar('Serviço selecionado', s.nomeServico ?? '',
-                              snackPosition: SnackPosition.BOTTOM,
-                              backgroundColor: primary,
-                              colorText: Colors.white);
-                        },
-                        icon: const Icon(Icons.design_services_rounded, size: 16),
-                        label: const Text(
-                          'Ver mais',
-                          style: TextStyle(fontSize: 12.5),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: primary,
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            ],
                           ),
-                          elevation: 2,
+
+                        const SizedBox(height: 6),
+
+                        // === Fornecedor ===
+                        Row(
+                          children: [
+                            const Icon(Icons.store_mall_directory_rounded,
+                                color: Colors.white70, size: 14),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                s.nomeFornecedor ?? 'Fornecedor não informado',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white.withValues(alpha: 0.9),
+                                  fontSize: 12,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
+                      ],
                     ),
-                  ],
+                  ),
+                ),
+              ),
+            ),
+
+            // === BOTÃO “VER MAIS” FLUTUANTE ===
+            Positioned(
+              bottom: 16,
+              right: 14,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  final serviceComplet = controllerLocalizacao.allService.firstWhereOrNull(
+                    (srv) =>
+                        srv.idProdutoServico == s.idProdutoServico &&
+                        srv.idFornecedor == s.idFornecedor &&
+                        srv.idSubcategoria == s.idSubcategoria,
+                  );
+                  if (serviceComplet == null) return;
+                  Get.to(() => ServicoDetalheScreen(servico: serviceComplet));
+                },
+                icon: const Icon(Icons.visibility_rounded, size: 16),
+                label: const Text('Ver mais'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                  elevation: 6,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shadowColor: primary.withValues(alpha: 0.5),
                 ),
               ),
             ),
           ],
         ),
       ),
-    );
+    ).animate().scaleXY(begin: 0.98, end: 1.0, duration: 250.ms);
   }
 
 // === Cabeçalho de categorias ===
   Widget _menuCategorias(Color primary, LinearGradient gradient) {
+    final controllerLocalizacao = Get.put(FornecedorLocalizacaoController());
     return Obx(() {
       final categorias = controllerLocalizacao.categorias;
       if (categorias.isEmpty) {
@@ -620,7 +642,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
       }
 
       return Container(
-        height: 64, // 🔹 um pouco mais alto para dar respiro
+        height: 64,
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -650,10 +672,16 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
             final corIcone = Biblioteca.corPorCategoria(c.nome);
 
             return GestureDetector(
-              onTap: () => setState(() {
-                selecionados.clear();
-                categoriaSelecionada = selected ? null : c;
-              }),
+              onTap: () async {
+                setState(() {
+                  selecionados.clear();
+                  categoriaSelecionada = selected ? null : c;
+                });
+
+                if (!selected) {
+                  await controllerLocalizacao.buscarServicosPorCategoria(c.id);
+                }
+              },
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 curve: Curves.easeOutCubic,

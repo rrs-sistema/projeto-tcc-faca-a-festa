@@ -69,6 +69,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
         bottom: true,
         child: PageView(
           controller: pageController,
+          physics: const NeverScrollableScrollPhysics(),
           onPageChanged: (i) async {
             setState(() => _currentIndex = i);
             if (i == 1) {
@@ -173,7 +174,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       {'icon': Icons.home_rounded, 'label': 'Home'},
       {'icon': Icons.storefront_rounded, 'label': 'Fornecedores'},
       {'icon': Icons.lightbulb_rounded, 'label': 'Inspiração'},
-      {'icon': Icons.menu_rounded, 'label': 'Menu'}, // 🔹 Novo botão
+      {'icon': Icons.menu_rounded, 'label': 'Menu'},
     ];
 
     return AnimatedContainer(
@@ -217,7 +218,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
               curve: Curves.easeInOut,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
               decoration: BoxDecoration(
-                color: selected && i != 3 ? cor.withValues(alpha: 0.08) : Colors.transparent,
+                color: selected && i != 3 ? cor.withValues(alpha: 0.009) : Colors.transparent,
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: selected && i != 3
                     ? [
@@ -1128,7 +1129,7 @@ Widget _buildBudgetChart(
                 Icon(Icons.pie_chart_rounded, color: primary, size: 22),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 30),
 
             // 🔹 Gráfico
             SizedBox(
@@ -1338,7 +1339,7 @@ Widget _buildSuppliersCarousel(EventThemeController theme) {
           // 🔹 Listagem reativa
           Obx(() {
             final carregando = fornecedorController.carregandoServicosFornecedor.value;
-            final fornecedores = fornecedorController.fornecedores
+            final fornecedores = fornecedorController.fornecedoresFiltrados
                 .where((f) => f.fornecedor.ativo && f.fornecedor.aptoParaOperar)
                 .toList();
 
@@ -1431,7 +1432,7 @@ Widget _buildSuppliersCarousel(EventThemeController theme) {
                               CachedNetworkImage(
                                 imageUrl: fornecedorDetalhe.fornecedor.bannerUrl ??
                                     'https://cdn-icons-png.flaticon.com/512/6799/6799605.png',
-                                fit: BoxFit.cover,
+                                fit: BoxFit.fill,
                                 width: double.infinity,
                                 height: double.infinity,
                                 placeholder: (_, __) => Container(

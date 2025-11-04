@@ -7,6 +7,7 @@ enum StatusFornecedorCotacao {
   aguardando,
   respondido,
   recusado,
+  cancelada,
   fechado;
 
   String get label {
@@ -16,6 +17,8 @@ enum StatusFornecedorCotacao {
       case StatusFornecedorCotacao.respondido:
         return 'Respondido';
       case StatusFornecedorCotacao.recusado:
+        return 'cancelada';
+      case StatusFornecedorCotacao.cancelada:
         return 'Recusado';
       case StatusFornecedorCotacao.fechado:
         return 'Fechado';
@@ -30,6 +33,8 @@ enum StatusFornecedorCotacao {
         return 'respondido';
       case StatusFornecedorCotacao.recusado:
         return 'recusado';
+      case StatusFornecedorCotacao.cancelada:
+        return 'cancelada';
       case StatusFornecedorCotacao.fechado:
         return 'fechado';
     }
@@ -42,6 +47,8 @@ enum StatusFornecedorCotacao {
         return StatusFornecedorCotacao.respondido;
       case 'recusado':
         return StatusFornecedorCotacao.recusado;
+      case 'cancelada':
+        return StatusFornecedorCotacao.cancelada;
       case 'fechado':
         return StatusFornecedorCotacao.fechado;
       default:

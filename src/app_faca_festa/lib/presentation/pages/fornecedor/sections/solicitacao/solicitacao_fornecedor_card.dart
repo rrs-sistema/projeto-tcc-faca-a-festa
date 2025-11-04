@@ -2,8 +2,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../controllers/contacao/solicitacoes_controller.dart';
+
 class SolicitacaoFornecedorCard extends StatelessWidget {
-  final dynamic solicitacao;
+  final SolicitacaoModel solicitacao;
   const SolicitacaoFornecedorCard({super.key, required this.solicitacao});
 
   Color _statusColor(String status) {
@@ -18,6 +20,8 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
         return Colors.green;
       case 'recusado':
         return Colors.redAccent;
+      case 'cancelada':
+        return Colors.red.shade700; // 🔹 cor mais escura para cancelado
       default:
         return Colors.grey;
     }
@@ -35,6 +39,8 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
         return Icons.check_circle_outline_rounded;
       case 'recusado':
         return Icons.cancel_rounded;
+      case 'cancelada':
+        return Icons.remove_circle_outline_rounded; // 🔹 ícone distinto de recusa
       default:
         return Icons.help_outline_rounded;
     }

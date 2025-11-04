@@ -12,30 +12,38 @@ class SolicitacoesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fornecedorController = Get.find<FornecedorController>();
-    final fornecedor = fornecedorController.fornecedor.value;
+    final solicitacoesController = Get.put(SolicitacoesController(), permanent: false);
 
-    if (fornecedor == null) {
-      return const Center(child: Text("Nenhum fornecedor logado."));
-    }
-
-    final controller = Get.put(SolicitacoesController());
-    controller.carregarSolicitacoes(fornecedor.idFornecedor);
+    // 🔹 Inicializa o listener uma única vez (fora do Obx)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final fornecedor = fornecedorController.fornecedor.value;
+      if (fornecedor != null) {
+        solicitacoesController.inicializar(fornecedor.idFornecedor);
+      }
+    });
 
     return Obx(() {
-      if (controller.carregando.value) {
+      final fornecedor = fornecedorController.fornecedor.value;
+
+      if (fornecedor == null) {
         return const Center(child: CircularProgressIndicator(strokeWidth: 2));
       }
 
-      if (controller.erro.isNotEmpty) {
+      if (solicitacoesController.carregando.value) {
+        return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+      }
+
+      if (solicitacoesController.erro.isNotEmpty) {
         return Center(
           child: Text(
-            controller.erro.value,
+            solicitacoesController.erro.value,
             style: GoogleFonts.poppins(color: Colors.red.shade600),
           ),
         );
       }
 
-      final lista = controller.solicitacoes;
+      final lista = solicitacoesController.solicitacoes;
+
       if (lista.isEmpty) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 24),
@@ -66,38 +74,8 @@ class SolicitacoesSection extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
-              final solicitacao = lista[index];
-              return SolicitacaoFornecedorCard(solicitacao: solicitacao);
+              return SolicitacaoFornecedorCard(solicitacao: lista[index]);
             },
-          ),
-          const SizedBox(height: 16),
-          Align(
-            alignment: Alignment.centerRight,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Get.snackbar(
-                  "Solicitações",
-                  "Abrindo lista completa...",
-                  backgroundColor: const Color(0xFF2E7D32),
-                  colorText: Colors.white,
-                );
-              },
-              icon: const Icon(Icons.list_alt_rounded, color: Colors.white),
-              label: Text(
-                "Ver todas",
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2E7D32),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
           ),
         ],
       );

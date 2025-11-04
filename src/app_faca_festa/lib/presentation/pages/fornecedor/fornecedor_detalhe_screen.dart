@@ -10,7 +10,7 @@ import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../core/utils/no_sqflite_cache_manager.dart';
 import './../../../controllers/fornecedor_controller.dart';
-import './cotacao/servicos_categoria_screen.dart';
+import 'cotacao/servicos_para_cotacao_screen.dart';
 import './../../../data/models/model.dart';
 
 class FornecedorDetalheScreen extends StatelessWidget {
@@ -500,7 +500,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
                                   );
                                   controllerLocalizacao.servicosFornecedor.add(serviceComplet);
 
-                                  Get.to(() => ServicosCategoriaScreen(
+                                  Get.to(() => ServicosParaCotacaoScreen(
                                         idCategoria: categoria.id,
                                         nomeCategoria: categoria.nome,
                                         fornecedoresSelecionados: [fornecedor.idFornecedor],
@@ -636,7 +636,7 @@ Widget _cardServicoCarrossel({
 
                     controllerLocalizacao.servicosFornecedor.add(serviceComplet);
 
-                    Get.to(() => ServicosCategoriaScreen(
+                    Get.to(() => ServicosParaCotacaoScreen(
                           idCategoria: categoria.id,
                           nomeCategoria: categoria.nome,
                           fornecedoresSelecionados: [fornecedorId],

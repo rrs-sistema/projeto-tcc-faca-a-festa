@@ -6,6 +6,7 @@ class FornecedorServicoDetalhadoDto {
   final String idProdutoServico;
   final String? idSubcategoria;
   final String? nomeServico;
+  final String? nomeFornecedor;
   final String? descricaoServico;
   final double preco;
   final double? precoPromocao;
@@ -21,6 +22,7 @@ class FornecedorServicoDetalhadoDto {
     required this.idProdutoServico,
     this.idSubcategoria,
     this.nomeServico,
+    this.nomeFornecedor,
     this.descricaoServico,
     required this.preco,
     this.precoPromocao,

@@ -26,6 +26,7 @@ import './controllers/orcamento_gasto_controller.dart';
 import './controllers/evento_cadastro_controller.dart';
 import './presentation/pages/login/login_screen.dart';
 import 'controllers/admin/admin_territorio_controller.dart';
+import 'controllers/contacao/solicitacoes_controller.dart';
 import 'controllers/tema/event_theme_controller.dart';
 import './controllers/fornecedor_controller.dart';
 import './controllers/orcamento_controller.dart';
@@ -80,6 +81,7 @@ Future<void> main() async {
   Get.put(CardapioController(), permanent: true);
   Get.put(GrupoConvidadoController(), permanent: true);
   Get.put(CotacaoController(), permanent: true);
+  Get.put(SolicitacoesController(), permanent: true);
   Get.put(AvaliacaoController(), permanent: true);
   Get.put(ServicoFotoController(), permanent: true);
   Get.put(AdminTerritorioController(), permanent: true);

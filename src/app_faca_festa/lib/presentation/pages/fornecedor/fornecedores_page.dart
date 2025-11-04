@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
+import '../../../controllers/contacao/solicitacoes_controller.dart';
 import './../../../controllers/contacao/cotacao_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/fornecedor_controller.dart';
@@ -231,6 +232,7 @@ class FornecedoresPage extends StatelessWidget {
   }
 
   Widget _buildMinhasCotacoes(List<CotacaoModel> cotacoes, Color primary) {
+    final solicitacoeCtrl = Get.find<SolicitacoesController>();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -306,8 +308,12 @@ class FornecedoresPage extends StatelessWidget {
                   _mostrarDetalhesCotacao(cotacao);
                 }),
                 _buildAcaoCotacao(primary, "Conversar com fornecedor", Icons.chat_rounded, () {}),
-                _buildAcaoCotacao(
-                    Colors.redAccent, "Cancelar cotação", Icons.cancel_outlined, () {}),
+                _buildAcaoCotacao(Colors.redAccent, "Cancelar cotação", Icons.cancel_outlined,
+                    () async {
+                  EasyLoading.show(status: 'Processando...');
+                  await solicitacoeCtrl.cancelarCotacao(cotacao.id);
+                  EasyLoading.dismiss();
+                }),
               ],
             ),
           ).animate().fade(duration: 300.ms).slideY(begin: 0.1, end: 0);
@@ -513,6 +519,8 @@ class FornecedoresPage extends StatelessWidget {
                               .format((data['prazo_entrega'] as Timestamp).toDate())
                           : '-';
                       final condicao = data['condicao_pagamento'] ?? '-';
+                      final comentario = data['observacao_fornecedor'] ?? '-';
+
                       final dataResposta = data['data_resposta'] is Timestamp
                           ? DateFormat("dd/MM/yyyy HH:mm")
                               .format((data['data_resposta'] as Timestamp).toDate())
@@ -650,6 +658,24 @@ class FornecedoresPage extends StatelessWidget {
                                                   fontSize: 12, color: Colors.grey.shade700),
                                               overflow: TextOverflow.ellipsis,
                                               softWrap: true,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      Row(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Icon(Icons.comment_outlined,
+                                              size: 13, color: Colors.grey),
+                                          const SizedBox(width: 5),
+                                          Flexible(
+                                            child: Text(
+                                              "Comentário: $comentario",
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 12, color: Colors.grey.shade700),
+                                              overflow: TextOverflow.ellipsis,
+                                              softWrap: true,
+                                              maxLines: 3,
                                             ),
                                           ),
                                         ],
