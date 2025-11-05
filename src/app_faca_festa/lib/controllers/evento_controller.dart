@@ -9,6 +9,7 @@ import './convidado/cardapio_controller.dart';
 import './../data/models/model.dart';
 import './orcamento_controller.dart';
 import 'tarefa_controller.dart';
+import 'tema/event_theme_controller.dart';
 
 class EventoController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -33,6 +34,7 @@ class EventoController extends GetxController {
   Future<void> buscarUltimoEvento(String idUsuario) async {
     try {
       carregando.value = true;
+      debugPrint("📦 [EventoController] Buscando último evento para usuário: $idUsuario");
 
       final snapshot = await _db
           .collection('evento')
@@ -46,12 +48,13 @@ class EventoController extends GetxController {
         await _inicializarEvento(evento);
       } else {
         eventoAtual.value = null;
+        debugPrint("⚠️ [EventoController] Nenhum evento encontrado para este usuário.");
       }
 
       carregando.value = false;
     } catch (e, s) {
       carregando.value = false;
-      if (kDebugMode) print("❌ Erro ao buscar último evento: $e\n$s");
+      debugPrint("❌ [EventoController] Erro ao buscar último evento: $e\n$s");
     }
   }
 
@@ -73,14 +76,14 @@ class EventoController extends GetxController {
 
         // Evita reinicialização desnecessária
         if (eventoAtual.value == null || evento.idEvento != eventoAtual.value!.idEvento) {
+          debugPrint("🔁 [EventoController] Evento detectado/atualizado: ${evento.nome}");
           await _inicializarEvento(evento);
-          if (kDebugMode) print('🔁 Evento atualizado: ${evento.nome}');
         }
       } else {
         eventoAtual.value = null;
       }
     }, onError: (e) {
-      if (kDebugMode) print('❌ Erro ao escutar evento: $e');
+      debugPrint('❌ [EventoController] Erro ao escutar evento: $e');
     });
   }
 
@@ -89,11 +92,19 @@ class EventoController extends GetxController {
   /// =====================================================
   Future<void> _inicializarEvento(EventoModel evento) async {
     try {
-      // 🔸 Cancela escutas antigas
+      debugPrint("🎯 [EventoController] Inicializando evento: ${evento.nome}");
       await _cancelarEscutas();
 
       eventoAtual.value = evento;
+
+      // 🔹 Busca e define o tipo do evento
       await buscarTipoEvento(evento.idTipoEvento);
+
+      // ✅ Aplica o tema visual automaticamente
+      final themeController = Get.find<EventThemeController>();
+      final tipoNome = tipoEventoAtual.value?.nome ?? 'Padrão';
+      debugPrint("🎨 [EventoController] Aplicando tema para tipo: $tipoNome");
+      themeController.aplicarTemaPorNome(tipoNome);
 
       // ✅ Escuta o documento do evento em tempo real
       _eventoDocSub = _db.collection('evento').doc(evento.idEvento).snapshots().listen((doc) {
@@ -102,19 +113,18 @@ class EventoController extends GetxController {
           final eventoAtualizado = EventoModel.fromMap(data);
           eventoAtual.value = eventoAtualizado;
 
-          if (kDebugMode) {
-            print('🔁 Evento atualizado em tempo real: ${eventoAtualizado.custoEstimado}');
-          }
+          debugPrint(
+              "🔄 [EventoController] Evento atualizado em tempo real: ${eventoAtualizado.nome}");
         }
       });
 
+      // 🔹 Inicializa controladores auxiliares
       final orcamentoController = Get.find<OrcamentoController>();
       final convidadoController = Get.find<ConvidadoController>();
       final cardapioController = Get.find<CardapioController>();
       final grupoController = Get.find<GrupoConvidadoController>();
       final tarefaController = Get.find<TarefaController>();
 
-      // 🔹 Inicia novas escutas dos submódulos
       _orcamentosSub =
           orcamentoController.carregarOrcamentosDoEvento(evento.idEvento).asStream().listen((_) {});
       _convidadosSub =
@@ -124,9 +134,10 @@ class EventoController extends GetxController {
       _gruposSub = grupoController.escutarGrupos(evento.idEvento).asStream().listen((_) {});
       _tarefasSub = tarefaController.listenTarefas(evento.idEvento).asStream().listen((_) {});
 
-      if (kDebugMode) print('✅ Evento inicializado e escutando alterações.');
+      debugPrint(
+          "✅ [EventoController] Evento '${evento.nome}' inicializado com sucesso e escutando alterações.");
     } catch (e, s) {
-      if (kDebugMode) print("❌ Erro ao inicializar evento: $e\n$s");
+      debugPrint("❌ [EventoController] Erro ao inicializar evento: $e\n$s");
     }
   }
 
@@ -150,7 +161,7 @@ class EventoController extends GetxController {
   }
 
   /// =====================================================
-  /// 🔹 Busca tipo de evento
+  /// 🔹 Busca tipo de evento e aplica o tema
   /// =====================================================
   Future<void> buscarTipoEvento(String idTipoEvento) async {
     try {
@@ -162,9 +173,18 @@ class EventoController extends GetxController {
 
       if (snapshot.docs.isNotEmpty) {
         tipoEventoAtual.value = TipoEventoModel.fromMap(snapshot.docs.first.data());
+
+        final nome = tipoEventoAtual.value!.nome;
+        debugPrint("📘 [EventoController] Tipo de evento carregado: $nome");
+
+        // 🔹 Aplica tema imediatamente
+        final themeController = Get.find<EventThemeController>();
+        themeController.aplicarTemaPorNome(nome);
+      } else {
+        debugPrint("⚠️ [EventoController] Tipo de evento não encontrado para ID: $idTipoEvento");
       }
-    } catch (e) {
-      if (kDebugMode) print("❌ Erro ao buscar tipo de evento: $e");
+    } catch (e, s) {
+      debugPrint("❌ [EventoController] Erro ao buscar tipo de evento: $e\n$s");
     }
   }
 

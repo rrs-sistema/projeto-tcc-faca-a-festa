@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../controllers/evento_controller.dart';
 import '../../controllers/fornecedor_controller.dart';
+import '../../controllers/tema/event_theme_controller.dart';
 import './../../controllers/app_controller.dart';
 
 /// =============================
@@ -15,6 +17,7 @@ class Splash extends StatefulWidget {
 }
 
 class _SplashState extends State<Splash> {
+  final eventoController = Get.find<EventoController>();
   @override
   void initState() {
     super.initState();
@@ -22,19 +25,26 @@ class _SplashState extends State<Splash> {
   }
 
   Future<void> _checkSession() async {
-    // ⏳ Espera 3 segundos antes de redirecionar
-    await Future.delayed(const Duration(seconds: 3));
+    await Future.delayed(const Duration(seconds: 2));
+
+    final themeController = Get.find<EventThemeController>();
+    if (eventoController.tipoEventoAtual.value == null ||
+        eventoController.tipoEventoAtual.value!.nome.isEmpty) {
+      debugPrint("💡 [Splash] Aplicando tema padrão (nenhum ativo encontrado)");
+      themeController.aplicarTemaPorNome("Padrão");
+    } else {
+      debugPrint(
+          "🎨 [Splash] Mantendo tema ativo: ${eventoController.tipoEventoAtual.value!.nome}");
+    }
 
     final appController = Get.find<AppController>();
     final fornecedorController = Get.find<FornecedorController>();
+
     if (appController.usuarioLogado.value != null) {
       if (appController.usuarioLogado.value!.tipo == 'F') {
         final fornecedor = await fornecedorController
             .buscarFornecedor(appController.usuarioLogado.value!.idUsuario);
-        Get.offAllNamed(
-          '/fornecedor',
-          arguments: {'fornecedor': fornecedor},
-        );
+        Get.offAllNamed('/fornecedor', arguments: {'fornecedor': fornecedor});
       } else if (appController.usuarioLogado.value!.tipo == '') {
         Get.offAllNamed('/role');
       }

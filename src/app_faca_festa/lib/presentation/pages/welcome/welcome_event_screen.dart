@@ -23,7 +23,7 @@ class WelcomeEventScreen extends StatefulWidget {
 
 class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
   final _db = FirebaseFirestore.instance;
-  final themeController = Get.put(EventThemeController());
+  final themeController = Get.find<EventThemeController>();
   final appController = Get.find<AppController>();
   final eventoController = Get.find<EventoController>();
 
@@ -131,8 +131,13 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                               nome: tipo.nome,
                               cor: _getColorFromName(tipo.nome),
                               onTap: () async {
-                                final appController = Get.find<AppController>();
+                                debugPrint(
+                                    "🎯 [WelcomeEventScreen] Tipo selecionado: ${tipo.nome}");
 
+                                // 🔹 Aplica imediatamente o tema ao selecionar o tipo
+                                themeController.aplicarTemaPorNome(tipo.nome);
+
+                                final appController = Get.find<AppController>();
                                 final usuario = await appController.prepararUsuarioComEndereco();
 
                                 if (usuario == null) {
@@ -146,20 +151,12 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                                   return;
                                 }
 
-                                // 🔹 Agora abre o cadastro com dados pré-carregados
-                                await showCadastroEventoBottomSheet(
-                                  context,
-                                );
+                                await showCadastroEventoBottomSheet(context);
 
                                 if (eventoController.eventoAtual.value != null) {
-                                  // 🔹 Aplica o tema visual do tipo de evento
-                                  themeController.aplicarTemaPorNome(tipo.nome);
-
-                                  // 🔹 Busca o último evento do usuário no Firestore
                                   await eventoController.buscarUltimoEvento(
                                       eventoController.eventoAtual.value!.idUsuario);
                                 } else {
-                                  // 👉 Nenhum evento encontrado: cria um placeholder temporário
                                   final novoEvento = EventoModel(
                                     idEvento: DateTime.now().millisecondsSinceEpoch.toString(),
                                     idTipoEvento: tipo.idTipoEvento,

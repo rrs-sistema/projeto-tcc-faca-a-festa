@@ -79,6 +79,7 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                   _menuItem(Icons.event_note, "Meu Evento", color: primary, onTap: () {
                     final evento = eventoController.eventoAtual.value;
                     if (evento != null) {
+                      Get.back();
                       eventoCadastroController.carregarEvento(evento);
                       showCadastroEventoBottomSheet(context, eventoParaEdicao: evento);
                     }
@@ -121,10 +122,13 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                   minimumSize: const Size(double.infinity, 48),
                 ),
                 onPressed: () => themeController.mostrarSeletorDeTema(context),
-                icon: const Icon(Icons.color_lens_outlined),
+                icon: const Icon(
+                  Icons.color_lens_outlined,
+                  color: Colors.white,
+                ),
                 label: Text(
                   "Alterar tema",
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white),
                 ),
               ),
             ),
@@ -143,10 +147,10 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                     minimumSize: const Size(double.infinity, 48),
                   ),
                   onPressed: onLogout,
-                  icon: const Icon(Icons.logout),
+                  icon: const Icon(Icons.logout, color: Colors.white),
                   label: Text(
                     "Encerrar sessão",
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ),
               ),

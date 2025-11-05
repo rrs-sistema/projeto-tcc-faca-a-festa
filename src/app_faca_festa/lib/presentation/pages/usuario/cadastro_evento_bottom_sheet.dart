@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +10,7 @@ import './../../../controllers/evento_cadastro_controller.dart';
 import './../../widgets/custom_input_field.dart';
 import './../endereco/endereco_section.dart';
 import './../../../data/models/model.dart';
+import 'evento_preview_titulo_widget.dart';
 
 Future<void> showCadastroEventoBottomSheet(
   BuildContext context, {
@@ -29,7 +31,6 @@ Future<void> showCadastroEventoBottomSheet(
   // 🔹 Define cores baseadas no tipo atual (ou padrão)
   Color corPrincipal;
   Color corSecundaria;
-  String emoji;
 
   final tipoNormalizado = controller.tipoEventoModel.value?.nome
           .toLowerCase()
@@ -41,27 +42,22 @@ Future<void> showCadastroEventoBottomSheet(
     case 'casamento':
       corPrincipal = const Color(0xFFE91E63);
       corSecundaria = const Color(0xFFFCE4EC);
-      emoji = '💍';
       break;
     case 'festa infantil':
       corPrincipal = const Color(0xFFFF9800);
       corSecundaria = const Color(0xFFFFF3E0);
-      emoji = '🎈';
       break;
     case 'chá de bebê':
       corPrincipal = const Color(0xFF03A9F4);
       corSecundaria = const Color(0xFFE1F5FE);
-      emoji = '🍼';
       break;
     case 'aniversário':
       corPrincipal = const Color(0xFF9C27B0);
       corSecundaria = const Color(0xFFF3E5F5);
-      emoji = '🎂';
       break;
     default:
       corPrincipal = const Color(0xFF009688);
       corSecundaria = const Color(0xFFE0F2F1);
-      emoji = '🎉';
   }
 
   // ===============================
@@ -79,7 +75,12 @@ Future<void> showCadastroEventoBottomSheet(
           curve: Curves.easeOutCubic,
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [corSecundaria, Colors.white],
+              colors: [
+                corSecundaria.withValues(alpha: 0.9),
+                Colors.white,
+                corPrincipal.withValues(alpha: 0.05),
+              ],
+              stops: const [0.0, 0.6, 1.0],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -112,95 +113,108 @@ Future<void> showCadastroEventoBottomSheet(
                         ),
                       ),
                       const SizedBox(height: 20),
-
-                      /// === Preview dinâmico ===
-                      if (eventoParaEdicao != null && eventoParaEdicao.idEvento.isNotEmpty)
-                        Obx(() => AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              padding: const EdgeInsets.all(10),
-                              margin: const EdgeInsets.only(bottom: 20),
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [corPrincipal.withValues(alpha: 0.15), Colors.white],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(color: corPrincipal.withValues(alpha: 0.5)),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(emoji, style: const TextStyle(fontSize: 38)),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      controller.nomeEventoPreview.value.isEmpty
-                                          ? 'Seu evento aparecerá aqui...'
-                                          : controller.nomeEvento.text,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                        color: corPrincipal,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )),
-
-                      ..._buildCamposPorTipo(corPrincipal, controller),
-
-                      const SizedBox(height: 32),
-
-                      /// === Botão de ação ===
-                      Obx(() => Center(
-                            child: ElevatedButton.icon(
-                              icon: controller.carregando.value
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: Colors.white,
-                                      ),
-                                    )
-                                  : Icon(
-                                      controller.isEditando
-                                          ? Icons.update
-                                          : Icons.check_circle_outline,
-                                      color: Colors.white,
-                                      size: 26,
-                                    ),
-                              label: Text(
-                                controller.isEditando ? 'Atualizar evento' : 'Salvar e continuar',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.green,
-                                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(30),
-                                ),
-                              ),
-                              onPressed: controller.carregando.value
-                                  ? null
-                                  : () => controller.salvarEvento(),
-                            ),
+                      Obx(() => EventoPreviewTituloWidget(
+                            tipoEvento: tipoNormalizado,
+                            nomeEvento: controller.nomeEventoPreview.value,
+                            corPrincipal: corPrincipal,
                           )),
+                      ..._buildCamposPorTipo(corPrincipal, controller),
+                      const SizedBox(height: 32),
+                      Obx(() => Column(
+                            children: [
+                              // === BOTÃO PRINCIPAL ===
+                              Center(
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: controller.isEditando
+                                          ? [corPrincipal.withValues(alpha: 0.9), corPrincipal]
+                                          : [
+                                              corPrincipal.withValues(alpha: 0.9),
+                                              corPrincipal.withValues(alpha: 0.7)
+                                            ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    ),
+                                    borderRadius: BorderRadius.circular(32),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withValues(alpha: 0.15),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                  child: ElevatedButton.icon(
+                                    icon: controller.carregando.value
+                                        ? const SizedBox(
+                                            height: 22,
+                                            width: 22,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : Icon(
+                                            controller.isEditando
+                                                ? Icons.update_rounded
+                                                : Icons.check_circle_rounded,
+                                            color: Colors.white,
+                                            size: 26,
+                                          ),
+                                    label: Text(
+                                      controller.isEditando
+                                          ? 'Atualizar evento'
+                                          : 'Salvar e continuar',
+                                      style: GoogleFonts.poppins(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        letterSpacing: 0.6,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent, // usa o gradiente
+                                      shadowColor: Colors.transparent,
+                                      padding:
+                                          const EdgeInsets.symmetric(horizontal: 45, vertical: 15),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(32),
+                                      ),
+                                    ),
+                                    onPressed: controller.carregando.value
+                                        ? null
+                                        : () => controller.salvarEvento(),
+                                  ),
+                                ),
+                              )
+                                  .animate()
+                                  .fadeIn(duration: 400.ms)
+                                  .scaleXY(begin: 0.9, end: 1.0, duration: 400.ms),
 
-                      const SizedBox(height: 20),
-                      Center(
-                        child: TextButton.icon(
-                          icon: const Icon(Icons.close, color: Colors.redAccent),
-                          label: const Text('Cancelar'),
-                          onPressed: () => Get.back(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
+                              const SizedBox(height: 20),
+
+                              // === BOTÃO CANCELAR ===
+                              TextButton.icon(
+                                icon: Icon(Icons.close_rounded, color: corPrincipal),
+                                label: Text(
+                                  'Cancelar',
+                                  style: GoogleFonts.poppins(
+                                    color: corPrincipal,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  overlayColor: corPrincipal.withValues(alpha: 0.1),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                  ),
+                                ),
+                                onPressed: () => Get.back(),
+                              ),
+                            ],
+                          )),
                     ],
                   ),
                 ),
@@ -223,45 +237,6 @@ List<Widget> _buildCamposPorTipo(
       .trim();
   final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
   return [
-    Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Obx(() {
-        final tipos = controller.tiposEvento;
-        final tipoSelecionado = controller.tipoEventoModel.value;
-
-        return DropdownButtonFormField<String>(
-          value: tipoSelecionado?.idTipoEvento.isNotEmpty == true
-              ? tipoSelecionado!.idTipoEvento
-              : null,
-          decoration: InputDecoration(
-            labelText: "Tipo de evento",
-            labelStyle: GoogleFonts.poppins(color: corPrincipal),
-            prefixIcon: Icon(Icons.category, color: corPrincipal),
-            focusedBorder: OutlineInputBorder(
-              borderSide: BorderSide(color: corPrincipal, width: 1.5),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ),
-          items: tipos.map((t) {
-            return DropdownMenuItem(
-              value: t.idTipoEvento, // ✅ agora o value é o ID
-              child: Text(t.nome),
-            );
-          }).toList(),
-          onChanged: (v) {
-            if (v != null) {
-              final tipo = tipos.firstWhereOrNull((e) => e.idTipoEvento == v);
-              controller.tipoEventoModel.value = tipo;
-              controller.atualizarPreview();
-            }
-          },
-          validator: (v) => v == null || v.isEmpty ? "Selecione o tipo de evento" : null,
-        );
-      }),
-    ),
     CustomInputField(
       label: "Nome do evento",
       icon: Icons.celebration,
@@ -297,6 +272,7 @@ List<Widget> _buildCamposPorTipo(
             fontWeight: FontWeight.w600,
             fontSize: 16,
           )),
+      const SizedBox(height: 12),
       Obx(() => DropdownButtonFormField<String>(
             value:
                 controller.tipoCerimonia.value.isNotEmpty ? controller.tipoCerimonia.value : null,
@@ -324,8 +300,10 @@ List<Widget> _buildCamposPorTipo(
           )),
 
       const SizedBox(height: 10),
+      Divider(color: corPrincipal.withValues(alpha: 0.3)),
+      const SizedBox(height: 10),
 
-// === Estilo do casamento (com opções pré-definidas)
+      // === Estilo do casamento (com opções pré-definidas)
       Obx(() => DropdownButtonFormField<String>(
             value: controller.estiloCasamento.value.isNotEmpty
                 ? controller.estiloCasamento.value
@@ -474,7 +452,7 @@ List<Widget> _buildCamposPorTipo(
     ),
 
     EnderecoSection(
-      cor: Colors.pink.shade700,
+      cor: corPrincipal,
       controller: controller.enderecoController.value,
       titulo: 'Endereço do evento',
     ),

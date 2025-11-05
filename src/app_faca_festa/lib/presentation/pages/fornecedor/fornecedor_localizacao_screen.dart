@@ -1,6 +1,3 @@
-// ignore_for_file: use_build_context_synchronously
-import 'dart:ui';
-
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -9,6 +6,7 @@ import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'dart:ui';
 
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
 import './../../../../controllers/categoria/categoria_servico_controller.dart';
@@ -18,11 +16,11 @@ import './../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/app_controller.dart';
-import 'cotacao/servicos_para_cotacao_screen.dart';
 import './../../../core/utils/biblioteca.dart';
+import './cotacao/servico_detalhe_screen.dart';
+import './../../widgets/festa_app_bar.dart';
 import './../../../data/models/model.dart';
 import './fornecedor_detalhe_screen.dart';
-import 'cotacao/servico_detalhe_screen.dart';
 
 class FornecedorLocalizacaoScreen extends StatefulWidget {
   final bool? showLeading;
@@ -65,258 +63,181 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
       return Scaffold(
         backgroundColor: Colors.grey.shade100,
-        appBar: AppBar(
-          automaticallyImplyLeading: automaticallyImplyLeading,
-          leading: automaticallyImplyLeading
-              ? IconButton(
-                  tooltip: 'Voltar',
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
-                  onPressed: () => Get.back(),
-                )
-              : null,
-          title: const Text(
-            'Fornecedores',
-            style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18, color: Colors.black),
-          ),
-          centerTitle: true,
-          elevation: 0,
-          flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
+        appBar: FestaAppBar(
+          titulo: 'Fornecedores',
+          automaticamenteImplyLeading: automaticallyImplyLeading,
+          acoes: [
+            IconButton(
+              tooltip: 'Pesquisar',
+              icon: const Icon(Icons.search_rounded, color: Colors.white),
+              onPressed: () {
+                // ação da busca
+              },
+            ),
+          ],
         ),
-        body: Obx(() {
-          if (controllerLocalizacao.carregando.value) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final selecionadosSet = selecionados;
-
-          return Column(
-            children: [
-              Container(
-                color: Colors.grey.shade100,
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: _menuCategorias(primary, gradient),
+        body: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
+          slivers: [
+            // 🟢 1️⃣ CATEGORIAS FIXAS (sempre visíveis no topo ao rolar)
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _CategoriasHeaderDelegateBuilder(
+                gradient: gradient,
+                primary: primary,
+                builder: (context) => _menuCategorias(primary, gradient),
               ),
+            ),
 
-              Expanded(
-                child: SingleChildScrollView(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.only(bottom: 100),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 8),
-                      Obx(() {
-                        List<FornecedorDetalhadoDto> proximos =
-                            controllerLocalizacao.fornecedoresProximos;
-                        List<FornecedorDetalhadoDto> destaque =
-                            controllerLocalizacao.fornecedoresDestaque;
+            // 🟢 2️⃣ CONTEÚDO ROLÁVEL (fornecedores, carrosséis etc.)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+                    Obx(() {
+                      List<FornecedorDetalhadoDto> proximos =
+                          controllerLocalizacao.fornecedoresProximos;
+                      List<FornecedorDetalhadoDto> destaque =
+                          controllerLocalizacao.fornecedoresDestaque;
 
-                        if (categoriaSelecionada != null) {
-                          final termo = categoriaSelecionada!.nome.trim().toLowerCase();
+                      if (categoriaSelecionada != null) {
+                        final termo = categoriaSelecionada!.nome.trim().toLowerCase();
 
-                          proximos = proximos.where((f) {
-                            final nomeCategoria = f.categoriaNome.toLowerCase();
-                            return nomeCategoria.contains(termo) ||
-                                f.categoriaId == categoriaSelecionada!.id;
-                          }).toList();
+                        proximos = proximos.where((f) {
+                          final nomeCategoria = f.categoriaNome.toLowerCase();
+                          return nomeCategoria.contains(termo) ||
+                              f.categoriaId == categoriaSelecionada!.id;
+                        }).toList();
 
-                          destaque = destaque.where((f) {
-                            final nomeCategoria = f.categoriaNome.toLowerCase();
-                            return nomeCategoria.contains(termo) ||
-                                f.categoriaId == categoriaSelecionada!.id;
-                          }).toList();
-                        }
+                        destaque = destaque.where((f) {
+                          final nomeCategoria = f.categoriaNome.toLowerCase();
+                          return nomeCategoria.contains(termo) ||
+                              f.categoriaId == categoriaSelecionada!.id;
+                        }).toList();
+                      }
 
-                        if (proximos.isEmpty && destaque.isEmpty) {
-                          return _mensagemVazia();
-                        }
+                      if (proximos.isEmpty && destaque.isEmpty) {
+                        return _mensagemVazia();
+                      }
 
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (proximos.isNotEmpty) ...[
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20),
-                                child: Text(
-                                  'Fornecedores próximos a você',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                height: 250,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  physics: const BouncingScrollPhysics(),
-                                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                                  itemCount: proximos.length,
-                                  itemBuilder: (context, index) {
-                                    final f = proximos[index];
-                                    final selecionado =
-                                        selecionadosSet.contains(f.fornecedor.idFornecedor);
-                                    return GestureDetector(
-                                      onTap: () {
-                                        if (selecionado) {
-                                          selecionados.remove(f.fornecedor.idFornecedor);
-                                          HapticFeedback.lightImpact();
-                                        } else {
-                                          selecionados.add(f.fornecedor.idFornecedor);
-                                          HapticFeedback.mediumImpact();
-                                        }
-                                      },
-                                      child: AnimatedPadding(
-                                        duration: const Duration(milliseconds: 300),
-                                        padding: const EdgeInsets.only(right: 16),
-                                        child: SizedBox(
-                                          width: isCelular ? 300 : 350,
-                                          child: _cardFornecedor(f, primary, gradient),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                              const SizedBox(height: 30),
-                            ],
-                            if (destaque.isNotEmpty) ...[
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20),
-                                child: Text(
-                                  'Fornecedores em destaque ⭐',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                height: 250,
-                                child: ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  physics: const BouncingScrollPhysics(),
-                                  padding: const EdgeInsets.symmetric(horizontal: 14),
-                                  itemCount: destaque.length,
-                                  itemBuilder: (context, index) {
-                                    final f = destaque[index];
-                                    final selecionado =
-                                        selecionadosSet.contains(f.fornecedor.idFornecedor);
-
-                                    return GestureDetector(
-                                      onTap: () {
-                                        if (selecionado) {
-                                          selecionados.remove(f.fornecedor.idFornecedor);
-                                          HapticFeedback.lightImpact();
-                                        } else {
-                                          selecionados.add(f.fornecedor.idFornecedor);
-                                          HapticFeedback.mediumImpact();
-                                        }
-                                      },
-                                      child: AnimatedPadding(
-                                        duration: const Duration(milliseconds: 300),
-                                        padding: const EdgeInsets.only(right: 16),
-                                        child: SizedBox(
-                                          width: isCelular ? 300 : 350,
-                                          child: _cardFornecedor(f, primary, gradient),
-                                        ),
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ],
-                        );
-                      }),
-                      const SizedBox(height: 30),
-                      if (categoriaSelecionada != null) ...[
-                        _carrosselServicos(
-                          themeController,
-                          controllerLocalizacao,
-                          subCategoriaController,
-                          categoriaSelecionada!,
-                        ),
-                        const SizedBox(height: 45),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-
-              // 🔹 Botão flutuante inferior
-              if (selecionados.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: SafeArea(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.design_services_rounded, color: Colors.white),
-                      label: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Ver Serviços',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '${selecionados.length}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
+                          if (proximos.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: Text(
+                                'Fornecedores próximos a você',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                ),
                               ),
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 250,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                itemCount: proximos.length,
+                                itemBuilder: (context, index) {
+                                  final f = proximos[index];
+                                  final selecionado =
+                                      selecionados.contains(f.fornecedor.idFornecedor);
+                                  return GestureDetector(
+                                    onTap: () {
+                                      if (selecionado) {
+                                        selecionados.remove(f.fornecedor.idFornecedor);
+                                        HapticFeedback.lightImpact();
+                                      } else {
+                                        selecionados.add(f.fornecedor.idFornecedor);
+                                        HapticFeedback.mediumImpact();
+                                      }
+                                    },
+                                    child: AnimatedPadding(
+                                      duration: const Duration(milliseconds: 300),
+                                      padding: const EdgeInsets.only(right: 16),
+                                      child: SizedBox(
+                                        width: isCelular ? 300 : 350,
+                                        child: _cardFornecedor(f, primary, gradient),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 30),
+                          ],
+                          if (destaque.isNotEmpty) ...[
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 20),
+                              child: Text(
+                                'Fornecedores em destaque ⭐',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 250,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                padding: const EdgeInsets.symmetric(horizontal: 14),
+                                itemCount: destaque.length,
+                                itemBuilder: (context, index) {
+                                  final f = destaque[index];
+                                  final selecionado =
+                                      selecionados.contains(f.fornecedor.idFornecedor);
+                                  return GestureDetector(
+                                    onTap: () {
+                                      if (selecionado) {
+                                        selecionados.remove(f.fornecedor.idFornecedor);
+                                        HapticFeedback.lightImpact();
+                                      } else {
+                                        selecionados.add(f.fornecedor.idFornecedor);
+                                        HapticFeedback.mediumImpact();
+                                      }
+                                    },
+                                    child: AnimatedPadding(
+                                      duration: const Duration(milliseconds: 300),
+                                      padding: const EdgeInsets.only(right: 16),
+                                      child: SizedBox(
+                                        width: isCelular ? 300 : 350,
+                                        child: _cardFornecedor(f, primary, gradient),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                          if (categoriaSelecionada != null) ...[
+                            _carrosselServicos(
+                              themeController,
+                              controllerLocalizacao,
+                              subCategoriaController,
+                              categoriaSelecionada!,
+                            ),
+                          ],
                         ],
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        elevation: 10,
-                        shadowColor: primary.withValues(alpha: 0.4),
-                      ),
-                      onPressed: () {
-                        if (categoriaSelecionada == null) {
-                          Get.snackbar(
-                            'Escolha uma categoria',
-                            'Selecione uma categoria antes de continuar.',
-                            backgroundColor: primary,
-                            colorText: Colors.white,
-                            snackPosition: SnackPosition.BOTTOM,
-                            margin: const EdgeInsets.all(12),
-                          );
-                          return;
-                        }
-
-                        Get.to(() => ServicosParaCotacaoScreen(
-                              idCategoria: categoriaSelecionada!.id,
-                              nomeCategoria: categoriaSelecionada!.nome,
-                              fornecedoresSelecionados: selecionados.toList(),
-                            ));
-                      },
-                    ),
-                  ),
+                      );
+                    }),
+                  ],
                 ),
-            ],
-          );
-        }),
+              ),
+            ),
+          ],
+        ),
       );
     });
   }
@@ -330,7 +251,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
       if (controllerLocalizacao.carregandoServicosFornecedor.value) {
         return const Center(
           child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 40),
+            padding: EdgeInsets.symmetric(vertical: 10),
             child: CircularProgressIndicator(strokeWidth: 2.5),
           ),
         );
@@ -365,9 +286,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 24),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 14),
               child: Text(
                 'Serviços disponíveis',
                 style: GoogleFonts.poppins(
@@ -445,8 +365,12 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                       height: double.infinity,
                       placeholder: (_, __) => Container(
                         color: Colors.grey.shade200,
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: primary,
+                            backgroundColor: primary,
+                          ),
                         ),
                       ),
                       errorWidget: (_, __, ___) => Container(
@@ -629,9 +553,9 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     ).animate().scaleXY(begin: 0.98, end: 1.0, duration: 250.ms);
   }
 
-// === Cabeçalho de categorias ===
   Widget _menuCategorias(Color primary, LinearGradient gradient) {
     final controllerLocalizacao = Get.put(FornecedorLocalizacaoController());
+
     return Obx(() {
       final categorias = controllerLocalizacao.categorias;
       if (categorias.isEmpty) {
@@ -641,89 +565,36 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
         );
       }
 
-      return Container(
-        height: 64,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              gradient.colors.first.withValues(alpha: 0.25),
-              gradient.colors.last.withValues(alpha: 0.10),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
-          separatorBuilder: (_, __) => const SizedBox(width: 12),
-          itemCount: categorias.length,
-          itemBuilder: (context, index) {
-            final c = categorias[index];
-            final selected = categoriaSelecionada?.id == c.id;
-            final icone = Biblioteca.iconePorCategoria(c.nome);
-            final corIcone = Biblioteca.corPorCategoria(c.nome);
+      return ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemCount: categorias.length,
+        itemBuilder: (context, index) {
+          final c = categorias[index];
+          final selected = categoriaSelecionada?.id == c.id;
+          final icone = Biblioteca.iconePorCategoria(c.nome);
+          final corIcone = Biblioteca.corPorCategoria(c.nome);
 
-            return GestureDetector(
-              onTap: () async {
-                setState(() {
-                  selecionados.clear();
-                  categoriaSelecionada = selected ? null : c;
-                });
-
-                if (!selected) {
-                  await controllerLocalizacao.buscarServicosPorCategoria(c.id);
-                }
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOutCubic,
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  gradient: selected ? gradient : null,
-                  color: selected ? null : Colors.white,
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(
-                    color: selected ? Colors.transparent : Colors.grey.shade300,
-                    width: 1.0,
-                  ),
-                  boxShadow: selected
-                      ? [
-                          BoxShadow(
-                            color: primary.withValues(alpha: 0.25),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          )
-                        ]
-                      : [],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(icone, size: 20, color: selected ? Colors.white : corIcone),
-                    const SizedBox(width: 6),
-                    Text(
-                      c.nome,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12.5,
-                        color: selected ? Colors.white : Colors.grey.shade800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        ),
+          return _AnimatedCategoriaChip(
+            categoria: c,
+            selected: selected,
+            primary: primary,
+            gradient: gradient,
+            corIcone: corIcone,
+            icone: icone,
+            onTap: () async {
+              setState(() {
+                selecionados.clear();
+                categoriaSelecionada = selected ? null : c;
+              });
+              if (!selected) {
+                await controllerLocalizacao.buscarServicosPorCategoria(c.id);
+              }
+            },
+          );
+        },
       );
     });
   }
@@ -1165,4 +1036,261 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
           ],
         ),
       );
+}
+
+class _CategoriasHeaderDelegateBuilder extends SliverPersistentHeaderDelegate {
+  final LinearGradient gradient;
+  final Color primary;
+  final WidgetBuilder builder;
+
+  _CategoriasHeaderDelegateBuilder({
+    required this.gradient,
+    required this.primary,
+    required this.builder,
+  });
+
+  @override
+  double get minExtent => 75;
+  @override
+  double get maxExtent => 75;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    final bool scrolled = shrinkOffset > 5;
+
+    return ClipRRect(
+      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(18)),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          // 💎 Fundo com blur + gradiente
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    gradient.colors.first.withValues(alpha: 0.3),
+                    gradient.colors.last.withValues(alpha: 0.15),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
+          ),
+          // 🌫 Brilho
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withValues(alpha: 0.25),
+                  Colors.white.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+          ),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOut,
+            decoration: BoxDecoration(
+              boxShadow: scrolled
+                  ? [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ]
+                  : [],
+            ),
+            // 👉 Aqui o builder é chamado dinamicamente
+            child: builder(context),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 🔁 Sempre reconstruir para refletir setState
+  @override
+  bool shouldRebuild(covariant _CategoriasHeaderDelegateBuilder oldDelegate) => true;
+}
+
+class _AnimatedCategoriaChip extends StatefulWidget {
+  final CategoriaServicoModel categoria;
+  final bool selected;
+  final Color primary;
+  final LinearGradient gradient;
+  final Color corIcone;
+  final IconData icone;
+  final VoidCallback onTap;
+
+  const _AnimatedCategoriaChip({
+    required this.categoria,
+    required this.selected,
+    required this.primary,
+    required this.gradient,
+    required this.corIcone,
+    required this.icone,
+    required this.onTap,
+  });
+
+  @override
+  State<_AnimatedCategoriaChip> createState() => _AnimatedCategoriaChipState();
+}
+
+class _AnimatedCategoriaChipState extends State<_AnimatedCategoriaChip>
+    with TickerProviderStateMixin {
+  late AnimationController _shineController;
+  late AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // ✨ Brilho escorrendo (vai e volta)
+    _shineController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+
+    // 💖 Pulso sincronizado (expansão e glow)
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1800),
+      lowerBound: 0.0,
+      upperBound: 1.0,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _shineController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final selected = widget.selected;
+    final pulseValue = CurvedAnimation(
+      parent: _pulseController,
+      curve: Curves.easeInOutCubic,
+    );
+
+    return GestureDetector(
+      onTapDown: (_) => HapticFeedback.selectionClick(),
+      onTap: widget.onTap,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([_shineController, _pulseController]),
+        builder: (context, _) {
+          final glowOpacity = selected ? (0.3 + 0.2 * pulseValue.value) : 0.0;
+          final glowBlur = selected ? (10 + 10 * pulseValue.value) : 0.0;
+          final slide = _shineController.value * 2 - 1; // de -1 a 1
+
+          return AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              gradient: selected
+                  ? widget.gradient
+                  : LinearGradient(
+                      colors: [
+                        Colors.white.withValues(alpha: 0.95),
+                        Colors.white.withValues(alpha: 0.8),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+              border: Border.all(
+                color: selected ? Colors.transparent : Colors.grey.withValues(alpha: 0.25),
+              ),
+              boxShadow: [
+                if (selected)
+                  BoxShadow(
+                    //color: widget.primary.withValues(alpha:glowOpacity),
+                    color: HSLColor.fromColor(widget.primary)
+                        .withLightness(0.8)
+                        .toColor()
+                        .withValues(alpha: glowOpacity),
+                    blurRadius: glowBlur,
+                    spreadRadius: 1.5,
+                    offset: const Offset(0, 0),
+                  )
+                else
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 6,
+                    offset: const Offset(0, 4),
+                  ),
+              ],
+            ),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // 🌟 Brilho escorrendo contínuo
+                if (selected)
+                  Transform.translate(
+                    offset: Offset(slide * 60, 0),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white24,
+                            Colors.white70,
+                            Colors.white24,
+                          ],
+                          stops: [0.0, 0.5, 1.0],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                // ❤️ Conteúdo com pulso sutil
+                Transform.scale(
+                  scale: selected ? (1.03 + 0.02 * pulseValue.value) : 1.0,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      AnimatedScale(
+                        scale: selected ? 1.25 : 1.0,
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeOut,
+                        child: Icon(
+                          widget.icone,
+                          size: 20,
+                          color: selected ? Colors.white : widget.corIcone,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13.5,
+                          color: selected ? Colors.white : Colors.grey.shade800,
+                        ),
+                        child: Text(
+                          widget.categoria.nome,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 }

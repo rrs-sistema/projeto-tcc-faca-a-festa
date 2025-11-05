@@ -15,6 +15,7 @@ import '../../controllers/app_controller.dart';
 import '../../controllers/fornecedor_localizacao_controller.dart';
 import '../../core/utils/biblioteca.dart';
 import '../../data/models/DTO/fornecedor_detalhado_dto.dart';
+import '../widgets/frase_aleatoria_widget.dart';
 import '../widgets/menu_drawer_faca_festa.dart';
 import './../../controllers/convidado/convidado_controller.dart';
 import '../../controllers/tema/event_theme_controller.dart';
@@ -140,7 +141,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 theme,
               ),
               _buildSuppliersCarousel(theme),
-              _buildMotivationalQuote(theme),
               const SliverToBoxAdapter(child: SizedBox(height: 15)),
             ],
           ),
@@ -270,17 +270,16 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
 Widget _buildAnimatedHeader(EventThemeController theme) {
   final eventoController = Get.find<EventoController>();
   final isCelular = Get.context!.width < 650;
-  final corPrincipal = theme.primaryColor.value;
+  final gradient = theme.gradient.value;
 
   return Obx(() {
     final evento = eventoController.eventoAtual.value;
     final tipoEvento = eventoController.tipoEventoAtual.value;
 
     return Container(
-      height: 220,
+      height: 230,
       width: double.infinity,
       decoration: BoxDecoration(
-        color: corPrincipal,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.1),
@@ -292,7 +291,7 @@ Widget _buildAnimatedHeader(EventThemeController theme) {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // 🔹 Imagem de fundo
+          // 📸 Imagem de fundo
           Hero(
             tag: 'event_header',
             child: Image.asset(
@@ -301,122 +300,129 @@ Widget _buildAnimatedHeader(EventThemeController theme) {
             ),
           ),
 
-          // 🔹 Gradiente e blur
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 1.5, sigmaY: 1.5),
-            child: Container(color: Colors.black.withValues(alpha: 0.2)),
-          ),
+          // 🌈 Gradiente do tema
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  corPrincipal.withValues(alpha: 0.6),
-                  Colors.transparent,
+                  gradient.colors.first.withValues(alpha: 0.9),
+                  gradient.colors.last.withValues(alpha: 0.6),
                   Colors.black.withValues(alpha: 0.7),
                 ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
           ),
 
-          // 🔹 Conteúdo (Nome e Tipo de Evento)
+          // 🌫️ Blur e sobreposição
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 2.5, sigmaY: 2.5),
+            child: Container(color: Colors.black.withValues(alpha: 0.2)),
+          ),
+
+          // 🔹 Nome do evento
           Positioned(
-            left: 20,
-            right: 20,
-            bottom: 75,
-            child: FadeInDown(
-              duration: const Duration(milliseconds: 900),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.celebration_rounded, color: Colors.white, size: 18),
-                          const SizedBox(width: 6),
-                          Text(
-                            tipoEvento?.nome ?? 'Faça a Festa',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: isCelular ? 12 : 16,
-                            ),
+            left: 10,
+            right: 10,
+            top: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.35),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.celebration_rounded, color: Colors.white, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          tipoEvento?.nome ?? 'Faça a Festa',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: isCelular ? 12 : 15,
                           ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      evento?.nome ?? 'Seu evento especial',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: isCelular ? 14 : 18,
+                        fontWeight: FontWeight.w700,
+                        shadows: const [
+                          Shadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2)),
                         ],
                       ),
-                      const SizedBox(height: 3),
-                      Text(
-                        evento?.nome ?? 'Seu evento especial',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: isCelular ? 13.5 : 17,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.3,
-                          shadows: const [
-                            Shadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2)),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
 
-          // 🔹 Informações rápidas (data e local)
+          // 🪩 Frase dinâmica do tipo de evento
+          Positioned(
+            top: 70,
+            left: 1,
+            right: 1,
+            child: SizedBox(
+              height: 80,
+              child: FraseAleatoriaWidget(
+                tipoEvento: tipoEvento?.nome ?? "Casamento",
+              ),
+            ),
+          ),
+
+          // 📅 Data e local
           Positioned(
             bottom: 10,
             left: 20,
             right: 20,
-            child: FadeInUp(
-              duration: const Duration(milliseconds: 1000),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-                ),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.calendar_month, color: Colors.white, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        evento?.data != null
-                            ? DateFormat("d 'de' MMMM", 'pt_BR').format(evento!.data)
-                            : 'Data a definir',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                        ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+              ),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  children: [
+                    const Icon(Icons.calendar_month, color: Colors.white, size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      evento?.data != null
+                          ? DateFormat("d 'de' MMMM", 'pt_BR').format(evento!.data)
+                          : 'Data a definir',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
                       ),
-                      const SizedBox(width: 20),
-                      const Icon(Icons.place_rounded, color: Colors.white, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        evento?.logradouro ?? 'Local não definido',
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w500,
-                        ),
+                    ),
+                    const SizedBox(width: 20),
+                    const Icon(Icons.place_rounded, color: Colors.white, size: 18),
+                    const SizedBox(width: 6),
+                    Text(
+                      evento?.logradouro ?? 'Local não definido',
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -771,38 +777,6 @@ Widget _buildInspirationGrid(EventThemeController theme) {
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
         childAspectRatio: 1,
-      ),
-    ),
-  );
-}
-
-// === FRASE MOTIVACIONAL ===
-Widget _buildMotivationalQuote(EventThemeController theme) {
-  final frases = [
-    "🎉 Cada detalhe é um passo rumo ao seu sonho!",
-    "💍 Organizar é transformar amor em celebração.",
-    "✨ Tudo pronto para um momento inesquecível?",
-    "🎶 Que cada escolha conte uma história linda.",
-  ];
-
-  final frase = frases[DateTime.now().second % frases.length];
-  return SliverToBoxAdapter(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Center(
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 700),
-          child: Text(
-            frase,
-            key: ValueKey(frase),
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              color: theme.primaryColor.value,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
       ),
     ),
   );
@@ -1390,14 +1364,19 @@ Widget _buildSuppliersCarousel(EventThemeController theme) {
                     razaoSocial: fornecedorDetalhe.fornecedor.razaoSocial,
                     telefone: fornecedorDetalhe.fornecedor.telefone,
                     email: fornecedorDetalhe.fornecedor.email,
+                    bannerUrl: fornecedorDetalhe.fornecedor.bannerUrl,
                   );
 
                   return GestureDetector(
                     onTap: () {
                       final fornecedorDetalhado = FornecedorDetalhadoDto(
-                          fornecedor: fornecedor, categoriaId: '', categoriaNome: '');
-                      Get.to(
-                          () => FornecedorDetalheScreen(fornecedorDetalhado: fornecedorDetalhado));
+                          fornecedor: fornecedor,
+                          categoriaId: fornecedorDetalhe.categoriaId,
+                          categoriaNome: fornecedorDetalhe.categoriaNome);
+
+                      Get.to(() => FornecedorDetalheScreen(
+                            fornecedorDetalhado: fornecedorDetalhado,
+                          ));
                     },
                     child: Hero(
                       tag: 'fornecedor_${fornecedor.idFornecedor}',
@@ -1432,7 +1411,7 @@ Widget _buildSuppliersCarousel(EventThemeController theme) {
                               CachedNetworkImage(
                                 imageUrl: fornecedorDetalhe.fornecedor.bannerUrl ??
                                     'https://cdn-icons-png.flaticon.com/512/6799/6799605.png',
-                                fit: BoxFit.fill,
+                                fit: BoxFit.cover,
                                 width: double.infinity,
                                 height: double.infinity,
                                 placeholder: (_, __) => Container(
@@ -1529,12 +1508,14 @@ Widget _buildFornecedorShimmer(EventThemeController theme) {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 30),
-        Text(
-          'Carregando fornecedores...',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-            color: primary,
+        Center(
+          child: Text(
+            'Carregando fornecedores...',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              fontSize: 16,
+              color: primary,
+            ),
           ),
         ),
         const SizedBox(height: 20),

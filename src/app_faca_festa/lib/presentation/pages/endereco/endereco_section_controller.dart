@@ -51,6 +51,19 @@ class EnderecoSectionController {
     };
   }
 
+  void limpar() {
+    cepController.clear();
+    logradouroController.clear();
+    numeroController.clear();
+    complementoController.clear();
+    bairroController.clear();
+    nomeCidadeController.clear();
+    ufController.text = 'PR';
+
+    // ✅ Zera seleção de cidade/UF
+    ufCidadeController.limpar();
+  }
+
   void dispose() {
     cepController.dispose();
     logradouroController.dispose();

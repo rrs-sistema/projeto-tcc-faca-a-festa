@@ -92,4 +92,19 @@ class UFCidadeController extends GetxController {
 
     return int.tryParse(id.toString());
   }
+
+  void limpar() {
+    // 🔹 Limpa as listas de estados e cidades carregadas
+    cidades.clear();
+    // Mantém a lista de estados (já carregada na inicialização)
+    // mas você pode limpar também se quiser reiniciar totalmente:
+    // estados.clear();
+
+    // 🔹 Reseta seleções reativas
+    estadoSelecionado.value = null;
+    cidadeSelecionada.value = null;
+
+    // 🔹 Garante estado visual limpo
+    carregando.value = false;
+  }
 }

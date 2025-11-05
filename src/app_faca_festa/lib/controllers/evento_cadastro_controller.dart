@@ -29,6 +29,7 @@ class EventoCadastroController extends GetxController {
   final idade = TextEditingController();
   final bebe = TextEditingController();
   final tema = TextEditingController();
+  final descricao = TextEditingController();
   final custoEstimado = TextEditingController();
 
   final tipoCerimonia = ''.obs;
@@ -64,11 +65,11 @@ class EventoCadastroController extends GetxController {
     }
   }
 
-  // ===============================
-  // 🔹 ATUALIZAR PRÉ-VISUALIZAÇÃO DO EVENTO
-  // ===============================
+// ===============================
+// 🔹 ATUALIZAR PRÉ-VISUALIZAÇÃO DO EVENTO
+// ===============================
   void atualizarPreview() {
-    final nomeStr = _capitalizar(nomeNoiva.text);
+    final nomeNoivaStr = _capitalizar(nomeNoiva.text);
     final parceiroStr = _capitalizar(parceiro.text);
     final idadeStr = idade.text;
     final bebeStr = _capitalizar(bebe.text);
@@ -78,10 +79,10 @@ class EventoCadastroController extends GetxController {
 
     switch (nomeTipoEvento) {
       case 'casamento':
-        if (nomeStr.isNotEmpty && parceiroStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Casamento de $nomeStr & $parceiroStr';
-        } else if (nomeStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Casamento de $nomeStr';
+        if (nomeNoivaStr.isNotEmpty && parceiroStr.isNotEmpty) {
+          nomeEventoPreview.value = 'Casamento de $nomeNoivaStr & $parceiroStr';
+        } else if (nomeNoivaStr.isNotEmpty) {
+          nomeEventoPreview.value = 'Casamento de $nomeNoivaStr';
         } else if (parceiroStr.isNotEmpty) {
           nomeEventoPreview.value = 'Casamento de $parceiroStr';
         } else {
@@ -90,10 +91,10 @@ class EventoCadastroController extends GetxController {
         break;
 
       case 'festa infantil':
-        if (nomeStr.isNotEmpty && idadeStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Festa da $nomeStr - $idadeStr anos';
-        } else if (nomeStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Festa da $nomeStr';
+        if (nomeNoivaStr.isNotEmpty && idadeStr.isNotEmpty) {
+          nomeEventoPreview.value = 'Festa de $nomeNoivaStr - $idadeStr anos';
+        } else if (nomeNoivaStr.isNotEmpty) {
+          nomeEventoPreview.value = 'Festa de $nomeNoivaStr';
         } else {
           nomeEventoPreview.value = '🎈 Festa Infantil';
         }
@@ -102,18 +103,18 @@ class EventoCadastroController extends GetxController {
       case 'chá de bebê':
         if (bebeStr.isNotEmpty) {
           nomeEventoPreview.value = 'Chá do $bebeStr';
-        } else if (nomeStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Chá de bebê de $nomeStr';
+        } else if (nomeNoivaStr.isNotEmpty) {
+          nomeEventoPreview.value = 'Chá de bebê de $nomeNoivaStr';
         } else {
           nomeEventoPreview.value = '🍼 Chá de Bebê';
         }
         break;
 
       case 'aniversário':
-        if (nomeStr.isNotEmpty && idadeStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Aniversário de $nomeStr - $idadeStr anos';
-        } else if (nomeStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Aniversário de $nomeStr';
+        if (nomeNoivaStr.isNotEmpty && idadeStr.isNotEmpty) {
+          nomeEventoPreview.value = 'Aniversário de $nomeNoivaStr - $idadeStr anos';
+        } else if (nomeNoivaStr.isNotEmpty) {
+          nomeEventoPreview.value = 'Aniversário de $nomeNoivaStr';
         } else {
           nomeEventoPreview.value = '🎂 Aniversário';
         }
@@ -135,9 +136,9 @@ class EventoCadastroController extends GetxController {
 
   void removePadrinho(String nome) => padrinhos.remove(nome);
 
-  // ===============================
-  // 🔹 CARREGAR EVENTO EXISTENTE (EDIÇÃO)
-  // ===============================
+// ===============================
+// 🔹 CARREGAR EVENTO EXISTENTE (EDIÇÃO)
+// ===============================
   void carregarEvento(EventoModel evento) {
     final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
@@ -154,24 +155,53 @@ class EventoCadastroController extends GetxController {
     horaFesta.text = evento.hora ?? '';
     padrinhos.assignAll(evento.padrinhos ?? []);
 
-    // ✅ formata custo estimado no padrão BR
+    // ✅ Formata custo estimado no padrão BR
     if (evento.custoEstimado != null && evento.custoEstimado! > 0) {
       custoEstimado.text = currencyFormat.format(evento.custoEstimado);
     } else {
       custoEstimado.text = '';
     }
 
-    // ✅ seleciona tipo de evento, se existir
+    // ✅ Seleciona tipo de evento, se existir
     tipoEventoModel.value = tiposEvento.firstWhereOrNull(
       (t) => t.idTipoEvento == evento.idTipoEvento,
     );
 
+    // ✅ Preenche endereço (se existir)
+    if (evento.cep != null ||
+        evento.logradouro != null ||
+        evento.bairro != null ||
+        evento.numero != null) {
+      final end = enderecoController.value;
+
+      end.cepController.text = evento.cep ?? '';
+      end.logradouroController.text = evento.logradouro ?? '';
+      end.numeroController.text = evento.numero ?? '';
+      end.complementoController.text = evento.complemento ?? '';
+      end.bairroController.text = evento.bairro ?? '';
+      end.nomeCidadeController.text = evento.nomeCidade ?? '';
+      end.ufController.text = evento.uf ?? 'PR';
+
+      // 🔹 Atualiza seleção reativa da cidade/UF no UFCidadeController
+      if (evento.uf != null) {
+        end.ufCidadeController.estadoSelecionado.value = {
+          'nome': evento.uf,
+          'uf': evento.uf,
+        };
+      }
+
+      if (evento.idCidade != null || evento.nomeCidade != null) {
+        end.ufCidadeController.cidadeSelecionada.value = {
+          'id_cidade': evento.idCidade,
+          'nome': evento.nomeCidade ?? '',
+          'uf': evento.uf ?? '',
+        };
+      }
+    }
+
     atualizarPreview();
   }
 
-  // ===============================
-  // 🔹 SALVAR EVENTO (NOVO / EDIÇÃO)
-  // ===============================
   Future<void> salvarEvento() async {
     if (!formKey.currentState!.validate()) return;
 
@@ -233,6 +263,7 @@ class EventoCadastroController extends GetxController {
       final user = app.usuarioLogado.value;
       if (user == null) throw Exception('Usuário não autenticado.');
 
+      // ✅ Monta data/hora completa
       final dataSelecionada = DateFormat('dd/MM/yyyy', 'pt_BR').parse(dataStr);
       final partesHora = horaStr.split(':');
       final dataCompleta = DateTime(
@@ -243,16 +274,31 @@ class EventoCadastroController extends GetxController {
         int.tryParse(partesHora[1]) ?? 0,
       );
 
-      final endereco = enderecoController.value.toModel('');
+      // ✅ Endereço
+      final end = enderecoController.value;
+      final endereco = end.toModel(user.idUsuario);
+
+      // ⚙️ Mapeamento da cidade e estado
+      final idCidade = end.ufCidadeController.idCidadeSelecionada?.toString();
+      final nomeCidade = end.nomeCidadeController.text.trim();
+      final uf = end.ufController.text.trim().isNotEmpty
+          ? end.ufController.text.trim().toUpperCase()
+          : null;
+
+      // ✅ Criação do modelo do evento
       final evento = EventoModel(
         idEvento: idEvento.value.isEmpty ? uuid.v4() : idEvento.value,
         idTipoEvento: tipoAtual.idTipoEvento,
         idUsuario: user.idUsuario,
-        nome: nomeEvento.text.trim(),
+        nome: nomeEvento.text.trim().isNotEmpty
+            ? nomeEvento.text.trim()
+            : nomeEventoPreview.value.trim(),
         custoEstimado: valor,
         data: dataCompleta,
         hora: horaStr,
         ativo: true,
+        status: StatusEvento.planejamento,
+        descricao: descricao.text,
         tema: tema.text,
         tipoCerimonia: tipoCerimonia.value,
         estiloCasamento: estiloCasamento.value,
@@ -260,6 +306,9 @@ class EventoCadastroController extends GetxController {
         nomeNoiva: nomeNoiva.text,
         nomeNoivo: parceiro.text,
         nomeResponsavel: user.nome,
+        idCidade: idCidade,
+        nomeCidade: nomeCidade.isNotEmpty ? nomeCidade : null,
+        uf: uf,
         cep: endereco.cep,
         logradouro: endereco.logradouro,
         numero: endereco.numero,
@@ -267,7 +316,9 @@ class EventoCadastroController extends GetxController {
         bairro: endereco.bairro,
       );
 
+      // ✅ Gravação no Firestore
       await db.collection('evento').doc(evento.idEvento).set(evento.toMap());
+
       carregando.value = false;
       Get.back();
 
@@ -310,6 +361,9 @@ class EventoCadastroController extends GetxController {
     padrinhos.clear();
     custoEstimado.clear();
     nomeEventoPreview.value = '';
+
+    // ✅ Limpa também os campos do endereço
+    enderecoController.value.limpar();
   }
 
   // ===============================

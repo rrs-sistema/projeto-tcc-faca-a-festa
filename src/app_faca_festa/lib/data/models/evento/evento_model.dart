@@ -1,48 +1,91 @@
+// ======================================================
+// 🏷️ ENUM - Status do Evento
+// ======================================================
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum StatusEvento {
+  rascunho,
+  planejamento,
+  confirmado,
+  emAndamento,
+  finalizado,
+  adiado,
+  cancelado,
+}
+
+extension StatusEventoExtension on StatusEvento {
+  String get label {
+    switch (this) {
+      case StatusEvento.rascunho:
+        return 'Rascunho';
+      case StatusEvento.planejamento:
+        return 'Em planejamento';
+      case StatusEvento.confirmado:
+        return 'Confirmado';
+      case StatusEvento.emAndamento:
+        return 'Em andamento';
+      case StatusEvento.finalizado:
+        return 'Finalizado';
+      case StatusEvento.adiado:
+        return 'Adiado';
+      case StatusEvento.cancelado:
+        return 'Cancelado';
+    }
+  }
+
+  String get value => toString().split('.').last;
+}
+
+// ======================================================
+// 🗓️ MODELO - EventoModel
+// ======================================================
 class EventoModel {
   final String idEvento;
   final String idTipoEvento;
   final String idUsuario;
-  final int? idCidade;
 
-  final String nome;
-  final DateTime data;
-  final String? hora;
-  final double? custoEstimado;
-  final String? status;
-  final String? descricao;
-
+  // 🗺️ Localização
+  final String? idCidade;
+  final String? nomeCidade;
+  final String? uf;
   final String? cep;
   final String? logradouro;
   final String? numero;
   final String? complemento;
   final String? bairro;
 
+  // 📅 Informações gerais
+  final String nome;
+  final DateTime data;
+  final String? hora;
+  final double? custoEstimado;
+  final StatusEvento? status;
+  final String? descricao;
+
+  // ⚙️ Controle
   final bool ativo;
   final DateTime dataCadastro;
 
-  // === CAMPOS ESPECÍFICOS POR TIPO DE EVENTO ===
   // 💍 Casamento
   final String? nomeNoiva;
   final String? nomeNoivo;
-  final String? tipoCerimonia; // civil, religiosa, simbólica, etc.
-  final String? estiloCasamento; // clássico, rústico, moderno...
-  final List<String>? padrinhos; // nomes dos padrinhos/madrinhas
+  final String? tipoCerimonia;
+  final String? estiloCasamento;
+  final List<String>? padrinhos;
 
   // 🎂 Aniversário / 🎈 Festa Infantil
   final String? nomeAniversariante;
   final int? idade;
   final String? tema;
-  final String? nomeResponsavel; // pai, mãe ou organizador
+  final String? nomeResponsavel;
 
   // 🍼 Chá de Bebê
   final String? nomeGestante;
   final String? nomeBebe;
-  final String? tipoCha; // bebê, fralda, revelação...
+  final String? tipoCha;
   final DateTime? dataPrevistaNascimento;
 
-  // 🌐 Campos gerais de personalização
+  // 🌐 Personalização
   final String? hashtagEvento;
   final String? siteEvento;
   final String? dressCode;
@@ -54,9 +97,11 @@ class EventoModel {
     required this.nome,
     required this.data,
     this.idCidade,
+    this.nomeCidade,
+    this.uf,
     this.hora,
     this.custoEstimado,
-    this.status,
+    this.status = StatusEvento.planejamento,
     this.descricao,
     this.cep,
     this.logradouro,
@@ -65,8 +110,6 @@ class EventoModel {
     this.bairro,
     this.ativo = true,
     DateTime? dataCadastro,
-
-    // Campos específicos
     this.nomeNoiva,
     this.nomeNoivo,
     this.tipoCerimonia,
@@ -85,18 +128,22 @@ class EventoModel {
     this.dressCode,
   }) : dataCadastro = dataCadastro ?? DateTime.now();
 
+  // ======================================================
   // 🔹 Conversão para Firestore
+  // ======================================================
   Map<String, dynamic> toMap() {
     return {
       'id_evento': idEvento,
       'id_tipo_evento': idTipoEvento,
       'id_usuario': idUsuario,
       'id_cidade': idCidade,
+      'nome_cidade': nomeCidade,
+      'uf': uf,
       'nome': nome,
       'data': Timestamp.fromDate(data),
       'hora': hora,
       'custo_estimado': custoEstimado,
-      'status': status,
+      'status': status?.value ?? StatusEvento.planejamento.value,
       'descricao': descricao,
       'cep': cep,
       'logradouro': logradouro,
@@ -127,13 +174,17 @@ class EventoModel {
     };
   }
 
+  // ======================================================
   // 🔹 Conversão do Firestore
+  // ======================================================
   factory EventoModel.fromMap(Map<String, dynamic> map) {
     return EventoModel(
       idEvento: map['id_evento'] ?? '',
       idTipoEvento: map['id_tipo_evento'] ?? '',
       idUsuario: map['id_usuario'] ?? '',
-      idCidade: map['id_cidade'],
+      idCidade: map['id_cidade']?.toString(),
+      nomeCidade: map['nome_cidade'],
+      uf: map['uf'],
       nome: map['nome'] ?? '',
       data: map['data'] is Timestamp
           ? (map['data'] as Timestamp).toDate()
@@ -141,7 +192,7 @@ class EventoModel {
       hora: map['hora'],
       custoEstimado:
           map['custo_estimado'] != null ? (map['custo_estimado'] as num).toDouble() : null,
-      status: map['status'],
+      status: _parseStatus(map['status']),
       descricao: map['descricao'],
       cep: map['cep'],
       logradouro: map['logradouro'],
@@ -152,8 +203,6 @@ class EventoModel {
       dataCadastro: map['data_cadastro'] is Timestamp
           ? (map['data_cadastro'] as Timestamp).toDate()
           : DateTime.now(),
-
-      // Campos específicos
       nomeNoiva: map['nome_noiva'],
       nomeNoivo: map['nome_noivo'],
       tipoCerimonia: map['tipo_cerimonia'],
@@ -175,17 +224,32 @@ class EventoModel {
     );
   }
 
-  // 🔹 Atualização parcial (útil para edição)
+  // ======================================================
+  // 🔹 Função auxiliar - converte string em enum
+  // ======================================================
+  static StatusEvento _parseStatus(dynamic value) {
+    if (value == null) return StatusEvento.planejamento;
+    final str = value.toString().toLowerCase();
+    return StatusEvento.values.firstWhere(
+      (e) => e.value == str,
+      orElse: () => StatusEvento.planejamento,
+    );
+  }
+
+  // ======================================================
+  // 🔹 copyWith
+  // ======================================================
   EventoModel copyWith({
     String? idTipoEvento,
     String? idUsuario,
-    int? idCidade,
+    String? idCidade,
+    String? nomeCidade,
+    String? uf,
     String? nome,
-    String? local,
     DateTime? data,
     String? hora,
     double? custoEstimado,
-    String? status,
+    StatusEvento? status,
     String? descricao,
     String? cep,
     String? logradouro,
@@ -194,8 +258,6 @@ class EventoModel {
     String? bairro,
     bool? ativo,
     DateTime? dataCadastro,
-
-    // Específicos
     String? nomeNoiva,
     String? nomeNoivo,
     String? tipoCerimonia,
@@ -218,6 +280,8 @@ class EventoModel {
       idTipoEvento: idTipoEvento ?? this.idTipoEvento,
       idUsuario: idUsuario ?? this.idUsuario,
       idCidade: idCidade ?? this.idCidade,
+      nomeCidade: nomeCidade ?? this.nomeCidade,
+      uf: uf ?? this.uf,
       nome: nome ?? this.nome,
       data: data ?? this.data,
       hora: hora ?? this.hora,

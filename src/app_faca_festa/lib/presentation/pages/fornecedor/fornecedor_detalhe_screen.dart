@@ -48,19 +48,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
         return Stack(
           children: [
             // 🔹 Capa principal
-            CachedNetworkImage(
-              imageUrl: fotoCapa,
-              fit: BoxFit.cover,
-              width: double.infinity,
-              height: 280,
-              placeholder: (_, __) => Container(color: Colors.grey.shade200),
-              errorWidget: (_, __, ___) => Container(
-                height: 280,
-                color: Colors.grey.shade300,
-                alignment: Alignment.center,
-                child: const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 50),
-              ),
-            ),
+            // 🔹 Capa principal
+            _bannerFornecedor(fotoCapa, gradient),
 
             // 🔹 Gradiente sobre a imagem
             Container(
@@ -690,4 +679,68 @@ class _InfoTile extends StatelessWidget {
       ),
     );
   }
+}
+
+Widget _bannerFornecedor(String fotoCapa, Gradient gradient) {
+  return Stack(
+    children: [
+      // 📸 Imagem principal com sombra e bordas suaves
+      Container(
+        height: 280,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.15),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: CachedNetworkImage(
+          imageUrl: fotoCapa,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+          placeholder: (_, __) => Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.grey.shade200, Colors.grey.shade300],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
+          errorWidget: (_, __, ___) => Container(
+            color: Colors.grey.shade300,
+            child: const Center(
+              child: Icon(Icons.broken_image_outlined, color: Colors.grey, size: 50),
+            ),
+          ),
+        ),
+      ),
+
+      // 🌈 Gradiente superior e inferior para contraste
+      Positioned.fill(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.black.withValues(alpha: 0.5),
+                Colors.transparent,
+                Colors.black.withValues(alpha: 0.35),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+      ),
+    ],
+  );
 }
