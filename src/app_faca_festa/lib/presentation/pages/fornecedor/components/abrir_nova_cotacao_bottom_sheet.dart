@@ -241,13 +241,13 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
       children: [
         Row(
           children: [
-            Icon(Icons.request_quote_rounded, color: widget.primary, size: 28),
+            Icon(Icons.request_quote_rounded, color: Colors.white, size: 28),
             const SizedBox(width: 8),
             Text('Nova Cotação',
                 style: GoogleFonts.poppins(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
-                  color: widget.primary,
+                  color: Colors.white,
                 )),
           ],
         ),

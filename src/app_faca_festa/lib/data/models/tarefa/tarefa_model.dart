@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../usuario/usuario_model.dart';
+import '../model.dart';
 
 enum StatusTarefa {
   aFazer,
@@ -69,7 +69,7 @@ class TarefaModel {
   final DateTime dataCadastro;
 
   /// 🔹 Campo opcional (não salvo no Firestore)
-  final UsuarioModel? responsavel;
+  final ConvidadoModel? responsavel;
 
   TarefaModel({
     required this.idTarefa,
@@ -120,7 +120,7 @@ class TarefaModel {
     String? descricao,
     DateTime? dataPrevista,
     StatusTarefa? status,
-    UsuarioModel? responsavel,
+    ConvidadoModel? responsavel,
   }) {
     return TarefaModel(
       idTarefa: idTarefa,

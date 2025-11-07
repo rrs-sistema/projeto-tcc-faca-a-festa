@@ -50,6 +50,7 @@ dependencies:
   geolocator: ^13.0.4
   email_validator: ^3.0.0
   br_validators: ^2.0.4
+  qr_flutter: ^4.1.0
 
 dev_dependencies:
   flutter_test:
@@ -72,7 +73,7 @@ flutter:
     - assets/lottie/lia_idle.json
     - assets/lottie/lia_talking.json
     - assets/animations/confetti_background.json
-
+    - assets/animations/particulas_profissionais.json
 
   fonts:
     - family: Caveat

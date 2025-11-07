@@ -169,6 +169,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
+            textAlign: TextAlign.center,
             fornecedor.razaoSocial,
             style: GoogleFonts.playfairDisplay(
               fontSize: 24,
@@ -197,14 +198,31 @@ class FornecedorDetalheScreen extends StatelessWidget {
                   ),
                 ),
                 Flexible(
-                  child: Text(
-                    detalhe.categoriaNome,
-                    style: GoogleFonts.poppins(
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.grey.shade700,
-                      letterSpacing: 0.3,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [
+                            Color(0xFF81D4FA),
+                            Color(0xFFCE93D8),
+                            Color(0xFFFF80AB),
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ).createShader(bounds),
+                        child: Text(
+                          detalhe.categoriaNome,
+                          style: GoogleFonts.poppins(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.white,
+                            fontStyle: FontStyle.italic,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],

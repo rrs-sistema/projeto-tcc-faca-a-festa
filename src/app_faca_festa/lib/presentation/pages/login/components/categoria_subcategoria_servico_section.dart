@@ -32,7 +32,7 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: primary,
+            color: Colors.white,
           ),
         ),
         const SizedBox(height: 12),
@@ -52,7 +52,7 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                       'Nenhuma categoria disponível.',
                       style: GoogleFonts.poppins(
                         fontSize: 13,
-                        color: Colors.grey.shade500,
+                        color: Colors.white70,
                       ),
                     ),
                   )
@@ -141,7 +141,7 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                     child: Text(
                       'Nenhuma subcategoria cadastrada.',
                       style: GoogleFonts.poppins(
-                        color: Colors.grey.shade500,
+                        color: Colors.white70,
                         fontSize: 13,
                       ),
                     ),
@@ -206,7 +206,7 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                 child: Text(
                   'Selecione uma categoria para visualizar os serviços disponíveis.',
                   style: GoogleFonts.poppins(
-                    color: Colors.grey.shade500,
+                    color: Colors.white70,
                     fontSize: 13,
                   ),
                 ),

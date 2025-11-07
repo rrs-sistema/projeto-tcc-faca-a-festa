@@ -267,20 +267,28 @@ class RegisterController extends GetxController {
     // 🔹 Endereço
     // ------------------------------
     final endereco = enderecoController.value.toModel('');
-    if (endereco.uf == null || endereco.uf!.isEmpty) {
-      _showError('Informe o estado (UF)');
+    if (endereco.cep.isEmpty) {
+      _showError('Informe o CEP');
       return false;
     }
-    if (endereco.nomeCidade == null || endereco.nomeCidade!.isEmpty) {
-      _showError('Informe a cidade');
+    if (endereco.logradouro.isEmpty) {
+      _showError('Informe o endereço completo');
+      return false;
+    }
+    if (endereco.numero.isEmpty) {
+      _showError('Informe o número do enredeço');
       return false;
     }
     if (endereco.bairro == null || endereco.bairro!.isEmpty) {
       _showError('Informe o bairro');
       return false;
     }
-    if (endereco.logradouro.isEmpty) {
-      _showError('Informe o endereço completo');
+    if (endereco.uf == null || endereco.uf!.isEmpty) {
+      _showError('Informe o estado (UF)');
+      return false;
+    }
+    if (endereco.nomeCidade == null || endereco.nomeCidade!.isEmpty) {
+      _showError('Informe a cidade');
       return false;
     }
 

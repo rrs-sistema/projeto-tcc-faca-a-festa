@@ -55,6 +55,13 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Ajuste do contraste da barra de status
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // mantém o topo translúcido
+      statusBarIconBrightness: Brightness.dark, // ícones escuros → use se o fundo for claro
+      statusBarBrightness: Brightness.light, // para iOS
+    ));
+
     final bool isCelular = Biblioteca.isCelular(context);
     return Obx(() {
       final gradient = themeController.gradient.value;
@@ -881,122 +888,125 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 📸 Banner com reflexo
-            Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                SizedBox(
-                  height: 140,
-                  width: double.infinity,
-                  child: fornecedor.bannerUrl != null && fornecedor.bannerUrl!.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: fornecedor.bannerUrl!,
-                          fit: BoxFit.cover,
-                          placeholder: (_, __) => Container(color: Colors.grey.shade200),
-                          errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
-                        )
-                      : _bannerPlaceholder(primary),
-                ),
-                // Reflexo suave sobre a imagem
-                Container(
-                  height: 140,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.25),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            // 📋 Conteúdo
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 📸 Banner com reflexo
+              Stack(
+                alignment: Alignment.bottomCenter,
                 children: [
-                  Text(
-                    fornecedor.razaoSocial,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
-                      color: Colors.black87,
-                    ),
+                  SizedBox(
+                    height: 140,
+                    width: double.infinity,
+                    child: fornecedor.bannerUrl != null && fornecedor.bannerUrl!.isNotEmpty
+                        ? CachedNetworkImage(
+                            imageUrl: fornecedor.bannerUrl!,
+                            fit: BoxFit.cover,
+                            placeholder: (_, __) => Container(color: Colors.grey.shade200),
+                            errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
+                          )
+                        : _bannerPlaceholder(primary),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    fornecedor.descricao ?? 'Fornecedor parceiro do Faça a Festa',
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      height: 1.4,
-                      color: Colors.grey.shade700,
-                    ),
-                  ),
-                  if (distancia != null) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.location_on_outlined,
-                          size: 14,
-                          color: primary,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          '${distancia.toStringAsFixed(1)} km de você',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.black54,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                  const SizedBox(height: 14),
-
-                  // ✨ Botão Detalhes centralizado
-                  Align(
-                    alignment: Alignment.center,
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.info_outline_rounded, size: 16),
-                      label: const Text('Detalhes', style: TextStyle(fontSize: 13)),
-                      style: ElevatedButton.styleFrom(
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        backgroundColor: primary.withValues(alpha: 0.95),
-                        foregroundColor: Colors.white.withValues(alpha: 0.95),
-                        minimumSize: const Size(120, 36),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(
-                            color: Colors.transparent,
-                          ),
-                        ),
+                  // Reflexo suave sobre a imagem
+                  Container(
+                    height: 140,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.25),
+                          Colors.transparent,
+                        ],
                       ),
-                      onPressed: () {
-                        Get.to(() => FornecedorDetalheScreen(
-                              fornecedorDetalhado: FornecedorDetalhadoDto(
-                                  fornecedor: fornecedor, categoriaId: '', categoriaNome: ''),
-                            ));
-                      },
                     ),
                   ),
                 ],
               ),
-            ),
-          ],
+
+              // 📋 Conteúdo
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      fornecedor.razaoSocial,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      fornecedor.descricao ?? 'Fornecedor parceiro do Faça a Festa',
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        height: 1.4,
+                        color: Colors.grey.shade700,
+                      ),
+                    ),
+                    if (distancia != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.location_on_outlined,
+                            size: 14,
+                            color: primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${distancia.toStringAsFixed(1)} km de você',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 14),
+
+                    // ✨ Botão Detalhes centralizado
+                    Align(
+                      alignment: Alignment.center,
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.info_outline_rounded, size: 16),
+                        label: const Text('Detalhes', style: TextStyle(fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                          backgroundColor: primary.withValues(alpha: 0.95),
+                          foregroundColor: Colors.white.withValues(alpha: 0.95),
+                          minimumSize: const Size(120, 36),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: Colors.transparent,
+                            ),
+                          ),
+                        ),
+                        onPressed: () {
+                          Get.to(() => FornecedorDetalheScreen(
+                                fornecedorDetalhado: FornecedorDetalhadoDto(
+                                    fornecedor: fornecedor, categoriaId: '', categoriaNome: ''),
+                              ));
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

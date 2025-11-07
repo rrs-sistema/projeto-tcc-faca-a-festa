@@ -1,11 +1,12 @@
 // ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
+import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/evento_cadastro_controller.dart';
 import './../../widgets/custom_input_field.dart';
 import './../endereco/endereco_section.dart';
@@ -17,6 +18,7 @@ Future<void> showCadastroEventoBottomSheet(
   EventoModel? eventoParaEdicao,
 }) async {
   final controller = Get.find<EventoCadastroController>();
+  final theme = Get.find<EventThemeController>();
 
   // 🔹 Carrega tipos de evento antes de abrir o formulário
   await controller.carregarTiposEvento();
@@ -25,12 +27,12 @@ Future<void> showCadastroEventoBottomSheet(
   if (eventoParaEdicao != null) {
     controller.carregarEvento(eventoParaEdicao);
   } else {
-    controller.limpar();
+    controller.limpar(manterEndereco: true); // 👈 mantém o endereço que você setou antes
   }
 
   // 🔹 Define cores baseadas no tipo atual (ou padrão)
-  Color corPrincipal;
-  Color corSecundaria;
+  Color corPrincipal = theme.primaryColor.value;
+  Color corSecundaria = theme.secondaryColor.value.withValues(alpha: 0.03);
 
   final tipoNormalizado = controller.tipoEventoModel.value?.nome
           .toLowerCase()
@@ -38,35 +40,13 @@ Future<void> showCadastroEventoBottomSheet(
           .trim() ??
       '';
 
-  switch (tipoNormalizado) {
-    case 'casamento':
-      corPrincipal = const Color(0xFFE91E63);
-      corSecundaria = const Color(0xFFFCE4EC);
-      break;
-    case 'festa infantil':
-      corPrincipal = const Color(0xFFFF9800);
-      corSecundaria = const Color(0xFFFFF3E0);
-      break;
-    case 'chá de bebê':
-      corPrincipal = const Color(0xFF03A9F4);
-      corSecundaria = const Color(0xFFE1F5FE);
-      break;
-    case 'aniversário':
-      corPrincipal = const Color(0xFF9C27B0);
-      corSecundaria = const Color(0xFFF3E5F5);
-      break;
-    default:
-      corPrincipal = const Color(0xFF009688);
-      corSecundaria = const Color(0xFFE0F2F1);
-  }
-
   // ===============================
   // 🔹 ABRE O BOTTOM SHEET
   // ===============================
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
+    backgroundColor: theme.primaryColor.value.withValues(alpha: 0.03),
     builder: (context) {
       return FractionallySizedBox(
         heightFactor: 0.92,
@@ -147,46 +127,49 @@ Future<void> showCadastroEventoBottomSheet(
                                     ],
                                   ),
                                   child: ElevatedButton.icon(
-                                    icon: controller.carregando.value
-                                        ? const SizedBox(
-                                            height: 22,
-                                            width: 22,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
+                                      icon: controller.carregando.value
+                                          ? const SizedBox(
+                                              height: 22,
+                                              width: 22,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : Icon(
+                                              controller.isEditando
+                                                  ? Icons.update_rounded
+                                                  : Icons.check_circle_rounded,
                                               color: Colors.white,
+                                              size: 26,
                                             ),
-                                          )
-                                        : Icon(
-                                            controller.isEditando
-                                                ? Icons.update_rounded
-                                                : Icons.check_circle_rounded,
-                                            color: Colors.white,
-                                            size: 26,
-                                          ),
-                                    label: Text(
-                                      controller.isEditando
-                                          ? 'Atualizar evento'
-                                          : 'Salvar e continuar',
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w700,
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                        letterSpacing: 0.6,
+                                      label: Text(
+                                        controller.isEditando
+                                            ? 'Atualizar evento'
+                                            : 'Salvar e continuar',
+                                        style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16,
+                                          color: Colors.white,
+                                          letterSpacing: 0.6,
+                                        ),
                                       ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent, // usa o gradiente
-                                      shadowColor: Colors.transparent,
-                                      padding:
-                                          const EdgeInsets.symmetric(horizontal: 45, vertical: 15),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(32),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.transparent, // usa o gradiente
+                                        shadowColor: Colors.transparent,
+                                        padding: const EdgeInsets.symmetric(
+                                            horizontal: 45, vertical: 15),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(32),
+                                        ),
                                       ),
-                                    ),
-                                    onPressed: controller.carregando.value
-                                        ? null
-                                        : () => controller.salvarEvento(),
-                                  ),
+                                      onPressed: controller.carregando.value
+                                          ? null
+                                          : () async {
+                                              EasyLoading.show(status: 'Processando...');
+                                              await controller.salvarEvento();
+                                              EasyLoading.dismiss();
+                                            }),
                                 ),
                               )
                                   .animate()
@@ -197,16 +180,17 @@ Future<void> showCadastroEventoBottomSheet(
 
                               // === BOTÃO CANCELAR ===
                               TextButton.icon(
-                                icon: Icon(Icons.close_rounded, color: corPrincipal),
+                                icon: Icon(Icons.close_rounded, color: Colors.white),
                                 label: Text(
                                   'Cancelar',
                                   style: GoogleFonts.poppins(
-                                    color: corPrincipal,
+                                    color: Colors.white,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 style: TextButton.styleFrom(
                                   overlayColor: corPrincipal.withValues(alpha: 0.1),
+                                  backgroundColor: corPrincipal.withValues(alpha: 0.25),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
@@ -243,7 +227,11 @@ List<Widget> _buildCamposPorTipo(
       controller: controller.nomeEvento,
       color: corPrincipal,
       validator: (v) => v == null || v.trim().isEmpty ? "Informe o nome do evento" : null,
-      onChanged: (_) => controller.atualizarPreview(),
+      onChanged: (p0) {
+        controller.nomeEventoPreview.value = p0;
+        controller.atualizarPreview();
+      },
+      //(_) => controller.atualizarPreview(),
     ),
 
     if (tipoNormalizado == 'casamento') ...[
@@ -365,6 +353,70 @@ List<Widget> _buildCamposPorTipo(
       ),
     ],
 
+    /// Campos comuns
+    const SizedBox(height: 10),
+    CustomInputField(
+      label: "Data do evento",
+      icon: Icons.calendar_month,
+      controller: controller.dataFesta,
+      color: corPrincipal,
+      readOnly: true,
+      onTap: () async {
+        final hoje = DateTime.now();
+        final picked = await showDatePicker(
+          context: Get.context!,
+          initialDate: hoje.add(const Duration(days: 30)),
+          firstDate: hoje,
+          lastDate: DateTime(hoje.year + 5),
+          locale: const Locale('pt', 'BR'),
+        );
+        if (picked != null) {
+          controller.dataFesta.text = DateFormat('dd/MM/yyyy', 'pt_BR').format(picked);
+        }
+      },
+      validator: (v) => v!.isEmpty ? "Selecione a data do evento" : null,
+    ),
+    CustomInputField(
+      label: "Hora do evento",
+      icon: Icons.access_time,
+      controller: controller.horaFesta,
+      color: corPrincipal,
+      readOnly: true,
+      onTap: () async {
+        final picked = await showTimePicker(
+          context: Get.context!,
+          initialTime: TimeOfDay.now(),
+        );
+        if (picked != null) {
+          controller.horaFesta.text =
+              "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+        }
+      },
+      validator: (v) => v!.isEmpty ? "Informe a hora" : null,
+    ),
+
+    Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.auto_awesome_rounded, color: corPrincipal, size: 26),
+              Text(
+                "Quanto deseja investir na sua alegria",
+                style: GoogleFonts.poppins(
+                  color: corPrincipal,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+            ],
+          ),
+        ),
+      ],
+    ),
+    const SizedBox(height: 8),
 // === Custo estimado ===
     CustomInputField(
       label: "Custo estimado (R\$)",
@@ -410,47 +462,6 @@ List<Widget> _buildCamposPorTipo(
       },
     ),
 
-    /// Campos comuns
-    CustomInputField(
-      label: "Data do evento",
-      icon: Icons.calendar_month,
-      controller: controller.dataFesta,
-      color: corPrincipal,
-      readOnly: true,
-      onTap: () async {
-        final hoje = DateTime.now();
-        final picked = await showDatePicker(
-          context: Get.context!,
-          initialDate: hoje.add(const Duration(days: 30)),
-          firstDate: hoje,
-          lastDate: DateTime(hoje.year + 5),
-          locale: const Locale('pt', 'BR'),
-        );
-        if (picked != null) {
-          controller.dataFesta.text = DateFormat('dd/MM/yyyy', 'pt_BR').format(picked);
-        }
-      },
-      validator: (v) => v!.isEmpty ? "Selecione a data do evento" : null,
-    ),
-    CustomInputField(
-      label: "Hora do evento",
-      icon: Icons.access_time,
-      controller: controller.horaFesta,
-      color: corPrincipal,
-      readOnly: true,
-      onTap: () async {
-        final picked = await showTimePicker(
-          context: Get.context!,
-          initialTime: TimeOfDay.now(),
-        );
-        if (picked != null) {
-          controller.horaFesta.text =
-              "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
-        }
-      },
-      validator: (v) => v!.isEmpty ? "Informe a hora" : null,
-    ),
-
     EnderecoSection(
       cor: corPrincipal,
       controller: controller.enderecoController.value,
@@ -465,51 +476,78 @@ Widget _buildCampoPadrinhos(Color cor, EventoCadastroController controller) {
   return Obx(() => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text("💖 Padrinhos",
-              style: GoogleFonts.poppins(
-                color: cor,
-                fontWeight: FontWeight.w600,
-              )),
+          ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              colors: [
+                cor.withValues(alpha: 0.9),
+                cor.withValues(alpha: 0.6),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(bounds),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: padrinhoController,
+                    decoration: InputDecoration(
+                      labelText: "💖 Padrinhos / Nome do casal",
+                      labelStyle: GoogleFonts.poppins(color: cor),
+                      focusedBorder: UnderlineInputBorder(
+                        borderSide: BorderSide(color: cor),
+                      ),
+                    ),
+                    onSubmitted: (v) {
+                      controller.addPadrinho(v);
+                      padrinhoController.clear();
+                    },
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.add_circle, color: cor),
+                  onPressed: () {
+                    controller.addPadrinho(padrinhoController.text);
+                    padrinhoController.clear();
+                  },
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 8),
           Wrap(
             spacing: 6,
             runSpacing: 6,
             children: controller.padrinhos.map((p) {
-              return Chip(
-                label: Text(p, style: const TextStyle(color: Colors.white)),
-                backgroundColor: cor,
-                deleteIcon: const Icon(Icons.close, color: Colors.white70, size: 18),
-                onDeleted: () => controller.removePadrinho(p),
-              );
-            }).toList(),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: padrinhoController,
-                  decoration: InputDecoration(
-                    labelText: "Nome do casal / padrinho",
-                    labelStyle: GoogleFonts.poppins(color: cor),
-                    focusedBorder: UnderlineInputBorder(
-                      borderSide: BorderSide(color: cor),
+              return ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        cor.withValues(alpha: 0.5),
+                        cor.withValues(alpha: 0.3),
+                        cor.withValues(alpha: 0.2),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
                   ),
-                  onSubmitted: (v) {
-                    controller.addPadrinho(v);
-                    padrinhoController.clear();
-                  },
+                  child: Chip(
+                    backgroundColor: cor.withValues(alpha: 0.9), // 👈 usa o gradiente do container
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 6),
+                    label: Text(
+                      p,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    deleteIcon: const Icon(Icons.delete, color: Colors.white, size: 20),
+                    onDeleted: () => controller.removePadrinho(p),
+                  ),
                 ),
-              ),
-              IconButton(
-                icon: Icon(Icons.add_circle, color: cor),
-                onPressed: () {
-                  controller.addPadrinho(padrinhoController.text);
-                  padrinhoController.clear();
-                },
-              ),
-            ],
+              );
+            }).toList(),
           ),
         ],
       ));

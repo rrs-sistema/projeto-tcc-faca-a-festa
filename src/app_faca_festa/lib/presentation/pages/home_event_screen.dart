@@ -49,13 +49,20 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   final tarefaController = Get.find<TarefaController>();
   final eventoController = Get.find<EventoController>();
   final fornecedorController = Get.put(FornecedorLocalizacaoController());
+  final theme = Get.find<EventThemeController>();
   bool isCelular = false;
   bool _carregandoFornecedor = false;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Get.find<EventThemeController>();
     isCelular = Biblioteca.isCelular(context);
+
+    // ✅ Ajuste do contraste da barra de status
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // mantém o topo translúcido
+      statusBarIconBrightness: Brightness.dark, // ícones escuros → use se o fundo for claro
+      statusBarBrightness: Brightness.light, // para iOS
+    ));
 
     return Scaffold(
       key: _scaffoldKey, // ✅ chave do Scaffold
@@ -177,91 +184,111 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       {'icon': Icons.menu_rounded, 'label': 'Menu'},
     ];
 
+    final gradientActive = LinearGradient(
+      colors: [cor.withValues(alpha: 0.95), cor.withValues(alpha: 0.6)],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
+
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      height: 70,
+      duration: const Duration(milliseconds: 500),
+      height: 62,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.white.withValues(alpha: 0.75),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
         boxShadow: [
           BoxShadow(
             color: cor.withValues(alpha: 0.25),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            blurRadius: 20,
+            offset: const Offset(0, -4),
           ),
         ],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        backgroundBlendMode: BlendMode.overlay,
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: List.generate(itens.length, (i) {
-          final selected = _currentIndex == i;
+      child: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(itens.length, (i) {
+              final selected = _currentIndex == i;
+              final item = itens[i];
 
-          return GestureDetector(
-            onTap: () async {
-              if (i == 3) {
-                // 🔹 Abre o Drawer com a GlobalKey
-                _scaffoldKey.currentState?.openEndDrawer();
-                return;
-              }
+              return GestureDetector(
+                onTap: () async {
+                  if (i == 3) {
+                    _scaffoldKey.currentState?.openEndDrawer();
+                    return;
+                  }
 
-              if (_currentIndex != i) {
-                setState(() => _currentIndex = i);
-                pageController.animateToPage(
-                  i,
-                  duration: const Duration(milliseconds: 450),
-                  curve: Curves.easeInOut,
-                );
-              }
-            },
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              curve: Curves.easeInOut,
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
-              decoration: BoxDecoration(
-                color: selected && i != 3 ? cor.withValues(alpha: 0.009) : Colors.transparent,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: selected && i != 3
-                    ? [
-                        BoxShadow(
-                          color: cor.withValues(alpha: 0.35),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
+                  if (_currentIndex != i) {
+                    setState(() => _currentIndex = i);
+                    pageController.animateToPage(
+                      i,
+                      duration: const Duration(milliseconds: 450),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 350),
+                  curve: Curves.easeInOutCubic,
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    gradient: selected && i != 3 ? gradientActive : null,
+                    color: selected && i != 3 ? cor.withValues(alpha: 0.08) : Colors.transparent,
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: selected && i != 3
+                        ? [
+                            BoxShadow(
+                              color: cor.withValues(alpha: 0.35),
+                              blurRadius: 16,
+                              offset: const Offset(0, 6),
+                            ),
+                          ]
+                        : [],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 350),
+                        child: Icon(
+                          item['icon'] as IconData,
+                          size: selected ? 30 : 25,
+                          color:
+                              selected ? Colors.white : Colors.grey.shade500.withValues(alpha: 0.9),
+                          shadows: selected
+                              ? [
+                                  Shadow(
+                                    color: cor.withValues(alpha: 0.5),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
+                                  )
+                                ]
+                              : [],
                         ),
-                      ]
-                    : [],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ShaderMask(
-                    shaderCallback: (bounds) => LinearGradient(
-                      colors: selected && i != 3
-                          ? [cor.withValues(alpha: 1), cor.withValues(alpha: 0.7)]
-                          : [Colors.grey.shade500, Colors.grey.shade600],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ).createShader(bounds),
-                    child: Icon(
-                      itens[i]['icon'] as IconData,
-                      size: selected ? 30 : 25,
-                      color: Colors.white,
-                    ),
+                      ),
+                      const SizedBox(height: 4),
+                      AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 300),
+                        style: GoogleFonts.poppins(
+                          fontSize: selected ? 13.0 : 11,
+                          fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                          color:
+                              selected ? Colors.white : Colors.grey.shade700.withValues(alpha: 0.9),
+                          letterSpacing: selected ? 0.8 : 0.2,
+                        ),
+                        child: Text(item['label'] as String),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 4),
-                  AnimatedDefaultTextStyle(
-                    duration: const Duration(milliseconds: 300),
-                    style: TextStyle(
-                      fontSize: selected ? 13.5 : 12,
-                      fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
-                      color: selected && i != 3 ? cor : Colors.grey.shade600,
-                    ),
-                    child: Text(itens[i]['label'] as String),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
+                ),
+              );
+            }),
+          ),
+        ),
       ),
     );
   }
@@ -277,7 +304,7 @@ Widget _buildAnimatedHeader(EventThemeController theme) {
     final tipoEvento = eventoController.tipoEventoAtual.value;
 
     return Container(
-      height: 230,
+      height: 200,
       width: double.infinity,
       decoration: BoxDecoration(
         boxShadow: [
@@ -305,9 +332,9 @@ Widget _buildAnimatedHeader(EventThemeController theme) {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  gradient.colors.first.withValues(alpha: 0.9),
-                  gradient.colors.last.withValues(alpha: 0.6),
-                  Colors.black.withValues(alpha: 0.7),
+                  gradient.colors.first.withValues(alpha: 0.6),
+                  gradient.colors.last.withValues(alpha: 0.3),
+                  Colors.black.withValues(alpha: 0.2),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -327,7 +354,7 @@ Widget _buildAnimatedHeader(EventThemeController theme) {
             right: 10,
             top: 10,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.35),
                 borderRadius: BorderRadius.circular(14),
@@ -339,7 +366,6 @@ Widget _buildAnimatedHeader(EventThemeController theme) {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.celebration_rounded, color: Colors.white, size: 18),
                         const SizedBox(width: 6),
                         Text(
                           tipoEvento?.nome ?? 'Faça a Festa',
@@ -385,8 +411,8 @@ Widget _buildAnimatedHeader(EventThemeController theme) {
           // 📅 Data e local
           Positioned(
             bottom: 10,
-            left: 20,
-            right: 20,
+            left: 10,
+            right: 10,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
@@ -402,7 +428,7 @@ Widget _buildAnimatedHeader(EventThemeController theme) {
                     const SizedBox(width: 6),
                     Text(
                       evento?.data != null
-                          ? DateFormat("d 'de' MMMM", 'pt_BR').format(evento!.data)
+                          ? DateFormat("d 'de' MMMM yyyy", 'pt_BR').format(evento!.data)
                           : 'Data a definir',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
@@ -443,7 +469,7 @@ Widget _buildQuickActions(EventThemeController theme) {
     child: FadeInUp(
       duration: const Duration(milliseconds: 800),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         child: LayoutBuilder(
           builder: (context, constraints) {
             final bool isTablet = constraints.maxWidth > 560;
@@ -792,14 +818,16 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   });
 
   @override
-  double get minExtent => 110; // 🔹 era 90 → agora tem mais espaço
+  double get minExtent => 70;
+  //double get minExtent => 100;
   @override
-  double get maxExtent => 130; // 🔹 era 120 → dá folga visual
+  double get maxExtent => 80;
+  //double get maxExtent => 120;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     // Calcula se o banner já sumiu
-    final bool bannerSumiu = shrinkOffset > 40;
+    final bool bannerSumiu = shrinkOffset > 45;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),

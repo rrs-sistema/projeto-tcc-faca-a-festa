@@ -1,3 +1,4 @@
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,10 @@ import './../../../controllers/register_controller.dart';
 import './register_organizador_form.dart';
 import './register_fornecedor_form.dart';
 import './../login/login_screen.dart';
+import 'dart:ui';
+
+import 'components/build_header_fornecedor.dart';
+import 'components/build_header_organizador.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -27,100 +32,135 @@ class _RegisterScreenState extends State<RegisterScreen> {
   File? bannerFile;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      //servicoController.carregarServicosPorSubcategoriaAntigo();
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final tipo = (Get.arguments?['tipo'] ?? 'O') as String;
     final isFornecedor = tipo == 'F';
     final theme = Get.find<EventThemeController>();
-    final primary = theme.primaryColor.value;
+
+    // 🎨 Define o gradiente base
+    final gradient = isFornecedor
+        ? const LinearGradient(
+            colors: [
+              Color(0xFF1A1A1A), // preto profundo no topo
+              Color(0xFF111111), // preto ligeiramente acinzentado
+              Color(0xFF1A1A1A), // cinza escuro na base
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          )
+        : theme.gradient.value;
+
+    // 🎨 Define cor base do vidro conforme o tipo
+    final glassColor =
+        isFornecedor ? Colors.black.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.08);
+
+    // 🎨 Define cor do texto padrão
+    final textColor = isFornecedor ? Colors.grey.shade200 : Colors.white;
 
     return Scaffold(
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+      extendBodyBehindAppBar: true,
+      backgroundColor: isFornecedor ? Colors.black : Colors.grey.shade100,
+      body: Stack(
+        children: [
+          // 🔹 Fundo dinâmico com gradiente animado
+          AnimatedContainer(
+            duration: 600.ms,
+            decoration: BoxDecoration(gradient: gradient),
+          ),
+
+          // 💎 Efeito vidro (blur + transparência adaptável)
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 25, sigmaY: 25),
+            child: Container(color: glassColor),
+          ),
+
+          // 🌟 Conteúdo principal
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Icon(
-                    isFornecedor ? Icons.storefront_rounded : Icons.event_available_rounded,
-                    color: primary,
-                    size: 30,
+                  // 🏆 Cabeçalho distinto para cada tipo
+                  isFornecedor ? buildHeaderFornecedor() : buildHeaderOrganizador(isFornecedor),
+
+                  const SizedBox(height: 28),
+
+                  // 📋 Cartão translúcido adaptativo
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      color: isFornecedor
+                          ? Colors.white.withValues(alpha: 0.05)
+                          : Colors.white.withValues(alpha: 0.15),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.25),
+                          blurRadius: 15,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        width: 1,
+                      ),
+                    ),
+                    child: isFornecedor
+                        ? RegisterFornecedorForm(
+                            controller: controller,
+                            fornecedorController: fornecedorController,
+                            picker: picker,
+                            bannerFile: bannerFile,
+                            onImageSelected: (file) => setState(() => bannerFile = file),
+                          )
+                        : RegisterOrganizadorForm(controller: controller),
+                  ).animate().fadeIn(duration: 900.ms).slideY(begin: 0.3, curve: Curves.easeOut),
+
+                  const SizedBox(height: 24),
+
+                  // 🔗 Link de login adaptado
+                  GestureDetector(
+                    onTap: () => Get.off(() => const LoginScreen()),
+                    child: Text.rich(
+                      TextSpan(
+                        text: "Já tem conta? ",
+                        style: GoogleFonts.poppins(
+                          color: textColor,
+                          fontSize: 14,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: "Entrar",
+                            style: GoogleFonts.poppins(
+                              color: isFornecedor ? Colors.amber.shade300 : Colors.amber.shade200,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                  const SizedBox(width: 8),
+
+                  const SizedBox(height: 40),
+
+                  // ✨ Rodapé com branding
                   Text(
-                    isFornecedor ? 'Conta de Fornecedor' : 'Criar Conta de Organizador',
+                    '💡 Faça a Festa',
                     style: GoogleFonts.poppins(
-                      fontSize: 26,
-                      fontWeight: FontWeight.bold,
-                      color: primary,
+                      color: textColor.withValues(alpha: 0.8),
+                      fontSize: 13.5,
                       letterSpacing: 0.5,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                isFornecedor
-                    ? 'Cadastre seus serviços e receba pedidos de eventos.'
-                    : 'Organize seu evento com praticidade e controle total.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 14,
-                  color: Colors.grey.shade600,
-                ),
-              ),
-              const SizedBox(height: 20),
-              isFornecedor
-                  ? RegisterFornecedorForm(
-                      controller: controller,
-                      fornecedorController: fornecedorController,
-                      picker: picker,
-                      bannerFile: bannerFile,
-                      onImageSelected: (file) => setState(() => bannerFile = file),
-                    )
-                  : RegisterOrganizadorForm(controller: controller),
-              const SizedBox(height: 24),
-              GestureDetector(
-                onTap: () => Get.off(() => const LoginScreen()),
-                child: Text.rich(
-                  TextSpan(
-                    text: "Já tem conta? ",
-                    style: GoogleFonts.poppins(color: Colors.black87, fontSize: 14),
-                    children: [
-                      TextSpan(
-                        text: "Entrar",
-                        style: GoogleFonts.poppins(
-                          color: primary,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 40),
-              Text(
-                '💡 Faça a Festa',
-                style: GoogleFonts.poppins(
-                  fontSize: 13.5,
-                  color: primary.withValues(alpha: 0.8),
-                  letterSpacing: 0.3,
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }

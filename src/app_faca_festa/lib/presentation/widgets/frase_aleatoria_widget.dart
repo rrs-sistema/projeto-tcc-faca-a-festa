@@ -94,6 +94,42 @@ class _FraseAleatoriaWidgetState extends State<FraseAleatoriaWidget>
     "🌈 O amor se multiplica, e a felicidade também!",
   ];
 
+  final frasesCorporativo = [
+    "💼 Grandes conquistas começam com grandes conexões.",
+    "🚀 Um evento é o reflexo da força e união de uma equipe.",
+    "🌟 Sucesso é quando cada detalhe comunica propósito.",
+    "🤝 Reunir pessoas certas é o primeiro passo para ideias brilharem.",
+    "🎯 Cada encontro é uma oportunidade de crescimento e inovação.",
+    "💡 Inspiração nasce quando mentes criativas se encontram.",
+    "🌍 Conectar, inspirar e transformar — o verdadeiro espírito corporativo.",
+    "🏆 Um bom evento é aquele que deixa marcas de aprendizado e propósito.",
+    "📈 Pequenos detalhes constroem grandes resultados.",
+    "🗣️ Networking é a arte de transformar encontros em oportunidades.",
+    "✨ Cada planejamento reflete o profissionalismo por trás do sucesso.",
+    "💬 Comunicação é a ponte entre sonhos e resultados.",
+    "🎬 O evento é o palco; a equipe, os protagonistas do sucesso.",
+    "🔑 A excelência está nos detalhes que ninguém vê, mas todos sentem.",
+    "🕊️ Inspire sua equipe, celebre conquistas, e construa novos horizontes.",
+  ];
+
+  final frasesFormatura = [
+    "🎓 Um ciclo se encerra, e o futuro começa a brilhar!",
+    "🌟 Cada conquista é fruto de sonhos, esforço e fé.",
+    "🎉 Hoje é dia de celebrar vitórias e novos começos!",
+    "✨ Formar-se é transformar aprendizado em propósito.",
+    "📚 Anos de estudo, uma vida inteira de conquistas.",
+    "💫 A jornada foi longa, mas o brilho da chegada é eterno.",
+    "🏅 Cada aplauso celebra uma história de superação.",
+    "🌈 O conhecimento é a chave que abre todas as portas.",
+    "🎶 Que a trilha sonora de hoje ecoe por toda a sua vida!",
+    "🌻 Orgulho, emoção e gratidão — os ingredientes da formatura perfeita.",
+    "🎓 O fim de uma etapa, o início de uma grande aventura.",
+    "💖 Que cada lembrança desse dia inspire o amanhã.",
+    "🌠 O diploma é só o começo do que você é capaz de conquistar.",
+    "📖 Hoje você escreve o capítulo mais bonito da sua história.",
+    "🥂 Celebre suas conquistas — o futuro é todo seu!",
+  ];
+
   final frasesNatal = [
     "🎄 Que o espírito natalino ilumine cada detalhe da sua festa!",
     "✨ Natal é tempo de celebrar o amor e espalhar alegria!",
@@ -125,6 +161,11 @@ class _FraseAleatoriaWidgetState extends State<FraseAleatoriaWidget>
         return frasesChaBebe;
       case 'natal':
         return frasesNatal;
+      case 'evento corporativo':
+      case 'corporativo':
+        return frasesCorporativo;
+      case 'formatura':
+        return frasesFormatura;
       default:
         return frasesGerais;
     }

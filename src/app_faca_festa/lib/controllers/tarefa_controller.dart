@@ -10,7 +10,7 @@ class TarefaController extends GetxController {
 
   // 🔹 Observáveis reativos
   final RxList<TarefaModel> tarefas = <TarefaModel>[].obs;
-  final RxList<UsuarioModel> usuarios = <UsuarioModel>[].obs;
+  final RxList<ConvidadoModel> usuarios = <ConvidadoModel>[].obs;
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
 
@@ -71,9 +71,9 @@ class TarefaController extends GetxController {
   // ==========================================================
   Future<void> carregarUsuarios() async {
     try {
-      final snapshot = await _db.collection('usuarios').where('ativo', isEqualTo: true).get();
+      final snapshot = await _db.collection('convidado').where('id_evento', isEqualTo: true).get();
 
-      final lista = snapshot.docs.map((d) => UsuarioModel.fromMap(d.data())).toList();
+      final lista = snapshot.docs.map((d) => ConvidadoModel.fromMap(d.data())).toList();
 
       usuarios.assignAll(lista);
     } catch (e) {

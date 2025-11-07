@@ -24,6 +24,7 @@ class EventoCadastroController extends GetxController {
   /// ===============================
   final idEvento = ''.obs;
   final nomeEvento = TextEditingController();
+  final localEvento = TextEditingController();
   final nomeNoiva = TextEditingController();
   final parceiro = TextEditingController();
   final idade = TextEditingController();
@@ -293,6 +294,7 @@ class EventoCadastroController extends GetxController {
         nome: nomeEvento.text.trim().isNotEmpty
             ? nomeEvento.text.trim()
             : nomeEventoPreview.value.trim(),
+        localEvento: localEvento.text.trim(),
         custoEstimado: valor,
         data: dataCompleta,
         hora: horaStr,
@@ -342,9 +344,8 @@ class EventoCadastroController extends GetxController {
   // ===============================
   // 🔹 LIMPAR CAMPOS
   // ===============================
-  void limpar() {
+  void limpar({bool manterEndereco = false}) {
     idEvento.value = '';
-    tipoEventoModel.value = null;
     nomeNoiva.clear();
     parceiro.clear();
     idade.clear();
@@ -362,8 +363,10 @@ class EventoCadastroController extends GetxController {
     custoEstimado.clear();
     nomeEventoPreview.value = '';
 
-    // ✅ Limpa também os campos do endereço
-    enderecoController.value.limpar();
+    // ✅ Só limpa o endereço se não for pedido para manter
+    if (!manterEndereco) {
+      enderecoController.value.limpar();
+    }
   }
 
   // ===============================

@@ -79,9 +79,11 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                   _menuItem(Icons.event_note, "Meu Evento", color: primary, onTap: () {
                     final evento = eventoController.eventoAtual.value;
                     if (evento != null) {
-                      Get.back();
                       eventoCadastroController.carregarEvento(evento);
-                      showCadastroEventoBottomSheet(context, eventoParaEdicao: evento);
+                      Get.back(); // fecha a tela atual
+                      Future.delayed(const Duration(milliseconds: 200), () {
+                        showCadastroEventoBottomSheet(Get.context!, eventoParaEdicao: evento);
+                      });
                     }
                   }),
                   _menuItem(Icons.group, "Convidados", color: primary),

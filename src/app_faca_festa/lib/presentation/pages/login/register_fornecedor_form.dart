@@ -142,7 +142,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                 suffixIcon: IconButton(
                   icon: Icon(
                     controller.exibirSenha.value ? Icons.visibility_off : Icons.visibility,
-                    color: primary,
+                    color: Colors.white,
                   ),
                   onPressed: () => controller.exibirSenha.toggle(),
                 ),

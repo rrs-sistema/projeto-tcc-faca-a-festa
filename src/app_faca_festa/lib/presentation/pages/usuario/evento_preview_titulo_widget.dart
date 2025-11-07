@@ -29,12 +29,28 @@ class EventoPreviewTituloWidget extends StatelessWidget {
           fontSize: 18,
           fontWeight: FontWeight.w600,
           letterSpacing: 1.1,
-          color: corPrincipal,
+          color: Colors.black,
           shadows: [
             Shadow(
               offset: const Offset(0, 2),
               blurRadius: 5,
-              color: corPrincipal.withValues(alpha: 0.25),
+              color: corPrincipal,
+            ),
+          ],
+        );
+        break;
+      case 'evento corporativo':
+        titulo = nome.isEmpty ? '💼 Um dia para celebrar o amor...' : '💼 $nome';
+        estilo = GoogleFonts.playfairDisplay(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 1.1,
+          color: Colors.black,
+          shadows: [
+            Shadow(
+              offset: const Offset(0, 2),
+              blurRadius: 5,
+              color: corPrincipal,
             ),
           ],
         );
@@ -45,7 +61,7 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         estilo = GoogleFonts.fredoka(
           fontSize: 21,
           fontWeight: FontWeight.w600,
-          color: corPrincipal,
+          color: Colors.black,
           shadows: [
             Shadow(
               offset: const Offset(1, 2),
@@ -61,7 +77,7 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         estilo = GoogleFonts.dancingScript(
           fontSize: 26,
           fontWeight: FontWeight.w600,
-          color: corPrincipal.withValues(alpha: 0.9),
+          color: Colors.black,
           shadows: [
             Shadow(
               offset: const Offset(1, 2),
@@ -77,7 +93,7 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         estilo = GoogleFonts.poppins(
           fontSize: 20,
           fontWeight: FontWeight.w700,
-          color: corPrincipal,
+          color: Colors.black,
           letterSpacing: 0.6,
           shadows: [
             Shadow(
@@ -93,7 +109,7 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         estilo = GoogleFonts.poppins(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: corPrincipal,
+          color: Colors.black,
         );
     }
 

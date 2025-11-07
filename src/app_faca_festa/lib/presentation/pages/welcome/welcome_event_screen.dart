@@ -1,18 +1,19 @@
 // ignore_for_file: use_build_context_synchronously
-
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/evento_controller.dart';
-import '../../../role_selector_screen.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
+import './../../../controllers/evento_cadastro_controller.dart';
 import './../usuario/cadastro_evento_bottom_sheet.dart';
+import './../../../controllers/evento_controller.dart';
 import './../../../controllers/app_controller.dart';
+import './../../../role_selector_screen.dart';
 import './../../../data/models/model.dart';
 import './../login/login_screen.dart';
-import './../home_event_screen.dart';
 
 class WelcomeEventScreen extends StatefulWidget {
   const WelcomeEventScreen({super.key});
@@ -26,6 +27,8 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
   final themeController = Get.find<EventThemeController>();
   final appController = Get.find<AppController>();
   final eventoController = Get.find<EventoController>();
+
+  final eventoCadastroController = Get.find<EventoCadastroController>();
 
   List<TipoEventoModel> _tiposEvento = [];
   bool _loading = true;
@@ -51,6 +54,13 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Ajuste do contraste da barra de status
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // mantém o topo translúcido
+      statusBarIconBrightness: Brightness.dark, // ícones escuros → use se o fundo for claro
+      statusBarBrightness: Brightness.light, // para iOS
+    ));
+
     return Scaffold(
       body: Stack(
         children: [
@@ -83,7 +93,7 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
                 Text(
                   "🎊 Faça a Festa",
                   style: GoogleFonts.poppins(
@@ -100,7 +110,7 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 2),
                 Text(
                   "Escolha o tipo de evento",
                   textAlign: TextAlign.center,
@@ -110,18 +120,18 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 20),
 
                 // 🧩 Grid de Tipos de Evento (carregado do Firebase)
                 Expanded(
                   child: _loading
                       ? const Center(child: CircularProgressIndicator())
                       : GridView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
-                            mainAxisSpacing: 24,
-                            crossAxisSpacing: 24,
+                            mainAxisSpacing: 16,
+                            crossAxisSpacing: 16,
                             childAspectRatio: 1,
                           ),
                           itemCount: _tiposEvento.length,
@@ -131,10 +141,8 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                               nome: tipo.nome,
                               cor: _getColorFromName(tipo.nome),
                               onTap: () async {
-                                debugPrint(
-                                    "🎯 [WelcomeEventScreen] Tipo selecionado: ${tipo.nome}");
-
                                 // 🔹 Aplica imediatamente o tema ao selecionar o tipo
+                                EasyLoading.show(status: 'Processando...');
                                 themeController.aplicarTemaPorNome(tipo.nome);
 
                                 final appController = Get.find<AppController>();
@@ -147,32 +155,52 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                                     backgroundColor: Colors.redAccent,
                                     colorText: Colors.white,
                                   );
+                                  EasyLoading.dismiss();
                                   Get.offAll(() => const RoleSelectorScreen());
                                   return;
                                 }
 
+                                final enderecoUsuario = appController.enderecoPrincipal.value;
+                                final endCtrl = eventoCadastroController.enderecoController.value;
+
+                                if (enderecoUsuario != null) {
+                                  endCtrl.logradouroController.text = enderecoUsuario.logradouro;
+                                  endCtrl.numeroController.text = enderecoUsuario.numero;
+                                  endCtrl.complementoController.text =
+                                      enderecoUsuario.complemento ?? '';
+                                  endCtrl.bairroController.text = enderecoUsuario.bairro ?? '';
+                                  endCtrl.cepController.text = enderecoUsuario.cep;
+                                  endCtrl.nomeCidadeController.text =
+                                      enderecoUsuario.nomeCidade ?? '';
+                                  endCtrl.ufController.text = enderecoUsuario.uf ?? 'PR';
+
+                                  // ✅ Atualiza seleção reativa no UF/CidadeController
+                                  endCtrl.ufCidadeController.estadoSelecionado.value = {
+                                    'nome': enderecoUsuario.uf ?? 'Paraná',
+                                    'uf': enderecoUsuario.uf ?? 'PR',
+                                  };
+                                  endCtrl.ufCidadeController.cidadeSelecionada.value = {
+                                    'id_cidade': enderecoUsuario.idCidade,
+                                    'nome': enderecoUsuario.nomeCidade,
+                                    'uf': enderecoUsuario.uf ?? 'PR',
+                                  };
+                                }
+
+                                eventoCadastroController.tipoEventoModel.value = tipo;
+                                EasyLoading.dismiss();
+
                                 await showCadastroEventoBottomSheet(context);
 
                                 if (eventoController.eventoAtual.value != null) {
+                                  EasyLoading.show(status: 'Processando...');
                                   await eventoController.buscarUltimoEvento(
                                       eventoController.eventoAtual.value!.idUsuario);
-                                } else {
-                                  final novoEvento = EventoModel(
-                                    idEvento: DateTime.now().millisecondsSinceEpoch.toString(),
-                                    idTipoEvento: tipo.idTipoEvento,
-                                    idUsuario: appController.usuarioLogado.value!.idUsuario,
-                                    nome:
-                                        "Novo ${tipo.nome.replaceAll(RegExp(r'[^\w\sÀ-ú]'), '').trim()}",
-                                    data: DateTime.now().add(const Duration(days: 30)),
-                                  );
 
-                                  eventoController.eventoAtual.value = novoEvento;
+                                  await Future.delayed(Duration(milliseconds: 350));
 
-                                  Get.to(
-                                    () => HomeEventScreen(),
-                                    transition: Transition.fadeIn,
-                                    duration: const Duration(milliseconds: 700),
-                                  );
+                                  EasyLoading.dismiss();
+
+                                  Get.offAllNamed('/HomeEventScreen');
                                 }
                               },
                             );
@@ -180,12 +208,27 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                         ),
                 ),
 
-                // ✨ Rodapé
-                Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: GestureDetector(
+                Padding(
+                  padding: const EdgeInsets.only(top: 15, bottom: 10),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        height: 2,
+                        width: 120,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.pinkAccent.shade100.withValues(alpha: 0.8),
+                              Colors.purpleAccent.shade100.withValues(alpha: 0.8),
+                              Colors.blueAccent.shade100.withValues(alpha: 0.8),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
+
+                      GestureDetector(
                         onTap: () {
                           Get.to(
                             () => const LoginScreen(),
@@ -193,30 +236,37 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                             duration: const Duration(milliseconds: 500),
                           );
                         },
-                        child: RichText(
-                          text: TextSpan(
-                            text: "Já tem uma conta? ",
-                            style: GoogleFonts.poppins(
-                              color: Colors.black87,
-                              fontSize: 14,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: "Entrar aqui",
-                                style: GoogleFonts.poppins(
-                                  color: Colors.pink.shade800,
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                ),
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: RichText(
+                            textAlign: TextAlign.center,
+                            text: TextSpan(
+                              style: GoogleFonts.poppins(
+                                color: Colors.black87,
+                                fontSize: 14,
+                                height: 1.5,
                               ),
-                            ],
+                              children: [
+                                const TextSpan(text: "Já tem uma conta? "),
+                                TextSpan(
+                                  text: "Entrar aqui",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.pink.shade700,
+                                    fontWeight: FontWeight.w700,
+                                    decoration: TextDecoration.underline,
+                                    decorationThickness: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: GestureDetector(
+
+                      const SizedBox(height: 8),
+
+                      // 🔹 Link para voltar ao início
+                      GestureDetector(
                         onTap: () {
                           Get.to(
                             () => const RoleSelectorScreen(),
@@ -224,39 +274,64 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                             duration: const Duration(milliseconds: 500),
                           );
                         },
-                        child: RichText(
-                          text: TextSpan(
-                            text: "Deseja voltar para o incicio? ",
-                            style: GoogleFonts.poppins(
-                              color: Colors.black87,
-                              fontSize: 14,
-                            ),
-                            children: [
-                              TextSpan(
-                                text: "Clique aqui",
-                                style: GoogleFonts.poppins(
-                                  color: Colors.pink.shade800,
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                ),
+                        child: MouseRegion(
+                          cursor: SystemMouseCursors.click,
+                          child: RichText(
+                            textAlign: TextAlign.center,
+                            text: TextSpan(
+                              style: GoogleFonts.poppins(
+                                color: Colors.black87,
+                                fontSize: 14,
+                                height: 1.5,
                               ),
-                            ],
+                              children: [
+                                const TextSpan(text: "Deseja voltar para o início? "),
+                                TextSpan(
+                                  text: "Clique aqui",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.purple.shade700,
+                                    fontWeight: FontWeight.w700,
+                                    decoration: TextDecoration.underline,
+                                    decorationThickness: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Text(
-                      "por RRS System Technology",
-                      style: GoogleFonts.poppins(
-                        color: Colors.pink.shade800.withValues(alpha: 0.7),
-                        fontSize: 13,
-                        letterSpacing: 0.5,
-                        fontWeight: FontWeight.w500,
+
+                      const SizedBox(height: 8),
+
+                      // 🔹 Assinatura com ícone sutil e opacidade
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          ShaderMask(
+                            shaderCallback: (bounds) => const LinearGradient(
+                              colors: [
+                                Color(0xFFFF80AB),
+                                Color(0xFFCE93D8),
+                                Color(0xFF81D4FA),
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ).createShader(bounds),
+                            child: Text(
+                              "by RRS System Technology",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                letterSpacing: 0.4,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 30),
               ],
             ),
           ),
@@ -268,12 +343,21 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
   /// 💡 Extrai cor do nome (usando os mesmos tons que você usava)
   Color _getColorFromName(String nome) {
     final lower = nome.toLowerCase();
+
     if (lower.contains("casamento")) return Colors.pinkAccent;
     if (lower.contains("infantil")) return Colors.orangeAccent;
     if (lower.contains("bebê")) return Colors.lightBlueAccent;
     if (lower.contains("aniversário")) return Colors.purpleAccent;
     if (lower.contains("fornecedor")) return Colors.greenAccent;
-    return Colors.teal;
+    // 💼 Evento Corporativo
+    if (lower.contains("corporativo") || lower.contains("empresa")) {
+      return const Color(0xFF00796B); // Azul Petróleo
+    }
+    // 🎓 Formatura
+    if (lower.contains("formatura") || lower.contains("colação")) {
+      return const Color(0xFF7E57C2); // Roxo Elegante
+    }
+    return Colors.teal; // padrão
   }
 }
 
@@ -339,6 +423,7 @@ class _EventTypeCardState extends State<_EventTypeCard> {
               const SizedBox(height: 10),
               Text(
                 texto,
+                textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   color: Colors.white,
                   fontWeight: FontWeight.w700,

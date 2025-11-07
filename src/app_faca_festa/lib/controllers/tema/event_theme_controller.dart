@@ -122,6 +122,37 @@ class EventThemeController extends GetxController {
         );
         break;
 
+      // 💼 Evento Corporativo
+      case 'evento corporativo':
+      case 'corporativo':
+        _setTheme(
+          primary: const Color(0xFF00796B),
+          secondary: const Color(0xFFE0F2F1),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF00796B), Color(0xFF48A999)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          icone: Icons.business_center_rounded,
+          titulo: "💼 Evento Corporativo",
+        );
+        break;
+
+      // 🎓 Formatura
+      case 'formatura':
+        _setTheme(
+          primary: const Color(0xFF7E57C2),
+          secondary: const Color(0xFFEDE7F6),
+          gradient: const LinearGradient(
+            colors: [Color(0xFF7E57C2), Color(0xFFB39DDB)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          icone: Icons.school_rounded,
+          titulo: "🎓 Formatura dos Sonhos",
+        );
+        break;
+
       default:
         _setTheme(
           primary: const Color(0xFF009688),

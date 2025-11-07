@@ -1,14 +1,15 @@
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/tema/event_theme_controller.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/app_controller.dart';
+import './../../widgets/festa_app_bar.dart';
 import './components/estatisticas_tab.dart';
-import 'area/lista_convidados_screen.dart';
 import './components/cardapios_tab.dart';
+import './enviar_convites_screen.dart';
 import './components/grupos_tab.dart';
-import 'enviar_convites_screen.dart';
 import './components/mesa_tab.dart';
 
 class ConvidadosPage extends StatefulWidget {
@@ -31,14 +32,61 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
+    // ✅ Ajuste do contraste da barra de status
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // mantém o topo translúcido
+      statusBarIconBrightness: Brightness.dark, // ícones escuros → use se o fundo for claro
+      statusBarBrightness: Brightness.light, // para iOS
+    ));
+
     final usuarioLogado = appController.usuarioLogado.value;
     return Obx(() {
       final primary = themeController.primaryColor.value;
-      final gradient = themeController.gradient.value;
 
       return Scaffold(
         backgroundColor: Colors.grey.shade100,
-        appBar: AppBar(
+        appBar: FestaAppBar(
+          titulo: 'Meus Convidados',
+          altura: 110,
+          acoes: [
+            IconButton(
+              tooltip: 'Pesquisar',
+              icon: const Icon(Icons.search_rounded, color: Colors.white),
+              onPressed: () {
+                // ação da busca
+              },
+            ),
+          ],
+          bottom: PreferredSize(
+            preferredSize: const Size.fromHeight(85),
+            child: TabBar(
+              controller: _tabController,
+              indicator: UnderlineTabIndicator(
+                borderSide: BorderSide(
+                  width: 3.0,
+                  color: Colors.black.withValues(alpha: 180),
+                ),
+                insets: const EdgeInsets.symmetric(horizontal: 24),
+              ),
+              labelColor: Colors.black,
+              unselectedLabelColor: Colors.black54,
+              labelStyle: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600,
+              ),
+              unselectedLabelStyle: GoogleFonts.poppins(
+                fontWeight: FontWeight.w500,
+              ),
+              indicatorPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              tabs: const [
+                Tab(text: 'Mesas'),
+                Tab(text: 'Grupos'),
+                Tab(text: 'Cardápios'),
+                Tab(text: 'Estatísticas'),
+              ],
+            ),
+          ),
+        ),
+        /*appBar: AppBar(
           automaticallyImplyLeading: false,
           leading: usuarioLogado!.tipo != 'C'
               ? Container(
@@ -111,7 +159,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
               ),
             ),
           ),
-        ),
+        ),*/
         body: TabBarView(
           controller: _tabController,
           children: const [
@@ -121,7 +169,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
             EstatisticasTab(),
           ],
         ),
-        floatingActionButton: usuarioLogado.tipo != 'C'
+        floatingActionButton: usuarioLogado!.tipo != 'C'
             ? FloatingActionButton.extended(
                 backgroundColor: primary,
                 elevation: 6,

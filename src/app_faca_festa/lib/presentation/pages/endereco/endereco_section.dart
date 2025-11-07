@@ -66,24 +66,28 @@ class _EnderecoSectionState extends State<EnderecoSection> {
     return Card(
       elevation: 3,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      margin: const EdgeInsets.symmetric(vertical: 10),
+      margin: const EdgeInsets.symmetric(vertical: 2),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          childrenPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          childrenPadding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           title: Row(
             children: [
               Icon(Icons.location_on_rounded, color: cor),
               const SizedBox(width: 8),
-              Text(
-                widget.titulo,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: cor,
+              Flexible(
+                child: Text(
+                  widget.titulo,
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: cor,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
                 ),
               ),
             ],

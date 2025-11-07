@@ -1,0 +1,184 @@
+import 'package:lottie/lottie.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+
+import '../../../../controllers/tema/event_theme_controller.dart';
+
+Widget buildHeaderOrganizador(bool isFornecedor) {
+  final theme = Get.find<EventThemeController>();
+
+  return Stack(
+    alignment: Alignment.center,
+    children: [
+      // 🎈 Balões ou confetes subindo suavemente no fundo
+      Positioned.fill(
+        child: Lottie.asset(
+          isFornecedor
+              ? 'assets/animations/confetti_background.json'
+              : 'assets/animations/confetti_background.json',
+          repeat: true,
+          fit: BoxFit.cover,
+          alignment: Alignment.topCenter,
+        ),
+      ),
+
+      // 🌟 Conteúdo principal sobreposto
+      Column(
+        children: [
+          const SizedBox(height: 40),
+
+          // ✨ Ícone flutuante com brilho
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [
+                  theme.primaryColor.value.withValues(alpha: 0.9),
+                  theme.secondaryColor.value.withValues(alpha: 0.5),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  blurRadius: 15,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Icon(
+              isFornecedor ? Icons.storefront_rounded : Icons.event_available_rounded,
+              color: Colors.white,
+              size: 44,
+            ),
+          )
+              .animate()
+              .fadeIn(duration: 700.ms)
+              .scale(begin: Offset(0.8, 0.0), curve: Curves.easeOutBack)
+              .then(delay: NumDurationExtensions(1).seconds)
+              .shimmer(duration: NumDurationExtensions(2).seconds),
+
+          const SizedBox(height: 16),
+
+          // 💎 Título estilizado com gradiente
+          ShaderMask(
+              shaderCallback: (bounds) => LinearGradient(
+                    colors: [
+                      Colors.white,
+                      theme.secondaryColor.value.withValues(alpha: 0.9),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ).createShader(bounds),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 400),
+                padding: const EdgeInsets.all(12),
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      theme.primaryColor.value.withValues(alpha: 0.9),
+                      theme.primaryColor.value
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: theme.primaryColor.value.withValues(alpha: 0.4)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: theme.primaryColor.value.withValues(alpha: 0.1),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    isFornecedor
+                        ? 'Crie sua conta de Fornecedor'
+                        : 'Organize seu Evento dos Sonhos',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.1,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          offset: const Offset(0, 2),
+                          blurRadius: 5,
+                          color: theme.primaryColor.value,
+                        ),
+                      ],
+                    ),
+                  ),
+                )
+                    // ✨ Animação suave
+                    .animate()
+                    .fadeIn(duration: 600.ms, curve: Curves.easeOut)
+                    .slideY(begin: 0.95, end: 0, duration: 700.ms, curve: Curves.easeOutBack)
+                    .scaleXY(begin: 0.95, end: 1.0, duration: 500.ms),
+              )
+              /*Text(
+              isFornecedor ? 'Crie sua conta de Fornecedor' : 'Organize seu Evento dos Sonhos',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 23,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.6,
+                color: Colors.white,
+              ),
+            ),
+            */
+              ).animate().fadeIn(duration: 900.ms).slideY(begin: 0.4, curve: Curves.easeOutCubic),
+
+          const SizedBox(height: 8),
+
+          // 💬 Subtítulo motivacional
+          Text(
+            isFornecedor
+                ? 'Mostre seu talento e receba novos pedidos!'
+                : 'Transforme cada detalhe em uma lembrança inesquecível!',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              height: 1.4,
+            ),
+          ).animate().fadeIn(duration: 1100.ms).slideY(begin: 0.3, curve: Curves.easeOutCubic),
+
+          const SizedBox(height: 25),
+
+          // 🌈 Linha decorativa com brilho
+          Container(
+            height: 4,
+            width: 100,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(50),
+              gradient: LinearGradient(
+                colors: [
+                  theme.secondaryColor.value.withValues(alpha: 0.3),
+                  Colors.white.withValues(alpha: 0.9),
+                  theme.secondaryColor.value.withValues(alpha: 0.3),
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  blurRadius: 8,
+                  spreadRadius: 1,
+                ),
+              ],
+            ),
+          ).animate().fadeIn(duration: 1000.ms).scale(begin: Offset(0.6, 0.0)),
+        ],
+      ),
+    ],
+  );
+}

@@ -181,15 +181,64 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
   List<Color> get _coresParticulas {
     switch (widget.tipoEvento.toLowerCase()) {
       case 'casamento':
-        return [Color(0xFFFFD54F), Color(0xFFFFB300), Color(0xFFD32F2F)];
+        // 💍 Tons dourados e vermelhos suaves (luxo e romance)
+        return const [
+          Color(0xFFFFD54F),
+          Color(0xFFFFB300),
+          Color(0xFFD32F2F),
+        ];
+
       case 'festa infantil':
-        return [Color(0xFFFF7043), Color(0xFF29B6F6), Color(0xFFEC407A)];
+        // 🎈 Tons alegres e vibrantes (diversão e energia)
+        return const [
+          Color(0xFFFF7043),
+          Color(0xFF29B6F6),
+          Color(0xFFEC407A),
+          Color(0xFFFFEE58),
+        ];
+
       case 'chá de bebê':
-        return [Color(0xFF0288D1), Color(0xFF01579B), Color(0xFF4FC3F7)];
+        // 🍼 Tons suaves de azul e branco (ternura e leveza)
+        return const [
+          Color(0xFF0288D1),
+          Color(0xFF4FC3F7),
+          Color(0xFFE1F5FE),
+        ];
+
       case 'aniversário':
-        return [Color(0xFF8E24AA), Color(0xFFD81B60), Color(0xFFFFA726)];
+        // 🎂 Paleta festiva e contrastante (alegria e celebração)
+        return const [
+          Color(0xFF8E24AA),
+          Color(0xFFD81B60),
+          Color(0xFFFFA726),
+          Color(0xFFFFEE58),
+        ];
+
+      case 'evento corporativo':
+        // 💼 Azul petróleo e cinzas sofisticados (profissional e moderno)
+        return const [
+          Color(0xFF00796B),
+          Color(0xFF004D40),
+          Color(0xFF26A69A),
+          Color(0xFF80CBC4),
+        ];
+
+      case 'formatura':
+        // 🎓 Roxos e dourados (elegância e conquista)
+        return const [
+          Color(0xFF7E57C2),
+          Color(0xFFB39DDB),
+          Color(0xFFFFD54F),
+          Color(0xFF9575CD),
+        ];
+
       default:
-        return [Color(0xFF26A69A), Color(0xFF004D40), Color(0xFF80CBC4)];
+        // 🌈 Tema padrão — verde água suave
+        return const [
+          Color(0xFF26A69A),
+          Color(0xFF004D40),
+          Color(0xFF80CBC4),
+        ];
     }
   }
 
@@ -208,7 +257,7 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
       children: [
         // Fundo
         Container(
-          margin: const EdgeInsets.symmetric(horizontal: 10),
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
           decoration: BoxDecoration(
             gradient: _gradientePorTema,
@@ -293,25 +342,34 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 350),
-                  style: GoogleFonts.poppins(
-                    color: _corTexto,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    shadows: [
-                      Shadow(
-                        color: _estaNoTopo ? Colors.black54 : Colors.black26,
-                        offset: const Offset(0, 1),
-                        blurRadius: 3,
+                Expanded(
+                  child: AnimatedDefaultTextStyle(
+                    duration: const Duration(milliseconds: 350),
+                    style: GoogleFonts.poppins(
+                      color: _corTexto,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      shadows: [
+                        Shadow(
+                          color: _estaNoTopo ? Colors.black54 : Colors.black26,
+                          offset: const Offset(0, 1),
+                          blurRadius: 3,
+                        ),
+                      ],
+                    ),
+                    child: SizedBox.shrink(),
+                    /*Text(
+                      _mensagemContagemRegressiva(dias, widget.tipoEvento),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
                       ),
-                    ],
-                  ),
-                  child: Text(
-                    '⏳ Faltam ${dias > 0 ? '$dias dias' : 'poucas horas!'} para o seu ${widget.tipoEvento}',
+                    ),*/
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 2),
                 AnimatedBuilder(
                   animation: pulsar,
                   builder: (context, _) {
@@ -332,6 +390,7 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
                     );
                   },
                 ),
+                const SizedBox(height: 6),
               ],
             ),
           ),
@@ -386,6 +445,37 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
         ),
       ),
     );
+  }
+}
+
+// ignore: unused_element
+String _mensagemContagemRegressiva(int dias, String tipoEvento) {
+  final tipo = tipoEvento.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '').trim();
+
+  String tempo;
+  if (dias > 1) {
+    tempo = "$dias dias";
+  } else if (dias == 1) {
+    tempo = "1 dia";
+  } else {
+    tempo = "poucas horas";
+  }
+
+  switch (tipo) {
+    case 'casamento':
+      return "💍 Contagem regressiva: $tempo até o grande dia do seu casamento!";
+    case 'festa infantil':
+      return "🎈 Faltam $tempo para a diversão começar na sua festa!";
+    case 'chá de bebê':
+      return "🍼 Faltam $tempo para celebrar a chegada do bebê!";
+    case 'aniversário':
+      return "🎂 $tempo até o seu aniversário especial!";
+    case 'evento corporativo':
+      return "💼 $tempo até o início do seu evento corporativo!";
+    case 'formatura':
+      return "🎓 $tempo para a sua formatura inesquecível!";
+    default:
+      return "⏳ Faltam $tempo para o seu evento!";
   }
 }
 

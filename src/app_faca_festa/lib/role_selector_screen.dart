@@ -109,14 +109,30 @@ class RoleSelectorScreen extends StatelessWidget {
 
                   const SizedBox(height: 40),
 
-                  Text(
-                    'Desenvolvido por Faça a Festa',
-                    style: GoogleFonts.poppins(
-                      color: Colors.blue.shade800.withValues(alpha: 0.8),
-                      fontSize: 13.5,
-                      letterSpacing: 0.3,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      ShaderMask(
+                        shaderCallback: (bounds) => const LinearGradient(
+                          colors: [
+                            Color(0xFF81D4FA),
+                            Color(0xFFCE93D8),
+                            Color(0xFFFF80AB),
+                          ],
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                        ).createShader(bounds),
+                        child: Text(
+                          "by RRS System Technology",
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                            letterSpacing: 0.4,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

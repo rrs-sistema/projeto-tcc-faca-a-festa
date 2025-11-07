@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:lottie/lottie.dart';
 import 'dart:async';
 
 import '../data/models/DTO/servico_cotado_dto.dart';
@@ -16,6 +17,7 @@ import './../data/models/model.dart';
 
 import 'avaliacao/avaliacao_controller.dart';
 import 'contacao/cotacao_controller.dart';
+import 'convidado/convidado_controller.dart';
 import 'evento_controller.dart';
 import 'fornecedor_controller.dart';
 import 'orcamento_controller.dart';
@@ -38,6 +40,7 @@ class AppController extends GetxController {
   StreamSubscription<User?>? _authSub;
 
   // ✅ Injeção de controladores auxiliares
+  final convidadoController = Get.put(ConvidadoController());
   final eventoController = Get.put(EventoController());
   final orcamentoController = Get.put(OrcamentoController());
   final cotacaoController = Get.put(CotacaoController());
@@ -106,6 +109,20 @@ class AppController extends GetxController {
       debugPrint('❌ Erro ao preparar usuário: $e');
       debugPrintStack(stackTrace: s);
       return null;
+    }
+  }
+
+  void iniciarSessao() {
+    if (_authSub == null) {
+      _monitorarSessao();
+    } else {
+      // já está monitorando — apenas revalida a rota atual
+      final user = usuarioLogado.value;
+      if (user == null) {
+        Get.offAllNamed('/role');
+      } else {
+        debugPrint("👤 Sessão ativa para ${user.nome} (${user.tipo})");
+      }
     }
   }
 
@@ -201,12 +218,15 @@ class AppController extends GetxController {
             break;
 
           case 'C': // 🎁 Convidado
-            await eventoController.buscarUltimoEvento(usuario.idUsuario);
-            final evento = eventoController.eventoAtual.value;
-
-            if (evento != null) {
-              await orcamentoController.carregarOrcamentosDoEvento(evento.idEvento);
-              destino = AreaConvidadoHomeScreen(convidado: usuario, evento: evento);
+            final convidado = await convidadoController.buscarPeloIdConvidado(usuario.idUsuario);
+            if (convidado != null) {
+              final evento = await eventoController.buscarEventoPeloIdEvento(convidado.idEvento);
+              if (evento != null) {
+                await eventoController.buscarTipoEvento(evento.idTipoEvento);
+                destino = AreaConvidadoHomeScreen(convidado: convidado, evento: evento);
+              } else {
+                destino = const ConvidadosPage();
+              }
             } else {
               destino = const ConvidadosPage();
             }
@@ -230,6 +250,25 @@ class AppController extends GetxController {
               debugPrint('✅ Evento ${evento.nome} carregado com sucesso!');
               destino = HomeEventScreen();
             } else {
+              Lottie.asset(
+                'assets/animations/confetti_background.json',
+                width: 180,
+                height: 180,
+                repeat: true,
+                fit: BoxFit.contain,
+              );
+              Get.snackbar(
+                "🎉 Falta escolher o tipo de evento!",
+                "Seu cadastro foi concluído com sucesso. Agora, selecione o tipo de evento para continuarmos o planejamento.",
+                backgroundColor: Colors.orange.shade400,
+                colorText: Colors.white,
+                snackPosition: SnackPosition.BOTTOM,
+                margin: const EdgeInsets.all(12),
+                borderRadius: 14,
+                icon: const Icon(Icons.celebration_rounded, color: Colors.white),
+                duration: const Duration(seconds: 4),
+              );
+
               destino = const WelcomeEventScreen();
             }
             break;

@@ -149,6 +149,20 @@ class OrcamentoController extends GetxController {
     }
   }
 
+  Future<void> excluirOrcamento(String idOrcamento) async {
+    try {
+      await _db.collection('orcamento').doc(idOrcamento).delete();
+      orcamentos.removeWhere((o) => o.idOrcamento == idOrcamento);
+    } catch (e) {
+      Get.snackbar(
+        'Erro',
+        'Falha ao excluir o orçamento. Tente novamente.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   /// ===========================================================
   /// 🔹 Reset e ciclo de vida
   /// ===========================================================

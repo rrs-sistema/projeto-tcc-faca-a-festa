@@ -307,14 +307,6 @@ class FornecedorController extends GetxController {
         final precoPromocao = (data['preco_promocao'] as num?)?.toDouble();
         final ativo = data['ativo'] ?? true;
 
-        // 🔹 Logs para diagnóstico detalhado
-        debugPrint('📄 Documento: $idDoc');
-        debugPrint('   id_fornecedor: $idFornecedor');
-        debugPrint('   id_produto_servico: $idProdutoServico');
-        debugPrint('   id_subcategoria: $idSubcategoria');
-        debugPrint('   preco: $preco | promocao: $precoPromocao');
-        debugPrint('------------------------------------');
-
         return FornecedorProdutoServicoModel(
           id: idDoc, // ✅ usa o ID real do documento Firestore
           idFornecedor: idFornecedor,
@@ -327,11 +319,9 @@ class FornecedorController extends GetxController {
         );
       }).toList();
 
-      debugPrint('✅ Total de vínculos carregados: ${listaServicos.length}');
       allServicosFornecedor.assignAll(listaServicos);
     } catch (e) {
       erro.value = 'Erro ao carregar fornecedores: $e';
-      debugPrint('❌ [FornecedorController] Erro: $e');
     } finally {
       carregando.value = false;
     }
@@ -563,8 +553,6 @@ class FornecedorController extends GetxController {
       erro.value = '';
       servicosDetalhado.clear();
 
-      debugPrint('📡 Buscando serviços do fornecedor $idFornecedor ...');
-
       // 1️⃣ Buscar categorias do fornecedor
       final allSnap = await _db.collection('fornecedor_categoria').get();
 
@@ -574,10 +562,7 @@ class FornecedorController extends GetxController {
         return idForn == idFornecedor.trim();
       }).toList();
 
-      debugPrint('📄 Documentos realmente do fornecedor: ${catDocs.length}');
-
       if (catDocs.isEmpty) {
-        debugPrint('⚠️ Nenhuma categoria encontrada para o fornecedor $idFornecedor');
         return;
       }
 
@@ -607,10 +592,7 @@ class FornecedorController extends GetxController {
         }
       }
 
-      debugPrint('📊 Subcategorias válidas: ${subcategoriasIds.length}');
-
       if (subcategoriasIds.isEmpty) {
-        debugPrint('⚠️ Nenhuma subcategoria encontrada para o fornecedor $idFornecedor');
         return;
       }
 
@@ -621,10 +603,7 @@ class FornecedorController extends GetxController {
           .where('ativo', isEqualTo: true)
           .get();
 
-      debugPrint('📄 Serviços encontrados: ${servSnap.docs.length}');
-
       if (servSnap.docs.isEmpty) {
-        debugPrint('⚠️ Nenhum serviço encontrado para o fornecedor $idFornecedor');
         return;
       }
 
@@ -644,9 +623,6 @@ class FornecedorController extends GetxController {
         final nomeCat = mapaCategorias[idCat] ?? 'Sem categoria';
         final nomeSub = mapaSubcategorias[idSub] ?? 'Sem subcategoria';
 
-        // Log detalhado do serviço
-        debugPrint('🔗 Serviço: $nomeServico | Cat: $nomeCat | Sub: $nomeSub | Preço: $preco');
-
         lista.add(FornecedorServicoDetalhadoDto(
           id: d.id,
           idFornecedor: idFornecedor,
@@ -663,8 +639,6 @@ class FornecedorController extends GetxController {
       }
 
       servicosDetalhado.assignAll(lista);
-
-      debugPrint('✅ ${lista.length} serviços carregados para fornecedor $idFornecedor');
     } catch (e, s) {
       erro.value = 'Erro ao carregar serviços: $e';
       debugPrint('❌ Erro ao listar serviços: $e\n$s');

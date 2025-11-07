@@ -4,6 +4,9 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../controllers/convidado/convidado_controller.dart';
+import '../../../controllers/evento_controller.dart';
+import '../../widgets/festa_app_bar.dart';
 import './tarefa_dialog.dart';
 import 'package:get/get.dart';
 
@@ -18,6 +21,8 @@ class TarefasScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeController = Get.find<EventThemeController>();
     final tarefaController = Get.find<TarefaController>();
+    final eventoController = Get.find<EventoController>();
+    final convidadoController = Get.find<ConvidadoController>();
 
     return Obx(() {
       final primary = themeController.primaryColor.value;
@@ -33,48 +38,28 @@ class TarefasScreen extends StatelessWidget {
 
       return Scaffold(
         backgroundColor: Colors.grey.shade100,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          leading: Container(
-            margin: const EdgeInsets.only(left: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.25),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black87, size: 20),
-              onPressed: Get.back,
-              tooltip: 'Voltar',
-            ),
-          ),
-          title: const Text(
-            'Minhas Tarefas',
-            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
-          ),
-          centerTitle: true,
-          elevation: 3,
-          flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
-          actions: [
+        appBar: FestaAppBar(
+          titulo: 'Minhas Tarefas',
+          acoes: [
             IconButton(
-              icon: const Icon(Icons.add_task_outlined, color: Colors.black),
+              icon: const Icon(Icons.add_task_outlined, color: Colors.white),
               onPressed: () async {
                 await showTarefaDialog(
                   context: context,
-                  usuarios: tarefaController.usuarios,
+                  usuarios: convidadoController.convidados,
                   onSave: (titulo, descricao, data, usuario) async {
                     await tarefaController.adicionarTarefa(
-                      nome: titulo,
-                      descricao: descricao,
-                      dataPrevista: data,
-                      idResponsavel: usuario.idUsuario,
-                    );
+                        nome: titulo,
+                        descricao: descricao,
+                        dataPrevista: data,
+                        idResponsavel: usuario.idConvidado,
+                        idEvento: eventoController.eventoAtual.value!.idEvento);
                   },
                 );
               },
             ),
           ],
         ),
-
         // ===== Corpo =====
         body: Column(
           children: [
@@ -104,17 +89,29 @@ class TarefasScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 10),
+                  // 🔹 Barra de progresso verde estilizada
                   ClipRRect(
                     borderRadius: BorderRadius.circular(12),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 700),
+                    child: Container(
                       height: 12,
                       width: double.infinity,
-                      decoration: BoxDecoration(color: Colors.grey.shade200),
+                      color: Colors.grey.shade200, // fundo neutro
                       child: FractionallySizedBox(
                         alignment: Alignment.centerLeft,
-                        widthFactor: tarefaController.progresso,
-                        child: Container(decoration: BoxDecoration(gradient: gradient)),
+                        widthFactor: tarefaController.progresso, // valor de 0.0 a 1.0
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 600),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.green.shade400,
+                                Colors.green.shade600,
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -141,8 +138,8 @@ class TarefasScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16),
                   itemBuilder: (context, index) {
                     final tarefa = tarefas[index];
-                    final responsavel = tarefaController.usuarios
-                        .firstWhereOrNull((r) => r.idUsuario == tarefa.idResponsavel);
+                    final responsavel = convidadoController.convidados
+                        .firstWhereOrNull((r) => r.idConvidado == tarefa.idResponsavel);
                     final tarefaComResponsavel =
                         responsavel != null ? tarefa.copyWith(responsavel: responsavel) : tarefa;
 
@@ -333,15 +330,11 @@ class _TarefaCard extends StatelessWidget {
                     ),
                     child: CircleAvatar(
                       radius: 28,
-                      backgroundImage: NetworkImage(
-                        tarefa.responsavel?.fotoPerfilUrl ??
-                            'https://ui-avatars.com/api/?background=random&name=${Uri.encodeComponent(tarefa.responsavel?.nome ?? 'Usuário')}',
+                      backgroundImage: const NetworkImage(
+                        'https://ui-avatars.com/api/?name=Tarefa&background=0D8ABC&color=fff',
                       ),
                       onBackgroundImageError: (_, __) {},
                       backgroundColor: Colors.grey.shade200,
-                      child: tarefa.responsavel?.fotoPerfilUrl == null
-                          ? Icon(Icons.person, color: primaryColor)
-                          : null,
                     ),
                   ),
                   const SizedBox(width: 14),

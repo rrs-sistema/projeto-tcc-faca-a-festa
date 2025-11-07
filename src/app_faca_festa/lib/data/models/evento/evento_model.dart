@@ -56,6 +56,7 @@ class EventoModel {
 
   // 📅 Informações gerais
   final String nome;
+  final String localEvento;
   final DateTime data;
   final String? hora;
   final double? custoEstimado;
@@ -95,6 +96,7 @@ class EventoModel {
     required this.idTipoEvento,
     required this.idUsuario,
     required this.nome,
+    required this.localEvento,
     required this.data,
     this.idCidade,
     this.nomeCidade,
@@ -186,6 +188,7 @@ class EventoModel {
       nomeCidade: map['nome_cidade'],
       uf: map['uf'],
       nome: map['nome'] ?? '',
+      localEvento: map['local_evento'] ?? map['logradouro'],
       data: map['data'] is Timestamp
           ? (map['data'] as Timestamp).toDate()
           : DateTime.tryParse(map['data']?.toString() ?? '') ?? DateTime.now(),
@@ -246,6 +249,7 @@ class EventoModel {
     String? nomeCidade,
     String? uf,
     String? nome,
+    String? localEvento,
     DateTime? data,
     String? hora,
     double? custoEstimado,
@@ -283,6 +287,7 @@ class EventoModel {
       nomeCidade: nomeCidade ?? this.nomeCidade,
       uf: uf ?? this.uf,
       nome: nome ?? this.nome,
+      localEvento: localEvento ?? this.localEvento,
       data: data ?? this.data,
       hora: hora ?? this.hora,
       custoEstimado: custoEstimado ?? this.custoEstimado,

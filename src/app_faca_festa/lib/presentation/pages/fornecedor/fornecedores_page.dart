@@ -26,6 +26,12 @@ class FornecedoresPage extends StatelessWidget {
 
     final primary = theme.primaryColor.value;
     final gradient = theme.gradient.value;
+    // ✅ Ajuste do contraste da barra de status
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent, // mantém o topo translúcido
+      statusBarIconBrightness: Brightness.dark, // ícones escuros → use se o fundo for claro
+      statusBarBrightness: Brightness.light, // para iOS
+    ));
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -102,7 +108,7 @@ class FornecedoresPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Painel do Cotações",
+                          "Painel de Cotações",
                           textAlign: TextAlign.center,
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w700,

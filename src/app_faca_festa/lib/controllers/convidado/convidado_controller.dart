@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../data/models/model.dart';
@@ -17,6 +20,10 @@ class ConvidadoController extends GetxController {
   final RxString idEventoAtual = ''.obs;
   final RxString termoBusca = ''.obs;
 
+  final Rx<ConvidadoModel?> convidadoAtual = Rx<ConvidadoModel?>(null);
+
+  StreamSubscription? _convidadosSub;
+
 // =============================================================
 // 🔹 Lista temporária de novos convidados (somente em memória)
 // =============================================================
@@ -30,6 +37,53 @@ class ConvidadoController extends GetxController {
   /// 🔹 Remove convidado da lista local
   void removerNovoConvidadoLocal(String idConvidado) {
     novosConvidados.removeWhere((c) => c.idConvidado == idConvidado);
+  }
+
+  /// =====================================================
+  /// 🔹 Busca convidado pelo ID do usuário
+  /// =====================================================
+  Future<ConvidadoModel?> buscarPeloIdConvidado(String idUsuario) async {
+    try {
+      carregando.value = true;
+      final snapshot = await _db
+          .collection('convidado')
+          .where('id_convidado', isEqualTo: idUsuario)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        final model = ConvidadoModel.fromMap(snapshot.docs.first.data());
+        convidadoAtual.value = model;
+        return model;
+      } else {
+        return null;
+      }
+    } catch (e, s) {
+      debugPrint('❌ [ConvidadoController] Erro ao buscar convidado: $e\n$s');
+      return null;
+    } finally {
+      carregando.value = false;
+    }
+  }
+
+  Future<ConvidadoModel?> buscarPeloIdEvento(String idEvento) async {
+    try {
+      carregando.value = true;
+
+      final snapshot =
+          await _db.collection('convidado').where('id_evento', isEqualTo: idEvento).limit(1).get();
+
+      if (snapshot.docs.isNotEmpty) {
+        carregando.value = false;
+        return ConvidadoModel.fromMap(snapshot.docs.first.data());
+      } else {
+        carregando.value = false;
+        return null;
+      }
+    } catch (e) {
+      carregando.value = false;
+      return null;
+    }
   }
 
   /// 🔹 Persiste todos os convidados novos no Firestore
@@ -52,20 +106,18 @@ class ConvidadoController extends GetxController {
   /// =============================================================
   /// 🔹 Escuta em tempo real todos os convidados de um evento
   /// =============================================================
+  /// =====================================================
+  /// 🔹 Escuta convidados do evento em tempo real
+  /// =====================================================
   Future<void> escutarConvidados(String idEvento) async {
-    if (idEvento.isEmpty) return;
-    idEventoAtual.value = idEvento;
-
-    _db.collection('convidado').where('id_evento', isEqualTo: idEvento).snapshots().listen(
-        (snapshot) {
-      final lista = snapshot.docs.map((d) {
-        final data = d.data();
-        return ConvidadoModel.fromMap(data);
-      }).toList();
-
-      convidados.assignAll(lista);
-    }, onError: (e) {
-      erro.value = 'Erro ao carregar convidados: $e';
+    _db
+        .collection('convidado')
+        .where('id_evento', isEqualTo: idEvento)
+        .snapshots()
+        .listen((snapshot) {
+      convidados.assignAll(
+        snapshot.docs.map((d) => ConvidadoModel.fromMap(d.data())).toList(),
+      );
     });
   }
 
@@ -80,6 +132,77 @@ class ConvidadoController extends GetxController {
       erro.value = 'Erro ao salvar convidado: $e';
     } finally {
       carregando.value = false;
+    }
+  }
+
+  /// =====================================================
+  /// 🔹 Cria ou atualiza convidado no Firestore
+  /// =====================================================
+  Future<void> salvarConvidado(ConvidadoModel convidado) async {
+    await _db.collection('convidado').doc(convidado.idConvidado).set(
+          convidado.toMap(),
+          SetOptions(merge: true),
+        );
+  }
+
+  Future<void> reservarPresente(
+      {required String idPresente,
+      required String idConvidado,
+      required String nomeConvidado,
+      required Color backgroundColor}) async {
+    final ref =
+        _db.collection('evento').doc(idEventoAtual.value).collection('presentes').doc(idPresente);
+
+    await ref.update({
+      'reservado_por': nomeConvidado,
+      'id_convidado': idConvidado,
+      'data_reserva': Timestamp.now(),
+    });
+
+    Get.snackbar(
+      '🎁 Presente reservado!',
+      'Você selecionou esse presente. Obrigado por participar!',
+      backgroundColor: backgroundColor,
+      colorText: Colors.white,
+    );
+  }
+
+  /// =====================================================
+  /// 🔹 Atualiza status de presença
+  /// =====================================================
+  Future<void> atualizarStatusPresenca(
+    ConvidadoModel convidado,
+    StatusConvidado novoStatus,
+  ) async {
+    try {
+      final atualizado = convidado.copyWith(
+        status: novoStatus,
+        dataResposta: DateTime.now(),
+      );
+
+      await _db
+          .collection('convidado')
+          .doc(convidado.idConvidado)
+          .set(atualizado.toMap(), SetOptions(merge: true));
+
+      convidadoAtual.value = atualizado;
+
+      String msg = switch (novoStatus) {
+        StatusConvidado.confirmado => '🎉 Presença confirmada! Obrigado por confirmar.',
+        StatusConvidado.recusado => '🙁 Sentiremos sua falta, confirmação registrada.',
+        _ => 'Status atualizado.'
+      };
+
+      Get.snackbar(
+        'Atualizado',
+        msg,
+        backgroundColor: novoStatus == StatusConvidado.confirmado
+            ? Colors.green.shade400
+            : Colors.orange.shade400,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      debugPrint('❌ [ConvidadoController] Erro ao atualizar status: $e');
     }
   }
 
@@ -172,5 +295,11 @@ class ConvidadoController extends GetxController {
     idEventoAtual.value = '';
     termoBusca.value = '';
     erro.value = '';
+  }
+
+  @override
+  void onClose() {
+    _convidadosSub?.cancel();
+    super.onClose();
   }
 }

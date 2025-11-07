@@ -312,9 +312,11 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                         // 🔹 Nome do serviço
                         Text(
                           s.nomeServico ?? 'Serviço sem nome',
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w700,
-                            fontSize: 16,
+                            fontSize: 14,
                             color: selecionado ? Colors.white : Colors.black87,
                             letterSpacing: 0.2,
                           ),
@@ -332,7 +334,7 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                             height: 1.3,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 6),
 
                         // 👤 Nome do fornecedor
                         Row(

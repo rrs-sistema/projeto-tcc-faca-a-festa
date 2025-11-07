@@ -36,24 +36,23 @@ class RegisterOrganizadorForm extends StatelessWidget {
               label: 'Senha',
               icon: Icons.lock_outline,
               controller: TextEditingController(),
-              color: primary,
+              color: Colors.white,
               obscureText: !controller.exibirSenha.value,
               suffixIcon: IconButton(
                 icon: Icon(
                   controller.exibirSenha.value ? Icons.visibility_off : Icons.visibility,
-                  color: primary,
+                  color: Colors.white,
                 ),
                 onPressed: () => controller.exibirSenha.toggle(),
               ),
               onChanged: (v) => controller.senha.value = v,
             )),
-        const SizedBox(height: 20),
         EnderecoSection(
           cor: primary,
           controller: controller.enderecoController.value,
-          titulo: 'Endereço do Usuário',
+          titulo: 'Endereço do usuário',
         ),
-        const SizedBox(height: 30),
+        const SizedBox(height: 15),
         _botaoCadastrar(primary),
       ],
     );

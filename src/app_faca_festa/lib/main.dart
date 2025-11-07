@@ -44,6 +44,7 @@ import './controllers/convidado/grupo_convidado_controller.dart';
 import './controllers/servico/servico_foto_controller.dart';
 import './controllers/admin/admin_territorio_controller.dart';
 import './controllers/tema/event_theme_controller.dart';
+import 'presentation/pages/home_event_screen.dart';
 // import 'popular_firebase.dart';
 
 /// =============================================================
@@ -130,6 +131,10 @@ class FacaFestaApp extends StatelessWidget {
 
       // 🧭 Rotas
       getPages: [
+        GetPage(
+          name: '/HomeEventScreen',
+          page: () => const HomeEventScreen(),
+        ),
         GetPage(name: '/splash', page: () => const Splash()),
         GetPage(name: '/role', page: () => const RoleSelectorScreen()),
         GetPage(name: '/welcome', page: () => const WelcomeEventScreen()),

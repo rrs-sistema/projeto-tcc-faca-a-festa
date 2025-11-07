@@ -15,10 +15,10 @@ Future<void> showTarefaDialog({
   String? tituloInicial,
   String? descricaoInicial,
   DateTime? dataInicial,
-  UsuarioModel? responsavelInicial,
-  required List<UsuarioModel> usuarios,
+  ConvidadoModel? responsavelInicial,
+  required List<ConvidadoModel> usuarios,
   bool isEdit = false,
-  required void Function(String, String, DateTime, UsuarioModel) onSave,
+  required void Function(String, String, DateTime, ConvidadoModel) onSave,
 }) async {
   final themeController = Get.find<EventThemeController>();
   final tituloController = TextEditingController(text: tituloInicial ?? '');
@@ -27,7 +27,7 @@ Future<void> showTarefaDialog({
     text: DateFormat('dd/MM/yyyy').format(dataInicial ?? DateTime.now()),
   );
   DateTime dataSelecionada = dataInicial ?? DateTime.now();
-  UsuarioModel? responsavelSelecionado = responsavelInicial;
+  ConvidadoModel? responsavelSelecionado = responsavelInicial;
   final bool isCelular = Biblioteca.isCelular(context);
 
   await showDialog(
@@ -181,8 +181,8 @@ Future<void> showTarefaDialog({
                                     separatorBuilder: (_, __) => const SizedBox(width: 14),
                                     itemBuilder: (context, index) {
                                       final usuario = usuarios[index];
-                                      final selecionado =
-                                          responsavelSelecionado?.idUsuario == usuario.idUsuario;
+                                      final selecionado = responsavelSelecionado?.idConvidado ==
+                                          usuario.idConvidado;
                                       return GestureDetector(
                                         onTap: () {
                                           setState(() => responsavelSelecionado = usuario);
@@ -213,9 +213,8 @@ Future<void> showTarefaDialog({
                                             children: [
                                               CircleAvatar(
                                                 radius: 28,
-                                                backgroundImage: NetworkImage(
-                                                  usuario.fotoPerfilUrl ??
-                                                      'https://ui-avatars.com/api/?name=${Uri.encodeComponent(usuario.nome)}',
+                                                backgroundImage: const NetworkImage(
+                                                  'https://ui-avatars.com/api/?name=Tarefa&background=0D8ABC&color=fff',
                                                 ),
                                               ),
                                               const SizedBox(height: 6),

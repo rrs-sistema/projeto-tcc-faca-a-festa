@@ -31,6 +31,37 @@ class EventoController extends GetxController {
   /// =====================================================
   /// 🔹 Busca o último evento do usuário (uma vez)
   /// =====================================================
+  Future<EventoModel?> buscarEventoPeloIdEvento(String idEvento) async {
+    try {
+      carregando.value = true;
+      debugPrint("📦 [EventoController] Buscando o evento para id: $idEvento");
+
+      final snapshot = await _db
+          .collection('evento')
+          .where('id_evento', isEqualTo: idEvento)
+          .orderBy('data_cadastro', descending: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        carregando.value = false;
+        return EventoModel.fromMap(snapshot.docs.first.data());
+      } else {
+        carregando.value = false;
+        eventoAtual.value = null;
+        debugPrint("⚠️ [EventoController] Nenhum evento encontrado para id: $idEvento");
+        return null;
+      }
+    } catch (e, s) {
+      carregando.value = false;
+      debugPrint("❌ [EventoController] Erro ao buscar o evento do id: $idEvento - erros: $e\n$s");
+      return null;
+    }
+  }
+
+  /// =====================================================
+  /// 🔹 Busca o último evento do usuário (uma vez)
+  /// =====================================================
   Future<void> buscarUltimoEvento(String idUsuario) async {
     try {
       carregando.value = true;
