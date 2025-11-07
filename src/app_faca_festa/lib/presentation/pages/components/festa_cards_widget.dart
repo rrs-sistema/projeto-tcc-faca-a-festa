@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import './../../../controllers/convidado/convidado_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/orcamento_controller.dart';
-import './../../pages/fornecedor/fornecedores_page.dart';
+import '../fornecedor/painel_cotacao_page.dart';
 import './../../pages/orcamento/orcamento_screen.dart';
 import './../../../controllers/tarefa_controller.dart';
 import './../../../controllers/evento_controller.dart';
@@ -51,7 +51,7 @@ class FestaCardsWidget extends StatelessWidget {
                     ),
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const FornecedoresPage()),
+                      MaterialPageRoute(builder: (_) => const PainelCotacaoPage()),
                     ),
                   )
                       .animate()

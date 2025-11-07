@@ -27,7 +27,8 @@ import './../../data/models/model.dart';
 import './contador_evento_screen.dart';
 import 'convidado/convidado_page.dart';
 import 'fornecedor/fornecedor_detalhe_screen.dart';
-import 'fornecedor/fornecedores_page.dart';
+import 'fornecedor/painel_cotacao_page.dart';
+import 'inspiracao/inspiracao_screen.dart';
 import 'orcamento/orcamento_screen.dart';
 import 'tarefa/tarefas_screen.dart';
 
@@ -168,6 +169,28 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             child: SizedBox(
               height: MediaQuery.of(context).size.height,
               child: FornecedorLocalizacaoScreen(showLeading: false),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInspiration(EventThemeController theme) {
+    final ScrollController scrollController = ScrollController();
+
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) => false,
+      child: CustomScrollView(
+        controller: scrollController,
+        slivers: [
+          SliverToBoxAdapter(
+            child: SizedBox(
+              height: MediaQuery.of(context).size.height,
+              child: InspiracaoScreen(
+                  tipoEvento: eventoController.tipoEventoAtual.value ??
+                      TipoEventoModel(idTipoEvento: '15XX10YY1983', nome: 'Tipo não localizado')),
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 100)),
@@ -549,7 +572,7 @@ Widget _buildQuickActions(EventThemeController theme) {
                         case 2:
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const FornecedoresPage()),
+                            MaterialPageRoute(builder: (_) => const PainelCotacaoPage()),
                           );
                         case 3:
                           Navigator.push(
@@ -724,85 +747,6 @@ Widget _buildProgressCards(EventThemeController theme) {
             );
           }),
         ],
-      ),
-    ),
-  );
-}
-
-Widget _buildInspiration(EventThemeController theme) {
-  final ScrollController scrollController = ScrollController();
-  return NotificationListener<ScrollNotification>(
-    onNotification: (notification) => false,
-    child: CustomScrollView(
-      controller: scrollController,
-      slivers: [
-        SliverToBoxAdapter(
-          child: _buildAnimatedHeader(theme),
-        ),
-        // 🔹 Grade de inspirações
-        _buildInspirationGrid(theme),
-        const SliverToBoxAdapter(child: SizedBox(height: 100)),
-      ],
-    ),
-  );
-}
-
-Widget _buildInspirationGrid(EventThemeController theme) {
-  return SliverPadding(
-    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-    sliver: SliverGrid(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) => GestureDetector(
-          onTap: () {},
-          child: FadeIn(
-            duration: Duration(milliseconds: 400 + (index * 100)),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Hero(
-                    tag: 'inspiracao_$index',
-                    child: Image.asset(
-                      'assets/images/kids_party_${(index % 3) + 1}.jpeg',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Colors.black.withValues(alpha: 0.4), Colors.transparent],
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                      ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: Text(
-                        'Inspiração ${index + 1}',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        childCount: 6,
-      ),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
-        childAspectRatio: 1,
       ),
     ),
   );

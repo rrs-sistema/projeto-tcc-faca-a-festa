@@ -227,6 +227,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                                 },
                               ),
                             ),
+                            const SizedBox(height: 55),
                           ],
                           if (categoriaSelecionada != null) ...[
                             _carrosselServicos(
@@ -337,6 +338,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                 ),
               ),
             ),
+            const SizedBox(height: 55),
           ],
         ),
       );
@@ -542,7 +544,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                   if (serviceComplet == null) return;
                   Get.to(() => ServicoDetalheScreen(servico: serviceComplet));
                 },
-                icon: const Icon(Icons.visibility_rounded, size: 16),
+                icon: const Icon(Icons.visibility_rounded, size: 16, color: Colors.white),
                 label: const Text('Ver mais'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,

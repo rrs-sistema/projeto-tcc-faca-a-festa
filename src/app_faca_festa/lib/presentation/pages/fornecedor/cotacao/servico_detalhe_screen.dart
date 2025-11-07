@@ -1,18 +1,16 @@
-import 'dart:ui';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'dart:ui';
 
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
-import '../components/abrir_nova_cotacao_bottom_sheet.dart';
+import './../components/abrir_nova_cotacao_bottom_sheet.dart';
 import './../../../../controllers/app_controller.dart';
-
-import 'package:lottie/lottie.dart';
+import './../../../widgets/confetti_background.dart';
 
 class ServicoDetalheScreen extends StatefulWidget {
   final FornecedorServicoDetalhadoDto servico;
@@ -86,13 +84,7 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                   ),
                   // ✨ Confete animado
                   Positioned.fill(
-                    child: IgnorePointer(
-                      child: Lottie.asset(
-                        'assets/animations/confetti_background.json',
-                        fit: BoxFit.cover,
-                        repeat: true,
-                      ),
-                    ),
+                    child: ConfettiBackground(seconds: 45),
                   ),
                   // Gradiente escuro inferior
                   Container(

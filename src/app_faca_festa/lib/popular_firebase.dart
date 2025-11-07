@@ -1,4 +1,1 @@
-Future<void> popularFirebase() async {
-
-}
-
+Future<void> popularFirebase() async {}

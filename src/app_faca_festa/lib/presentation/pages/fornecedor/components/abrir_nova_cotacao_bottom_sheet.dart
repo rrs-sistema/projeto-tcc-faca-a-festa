@@ -78,6 +78,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
   // ==========================================================
   // === ENVIO
   // ==========================================================
+
   Future<void> _enviarCotacao() async {
     final evento = eventoCtrl.eventoAtual.value;
     final usuario = appCtrl.usuarioLogado.value;
@@ -98,6 +99,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
     EasyLoading.show(status: 'Enviando cotações...');
 
     try {
+      // 🔹 Cria o documento principal da cotação
       final cotacaoRef = await db.collection('cotacao').add({
         'id_evento': evento?.idEvento ?? '',
         'id_usuario_solicitante': usuario?.idUsuario ?? '',
@@ -112,48 +114,71 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
 
       final batch = db.batch();
 
-      for (int i = 0; i < widget.servicosSelecionados.length; i++) {
-        final s = widget.servicosSelecionados[i];
-        final qtd = int.tryParse(qtdControllers[i].text) ?? 1;
-
-        final servicoRef = cotacaoRef.collection('servicos').doc();
-        batch.set(servicoRef, {
-          'id_produto_servico': s.idProdutoServico,
-          'nome_produto_servico': s.nomeServico,
-          'quantidade': qtd,
-          'valor_estimado': s.preco,
-          'subtotal': qtd * s.preco,
-        });
-      }
-
+      // 🔹 Para cada fornecedor selecionado
       for (final idFornecedor in widget.fornecedoresSelecionados) {
         final fornecedor = fornecedorController.fornecedores
             .firstWhereOrNull((f) => f.idFornecedor == idFornecedor);
-        if (fornecedor != null) {
-          final fornecedorRef = cotacaoRef.collection('fornecedores').doc();
-          batch.set(fornecedorRef, {
-            'id_fornecedor': fornecedor.idFornecedor,
-            'nome_fornecedor': fornecedor.razaoSocial,
-            'email': fornecedor.email,
-            'telefone': fornecedor.telefone,
-            'status': StatusFornecedorCotacao.aguardando.firestoreValue,
+        if (fornecedor == null) continue;
+
+        final fornecedorRef = cotacaoRef.collection('fornecedores').doc(idFornecedor);
+
+        batch.set(fornecedorRef, {
+          'id_fornecedor': fornecedor.idFornecedor,
+          'nome_fornecedor': fornecedor.razaoSocial,
+          'email': fornecedor.email,
+          'telefone': fornecedor.telefone,
+          'status': StatusFornecedorCotacao.aguardando.firestoreValue,
+          'data_envio': Timestamp.now(),
+          'respondido': false,
+        });
+
+        // 🔹 Filtra apenas os serviços pertencentes a este fornecedor
+        final servicosDoFornecedor =
+            widget.servicosSelecionados.where((s) => s.idFornecedor == idFornecedor).toList();
+
+        for (int i = 0; i < servicosDoFornecedor.length; i++) {
+          final s = servicosDoFornecedor[i];
+          final qtd = int.tryParse(qtdControllers[i].text) ?? 1;
+
+          final servicoRef = fornecedorRef.collection('servicos').doc(s.idProdutoServico);
+
+          batch.set(servicoRef, {
+            'id_produto_servico': s.idProdutoServico,
+            'nome_produto_servico': s.nomeServico,
+            'quantidade': qtd,
+            'valor_estimado': s.preco,
+            'subtotal': qtd * s.preco,
+            'status': 'pendente',
+            'data_adicionado': Timestamp.now(),
           });
         }
       }
 
       await batch.commit();
+
       EasyLoading.dismiss();
       HapticFeedback.mediumImpact();
       Navigator.pop(context);
       widget.onCotacaoFinalizada?.call();
 
-      Get.snackbar('Cotação enviada!', 'Os fornecedores foram notificados.',
-          backgroundColor: widget.primary, colorText: Colors.white);
+      Get.snackbar(
+        'Cotação enviada!',
+        'Os fornecedores foram notificados.',
+        backgroundColor: widget.primary,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        duration: const Duration(seconds: 3),
+      );
     } catch (e, s) {
       EasyLoading.dismiss();
-      debugPrint('❌ Erro: $e\n$s');
-      Get.snackbar('Erro ao enviar', 'Tente novamente mais tarde.',
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
+      debugPrint('❌ Erro ao enviar cotação: $e\n$s');
+      Get.snackbar(
+        'Erro ao enviar',
+        'Tente novamente mais tarde.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
     }
   }
 

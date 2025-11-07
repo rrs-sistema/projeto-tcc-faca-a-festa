@@ -209,10 +209,8 @@ class AppController extends GetxController {
 
               orcamentoController.escutarOrcamentos(fornecedor.idUsuario);
               avaliacaoController.listenAvaliacoes(fornecedor.idUsuario);
-              servicoController.carregarServicosOtimizado(
-                  filtrarPorFornecedor: true, idFornecedor: fornecedor.idUsuario);
-
-              await servicoController.buscarServicosPorFornecedorLogado(fornecedor.idUsuario);
+              servicoController.carregarServicosComDetalhesOtimizado(
+                  idFornecedor: fornecedor.idUsuario);
             }
             destino = FornecedorHomeScreen();
             break;
@@ -233,7 +231,7 @@ class AppController extends GetxController {
             break;
 
           case 'A': // 🛠️ Administrador
-            servicoController.iniciarListenerServicosAdmin();
+            servicoController.carregarServicosComDetalhesOtimizado();
             destino = const AdminDashboardScreen();
             break;
 

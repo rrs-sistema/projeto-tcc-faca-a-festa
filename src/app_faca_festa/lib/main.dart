@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -8,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
+import 'dart:io';
 
 // 🌎 Imports do projeto
 import './presentation/pages/convidado/area/area_convidado_home_screen.dart';
@@ -100,6 +100,8 @@ Future<void> main() async {
   Get.put(AdminTerritorioController(), permanent: true);
 
   debugPrint("✅ [MAIN] Controladores principais registrados com sucesso.");
+
+  //await popularFirebase();
 
   runApp(const FacaFestaApp());
 }

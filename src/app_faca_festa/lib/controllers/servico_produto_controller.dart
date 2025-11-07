@@ -43,6 +43,182 @@ class ServicoProdutoController extends GetxController {
     //buscarServicosComCategoriaESubcategoria();
   }
 
+  /// 🔹 Carrega serviços com ou sem filtro por fornecedor.
+  Future<void> carregarServicosComDetalhesOtimizado({String? idFornecedor}) async {
+    try {
+      carregando.value = true;
+      servicosFornecedor.clear();
+      erro.value = '';
+
+      // ===========================================================
+      // 1️⃣ Se não tiver fornecedor → modo ADMIN (todos os serviços)
+      // ===========================================================
+      if (idFornecedor == null) {
+        debugPrint('📡 [SERVIÇOS] Modo ADMIN — carregando todos os serviços ativos');
+
+        final catSnap = await _db.collection('categoria_servico').get();
+        final subSnap = await _db.collection('subcategoria_servico').get();
+
+        final mapaCategorias = <String, String>{};
+        final mapaSubcategorias = <String, String>{};
+        final mapaSubParaCat = <String, String>{};
+
+        for (var c in catSnap.docs) {
+          mapaCategorias[c.id] = c.data()['nome'] ?? 'Sem nome';
+        }
+        for (var s in subSnap.docs) {
+          final data = s.data();
+          final idCat = data['id_categoria'] ?? '';
+          mapaSubcategorias[s.id] = data['nome'] ?? 'Sem nome';
+          mapaSubParaCat[s.id] = idCat;
+        }
+
+        final servSnap =
+            await _db.collection('servico_produto').where('ativo', isEqualTo: true).get();
+
+        final lista = servSnap.docs.map((d) {
+          final data = d.data();
+          final idSub = data['id_subcategoria'] ?? '';
+          final idCat = mapaSubParaCat[idSub] ?? '';
+          return FornecedorServicoDetalhadoDto(
+            id: d.id,
+            idFornecedor: '',
+            idProdutoServico: d.id,
+            idSubcategoria: idSub,
+            nomeServico: data['nome'] ?? 'Serviço sem nome',
+            descricaoServico: data['descricao'] ?? '',
+            tipoMedida: data['tipo_medida'] ?? 'U',
+            preco: 0.0,
+            precoPromocao: null,
+            nomeSubcategoria: mapaSubcategorias[idSub] ?? 'Sem subcategoria',
+            nomeCategoria: mapaCategorias[idCat] ?? 'Sem categoria',
+            imagemUrl: null,
+            ativo: data['ativo'] ?? true,
+          );
+        }).toList();
+
+        servicosFornecedor.assignAll(lista);
+        debugPrint('✅ [SERVIÇOS] Lista ADMIN carregada: ${lista.length} itens.');
+        return;
+      }
+
+      // ===========================================================
+      // 2️⃣ Se tiver fornecedor → modo FORNECEDOR
+      // ===========================================================
+      debugPrint('📡 [SERVIÇOS] Modo FORNECEDOR — carregando $idFornecedor');
+
+      // 🔸 Categorias e subcategorias do fornecedor
+      final categoriaSnap = await _db
+          .collection('fornecedor_categoria')
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .get();
+
+      if (categoriaSnap.docs.isEmpty) {
+        debugPrint('⚠️ Nenhuma categoria encontrada para o fornecedor $idFornecedor');
+        carregando.value = false;
+        return;
+      }
+
+      final mapaCategorias = <String, String>{};
+      final mapaSubcategorias = <String, String>{};
+      final mapaSubParaCat = <String, String>{};
+      final subIds = <String>[];
+
+      for (var catDoc in categoriaSnap.docs) {
+        final data = catDoc.data();
+        final idCat = data['id_categoria'] ?? '';
+        mapaCategorias[idCat] = data['nome_categoria'] ?? 'Sem nome';
+
+        final subs = (data['subcategorias'] as List?) ?? [];
+        for (var sub in subs) {
+          final idSub = sub['idSubcategoria'] ?? '';
+          final nomeSub = sub['nomeSubcategoria'] ?? '';
+          if (idSub.isNotEmpty) {
+            mapaSubcategorias[idSub] = nomeSub;
+            mapaSubParaCat[idSub] = idCat;
+            subIds.add(idSub);
+          }
+        }
+      }
+
+      if (subIds.isEmpty) {
+        debugPrint('⚠️ Nenhuma subcategoria vinculada ao fornecedor.');
+        carregando.value = false;
+        return;
+      }
+
+      // 🔸 Buscar vínculos (preço, promoção, ativo)
+      final vinculosSnap = await _db
+          .collection('fornecedor_servico')
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .get();
+
+      final vinculosMap = {
+        for (var doc in vinculosSnap.docs) doc.data()['id_produto_servico']: doc.data()
+      };
+
+      // 🔸 Buscar fotos do fornecedor
+      final fotosSnap = await _db
+          .collection('servico_foto')
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .get();
+
+      final fotosMap = {
+        for (var doc in fotosSnap.docs) doc.data()['id_produto_servico']: doc.data()['url']
+      };
+
+      // 🔸 Buscar serviços das subcategorias
+      final servicosSnap = await _db
+          .collection('servico_produto')
+          .where('id_subcategoria', whereIn: subIds)
+          .where('ativo', isEqualTo: true)
+          .get();
+
+      final lista = <FornecedorServicoDetalhadoDto>[];
+
+      for (var servDoc in servicosSnap.docs) {
+        final data = servDoc.data();
+        final idServico = servDoc.id;
+        final idSub = (data['id_subcategoria'] ?? '').toString();
+
+        final vinculo = vinculosMap[idServico];
+        if (vinculo == null) continue; // sem vínculo ativo
+
+        final preco = (vinculo['preco'] ?? 0).toDouble();
+        final precoPromocao = vinculo['preco_promocao'] != null
+            ? (vinculo['preco_promocao'] as num).toDouble()
+            : null;
+        final ativo = vinculo['ativo'] ?? true;
+        final imagemUrl = fotosMap[idServico];
+
+        lista.add(FornecedorServicoDetalhadoDto(
+          id: idServico,
+          idFornecedor: idFornecedor,
+          idProdutoServico: idServico,
+          idSubcategoria: idSub,
+          nomeServico: data['nome'] ?? 'Serviço sem nome',
+          descricaoServico: data['descricao'] ?? '',
+          tipoMedida: data['tipo_medida'] ?? 'U',
+          preco: preco,
+          precoPromocao: precoPromocao,
+          nomeSubcategoria: mapaSubcategorias[idSub] ?? 'Sem subcategoria',
+          nomeCategoria: mapaCategorias[mapaSubParaCat[idSub]] ?? 'Sem categoria',
+          imagemUrl: imagemUrl,
+          ativo: ativo,
+        ));
+      }
+
+      servicosFornecedor.assignAll(lista);
+      debugPrint('✅ [SERVIÇOS] Lista do fornecedor carregada: ${lista.length} itens.');
+    } catch (e, s) {
+      erro.value = e.toString();
+      servicosFornecedor.clear();
+      debugPrint('❌ Erro ao carregar serviços: $e\n$s');
+    } finally {
+      carregando.value = false;
+    }
+  }
+
   Future<List<ServicoProdutoModel>> carregarServicosPorSubcategoria(String idSubcategoria) async {
     try {
       carregando.value = true;
@@ -98,331 +274,14 @@ class ServicoProdutoController extends GetxController {
     }
   }
 
-  Future<void> converterServicosComDetalhes(String idFornecedor) async {
-    final db = FirebaseFirestore.instance;
-
-    try {
-      // 🔹 1. Busca as categorias e subcategorias do fornecedor
-      final catSnap = await db
-          .collection('fornecedor_categoria')
-          .where('id_fornecedor', isEqualTo: idFornecedor)
-          .get();
-
-      if (catSnap.docs.isEmpty) {
-        debugPrint('⚠️ Nenhuma categoria encontrada para o fornecedor $idFornecedor');
-        servicosFornecedor.clear();
-        return;
-      }
-
-      // 🔹 2. Monta mapas de subcategorias e categorias
-      final Map<String, String> mapaSub = {}; // idSubcategoria → nomeSubcategoria
-      final Map<String, String> mapaCat = {}; // idCategoria → nomeCategoria
-      final Map<String, String> mapaSubParaCat = {}; // idSubcategoria → idCategoria
-
-      for (var catDoc in catSnap.docs) {
-        final data = catDoc.data();
-        final idCategoria = data['id_categoria'] ?? '';
-        final nomeCategoria = data['nome_categoria'] ?? '';
-        mapaCat[idCategoria] = nomeCategoria;
-
-        final subs = (data['subcategorias'] as List?) ?? [];
-        for (var sub in subs) {
-          final idSub = sub['idSubcategoria'] ?? '';
-          final nomeSub = sub['nomeSubcategoria'] ?? '';
-          if (idSub.isNotEmpty) {
-            mapaSub[idSub] = nomeSub;
-            mapaSubParaCat[idSub] = idCategoria;
-          }
-        }
-      }
-
-      // 🔹 3. Cria os DTOs dos serviços detalhados
-      final lista = servicos.map((s) {
-        final nomeSub = mapaSub[s.idSubcategoria] ?? 'Subcategoria não encontrada';
-        final idCat = mapaSubParaCat[s.idSubcategoria];
-        final nomeCat = mapaCat[idCat] ?? 'Categoria não encontrada';
-
-        return FornecedorServicoDetalhadoDto(
-          id: s.id,
-          idFornecedor: idFornecedor,
-          idProdutoServico: s.id,
-          idSubcategoria: s.idSubcategoria,
-          nomeServico: s.nome,
-          descricaoServico: s.descricao,
-          preco: 0.0,
-          precoPromocao: null,
-          nomeSubcategoria: nomeSub,
-          nomeCategoria: nomeCat,
-          imagemUrl: null,
-          tipoMedida: s.tipoMedida,
-          ativo: s.ativo,
-        );
-      }).toList();
-
-      // 🔹 4. Atualiza o observable
-      servicosFornecedor.assignAll(lista);
-    } catch (e, s) {
-      debugPrint('❌ Erro ao converter serviços detalhados: $e\n$s');
-      servicosFornecedor.clear();
-    }
-  }
-
-  Future<void> buscarServicosComCategoriaESubcategoria() async {
-    //await carregarServicosOtimizado(filtrarPorFornecedor: false);
-  }
-
-  Future<void> buscarServicosPorFornecedorLogado(String idFornecedor) async {
-    //await carregarServicosOtimizado(filtrarPorFornecedor: true, idFornecedor: idFornecedor);
-  }
-
   Future<void> buscarServicosDoFornecedorPeloAdmin(String idFornecedor) async {
     toggleListenerFornecedor(idFornecedor: idFornecedor);
-  }
-
-  void iniciarListenerServicosAdmin() {
-    final db = FirebaseFirestore.instance;
-
-    debugPrint('📡 Iniciando listener de serviços (modo ADMIN)...');
-
-    _servicosAdminSubscription?.cancel(); // cancela listener anterior, se existir
-
-    _servicosAdminSubscription = db
-        .collection('servico_produto')
-        .where('ativo', isEqualTo: true)
-        .snapshots()
-        .listen((servSnap) async {
-      try {
-        carregando.value = true;
-        erro.value = '';
-        servicosFornecedor.clear();
-
-        // ========================
-        // 1️⃣ Buscar categorias e subcategorias (uma vez por atualização)
-        // ========================
-        final catSnap = await db.collection('categoria_servico').get();
-        final subSnap = await db.collection('subcategoria_servico').get();
-
-        final Map<String, String> mapaCategorias = {}; // idCategoria → nomeCategoria
-        final Map<String, String> mapaSubcategorias = {}; // idSubcategoria → nomeSubcategoria
-        final Map<String, String> mapaSubParaCat = {}; // idSubcategoria → idCategoria
-
-        for (final doc in catSnap.docs) {
-          final data = doc.data();
-          mapaCategorias[doc.id] = data['nome'] ?? 'Sem nome';
-        }
-
-        for (final doc in subSnap.docs) {
-          final data = doc.data();
-          final idCat = data['id_categoria'] ?? '';
-          mapaSubcategorias[doc.id] = data['nome'] ?? 'Sem nome';
-          mapaSubParaCat[doc.id] = idCat;
-        }
-
-        debugPrint(
-            '📦 Categorias: ${mapaCategorias.length}, Subcategorias: ${mapaSubcategorias.length}');
-        debugPrint('📦 Serviços ativos recebidos: ${servSnap.docs.length}');
-
-        // ========================
-        // 2️⃣ Montar lista detalhada
-        // ========================
-        final List<FornecedorServicoDetalhadoDto> lista = [];
-
-        for (final servDoc in servSnap.docs) {
-          final data = servDoc.data();
-          final idSub = data['id_subcategoria'] ?? '';
-          final idCat = mapaSubParaCat[idSub] ?? '';
-          final nomeCat = mapaCategorias[idCat] ?? 'Sem categoria';
-          final nomeSub = mapaSubcategorias[idSub] ?? 'Sem subcategoria';
-
-          lista.add(FornecedorServicoDetalhadoDto(
-            id: 'admin_${servDoc.id}',
-            idFornecedor: '',
-            idProdutoServico: servDoc.id,
-            idSubcategoria: idSub,
-            nomeServico: data['nome'] ?? 'Serviço sem nome',
-            descricaoServico: data['descricao'] ?? '',
-            tipoMedida: data['tipo_medida'] ?? 'U',
-            preco: 0.0,
-            precoPromocao: null,
-            nomeSubcategoria: nomeSub,
-            nomeCategoria: nomeCat,
-            imagemUrl: null,
-            ativo: data['ativo'] ?? true,
-          ));
-        }
-
-        servicosFornecedor.assignAll(lista);
-        debugPrint('✅ Lista ADMIN atualizada: ${lista.length} serviços.');
-      } catch (e, s) {
-        erro.value = 'Erro ao carregar serviços (Admin): $e';
-        debugPrint('❌ Erro ao atualizar lista ADMIN: $e\n$s');
-        servicosFornecedor.clear();
-      } finally {
-        carregando.value = false;
-      }
-    });
   }
 
   void pararListenerServicosAdmin() {
     _servicosAdminSubscription?.cancel();
     _servicosAdminSubscription = null;
     debugPrint('🛑 Listener de serviços ADMIN encerrado.');
-  }
-
-  void carregarServicosOtimizado({
-    bool filtrarPorFornecedor = false,
-    String? idFornecedor,
-  }) {
-    debugPrint('BUSCANDO SERVIÇO DO FORNECEDOR: $idFornecedor');
-    final db = FirebaseFirestore.instance;
-    _servicosSubscription?.cancel();
-
-    carregando.value = true;
-    erro.value = '';
-    servicosFornecedor.clear();
-
-    Query query = db.collection('fornecedor_categoria');
-    if (filtrarPorFornecedor && idFornecedor != null) {
-      query = query.where('id_fornecedor', isEqualTo: idFornecedor);
-      debugPrint('📡 Iniciando listener de categorias do fornecedor: $idFornecedor');
-    } else {
-      debugPrint('📡 Iniciando listener de TODAS as categorias (modo Admin)');
-    }
-
-    _servicosSubscription = query.snapshots().listen((catSnap) async {
-      try {
-        final docs = catSnap.docs;
-        debugPrint('📄 FornecedorCategoria atualizada (${docs.length} docs)');
-
-        if (docs.isEmpty) {
-          debugPrint('⚠️ Nenhum vínculo encontrado em fornecedor_categoria para $idFornecedor.');
-          servicosFornecedor.clear();
-          carregando.value = false;
-          return; // ⛔️ Interrompe a execução — não deve abrir listener de servico_produto
-        }
-
-        // 1️⃣ Mapear categorias e subcategorias
-        final mapaCategorias = <String, String>{};
-        final mapaSubcategorias = <String, String>{};
-        final mapaSubParaCat = <String, String>{};
-        final subcategoriasIds = <String>{};
-        subcategoriasIds.clear();
-
-        for (final doc in docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          final idCat = (data['id_categoria'] ?? '').toString();
-          final nomeCat = (data['nome_categoria'] ?? 'Sem nome').toString();
-
-          mapaCategorias[idCat] = nomeCat;
-          final subs = (data['subcategorias'] as List?) ?? [];
-
-          for (final sub in subs) {
-            if (sub is Map<String, dynamic>) {
-              final idSub = (sub['idSubcategoria'] ?? '').toString();
-              final nomeSub = (sub['nomeSubcategoria'] ?? 'Sem nome').toString();
-              if (idSub.isNotEmpty) {
-                mapaSubcategorias[idSub] = nomeSub;
-                mapaSubParaCat[idSub] = idCat;
-                subcategoriasIds.add(idSub);
-              }
-            }
-          }
-        }
-// Força a conclusão antes de iniciar o próximo listener
-        await Future.delayed(const Duration(milliseconds: 50));
-
-        if (subcategoriasIds.isEmpty) {
-          debugPrint('⚠️ Nenhuma subcategoria vinculada encontrada.');
-          servicosFornecedor.clear();
-          return;
-        }
-
-        if (subcategoriasIds.isEmpty) {
-          debugPrint(
-              '⚠️ Nenhuma subcategoria vinculada encontrada para o fornecedor $idFornecedor.');
-          servicosFornecedor.clear();
-          carregando.value = false;
-          return; // ⛔️ Não cria listener desnecessário
-        }
-
-        // 2️⃣ Escutar mudanças em servico_produto em tempo real
-        db
-            .collection('servico_produto')
-            .where('id_subcategoria', whereIn: subcategoriasIds.toList())
-            .where('ativo', isEqualTo: true)
-            .snapshots()
-            .listen((servSnap) async {
-          try {
-            final lista = <FornecedorServicoDetalhadoDto>[];
-            final resumoPorCategoria = <String, int>{};
-
-            for (final servDoc in servSnap.docs) {
-              final data = servDoc.data();
-              final idSub = (data['id_subcategoria'] ?? '').toString();
-              final idCat = mapaSubParaCat[idSub] ?? '';
-              final nomeCat = mapaCategorias[idCat] ?? 'Sem categoria';
-              final nomeSub = mapaSubcategorias[idSub] ?? 'Sem subcategoria';
-
-              resumoPorCategoria[nomeCat] = (resumoPorCategoria[nomeCat] ?? 0) + 1;
-
-              // 🧩 🔹 Se for modo fornecedor, verificar se ele tem vínculo no fornecedor_servico
-              if (filtrarPorFornecedor && idFornecedor != null) {
-                final vinculoSnap = await db
-                    .collection('fornecedor_servico')
-                    .where('id_fornecedor', isEqualTo: idFornecedor)
-                    .where('id_produto_servico', isEqualTo: servDoc.id)
-                    .limit(1)
-                    .get();
-
-                if (vinculoSnap.docs.isEmpty) continue; // 🔸 Pula serviços não vinculados
-              }
-
-              // Buscar foto principal (opcional)
-              String? imagemUrl;
-              if (filtrarPorFornecedor && idFornecedor != null) {
-                final fotoSnap = await db
-                    .collection('servico_foto')
-                    .where('id_fornecedor', isEqualTo: idFornecedor)
-                    .where('id_produto_servico', isEqualTo: servDoc.id)
-                    .limit(1)
-                    .get();
-                if (fotoSnap.docs.isNotEmpty) {
-                  imagemUrl = fotoSnap.docs.first.data()['url'];
-                }
-              }
-
-              lista.add(FornecedorServicoDetalhadoDto(
-                id: servDoc.id,
-                idFornecedor: idFornecedor ?? '',
-                idProdutoServico: servDoc.id,
-                idSubcategoria: idSub,
-                nomeServico: data['nome'] ?? 'Serviço sem nome',
-                descricaoServico: data['descricao'] ?? '',
-                tipoMedida: data['tipo_medida'] ?? 'U',
-                preco: 0.0,
-                precoPromocao: null,
-                nomeSubcategoria: nomeSub,
-                nomeCategoria: nomeCat,
-                imagemUrl: imagemUrl,
-                ativo: data['ativo'] ?? true,
-              ));
-            }
-
-            servicosFornecedor.assignAll(lista);
-            debugPrint(
-                '✅ Lista atualizada (${lista.length}) serviços (${filtrarPorFornecedor ? "Fornecedor $idFornecedor" : "Admin"})');
-          } catch (e, s) {
-            debugPrint('❌ Erro ao atualizar serviços: $e\n$s');
-          } finally {
-            carregando.value = false;
-          }
-        });
-      } catch (e, s) {
-        erro.value = 'Erro no listener: $e';
-        debugPrint('❌ Erro no listener de serviços: $e\n$s');
-        servicosFornecedor.clear();
-      }
-    });
   }
 
   ServicoProdutoModel? buscarPorId(String id) {
@@ -451,7 +310,7 @@ class ServicoProdutoController extends GetxController {
     } else {
       // Listener está inativo → iniciar
       debugPrint('▶️ Iniciando listener de serviços (Admin)...');
-      iniciarListenerServicosAdmin();
+      carregarServicosComDetalhesOtimizado();
       listenerAtivoAdmin.value = true;
     }
   }
@@ -475,7 +334,7 @@ class ServicoProdutoController extends GetxController {
     } else {
       // 🔹 Iniciar listener
       debugPrint('▶️ Iniciando listener do fornecedor $idFornecedor...');
-      carregarServicosOtimizado(filtrarPorFornecedor: true, idFornecedor: idFornecedor);
+      carregarServicosComDetalhesOtimizado(idFornecedor: idFornecedor);
       listenerAtivoFornecedor.value = true;
 
       // 🔹 Define o timer de timeout

@@ -20,6 +20,9 @@ class CotacaoController extends GetxController {
     totalCount.value = cotacoes.length;
   }
 
+  // ============================================================
+  // 🔹 Escuta todas as cotações do organizador logado
+  // ============================================================
   void ouvirMinhasCotacoes() async {
     final idUsuario = Get.find<AppController>().usuarioLogado.value?.idUsuario;
     if (idUsuario == null) return;
@@ -37,20 +40,26 @@ class CotacaoController extends GetxController {
       try {
         final List<CotacaoModel> lista = [];
 
-        // 🔹 Percorre todas as cotações do snapshot
         for (final doc in snapshot.docs) {
           final data = doc.data();
 
-          // 🔸 Busca a subcoleção "servicos" e soma o valor_estimado
+          // 🔸 Soma os valores de todos os serviços de todos os fornecedores
           double totalEstimado = 0.0;
           try {
-            final servicosSnap = await doc.reference.collection('servicos').get();
-            for (final s in servicosSnap.docs) {
-              final valor = (s.data()['valor_estimado'] ?? 0);
-              if (valor is num) totalEstimado += valor.toDouble();
+            final fornecedoresSnap = await doc.reference.collection('fornecedores').get();
+            for (final fornecedorDoc in fornecedoresSnap.docs) {
+              final servicosSnap = await fornecedorDoc.reference.collection('servicos').get();
+              for (final s in servicosSnap.docs) {
+                final d = s.data();
+                final valor = (d['valor_estimado'] ?? 0);
+                final qtd = (d['quantidade'] ?? 1);
+                if (valor is num && qtd is num) {
+                  totalEstimado += valor.toDouble() * qtd.toDouble();
+                }
+              }
             }
           } catch (e) {
-            debugPrint('⚠️ Erro ao carregar serviços da cotação ${doc.id}: $e');
+            debugPrint('⚠️ Erro ao somar serviços da cotação ${doc.id}: $e');
           }
 
           final cotacao = CotacaoModel(
@@ -62,9 +71,9 @@ class CotacaoController extends GetxController {
             dataLimiteResposta: (data['data_limite_resposta'] as Timestamp?)?.toDate(),
             dataCadastro: (data['data_envio'] as Timestamp?)?.toDate() ?? DateTime.now(),
             status: StatusCotacao.fromString(data['status']),
-            fornecedores: List<String>.from(data['fornecedores'] ?? []),
-            servicos: List<String>.from(data['servicos'] ?? []),
-            valorEstimadoTotal: totalEstimado, // ✅ Soma total da subcoleção
+            valorEstimadoTotal: totalEstimado,
+            fornecedores: [],
+            servicos: [],
           );
 
           if (!_subStreams.containsKey(doc.id)) {
@@ -74,7 +83,6 @@ class CotacaoController extends GetxController {
           lista.add(cotacao);
         }
 
-        // 🔹 Atualiza a lista principal reativamente
         cotacoes.assignAll(lista);
         _atualizarContagens();
       } catch (e, s) {
@@ -88,6 +96,9 @@ class CotacaoController extends GetxController {
     });
   }
 
+  // ============================================================
+  // 🔹 Escuta em tempo real os fornecedores dentro de cada cotação
+  // ============================================================
   void _ouvirFornecedoresDaCotacao(String idCotacao) {
     final stream = FirebaseFirestore.instance
         .collection('cotacao')
@@ -108,7 +119,8 @@ class CotacaoController extends GetxController {
       final cotacaoIndex = cotacoes.indexWhere((c) => c.id == idCotacao);
       if (cotacaoIndex != -1) {
         final cotacao = cotacoes[cotacaoIndex];
-        final temResposta = respostas.any((r) => r['status'] == 'respondido');
+        final temResposta =
+            respostas.any((r) => r['status'] == 'respondido' || r['status'] == 'respondida');
 
         if (temResposta && cotacao.status != StatusCotacao.respondida) {
           cotacoes[cotacaoIndex] = cotacao.copyWith(status: StatusCotacao.respondida);
@@ -116,7 +128,7 @@ class CotacaoController extends GetxController {
 
           Get.snackbar(
             'Nova resposta recebida!',
-            'Um fornecedor respondeu à sua cotação em "${cotacao.categoriaNome}".',
+            'Um fornecedor respondeu à cotação "${cotacao.categoriaNome}".',
             backgroundColor: Colors.blueAccent,
             colorText: Colors.white,
             icon: const Icon(Icons.mark_chat_read_rounded, color: Colors.white),

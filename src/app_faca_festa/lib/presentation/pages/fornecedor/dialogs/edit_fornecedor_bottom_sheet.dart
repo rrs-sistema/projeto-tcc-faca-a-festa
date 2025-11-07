@@ -1,15 +1,16 @@
 // ignore_for_file: use_build_context_synchronously
-
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:io';
+import 'dart:io' show File;
+import 'dart:typed_data';
 
-import '../../../widgets/custom_input_field.dart';
 import './../../../../controllers/fornecedor_controller.dart';
+import './../../../widgets/custom_input_field.dart';
 import './../../../../data/models/model.dart';
 
 class EditFornecedorBottomSheet extends StatefulWidget {
@@ -28,6 +29,7 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
   late TextEditingController _descricaoCtrl;
 
   File? _bannerFile;
+  Uint8List? _bannerBytes; // 🔹 usado apenas na Web
 
   @override
   void initState() {
@@ -47,10 +49,27 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
     super.dispose();
   }
 
+  /// 🔹 Seleciona imagem com compatibilidade Web/Mobile/Desktop
   Future<void> _selecionarImagem() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) setState(() => _bannerFile = File(picked.path));
+
+    if (picked != null) {
+      if (kIsWeb) {
+        // Web: lê bytes diretamente
+        final bytes = await picked.readAsBytes();
+        setState(() {
+          _bannerBytes = bytes;
+          _bannerFile = null;
+        });
+      } else {
+        // Mobile/Desktop: usa arquivo local
+        setState(() {
+          _bannerFile = File(picked.path);
+          _bannerBytes = null;
+        });
+      }
+    }
   }
 
   Future<void> _salvar() async {
@@ -59,8 +78,13 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
 
     try {
       String? bannerUrl = widget.fornecedor.bannerUrl;
-      if (_bannerFile != null) {
-        bannerUrl = await controller.uploadBanner(_bannerFile!);
+
+      // 🔹 Upload apenas se o usuário escolheu nova imagem
+      if (_bannerFile != null || _bannerBytes != null) {
+        bannerUrl = await controller.uploadBanner(
+          _bannerFile!,
+          bytesWeb: _bannerBytes,
+        );
       }
 
       final atualizado = widget.fornecedor.copyWith(
@@ -90,7 +114,7 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: const Offset(0, -4),
           ),
@@ -119,8 +143,6 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
                     ),
                   ],
                 ),
-
-                // 🔹 Botão de fechar
                 Positioned(
                   right: 0,
                   child: IconButton(
@@ -139,44 +161,7 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
               onTap: _selecionarImagem,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: _bannerFile != null
-                    ? Image.file(
-                        _bannerFile!,
-                        height: 150,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                      )
-                    : (widget.fornecedor.bannerUrl != null
-                        ? CachedNetworkImage(
-                            imageUrl: widget.fornecedor.bannerUrl!,
-                            height: 150,
-                            width: double.infinity,
-                            fit: BoxFit.cover,
-                            placeholder: (_, __) => Container(color: Colors.grey.shade200),
-                            errorWidget: (_, __, ___) => Container(
-                              height: 150,
-                              color: Colors.grey.shade300,
-                              child: const Icon(Icons.image_not_supported,
-                                  color: Colors.grey, size: 48),
-                            ),
-                          )
-                        : Container(
-                            height: 150,
-                            color: Colors.grey.shade100,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.add_a_photo_rounded, color: primary, size: 36),
-                                const SizedBox(height: 6),
-                                Text(
-                                  "Selecionar banner",
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )),
+                child: _buildBannerWidget(primary),
               ),
             ),
             const SizedBox(height: 20),
@@ -185,7 +170,7 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
             _campo("Razão Social", _razaoCtrl, Icons.business_rounded),
             _campo("Telefone", _telefoneCtrl, Icons.phone_rounded),
             _campo("E-mail", _emailCtrl, Icons.email_rounded),
-            _campo("Descrição", _descricaoCtrl, Icons.edit_note_rounded, maxLines: 3),
+            _campo("Descrição", _descricaoCtrl, Icons.edit_note_rounded, maxLines: 6),
             const SizedBox(height: 16),
 
             // ===== BOTÃO SALVAR =====
@@ -217,6 +202,61 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
     );
   }
 
+  /// 🔹 Exibe corretamente o banner dependendo da plataforma
+  Widget _buildBannerWidget(Color primary) {
+    if (_bannerBytes != null) {
+      return Image.memory(
+        _bannerBytes!,
+        height: 150,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      );
+    }
+
+    if (_bannerFile != null) {
+      return Image.file(
+        _bannerFile!,
+        height: 150,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      );
+    }
+
+    if (widget.fornecedor.bannerUrl != null && widget.fornecedor.bannerUrl!.isNotEmpty) {
+      return CachedNetworkImage(
+        imageUrl: widget.fornecedor.bannerUrl!,
+        height: 150,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        placeholder: (_, __) => Container(color: Colors.grey.shade200),
+        errorWidget: (_, __, ___) => Container(
+          height: 150,
+          color: Colors.grey.shade300,
+          child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 48),
+        ),
+      );
+    }
+
+    // 🔹 Placeholder padrão
+    return Container(
+      height: 150,
+      color: Colors.grey.shade100,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.add_a_photo_rounded, color: primary, size: 36),
+          const SizedBox(height: 6),
+          Text(
+            "Selecionar banner",
+            style: GoogleFonts.poppins(
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _campo(String label, TextEditingController controller, IconData icon, {int maxLines = 1}) {
     return CustomInputField(
       label: label,
@@ -224,6 +264,7 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
       icon: icon,
       color: null,
       readOnly: false,
+      maxLines: maxLines,
     );
   }
 }

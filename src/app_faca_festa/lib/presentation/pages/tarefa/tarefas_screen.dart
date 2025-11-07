@@ -247,7 +247,6 @@ class _TarefaCard extends StatelessWidget {
             SlidableAction(
               onPressed: (_) async {
                 final tarefaController = Get.find<TarefaController>();
-
                 await showTarefaDialog(
                   context: context,
                   idEvento: tarefa.idEvento,
@@ -311,57 +310,34 @@ class _TarefaCard extends StatelessWidget {
               color: concluida ? primaryColor.withValues(alpha: 0.5) : Colors.grey.shade300,
               width: 1.2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withValues(alpha: 0.05),
+                blurRadius: 5,
+                offset: const Offset(0, 3),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ===== Linha superior =====
+              // ===== Linha superior (título + botão check) =====
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Avatar
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: primaryColor.withValues(alpha: 0.4),
-                        width: 2,
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 28,
-                      backgroundImage: const NetworkImage(
-                        'https://ui-avatars.com/api/?name=Tarefa&background=0D8ABC&color=fff',
-                      ),
-                      onBackgroundImageError: (_, __) {},
-                      backgroundColor: Colors.grey.shade200,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-
-                  // === Conteúdo reativo ===
+                  // === Título e responsável ===
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                tarefa.titulo,
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.bold,
-                                  color: concluida ? primaryColor : Colors.grey.shade900,
-                                  decoration: concluida ? TextDecoration.lineThrough : null,
-                                ),
-                              ),
-                            ),
-                            _StatusChip(
-                              status: status,
-                              primaryColor: primaryColor,
-                            ),
-                          ],
+                        Text(
+                          tarefa.titulo,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: concluida ? primaryColor : Colors.grey.shade900,
+                            decoration: concluida ? TextDecoration.lineThrough : null,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
@@ -402,7 +378,7 @@ class _TarefaCard extends StatelessWidget {
               if (tarefa.descricao?.isNotEmpty ?? false)
                 Container(
                   width: double.infinity,
-                  margin: const EdgeInsets.only(left: 4, right: 4, bottom: 10),
+                  margin: const EdgeInsets.only(bottom: 12),
                   child: Text(
                     tarefa.descricao!,
                     style: TextStyle(
@@ -413,10 +389,10 @@ class _TarefaCard extends StatelessWidget {
                   ),
                 ),
 
-              // ===== Data =====
+              // ===== Linha inferior: data + status =====
               Row(
                 children: [
-                  const Icon(Icons.calendar_today_outlined, size: 15, color: Colors.grey),
+                  const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey),
                   const SizedBox(width: 6),
                   Text(
                     tarefa.dataPrevista != null
@@ -424,6 +400,8 @@ class _TarefaCard extends StatelessWidget {
                         : '--/--/----',
                     style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
+                  const Spacer(),
+                  _StatusChip(status: status, primaryColor: primaryColor),
                 ],
               ),
             ],

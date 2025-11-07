@@ -1,9 +1,13 @@
+import 'dart:ui';
+
 import 'package:app_faca_festa/role_selector_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/login_controller.dart';
+import './../../widgets/custom_input_field.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -11,11 +15,16 @@ class LoginScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.put(LoginController());
+    final theme = Get.find<EventThemeController>();
+    final gradient = theme.gradient.value;
+
+    final emailCtrl = TextEditingController();
+    final senhaCtrl = TextEditingController();
 
     return Scaffold(
       body: Stack(
         children: [
-          // Fundo com imagem e gradiente translúcido
+          // 🌈 Fundo com imagem e overlay
           Container(
             decoration: const BoxDecoration(
               image: DecorationImage(
@@ -25,21 +34,25 @@ class LoginScreen extends StatelessWidget {
             ),
           ),
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFFFFF9C4),
-                  Color(0xFFFFC1E3),
-                  Color(0xFFB3E5FC),
+                  gradient.colors.first.withValues(alpha: 0.35),
+                  gradient.colors.last.withValues(alpha: 0.45),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
             ),
           ),
-          Container(color: Colors.white.withValues(alpha: 0.35)),
 
-          // Conteúdo
+          // 🩵 Efeito de blur translúcido
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+            child: Container(color: Colors.black.withValues(alpha: 0.05)),
+          ),
+
+          // ✨ Conteúdo
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
@@ -47,92 +60,145 @@ class LoginScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
+                    // 🌟 Logo e Título
                     Text(
                       '🎉 Faça a Festa',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.fredoka(
+                        fontSize: 36,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withValues(alpha: 0.25),
+                            offset: const Offset(1, 2),
+                            blurRadius: 6,
+                          )
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      'Organize, inspire e celebre com estilo',
                       style: GoogleFonts.poppins(
-                        fontSize: 30,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.pink.shade800,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w400,
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 50),
 
-                    // Campo Email
-                    TextField(
-                      onChanged: (v) => controller.email.value = v,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: const Icon(Icons.email_outlined, color: Colors.pink),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
+                    // 🪩 Card principal
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(24),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          )
+                        ],
                       ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Campo Senha
-                    TextField(
-                      obscureText: true,
-                      onChanged: (v) => controller.senha.value = v,
-                      decoration: InputDecoration(
-                        labelText: 'Senha',
-                        prefixIcon: const Icon(Icons.lock_outline, color: Colors.pinkAccent),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // Botão de Login
-                    Obx(() {
-                      return ElevatedButton(
-                        onPressed: controller.carregando.value ? null : () => controller.login(),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.pink.shade700,
-                          minimumSize: const Size(double.infinity, 50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                      child: Column(
+                        children: [
+                          // Campo Email
+                          CustomInputField(
+                            label: 'Email',
+                            icon: Icons.email_outlined,
+                            controller: emailCtrl,
+                            color: theme.primaryColor.value,
+                            onChanged: (v) => controller.email.value = v,
                           ),
-                        ),
-                        child: controller.carregando.value
-                            ? const SizedBox(
-                                height: 22,
-                                width: 22,
-                                child: CircularProgressIndicator(
-                                  color: Colors.white,
-                                  strokeWidth: 2,
+
+                          // Campo Senha
+                          CustomInputField(
+                            label: 'Senha',
+                            icon: Icons.lock_outline,
+                            controller: senhaCtrl,
+                            color: theme.primaryColor.value,
+                            obscureText: true,
+                            onChanged: (v) => controller.senha.value = v,
+                          ),
+
+                          const SizedBox(height: 25),
+
+                          // Botão Entrar
+                          Obx(() {
+                            return SizedBox(
+                              height: 55,
+                              child: ElevatedButton(
+                                onPressed:
+                                    controller.carregando.value ? null : () => controller.login(),
+                                style: ElevatedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 2),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  backgroundColor: Colors.transparent,
+                                  shadowColor: Colors.transparent,
+                                ).copyWith(
+                                  elevation: WidgetStateProperty.all(0),
+                                  backgroundColor: WidgetStateProperty.resolveWith((states) {
+                                    if (states.contains(WidgetState.disabled)) {
+                                      return gradient.colors.first.withValues(alpha: 0.6);
+                                    }
+                                    return null;
+                                  }),
                                 ),
-                              )
-                            : Text(
-                                'Entrar',
-                                style: GoogleFonts.poppins(
-                                  fontSize: 18,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
+                                child: Ink(
+                                  decoration: BoxDecoration(
+                                    gradient: gradient,
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Container(
+                                    alignment: Alignment.center,
+                                    child: controller.carregando.value
+                                        ? const SizedBox(
+                                            height: 24,
+                                            width: 24,
+                                            child: CircularProgressIndicator(
+                                              color: Colors.white,
+                                              strokeWidth: 2.3,
+                                            ),
+                                          )
+                                        : Text(
+                                            'Entrar',
+                                            style: GoogleFonts.poppins(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                  ),
                                 ),
                               ),
-                      );
-                    }),
-                    const SizedBox(height: 20),
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
 
-                    // Link para cadastro
+                    const SizedBox(height: 24),
+
+                    // 🔗 Cadastro
                     GestureDetector(
                       onTap: () => Get.to(() => const RoleSelectorScreen()),
                       child: RichText(
                         text: TextSpan(
                           text: "Ainda não tem uma conta? ",
                           style: GoogleFonts.poppins(
-                            color: Colors.black87,
-                            fontSize: 14,
+                            color: Colors.white,
+                            fontSize: 14.5,
+                            fontWeight: FontWeight.w400,
                           ),
                           children: [
                             TextSpan(
                               text: "Cadastre-se aqui",
                               style: GoogleFonts.poppins(
-                                color: Colors.pink.shade800,
-                                fontWeight: FontWeight.bold,
+                                color: Colors.yellow.shade100,
+                                fontWeight: FontWeight.w600,
                                 decoration: TextDecoration.underline,
                               ),
                             ),
@@ -140,16 +206,35 @@ class LoginScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 40),
 
-                    Text(
-                      'Desenvolvido por Faça a Festa',
-                      style: GoogleFonts.poppins(
-                        color: Colors.pink.shade800.withValues(alpha: 0.8),
-                        fontSize: 13.5,
-                        letterSpacing: 0.3,
-                        fontWeight: FontWeight.w500,
-                      ),
+                    // Rodapé
+
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [
+                              Color(0xFF81D4FA),
+                              Color(0xFFCE93D8),
+                              Color(0xFFFF80AB),
+                            ],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ).createShader(bounds),
+                          child: Text(
+                            "by RRS System Technology",
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              letterSpacing: 0.4,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

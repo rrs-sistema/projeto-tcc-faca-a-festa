@@ -10,13 +10,12 @@ import './../cadastro/fornecedor/fornecedores_admin_list_screen.dart';
 import './../cadastro/categoria/categoria_servico_list_screen.dart';
 import './../cadastro/servico/servico_produto_list_screen.dart';
 import './../../../controllers/servico_produto_controller.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/app_controller.dart';
-
+import './../../widgets/confetti_background.dart';
 import './orcamentos_admin_list_screen.dart';
 import './usuarios_admin_list_screen.dart';
 import './eventos_admin_list_screen.dart';
-import 'package:lottie/lottie.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
@@ -125,13 +124,7 @@ class AdminDashboardScreen extends StatelessWidget {
       body: Stack(
         children: [
           Positioned.fill(
-            child: IgnorePointer(
-              child: Lottie.asset(
-                'assets/animations/confetti_background.json',
-                fit: BoxFit.cover,
-                repeat: true,
-              ),
-            ),
+            child: ConfettiBackground(seconds: 600),
           ),
           Container(
             decoration: BoxDecoration(

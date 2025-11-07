@@ -379,7 +379,6 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
   // 🏠 Informações do Evento — layout moderno com animação
   // ============================================================
   Widget _buildInformacoesPage(EventoModel evento) {
-    final dateFormat = DateFormat('dd/MM/yyyy');
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('evento').doc(evento.idEvento).snapshots(),
       builder: (context, snapshot) {
@@ -419,15 +418,10 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              _infoTile(
-                  Icons.calendar_today,
-                  'Data',
-                  data['data'] is Timestamp
-                      ? dateFormat.format((data['data'] as Timestamp).toDate())
-                      : '--/--/----'),
-              _infoTile(Icons.access_time, 'Horário', data['hora'] ?? 'a definir'),
-              _infoTile(Icons.message, 'Mensagem',
-                  data['mensagem'] ?? 'Prepare-se para uma celebração especial! 💖'),
+              _infoTileDataHora(
+                data['data'] is Timestamp ? (data['data'] as Timestamp).toDate() : null,
+                data['hora'],
+              ),
               _infoTileComAcao(
                 Icons.location_on,
                 'Local',
@@ -438,6 +432,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                         : 'local ainda não informado'),
                 onTap: () => _abrirNoMapa(evento),
               ),
+              _infoTile(Icons.message, 'Mensagem',
+                  data['mensagem'] ?? 'Prepare-se para uma celebração especial! 💖'),
             ],
           ),
         );
@@ -774,6 +770,87 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
             style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.black87)),
         subtitle:
             Text(value, style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade800)),
+      ),
+    );
+  }
+
+  Widget _infoTileDataHora(DateTime? data, String? hora) {
+    final color = theme.primaryColor.value;
+    final dateFormat = DateFormat('dd/MM/yyyy');
+
+    final dataFormatada = data != null ? dateFormat.format(data) : '--/--/----';
+    final horaFormatada = (hora != null && hora.isNotEmpty) ? hora : 'a definir';
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shadowColor: color.withValues(alpha: 0.15),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // 📅 Ícone à esquerda
+            Container(
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              padding: const EdgeInsets.all(10),
+              child: Icon(Icons.event_rounded, color: color, size: 28),
+            ),
+            const SizedBox(width: 14),
+
+            // 🧾 Conteúdo
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Data e Hora do Evento',
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      letterSpacing: 0.6,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+
+                  // 🔹 Data e hora lado a lado
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_rounded,
+                          size: 16, color: color.withValues(alpha: 0.8)),
+                      const SizedBox(width: 6),
+                      Text(
+                        dataFormatada,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Icon(Icons.access_time_rounded,
+                          size: 16, color: color.withValues(alpha: 0.8)),
+                      const SizedBox(width: 6),
+                      Text(
+                        horaFormatada,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

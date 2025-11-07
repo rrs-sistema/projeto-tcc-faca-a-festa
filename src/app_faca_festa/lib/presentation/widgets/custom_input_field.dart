@@ -161,6 +161,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
           onTap: widget.onTap,
           obscureText: widget.obscureText,
           keyboardType: keyboardType,
+          maxLines: widget.maxLines ?? 1,
           inputFormatters: maskFormatter != null ? [maskFormatter!] : [],
           cursorColor: iconColor,
           style: GoogleFonts.poppins(

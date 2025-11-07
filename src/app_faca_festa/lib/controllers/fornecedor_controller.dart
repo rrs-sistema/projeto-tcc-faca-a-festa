@@ -205,7 +205,7 @@ class FornecedorController extends GetxController {
   }
 
   /// 🔹 Faz upload de imagem para o Firebase Storage e retorna a URL pública
-  Future<String> uploadBanner(File imageFile) async {
+  Future<String> uploadBanner(File imageFile, {Uint8List? bytesWeb}) async {
     try {
       final String fileName =
           'banners_fornecedores/${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';

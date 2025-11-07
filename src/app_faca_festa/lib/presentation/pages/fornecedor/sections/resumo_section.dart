@@ -1,15 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
 import './../../../../controllers/avaliacao/avaliacao_controller.dart';
+import './../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/servico_produto_controller.dart';
 import './../../cadastro/servico/servico_produto_list_screen.dart';
-import './../components/show_responder_cotacao_bottom_sheet.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/fornecedor_controller.dart';
+import './components/build_cotacao_card.dart';
 
 class ResumoSection extends StatelessWidget {
   const ResumoSection({super.key});
@@ -86,29 +86,7 @@ class ResumoSection extends StatelessWidget {
                                     .format((s['dataEnvio'] as Timestamp).toDate())
                                 : '';
 
-                            return ListTile(
-                              leading: const Icon(Icons.assignment_outlined, color: Colors.green),
-                              title: Text(
-                                s['categoriaNome'],
-                                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                              ),
-                              subtitle: Text(
-                                "Enviada em $dataEnvio",
-                                style:
-                                    GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
-                              ),
-                              trailing: const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-                              onTap: () {
-                                Get.back();
-                                showResponderCotacaoBottomSheet(
-                                  context: context,
-                                  idCotacao: s['idCotacao'],
-                                  categoriaNome: s['categoriaNome'],
-                                  descricao: s['descricao'],
-                                  nomeSolicitante: s['nomeSolicitante'],
-                                );
-                              },
-                            );
+                            return buildCotacaoCard(context, s, dataEnvio);
                           },
                         ),
                       ),
