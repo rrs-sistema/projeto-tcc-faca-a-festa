@@ -4,11 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import './../../../controllers/categoria/categoria_servico_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/inspiracao_controller.dart';
 import './../../widgets/confetti_background.dart';
 import './../../../data/models/model.dart';
-import 'inspiracao_detalhe_screen.dart';
+import './inspiracao_detalhe_screen.dart';
 
 class InspiracaoScreen extends StatefulWidget {
   final TipoEventoModel tipoEvento;
@@ -19,6 +20,7 @@ class InspiracaoScreen extends StatefulWidget {
 }
 
 class _InspiracaoScreenState extends State<InspiracaoScreen> {
+  final categoriaController = Get.find<CategoriaServicoController>();
   final controller = Get.put(InspiracaoController());
   final themeController = Get.find<EventThemeController>();
 
@@ -175,11 +177,19 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
   }
 
   Widget _filtrosCategoria(Color primary) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Obx(() {
-        return Row(
+    return Obx(() {
+      if (categoriaController.carregando.value) {
+        return const Padding(
+          padding: EdgeInsets.all(16),
+          child: Center(child: CircularProgressIndicator()),
+        );
+      }
+
+      final categorias = ['Tudo', ...categoriaController.categorias.map((c) => c.nome)];
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Row(
           children: categorias.map((c) {
             final selected = categoriaSelecionada.value == c;
             return GestureDetector(
@@ -194,9 +204,10 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                   boxShadow: selected
                       ? [
                           BoxShadow(
-                              color: primary.withValues(alpha: 0.3),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3))
+                            color: primary.withValues(alpha: 0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          )
                         ]
                       : [],
                 ),
@@ -210,9 +221,9 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
               ),
             );
           }).toList(),
-        );
-      }),
-    );
+        ),
+      );
+    });
   }
 
   Widget _carrosselDestaque(List<InspiracaoModel> items) {

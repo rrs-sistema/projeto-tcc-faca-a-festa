@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:app_faca_festa/controllers/contacao/cotacao_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,30 +5,31 @@ import 'package:animate_do/animate_do.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
-import 'package:shimmer/shimmer.dart';
+import 'dart:ui';
 
-import '../../controllers/app_controller.dart';
-import '../../controllers/fornecedor_localizacao_controller.dart';
-import '../../core/utils/biblioteca.dart';
-import '../../data/models/DTO/fornecedor_detalhado_dto.dart';
-import '../widgets/frase_aleatoria_widget.dart';
-import '../widgets/menu_drawer_faca_festa.dart';
+import './../../controllers/fornecedor_localizacao_controller.dart';
 import './../../controllers/convidado/convidado_controller.dart';
-import '../../controllers/tema/event_theme_controller.dart';
+import './../../data/models/DTO/fornecedor_detalhado_dto.dart';
+import './../../controllers/tema/event_theme_controller.dart';
 import './fornecedor/fornecedor_localizacao_screen.dart';
 import './../../controllers/orcamento_controller.dart';
+import './fornecedor/fornecedor_detalhe_screen.dart';
 import './../../controllers/tarefa_controller.dart';
 import './../../controllers/evento_controller.dart';
+import './../widgets/frase_aleatoria_widget.dart';
+import './../widgets/menu_drawer_faca_festa.dart';
+import './../../controllers/app_controller.dart';
+import './fornecedor/painel_cotacao_page.dart';
+import './inspiracao/inspiracao_screen.dart';
+import './../../core/utils/biblioteca.dart';
+import './orcamento/orcamento_screen.dart';
+import './convidado/convidado_page.dart';
 import './../../data/models/model.dart';
 import './contador_evento_screen.dart';
-import 'convidado/convidado_page.dart';
-import 'fornecedor/fornecedor_detalhe_screen.dart';
-import 'fornecedor/painel_cotacao_page.dart';
-import 'inspiracao/inspiracao_screen.dart';
-import 'orcamento/orcamento_screen.dart';
-import 'tarefa/tarefas_screen.dart';
+import './tarefa/tarefas_screen.dart';
 
 class HomeEventScreen extends StatefulWidget {
   const HomeEventScreen({super.key});
@@ -49,10 +48,16 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   final orcamentoController = Get.find<OrcamentoController>();
   final tarefaController = Get.find<TarefaController>();
   final eventoController = Get.find<EventoController>();
-  final fornecedorController = Get.put(FornecedorLocalizacaoController());
+  late FornecedorLocalizacaoController fornecedorController;
   final theme = Get.find<EventThemeController>();
   bool isCelular = false;
   bool _carregandoFornecedor = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fornecedorController = Get.put(FornecedorLocalizacaoController(), permanent: true);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,9 +65,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
 
     // ✅ Ajuste do contraste da barra de status
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // mantém o topo translúcido
-      statusBarIconBrightness: Brightness.dark, // ícones escuros → use se o fundo for claro
-      statusBarBrightness: Brightness.light, // para iOS
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
     ));
 
     return Scaffold(
@@ -148,7 +153,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                 orcamentoController.totalCustoEstimado,
                 theme,
               ),
-              _buildSuppliersCarousel(theme),
+              _buildSuppliersCarousel(fornecedorController, theme),
               const SliverToBoxAdapter(child: SizedBox(height: 15)),
             ],
           ),
@@ -837,6 +842,7 @@ class _AnimatedProgressCardState extends State<_AnimatedProgressCard>
   @override
   void initState() {
     super.initState();
+
     _iniciarAnimacao();
   }
 
@@ -1259,8 +1265,8 @@ String _formatarDataTarefa(DateTime? data) {
   return textoData[0].toUpperCase() + textoData.substring(1); // capitaliza
 }
 
-Widget _buildSuppliersCarousel(EventThemeController theme) {
-  final fornecedorController = Get.put(FornecedorLocalizacaoController());
+Widget _buildSuppliersCarousel(
+    FornecedorLocalizacaoController fornecedorController, EventThemeController theme) {
   final cor = theme.primaryColor.value;
 
   return SliverToBoxAdapter(
@@ -1284,9 +1290,9 @@ Widget _buildSuppliersCarousel(EventThemeController theme) {
 
           // 🔹 Listagem reativa
           Obx(() {
-            final carregando = fornecedorController.carregandoServicosFornecedor.value;
+            final carregando = fornecedorController.carregando.value;
             final fornecedores = fornecedorController.fornecedoresFiltrados
-                .where((f) => f.fornecedor.ativo && f.fornecedor.aptoParaOperar)
+                .where((f) => f.fornecedor.ativo && (f.fornecedor.aptoParaOperar != false))
                 .toList();
 
             if (carregando) {
@@ -1330,141 +1336,127 @@ Widget _buildSuppliersCarousel(EventThemeController theme) {
                 separatorBuilder: (_, __) => const SizedBox(width: 14),
                 itemBuilder: (_, index) {
                   final fornecedorDetalhe = fornecedores[index];
-                  final fornecedor = FornecedorModel(
-                    idFornecedor: fornecedorDetalhe.fornecedor.idFornecedor,
-                    idUsuario: fornecedorDetalhe.fornecedor.idUsuario,
-                    razaoSocial: fornecedorDetalhe.fornecedor.razaoSocial,
-                    telefone: fornecedorDetalhe.fornecedor.telefone,
-                    email: fornecedorDetalhe.fornecedor.email,
-                    bannerUrl: fornecedorDetalhe.fornecedor.bannerUrl,
-                  );
-
-                  return GestureDetector(
-                    onTap: () {
-                      final fornecedorDetalhado = FornecedorDetalhadoDto(
-                          fornecedor: fornecedor,
-                          categoriaId: fornecedorDetalhe.categoriaId,
-                          categoriaNome: fornecedorDetalhe.categoriaNome);
-
-                      Get.to(() => FornecedorDetalheScreen(
-                            fornecedorDetalhado: fornecedorDetalhado,
-                          ));
-                    },
-                    child: Hero(
-                      tag: 'fornecedor_${fornecedor.idFornecedor}',
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        width: 140,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.white,
-                              Colors.grey.shade50,
-                              cor.withValues(alpha: 0.05),
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: cor.withValues(alpha: 0.1),
-                              blurRadius: 6,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Stack(
-                            alignment: Alignment.bottomCenter,
-                            children: [
-                              // 📸 Banner do fornecedor
-                              CachedNetworkImage(
-                                imageUrl: fornecedorDetalhe.fornecedor.bannerUrl ??
-                                    'https://cdn-icons-png.flaticon.com/512/6799/6799605.png',
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                                placeholder: (_, __) => Container(
-                                  color: Colors.grey.shade200,
-                                ),
-                                errorWidget: (_, __, ___) => Container(
-                                  color: Colors.grey.shade200,
-                                  child: const Icon(Icons.store_mall_directory,
-                                      size: 40, color: Colors.grey),
-                                ),
-                              ),
-
-                              // ✨ Gradiente de brilho
-                              Container(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      Colors.transparent,
-                                      Colors.black.withValues(alpha: 0.6),
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              // 📋 Nome do fornecedor e botão
-                              Padding(
-                                padding: const EdgeInsets.all(8),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      fornecedorDetalhe.fornecedor.razaoSocial,
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.poppins(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: 12.5,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Container(
-                                      padding:
-                                          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: cor.withValues(alpha: 0.9),
-                                        borderRadius: BorderRadius.circular(10),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: cor.withValues(alpha: 0.4),
-                                            blurRadius: 6,
-                                            offset: const Offset(0, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Text(
-                                        'Detalhes',
-                                        style: GoogleFonts.poppins(
-                                          color: Colors.white,
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
+                  return _fornecedorCard(fornecedorDetalhe: fornecedorDetalhe, cor: cor);
                 },
               ),
             );
           }),
         ],
+      ),
+    ),
+  );
+}
+
+Widget _fornecedorCard({
+  required FornecedorDetalhadoDto fornecedorDetalhe,
+  required Color cor,
+}) {
+  final fornecedor = fornecedorDetalhe.fornecedor;
+
+  return GestureDetector(
+    onTap: () {
+      Get.to(() => FornecedorDetalheScreen(
+            fornecedorDetalhado: fornecedorDetalhe,
+          ));
+    },
+    child: Hero(
+      tag: 'fornecedor_${fornecedor.idFornecedor}',
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        width: 140,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.white,
+              Colors.grey.shade50,
+              cor.withValues(alpha: 0.05),
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: cor.withValues(alpha: 0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            alignment: Alignment.bottomCenter,
+            children: [
+              CachedNetworkImage(
+                imageUrl: fornecedor.bannerUrl ??
+                    'https://cdn-icons-png.flaticon.com/512/6799/6799605.png',
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                placeholder: (_, __) => Container(color: Colors.grey.shade200),
+                errorWidget: (_, __, ___) => Container(
+                  color: Colors.grey.shade200,
+                  child: const Icon(Icons.store_mall_directory, size: 40, color: Colors.grey),
+                ),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.6),
+                    ],
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      fornecedor.razaoSocial,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: cor.withValues(alpha: 0.9),
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: cor.withValues(alpha: 0.4),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Text(
+                        'Detalhes',
+                        style: GoogleFonts.poppins(
+                          color: Colors.white,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     ),
   );

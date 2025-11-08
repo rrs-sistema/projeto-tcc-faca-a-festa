@@ -48,9 +48,14 @@ class FornecedorLocalizacaoController extends GetxController {
   @override
   void onInit() {
     raio.value = 25.0; // 25 km de raio
-    _obterLocalizacaoUsuario();
-    Future.delayed(Duration(seconds: 3), () {
-      escutarTodosServicos();
+    _obterLocalizacaoUsuario().then((ok) {
+      if (ok) escutarTodosServicos();
+
+      // 🔁 Garante refresh após a primeira carga e build da tela
+      Future.delayed(const Duration(seconds: 1), () {
+        fornecedoresFiltrados.refresh();
+        debugPrint('🔁 Refresh inicial forçado (sincronização UI)');
+      });
     });
     super.onInit();
   }
@@ -58,41 +63,60 @@ class FornecedorLocalizacaoController extends GetxController {
   // ==========================================================
   // === LOCALIZAÇÃO DO USUÁRIO (com fallback)
   // ==========================================================
-  Future<void> _obterLocalizacaoUsuario() async {
+  Future<bool> _obterLocalizacaoUsuario() async {
     try {
+      // 1️⃣ Verifica se o serviço de localização está ativo
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint('⚠️ Serviço de localização desativado — fallback (Curitiba).');
+        userLatitude.value = -25.43;
+        userLongitude.value = -49.27;
+        await carregarDados();
+        await Future.delayed(const Duration(milliseconds: 300));
+        fornecedoresFiltrados.refresh();
+        return false;
+      }
+
+      // 2️⃣ Verifica a permissão atual
       var permission = await Geolocator.checkPermission();
 
-      if (!serviceEnabled ||
-          permission == LocationPermission.denied ||
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      // 3️⃣ Se ainda estiver negada (ou negada para sempre), usa fallback
+      if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         debugPrint('⚠️ Permissão negada — usando coordenadas padrão (Curitiba).');
         userLatitude.value = -25.43;
         userLongitude.value = -49.27;
         await carregarDados();
-        return;
+        return false;
       }
 
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        debugPrint('⚠️ Permissão de localização ainda negada — fallback ativado.');
-        userLatitude.value = -25.43;
-        userLongitude.value = -49.27;
-        await carregarDados();
-        return;
-      }
+      // ✅ Nova forma de obter a posição atual
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+          distanceFilter: 0, // atualiza sempre que se mover
+        ),
+      );
 
-      final pos = await Geolocator.getCurrentPosition();
       userLatitude.value = pos.latitude;
       userLongitude.value = pos.longitude;
       debugPrint('📍 Localização obtida: ${pos.latitude}, ${pos.longitude}');
+
       await carregarDados();
-    } catch (e) {
-      debugPrint('❌ Erro ao obter localização: $e — fallback (Curitiba).');
+      await Future.delayed(const Duration(milliseconds: 300));
+      fornecedoresFiltrados.refresh();
+      return true;
+    } catch (e, s) {
+      debugPrint('❌ Erro ao obter localização: $e\n$s');
+      // fallback para Curitiba
       userLatitude.value = -25.43;
       userLongitude.value = -49.27;
       await carregarDados();
+      return false;
     }
   }
 
@@ -180,22 +204,15 @@ class FornecedorLocalizacaoController extends GetxController {
         categorias.isNotEmpty) {
       _dadosCarregados = true;
 
-      // Validação de correspondência fornecedor ↔ território
-      debugPrint('🔍 Validando correspondência fornecedor ↔ território');
-      for (var t in territoriosFornecedores) {
-        final match = _fornecedoresRaw.firstWhereOrNull(
-          (f) => f.idFornecedor.trim() == t.idFornecedor.trim(),
-        );
-        if (match != null) {
-          debugPrint('✅ MATCH → ${match.razaoSocial} | ${t.idFornecedor}');
-        } else {
-          debugPrint('⚠️ SEM MATCH → ${t.idFornecedor}');
-        }
-      }
-
       debugPrint('✅ Dados prontos — reconstruindo listas finais...');
       _reconstruirLista();
       _atualizarListasPorTipo();
+
+      // 🔹 Força refresh para o primeiro Obx
+      Future.delayed(const Duration(milliseconds: 300), () {
+        fornecedoresFiltrados.refresh();
+        debugPrint('🔁 Refresh forçado para fornecedoresFiltrados');
+      });
     }
   }
 
