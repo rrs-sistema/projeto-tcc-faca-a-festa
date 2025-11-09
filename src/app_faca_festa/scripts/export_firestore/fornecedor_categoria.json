@@ -1,0 +1,202 @@
+[
+    {
+        "subcategorias": [
+            {
+                "idSubcategoria": "1760932672539",
+                "nomeSubcategoria": "Cabelereiro e Penteado"
+            },
+            {
+                "idSubcategoria": "1761672987404",
+                "nomeSubcategoria": "Barbearia"
+            },
+            {
+                "idSubcategoria": "1761672969508",
+                "nomeSubcategoria": "Maquiagem Profissional"
+            }
+        ],
+        "id_fornecedor": "4vB9Cu4gybhaAJWEZ28jiiJcS5S2",
+        "nome_categoria": "Beleza e Estética",
+        "data_atualizacao": "2025-11-04 04:09:06",
+        "id_categoria": "1760923921063"
+    },
+    {
+        "subcategorias": [
+            {
+                "idSubcategoria": "1761673280167",
+                "nomeSubcategoria": "Transporte Executivo"
+            },
+            {
+                "idSubcategoria": "1761673288334",
+                "nomeSubcategoria": "Carros de Luxo"
+            }
+        ],
+        "id_fornecedor": "7JGfA120ZqXMJx0tJgh3zSz2Ewq1",
+        "nome_categoria": "Transporte",
+        "data_atualizacao": "2025-11-02 14:30:02",
+        "id_categoria": "1761673265007"
+    },
+    {
+        "subcategorias": [
+            {
+                "idSubcategoria": "1761673447533",
+                "nomeSubcategoria": "Convites"
+            },
+            {
+                "idSubcategoria": "1761673454745",
+                "nomeSubcategoria": "Tags e Toppers"
+            }
+        ],
+        "id_fornecedor": "BPmLOaDwf7gr05AfJG4V2OZKZX12",
+        "nome_categoria": "Papelaria e Lembranças",
+        "data_atualizacao": "2025-11-03 15:03:03",
+        "id_categoria": "1761673435226"
+    },
+    {
+        "id_categoria": "3cbc7cb4-5538-4ce0-9313-36e35bb2834a",
+        "data_cadastro": "2025-10-31 16:50:30",
+        "nome_categoria": "Buffet e Gastronomia",
+        "id_fornecedor": "paZJsxinFMbfesof3wIpkkRuk823",
+        "subcategorias": [
+            {
+                "idSubcategoria": "1761673021428",
+                "nomeSubcategoria": "Salgados e Doces"
+            },
+            {
+                "idSubcategoria": "1761673028470",
+                "nomeSubcategoria": "Bolo e Sobremesas"
+            },
+            {
+                "idSubcategoria": "1761673040023",
+                "nomeSubcategoria": "Bebidas"
+            },
+            {
+                "idSubcategoria": "1761673081975",
+                "nomeSubcategoria": "Carrinhos Temáticos"
+            },
+            {
+                "idSubcategoria": "d53c30bf-e790-4849-b40f-40358e90af68",
+                "nomeSubcategoria": "Buffet Completo"
+            }
+        ]
+    },
+    {
+        "id_categoria": "0b5c0fee-2f33-4ae7-8b96-2bb25aedd669",
+        "data_cadastro": "2025-10-30 17:14:26",
+        "nome_categoria": "Música e Iluminação",
+        "id_fornecedor": "S4ZG0lNdqldwMfBKTITmZOs19Bi2",
+        "subcategorias": [
+            {
+                "idSubcategoria": "1761673760258",
+                "nomeSubcategoria": "Bandas e Músicos"
+            },
+            {
+                "idSubcategoria": "1761673777692",
+                "nomeSubcategoria": "Equipamentos de Som"
+            },
+            {
+                "idSubcategoria": "1761673797647",
+                "nomeSubcategoria": "Iluminação Cênica"
+            }
+        ]
+    },
+    {
+        "id_categoria": "0b5c0fee-2f33-4ae7-8b96-2bb25aedd669",
+        "data_cadastro": "2025-10-31 19:35:01",
+        "nome_categoria": "Música e Iluminação",
+        "id_fornecedor": "kbmYqRLc2zTvy8WgivXEjqavUcs2",
+        "subcategorias": [
+            {
+                "idSubcategoria": "1761673777692",
+                "nomeSubcategoria": "Equipamentos de Som"
+            },
+            {
+                "idSubcategoria": "1761673760258",
+                "nomeSubcategoria": "Bandas e Músicos"
+            }
+        ]
+    },
+    {
+        "subcategorias": [
+            {
+                "idSubcategoria": "1760932672539",
+                "nomeSubcategoria": "Cabelereiro e Penteado"
+            },
+            {
+                "idSubcategoria": "1761672969508",
+                "nomeSubcategoria": "Maquiagem Profissional"
+            },
+            {
+                "idSubcategoria": "1761672987404",
+                "nomeSubcategoria": "Barbearia"
+            }
+        ],
+        "id_fornecedor": "X8R9CYgohqdM2dhnnN6GAvN3O8z1",
+        "nome_categoria": "Beleza e Estética",
+        "data_atualizacao": "2025-11-07 02:39:49",
+        "id_categoria": "1760923921063"
+    },
+    {
+        "id_categoria": "1760923921063",
+        "data_cadastro": "2025-11-03 17:49:57",
+        "nome_categoria": "Beleza e Estética",
+        "id_fornecedor": "4vB9Cu4gybhaAJWEZ28jiiJcS5S2",
+        "subcategorias": [
+            {
+                "idSubcategoria": "1760932672539",
+                "nomeSubcategoria": "Cabelereiro e Penteado"
+            },
+            {
+                "idSubcategoria": "1761672969508",
+                "nomeSubcategoria": "Maquiagem Profissional"
+            },
+            {
+                "idSubcategoria": "1761672978643",
+                "nomeSubcategoria": "Cuidados Estéticos"
+            },
+            {
+                "idSubcategoria": "1761672987404",
+                "nomeSubcategoria": "Barbearia"
+            }
+        ]
+    },
+    {
+        "id_categoria": "1761673265007",
+        "data_cadastro": "2025-10-31 17:40:11",
+        "nome_categoria": "Transporte",
+        "id_fornecedor": "7JGfA120ZqXMJx0tJgh3zSz2Ewq1",
+        "subcategorias": [
+            {
+                "idSubcategoria": "1761673288334",
+                "nomeSubcategoria": "Carros de Luxo"
+            },
+            {
+                "idSubcategoria": "1761673280167",
+                "nomeSubcategoria": "Transporte Executivo"
+            }
+        ]
+    },
+    {
+        "subcategorias": [
+            {
+                "idSubcategoria": "1760932672539",
+                "nomeSubcategoria": "Cabelereiro e Penteado"
+            },
+            {
+                "idSubcategoria": "1761672969508",
+                "nomeSubcategoria": "Maquiagem Profissional"
+            },
+            {
+                "idSubcategoria": "1761672978643",
+                "nomeSubcategoria": "Cuidados Estéticos"
+            },
+            {
+                "idSubcategoria": "1761672987404",
+                "nomeSubcategoria": "Barbearia"
+            }
+        ],
+        "data_cadastro": "2025-10-29 04:51:18",
+        "nome_categoria": "Beleza e Estética",
+        "id_fornecedor": "EFA6yUNwSPPGJkYu0nnpekmTcmA2",
+        "id_categoria": "1760923921063"
+    }
+]

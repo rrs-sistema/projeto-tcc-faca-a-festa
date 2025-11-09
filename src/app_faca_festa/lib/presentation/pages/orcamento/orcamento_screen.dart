@@ -1180,7 +1180,7 @@ void _showAvaliacaoDialog(BuildContext context, OrcamentoModel orcamento) {
                             nomeFornecedor: orcamento.nomeFornecedor ?? '',
                             idCliente: usuario?.idUsuario ?? '',
                             nomeCliente: usuario?.nome ?? '',
-                            evento: eventoController.eventoAtual.value?.nome ?? '',
+                            evento: eventoController.eventoAtual.value?.nomeEvento ?? '',
                             nota: nota,
                             comentario: comentarioCtrl.text,
                             data: DateTime.now(),

@@ -139,7 +139,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                   scrollController: _scrollControllerHome,
                   child: ContadorEventoScreen(
                     dataEvento: eventoModel.data,
-                    tipoEvento: tipoEventoModel?.nome ?? eventoModel.nome,
+                    tipoEvento: tipoEventoModel?.nome ?? eventoModel.nomeEvento,
                     scrollController: _scrollControllerHome,
                   ),
                 ),
@@ -407,7 +407,7 @@ Widget _buildAnimatedHeader(EventThemeController theme) {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      evento?.nome ?? 'Seu evento especial',
+                      evento?.nomeEvento ?? 'Seu evento especial',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: isCelular ? 14 : 18,

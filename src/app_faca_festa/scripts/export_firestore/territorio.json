@@ -1,0 +1,88 @@
+[
+    {
+        "raio_km": 100.0,
+        "id_fornecedor": "S4ZG0lNdqldwMfBKTITmZOs19Bi2",
+        "descricao": "Atende Curitiba e Região Metropolitana",
+        "regioes": null,
+        "tipo_cobertura": "raio",
+        "ativo": true,
+        "id_territorio": "305f397d-7cc1-4bf5-902a-ad90ba1758e3",
+        "latitude": -25.53424015419184,
+        "longitude": -49.20666430122461
+    },
+    {
+        "raio_km": 97.0,
+        "id_fornecedor": "paZJsxinFMbfesof3wIpkkRuk823",
+        "descricao": "Maringa e Região",
+        "regioes": null,
+        "tipo_cobertura": "raio",
+        "ativo": true,
+        "id_territorio": "3ad6f4bb-5955-451d-885e-ee56261e7a67",
+        "latitude": -23.42032270957822,
+        "longitude": -51.945841057769876
+    },
+    {
+        "raio_km": null,
+        "id_fornecedor": "4vB9Cu4gybhaAJWEZ28jiiJcS5S2",
+        "descricao": "Território 3/11",
+        "regioes": [
+            "-25.35154792375619,-49.47688846355111",
+            "-25.45417738116319,-49.57399480252019",
+            "-25.6749281655594,-49.52641269642534",
+            "-25.70993050642927,-49.3147208774727",
+            "-25.675803349441157,-49.14964010122553",
+            "-25.543577890874293,-49.05836014259457",
+            "-25.3629555063387,-49.040881001580374",
+            "-25.253222672177216,-49.30209705340724"
+        ],
+        "tipo_cobertura": "regiao",
+        "ativo": true,
+        "id_territorio": "75d767db-548e-4132-8413-2d955e401e73",
+        "latitude": null,
+        "longitude": null
+    },
+    {
+        "raio_km": 25,
+        "id_fornecedor": "X8R9CYgohqdM2dhnnN6GAvN3O8z1",
+        "descricao": "Atendendo Curitiba e Região",
+        "id_territorio": "XdjzI7YGwAoVBLCJsXsr",
+        "ativo": true,
+        "latitude": -25.494,
+        "longitude": -49.291
+    },
+    {
+        "raio_km": 70.0,
+        "id_fornecedor": "7JGfA120ZqXMJx0tJgh3zSz2Ewq1",
+        "descricao": "Atende Curitba e São José dos Pinhais",
+        "regioes": [
+            "Local desconhecido"
+        ],
+        "tipo_cobertura": "raio",
+        "ativo": true,
+        "id_territorio": "dc90bf20-027f-404e-bad8-8fe4a7ae6f24_0",
+        "latitude": -25.58645029184216,
+        "longitude": -49.40666053199418
+    },
+    {
+        "raio_km": null,
+        "id_fornecedor": "BPmLOaDwf7gr05AfJG4V2OZKZX12",
+        "descricao": "Distribuição por região",
+        "regioes": [
+            "-25.23629964756138,-49.33987256082551",
+            "-25.326739327138707,-49.4903873862276",
+            "-25.44605137623036,-49.557390760116284",
+            "-25.547724223769293,-49.53796949232246",
+            "-25.616042013747535,-49.38259934997191",
+            "-25.616042013747535,-49.26510067981929",
+            "-25.550352551970438,-49.12138329814503",
+            "-25.421496772255757,-49.03204546629346",
+            "-25.28460106970363,-49.01359526188932",
+            "-25.207309576537487,-49.1456598828873"
+        ],
+        "tipo_cobertura": "regiao",
+        "id_territorio": "e81aee62-533c-45b0-8b0b-29a8df8fef24",
+        "ativo": true,
+        "latitude": null,
+        "longitude": null
+    }
+]

@@ -1,0 +1,234 @@
+[
+    {
+        "descricao": "Montagem de painéis e balões para todos os eventos",
+        "id": "1761675100047",
+        "ativo": true,
+        "tipo_medida": "P",
+        "id_subcategoria": "3bc4092c-435f-4bc6-be39-de0e94ef8e50",
+        "nome": "Montagem de painéis e balões"
+    },
+    {
+        "descricao": "Cabine de fotos instantâneas com moldura personalizada",
+        "id": "1761675196036",
+        "ativo": true,
+        "tipo_medida": "D",
+        "id_subcategoria": "1761673592400",
+        "nome": "Cabine de fotos instantâneas com moldura personalizada"
+    },
+    {
+        "descricao": "Locação de caixas de som e microfones",
+        "id": "1761675638299",
+        "ativo": true,
+        "tipo_medida": "D",
+        "id_subcategoria": "1761673777692",
+        "nome": "Locação de caixas de som e microfones"
+    },
+    {
+        "descricao": "Iluminação de pista e ambientação",
+        "id": "1761675661136",
+        "ativo": true,
+        "tipo_medida": "D",
+        "id_subcategoria": "1761673797647",
+        "nome": "Iluminação de pista e ambientação"
+    },
+    {
+        "descricao": "Efeitos de fumaça e laser",
+        "id": "1761675682833",
+        "ativo": true,
+        "tipo_medida": "D",
+        "id_subcategoria": "1761673797647",
+        "nome": "Efeitos de fumaça e laser"
+    },
+    {
+        "descricao": "Cerimonial completo (pré, durante e pós-evento)",
+        "id": "1761676002265",
+        "ativo": true,
+        "tipo_medida": "H",
+        "id_subcategoria": "1761674078610",
+        "nome": "Cerimonial completo (pré, durante e pós-evento)"
+    },
+    {
+        "descricao": "Corte de cabelo em geral",
+        "id": "1761875269254",
+        "ativo": true,
+        "id_subcategoria": "1760932672539",
+        "nome": "Corte Unissex",
+        "tipo_medida": "U"
+    },
+    {
+        "descricao": "Corte de cabelo masculino",
+        "id": "1761875365937",
+        "ativo": true,
+        "id_subcategoria": "1761672987404",
+        "nome": "Corte masculino",
+        "tipo_medida": "U"
+    },
+    {
+        "descricao": "Make social geral",
+        "id": "1761875398061",
+        "ativo": true,
+        "id_subcategoria": "1761672969508",
+        "nome": "Make social",
+        "tipo_medida": "U"
+    },
+    {
+        "descricao": "Locação: Salões, sítios, chácaras, auditórios",
+        "id": "1761875536019",
+        "ativo": true,
+        "id_subcategoria": "1761673175394",
+        "nome": "Salões, sítios, chácaras, auditórios",
+        "tipo_medida": "D"
+    },
+    {
+        "descricao": "Locação de Mesas, toalhas, louças, utensílios",
+        "id": "1761875593018",
+        "ativo": true,
+        "id_subcategoria": "1761673186978",
+        "nome": "Mesas, toalhas, louças, utensílio",
+        "tipo_medida": "U"
+    },
+    {
+        "descricao": "Locação de motorista particular",
+        "id": "1761875630569",
+        "ativo": true,
+        "id_subcategoria": "1761673280167",
+        "nome": "Motorista particular",
+        "tipo_medida": "D"
+    },
+    {
+        "descricao": "Locação de carros temáticos, decoração inclusa",
+        "id": "1761875667928",
+        "ativo": true,
+        "id_subcategoria": "1761673288334",
+        "nome": "Carros temáticos, decoração inclusa",
+        "tipo_medida": "D"
+    },
+    {
+        "descricao": "Design e impressão de convites e lembranças",
+        "id": "1761884436433",
+        "ativo": true,
+        "id_subcategoria": "1761673447533",
+        "nome": "Impressos, digitais, com acabamento especial",
+        "tipo_medida": "U"
+    },
+    {
+        "descricao": "Adesivos, toppers personalizados",
+        "id": "1761884482694",
+        "ativo": true,
+        "id_subcategoria": "1761673454745",
+        "nome": "Adesivos, toppers personalizados",
+        "tipo_medida": "U"
+    },
+    {
+        "descricao": "Personalizadas, sustentáveis, temáticas",
+        "id": "1761884500077",
+        "ativo": true,
+        "id_subcategoria": "1761673463610",
+        "nome": "Personalizadas, sustentáveis, temáticas",
+        "tipo_medida": "U"
+    },
+    {
+        "descricao": "Album encadernado, livro de assinaturas",
+        "id": "1761884518309",
+        "ativo": true,
+        "id_subcategoria": "1761673472809",
+        "tipo_medida": "U",
+        "nome": "Album encadernado, livro de assinaturas"
+    },
+    {
+        "descricao": "Infantil, casamento, corporativo",
+        "id": "1761884685166",
+        "ativo": true,
+        "id_subcategoria": "1761673391822",
+        "nome": "Infantil, casamento, corporativo",
+        "tipo_medida": "U"
+    },
+    {
+        "descricao": "Balões, painéis 3D",
+        "id": "1761884716982",
+        "ativo": true,
+        "id_subcategoria": "1761673400239",
+        "nome": "Balões, painéis 3D",
+        "tipo_medida": "U"
+    },
+    {
+        "descricao": "Som, luz, projeção",
+        "id": "1761884805538",
+        "ativo": true,
+        "id_subcategoria": "1761674254303",
+        "nome": "Som, luz, projeção",
+        "tipo_medida": "U"
+    },
+    {
+        "descricao": "Painel de LED, montagem de palco",
+        "id": "1761884839631",
+        "ativo": true,
+        "id_subcategoria": "d3c555da-6491-424c-8d57-4db07188cc9e",
+        "nome": "Painel de LED, montagem de palco",
+        "tipo_medida": "D"
+    },
+    {
+        "descricao": "Coffee break, coquetel, jantar executivo",
+        "id": "1761884862181",
+        "ativo": true,
+        "id_subcategoria": "1761674269687",
+        "nome": "Coffee break, coquetel, jantar executivo",
+        "tipo_medida": "P"
+    },
+    {
+        "descricao": "Jantares, coquetéis, coffee breaks",
+        "id": "1761927003652",
+        "ativo": true,
+        "id_subcategoria": "d53c30bf-e790-4849-b40f-40358e90af68",
+        "nome": "Jantares, coquetéis, coffee breaks",
+        "tipo_medida": "P"
+    },
+    {
+        "descricao": "Mini salgados, doces finos, personalizados",
+        "id": "1761927027883",
+        "ativo": true,
+        "id_subcategoria": "1761673021428",
+        "nome": "Mini salgados, doces finos, personalizados",
+        "tipo_medida": "P"
+    },
+    {
+        "descricao": "Bolo principal, mini bolos, tortas",
+        "id": "1761928125187",
+        "ativo": true,
+        "id_subcategoria": "1761673028470",
+        "nome": "Bolo principal, mini bolos, tortas",
+        "tipo_medida": "P"
+    },
+    {
+        "descricao": "Drinks, bar de caipirinhas, refrigerantes",
+        "id": "1761928156729",
+        "ativo": true,
+        "id_subcategoria": "1761673040023",
+        "nome": "Drinks, bar de caipirinhas, refrigerantes",
+        "tipo_medida": "P"
+    },
+    {
+        "descricao": "Pipoca, algodão doce, churros",
+        "id": "1761928171481",
+        "ativo": true,
+        "id_subcategoria": "1761673081975",
+        "nome": "Pipoca, algodão doce, churros",
+        "tipo_medida": "P"
+    },
+    {
+        "descricao": "Ensaio pré-evento para todos os eventos.",
+        "id": "9d95c062-dc90-45e3-a2e6-cc620842059f",
+        "ativo": true,
+        "tipo_medida": "H",
+        "id_subcategoria": "8847a156-8823-4733-9c0e-69d94531d92a",
+        "nome": "Ensaio pré-evento"
+    },
+    {
+        "descricao": "DJs",
+        "id": "bac73f82-319d-44b5-9359-7b5e7674cc1c",
+        "ativo": true,
+        "tipo_medida": "H",
+        "id_subcategoria": "1761673760258",
+        "nome": "DJs"
+    }
+]

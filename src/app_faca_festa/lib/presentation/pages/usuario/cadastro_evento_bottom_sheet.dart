@@ -19,8 +19,9 @@ Future<void> showCadastroEventoBottomSheet(
 }) async {
   final controller = Get.find<EventoCadastroController>();
   final theme = Get.find<EventThemeController>();
-
+  EasyLoading.show(status: 'Carregando informações...');
   // 🔹 Carrega tipos de evento antes de abrir o formulário
+
   await controller.carregarTiposEvento();
 
   // 🔹 Se estiver editando, carrega os dados do evento
@@ -40,6 +41,7 @@ Future<void> showCadastroEventoBottomSheet(
           .trim() ??
       '';
 
+  EasyLoading.dismiss();
   // ===============================
   // 🔹 ABRE O BOTTOM SHEET
   // ===============================
@@ -233,6 +235,38 @@ List<Widget> _buildCamposPorTipo(
       },
       //(_) => controller.atualizarPreview(),
     ),
+
+    if (tipoNormalizado == 'aniversário' || tipoNormalizado == 'aniversario') ...[
+      CustomInputField(
+        label: "Nome do(a) aniversariante",
+        icon: Icons.cake_rounded,
+        controller: controller.nomePessoalPrincipal,
+        color: corPrincipal,
+        validator: (v) => v!.isEmpty ? "Informe o nome do(a) aniversariante" : null,
+        onChanged: (_) => controller.atualizarPreview(),
+      ),
+    ],
+
+    if (tipoNormalizado == 'formatura' || tipoNormalizado == 'evento formatura') ...[
+      CustomInputField(
+        label: "Nome do(a) formando(a)",
+        icon: Icons.school_rounded,
+        controller: controller.nomePessoalPrincipal,
+        color: corPrincipal,
+        validator: (v) => v!.isEmpty ? "Informe o nome do(a) formando(a)" : null,
+        onChanged: (_) => controller.atualizarPreview(),
+      ),
+    ],
+    if (tipoNormalizado == 'corporativo' || tipoNormalizado == 'evento corporativo') ...[
+      CustomInputField(
+        label: "Nome da empresa ou setor",
+        icon: Icons.business_rounded,
+        controller: controller.nomePessoalPrincipal,
+        color: corPrincipal,
+        validator: (v) => v!.isEmpty ? "Informe o nome da empresa ou setor" : null,
+        onChanged: (_) => controller.atualizarPreview(),
+      ),
+    ],
 
     if (tipoNormalizado == 'casamento') ...[
       CustomInputField(

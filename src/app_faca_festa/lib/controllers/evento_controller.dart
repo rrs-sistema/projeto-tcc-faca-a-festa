@@ -107,7 +107,7 @@ class EventoController extends GetxController {
 
         // Evita reinicialização desnecessária
         if (eventoAtual.value == null || evento.idEvento != eventoAtual.value!.idEvento) {
-          debugPrint("🔁 [EventoController] Evento detectado/atualizado: ${evento.nome}");
+          debugPrint("🔁 [EventoController] Evento detectado/atualizado: ${evento.nomeEvento}");
           await _inicializarEvento(evento);
         }
       } else {
@@ -123,7 +123,7 @@ class EventoController extends GetxController {
   /// =====================================================
   Future<void> _inicializarEvento(EventoModel evento) async {
     try {
-      debugPrint("🎯 [EventoController] Inicializando evento: ${evento.nome}");
+      debugPrint("🎯 [EventoController] Inicializando evento: ${evento.nomeEvento}");
       await _cancelarEscutas();
 
       eventoAtual.value = evento;
@@ -145,7 +145,7 @@ class EventoController extends GetxController {
           eventoAtual.value = eventoAtualizado;
 
           debugPrint(
-              "🔄 [EventoController] Evento atualizado em tempo real: ${eventoAtualizado.nome}");
+              "🔄 [EventoController] Evento atualizado em tempo real: ${eventoAtualizado.nomeEvento}");
         }
       });
 
@@ -166,7 +166,7 @@ class EventoController extends GetxController {
       _tarefasSub = tarefaController.listenTarefas(evento.idEvento).asStream().listen((_) {});
 
       debugPrint(
-          "✅ [EventoController] Evento '${evento.nome}' inicializado com sucesso e escutando alterações.");
+          "✅ [EventoController] Evento '${evento.nomeEvento}' inicializado com sucesso e escutando alterações.");
     } catch (e, s) {
       debugPrint("❌ [EventoController] Erro ao inicializar evento: $e\n$s");
     }

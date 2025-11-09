@@ -240,12 +240,12 @@ class AppController extends GetxController {
             final evento = eventoController.eventoAtual.value;
 
             if (evento != null) {
-              debugPrint('🔹 Carregando dados do evento ${evento.nome}...');
+              debugPrint('🔹 Carregando dados do evento ${evento.nomeEvento}...');
               fornecedorController.carregarServicosPorEvento(evento.idEvento);
               await orcamentoController.carregarOrcamentosDoEvento(evento.idEvento);
               cotacaoController.ouvirMinhasCotacoes();
 
-              debugPrint('✅ Evento ${evento.nome} carregado com sucesso!');
+              debugPrint('✅ Evento ${evento.nomeEvento} carregado com sucesso!');
               destino = HomeEventScreen();
             } else {
               Lottie.asset(

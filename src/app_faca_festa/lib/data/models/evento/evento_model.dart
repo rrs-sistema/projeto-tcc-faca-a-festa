@@ -55,7 +55,9 @@ class EventoModel {
   final String? bairro;
 
   // 📅 Informações gerais
-  final String nome;
+  final String? nomePessoalPrincipal;
+  final String nomeEvento;
+
   final String localEvento;
   final DateTime data;
   final String? hora;
@@ -95,9 +97,10 @@ class EventoModel {
     required this.idEvento,
     required this.idTipoEvento,
     required this.idUsuario,
-    required this.nome,
+    required this.nomeEvento,
     required this.localEvento,
     required this.data,
+    this.nomePessoalPrincipal,
     this.idCidade,
     this.nomeCidade,
     this.uf,
@@ -141,7 +144,8 @@ class EventoModel {
       'id_cidade': idCidade,
       'nome_cidade': nomeCidade,
       'uf': uf,
-      'nome': nome,
+      'nome_pessoa_principal': nomePessoalPrincipal,
+      'nome_evento': nomeEvento,
       'data': Timestamp.fromDate(data),
       'hora': hora,
       'custo_estimado': custoEstimado,
@@ -187,7 +191,8 @@ class EventoModel {
       idCidade: map['id_cidade']?.toString(),
       nomeCidade: map['nome_cidade'],
       uf: map['uf'],
-      nome: map['nome'] ?? '',
+      nomeEvento: map['nome_evento'] ?? '',
+      nomePessoalPrincipal: map['nome_pessoa_principal'] ?? '',
       localEvento: map['local_evento'] ?? map['logradouro'],
       data: map['data'] is Timestamp
           ? (map['data'] as Timestamp).toDate()
@@ -248,7 +253,8 @@ class EventoModel {
     String? idCidade,
     String? nomeCidade,
     String? uf,
-    String? nome,
+    String? nomeEvento,
+    String? nomePessoalPrincipal,
     String? localEvento,
     DateTime? data,
     String? hora,
@@ -286,7 +292,8 @@ class EventoModel {
       idCidade: idCidade ?? this.idCidade,
       nomeCidade: nomeCidade ?? this.nomeCidade,
       uf: uf ?? this.uf,
-      nome: nome ?? this.nome,
+      nomePessoalPrincipal: nomePessoalPrincipal ?? this.nomePessoalPrincipal,
+      nomeEvento: nomeEvento ?? this.nomeEvento,
       localEvento: localEvento ?? this.localEvento,
       data: data ?? this.data,
       hora: hora ?? this.hora,

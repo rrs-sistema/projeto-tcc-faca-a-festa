@@ -1,0 +1,56 @@
+[
+    {
+        "data_prevista": "2025-10-22 16:47:57",
+        "descricao": "preciso descascar as frutas",
+        "data_cadastro": "2025-10-22 16:48:19",
+        "id_tarefa": "34faf783-e1e4-4f45-9da4-5066bac25114",
+        "status": "a_fazer",
+        "titulo": "descascar as frutas",
+        "id_evento": "1761151562979",
+        "id_evento_evento": "1761151562979",
+        "id_responsavel": "CT7zhUeCzOQtsVgWsaTGqcjXpWr1"
+    },
+    {
+        "data_prevista": "2025-11-30 03:00:00",
+        "descricao": "Criar toda a documentação necessária para a aplicação rodar no Brasil sem burocracia",
+        "data_cadastro": "2025-10-19 05:34:34",
+        "id_tarefa": "3d585fc4-4ddc-400e-89eb-6f8b50b95d8a",
+        "status": "concluida",
+        "titulo": "Fazer a documentação da aplicação",
+        "id_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
+        "id_evento_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
+        "id_responsavel": "EATtE19nmrNvgpE88XIzqDhXBox1"
+    },
+    {
+        "data_prevista": "2025-11-15 03:00:00",
+        "descricao": "Verificar e pagar menor valor dos custos das documentações do cartório.",
+        "data_cadastro": "2025-11-06 18:22:05",
+        "id_tarefa": "52c3a33b-12da-410f-8451-4c7a30b31f7e",
+        "status": "a_fazer",
+        "titulo": "Custos das documentação do cartório",
+        "id_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
+        "id_responsavel": "FEulequMiDQDdfuO4HVPY4X6D6X2"
+    },
+    {
+        "data_cadastro": "2025-10-19 05:56:51",
+        "descricao": "Recriar a aplicação aplicando TDD.",
+        "data_prevista": "2026-04-30 03:00:00",
+        "id_tarefa": "ab2b2303-0827-4fa5-87c2-8cfffca9dce7",
+        "status": "concluida",
+        "titulo": "Recriar a aplicação",
+        "id_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
+        "id_evento_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
+        "id_responsavel": "EL6kMxlA03MD32w1NxFU7Jxthz83"
+    },
+    {
+        "data_cadastro": "2025-10-19 05:10:41",
+        "descricao": "Usando o modelo Clean Architecture construa o modelo inteiro da aplicação. Update Acsa!",
+        "data_prevista": "2025-12-20 03:00:00",
+        "id_tarefa": "b0d44812-fd5e-42c8-89ec-05874cecdd16",
+        "status": "concluida",
+        "titulo": "Criar a parte do model",
+        "id_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
+        "id_evento_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
+        "id_responsavel": "CT7zhUeCzOQtsVgWsaTGqcjXpWr1"
+    }
+]

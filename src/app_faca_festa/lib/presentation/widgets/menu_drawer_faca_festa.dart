@@ -1,3 +1,4 @@
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -78,12 +79,20 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                 children: [
                   _menuItem(Icons.event_note, "Meu Evento", color: primary, onTap: () {
                     final evento = eventoController.eventoAtual.value;
-                    if (evento != null) {
-                      eventoCadastroController.carregarEvento(evento);
-                      Get.back(); // fecha a tela atual
-                      Future.delayed(const Duration(milliseconds: 200), () {
-                        showCadastroEventoBottomSheet(Get.context!, eventoParaEdicao: evento);
-                      });
+                    try {
+                      if (evento != null) {
+                        Get.back(); // fecha a tela atual
+                        EasyLoading.show(status: 'Carregando informações...');
+                        eventoCadastroController.carregarEvento(evento);
+
+                        Future.delayed(const Duration(milliseconds: 200), () {
+                          showCadastroEventoBottomSheet(Get.context!, eventoParaEdicao: evento);
+                        });
+                      }
+                    } catch (e) {
+                      EasyLoading.dismiss();
+                    } finally {
+                      EasyLoading.dismiss();
                     }
                   }),
                   _menuItem(Icons.group, "Convidados", color: primary),

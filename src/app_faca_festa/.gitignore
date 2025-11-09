@@ -64,6 +64,9 @@
 # 🔒 IGNORAR CHAVES PRIVADAS:
 firebase-debug.log
 /secrets/
+# 🔒 Ignorar credenciais do Firebase usadas em scripts locais
+credenciais.json
+scripts/credenciais.json
 
 # ============================
 # IDEs

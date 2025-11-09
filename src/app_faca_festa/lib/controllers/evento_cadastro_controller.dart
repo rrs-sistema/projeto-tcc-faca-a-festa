@@ -4,7 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
-import '../presentation/pages/endereco/endereco_section_controller.dart';
+import './../presentation/pages/endereco/endereco_section_controller.dart';
 import './../controllers/app_controller.dart';
 import './../data/models/model.dart';
 
@@ -24,6 +24,7 @@ class EventoCadastroController extends GetxController {
   /// ===============================
   final idEvento = ''.obs;
   final nomeEvento = TextEditingController();
+  final nomePessoalPrincipal = TextEditingController();
   final localEvento = TextEditingController();
   final nomeNoiva = TextEditingController();
   final parceiro = TextEditingController();
@@ -141,10 +142,12 @@ class EventoCadastroController extends GetxController {
 // 🔹 CARREGAR EVENTO EXISTENTE (EDIÇÃO)
 // ===============================
   void carregarEvento(EventoModel evento) {
+    carregando.value = false;
     final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
     idEvento.value = evento.idEvento;
-    nomeEvento.text = evento.nome;
+    nomeEvento.text = evento.nomeEvento;
+    nomePessoalPrincipal.text = evento.nomePessoalPrincipal ?? '';
     nomeNoiva.text = evento.nomeNoiva ?? evento.nomeAniversariante ?? '';
     parceiro.text = evento.nomeNoivo ?? '';
     tema.text = evento.tema ?? '';
@@ -259,7 +262,6 @@ class EventoCadastroController extends GetxController {
       return;
     }
 
-    carregando.value = true;
     try {
       final user = app.usuarioLogado.value;
       if (user == null) throw Exception('Usuário não autenticado.');
@@ -278,6 +280,9 @@ class EventoCadastroController extends GetxController {
       // ✅ Endereço
       final end = enderecoController.value;
       final endereco = end.toModel(user.idUsuario);
+      if (!_validarCamposEnderecor(endereco)) return;
+
+      carregando.value = true;
 
       // ⚙️ Mapeamento da cidade e estado
       final idCidade = end.ufCidadeController.idCidadeSelecionada?.toString();
@@ -291,9 +296,10 @@ class EventoCadastroController extends GetxController {
         idEvento: idEvento.value.isEmpty ? uuid.v4() : idEvento.value,
         idTipoEvento: tipoAtual.idTipoEvento,
         idUsuario: user.idUsuario,
-        nome: nomeEvento.text.trim().isNotEmpty
+        nomeEvento: nomeEvento.text.trim().isNotEmpty
             ? nomeEvento.text.trim()
             : nomeEventoPreview.value.trim(),
+        nomePessoalPrincipal: nomePessoalPrincipal.text,
         localEvento: localEvento.text.trim(),
         custoEstimado: valor,
         data: dataCompleta,
@@ -367,6 +373,53 @@ class EventoCadastroController extends GetxController {
     if (!manterEndereco) {
       enderecoController.value.limpar();
     }
+  }
+
+  bool _validarCamposEnderecor(EnderecoUsuarioModel endereco) {
+    // ------------------------------
+    // 🔹 Endereço
+    // ------------------------------
+    if (endereco.cep.isEmpty) {
+      _showError('Informe o CEP');
+      return false;
+    }
+    if (endereco.logradouro.isEmpty) {
+      _showError('Informe o endereço completo');
+      return false;
+    }
+    if (endereco.numero.isEmpty) {
+      _showError('Informe o número do enredeço');
+      return false;
+    }
+    if (endereco.bairro == null || endereco.bairro!.isEmpty) {
+      _showError('Informe o bairro');
+      return false;
+    }
+    if (endereco.uf == null || endereco.uf!.isEmpty) {
+      _showError('Informe o estado (UF)');
+      return false;
+    }
+    if (endereco.nomeCidade == null || endereco.nomeCidade!.isEmpty) {
+      _showError('Informe a cidade');
+      return false;
+    }
+
+    return true;
+  }
+
+  /// 🔹 Exibe mensagens elegantes de erro
+  void _showError(String mensagem) {
+    Get.snackbar(
+      'Verificação necessária',
+      mensagem,
+      backgroundColor: Colors.red.shade600.withValues(alpha: 0.95),
+      colorText: Colors.white,
+      snackPosition: SnackPosition.TOP,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      borderRadius: 12,
+      icon: const Icon(Icons.warning_amber_rounded, color: Colors.white),
+      duration: const Duration(seconds: 3),
+    );
   }
 
   // ===============================

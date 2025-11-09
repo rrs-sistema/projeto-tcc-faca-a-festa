@@ -1,0 +1,62 @@
+[
+    {
+        "descricao": "DJ para festa / casamento / formatura - Banda ao vivo ou voz e violão",
+        "id": "0b5c0fee-2f33-4ae7-8b96-2bb25aedd669",
+        "ativo": true,
+        "nome": "Música e Iluminação"
+    },
+    {
+        "descricao": "Aqui nós oferecemos: Cabeleireiros, Estética, Maquiagem, Relaxamento entre outros",
+        "id": "1760923921063",
+        "ativo": true,
+        "nome": "Beleza e Estética"
+    },
+    {
+        "descricao": "Locação de Espaço - Locação de Mesas e Cadeiras - Tendas e Coberturas",
+        "id": "1761673162365",
+        "ativo": true,
+        "nome": "Espaço e Estrutura"
+    },
+    {
+        "descricao": "Aluguel de carro para noiva - Transporte de convidados",
+        "id": "1761673265007",
+        "ativo": true,
+        "nome": "Transporte"
+    },
+    {
+        "descricao": "Design e impressão de convites físicos e digitais",
+        "id": "1761673435226",
+        "ativo": true,
+        "nome": "Papelaria e Lembranças"
+    },
+    {
+        "descricao": "Cerimonial completo (pré, durante e pós-evento)",
+        "id": "1761674055649",
+        "ativo": true,
+        "nome": "Assessoria e Produção de Eventos"
+    },
+    {
+        "descricao": "Comidas, bebidas e atendimento",
+        "id": "3cbc7cb4-5538-4ce0-9313-36e35bb2834a",
+        "ativo": true,
+        "nome": "Buffet e Gastronomia"
+    },
+    {
+        "descricao": "Cobertura visual do evento",
+        "nome": "Fotografia e Filmagem",
+        "ativo": true,
+        "id": "50d5aac7-8831-4fca-bfe3-cc2c1f94b509"
+    },
+    {
+        "descricao": "Painel de LED e telão - Som e iluminação profissional - Buffet e coquetel corporativo",
+        "id": "5fd47622-8e80-4477-a86c-f4d9c4422164",
+        "ativo": true,
+        "nome": "Formaturas e Eventos Corporativos"
+    },
+    {
+        "descricao": "Flores, locação e design de ambientes",
+        "id": "d59ec1ca-2267-4cd1-89c8-5ad0712d450c",
+        "ativo": true,
+        "nome": "Decoração"
+    }
+]

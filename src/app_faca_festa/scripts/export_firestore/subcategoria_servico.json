@@ -1,0 +1,338 @@
+[
+    {
+        "descricao": "Aqui nós oferecemos cabeleireiros masculino e feminino",
+        "id": "1760932672539",
+        "ativo": true,
+        "nome": "Cabelereiro e Penteado",
+        "id_categoria": "1760923921063"
+    },
+    {
+        "descricao": "Decoração Personalizada",
+        "id": "1761672773772",
+        "ativo": true,
+        "nome": "Decoração Personalizada",
+        "id_categoria": "d59ec1ca-2267-4cd1-89c8-5ad0712d450c"
+    },
+    {
+        "descricao": "Locação de Itens Decorativos",
+        "id": "1761672923479",
+        "ativo": true,
+        "nome": "Locação de Itens Decorativos",
+        "id_categoria": "d59ec1ca-2267-4cd1-89c8-5ad0712d450c"
+    },
+    {
+        "descricao": "Maquiagem Profissional",
+        "id": "1761672969508",
+        "ativo": true,
+        "nome": "Maquiagem Profissional",
+        "id_categoria": "1760923921063"
+    },
+    {
+        "descricao": "Cuidados Estéticos",
+        "id": "1761672978643",
+        "ativo": true,
+        "nome": "Cuidados Estéticos",
+        "id_categoria": "1760923921063"
+    },
+    {
+        "descricao": "Barbearia",
+        "id": "1761672987404",
+        "ativo": true,
+        "nome": "Barbearia",
+        "id_categoria": "1760923921063"
+    },
+    {
+        "descricao": "Salgados e Doces",
+        "id": "1761673021428",
+        "ativo": true,
+        "nome": "Salgados e Doces",
+        "id_categoria": "3cbc7cb4-5538-4ce0-9313-36e35bb2834a"
+    },
+    {
+        "descricao": "Bolo e Sobremesas",
+        "id": "1761673028470",
+        "ativo": true,
+        "nome": "Bolo e Sobremesas",
+        "id_categoria": "3cbc7cb4-5538-4ce0-9313-36e35bb2834a"
+    },
+    {
+        "descricao": "Bebidas",
+        "id": "1761673040023",
+        "ativo": true,
+        "nome": "Bebidas",
+        "id_categoria": "3cbc7cb4-5538-4ce0-9313-36e35bb2834a"
+    },
+    {
+        "descricao": "Carrinhos Temáticos",
+        "id": "1761673081975",
+        "ativo": true,
+        "nome": "Carrinhos Temáticos",
+        "id_categoria": "3cbc7cb4-5538-4ce0-9313-36e35bb2834a"
+    },
+    {
+        "descricao": "Locação de Espaço",
+        "id": "1761673175394",
+        "ativo": true,
+        "nome": "Locação de Espaço",
+        "id_categoria": "1761673162365"
+    },
+    {
+        "descricao": "Locação de Mesas e Cadeiras",
+        "id": "1761673186978",
+        "ativo": true,
+        "nome": "Locação de Mesas e Cadeiras",
+        "id_categoria": "1761673162365"
+    },
+    {
+        "descricao": "Tendas e Coberturas",
+        "id": "1761673195296",
+        "ativo": true,
+        "nome": "Tendas e Coberturas",
+        "id_categoria": "1761673162365"
+    },
+    {
+        "descricao": "Geradores e Equipamentos",
+        "id": "1761673202507",
+        "ativo": true,
+        "nome": "Geradores e Equipamentos",
+        "id_categoria": "1761673162365"
+    },
+    {
+        "descricao": "alão de festas / sítios / chácaras",
+        "id": "1761673211096",
+        "ativo": true,
+        "nome": "alão de festas / sítios / chácaras",
+        "id_categoria": "1761673162365"
+    },
+    {
+        "descricao": "Aluguel de mesas, cadeiras, toalhas e louças",
+        "id": "1761673218130",
+        "ativo": true,
+        "nome": "Aluguel de mesas, cadeiras, toalhas e louças",
+        "id_categoria": "1761673162365"
+    },
+    {
+        "descricao": "Tendas e cobertura externa",
+        "id": "1761673224551",
+        "ativo": true,
+        "nome": "Tendas e cobertura externa",
+        "id_categoria": "1761673162365"
+    },
+    {
+        "descricao": "Palcos e tablados",
+        "id": "1761673231215",
+        "ativo": true,
+        "nome": "Palcos e tablados",
+        "id_categoria": "1761673162365"
+    },
+    {
+        "descricao": "Transporte Executivo",
+        "id": "1761673280167",
+        "ativo": true,
+        "nome": "Transporte Executivo",
+        "id_categoria": "1761673265007"
+    },
+    {
+        "descricao": "Carros de Luxo",
+        "id": "1761673288334",
+        "ativo": true,
+        "nome": "Carros de Luxo",
+        "id_categoria": "1761673265007"
+    },
+    {
+        "descricao": "Vans e Micro-ônibus",
+        "id": "1761673297233",
+        "ativo": true,
+        "nome": "Vans e Micro-ônibus",
+        "id_categoria": "1761673265007"
+    },
+    {
+        "descricao": "Aluguel de carro para noiva",
+        "id": "1761673306202",
+        "ativo": true,
+        "nome": "Aluguel de carro para noiva",
+        "id_categoria": "1761673265007"
+    },
+    {
+        "descricao": "Transporte de convidados",
+        "id": "1761673318403",
+        "ativo": true,
+        "nome": "Transporte de convidados",
+        "id_categoria": "1761673265007"
+    },
+    {
+        "descricao": "Vans para eventos corporativos",
+        "id": "1761673325402",
+        "ativo": true,
+        "nome": "Vans para eventos corporativos",
+        "id_categoria": "1761673265007"
+    },
+    {
+        "descricao": "Decoração temática infantil / casamento / corporativa",
+        "id": "1761673391822",
+        "ativo": true,
+        "nome": "Decoração temática",
+        "id_categoria": "d59ec1ca-2267-4cd1-89c8-5ad0712d450c"
+    },
+    {
+        "descricao": "Montagem de painéis e balões",
+        "id": "1761673400239",
+        "ativo": true,
+        "nome": "Montagem de painéis e balões",
+        "id_categoria": "d59ec1ca-2267-4cd1-89c8-5ad0712d450c"
+    },
+    {
+        "descricao": "Flores e Arranjos",
+        "id": "1761673407907",
+        "ativo": true,
+        "nome": "Flores e Arranjos",
+        "id_categoria": "d59ec1ca-2267-4cd1-89c8-5ad0712d450c"
+    },
+    {
+        "descricao": "Locação de vasos, arcos, mobiliário e cenários",
+        "id": "1761673418508",
+        "ativo": true,
+        "nome": "Locação de vasos, arcos, mobiliário e cenários",
+        "id_categoria": "d59ec1ca-2267-4cd1-89c8-5ad0712d450c"
+    },
+    {
+        "descricao": "Design e impressão de convites físicos e digitais",
+        "id": "1761673447533",
+        "ativo": true,
+        "nome": "Convites",
+        "id_categoria": "1761673435226"
+    },
+    {
+        "descricao": "Tags e toppers decorativos",
+        "id": "1761673454745",
+        "ativo": true,
+        "nome": "Tags e Toppers",
+        "id_categoria": "1761673435226"
+    },
+    {
+        "descricao": "Lembrancinhas personalizadas",
+        "id": "1761673463610",
+        "ativo": true,
+        "nome": "Lembrancinhas",
+        "id_categoria": "1761673435226"
+    },
+    {
+        "descricao": "Álbuns fotográficos e livros de assinatura",
+        "id": "1761673472809",
+        "ativo": true,
+        "nome": "Álbum e Fotoprodutos",
+        "id_categoria": "1761673435226"
+    },
+    {
+        "descricao": "Design e impressão de convites físicos e digitais",
+        "id": "1761673499234",
+        "ativo": true,
+        "nome": "Design e impressão de convites físicos e digitais",
+        "id_categoria": "1761673435226"
+    },
+    {
+        "descricao": "Edição de vídeo e trailer do evento",
+        "id": "1761673592400",
+        "ativo": true,
+        "nome": "Filmagem e Edição de Vídeo",
+        "id_categoria": "50d5aac7-8831-4fca-bfe3-cc2c1f94b509"
+    },
+    {
+        "descricao": "Cabine de fotos instantâneas com moldura personalizada",
+        "id": "1761673598981",
+        "ativo": true,
+        "nome": "Cabine de Fotos",
+        "id_categoria": "50d5aac7-8831-4fca-bfe3-cc2c1f94b509"
+    },
+    {
+        "descricao": "Banda ao vivo ou voz e violão",
+        "id": "1761673760258",
+        "ativo": true,
+        "nome": "Bandas e Músicos",
+        "id_categoria": "0b5c0fee-2f33-4ae7-8b96-2bb25aedd669"
+    },
+    {
+        "descricao": "Locação de caixas de som e microfones",
+        "id": "1761673777692",
+        "ativo": true,
+        "nome": "Equipamentos de Som",
+        "id_categoria": "0b5c0fee-2f33-4ae7-8b96-2bb25aedd669"
+    },
+    {
+        "descricao": "Iluminação de pista e ambientação - Efeitos de fumaça e laser",
+        "id": "1761673797647",
+        "ativo": true,
+        "nome": "Iluminação Cênica",
+        "id_categoria": "0b5c0fee-2f33-4ae7-8b96-2bb25aedd669"
+    },
+    {
+        "descricao": "Assessoria parcial ou por hora",
+        "id": "1761674078610",
+        "ativo": true,
+        "nome": "Cerimonial",
+        "id_categoria": "1761674055649"
+    },
+    {
+        "descricao": "Organização do cronograma do evento",
+        "id": "1761674096559",
+        "ativo": true,
+        "nome": "Produção e Organização",
+        "id_categoria": "1761674055649"
+    },
+    {
+        "descricao": "Gestão de fornecedores e contratações",
+        "id": "1761674113077",
+        "ativo": true,
+        "nome": "Assessoria de Noiva / Festa",
+        "id_categoria": "1761674055649"
+    },
+    {
+        "descricao": "Som e iluminação profissional",
+        "id": "1761674254303",
+        "ativo": true,
+        "nome": "Audiovisual",
+        "id_categoria": "5fd47622-8e80-4477-a86c-f4d9c4422164"
+    },
+    {
+        "descricao": "Filmagem institucional e fotos oficiais",
+        "id": "1761674269687",
+        "ativo": true,
+        "nome": "Buffet Corporativo",
+        "id_categoria": "5fd47622-8e80-4477-a86c-f4d9c4422164"
+    },
+    {
+        "descricao": null,
+        "nome": "Flores e Arranjos",
+        "ativo": true,
+        "id": "3bc4092c-435f-4bc6-be39-de0e94ef8e50",
+        "id_categoria": "d59ec1ca-2267-4cd1-89c8-5ad0712d450c"
+    },
+    {
+        "descricao": null,
+        "nome": "Locação de Móveis",
+        "ativo": true,
+        "id": "4f8f9e9a-7f67-45ca-91f6-4ad6c2885389",
+        "id_categoria": "d59ec1ca-2267-4cd1-89c8-5ad0712d450c"
+    },
+    {
+        "descricao": "Ensaio pré-evento - Cobertura fotográfica completa - Filmagem e drone",
+        "id": "8847a156-8823-4733-9c0e-69d94531d92a",
+        "ativo": true,
+        "nome": "Fotografia Profissional",
+        "id_categoria": "50d5aac7-8831-4fca-bfe3-cc2c1f94b509"
+    },
+    {
+        "descricao": "Painel de LED e telão",
+        "id": "d3c555da-6491-424c-8d57-4db07188cc9e",
+        "ativo": true,
+        "nome": "Estrutura e Palco",
+        "id_categoria": "5fd47622-8e80-4477-a86c-f4d9c4422164"
+    },
+    {
+        "descricao": null,
+        "nome": "Buffet Completo",
+        "ativo": true,
+        "id": "d53c30bf-e790-4849-b40f-40358e90af68",
+        "id_categoria": "3cbc7cb4-5538-4ce0-9313-36e35bb2834a"
+    }
+]

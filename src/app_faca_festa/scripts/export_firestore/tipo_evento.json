@@ -1,0 +1,42 @@
+[
+    {
+        "id_tipo_evento": "1eab2c53-a7d3-4a97-b473-02572464e779",
+        "nome": "🍼 Chá de Bebê",
+        "ativo": true
+    },
+    {
+        "id_tipo_evento": "302191a2-dbf3-4ac6-ba53-08273b384cab",
+        "nome": "💍 Casamento",
+        "ativo": true
+    },
+    {
+        "id_tipo_evento": "7f8aa427-9b80-45ef-9b7c-f4e7c08ffcda",
+        "nome": "🎂 Aniversário",
+        "ativo": true
+    },
+    {
+        "id_tipo_evento": "WlLdfdmu4Chvw2p8daUm",
+        "nome": "🎓 Formatura",
+        "descricao": "Planeje sua festa de formatura com fornecedores de decoração, buffet e fotografia em um só lugar.",
+        "icone": "🎓",
+        "cor": "#7E57C2",
+        "ativo": true,
+        "ordem": 6,
+        "tema": "Roxo Elegante"
+    },
+    {
+        "id_tipo_evento": "ccbdb965-8f3c-4c92-bc94-2331c0ca2bb8",
+        "nome": "🎈 Festa Infantil",
+        "ativo": true
+    },
+    {
+        "id_tipo_evento": "lXf0M5vMNvyRn52yQ2fY",
+        "nome": "💼 Evento Corporativo",
+        "descricao": "Organize eventos empresariais, treinamentos, lançamentos de produtos e confraternizações corporativas.",
+        "icone": "💼",
+        "cor": "#00796B",
+        "ativo": true,
+        "ordem": 5,
+        "tema": "Azul Petróleo"
+    }
+]
