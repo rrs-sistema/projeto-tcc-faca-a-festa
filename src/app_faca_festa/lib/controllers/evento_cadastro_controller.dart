@@ -330,12 +330,12 @@ class EventoCadastroController extends GetxController {
       carregando.value = false;
       Get.back();
 
-      Get.snackbar(
-        'Sucesso',
-        isEditando ? 'Evento atualizado com sucesso!' : 'Evento salvo com sucesso!',
-        backgroundColor: Colors.green.shade600,
-        colorText: Colors.white,
-      );
+      await Future.delayed(const Duration(milliseconds: 350));
+
+      await app.buscarUltimoEvento(user.idUsuario);
+      if (idEvento.value.isEmpty) {
+        Get.offAllNamed('/splash', arguments: {'novoEvento': true});
+      }
     } catch (e) {
       carregando.value = false;
       Get.snackbar(

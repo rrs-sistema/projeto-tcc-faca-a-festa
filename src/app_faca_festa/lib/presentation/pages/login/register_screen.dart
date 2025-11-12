@@ -1,21 +1,21 @@
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:io';
+import 'dart:ui';
 
 import './../../../controllers/servico_produto_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/fornecedor_controller.dart';
 import './../../../controllers/register_controller.dart';
+import './components/build_header_organizador.dart';
+import './components/build_header_fornecedor.dart';
 import './register_organizador_form.dart';
 import './register_fornecedor_form.dart';
 import './../login/login_screen.dart';
-import 'dart:ui';
-
-import 'components/build_header_fornecedor.dart';
-import 'components/build_header_organizador.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -30,6 +30,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final servicoController = Get.put(ServicoProdutoController());
   final picker = ImagePicker();
   File? bannerFile;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 500), () {
+      EasyLoading.dismiss();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

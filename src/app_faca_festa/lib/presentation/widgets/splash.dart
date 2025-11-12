@@ -35,11 +35,18 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
     );
 
     _fadeController.forward();
-
-    // ✅ Apenas aguarda o AppController cuidar do redirecionamento
-    Future.delayed(const Duration(milliseconds: 500), () {
-      appController.iniciarSessao(); // método público que chama _monitorarSessao()
-    });
+    final novoEvento = (Get.arguments?['novoEvento'] ?? false) as bool;
+    if (novoEvento) {
+      Future.delayed(const Duration(seconds: 2), () {
+        Get.offAllNamed('/HomeEventScreen');
+      });
+    } else {
+      Future.delayed(const Duration(milliseconds: 500), () {
+        if (novoEvento) {
+          appController.iniciarSessao();
+        }
+      });
+    }
   }
 
   @override

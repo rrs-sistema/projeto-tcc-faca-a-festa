@@ -74,7 +74,7 @@ class AppController extends GetxController {
       }
 
       final usuario = UsuarioModel.fromMap(docUser.data()!);
-      await eventoController.buscarUltimoEvento(usuario.idUsuario);
+      await buscarUltimoEvento(user.uid);
 
       // 🔹 2️⃣ Busca subcoleção de endereços
       final enderecosSnapshot =
@@ -110,6 +110,10 @@ class AppController extends GetxController {
       debugPrintStack(stackTrace: s);
       return null;
     }
+  }
+
+  Future<void> buscarUltimoEvento(String idUsuario) async {
+    await eventoController.buscarUltimoEvento(idUsuario);
   }
 
   void iniciarSessao() {

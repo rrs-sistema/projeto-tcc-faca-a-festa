@@ -13,33 +13,13 @@
     {
         "raio_km": 97.0,
         "id_fornecedor": "paZJsxinFMbfesof3wIpkkRuk823",
-        "descricao": "Maringa e Região",
+        "descricao": "Maringá e Região",
         "regioes": null,
         "tipo_cobertura": "raio",
         "ativo": true,
         "id_territorio": "3ad6f4bb-5955-451d-885e-ee56261e7a67",
         "latitude": -23.42032270957822,
         "longitude": -51.945841057769876
-    },
-    {
-        "raio_km": null,
-        "id_fornecedor": "4vB9Cu4gybhaAJWEZ28jiiJcS5S2",
-        "descricao": "Território 3/11",
-        "regioes": [
-            "-25.35154792375619,-49.47688846355111",
-            "-25.45417738116319,-49.57399480252019",
-            "-25.6749281655594,-49.52641269642534",
-            "-25.70993050642927,-49.3147208774727",
-            "-25.675803349441157,-49.14964010122553",
-            "-25.543577890874293,-49.05836014259457",
-            "-25.3629555063387,-49.040881001580374",
-            "-25.253222672177216,-49.30209705340724"
-        ],
-        "tipo_cobertura": "regiao",
-        "ativo": true,
-        "id_territorio": "75d767db-548e-4132-8413-2d955e401e73",
-        "latitude": null,
-        "longitude": null
     },
     {
         "raio_km": 25,
@@ -55,7 +35,8 @@
         "id_fornecedor": "7JGfA120ZqXMJx0tJgh3zSz2Ewq1",
         "descricao": "Atende Curitba e São José dos Pinhais",
         "regioes": [
-            "Local desconhecido"
+            "Curitiba",
+            "São José dos Pinhais"
         ],
         "tipo_cobertura": "raio",
         "ativo": true,
@@ -64,25 +45,119 @@
         "longitude": -49.40666053199418
     },
     {
-        "raio_km": null,
-        "id_fornecedor": "BPmLOaDwf7gr05AfJG4V2OZKZX12",
-        "descricao": "Distribuição por região",
+        "raio_km": 120.0,
+        "id_fornecedor": "R8p4D22bHwYrKLMZfT2Gh8nq3Hq2",
+        "descricao": "Cobre Londrina e cidades próximas como Cambé e Rolândia",
         "regioes": [
-            "-25.23629964756138,-49.33987256082551",
-            "-25.326739327138707,-49.4903873862276",
-            "-25.44605137623036,-49.557390760116284",
-            "-25.547724223769293,-49.53796949232246",
-            "-25.616042013747535,-49.38259934997191",
-            "-25.616042013747535,-49.26510067981929",
-            "-25.550352551970438,-49.12138329814503",
-            "-25.421496772255757,-49.03204546629346",
-            "-25.28460106970363,-49.01359526188932",
-            "-25.207309576537487,-49.1456598828873"
+            "Londrina",
+            "Cambé",
+            "Rolândia"
         ],
-        "tipo_cobertura": "regiao",
-        "id_territorio": "e81aee62-533c-45b0-8b0b-29a8df8fef24",
+        "tipo_cobertura": "raio",
         "ativo": true,
-        "latitude": null,
-        "longitude": null
+        "id_territorio": "aee32d94-9920-4cfd-9e7d-0f2733cb1c01",
+        "latitude": -23.3103,
+        "longitude": -51.1628
+    },
+    {
+        "raio_km": 85.0,
+        "id_fornecedor": "K9DfQ1Yt3oL9zB2iN1kM0HjR6uP7",
+        "descricao": "Atende Ponta Grossa e Castro",
+        "regioes": [
+            "Ponta Grossa",
+            "Castro"
+        ],
+        "tipo_cobertura": "raio",
+        "ativo": true,
+        "id_territorio": "c2391d90-ade2-48c3-b7f0-efc52250aa22",
+        "latitude": -25.0945,
+        "longitude": -50.1634
+    },
+    {
+        "raio_km": 110.0,
+        "id_fornecedor": "N8HcB2Tq9wUvC3pL5xSdR7fT1yG2",
+        "descricao": "Cobre Maringá, Sarandi e Paiçandu",
+        "regioes": [
+            "Maringá",
+            "Sarandi",
+            "Paiçandu"
+        ],
+        "tipo_cobertura": "raio",
+        "ativo": true,
+        "id_territorio": "e152d7b4-dcd9-4e57-95f8-d4a9b4cefae8",
+        "latitude": -23.4257,
+        "longitude": -51.9381
+    },
+    {
+        "raio_km": 90.0,
+        "id_fornecedor": "T2JxD9Vn7pUqM1rE8yHsZ5kW3fX9",
+        "descricao": "Atende Cascavel e Toledo",
+        "regioes": [
+            "Cascavel",
+            "Toledo"
+        ],
+        "tipo_cobertura": "raio",
+        "ativo": true,
+        "id_territorio": "f12cde45-ec1a-4a73-b78f-df81404b27cd",
+        "latitude": -24.9573,
+        "longitude": -53.4602
+    },
+    {
+        "raio_km": 100.0,
+        "id_fornecedor": "G4MtR8Lz2vPjQ6sK3dBnC1xE9rW5",
+        "descricao": "Região de Guarapuava e arredores",
+        "regioes": [
+            "Guarapuava",
+            "Turvo",
+            "Candói"
+        ],
+        "tipo_cobertura": "raio",
+        "ativo": true,
+        "id_territorio": "dcb89ed4-3f74-45ac-91dc-2db7e2daef9c",
+        "latitude": -25.3935,
+        "longitude": -51.4621
+    },
+    {
+        "raio_km": 60.0,
+        "id_fornecedor": "M1LpC4Nt5gQvJ2rS9bWfH7xZ0tE8",
+        "descricao": "Atende Paranaguá e Litoral do Paraná",
+        "regioes": [
+            "Paranaguá",
+            "Matinhos",
+            "Pontal do Paraná"
+        ],
+        "tipo_cobertura": "raio",
+        "ativo": true,
+        "id_territorio": "e68e5afc-937a-4148-a8d1-bcb3b2d6d4d7",
+        "latitude": -25.5207,
+        "longitude": -48.5091
+    },
+    {
+        "raio_km": 75.0,
+        "id_fornecedor": "L3FxP6Qt9bHvN5mE2rGjC7yD1sZ8",
+        "descricao": "Atende Campo Largo e Araucária",
+        "regioes": [
+            "Campo Largo",
+            "Araucária"
+        ],
+        "tipo_cobertura": "raio",
+        "ativo": true,
+        "id_territorio": "b82f6a13-fb1a-4b97-9d19-4035a53dc16e",
+        "latitude": -25.4421,
+        "longitude": -49.5287
+    },
+    {
+        "raio_km": 85.0,
+        "id_fornecedor": "R2VfB8Wc1mJtH6pL4sQxZ0nE9dG3",
+        "descricao": "Atende Colombo e Pinhais",
+        "regioes": [
+            "Colombo",
+            "Pinhais"
+        ],
+        "tipo_cobertura": "raio",
+        "ativo": true,
+        "id_territorio": "f32d4e8b-56e7-48b8-9e1f-58f923f67bcd",
+        "latitude": -25.3363,
+        "longitude": -49.2232
     }
 ]

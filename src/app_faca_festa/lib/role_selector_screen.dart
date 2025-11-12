@@ -1,3 +1,4 @@
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -51,24 +52,42 @@ class RoleSelectorScreen extends StatelessWidget {
                     icon: Icons.event_available,
                     label: "Sou Organizador",
                     color: Colors.pinkAccent,
-                    onTap: () => Get.toNamed('/register', arguments: {'tipo': 'O'}),
+                    onTap: () async {
+                      EasyLoading.show(status: 'Processando...');
+                      await Future.delayed(const Duration(milliseconds: 300));
+                      Future.microtask(() => Get.toNamed('/register', arguments: {'tipo': 'O'}))
+                          .then((_) => EasyLoading.dismiss());
+                    },
                   ),
+
                   const SizedBox(height: 20),
 
                   _buildRoleCard(
                     icon: Icons.store_mall_directory,
                     label: "Sou Fornecedor",
                     color: Colors.green.shade600,
-                    onTap: () => Get.toNamed('/register', arguments: {'tipo': 'F'}),
+                    onTap: () async {
+                      EasyLoading.show(status: 'Processando...');
+                      await Future.delayed(const Duration(milliseconds: 300));
+                      await Get.toNamed('/register', arguments: {'tipo': 'F'});
+                      EasyLoading.dismiss();
+                    },
                   ),
+
                   const SizedBox(height: 20),
 
                   _buildRoleCard(
                     icon: Icons.card_giftcard,
                     label: "Sou Convidado",
                     color: Colors.orange.shade700,
-                    onTap: () => Get.toNamed('/registerGuest', arguments: {'tipo': 'C'}),
+                    onTap: () async {
+                      EasyLoading.show(status: 'Processando...');
+                      await Future.delayed(const Duration(milliseconds: 300));
+                      await Get.toNamed('/register', arguments: {'tipo': 'C'});
+                      EasyLoading.dismiss();
+                    },
                   ),
+
                   const SizedBox(height: 50),
                   // ✨ Rodapé
                   Column(

@@ -4,7 +4,7 @@
         "descricao": "preciso descascar as frutas",
         "data_cadastro": "2025-10-22 16:48:19",
         "id_tarefa": "34faf783-e1e4-4f45-9da4-5066bac25114",
-        "status": "a_fazer",
+        "status": "Pendente",
         "titulo": "descascar as frutas",
         "id_evento": "1761151562979",
         "id_evento_evento": "1761151562979",
@@ -15,7 +15,7 @@
         "descricao": "Criar toda a documentação necessária para a aplicação rodar no Brasil sem burocracia",
         "data_cadastro": "2025-10-19 05:34:34",
         "id_tarefa": "3d585fc4-4ddc-400e-89eb-6f8b50b95d8a",
-        "status": "concluida",
+        "status": "Concluida",
         "titulo": "Fazer a documentação da aplicação",
         "id_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
         "id_evento_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
@@ -26,7 +26,7 @@
         "descricao": "Verificar e pagar menor valor dos custos das documentações do cartório.",
         "data_cadastro": "2025-11-06 18:22:05",
         "id_tarefa": "52c3a33b-12da-410f-8451-4c7a30b31f7e",
-        "status": "a_fazer",
+        "status": "Pendente",
         "titulo": "Custos das documentação do cartório",
         "id_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
         "id_responsavel": "FEulequMiDQDdfuO4HVPY4X6D6X2"
@@ -36,7 +36,7 @@
         "descricao": "Recriar a aplicação aplicando TDD.",
         "data_prevista": "2026-04-30 03:00:00",
         "id_tarefa": "ab2b2303-0827-4fa5-87c2-8cfffca9dce7",
-        "status": "concluida",
+        "status": "Concluida",
         "titulo": "Recriar a aplicação",
         "id_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
         "id_evento_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
@@ -44,13 +44,153 @@
     },
     {
         "data_cadastro": "2025-10-19 05:10:41",
-        "descricao": "Usando o modelo Clean Architecture construa o modelo inteiro da aplicação. Update Acsa!",
+        "descricao": "Usando o modelo Clean Architecture construa o modelo inteiro da aplicação.",
         "data_prevista": "2025-12-20 03:00:00",
         "id_tarefa": "b0d44812-fd5e-42c8-89ec-05874cecdd16",
-        "status": "concluida",
+        "status": "Concluida",
         "titulo": "Criar a parte do model",
         "id_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
         "id_evento_evento": "cbc35769-d700-4a7d-bb13-c42f1eb1c8dc",
         "id_responsavel": "CT7zhUeCzOQtsVgWsaTGqcjXpWr1"
+    },
+    {
+        "data_prevista": "2025-11-10 08:00:00",
+        "descricao": "Entrar em contato com o buffet e confirmar a quantidade de convidados.",
+        "data_cadastro": "2025-11-05 10:30:00",
+        "id_tarefa": "111d848b-88d9-4d02-b113-9aa5a10a71d1",
+        "status": "Em andamento",
+        "titulo": "Confirmar buffet",
+        "id_evento": "evt_001",
+        "id_responsavel": "JT2921WER"
+    },
+    {
+        "data_prevista": "2025-11-14 18:00:00",
+        "descricao": "Verificar iluminação do salão e fazer testes de som.",
+        "data_cadastro": "2025-11-05 19:00:00",
+        "id_tarefa": "222d848b-88d9-4d02-b113-9aa5a10a71d2",
+        "status": "Pendente",
+        "titulo": "Checar iluminação e som",
+        "id_evento": "evt_002",
+        "id_responsavel": "BC6190WER"
+    },
+    {
+        "data_prevista": "2025-11-20 10:00:00",
+        "descricao": "Comprar bebidas e organizar os coolers de refrigeração.",
+        "data_cadastro": "2025-11-07 09:00:00",
+        "id_tarefa": "333d848b-88d9-4d02-b113-9aa5a10a71d3",
+        "status": "Em andamento",
+        "titulo": "Organizar bebidas",
+        "id_evento": "evt_003",
+        "id_responsavel": "JP4561QWE"
+    },
+    {
+        "data_prevista": "2025-11-18 14:00:00",
+        "descricao": "Contratar o fotógrafo e definir horário da sessão de fotos.",
+        "data_cadastro": "2025-11-06 14:10:00",
+        "id_tarefa": "444d848b-88d9-4d02-b113-9aa5a10a71d4",
+        "status": "Pendente",
+        "titulo": "Agendar fotógrafo",
+        "id_evento": "evt_004",
+        "id_responsavel": "VR9435JHT"
+    },
+    {
+        "data_prevista": "2025-11-09 15:00:00",
+        "descricao": "Comprar flores e montar os arranjos das mesas.",
+        "data_cadastro": "2025-11-03 16:45:00",
+        "id_tarefa": "555d848b-88d9-4d02-b113-9aa5a10a71d5",
+        "status": "Concluida",
+        "titulo": "Montar arranjos de flores",
+        "id_evento": "evt_005",
+        "id_responsavel": "FE1948PLQ"
+    },
+    {
+        "data_prevista": "2025-11-25 09:00:00",
+        "descricao": "Testar o projetor e o microfone do palco.",
+        "data_cadastro": "2025-11-04 12:30:00",
+        "id_tarefa": "666d848b-88d9-4d02-b113-9aa5a10a71d6",
+        "status": "Pendente",
+        "titulo": "Testar equipamentos de som",
+        "id_evento": "evt_006",
+        "id_responsavel": "PG1452XCV"
+    },
+    {
+        "data_prevista": "2025-12-01 19:00:00",
+        "descricao": "Revisar lista de convidados e enviar lembretes de presença.",
+        "data_cadastro": "2025-11-08 08:15:00",
+        "id_tarefa": "777d848b-88d9-4d02-b113-9aa5a10a71d7",
+        "status": "Em andamento",
+        "titulo": "Enviar lembretes de convidados",
+        "id_evento": "evt_007",
+        "id_responsavel": "LUC7491AKSQ"
+    },
+    {
+        "data_prevista": "2025-11-22 16:00:00",
+        "descricao": "Comprar utensílios de cozinha e talheres descartáveis.",
+        "data_cadastro": "2025-11-05 09:25:00",
+        "id_tarefa": "888d848b-88d9-4d02-b113-9aa5a10a71d8",
+        "status": "Pendente",
+        "titulo": "Comprar utensílios",
+        "id_evento": "evt_008",
+        "id_responsavel": "DA9301ZXC"
+    },
+    {
+        "data_prevista": "2025-11-29 13:00:00",
+        "descricao": "Confirmar entrega do bolo e doces com o fornecedor.",
+        "data_cadastro": "2025-11-07 17:00:00",
+        "id_tarefa": "999d848b-88d9-4d02-b113-9aa5a10a71d9",
+        "status": "Concluida",
+        "titulo": "Confirmar bolo e doces",
+        "id_evento": "evt_009",
+        "id_responsavel": "JT2921WER"
+    },
+    {
+        "data_prevista": "2025-12-03 20:00:00",
+        "descricao": "Organizar cronograma das apresentações e música.",
+        "data_cadastro": "2025-11-08 18:00:00",
+        "id_tarefa": "aaa4e848b-88d9-4d02-b113-9aa5a10a71a1",
+        "status": "Em andamento",
+        "titulo": "Montar cronograma do evento",
+        "id_evento": "evt_010",
+        "id_responsavel": "RB3478NMQ"
+    },
+    {
+        "data_prevista": "2025-12-10 15:00:00",
+        "descricao": "Fazer backup das fotos e vídeos após o evento.",
+        "data_cadastro": "2025-11-09 11:00:00",
+        "id_tarefa": "bbb4e848b-88d9-4d02-b113-9aa5a10a71a2",
+        "status": "Pendente",
+        "titulo": "Backup de mídias",
+        "id_evento": "evt_011",
+        "id_responsavel": "GB5167RTY"
+    },
+    {
+        "data_prevista": "2025-12-12 11:00:00",
+        "descricao": "Solicitar feedback dos convidados e avaliar fornecedores.",
+        "data_cadastro": "2025-11-10 10:00:00",
+        "id_tarefa": "ccc4e848b-88d9-4d02-b113-9aa5a10a71a3",
+        "status": "Pendente",
+        "titulo": "Coletar feedback do evento",
+        "id_evento": "evt_012",
+        "id_responsavel": "AC8172UIO"
+    },
+    {
+        "data_prevista": "2025-11-26 18:00:00",
+        "descricao": "Organizar transporte para convidados e equipe.",
+        "data_cadastro": "2025-11-09 12:00:00",
+        "id_tarefa": "ddd4e848b-88d9-4d02-b113-9aa5a10a71a4",
+        "status": "Em andamento",
+        "titulo": "Transporte de convidados",
+        "id_evento": "evt_013",
+        "id_responsavel": "PG1452XCV"
+    },
+    {
+        "data_prevista": "2025-12-15 09:00:00",
+        "descricao": "Revisar contratos e pagamentos pendentes.",
+        "data_cadastro": "2025-11-10 14:00:00",
+        "id_tarefa": "eee4e848b-88d9-4d02-b113-9aa5a10a71a5",
+        "status": "Concluida",
+        "titulo": "Revisar contratos e pagamentos",
+        "id_evento": "evt_014",
+        "id_responsavel": "JT2921WER"
     }
 ]

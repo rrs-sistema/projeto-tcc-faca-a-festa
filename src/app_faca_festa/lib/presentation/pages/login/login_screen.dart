@@ -129,8 +129,9 @@ class LoginScreen extends StatelessWidget {
                             return SizedBox(
                               height: 55,
                               child: ElevatedButton(
-                                onPressed:
-                                    controller.carregando.value ? null : () => controller.login(),
+                                onPressed: controller.carregando.value
+                                    ? null
+                                    : () async => await controller.login(),
                                 style: ElevatedButton.styleFrom(
                                   padding: const EdgeInsets.symmetric(vertical: 2),
                                   shape: RoundedRectangleBorder(

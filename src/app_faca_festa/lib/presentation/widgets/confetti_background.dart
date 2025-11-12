@@ -31,32 +31,27 @@ class _ConfettiBackgroundState extends State<ConfettiBackground>
 
   @override
   Widget build(BuildContext context) {
-    return Positioned.fill(
-      child: IgnorePointer(
-        child: Lottie.asset(
-          'assets/animations/confetti_background.json',
-          fit: BoxFit.cover,
-          controller: _controller,
-          onLoaded: (composition) {
-            // Define a duração do controller
-            _controller.duration = composition.duration;
+    return IgnorePointer(
+      child: Lottie.asset(
+        'assets/animations/confetti_background.json',
+        fit: BoxFit.cover,
+        controller: _controller,
+        onLoaded: (composition) {
+          _controller.duration = composition.duration;
 
-            // Só executa a primeira vez após carregado
-            if (!_isLoaded) {
-              _isLoaded = true;
-              _controller.forward();
+          if (!_isLoaded) {
+            _isLoaded = true;
+            _controller.forward();
 
-              // Repetição periódica
-              _timer = Timer.periodic(
-                Duration(seconds: widget.seconds ?? 5),
-                (_) {
-                  _controller.reset();
-                  _controller.forward();
-                },
-              );
-            }
-          },
-        ),
+            _timer = Timer.periodic(
+              Duration(seconds: widget.seconds ?? 5),
+              (_) {
+                _controller.reset();
+                _controller.forward();
+              },
+            );
+          }
+        },
       ),
     );
   }

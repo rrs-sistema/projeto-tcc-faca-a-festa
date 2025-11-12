@@ -40,17 +40,33 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         );
         break;
       case 'evento corporativo':
-        titulo = nome.isEmpty ? '💼 Um dia para celebrar o amor...' : '💼 $nome';
-        estilo = GoogleFonts.playfairDisplay(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 1.1,
+      case 'corporativo':
+        titulo = nome.isEmpty ? '💼 Conectando ideias e pessoas' : '💼 $nome';
+        estilo = GoogleFonts.poppins(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
           color: Colors.black,
+          letterSpacing: 0.6,
           shadows: [
             Shadow(
-              offset: const Offset(0, 2),
-              blurRadius: 5,
-              color: corPrincipal,
+              color: corPrincipal.withValues(alpha: 0.25),
+              blurRadius: 6,
+            ),
+          ],
+        );
+        break;
+      case 'formatura':
+      case 'evento formatura':
+        titulo = nome.isEmpty ? '🎓 Celebre sua conquista!' : '🎓 Formatura de $nome';
+        estilo = GoogleFonts.poppins(
+          fontSize: 20,
+          fontWeight: FontWeight.w700,
+          color: Colors.black,
+          letterSpacing: 0.6,
+          shadows: [
+            Shadow(
+              color: corPrincipal.withValues(alpha: 0.25),
+              blurRadius: 6,
             ),
           ],
         );

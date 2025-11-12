@@ -2,7 +2,7 @@
     {
         "id_fornecedor": "X8R9CYgohqdM2dhnnN6GAvN3O8z1",
         "id": "0731532481378",
-        "comentario": "Acho que demorou um pouquinho para retornar eu contato, mais foi rápido para fazer fazer a cotação e fechar negocio.",
+        "comentario": "Acho que demorou um pouquinho para retornar o contato, mas foi rápido para fechar negócio.",
         "data": "2025-10-27 13:45:35",
         "nome_fornecedor": "RRS System - Fornecedor",
         "evento": "💍 Casamento",
@@ -13,12 +13,166 @@
     {
         "id_fornecedor": "X8R9CYgohqdM2dhnnN6GAvN3O8z1",
         "id": "1761528458551",
-        "comentario": "Foi muito bom negociar com o fornecedor, foi muito fácil e rápido entrar em contato com e fazer a cotação. ",
+        "comentario": "Foi muito bom negociar com o fornecedor, foi fácil e rápido entrar em contato.",
         "data": "2025-10-27 01:27:38",
         "nome_fornecedor": "RRS System - Fornecedor",
         "evento": "💍 Casamento",
         "nome_cliente": "Riva Organizador",
         "nota": 5,
         "id_cliente": "EL6kMxlA03MD32w1NxFU7Jxthz83"
+    },
+    {
+        "id_fornecedor": "FJ2aX8Pmbm1AvvF4Rksx4h2tB9y5",
+        "id": "1762528512901",
+        "comentario": "Excelente atendimento e qualidade na decoração, recomendo fortemente.",
+        "data": "2025-11-02 09:15:21",
+        "nome_fornecedor": "Decora Festas",
+        "evento": "🎂 Aniversário",
+        "nome_cliente": "Lucas Fernandes",
+        "nota": 5,
+        "id_cliente": "LUC7491AKSQ"
+    },
+    {
+        "id_fornecedor": "JK9mTzXbCk3Pp1S9RtFq7HvVb5Y2",
+        "id": "1762528512902",
+        "comentario": "A comida estava deliciosa, mas a entrega atrasou um pouco.",
+        "data": "2025-10-29 18:23:45",
+        "nome_fornecedor": "Buffet Sabor e Arte",
+        "evento": "🎉 Festa Infantil",
+        "nome_cliente": "Maria Eduarda",
+        "nota": 3,
+        "id_cliente": "ME8192XHJK"
+    },
+    {
+        "id_fornecedor": "PZ4dTsQ1Vu7Kr9YpXxS3HbNwA2F8",
+        "id": "1762528512903",
+        "comentario": "O fotógrafo foi pontual e as fotos ficaram incríveis!",
+        "data": "2025-10-31 15:04:10",
+        "nome_fornecedor": "Click Perfeito",
+        "evento": "💍 Casamento",
+        "nome_cliente": "Fernanda Souza",
+        "nota": 5,
+        "id_cliente": "FE1948PLQ"
+    },
+    {
+        "id_fornecedor": "FJ2aX8Pmbm1AvvF4Rksx4h2tB9y5",
+        "id": "1762528512904",
+        "comentario": "Gostei muito da decoração, mas o preço poderia ser melhor.",
+        "data": "2025-10-25 11:50:30",
+        "nome_fornecedor": "Decora Festas",
+        "evento": "👶 Chá de Bebê",
+        "nome_cliente": "Camila Martins",
+        "nota": 4,
+        "id_cliente": "CA8547PQWX"
+    },
+    {
+        "id_fornecedor": "LK7sFgQ8Np4Rj2KwHh5Dd3BmZqV6",
+        "id": "1762528512905",
+        "comentario": "O DJ foi ótimo, tocou músicas animadas e agradou a todos.",
+        "data": "2025-11-01 22:05:15",
+        "nome_fornecedor": "Som e Luz MegaMix",
+        "evento": "🎊 Ano Novo",
+        "nome_cliente": "João Pedro",
+        "nota": 5,
+        "id_cliente": "JP4561QWE"
+    },
+    {
+        "id_fornecedor": "JK9mTzXbCk3Pp1S9RtFq7HvVb5Y2",
+        "id": "1762528512906",
+        "comentario": "O buffet foi bom, mas faltou variedade de bebidas.",
+        "data": "2025-10-20 19:37:42",
+        "nome_fornecedor": "Buffet Sabor e Arte",
+        "evento": "🎂 Aniversário",
+        "nome_cliente": "Roberta Lima",
+        "nota": 4,
+        "id_cliente": "RB3478NMQ"
+    },
+    {
+        "id_fornecedor": "PZ4dTsQ1Vu7Kr9YpXxS3HbNwA2F8",
+        "id": "1762528512907",
+        "comentario": "Fotografia muito boa, mas o vídeo demorou um pouco para ser entregue.",
+        "data": "2025-10-28 16:12:09",
+        "nome_fornecedor": "Click Perfeito",
+        "evento": "💍 Casamento",
+        "nome_cliente": "Vanessa Ribeiro",
+        "nota": 4,
+        "id_cliente": "VR9435JHT"
+    },
+    {
+        "id_fornecedor": "AB3kMnX1Lp7Cc2De9ZrT4GbFq8W0",
+        "id": "1762528512908",
+        "comentario": "As lembrancinhas ficaram lindas e chegaram antes do prazo.",
+        "data": "2025-10-23 14:44:01",
+        "nome_fornecedor": "Mimos & Arte",
+        "evento": "🎂 Aniversário",
+        "nome_cliente": "Jéssica Tavares",
+        "nota": 5,
+        "id_cliente": "JT2921WER"
+    },
+    {
+        "id_fornecedor": "JK9mTzXbCk3Pp1S9RtFq7HvVb5Y2",
+        "id": "1762528512909",
+        "comentario": "O buffet foi excelente, mas a sobremesa estava simples.",
+        "data": "2025-10-24 20:10:33",
+        "nome_fornecedor": "Buffet Sabor e Arte",
+        "evento": "🎉 Festa Infantil",
+        "nome_cliente": "Gabriel Nascimento",
+        "nota": 4,
+        "id_cliente": "GB5167RTY"
+    },
+    {
+        "id_fornecedor": "LK7sFgQ8Np4Rj2KwHh5Dd3BmZqV6",
+        "id": "1762528512910",
+        "comentario": "O som ficou perfeito durante todo o evento!",
+        "data": "2025-10-19 23:10:50",
+        "nome_fornecedor": "Som e Luz MegaMix",
+        "evento": "🎉 Festa Infantil",
+        "nome_cliente": "Bruno Carvalho",
+        "nota": 5,
+        "id_cliente": "BC6190WER"
+    },
+    {
+        "id_fornecedor": "AB3kMnX1Lp7Cc2De9ZrT4GbFq8W0",
+        "id": "1762528512911",
+        "comentario": "As lembrancinhas chegaram com pequenos defeitos, mas o fornecedor resolveu rápido.",
+        "data": "2025-10-26 10:27:15",
+        "nome_fornecedor": "Mimos & Arte",
+        "evento": "👶 Chá de Bebê",
+        "nome_cliente": "Patrícia Gomes",
+        "nota": 3,
+        "id_cliente": "PG1452XCV"
+    },
+    {
+        "id_fornecedor": "FJ2aX8Pmbm1AvvF4Rksx4h2tB9y5",
+        "id": "1762528512912",
+        "comentario": "Equipe de decoração muito atenciosa e criativa!",
+        "data": "2025-10-30 17:52:29",
+        "nome_fornecedor": "Decora Festas",
+        "evento": "🎂 Aniversário",
+        "nome_cliente": "Aline Castro",
+        "nota": 5,
+        "id_cliente": "AC8172UIO"
+    },
+    {
+        "id_fornecedor": "PZ4dTsQ1Vu7Kr9YpXxS3HbNwA2F8",
+        "id": "1762528512913",
+        "comentario": "Excelente qualidade de vídeo, entrega rápida e edição profissional.",
+        "data": "2025-11-03 14:05:43",
+        "nome_fornecedor": "Click Perfeito",
+        "evento": "💍 Casamento",
+        "nome_cliente": "Diego Azevedo",
+        "nota": 5,
+        "id_cliente": "DA9301ZXC"
+    },
+    {
+        "id_fornecedor": "X8R9CYgohqdM2dhnnN6GAvN3O8z1",
+        "id": "1762528512914",
+        "comentario": "Bom atendimento, mas o corte de cabelo poderia ter sido mais caprichado.",
+        "data": "2025-11-04 09:41:22",
+        "nome_fornecedor": "RRS System - Fornecedor",
+        "evento": "👰 Ensaio Pré-Casamento",
+        "nome_cliente": "Jullia Acsa",
+        "nota": 3,
+        "id_cliente": "CT7zhUeCzOQtsVgWsaTGqcjXpWr1"
     }
 ]
