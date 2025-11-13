@@ -1,6 +1,6 @@
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
@@ -469,7 +469,9 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
                         // === Preços ===
                         if (s.preco > 0)
-                          Row(
+                          Wrap(
+                            spacing: 8,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               if (s.precoPromocao != null && s.precoPromocao! > 0)
                                 Container(
@@ -487,7 +489,6 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                                     ),
                                   ),
                                 ),
-                              const SizedBox(width: 6),
                               Text(
                                 'R\$ ${Biblioteca.formatarValorDecimal(s.preco)}',
                                 style: GoogleFonts.poppins(
@@ -837,8 +838,19 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                       elevation: 2,
                     ),
                     onPressed: () {
+                      if (categoriaSelecionada != null) {
+                        debugPrint(
+                            '🔍 Categoria selecionada ao abrir detalhes: ${categoriaSelecionada!.nome}');
+
+                        fornecedor = fornecedor.copyWith(
+                          categoriaId: categoriaSelecionada!.id,
+                          categoriaNome: categoriaSelecionada!.nome,
+                        );
+                      }
+
                       Get.to(() => FornecedorDetalheScreen(
                             fornecedorDetalhado: fornecedor,
+                            selecionouCategoria: categoriaSelecionada != null,
                           ));
                     },
                   ),
@@ -999,7 +1011,11 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                         onPressed: () {
                           Get.to(() => FornecedorDetalheScreen(
                                 fornecedorDetalhado: FornecedorDetalhadoDto(
-                                    fornecedor: fornecedor, categoriaId: '', categoriaNome: ''),
+                                  fornecedor: fornecedor,
+                                  categoriaId: '',
+                                  categoriaNome: '',
+                                ),
+                                selecionouCategoria: categoriaSelecionada != null,
                               ));
                         },
                       ),

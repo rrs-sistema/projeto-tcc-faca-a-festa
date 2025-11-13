@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../controllers/convidado/convidado_controller.dart';
+import '../../../../controllers/convidado/grupo_convidado_controller.dart';
 import '../../../../core/utils/biblioteca.dart';
+import '../../../../data/models/convidado/grupo_convidado_model.dart';
 import '../../../../data/models/model.dart';
 
 class MesasTab extends StatelessWidget {
@@ -12,6 +14,7 @@ class MesasTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<ConvidadoController>();
+    final grupoController = Get.find<GrupoConvidadoController>();
 
     return Obx(() {
       final grupos = controller.convidadosPorMesa;
@@ -58,22 +61,32 @@ class MesasTab extends StatelessWidget {
             ...grupos.entries.map((entry) {
               final nome = entry.key;
               final convidados = entry.value;
-              final confirmados =
+
+              // 🔹 Buscar mesa cadastrada (se existir)
+              final grupoAtual = grupoController.grupos.firstWhere(
+                (g) => g.nome == nome,
+                orElse: () => GrupoConvidadoModel(
+                  idGrupo: '',
+                  idEvento: '',
+                  nome: nome,
+                  numeroMesa: 0, // padrão
+                ),
+              );
+
+              // 🔹 Quantidade de assentos da mesa
+              final assentos = grupoAtual.numeroMesa ?? 0;
+
+              // 🔹 Convidados confirmados
+              final ocupados =
                   convidados.where((c) => c.status == StatusConvidado.confirmado).length;
-              final convidadoModel = convidados.where((c) => c.grupoMesa!.contains(nome)).first;
 
-              final dataHora = DateTime.timestamp().millisecondsSinceEpoch;
-
-              final nomeAlterado = ('${convidadoModel.nome}-$dataHora${convidadoModel.grupoMesa!}');
-
-              //final color = Colors.primaries[nome.hashCode % Colors.primaries.length];
-              final color = Biblioteca.gerarCorPorChaves(
-                  [nomeAlterado, convidadoModel.status.label, convidadoModel.contato]);
+              // 🔹 Cor gerada baseada no nome da mesa (estável)
+              final color = Biblioteca.gerarCorPorChaves([nome]);
 
               return _MesaCard(
                 nome: nome,
-                assentos: convidados.length,
-                ocupados: confirmados,
+                assentos: assentos,
+                ocupados: ocupados,
                 color: color,
                 icon: Icons.chair,
                 convidados: convidados

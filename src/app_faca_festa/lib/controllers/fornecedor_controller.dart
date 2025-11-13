@@ -480,7 +480,7 @@ class FornecedorController extends GetxController {
       carregando.value = true;
       erro.value = '';
 
-      // 🔹 Busca orçamentos relacionados a esse evento
+      // 🔹 Busca orçamentos relacionados
       final orcamentosSnap =
           await _db.collection('orcamento').where('id_evento', isEqualTo: idEvento).get();
 
@@ -489,7 +489,7 @@ class FornecedorController extends GetxController {
         return;
       }
 
-// 🔹 Extrai IDs válidos dos serviços fornecidos (filtrando nulos)
+      // 🔹 Extrai os IDs dos documentos de fornecedor_servico vinculados ao evento
       final fornecedoresIds = orcamentosSnap.docs
           .map((d) => d.data()['id_servico_fornecido'])
           .where((id) => id != null && id.toString().isNotEmpty)
@@ -497,22 +497,31 @@ class FornecedorController extends GetxController {
           .toSet()
           .toList();
 
-      // 🔹 Busca todos os serviços que pertencem a esses fornecedores
+      // 🚨 Correção: evita erro "whereIn vazio"
+      if (fornecedoresIds.isEmpty) {
+        servicosFornecedor.clear();
+        return;
+      }
+
+      // 🚨 Correção: busca usando o ID REAL do documento
       final servicosSnap = await _db
           .collection('fornecedor_servico')
-          .where('id_fornecedor_servico', whereIn: fornecedoresIds)
+          .where(FieldPath.documentId, whereIn: fornecedoresIds)
           .get();
 
-      final listaServicos =
-          servicosSnap.docs.map((d) => FornecedorProdutoServicoModel.fromMap(d.data())).toList();
+      final listaServicos = servicosSnap.docs
+          .map((d) => FornecedorProdutoServicoModel.fromMap({
+                'id': d.id,
+                ...d.data(),
+              }))
+          .toList();
 
       servicosFornecedor.assignAll(listaServicos);
 
-      // 🔹 Carrega o catálogo de produtos relacionados
+      // 🔹 Carrega catálogo e fotos
       final idsProdutos = listaServicos.map((s) => s.idProdutoServico).toList();
       await carregarCatalogoServicos();
 
-      // 🔹 (Opcional) Carrega as fotos
       for (final fornecedorId in fornecedoresIds) {
         await carregarFotosServicos(idsProdutos, fornecedorId);
       }

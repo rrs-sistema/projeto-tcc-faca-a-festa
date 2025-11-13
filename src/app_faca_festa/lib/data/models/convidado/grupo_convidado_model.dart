@@ -8,12 +8,14 @@ class GrupoConvidadoModel {
   final String? descricao;
   final String? icone; // opcional, se quiser salvar o ícone escolhido
   final String? corHex; // cor base no formato "#RRGGBB"
+  final int? numeroMesa;
   final List<ConvidadoModel> convidados;
 
   const GrupoConvidadoModel({
     required this.idGrupo,
     required this.idEvento,
     required this.nome,
+    required this.numeroMesa,
     this.descricao,
     this.icone,
     this.corHex,
@@ -25,6 +27,7 @@ class GrupoConvidadoModel {
         'id_grupo': idGrupo,
         'id_evento': idEvento,
         'nome': nome,
+        'numero_mesa': numeroMesa,
         'descricao': descricao,
         'icone': icone,
         'cor_hex': corHex,
@@ -36,6 +39,7 @@ class GrupoConvidadoModel {
     return GrupoConvidadoModel(
       idGrupo: map['id_grupo'] ?? '',
       idEvento: map['id_evento'] ?? '',
+      numeroMesa: map['numero_mesa'] ?? 5,
       nome: map['nome'] ?? '',
       descricao: map['descricao'],
       icone: map['icone'],
@@ -45,16 +49,20 @@ class GrupoConvidadoModel {
 
   /// 🔹 Cria uma cópia com modificações
   GrupoConvidadoModel copyWith({
+    String? idGrupo,
+    String? idEvento,
     String? nome,
+    int? numeroMesa,
     String? descricao,
     String? icone,
     String? corHex,
     List<ConvidadoModel>? convidados,
   }) {
     return GrupoConvidadoModel(
-      idGrupo: idGrupo,
-      idEvento: idEvento,
+      idGrupo: idGrupo ?? this.idGrupo,
+      idEvento: idEvento ?? this.idEvento,
       nome: nome ?? this.nome,
+      numeroMesa: numeroMesa ?? this.numeroMesa,
       descricao: descricao ?? this.descricao,
       icone: icone ?? this.icone,
       corHex: corHex ?? this.corHex,

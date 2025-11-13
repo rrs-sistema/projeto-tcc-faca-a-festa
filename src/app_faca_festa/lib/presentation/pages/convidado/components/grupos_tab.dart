@@ -1,122 +1,262 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-/// --- Aba: Grupos ---
+import './../../../../controllers/convidado/grupo_convidado_controller.dart';
+import './../../../../data/models/convidado/grupo_convidado_model.dart';
+import './../../../../data/models/model.dart';
+
 class GruposTab extends StatelessWidget {
   const GruposTab({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final grupos = [
-      {
-        "title": "Casais",
-        "icon": Icons.favorite_rounded,
-        "color": Colors.pinkAccent,
-        "convidados": [
-          {"nome": "Lucas & Amanda", "confirmado": true},
-          {"nome": "Carlos & Marta", "confirmado": true},
-        ]
-      },
-      {
-        "title": "Família RRS Sistemas",
-        "icon": Icons.family_restroom_rounded,
-        "color": Colors.teal,
-        "convidados": [
-          {"nome": "RRS Pai", "confirmado": true},
-          {"nome": "RRS Mãe", "confirmado": false},
-          {"nome": "RRS Filho", "confirmado": false},
-        ]
-      },
-      {
-        "title": "Amigos RRS Sistemas",
-        "icon": Icons.group_rounded,
-        "color": Colors.orangeAccent,
-        "convidados": [
-          {"nome": "Murillo", "confirmado": true},
-          {"nome": "Jezreel", "confirmado": true},
-          {"nome": "Amanda", "confirmado": false},
-        ]
-      },
-      {
-        "title": "Família No Futuro",
-        "icon": Icons.favorite_outline,
-        "color": Colors.deepPurpleAccent,
-        "convidados": [],
-      },
-    ];
+    final grupoController = Get.find<GrupoConvidadoController>();
 
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFFFFF8F8), Color(0xFFFFFFFF)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+    return Obx(() {
+      if (grupoController.carregando.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      final grupos = grupoController.grupos;
+
+      return Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFFFF8F8), Color(0xFFFFFFFF)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
-      ),
-      child: ListView(
-        padding: const EdgeInsets.all(18),
-        children: [
-          const SizedBox(height: 10),
-          const Center(
-            child: Text(
-              "👨‍👩‍👧‍👦 Grupos de Convidados",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+        child: ListView(
+          padding: const EdgeInsets.all(18),
+          children: [
+            const SizedBox(height: 10),
+            const Center(
+              child: Text(
+                "👨‍👩‍👧‍👦 Grupos de Convidados",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
             ),
+            const SizedBox(height: 20),
+
+            // 🔥 GRUPOS REAIS DO FIREBASE
+            ...grupos.map((g) => _GrupoCard(
+                  title: g.nome,
+                  icon: _iconFromKey(g.icone), // (vou te mostrar isso também)
+                  color: fromHex(g.corHex ?? '#FF7BAC'),
+                  convidados: g.convidados.map((c) {
+                    return _ConvidadoItem(
+                      nome: c.nome,
+                      confirmado: c.status == StatusConvidado.confirmado,
+                    );
+                  }).toList(),
+                )),
+
+            const SizedBox(height: 20),
+
+            // 🔥 RESUMO DINÂMICO
+            _ResumoGrupos(
+              totalGrupos: grupoController.totalGrupos,
+              gruposComConvidados: grupoController.gruposComConvidados,
+              totalConvidados: grupoController.totalConvidados,
+              gruposVazios: grupoController.gruposVazios,
+            ),
+
+            const SizedBox(height: 32),
+
+            // 🔥 GRÁFICO DINÂMICO
+            _GraficoGrupos(grupos: grupos),
+
+            const SizedBox(height: 110),
+          ],
+        ),
+      );
+    });
+  }
+}
+
+class _ResumoGrupos extends StatelessWidget {
+  final int totalGrupos;
+  final int gruposComConvidados;
+  final int totalConvidados;
+  final int gruposVazios;
+
+  const _ResumoGrupos({
+    required this.totalGrupos,
+    required this.gruposComConvidados,
+    required this.totalConvidados,
+    required this.gruposVazios,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final resumo = [
+      {"label": "Grupos criados", "value": totalGrupos, "color": Colors.teal},
+      {"label": "Grupos com convidados", "value": gruposComConvidados, "color": Colors.orange},
+      {"label": "Total de convidados", "value": totalConvidados, "color": Colors.pinkAccent},
+      {"label": "Grupos vazios", "value": gruposVazios, "color": Colors.grey},
+    ];
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final double cardWidth = (screenWidth / 2) - 28;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          child: Text(
+            "📊 Resumo geral dos grupos",
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+              color: Colors.black87,
+            ),
           ),
-          const SizedBox(height: 20),
-
-          // Cards de grupos
-          ...grupos.map((g) => _GrupoCard(
-                title: g["title"] as String,
-                icon: g["icon"] as IconData,
-                color: g["color"] as Color,
-                convidados: (g["convidados"] as List)
-                    .map((c) => _ConvidadoItem(
-                          nome: c["nome"] as String,
-                          confirmado: c["confirmado"] as bool,
-                        ))
-                    .toList(),
-              )),
-
-          const SizedBox(height: 20),
-
-          // Resumo de grupos
-          const _ResumoGrupos(),
-
-          const SizedBox(height: 32),
-
-          // Gráfico visual
-          const _GraficoGrupos(),
-
-          const SizedBox(height: 110),
-        ],
-      ),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 14,
+          runSpacing: 14,
+          children: resumo.map((r) {
+            return AnimatedContainer(
+              duration: const Duration(milliseconds: 400),
+              width: cardWidth,
+              padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: [
+                  BoxShadow(
+                    color: (r["color"] as Color).withValues(alpha: 0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    r["value"].toString(),
+                    style: TextStyle(
+                      color: r["color"] as Color,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    r["label"] as String,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ],
     );
   }
 }
 
-/// === CARD de Grupo ===
+class _GraficoGrupos extends StatelessWidget {
+  final List<GrupoConvidadoModel> grupos;
+
+  const _GraficoGrupos({required this.grupos});
+
+  @override
+  Widget build(BuildContext context) {
+    final total = grupos.fold<int>(0, (s, g) => s + g.convidados.length);
+
+    if (total == 0) {
+      return const Center(
+        child: Text("Nenhum convidado para gerar gráfico."),
+      );
+    }
+
+    return Column(
+      children: [
+        const SizedBox(height: 20),
+        const Text(
+          "📈 Distribuição de Convidados por Grupo",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          height: 240,
+          child: PieChart(
+            PieChartData(
+              sectionsSpace: 3,
+              centerSpaceRadius: 55,
+              sections: grupos.map((g) {
+                final percent = g.convidados.isEmpty ? 0 : g.convidados.length / total;
+
+                final color = Colors.primaries[grupos.indexOf(g) % Colors.primaries.length];
+
+                return PieChartSectionData(
+                  color: color,
+                  value: percent.toDouble(),
+                  title: "${(percent * 100).toStringAsFixed(0)}%",
+                  radius: 70,
+                  titleStyle: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        ...grupos.map((g) {
+          final color = Colors.primaries[grupos.indexOf(g) % Colors.primaries.length];
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 2),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.circle, color: color, size: 12),
+                const SizedBox(width: 6),
+                Text(g.nome),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+}
+
 class _GrupoCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color color;
   final List<Widget> convidados;
-
   const _GrupoCard({
     required this.title,
     required this.icon,
     required this.color,
     required this.convidados,
   });
-
   @override
   Widget build(BuildContext context) {
     final temConvidados = convidados.isNotEmpty;
-
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
@@ -173,13 +313,10 @@ class _GrupoCard extends StatelessWidget {
   }
 }
 
-/// === ITEM de convidado ===
 class _ConvidadoItem extends StatelessWidget {
   final String nome;
   final bool confirmado;
-
   const _ConvidadoItem({required this.nome, required this.confirmado});
-
   @override
   Widget build(BuildContext context) {
     return ListTile(
@@ -204,177 +341,27 @@ class _ConvidadoItem extends StatelessWidget {
   }
 }
 
-/// === RESUMO de GRUPOS ===
-class _ResumoGrupos extends StatelessWidget {
-  const _ResumoGrupos();
-
-  @override
-  Widget build(BuildContext context) {
-    final resumo = [
-      {"label": "Grupos criados", "value": 4, "color": Colors.teal},
-      {"label": "Grupos com convidados", "value": 3, "color": Colors.orange},
-      {"label": "Total de convidados", "value": 8, "color": Colors.pinkAccent},
-      {"label": "Grupos vazios", "value": 1, "color": Colors.grey},
-    ];
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Text(
-            "📊 Resumo geral dos grupos",
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-              color: Colors.black87,
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 14,
-          runSpacing: 14,
-          children: resumo
-              .map((r) => _metricCard(
-                    context,
-                    r["label"] as String,
-                    r["value"].toString(),
-                    r["color"] as Color,
-                  ))
-              .toList(),
-        ),
-      ],
-    );
-  }
-
-  Widget _metricCard(
-    BuildContext context,
-    String label,
-    String value,
-    Color color,
-  ) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final double cardWidth = (screenWidth / 2) - 28;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-      width: cardWidth,
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
-              color: Colors.black87,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+Color fromHex(String hex) {
+  hex = hex.replaceAll('#', '');
+  return Color(int.parse('0xff$hex'));
 }
 
-/// === GRÁFICO de GRUPOS ===
-class _GraficoGrupos extends StatelessWidget {
-  const _GraficoGrupos();
-
-  @override
-  Widget build(BuildContext context) {
-    final casais = 2.0;
-    final familia = 3.0;
-    final amigos = 3.0;
-    final vazio = 1.0;
-    final total = casais + familia + amigos + vazio;
-
-    return Column(
-      children: [
-        const SizedBox(height: 20),
-        const Text(
-          "📈 Distribuição de Convidados por Grupo",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          height: 240,
-          child: PieChart(
-            PieChartData(
-              sectionsSpace: 3,
-              centerSpaceRadius: 55,
-              sections: [
-                _pieSection("Casais", casais / total, Colors.pinkAccent),
-                _pieSection("Família", familia / total, Colors.teal),
-                _pieSection("Amigos", amigos / total, Colors.orangeAccent),
-                _pieSection("Vazio", vazio / total, Colors.grey),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
-        _graficoLegenda("Casais", Colors.pinkAccent),
-        _graficoLegenda("Família", Colors.teal),
-        _graficoLegenda("Amigos", Colors.orangeAccent),
-        _graficoLegenda("Vazio", Colors.grey),
-      ],
-    );
-  }
-
-  PieChartSectionData _pieSection(String label, double percent, Color color) {
-    return PieChartSectionData(
-      color: color,
-      value: percent,
-      title: "${(percent * 100).toStringAsFixed(0)}%",
-      radius: 70,
-      titleStyle: const TextStyle(
-        color: Colors.white,
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-
-  Widget _graficoLegenda(String label, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.circle, color: color, size: 12),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 13, color: Colors.black87),
-          ),
-        ],
-      ),
-    );
-  }
+IconData _iconFromKey(String? key) {
+  return mapaIcones[key] ?? Icons.group_rounded;
 }
+
+final mapaIcones = {
+  'group': Icons.group_rounded,
+  'family': Icons.family_restroom_rounded,
+  'star': Icons.star_rounded,
+  'favorite': Icons.favorite_rounded,
+  'chair': Icons.chair_rounded,
+  'cake': Icons.cake_rounded,
+  'music': Icons.music_note_rounded,
+  'work': Icons.work_rounded,
+  'pets': Icons.pets_rounded,
+  'sports': Icons.sports_soccer_rounded,
+  'emoji': Icons.emoji_people_rounded,
+  'school': Icons.school_rounded,
+  'travel': Icons.flight_takeoff_rounded,
+};

@@ -1,12 +1,23 @@
-import 'package:flutter/services.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:get/get.dart';
-import 'package:intl/intl.dart';
+import 'package:currency_text_input_formatter/currency_text_input_formatter.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-import '../../controllers/tema/event_theme_controller.dart';
+import './../../controllers/tema/event_theme_controller.dart';
+
+enum InputType {
+  text,
+  email,
+  password,
+  phone,
+  number,
+  cpfCnpj,
+  money,
+  multiline,
+  search,
+}
 
 class CustomInputField extends StatefulWidget {
   final String label;
@@ -28,6 +39,9 @@ class CustomInputField extends StatefulWidget {
   final Widget? suffixIcon;
   final bool autoFormat;
 
+  // NOVO sem quebrar nada
+  final InputType type;
+
   const CustomInputField({
     super.key,
     required this.label,
@@ -46,6 +60,7 @@ class CustomInputField extends StatefulWidget {
     this.onChanged,
     this.suffixIcon,
     this.autoFormat = true,
+    this.type = InputType.text,
   });
 
   @override
@@ -55,96 +70,73 @@ class CustomInputField extends StatefulWidget {
 class _CustomInputFieldState extends State<CustomInputField> {
   final themeController = Get.find<EventThemeController>();
   bool isFocused = false;
+  bool showPassword = false;
+
   MaskTextInputFormatter? maskFormatter;
-  late TextInputType keyboardType;
+  late TextInputType finalKeyboardType;
 
   @override
   void initState() {
     super.initState();
-    if (widget.autoFormat) _configurarMascara();
+    _configureType();
   }
 
-  void _configurarMascara() {
-    final label = widget.label.toLowerCase();
-
-    // 🟢 CAMPO DE PREÇO
-    if (label.contains('preço') || label.contains('preco') || label.contains('valor')) {
-      keyboardType = TextInputType.number;
-      maskFormatter = null; // moeda não usa máscara fixa
+  // =====================================================
+  // CONFIGURAÇÃO AUTOMÁTICA DOS TIPOS DE INPUT
+  // =====================================================
+  void _configureType() {
+    if (!widget.autoFormat) {
+      finalKeyboardType = widget.keyboardType ?? TextInputType.text;
       return;
     }
 
-    // 🟡 Outras máscaras
-    if (label.contains('telefone')) {
-      maskFormatter = MaskTextInputFormatter(mask: '(##) #####-####');
-      keyboardType = TextInputType.phone;
-      return;
-    }
+    switch (widget.type) {
+      case InputType.email:
+        finalKeyboardType = TextInputType.emailAddress;
+        break;
 
-    if (label.contains('cep')) {
-      maskFormatter = MaskTextInputFormatter(mask: '#####-###');
-      keyboardType = TextInputType.number;
-      return;
-    }
+      case InputType.password:
+        finalKeyboardType = TextInputType.visiblePassword;
+        break;
 
-    if (label.contains('cpf') || label.contains('cnpj')) {
-      keyboardType = TextInputType.number;
-      return;
-    }
+      case InputType.phone:
+        finalKeyboardType = TextInputType.phone;
+        maskFormatter = MaskTextInputFormatter(mask: '(##) #####-####');
+        break;
 
-    if (label.contains('email')) {
-      keyboardType = TextInputType.emailAddress;
-      return;
-    }
+      case InputType.number:
+        finalKeyboardType = TextInputType.number;
+        break;
 
-    keyboardType = widget.keyboardType ?? TextInputType.text;
+      case InputType.cpfCnpj:
+        finalKeyboardType = TextInputType.number;
+        maskFormatter = MaskTextInputFormatter(mask: '###.###.###-##');
+        break;
+
+      case InputType.money:
+        finalKeyboardType = TextInputType.number;
+        break;
+
+      case InputType.multiline:
+        finalKeyboardType = TextInputType.multiline;
+        break;
+
+      default:
+        finalKeyboardType = widget.keyboardType ?? TextInputType.text;
+        break;
+    }
   }
 
+  // =====================================================
+  // WIDGET FINAL
+  // =====================================================
   @override
   Widget build(BuildContext context) {
-    final tipo = (Get.arguments?['tipo'] ?? 'O').toString(); // F, O, C
     final gradient = themeController.gradient.value;
 
-    // 🎨 Paletas distintas
-    Color bgColor;
-    Color textColor;
-    Color iconColor;
-    Color labelColor;
-
-    switch (tipo) {
-      case 'F': // Fornecedor
-        bgColor = Colors.black.withValues(alpha: 0.65);
-        textColor = Colors.white;
-        iconColor = Colors.white;
-        labelColor = Colors.grey.shade400;
-        break;
-      case 'O': // Organizador
-        final base = gradient.colors.first;
-        final darker = HSLColor.fromColor(base)
-            .withLightness(
-              (HSLColor.fromColor(base).lightness - 0.10).clamp(0.0, 1.0),
-            )
-            .toColor();
-
-        // Campos em tom claro, contraste alto sobre fundo verde
-        bgColor = Colors.white.withValues(alpha: 0.95);
-        textColor = Colors.grey.shade900;
-        iconColor = darker;
-        labelColor = darker.withValues(alpha: 0.8);
-        break;
-
-      case 'C': // Convidado
-        bgColor = Colors.white;
-        textColor = Colors.blueGrey.shade800;
-        iconColor = Colors.teal;
-        labelColor = Colors.blueGrey.shade500;
-        break;
-      default:
-        bgColor = Colors.white;
-        textColor = Colors.black87;
-        iconColor = Colors.black54;
-        labelColor = Colors.grey.shade600;
-    }
+    Color bgColor = Colors.white;
+    Color textColor = Colors.black87;
+    Color iconColor = widget.color ?? gradient.colors.first;
 
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(widget.borderRadius),
@@ -154,109 +146,90 @@ class _CustomInputFieldState extends State<CustomInputField> {
     return AnimatedContainer(
       duration: 300.ms,
       margin: widget.margin,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(widget.borderRadius),
-        boxShadow: [
-          if (isFocused)
-            BoxShadow(
-              color: iconColor.withValues(alpha: 0.25),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // LABEL EXTERNO (não flutua, não sobe demais)
+          Text(
+            widget.label,
+            style: GoogleFonts.poppins(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: iconColor.withValues(alpha: 0.85),
             ),
+          ),
+          const SizedBox(height: 6),
+
+          Focus(
+            onFocusChange: (f) => setState(() => isFocused = f),
+            child: TextFormField(
+              controller: widget.controller,
+              validator: widget.validator,
+              readOnly: widget.readOnly,
+              onTap: widget.onTap,
+              maxLength: widget.maxLength,
+              maxLines: widget.maxLines ?? (widget.type == InputType.multiline ? 4 : 1),
+              obscureText: widget.type == InputType.password ? !showPassword : widget.obscureText,
+              keyboardType: finalKeyboardType,
+              onChanged: widget.onChanged,
+              cursorColor: iconColor,
+              inputFormatters: [
+                if (maskFormatter != null) maskFormatter!,
+                if (widget.type == InputType.money) CurrencyTextInputFormatter.currency(),
+              ],
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+                color: textColor,
+              ),
+              decoration: InputDecoration(
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Icon(widget.icon, size: 22, color: iconColor),
+                ),
+
+                suffixIcon: widget.type == InputType.password
+                    ? IconButton(
+                        icon: Icon(
+                          showPassword ? Icons.visibility : Icons.visibility_off,
+                          color: iconColor,
+                        ),
+                        onPressed: () => setState(() => showPassword = !showPassword),
+                      )
+                    : widget.suffixIcon,
+
+                filled: true,
+                fillColor: bgColor,
+
+                // Correção do label subindo demais
+                floatingLabelBehavior: FloatingLabelBehavior.never,
+
+                hintText: "Digite ${widget.label.toLowerCase()}...",
+                hintStyle: GoogleFonts.poppins(
+                  fontSize: 14,
+                  color: Colors.grey.shade500,
+                ),
+
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 16,
+                  horizontal: 14,
+                ),
+
+                enabledBorder: border,
+                focusedBorder: border.copyWith(
+                  borderSide: BorderSide(color: iconColor, width: 1.5),
+                ),
+                errorBorder: border.copyWith(
+                  borderSide: const BorderSide(color: Colors.redAccent, width: 1.3),
+                ),
+                focusedErrorBorder: border.copyWith(
+                  borderSide: const BorderSide(color: Colors.redAccent, width: 1.3),
+                ),
+              ),
+            ),
+          ),
         ],
       ),
-      child: Focus(
-        onFocusChange: (focus) => setState(() => isFocused = focus),
-        child: TextFormField(
-          controller: widget.controller,
-          validator: widget.validator,
-          onChanged: widget.onChanged,
-          readOnly: widget.readOnly,
-          onTap: widget.onTap,
-          obscureText: widget.obscureText,
-          keyboardType: keyboardType,
-          maxLines: widget.maxLines ?? 1,
-          inputFormatters: [
-            if (maskFormatter != null) maskFormatter!,
-            if (maskFormatter == null &&
-                (widget.label.toLowerCase().contains('preço') ||
-                    widget.label.toLowerCase().contains('preco') ||
-                    widget.label.toLowerCase().contains('valor')))
-              MoneyInputFormatter(),
-          ],
-          cursorColor: iconColor,
-          style: GoogleFonts.poppins(
-            fontSize: 15.5,
-            fontWeight: FontWeight.w500,
-            color: textColor,
-          ),
-          decoration: InputDecoration(
-            prefixIcon: Padding(
-              padding: const EdgeInsets.all(10),
-              child: Icon(widget.icon, size: 22, color: iconColor),
-            ),
-            suffixIcon: widget.suffixIcon,
-            labelText: widget.label,
-            labelStyle: GoogleFonts.poppins(
-              color: isFocused ? iconColor : labelColor,
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
-            ),
-            floatingLabelStyle: GoogleFonts.poppins(
-              color: iconColor.withValues(alpha: 0.9),
-              fontWeight: FontWeight.w600,
-              fontSize: 13,
-            ),
-            floatingLabelBehavior: FloatingLabelBehavior.auto, // ✅ volta ao comportamento padrão
-            filled: true,
-            fillColor: bgColor, // ✅ mantém o fundo visível
-            enabledBorder: border,
-            focusedBorder: border.copyWith(
-              borderSide: BorderSide(color: iconColor, width: 1.5),
-            ),
-            errorBorder: border.copyWith(
-              borderSide: const BorderSide(color: Colors.redAccent, width: 1.3),
-            ),
-            focusedErrorBorder: border.copyWith(
-              borderSide: const BorderSide(color: Colors.redAccent, width: 1.3),
-            ),
-            contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 14),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class MoneyInputFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
-    // Remove tudo que não é número
-    String digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-
-    if (digits.isEmpty) {
-      return const TextEditingValue(text: 'R\$ 0,00');
-    }
-
-    // Garante pelo menos 3 dígitos
-    while (digits.length < 3) {
-      digits = '0$digits';
-    }
-
-    // Converte para decimal (últimos 2 dígitos = centavos)
-    double value = double.parse(digits) / 100.0;
-
-    // Formata corretamente
-    final formatted = NumberFormat.currency(
-      locale: 'pt_BR',
-      symbol: 'R\$ ',
-      decimalDigits: 2,
-    ).format(value);
-
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

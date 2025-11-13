@@ -17,31 +17,59 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
   final themeController = Get.find<EventThemeController>();
   final convidadoController = Get.find<ConvidadoController>();
 
-  final RxString _filtroStatus = 'todos'.obs; // 🔹 Novo filtro reativo
+  final RxString _filtroStatus = 'todos'.obs;
 
   @override
   Widget build(BuildContext context) {
     final gradient = themeController.gradient.value;
+    final primary = themeController.primaryColor.value;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
+
+      // ===========================================================
+      // 🎨 APPBAR COM TEMA
+      // ===========================================================
       appBar: AppBar(
+        toolbarHeight: 90,
+        elevation: 0,
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(gradient: gradient),
+        ),
         title: Text(
           'Convidados do Evento',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black),
+          style: GoogleFonts.playfairDisplay(
+            fontSize: 22,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                blurRadius: 14,
+                color: Colors.black.withValues(alpha: 0.25),
+              )
+            ],
+          ),
         ),
-        centerTitle: true,
-        flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
+        leading: IconButton(
+          tooltip: 'Voltar',
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
       ),
+
       body: Column(
         children: [
-          _buildResumo(convidadoController),
-          _buildSearchAndFilter(convidadoController),
+          _buildResumo(convidadoController, primary), // <-- passou primary
+          _buildSearchAndFilter(convidadoController, primary),
           const SizedBox(height: 4),
+
           Expanded(
             child: Obx(() {
-              // 🔹 Aplica filtro de status + busca
               final listaBase = convidadoController.listaFiltrada;
+
               final lista = _filtroStatus.value == 'todos'
                   ? listaBase
                   : listaBase.where((c) {
@@ -65,14 +93,21 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
                 return Center(
                   child: Text(
                     'Nenhum convidado encontrado.',
-                    style: GoogleFonts.poppins(color: Colors.black54),
+                    style: GoogleFonts.poppins(
+                      color: Colors.black54,
+                      fontSize: 15,
+                    ),
                   ),
                 );
               }
 
+              // ===========================================================
+              // 🧾 LISTA DE CONVIDADOS COM TEMA
+              // ===========================================================
               return ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 55),
                 itemCount: lista.length,
-                separatorBuilder: (_, __) => Divider(color: Colors.grey.shade300, height: 1),
+                separatorBuilder: (_, __) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
                   final convidado = lista[index];
                   final corStatus = _getCorStatus(convidado.status);
@@ -80,45 +115,97 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
                   return Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      border: Border(left: BorderSide(color: corStatus, width: 5)),
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primary.withValues(alpha: 0.12),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                      border: Border(
+                        left: BorderSide(
+                          color: corStatus,
+                          width: 6,
+                        ),
+                      ),
                     ),
                     child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      leading: CircleAvatar(
-                        backgroundColor: corStatus.withValues(alpha: 0.15),
-                        child: Icon(Icons.person, color: corStatus),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 10,
                       ),
+
+                      // =======================================================
+                      // 🎭 AVATAR ELEGANTE
+                      // =======================================================
+                      leading: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: primary, width: 2),
+                        ),
+                        child: CircleAvatar(
+                          radius: 22,
+                          backgroundColor: corStatus.withValues(alpha: 0.15),
+                          child: Icon(Icons.person_rounded, color: corStatus),
+                        ),
+                      ),
+
+                      // =======================================================
+                      // ✏️ NOME + INFO
+                      // =======================================================
                       title: Text(
                         convidado.nome,
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
-                          fontSize: 15,
+                          fontSize: 15.5,
                           color: Colors.black87,
                         ),
                       ),
                       subtitle: Text(
                         '${convidado.email ?? 'Sem e-mail'} • ${convidado.contato}',
-                        style: GoogleFonts.poppins(fontSize: 13, color: Colors.black54),
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.black54,
+                        ),
                       ),
+
+                      // =======================================================
+                      // ⋮ MENU COM TEMA
+                      // =======================================================
                       trailing: PopupMenuButton<String>(
-                        icon: Icon(Icons.more_vert, color: Colors.grey.shade700),
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
                         onSelected: (value) async {
                           switch (value) {
                             case 'confirmar':
                               await convidadoController.atualizarStatus(
-                                  convidado.idConvidado, StatusConvidado.confirmado);
+                                convidado.idConvidado,
+                                StatusConvidado.confirmado,
+                              );
                               _mostrarSnack('Convidado confirmado', convidado.nome, Colors.green);
                               break;
+
                             case 'pendente':
                               await convidadoController.atualizarStatus(
-                                  convidado.idConvidado, StatusConvidado.pendente);
+                                convidado.idConvidado,
+                                StatusConvidado.pendente,
+                              );
                               _mostrarSnack('Marcado como pendente', convidado.nome, Colors.orange);
                               break;
+
                             case 'recusar':
                               await convidadoController.atualizarStatus(
-                                  convidado.idConvidado, StatusConvidado.recusado);
+                                convidado.idConvidado,
+                                StatusConvidado.recusado,
+                              );
                               _mostrarSnack('Convite recusado', convidado.nome, Colors.redAccent);
                               break;
+
                             case 'excluir':
                               await convidadoController.excluirConvidado(convidado.idConvidado);
                               _mostrarSnack('Convidado excluído', convidado.nome, Colors.red);
@@ -180,65 +267,67 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
     );
   }
 
-  /// 🔹 Campo de busca + filtro de status
-  Widget _buildSearchAndFilter(ConvidadoController controller) {
+  // ===============================================================
+  // 🔍 BUSCA + FILTRO COM TEMA
+  // ===============================================================
+  Widget _buildSearchAndFilter(ConvidadoController controller, Color primary) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          // 🔹 Campo de busca ocupa 70% do espaço
           Expanded(
             flex: 7,
             child: TextField(
               onChanged: (value) => controller.termoBusca.value = value,
               decoration: InputDecoration(
                 hintText: 'Buscar por nome ou e-mail...',
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon: Icon(Icons.search_rounded, color: primary),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                contentPadding: const EdgeInsets.symmetric(vertical: 12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(color: primary.withValues(alpha: 0.2)),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
-
-          // 🔹 Dropdown ocupa o espaço restante de forma segura
+          const SizedBox(width: 10),
           Flexible(
             flex: 4,
-            child: Obx(() => DropdownButtonFormField<String>(
-                  value: _filtroStatus.value,
-                  isExpanded: true, // 🔹 evita overflow interno do dropdown
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+            child: Obx(() {
+              return DropdownButtonFormField<String>(
+                value: _filtroStatus.value,
+                isExpanded: true,
+                icon: Icon(Icons.filter_alt_rounded, color: primary),
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: primary.withValues(alpha: 0.2)),
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'todos', child: Text('Todos')),
-                    DropdownMenuItem(value: 'confirmados', child: Text('Confirmados')),
-                    DropdownMenuItem(value: 'pendentes', child: Text('Pendentes')),
-                    DropdownMenuItem(value: 'recusados', child: Text('Recusados')),
-                  ],
-                  onChanged: (value) {
-                    _filtroStatus.value = value ?? 'todos';
-                  },
-                )),
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'todos', child: Text('Todos')),
+                  DropdownMenuItem(value: 'confirmados', child: Text('Confirmados')),
+                  DropdownMenuItem(value: 'pendentes', child: Text('Pendentes')),
+                  DropdownMenuItem(value: 'recusados', child: Text('Recusados')),
+                ],
+                onChanged: (value) => _filtroStatus.value = value ?? 'todos',
+              );
+            }),
           ),
         ],
       ),
     );
   }
 
-  /// 🔹 Resumo de convidados no topo
-  Widget _buildResumo(ConvidadoController controller) {
+  // ===============================================================
+  // 📊 RESUMO COM TEMA
+  // ===============================================================
+  Widget _buildResumo(ConvidadoController controller, Color primary) {
     return Obx(() {
       final total = controller.totalConvidados;
       final confirmados = controller.totalConfirmados;
@@ -246,43 +335,37 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
       final recusados = controller.totalRecusados;
 
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.white, Colors.grey.shade100],
+            colors: [
+              primary.withValues(alpha: 0.14),
+              Colors.white,
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
         ),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              _resumoItem('✔ Confirmados', confirmados, Colors.green.shade700),
-              _resumoItem('⏳ Pendentes', pendentes, Colors.orange.shade700),
-              _resumoItem('❌ Recusados', recusados, Colors.red.shade700),
-              _resumoItem('👥 Total', total, Colors.blueGrey.shade700),
-            ],
-          ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _resumoCard("✔ Confirmados", confirmados, Colors.green.shade700),
+            _resumoCard("⏳ Pendentes", pendentes, Colors.orange.shade700),
+            _resumoCard("❌ Recusados", recusados, Colors.red.shade700),
+            _resumoCard("👥 Total", total, primary),
+          ],
         ),
       );
     });
   }
 
-  Widget _resumoItem(String label, int valor, Color cor) {
+  Widget _resumoCard(String label, int value, Color color) {
     return Column(
       children: [
         Text(
-          "$valor",
+          "$value",
           style: GoogleFonts.poppins(
-            color: cor,
+            color: color,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -300,6 +383,9 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
     );
   }
 
+  // ===============================================================
+  // 🎨 COR POR STATUS
+  // ===============================================================
   Color _getCorStatus(StatusConvidado status) {
     switch (status) {
       case StatusConvidado.confirmado:
@@ -311,6 +397,9 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
     }
   }
 
+  // ===============================================================
+  // 🍰 SNACK
+  // ===============================================================
   void _mostrarSnack(String titulo, String nome, Color cor) {
     Get.snackbar(
       titulo,

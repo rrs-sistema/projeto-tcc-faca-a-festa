@@ -1357,6 +1357,7 @@ Widget _fornecedorCard({
     onTap: () {
       Get.to(() => FornecedorDetalheScreen(
             fornecedorDetalhado: fornecedorDetalhe,
+            selecionouCategoria: false,
           ));
     },
     child: Hero(

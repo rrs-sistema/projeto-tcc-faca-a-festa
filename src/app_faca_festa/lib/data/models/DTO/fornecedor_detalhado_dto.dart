@@ -14,4 +14,21 @@ class FornecedorDetalhadoDto {
     this.territorio,
     this.distanciaKm,
   });
+
+  // 🔹 Método copyWith elegante e completo
+  FornecedorDetalhadoDto copyWith({
+    FornecedorModel? fornecedor,
+    TerritorioModel? territorio,
+    String? categoriaId,
+    String? categoriaNome,
+    double? distanciaKm,
+  }) {
+    return FornecedorDetalhadoDto(
+      fornecedor: fornecedor ?? this.fornecedor,
+      territorio: territorio ?? this.territorio,
+      categoriaId: categoriaId ?? this.categoriaId,
+      categoriaNome: categoriaNome ?? this.categoriaNome,
+      distanciaKm: distanciaKm ?? this.distanciaKm,
+    );
+  }
 }

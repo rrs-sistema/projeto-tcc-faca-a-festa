@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../controllers/convidado/grupo_convidado_controller.dart';
-import '../../widgets/custom_input_field.dart';
+import './../../../controllers/convidado/grupo_convidado_controller.dart';
 import './../../../controllers/convidado/convidado_controller.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/evento_controller.dart';
+import './../../widgets/custom_input_field.dart';
 import './../../../data/models/model.dart';
 
 class EnviarConvitesScreen extends StatefulWidget {
@@ -24,12 +24,14 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
   final _searchController = TextEditingController();
   final RxList<ConvidadoModel> _selecionados = <ConvidadoModel>[].obs;
   final _uuid = const Uuid();
+  late String idEvento;
 
   @override
   void initState() {
     super.initState();
-    final idEvento = eventoController.eventoAtual.value?.idEvento;
-    if (idEvento != null && idEvento.isNotEmpty) {
+    eventoController.eventoAtual.value?.idEvento;
+    if (eventoController.eventoAtual.value?.idEvento != null) {
+      idEvento = eventoController.eventoAtual.value?.idEvento.toString() ?? '';
       convidadoController.escutarConvidados(idEvento);
     }
   }
@@ -65,15 +67,21 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
     return Scaffold(
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: Text(
           'Envio de Convites',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.black),
+          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        leading: IconButton(
+          tooltip: 'Voltar',
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          onPressed: () => Get.back(),
         ),
         centerTitle: true,
         flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black),
+            icon: const Icon(Icons.refresh, color: Colors.white),
             tooltip: 'Recarregar lista',
             onPressed: () {
               final idEvento = eventoController.eventoAtual.value?.idEvento;
@@ -184,7 +192,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
         backgroundColor: primary,
         onPressed: () => _abrirDialogAdicionarConvidado(context, primary),
         label: Text(
-          'Adicionar Convidado',
+          'Adicionar',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white),
         ),
         icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
@@ -336,33 +344,30 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                     Icon(Icons.person_add_alt_1, size: 40, color: Colors.white),
                     const SizedBox(height: 12),
                     Text(
-                      "Adicionar Convidado",
+                      "Adicionar",
                       style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                        color: Colors.black,
-                      ),
+                          fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
                     ),
                     const SizedBox(height: 24),
                     CustomInputField(
                       label: "Nome",
                       icon: Icons.person_outline,
                       controller: nomeCtrl,
-                      color: Colors.pinkAccent,
+                      color: Colors.white,
                     ),
 
                     CustomInputField(
                       label: "Telefone",
                       icon: Icons.phone_outlined,
                       controller: telCtrl,
-                      color: Colors.pinkAccent,
+                      color: Colors.white,
                     ),
 
                     CustomInputField(
                       label: "E-mail",
                       icon: Icons.email_outlined,
                       controller: emailCtrl,
-                      color: Colors.pinkAccent,
+                      color: Colors.white,
                     ),
 
                     // 🔹 Campo dropdown com os grupos vindos do controller
@@ -373,19 +378,23 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                       }
                       if (grupos.isEmpty) {
                         return Container(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(14),
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          child: Column(
                             children: [
-                              const Icon(Icons.info_outline, color: Colors.grey),
-                              const SizedBox(width: 8),
-                              Text(
-                                "Nenhum grupo cadastrado ainda",
-                                style: GoogleFonts.poppins(color: Colors.black54, fontSize: 13),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Icons.info_outline, color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Nenhum grupo cadastrado ainda",
+                                    style: GoogleFonts.poppins(color: Colors.black54, fontSize: 13),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -416,52 +425,74 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                     }),
 
                     const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 30),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: primary,
+                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 30),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.check, color: Colors.white),
+                        label: Text("Salvar", style: GoogleFonts.poppins(color: Colors.white)),
+                        onPressed: () async {
+                          if (nomeCtrl.text.isEmpty) {
+                            Get.snackbar('Atenção', 'Informe o nome do convidado',
+                                backgroundColor: Colors.redAccent, colorText: Colors.white);
+                            return;
+                          }
+
+                          if (grupoSelecionado.value.isEmpty) {
+                            Get.snackbar('Atenção', 'Selecione um grupo para o convidado',
+                                backgroundColor: Colors.redAccent, colorText: Colors.white);
+                            return;
+                          }
+
+                          final idEvento = eventoController.eventoAtual.value?.idEvento ?? '';
+                          final novo = ConvidadoModel(
+                            idConvidado: _uuid.v4(),
+                            idEvento: idEvento,
+                            nome: nomeCtrl.text,
+                            contato: telCtrl.text,
+                            email: emailCtrl.text,
+                            grupoMesa: grupoSelecionado.value,
+                            status: StatusConvidado.pendente,
+                            adulto: true,
+                          );
+
+                          convidadoController.adicionarNovoConvidadoLocal(novo);
+                          _selecionados.add(novo);
+
+                          Get.back();
+                          Get.snackbar('Convidado adicionado', nomeCtrl.text,
+                              backgroundColor: primary, colorText: Colors.white);
+                        },
                       ),
-                      icon: const Icon(Icons.check, color: Colors.white),
-                      label: Text("Salvar", style: GoogleFonts.poppins(color: Colors.white)),
-                      onPressed: () async {
-                        if (nomeCtrl.text.isEmpty) {
-                          Get.snackbar('Atenção', 'Informe o nome do convidado',
-                              backgroundColor: Colors.redAccent, colorText: Colors.white);
-                          return;
-                        }
-
-                        if (grupoSelecionado.value.isEmpty) {
-                          Get.snackbar('Atenção', 'Selecione um grupo para o convidado',
-                              backgroundColor: Colors.redAccent, colorText: Colors.white);
-                          return;
-                        }
-
-                        final idEvento = eventoController.eventoAtual.value?.idEvento ?? '';
-                        final novo = ConvidadoModel(
-                          idConvidado: _uuid.v4(),
-                          idEvento: idEvento,
-                          nome: nomeCtrl.text,
-                          contato: telCtrl.text,
-                          email: emailCtrl.text,
-                          grupoMesa: grupoSelecionado.value,
-                          status: StatusConvidado.pendente,
-                          adulto: true,
-                        );
-
-                        convidadoController.adicionarNovoConvidadoLocal(novo);
-                        _selecionados.add(novo);
-
-                        Get.back();
-                        Get.snackbar('Convidado adicionado', nomeCtrl.text,
-                            backgroundColor: primary, colorText: Colors.white);
-                      },
                     ),
                     const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
-                    )
+
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => Get.back(),
+                        icon: Icon(Icons.close, color: Colors.white),
+                        label: Text(
+                          'Cancelar',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: Colors.grey.shade300),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

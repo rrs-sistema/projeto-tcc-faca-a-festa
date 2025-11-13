@@ -5,12 +5,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../data/models/model.dart';
+import 'grupo_convidado_controller.dart';
 
 class ConvidadoController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // 🔹 Lista completa de convidados do evento atual
   final RxList<ConvidadoModel> convidados = <ConvidadoModel>[].obs;
+
+  final grupoController = Get.put(GrupoConvidadoController());
 
   // 🔹 Estados de carregamento e erro
   final RxBool carregando = false.obs;
@@ -243,7 +246,37 @@ class ConvidadoController extends GetxController {
   }
 
   /// 🔹 Calcula estatísticas gerais de mesas
+  /// 🔹 Calcula estatísticas gerais de mesas (AGORA CORRETO)
   Map<String, dynamic> get estatisticasMesas {
+    final gruposMesa = grupoController.grupos;
+
+    // Total de mesas cadastradas
+    final totalMesas = gruposMesa.length;
+
+    // Total de assentos = total de convidados em todas as mesas
+    int totalAssentos = 0;
+    for (var g in gruposMesa) {
+      totalAssentos += g.numeroMesa != null ? g.numeroMesa! : 0;
+    }
+
+    // Quantos confirmados no total
+    final totalOcupados = gruposMesa
+        .expand((g) => g.convidados)
+        .where((c) => c.status == StatusConvidado.confirmado)
+        .length;
+
+    // Assentos livres
+    final totalLivres = totalAssentos - totalOcupados;
+
+    return {
+      'totalMesas': totalMesas,
+      'assentos': totalAssentos,
+      'ocupados': totalOcupados,
+      'livres': totalLivres,
+    };
+  }
+
+  Map<String, dynamic> get estatisticasMesas001 {
     final grupos = convidadosPorMesa;
     final totalMesas = grupos.length;
     final totalAssentos = grupos.values.fold<int>(0, (a, b) => a + b.length);
