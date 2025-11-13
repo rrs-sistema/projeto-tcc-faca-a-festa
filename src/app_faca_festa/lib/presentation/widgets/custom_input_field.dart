@@ -1,5 +1,7 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
@@ -64,24 +66,37 @@ class _CustomInputFieldState extends State<CustomInputField> {
 
   void _configurarMascara() {
     final label = widget.label.toLowerCase();
+
+    // 🟢 CAMPO DE PREÇO
+    if (label.contains('preço') || label.contains('preco') || label.contains('valor')) {
+      keyboardType = TextInputType.number;
+      maskFormatter = null; // moeda não usa máscara fixa
+      return;
+    }
+
+    // 🟡 Outras máscaras
     if (label.contains('telefone')) {
       maskFormatter = MaskTextInputFormatter(mask: '(##) #####-####');
       keyboardType = TextInputType.phone;
       return;
     }
-    if (label.contains('cpf') || label.contains('cnpj')) {
-      keyboardType = TextInputType.number;
-      return;
-    }
+
     if (label.contains('cep')) {
       maskFormatter = MaskTextInputFormatter(mask: '#####-###');
       keyboardType = TextInputType.number;
       return;
     }
+
+    if (label.contains('cpf') || label.contains('cnpj')) {
+      keyboardType = TextInputType.number;
+      return;
+    }
+
     if (label.contains('email')) {
       keyboardType = TextInputType.emailAddress;
       return;
     }
+
     keyboardType = widget.keyboardType ?? TextInputType.text;
   }
 
@@ -162,7 +177,14 @@ class _CustomInputFieldState extends State<CustomInputField> {
           obscureText: widget.obscureText,
           keyboardType: keyboardType,
           maxLines: widget.maxLines ?? 1,
-          inputFormatters: maskFormatter != null ? [maskFormatter!] : [],
+          inputFormatters: [
+            if (maskFormatter != null) maskFormatter!,
+            if (maskFormatter == null &&
+                (widget.label.toLowerCase().contains('preço') ||
+                    widget.label.toLowerCase().contains('preco') ||
+                    widget.label.toLowerCase().contains('valor')))
+              MoneyInputFormatter(),
+          ],
           cursorColor: iconColor,
           style: GoogleFonts.poppins(
             fontSize: 15.5,
@@ -203,6 +225,38 @@ class _CustomInputFieldState extends State<CustomInputField> {
           ),
         ),
       ),
+    );
+  }
+}
+
+class MoneyInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    // Remove tudo que não é número
+    String digits = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    if (digits.isEmpty) {
+      return const TextEditingValue(text: 'R\$ 0,00');
+    }
+
+    // Garante pelo menos 3 dígitos
+    while (digits.length < 3) {
+      digits = '0$digits';
+    }
+
+    // Converte para decimal (últimos 2 dígitos = centavos)
+    double value = double.parse(digits) / 100.0;
+
+    // Formata corretamente
+    final formatted = NumberFormat.currency(
+      locale: 'pt_BR',
+      symbol: 'R\$ ',
+      decimalDigits: 2,
+    ).format(value);
+
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
     );
   }
 }

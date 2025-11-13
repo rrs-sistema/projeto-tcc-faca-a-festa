@@ -5,15 +5,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../controllers/app_controller.dart';
-import '../../../../controllers/fornecedor_controller.dart';
-import '../../../../controllers/servico/servico_foto_controller.dart';
-import '../../../../data/models/model.dart';
-import '../fornecedor/fornecedor_servico_bottom_sheet.dart';
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
+import './../../../../controllers/servico/servico_foto_controller.dart';
+import './../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/servico_produto_controller.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
+import './../fornecedor/fornecedor_servico_bottom_sheet.dart';
+import './../../../../controllers/fornecedor_controller.dart';
+import './../../../../controllers/app_controller.dart';
+import './../../../../core/utils/biblioteca.dart';
 import './show_servico_produto_bottom_sheet.dart';
+import './../../../../data/models/model.dart';
 
 class ServicoProdutoListScreen extends StatefulWidget {
   final String? fornecedorId;
@@ -27,6 +28,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
   final controller = Get.put(ServicoProdutoController());
   final fornecedorController = Get.find<FornecedorController>();
   final fotoController = Get.put(ServicoFotoController());
+  final servicoController = Get.find<ServicoProdutoController>();
   final appController = Get.put(AppController());
 
   final theme = Get.find<EventThemeController>();
@@ -125,6 +127,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
               icon: const Icon(Icons.add_rounded, color: Colors.black, size: 22),
               onPressed: () {
                 if (appController.usuarioLogado.value?.tipo == 'F') {
+                  fotoController.fotos.clear();
+                  fotoController.fotos.refresh();
                   showFornecedorServicoBottomSheet(
                     context,
                     widget.fornecedorId ?? '',
@@ -210,9 +214,17 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                                   showServicoProdutoBottomSheet(context, servico);
                                 }
                               },
-                              onExcluir: (id) {
+                              onExcluir: (s) async {
                                 if (appController.usuarioLogado.value?.tipo == 'F') {
-                                  fornecedorController.excluirVinculo(id);
+                                  _confirmarExclusao(
+                                    context: context,
+                                    onConfirmar: () async {
+                                      EasyLoading.show(status: 'Processando...');
+                                      await servicoController.excluirVinculo(s.id, s.idFornecedor);
+
+                                      EasyLoading.dismiss();
+                                    },
+                                  );
                                 } else if (appController.usuarioLogado.value?.tipo == 'A') {
                                   //controller.excluirServico(id);
                                 }
@@ -253,6 +265,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
     final nomeCategoriaWidth = isSmall ? 180.0 : 250.0;
     final subCategoriaWidth = isSmall ? 180.0 : 250.0;
     final medidaWidth = isSmall ? 100.0 : 130.0;
+    final precoWidth = isSmall ? 100.0 : 120.0;
     final statusWidth = isSmall ? 90.0 : 100.0;
 
     return Container(
@@ -294,6 +307,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                 onSort: (asc) => _sort((s) => s.nomeSubcategoria ?? '', 3, asc)),
             _headerCell(Icons.straighten_rounded, 'Medida', 4,
                 width: medidaWidth, iconColor: Colors.orangeAccent),
+            _headerCell(Icons.straighten_rounded, 'Preço', 4,
+                width: precoWidth, iconColor: Colors.orangeAccent),
             _headerCell(Icons.manage_accounts_rounded, 'Ações', 5,
                 width: statusWidth, iconColor: Colors.redAccent),
           ],
@@ -376,83 +391,310 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
         ),
       );
 
-  // 🔹 Layout compacto para celular
-  Widget _buildServicoCard(BuildContext context, FornecedorServicoDetalhadoDto s, Color primary,
-      Map<String, String> medidas) {
+  Widget _buildServicoCard(
+    BuildContext context,
+    FornecedorServicoDetalhadoDto s,
+    Color primary,
+    Map<String, String> medidas,
+  ) {
     final tipo = medidas[s.tipoMedida] ?? s.tipoMedida ?? '-';
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: primary.withValues(alpha: 0.15),
-          child: Icon(Icons.design_services_rounded, color: primary),
-        ),
-        title: Text(
-          s.nomeServico ?? 'Serviço sem nome',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-        ),
-        subtitle: Text(
-          '${s.nomeCategoria ?? '-'} • ${s.nomeSubcategoria ?? '-'} • $tipo',
-          style: GoogleFonts.poppins(fontSize: 13),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.edit_rounded, color: Colors.blueAccent),
-              onPressed: () async {
-                EasyLoading.show(status: 'Buscando as informações...');
 
-                final servico =
-                    controller.servicos.firstWhereOrNull((p) => p.id == s.idProdutoServico);
+    final hover = false.obs;
 
-                fotoController.fotos.clear();
-                await fotoController.carregarFotos(s.idFornecedor, s.idProdutoServico);
-
-                if (appController.usuarioLogado.value?.tipo == 'F') {
-                  final vinculo = FornecedorProdutoServicoModel(
-                    id: s.id,
-                    idProdutoServico: s.idProdutoServico,
-                    idFornecedor: s.idFornecedor,
-                    preco: s.preco,
-                    precoPromocao: s.precoPromocao,
-                    idSubcategoria: s.idSubcategoria,
-                    ativo: s.ativo,
-                  );
-                  EasyLoading.dismiss();
-
-                  showFornecedorServicoBottomSheet(
-                    context,
-                    widget.fornecedorId ?? '',
-                    vinculo: vinculo,
-                  );
-                } else {
-                  showServicoProdutoBottomSheet(context, servico);
-                }
-              },
+    return MouseRegion(
+      onEnter: (_) => hover.value = true,
+      onExit: (_) => hover.value = false,
+      child: Obx(() {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: hover.value
+                  ? primary.withValues(alpha: 0.30)
+                  : Colors.grey.withValues(alpha: 0.12),
             ),
-            IconButton(
-                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                onPressed: () {
-                  if (appController.usuarioLogado.value?.tipo == 'F') {
-                    final vinculoId = '${s.idFornecedor}_${s.idProdutoServico}';
-                    fornecedorController.excluirVinculo(vinculoId);
-                  } else {
-                    //controller.excluirServico(s.idProdutoServico);
-                  }
-                }),
+            gradient: LinearGradient(
+              colors: hover.value
+                  ? [
+                      Colors.white.withValues(alpha: 0.95),
+                      Colors.grey.shade50.withValues(alpha: 0.95),
+                    ]
+                  : [
+                      Colors.white,
+                      Colors.grey.shade50,
+                    ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: hover.value
+                    ? primary.withValues(alpha: 0.12)
+                    : Colors.black.withValues(alpha: 0.04),
+                blurRadius: hover.value ? 12 : 8,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+
+            // ● Mini Capa + Ícone
+            leading: _buildLeadingImage(s, primary),
+
+            // ● Informações
+            title: Text(
+              s.nomeServico ?? 'Serviço sem nome',
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey.shade900,
+              ),
+            ),
+
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ○ Categoria • Subcategoria • Medida
+                Text(
+                  '${s.nomeCategoria ?? '-'} • ${s.nomeSubcategoria ?? '-'} • $tipo',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+
+                // ○ Preço badge
+                _badgePreco(primary, s),
+
+                const SizedBox(height: 6),
+
+                // ○ Estrelas de avaliação (opcional)
+                _buildRatingStars(s),
+              ],
+            ),
+
+            // ● Ações
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _iconButtonCircle(
+                  icon: Icons.edit_rounded,
+                  color: Colors.blueAccent,
+                  onTap: () async {
+                    EasyLoading.show(status: 'Buscando as informações...');
+
+                    final servico =
+                        controller.servicos.firstWhereOrNull((p) => p.id == s.idProdutoServico);
+
+                    fotoController.fotos.clear();
+                    await fotoController.carregarFotos(s.idFornecedor, s.idProdutoServico);
+
+                    if (appController.usuarioLogado.value?.tipo == 'F') {
+                      final vinculo = FornecedorProdutoServicoModel(
+                        id: s.id,
+                        idProdutoServico: s.idProdutoServico,
+                        idFornecedor: s.idFornecedor,
+                        preco: s.preco,
+                        precoPromocao: s.precoPromocao,
+                        idSubcategoria: s.idSubcategoria,
+                        ativo: s.ativo,
+                      );
+                      EasyLoading.dismiss();
+
+                      showFornecedorServicoBottomSheet(
+                        context,
+                        widget.fornecedorId ?? '',
+                        vinculo: vinculo,
+                      );
+                    } else {
+                      showServicoProdutoBottomSheet(context, servico);
+                    }
+                  },
+                ),
+                const SizedBox(width: 6),
+                _iconButtonCircle(
+                  icon: Icons.delete_outline_rounded,
+                  color: Colors.redAccent,
+                  onTap: () {
+                    if (appController.usuarioLogado.value?.tipo == 'F') {
+                      final vinculoId = '${s.idFornecedor}_${s.idProdutoServico}';
+
+                      _confirmarExclusao(
+                        context: context,
+                        onConfirmar: () async {
+                          EasyLoading.show(status: 'Processando...');
+                          await servicoController.excluirVinculo(vinculoId, s.idFornecedor);
+
+                          EasyLoading.dismiss();
+                        },
+                      );
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+    );
+  }
+
+  Future<void> _confirmarExclusao({
+    required BuildContext context,
+    required VoidCallback onConfirmar,
+  }) async {
+    if (!context.mounted) {
+      context = Get.context!;
+    }
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        final primary = Theme.of(ctx).colorScheme.primary;
+
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          title: Row(
+            children: [
+              Icon(Icons.help_outline_rounded, color: primary, size: 26),
+              const SizedBox(width: 8),
+              Text(
+                "Confirmar exclusão",
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 17,
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            "Deseja realmente excluir este serviço?",
+            style: GoogleFonts.poppins(fontSize: 14.5, color: Colors.grey.shade700),
+          ),
+          actionsPadding: const EdgeInsets.only(bottom: 8, right: 8),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                "Cancelar",
+                style: GoogleFonts.poppins(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                onConfirmar();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: Text(
+                "Excluir",
+                style: GoogleFonts.poppins(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ],
+        );
+      },
+    );
+  }
+
+  Widget _buildRatingStars(FornecedorServicoDetalhadoDto s) {
+    if (s.precoPromocao == null) {
+      return const SizedBox.shrink();
+    }
+
+    final estrelas = 4; // Você pode puxar do modelo depois
+    return Row(
+      children: List.generate(5, (i) {
+        return Icon(
+          i < estrelas ? Icons.star_rounded : Icons.star_border_rounded,
+          size: 16,
+          color: Colors.amber.shade600,
+        );
+      }),
+    );
+  }
+
+  Widget _buildLeadingImage(FornecedorServicoDetalhadoDto s, Color primary) {
+    if (s.imagemUrl == null || s.imagemUrl!.isEmpty) {
+      return Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: primary.withValues(alpha: 0.15),
+          shape: BoxShape.circle,
         ),
+        child: Icon(Icons.design_services_rounded, color: primary),
+      );
+    }
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.network(
+        s.imagemUrl!,
+        width: 52,
+        height: 52,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          width: 52,
+          height: 52,
+          color: primary.withValues(alpha: 0.15),
+          child: Icon(Icons.image_not_supported_rounded, color: primary),
+        ),
+      ),
+    );
+  }
+
+  Widget _badgePreco(Color primary, FornecedorServicoDetalhadoDto s) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: primary.withValues(alpha: 0.13),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        Biblioteca.formatarPrecoGrid(s.preco, s.precoPromocao),
+        style: GoogleFonts.poppins(
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: primary,
+        ),
+      ),
+    );
+  }
+
+// ● Botão circular elegante
+  Widget _iconButtonCircle({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(50),
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(6),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: color.withValues(alpha: 0.12),
+        ),
+        child: Icon(icon, color: color, size: 20),
       ),
     );
   }
@@ -463,7 +705,7 @@ class ServicoDataTable extends StatelessWidget {
   final Map<String, String> medidas;
   final Color primary;
   final Function(FornecedorServicoDetalhadoDto s) onEditar;
-  final Function(String id) onExcluir;
+  final Function(FornecedorServicoDetalhadoDto s) onExcluir;
   final RxInt currentPage;
   final RxInt rowsPerPage;
 
@@ -511,6 +753,7 @@ class ServicoDataTable extends StatelessWidget {
       final nomeServicoWidth = isSmall ? width * 0.48 : width * 0.588;
       final nomeCategoriaWidth = isSmall ? 180.0 : 250.0;
       final subCategoriaWidth = isSmall ? 180.0 : 250.0;
+      final precoWidth = isSmall ? 100.0 : 120.0;
       final medidaWidth = isSmall ? 100.0 : 130.0;
       final statusWidth = 110.0;
 
@@ -528,7 +771,8 @@ class ServicoDataTable extends StatelessWidget {
                   2: FixedColumnWidth(nomeCategoriaWidth),
                   3: FixedColumnWidth(subCategoriaWidth),
                   4: FixedColumnWidth(medidaWidth),
-                  5: FixedColumnWidth(statusWidth),
+                  5: FixedColumnWidth(precoWidth),
+                  6: FixedColumnWidth(statusWidth),
                 },
                 border: TableBorder.symmetric(
                   inside: BorderSide(color: Colors.grey.withValues(alpha: 0.1)),
@@ -557,6 +801,13 @@ class ServicoDataTable extends StatelessWidget {
                           TextAlign.left),
                       _cell(index, hoveredIndex, selectedIndex, s.nomeSubcategoria ?? '-',
                           TextAlign.left),
+                      _cell(
+                        index,
+                        hoveredIndex,
+                        selectedIndex,
+                        Biblioteca.formatarPrecoGrid(s.preco, s.precoPromocao),
+                        TextAlign.center,
+                      ),
                       Center(child: _medidaBadge(tipo, primary)),
                       Center(
                         child: Row(
@@ -570,7 +821,7 @@ class ServicoDataTable extends StatelessWidget {
                             IconButton(
                               icon:
                                   const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                              onPressed: () => onExcluir(s.idProdutoServico),
+                              onPressed: () => onExcluir(s),
                             ),
                           ],
                         ),

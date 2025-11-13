@@ -1,11 +1,12 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:app_faca_festa/presentation/pages/cadastro/fornecedor/components/titulo_vinculo_animado.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/utils/biblioteca.dart';
+import '../../../widgets/custom_input_field.dart';
 import './../../../../data/models/servico_produto/subcategoria_servico_model.dart';
 import './../../../../controllers/categoria/subcategoria_servico_controller.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
@@ -13,8 +14,8 @@ import './../../../../controllers/categoria/categoria_servico_controller.dart';
 import './../../../../controllers/servico/servico_foto_controller.dart';
 import './../../../../data/models/servico_produto/servico_foto.dart';
 import './../../../../controllers/servico_produto_controller.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
-import './../../../../controllers/fornecedor_controller.dart';
+import './../../../../controllers/tema/event_theme_controller.dart';
+import './components/titulo_vinculo_animado.dart';
 import './../../../../data/models/model.dart';
 
 Future<void> showFornecedorServicoBottomSheet(
@@ -23,7 +24,6 @@ Future<void> showFornecedorServicoBottomSheet(
   FornecedorProdutoServicoModel? vinculo,
 }) async {
   final themeController = Get.find<EventThemeController>();
-  final fornecedorController = Get.find<FornecedorController>();
   final categoriaController = Get.find<CategoriaServicoController>();
   final subcategoriaController = Get.find<SubcategoriaServicoController>();
   final servicoController = Get.find<ServicoProdutoController>();
@@ -144,23 +144,44 @@ Future<void> showFornecedorServicoBottomSheet(
                   items: categoriaController.categorias
                       .map((c) => DropdownMenuItem(value: c, child: Text(c.nome)))
                       .toList(),
-                  onChanged: (val) {
+                  onChanged: (val) async {
                     categoriaSelecionada.value = val;
+
+                    // limpa dependentes
                     subcategoriaSelecionada.value = null;
                     servicoSelecionado.value = null;
-                    if (val != null) subcategoriaController.carregarSubcategorias(val.id);
+
+                    if (val != null) {
+                      await subcategoriaController.carregarSubcategorias(val.id);
+                    }
                   },
                 ),
                 const SizedBox(height: 16),
 
-                DropdownButtonFormField<SubcategoriaServicoModel>(
-                  value: subcategoriaSelecionada.value,
-                  decoration: decor('Subcategoria', Icons.list_alt_outlined),
-                  items: subcategoriaController.subcategorias
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s.nome)))
-                      .toList(),
-                  onChanged: (val) => subcategoriaSelecionada.value = val,
-                ),
+                Obx(() {
+                  final categoria = categoriaSelecionada.value;
+
+                  return DropdownButtonFormField<SubcategoriaServicoModel>(
+                    value: subcategoriaSelecionada.value,
+                    decoration: decor('Subcategoria', Icons.list_alt_outlined),
+
+                    // ✨ DESABILITA se nenhuma categoria foi escolhida
+                    isExpanded: true,
+                    items: categoria == null
+                        ? [] // sem itens
+                        : subcategoriaController.subcategorias
+                            .where((s) => s.idCategoria == categoria.id)
+                            .map((s) => DropdownMenuItem(value: s, child: Text(s.nome)))
+                            .toList(),
+
+                    onChanged: categoria == null
+                        ? null // ❌ bloqueado
+                        : (val) {
+                            subcategoriaSelecionada.value = val;
+                            servicoSelecionado.value = null;
+                          },
+                  );
+                }),
                 const SizedBox(height: 16),
 
                 DropdownButtonFormField<ServicoProdutoModel>(
@@ -183,17 +204,19 @@ Future<void> showFornecedorServicoBottomSheet(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       children: [
-                        TextField(
+                        CustomInputField(
+                          label: "Preço padrão (R\$)",
+                          icon: Icons.attach_money_rounded,
                           controller: precoCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration: decor('Preço padrão (R\$)', Icons.attach_money_rounded),
+                          keyboardType: TextInputType.number,
+                          onChanged: (_) {}, // opcional
                         ),
                         const SizedBox(height: 14),
-                        TextField(
+                        CustomInputField(
+                          label: "Preço promocional (opcional)",
+                          icon: Icons.local_offer_outlined,
                           controller: promocaoCtrl,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          decoration:
-                              decor('Preço promocional (opcional)', Icons.local_offer_outlined),
+                          keyboardType: TextInputType.number,
                         ),
                         const Divider(height: 28),
                         Row(
@@ -364,20 +387,31 @@ Future<void> showFornecedorServicoBottomSheet(
                         );
                         return;
                       }
+                      if (precoCtrl.value.text.isEmpty) {
+                        Get.snackbar(
+                          'Atenção',
+                          'Informe o preço do serviço antes de salvar',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.red.shade100,
+                          colorText: Colors.black87,
+                        );
+                        return;
+                      }
                       EasyLoading.show(status: 'Salvando as informações...');
                       final vinculoNovo = FornecedorProdutoServicoModel(
                         id: vinculo?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
                         idProdutoServico: servicoSelecionado.value!.id,
                         idSubcategoria: subcategoriaSelecionada.value!.id,
                         idFornecedor: idFornecedor,
-                        preco: double.tryParse(precoCtrl.text.replaceAll(',', '.')) ?? 0.0,
-                        precoPromocao: double.tryParse(promocaoCtrl.text.replaceAll(',', '.')),
+                        preco: Biblioteca.toDouble(precoCtrl.text),
+                        precoPromocao: Biblioteca.toDouble(promocaoCtrl.text),
                         ativo: ativo.value,
                       );
 
-                      await fornecedorController.vincularServico(vinculoNovo);
+                      await servicoController.vincularServico(vinculoNovo);
                       EasyLoading.dismiss();
-                      Get.back();
+
+                      Navigator.pop(context);
                     },
                   ),
                 ),

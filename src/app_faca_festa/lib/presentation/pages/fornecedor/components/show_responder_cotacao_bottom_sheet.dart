@@ -421,12 +421,16 @@ Future<void> _confirmarEnvio({
   required BuildContext context,
   required VoidCallback onConfirmar,
 }) async {
-  final primary = Theme.of(context).colorScheme.primary;
+  if (!context.mounted) {
+    context = Get.context!;
+  }
 
   await showDialog(
     context: context,
     barrierDismissible: false,
-    builder: (context) {
+    builder: (ctx) {
+      final primary = Theme.of(ctx).colorScheme.primary;
+
       return AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Row(
@@ -449,7 +453,7 @@ Future<void> _confirmarEnvio({
         actionsPadding: const EdgeInsets.only(bottom: 8, right: 8),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(ctx),
             child: Text(
               "Cancelar",
               style: GoogleFonts.poppins(
@@ -460,7 +464,7 @@ Future<void> _confirmarEnvio({
           ),
           ElevatedButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx);
               onConfirmar();
             },
             style: ElevatedButton.styleFrom(

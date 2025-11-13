@@ -11,11 +11,11 @@ import 'package:get/get.dart';
 import 'dart:async';
 import 'dart:io';
 
-import '../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../data/models/servico_produto/subcategoria_servico_model.dart';
 import './../data/models/servico_produto/fornecedor_categoria_model.dart';
 import './../presentation/dialogs/show_novo_orcamento_bottom_sheet.dart';
 import './../data/models/servico_produto/categoria_servico_model.dart';
+import './../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../data/models/servico_produto/servico_foto.dart';
 import './../data/models/model.dart';
 import './app_controller.dart';
@@ -856,91 +856,6 @@ class FornecedorController extends GetxController {
     }
 
     print('🧹 Limpeza concluída! Duplicatas removidas: $duplicatasRemovidas');
-  }
-
-  Future<void> vincularServico(FornecedorProdutoServicoModel model) async {
-    print('💾 [SALVAR VÍNCULO DE SERVIÇO]');
-    print('   → ID Produto Serviço: ${model.idProdutoServico}');
-    print('   → ID Subcategoria: ${model.idSubcategoria}');
-    print('   → ID Fornecedor: ${model.idFornecedor}');
-    print('   → Preço: ${model.preco}');
-    print('   → Preço Promocional: ${model.precoPromocao}');
-    print('   → Ativo: ${model.ativo}');
-
-    // 🔹 Define ID composto único para evitar duplicatas
-    final vinculoId = '${model.idFornecedor}_${model.idProdutoServico}';
-
-    // 🔹 Garante que todos os vínculos tenham data
-    final data = model.toMap();
-    data['data_atualizacao'] = FieldValue.serverTimestamp();
-
-    // 🔹 Cria ou atualiza com merge
-    await _db.collection('fornecedor_servico').doc(vinculoId).set(data, SetOptions(merge: true));
-
-    print('🟢 Vínculo salvo/atualizado com sucesso (ID: $vinculoId)');
-
-    // 🔹 Atualiza categoria vinculada
-    await _atualizarFornecedorCategoria(model);
-
-    // 🔹 Atualiza lista em tempo real
-    await escutarServicosFornecedor(model.idFornecedor);
-  }
-
-  Future<void> _atualizarFornecedorCategoria(FornecedorProdutoServicoModel model) async {
-    final subSnap = await _db.collection('subcategoria_servico').doc(model.idSubcategoria).get();
-
-    if (!subSnap.exists) {
-      print('⚠️ Subcategoria ${model.idSubcategoria} não encontrada.');
-      return;
-    }
-
-    final sub = subSnap.data()!;
-    final idCategoria = sub['id_categoria'] ?? sub['idCategoria'];
-    if (idCategoria == null) {
-      print('⚠️ Subcategoria sem categoria associada.');
-      return;
-    }
-
-    String nomeCategoria = sub['nome_categoria'] ?? sub['nomeCategoria'] ?? '';
-    final nomeSub = sub['nome'] ?? sub['nomeSubcategoria'] ?? 'Subcategoria sem nome';
-
-    // 🔹 Recupera nome da categoria se faltar
-    if (nomeCategoria.isEmpty) {
-      final catSnap = await _db.collection('categoria_servico').doc(idCategoria).get();
-      if (catSnap.exists) {
-        nomeCategoria = catSnap.data()?['nome'] ?? '';
-      }
-    }
-
-    // 🔹 ID fixo da categoria vinculada ao fornecedor
-    final idDoc = '${model.idFornecedor}_$idCategoria';
-
-    final docSnap = await _db.collection('fornecedor_categoria').doc(idDoc).get();
-    final dataAtual = docSnap.exists ? docSnap.data() ?? {} : {};
-
-    final List<Map<String, dynamic>> subs =
-        List<Map<String, dynamic>>.from(dataAtual['subcategorias'] ?? []);
-    final existe = subs.any((s) => s['idSubcategoria'] == model.idSubcategoria);
-
-    if (!existe) {
-      subs.add({'idSubcategoria': model.idSubcategoria, 'nomeSubcategoria': nomeSub});
-      print('✅ Subcategoria adicionada: $nomeSub');
-    } else {
-      print('ℹ️ Subcategoria já existente: $nomeSub');
-    }
-
-    // 🔹 Cria ou atualiza o documento da categoria
-    await _db.collection('fornecedor_categoria').doc(idDoc).set({
-      'id_fornecedor': model.idFornecedor,
-      'id_categoria': idCategoria,
-      'nome_categoria': nomeCategoria,
-      'subcategorias': subs,
-      'data_atualizacao': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-  }
-
-  Future<void> excluirVinculo(String id) async {
-    await _db.collection('fornecedor_servico').doc(id).delete();
   }
 
   // ==========================================================

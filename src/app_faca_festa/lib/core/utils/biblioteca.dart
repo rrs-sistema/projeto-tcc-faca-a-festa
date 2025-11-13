@@ -95,6 +95,18 @@ class Biblioteca {
     return mesFormatado;
   }
 
+  static double toDouble(String value) {
+    return double.tryParse(
+          value.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim(),
+        ) ??
+        0.0;
+  }
+
+  static String formatarPrecoGrid(double preco, double? promocao) {
+    final valor = (promocao != null && promocao > 0.0) ? promocao : preco;
+    return 'R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
   static String formatarValorDecimal(double? valor) {
     return _formatoDecimalValor.format(valor ?? 0);
   }

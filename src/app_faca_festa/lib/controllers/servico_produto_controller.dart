@@ -1,10 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'dart:async';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
-
-import '../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
+import './../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../data/models/model.dart';
 
 class ServicoProdutoController extends GetxController {
@@ -40,10 +39,24 @@ class ServicoProdutoController extends GetxController {
   void onInit() {
     super.onInit();
     carregarServicos();
-    //buscarServicosComCategoriaESubcategoria();
   }
 
-  /// 🔹 Carrega serviços com ou sem filtro por fornecedor.
+  Future<void> escutarServicosFornecedor(String idFornecedor) async {
+    debugPrint('📡 Listener FORNECEDOR iniciado → $idFornecedor');
+
+    await _servicosSubscription?.cancel();
+
+    _servicosSubscription = _db
+        .collection('fornecedor_servico')
+        .where('id_fornecedor', isEqualTo: idFornecedor)
+        .snapshots()
+        .listen((snapshot) async {
+      debugPrint('♻️ Detectada mudança REAL-TIME → recarregando...');
+      await carregarServicosComDetalhesOtimizado(idFornecedor: idFornecedor);
+    });
+  }
+
+  /// 🔹 Carrega serviços com detalhes completos (modo ADMIN ou FORNECEDOR)
   Future<void> carregarServicosComDetalhesOtimizado({String? idFornecedor}) async {
     try {
       carregando.value = true;
@@ -51,7 +64,7 @@ class ServicoProdutoController extends GetxController {
       erro.value = '';
 
       // ===========================================================
-      // 1️⃣ Se não tiver fornecedor → modo ADMIN (todos os serviços)
+      // 1️⃣ MODO ADMIN — carrega TODOS os serviços do sistema
       // ===========================================================
       if (idFornecedor == null) {
         debugPrint('📡 [SERVIÇOS] Modo ADMIN — carregando todos os serviços ativos');
@@ -80,6 +93,7 @@ class ServicoProdutoController extends GetxController {
           final data = d.data();
           final idSub = data['id_subcategoria'] ?? '';
           final idCat = mapaSubParaCat[idSub] ?? '';
+
           return FornecedorServicoDetalhadoDto(
             id: d.id,
             idFornecedor: '',
@@ -98,16 +112,16 @@ class ServicoProdutoController extends GetxController {
         }).toList();
 
         servicosFornecedor.assignAll(lista);
-        debugPrint('✅ [SERVIÇOS] Lista ADMIN carregada: ${lista.length} itens.');
+        debugPrint('🟢 [SERVIÇOS] Lista ADMIN carregada: ${lista.length} itens.');
         return;
       }
 
       // ===========================================================
-      // 2️⃣ Se tiver fornecedor → modo FORNECEDOR
+      // 2️⃣ MODO FORNECEDOR — carrega SOMENTE serviços vinculados
       // ===========================================================
-      debugPrint('📡 [SERVIÇOS] Modo FORNECEDOR — carregando $idFornecedor');
+      debugPrint('📡 [SERVIÇOS] Modo FORNECEDOR — carregando serviços de $idFornecedor');
 
-      // 🔸 Categorias e subcategorias do fornecedor
+      // 🔸 Buscar categorias e subcategorias do fornecedor
       final categoriaSnap = await _db
           .collection('fornecedor_categoria')
           .where('id_fornecedor', isEqualTo: idFornecedor)
@@ -115,14 +129,15 @@ class ServicoProdutoController extends GetxController {
 
       if (categoriaSnap.docs.isEmpty) {
         debugPrint('⚠️ Nenhuma categoria encontrada para o fornecedor $idFornecedor');
-        carregando.value = false;
         return;
       }
 
       final mapaCategorias = <String, String>{};
       final mapaSubcategorias = <String, String>{};
       final mapaSubParaCat = <String, String>{};
-      final subIds = <String>[];
+
+      /// 🔥 IMPORTANTÍSSIMO → aqui vira SET para remover duplicados
+      final Set<String> subIds = {};
 
       for (var catDoc in categoriaSnap.docs) {
         final data = catDoc.data();
@@ -133,6 +148,7 @@ class ServicoProdutoController extends GetxController {
         for (var sub in subs) {
           final idSub = sub['idSubcategoria'] ?? '';
           final nomeSub = sub['nomeSubcategoria'] ?? '';
+
           if (idSub.isNotEmpty) {
             mapaSubcategorias[idSub] = nomeSub;
             mapaSubParaCat[idSub] = idCat;
@@ -141,13 +157,35 @@ class ServicoProdutoController extends GetxController {
         }
       }
 
+      debugPrint('📌 Subcategorias únicas encontradas: ${subIds.length}');
+
       if (subIds.isEmpty) {
         debugPrint('⚠️ Nenhuma subcategoria vinculada ao fornecedor.');
-        carregando.value = false;
         return;
       }
 
-      // 🔸 Buscar vínculos (preço, promoção, ativo)
+      // ===========================================================
+      // 🔥 Criar função interna para dividir lista em chunks de 30
+      // ===========================================================
+      List<List<String>> dividirChunks(List<String> lista, int tamanho) {
+        final chunks = <List<String>>[];
+        for (var i = 0; i < lista.length; i += tamanho) {
+          chunks.add(lista.sublist(
+            i,
+            i + tamanho > lista.length ? lista.length : i + tamanho,
+          ));
+        }
+        return chunks;
+      }
+
+      final subIdsList = subIds.toList();
+      final chunks = dividirChunks(subIdsList, 30);
+
+      debugPrint('📦 Total de chunks necessários: ${chunks.length}');
+
+      // ===========================================================
+      // 3️⃣ Buscar vínculos (preço, promoção, ativo)
+      // ===========================================================
       final vinculosSnap = await _db
           .collection('fornecedor_servico')
           .where('id_fornecedor', isEqualTo: idFornecedor)
@@ -157,7 +195,9 @@ class ServicoProdutoController extends GetxController {
         for (var doc in vinculosSnap.docs) doc.data()['id_produto_servico']: doc.data()
       };
 
-      // 🔸 Buscar fotos do fornecedor
+      // ===========================================================
+      // 4️⃣ Buscar fotos
+      // ===========================================================
       final fotosSnap = await _db
           .collection('servico_foto')
           .where('id_fornecedor', isEqualTo: idFornecedor)
@@ -167,27 +207,44 @@ class ServicoProdutoController extends GetxController {
         for (var doc in fotosSnap.docs) doc.data()['id_produto_servico']: doc.data()['url']
       };
 
-      // 🔸 Buscar serviços das subcategorias
-      final servicosSnap = await _db
-          .collection('servico_produto')
-          .where('id_subcategoria', whereIn: subIds)
-          .where('ativo', isEqualTo: true)
-          .get();
+      // ===========================================================
+      // 5️⃣ Buscar serviços — AGORA sem erro, em várias consultas
+      // ===========================================================
+      final List<QueryDocumentSnapshot> todosServicosDocs = [];
 
+      for (final chunk in chunks) {
+        debugPrint('🔎 Consultando chunk com ${chunk.length} subcategorias...');
+        final snap = await _db
+            .collection('servico_produto')
+            .where('id_subcategoria', whereIn: chunk)
+            .where('ativo', isEqualTo: true)
+            .get();
+
+        todosServicosDocs.addAll(snap.docs);
+      }
+
+      debugPrint('🧩 Total de serviços encontrados: ${todosServicosDocs.length}');
+
+      // ===========================================================
+      // 6️⃣ Montar lista final com detalhes
+      // ===========================================================
       final lista = <FornecedorServicoDetalhadoDto>[];
 
-      for (var servDoc in servicosSnap.docs) {
-        final data = servDoc.data();
+      for (var servDoc in todosServicosDocs) {
+        final data = servDoc.data() as Map<String, dynamic>?;
+        if (data == null) continue;
+
         final idServico = servDoc.id;
         final idSub = (data['id_subcategoria'] ?? '').toString();
 
         final vinculo = vinculosMap[idServico];
-        if (vinculo == null) continue; // sem vínculo ativo
+        if (vinculo == null) continue;
 
         final preco = (vinculo['preco'] ?? 0).toDouble();
         final precoPromocao = vinculo['preco_promocao'] != null
             ? (vinculo['preco_promocao'] as num).toDouble()
             : null;
+
         final ativo = vinculo['ativo'] ?? true;
         final imagemUrl = fotosMap[idServico];
 
@@ -209,7 +266,7 @@ class ServicoProdutoController extends GetxController {
       }
 
       servicosFornecedor.assignAll(lista);
-      debugPrint('✅ [SERVIÇOS] Lista do fornecedor carregada: ${lista.length} itens.');
+      debugPrint('🟢 [SERVIÇOS] Lista do fornecedor carregada: ${lista.length} itens.');
     } catch (e, s) {
       erro.value = e.toString();
       servicosFornecedor.clear();
@@ -320,37 +377,163 @@ class ServicoProdutoController extends GetxController {
     Duration timeout = const Duration(minutes: 2),
   }) async {
     if (listenerAtivoFornecedor.value) {
-      // 🔹 Parar listener manualmente
+      // PARAR LISTENER
       debugPrint('🛑 Parando listener do fornecedor $idFornecedor...');
       await _servicosSubscription?.cancel();
       _servicosSubscription = null;
       listenerAtivoFornecedor.value = false;
 
-      // 🔹 Cancela o timer se existir
       _fornecedorTimeoutTimer?.cancel();
       _fornecedorTimeoutTimer = null;
 
-      debugPrint('✅ Listener do fornecedor $idFornecedor parado.');
-    } else {
-      // 🔹 Iniciar listener
-      debugPrint('▶️ Iniciando listener do fornecedor $idFornecedor...');
-      carregarServicosComDetalhesOtimizado(idFornecedor: idFornecedor);
-      listenerAtivoFornecedor.value = true;
+      return;
+    }
 
-      // 🔹 Define o timer de timeout
-      _fornecedorTimeoutTimer?.cancel(); // cancela anterior se existir
-      _fornecedorTimeoutTimer = Timer(timeout, () async {
-        if (listenerAtivoFornecedor.value) {
-          debugPrint(
-              '⏰ Timeout atingido (${timeout.inSeconds}s): encerrando listener fornecedor $idFornecedor.');
-          await _servicosSubscription?.cancel();
-          _servicosSubscription = null;
-          listenerAtivoFornecedor.value = false;
-        }
+    // INICIAR LISTENER
+    debugPrint('▶️ Iniciando listener do fornecedor $idFornecedor...');
+
+    // Carrega imediatamente antes de abrir o listener realtime
+    await carregarServicosComDetalhesOtimizado(idFornecedor: idFornecedor);
+
+    // Agora sim: cria o listener real-time
+    await escutarServicosFornecedor(idFornecedor);
+
+    listenerAtivoFornecedor.value = true;
+
+    // Timeout opcional
+    _fornecedorTimeoutTimer?.cancel();
+    _fornecedorTimeoutTimer = Timer(timeout, () async {
+      if (listenerAtivoFornecedor.value) {
+        debugPrint('⏰ Timeout: encerrando listener fornecedor.');
+        await _servicosSubscription?.cancel();
+        _servicosSubscription = null;
+        listenerAtivoFornecedor.value = false;
+      }
+    });
+
+    debugPrint('⏱️ Listener ativo por ${timeout.inMinutes} min.');
+  }
+
+  /// 🔍 Valida se o fornecedor realmente possui a subcategoria
+  Future<bool> validarSubcategoriaFornecedor(String idFornecedor, String idSubcat) async {
+    final snap = await _db
+        .collection('fornecedor_categoria')
+        .where('id_fornecedor', isEqualTo: idFornecedor)
+        .get();
+
+    if (snap.docs.isEmpty) return false;
+
+    for (var doc in snap.docs) {
+      final subs = (doc.data()['subcategorias'] as List?) ?? [];
+      if (subs.any((s) => s['idSubcategoria'] == idSubcat)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// ============================================================
+  /// 🔗 Vincular serviço ao fornecedor — VERSÃO CORRIGIDA
+  /// ============================================================
+  Future<void> vincularServico(FornecedorProdutoServicoModel model) async {
+    try {
+      carregando.value = true;
+
+      debugPrint('💾 [VÍNCULO] Salvando vínculo do serviço...');
+
+      /// 1) VALIDAR SUBCATEGORIA
+      final ok = await validarSubcategoriaFornecedor(
+        model.idFornecedor,
+        model.idSubcategoria ?? '',
+      );
+
+      // 2) Se não possuir → cadastrar automaticamente
+      if (!ok) {
+        debugPrint('⚠ Subcategoria não encontrada. Adicionando...');
+        await adicionarSubcategoriaAoFornecedor(
+          model.idFornecedor,
+          model.idSubcategoria!,
+        );
+      }
+
+      /// 2) SALVAR VÍNCULO
+      final String vinculoId = '${model.idFornecedor}_${model.idProdutoServico}';
+
+      final Map<String, dynamic> data = model.toMap();
+      data['data_atualizacao'] = FieldValue.serverTimestamp();
+
+      await _db.collection('fornecedor_servico').doc(vinculoId).set(data, SetOptions(merge: true));
+
+      debugPrint('🟢 Vínculo salvo com sucesso → $vinculoId');
+
+      /// 3) RECARREGAR SERVIÇOS (SEMPRE)
+      await carregarServicosComDetalhesOtimizado(
+        idFornecedor: model.idFornecedor,
+      );
+
+      Get.snackbar(
+        'Sucesso',
+        'Serviço vinculado ao fornecedor!',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green.shade100,
+        colorText: Colors.green.shade900,
+      );
+    } catch (e, s) {
+      debugPrint('❌ Erro ao vincular serviço: $e\n$s');
+      erro.value = e.toString();
+      Get.snackbar(
+        'Erro',
+        erro.value,
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+      );
+    } finally {
+      carregando.value = false;
+    }
+  }
+
+  Future<void> adicionarSubcategoriaAoFornecedor(
+    String idFornecedor,
+    String idSubcat,
+  ) async {
+    final ref =
+        _db.collection('fornecedor_categoria').where('id_fornecedor', isEqualTo: idFornecedor);
+
+    final snap = await ref.get();
+
+    if (snap.docs.isEmpty) {
+      debugPrint('⚠ Nenhuma categoria principal encontrada para esse fornecedor.');
+      return;
+    }
+
+    for (var doc in snap.docs) {
+      final List subs = (doc.data()['subcategorias'] as List?) ?? [];
+
+      // Já existe → nada a fazer
+      if (subs.any((s) => s['idSubcategoria'] == idSubcat)) {
+        return;
+      }
+
+      final nova = {
+        'idSubcategoria': idSubcat,
+        'nomeSubcategoria': 'Subcategoria',
+      };
+
+      subs.add(nova);
+
+      await doc.reference.update({
+        'subcategorias': subs,
       });
 
-      debugPrint(
-          '⏱️ Listener do fornecedor $idFornecedor com timeout de ${timeout.inMinutes} min iniciado.');
+      debugPrint("🟢 Subcategoria adicionada automaticamente ao fornecedor.");
     }
+  }
+
+  Future<void> excluirVinculo(String id, String idFornecedor) async {
+    await _db.collection('fornecedor_servico').doc(id).delete();
+    await carregarServicosComDetalhesOtimizado(
+      idFornecedor: idFornecedor,
+    );
   }
 }

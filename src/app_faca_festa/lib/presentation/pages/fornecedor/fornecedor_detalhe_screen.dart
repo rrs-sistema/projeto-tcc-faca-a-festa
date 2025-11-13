@@ -182,7 +182,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
           const SizedBox(height: 6),
           if (detalhe.categoriaNome.isNotEmpty)
             Row(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 Container(
                   width: 36,
@@ -197,32 +197,31 @@ class FornecedorDetalheScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                Flexible(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) => const LinearGradient(
-                          colors: [
-                            Color(0xFF81D4FA),
-                            Color(0xFFCE93D8),
-                            Color(0xFFFF80AB),
-                          ],
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                        ).createShader(bounds),
-                        child: Text(
-                          detalhe.categoriaNome,
-                          style: GoogleFonts.poppins(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                            fontStyle: FontStyle.italic,
-                            letterSpacing: 0.3,
-                          ),
-                        ),
+
+                /// 👉 O texto agora ocupa o espaço disponível
+                Expanded(
+                  child: ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [
+                        Color(0xFF81D4FA),
+                        Color(0xFFCE93D8),
+                        Color(0xFFFF80AB),
+                      ],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ).createShader(bounds),
+                    child: Text(
+                      detalhe.categoriaNome,
+                      softWrap: true,
+                      overflow: TextOverflow.visible,
+                      style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white,
+                        fontStyle: FontStyle.italic,
+                        letterSpacing: 0.3,
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ],
