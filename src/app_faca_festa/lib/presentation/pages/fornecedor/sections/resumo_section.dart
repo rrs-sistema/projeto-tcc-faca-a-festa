@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
+import '../chat/fornecedor_mensagens_page.dart';
 import './../../../../controllers/avaliacao/avaliacao_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/servico_produto_controller.dart';
@@ -124,12 +125,13 @@ class ResumoSection extends StatelessWidget {
           },
         ),
         _ResumoCardData(
-          title: "📩 Mensagens - EM BREVE",
-          icon: Icons.chat_bubble_outline,
+          title: "📩 Mensagens",
+          icon: Icons.chat_bubble_outline_rounded,
           color1: const Color(0xFFB2DFDB),
           color2: const Color(0xFF00796B),
           value: controller.mensagensNaoLidas.value,
           description: "não lidas",
+          onTap: () => Get.to(() => FornecedorMensagensPage()),
         ),
         _ResumoCardData(
           title: "🏆 Avaliação Média",

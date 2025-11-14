@@ -48,9 +48,18 @@ class CardapioModel {
 
     IconData? parseIcon(dynamic codePoint) {
       if (codePoint == null) return null;
+
       try {
-        return IconData(codePoint, fontFamily: 'MaterialIcons');
-      } catch (_) {
+        // Converte para int de forma segura
+        final int cp = codePoint is int ? codePoint : int.tryParse(codePoint.toString()) ?? 0;
+
+        return IconData(
+          cp,
+          fontFamily: 'MaterialIcons',
+          fontPackage: null,
+        );
+      } catch (e) {
+        // Caso algo inesperado aconteça
         return null;
       }
     }

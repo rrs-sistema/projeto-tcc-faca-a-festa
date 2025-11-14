@@ -246,7 +246,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
                         .animate()
                         .fadeIn(duration: 550.ms)
                         .scale(begin: const Offset(0.9, 0.9)),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 40),
                   ],
                 ),
               ),

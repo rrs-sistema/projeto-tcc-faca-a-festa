@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../data/models/cardapio/cardapio_item_model.dart';
@@ -80,10 +81,12 @@ class CardapioController extends GetxController {
   }
 
   Future<void> atualizarCardapio(CardapioModel c) async {
+    final corHex = _colorToHex(c.cor ?? Colors.purple);
+
     await _db.collection("cardapios").doc(c.idCardapio).update({
       "titulo": c.titulo,
       "icone": c.icone?.codePoint,
-      "cor_hex": "#${c.cor!.value.toRadixString(16)}",
+      "cor_hex": corHex,
     });
   }
 
@@ -96,4 +99,12 @@ class CardapioController extends GetxController {
   int get totalComidas => cardapios.fold(0, (soma, c) => soma + c.totalComidas);
   int get totalBebidas => cardapios.fold(0, (soma, c) => soma + c.totalBebidas);
   int get totalSobremesas => cardapios.fold(0, (soma, c) => soma + c.totalSobremesas);
+
+  String _colorToHex(Color color) {
+    final a = color.a.toInt().toRadixString(16).padLeft(2, '0').toUpperCase();
+    final r = color.r.toInt().toRadixString(16).padLeft(2, '0').toUpperCase();
+    final g = color.g.toInt().toRadixString(16).padLeft(2, '0').toUpperCase();
+    final b = color.b.toInt().toRadixString(16).padLeft(2, '0').toUpperCase();
+    return '#$a$r$g$b';
+  }
 }

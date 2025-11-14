@@ -46,7 +46,7 @@ class TarefasScreen extends StatelessWidget {
               onPressed: () async {
                 await showTarefaDialog(
                   context: context,
-                  usuarios: convidadoController.convidados,
+                  usuarios: tarefaController.usuarios,
                   onSave: (titulo, descricao, data, usuario) async {
                     await tarefaController.adicionarTarefa(
                         nome: titulo,
@@ -85,7 +85,7 @@ class TarefasScreen extends StatelessWidget {
                     '${tarefaController.concluidas} de ${tarefaController.tarefas.length} tarefas concluídas',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade800,
+                      color: primary,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -104,8 +104,8 @@ class TarefasScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Colors.green.shade400,
-                                Colors.green.shade600,
+                                primary.withValues(alpha: 1.6),
+                                primary.withValues(alpha: 0.9),
                               ],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
@@ -129,6 +129,7 @@ class TarefasScreen extends StatelessWidget {
             // ===== Lista de tarefas =====
             Expanded(
               child: Obx(() {
+                // Verifica se quando essa lista está vazia gera erro ao chamar o modal de adicionar tarefa
                 if (tarefas.isEmpty) {
                   return _buildEmptyState(gradient, primary);
                 }

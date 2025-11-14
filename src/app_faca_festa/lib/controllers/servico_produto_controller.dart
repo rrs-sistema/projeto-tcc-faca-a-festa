@@ -119,7 +119,6 @@ class ServicoProdutoController extends GetxController {
       // ===========================================================
       // 2️⃣ MODO FORNECEDOR — carrega SOMENTE serviços vinculados
       // ===========================================================
-      debugPrint('📡 [SERVIÇOS] Modo FORNECEDOR — carregando serviços de $idFornecedor');
 
       // 🔸 Buscar categorias e subcategorias do fornecedor
       final categoriaSnap = await _db
@@ -128,7 +127,6 @@ class ServicoProdutoController extends GetxController {
           .get();
 
       if (categoriaSnap.docs.isEmpty) {
-        debugPrint('⚠️ Nenhuma categoria encontrada para o fornecedor $idFornecedor');
         return;
       }
 
@@ -157,10 +155,7 @@ class ServicoProdutoController extends GetxController {
         }
       }
 
-      debugPrint('📌 Subcategorias únicas encontradas: ${subIds.length}');
-
       if (subIds.isEmpty) {
-        debugPrint('⚠️ Nenhuma subcategoria vinculada ao fornecedor.');
         return;
       }
 
@@ -180,8 +175,6 @@ class ServicoProdutoController extends GetxController {
 
       final subIdsList = subIds.toList();
       final chunks = dividirChunks(subIdsList, 30);
-
-      debugPrint('📦 Total de chunks necessários: ${chunks.length}');
 
       // ===========================================================
       // 3️⃣ Buscar vínculos (preço, promoção, ativo)
@@ -213,7 +206,6 @@ class ServicoProdutoController extends GetxController {
       final List<QueryDocumentSnapshot> todosServicosDocs = [];
 
       for (final chunk in chunks) {
-        debugPrint('🔎 Consultando chunk com ${chunk.length} subcategorias...');
         final snap = await _db
             .collection('servico_produto')
             .where('id_subcategoria', whereIn: chunk)
@@ -222,8 +214,6 @@ class ServicoProdutoController extends GetxController {
 
         todosServicosDocs.addAll(snap.docs);
       }
-
-      debugPrint('🧩 Total de serviços encontrados: ${todosServicosDocs.length}');
 
       // ===========================================================
       // 6️⃣ Montar lista final com detalhes

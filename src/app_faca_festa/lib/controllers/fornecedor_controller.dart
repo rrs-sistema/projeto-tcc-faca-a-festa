@@ -85,6 +85,7 @@ class FornecedorController extends GetxController {
   // 🔹 Dados auxiliares carregados de outras coleções
   final enderecos = <EnderecoUsuarioModel>[].obs;
   final categoriasFornecedor = <FornecedorCategoriaModel>[].obs;
+  final List<StreamSubscription> _mensagemListeners = [];
 
   Future<void> logoutFornecedor() async {
     fornecedores.clear();
@@ -111,6 +112,61 @@ class FornecedorController extends GetxController {
       ever(appController.usuarioLogado, (usuario) async {
         carregarTodosFornecedores();
       });
+    });
+  }
+
+  Future<void> ouvirMensagensNaoLidas(String idFornecedor) async {
+    debugPrint('\n📡 [MSG] Iniciando listener de mensagens NÃO lidas para $idFornecedor');
+
+    // Cancelar listeners antigos
+    for (var l in _mensagemListeners) {
+      await l.cancel();
+    }
+    _mensagemListeners.clear();
+
+    // Buscar todas as subcoleções "fornecedores" onde id_fornecedor = idFornecedor
+    FirebaseFirestore.instance
+        .collectionGroup("fornecedores")
+        .where("id_fornecedor", isEqualTo: idFornecedor)
+        .snapshots()
+        .listen((fornecedorSnap) {
+      debugPrint("📌 Fornecedor está em ${fornecedorSnap.docs.length} cotações.");
+
+      mensagensNaoLidas.value = 0; // reset total
+
+      for (final f in fornecedorSnap.docs) {
+        final cotacaoRef = f.reference.parent.parent!; // pega a cotação pai
+        final idCotacao = cotacaoRef.id;
+
+        debugPrint("🔎 Listening mensagens da cotação $idCotacao");
+
+        final sub = cotacaoRef
+            .collection("fornecedores")
+            .doc(idFornecedor)
+            .collection("mensagens")
+            .where("id_usuario", isNotEqualTo: idFornecedor) // recebidas
+            .where("lido", isEqualTo: false)
+            .snapshots()
+            .listen((msgSnap) {
+          final count = msgSnap.docs.length;
+
+          debugPrint("💬 Cotação $idCotacao → não lidas: $count");
+
+          // Recalcular TOTAL
+          int total = 0;
+          for (var doc in fornecedorSnap.docs) {
+            // (não dá para reconsultar aqui porque o listener só retorna 1 cotação por vez)
+          }
+
+          mensagensNaoLidas.value += count;
+
+          debugPrint("📊 Total atualizado: ${mensagensNaoLidas.value}");
+        });
+
+        _mensagemListeners.add(sub);
+      }
+
+      debugPrint("📌 Listeners ativos: ${_mensagemListeners.length}");
     });
   }
 

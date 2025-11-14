@@ -74,7 +74,8 @@ Future<void> main() async {
   // ===============================================
   // 🧠 REGISTRO GLOBAL DE CONTROLADORES PRINCIPAIS
   // ===============================================
-  Get.put(AppController(), permanent: true);
+  //Get.put(AppController(), permanent: true);
+  Get.lazyPut<AppController>(() => AppController(), fenix: true);
   Get.put(EventoController(), permanent: true);
 
 // ✅ Cria instância global antes de rodar o app

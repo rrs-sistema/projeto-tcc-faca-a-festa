@@ -109,6 +109,7 @@ class LoginScreen extends StatelessWidget {
                             icon: Icons.email_outlined,
                             controller: emailCtrl,
                             color: theme.primaryColor.value,
+                            titleColor: theme.primaryColor.value,
                             onChanged: (v) => controller.email.value = v,
                           ),
 
@@ -119,6 +120,7 @@ class LoginScreen extends StatelessWidget {
                             controller: senhaCtrl,
                             color: theme.primaryColor.value,
                             obscureText: true,
+                            titleColor: theme.primaryColor.value,
                             onChanged: (v) => controller.senha.value = v,
                           ),
 

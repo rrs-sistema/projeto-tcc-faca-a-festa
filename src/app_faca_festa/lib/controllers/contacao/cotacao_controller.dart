@@ -66,6 +66,7 @@ class CotacaoController extends GetxController {
             id: doc.id,
             idEvento: data['id_evento'],
             idUsuarioSolicitante: data['id_usuario_solicitante'],
+            nomeUsuarioSolicitante: data['nome_usuario_solicitante'],
             categoriaNome: data['categoria_nome'] ?? '',
             descricao: data['observacao'] ?? data['descricao'],
             dataLimiteResposta: (data['data_limite_resposta'] as Timestamp?)?.toDate(),

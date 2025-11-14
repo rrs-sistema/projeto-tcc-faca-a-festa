@@ -228,6 +228,7 @@ List<Widget> _buildCamposPorTipo(
       icon: Icons.celebration,
       controller: controller.nomeEvento,
       color: corPrincipal,
+      titleColor: corPrincipal,
       validator: (v) => v == null || v.trim().isEmpty ? "Informe o nome do evento" : null,
       onChanged: (p0) {
         controller.nomeEventoPreview.value = p0;
@@ -242,6 +243,7 @@ List<Widget> _buildCamposPorTipo(
         icon: Icons.cake_rounded,
         controller: controller.nomePessoalPrincipal,
         color: corPrincipal,
+        titleColor: corPrincipal,
         validator: (v) => v!.isEmpty ? "Informe o nome do(a) aniversariante" : null,
         onChanged: (_) => controller.atualizarPreview(),
       ),
@@ -253,6 +255,7 @@ List<Widget> _buildCamposPorTipo(
         icon: Icons.school_rounded,
         controller: controller.nomePessoalPrincipal,
         color: corPrincipal,
+        titleColor: corPrincipal,
         validator: (v) => v!.isEmpty ? "Informe o nome do(a) formando(a)" : null,
         onChanged: (_) => controller.atualizarPreview(),
       ),
@@ -263,6 +266,7 @@ List<Widget> _buildCamposPorTipo(
         icon: Icons.business_rounded,
         controller: controller.nomePessoalPrincipal,
         color: corPrincipal,
+        titleColor: corPrincipal,
         validator: (v) => v!.isEmpty ? "Informe o nome da empresa ou setor" : null,
         onChanged: (_) => controller.atualizarPreview(),
       ),
@@ -274,6 +278,7 @@ List<Widget> _buildCamposPorTipo(
         icon: Icons.female,
         controller: controller.nomeNoiva,
         color: corPrincipal,
+        titleColor: corPrincipal,
         validator: (v) => v!.isEmpty ? "Informe o nome da noiva" : null,
         onChanged: (_) => controller.atualizarPreview(),
       ),
@@ -282,6 +287,7 @@ List<Widget> _buildCamposPorTipo(
         icon: Icons.male,
         controller: controller.parceiro,
         color: corPrincipal,
+        titleColor: corPrincipal,
         validator: (v) => v!.isEmpty ? "Informe o nome do noivo" : null,
         onChanged: (_) => controller.atualizarPreview(),
       ),
@@ -367,6 +373,7 @@ List<Widget> _buildCamposPorTipo(
         icon: Icons.child_care,
         controller: controller.nomeNoiva,
         color: corPrincipal,
+        titleColor: corPrincipal,
         validator: (v) => v!.isEmpty ? "Informe o nome da criança" : null,
         onChanged: (_) => controller.atualizarPreview(),
       ),
@@ -375,6 +382,7 @@ List<Widget> _buildCamposPorTipo(
         icon: Icons.cake,
         controller: controller.idade,
         color: corPrincipal,
+        titleColor: corPrincipal,
         keyboardType: TextInputType.number,
         onChanged: (_) => controller.atualizarPreview(),
       ),
@@ -383,6 +391,7 @@ List<Widget> _buildCamposPorTipo(
         icon: Icons.star,
         controller: controller.tema,
         color: corPrincipal,
+        titleColor: corPrincipal,
         onChanged: (_) => controller.atualizarPreview(),
       ),
     ],
@@ -394,6 +403,7 @@ List<Widget> _buildCamposPorTipo(
       icon: Icons.calendar_month,
       controller: controller.dataFesta,
       color: corPrincipal,
+      titleColor: corPrincipal,
       readOnly: true,
       onTap: () async {
         final hoje = DateTime.now();
@@ -415,6 +425,7 @@ List<Widget> _buildCamposPorTipo(
       icon: Icons.access_time,
       controller: controller.horaFesta,
       color: corPrincipal,
+      titleColor: corPrincipal,
       readOnly: true,
       onTap: () async {
         final picked = await showTimePicker(
@@ -457,6 +468,7 @@ List<Widget> _buildCamposPorTipo(
       icon: Icons.attach_money,
       controller: controller.custoEstimado,
       color: corPrincipal,
+      titleColor: corPrincipal,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       validator: (v) {
         if (v == null || v.isEmpty) return "Informe o custo estimado";

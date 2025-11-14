@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 import 'dart:async';
 
 import './../data/models/model.dart';
+import 'app_controller.dart';
+import 'evento_controller.dart';
 
 class TarefaController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -16,6 +18,8 @@ class TarefaController extends GetxController {
 
   // 🔹 Assinatura para cancelamento de escuta
   StreamSubscription? _tarefasSubscription;
+
+  final eventoController = Get.put(EventoController());
 
   @override
   void onInit() {
@@ -71,13 +75,61 @@ class TarefaController extends GetxController {
   // ==========================================================
   Future<void> carregarUsuarios() async {
     try {
-      final snapshot = await _db.collection('convidado').where('id_evento', isEqualTo: true).get();
+      carregando.value = true;
+      await Future.delayed(const Duration(seconds: 5));
+      erro.value = '';
 
-      final lista = snapshot.docs.map((d) => ConvidadoModel.fromMap(d.data())).toList();
+      // 🔹 LIMPA lista atual
+      usuarios.clear();
 
-      usuarios.assignAll(lista);
+      // ============================================================
+      // 1️⃣ BUSCAR CONVIDADOS DO EVENTO
+      // ============================================================
+      final snapshot = await _db
+          .collection('convidado')
+          .where('id_evento', isEqualTo: eventoController.eventoAtual.value?.idEvento)
+          .get();
+
+      final listaConvidados = snapshot.docs.map((d) => ConvidadoModel.fromMap(d.data())).toList();
+
+      // ============================================================
+      // 2️⃣ PEGAR ORGANIZADOR LOGADO (AppController)
+      // ============================================================
+      final appController = Get.find<AppController>();
+      final user = appController.usuarioLogado.value;
+
+      if (user != null) {
+        // ============================================================
+        // 3️⃣ CONVERTER USUÁRIO → ConvidadoModel "virtual"
+        // ============================================================
+        final organizador = ConvidadoModel(
+          idConvidado: user.idUsuario,
+          idEvento: eventoController.eventoAtual.value?.idEvento ?? '',
+          nome: user.nome,
+          contato: user.email,
+          email: user.email,
+          status: StatusConvidado.confirmado, // Organizador sempre confirmado
+          adulto: true,
+          grupoMesa: null,
+          cuidadoEspecial: false,
+        );
+
+        // Evitar duplicação caso o organizador também esteja na coleção "convidado"
+        final jaExiste = listaConvidados.any((c) => c.idConvidado == user.idUsuario);
+
+        if (!jaExiste) {
+          listaConvidados.insert(0, organizador); // adiciona no topo
+        }
+      }
+
+      // ============================================================
+      // 4️⃣ Atualizar lista reativa
+      // ============================================================
+      usuarios.assignAll(listaConvidados);
     } catch (e) {
       erro.value = 'Erro ao carregar usuários: $e';
+    } finally {
+      carregando.value = false;
     }
   }
 

@@ -209,6 +209,7 @@ Future<void> showFornecedorServicoBottomSheet(
                           icon: Icons.attach_money_rounded,
                           controller: precoCtrl,
                           keyboardType: TextInputType.number,
+                          titleColor: primary,
                           onChanged: (_) {}, // opcional
                         ),
                         const SizedBox(height: 14),
@@ -217,6 +218,7 @@ Future<void> showFornecedorServicoBottomSheet(
                           icon: Icons.local_offer_outlined,
                           controller: promocaoCtrl,
                           keyboardType: TextInputType.number,
+                          titleColor: primary,
                         ),
                         const Divider(height: 28),
                         Row(

@@ -208,6 +208,7 @@ class AppController extends GetxController {
               //await fornecedorController.buscarServicosFornecedorPorCategorias(fornecedor.idUsuario);
               //servicoController.converterServicosComDetalhes(fornecedor.idUsuario);
 
+              fornecedorController.ouvirMensagensNaoLidas(fornecedor.idUsuario);
               fornecedorController.iniciarListenerFornecedor(fornecedor.idUsuario);
               fornecedorController.escutarSolicitacoesPendentes(fornecedor.idUsuario);
 

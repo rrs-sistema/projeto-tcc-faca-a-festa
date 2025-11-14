@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'dart:ui';
 
-import '../../../controllers/tema/event_theme_controller.dart';
-import './../../../core/utils/biblioteca.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
+import './../../../controllers/app_controller.dart';
 import './../../../data/models/model.dart';
 
 Future<void> showTarefaDialog({
@@ -20,6 +20,7 @@ Future<void> showTarefaDialog({
   bool isEdit = false,
   required void Function(String, String, DateTime, ConvidadoModel) onSave,
 }) async {
+  final app = Get.find<AppController>();
   final themeController = Get.find<EventThemeController>();
   final tituloController = TextEditingController(text: tituloInicial ?? '');
   final descricaoController = TextEditingController(text: descricaoInicial ?? '');
@@ -28,7 +29,6 @@ Future<void> showTarefaDialog({
   );
   DateTime dataSelecionada = dataInicial ?? DateTime.now();
   ConvidadoModel? responsavelSelecionado = responsavelInicial;
-  final bool isCelular = Biblioteca.isCelular(context);
 
   await showDialog(
     context: context,
@@ -64,340 +64,185 @@ Future<void> showTarefaDialog({
                         width: 1.2,
                       ),
                     ),
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          // === Cabeçalho ===
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: isEdit
-                                      ? LinearGradient(
-                                          colors: [Colors.orange.shade400, Colors.deepOrangeAccent],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        )
-                                      : gradient,
-                                ),
-                                padding: const EdgeInsets.all(12),
-                                child: Icon(
-                                  isEdit ? Icons.edit_note_rounded : Icons.task_alt,
-                                  color: Colors.white,
-                                  size: 26,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  isEdit ? 'Editar Tarefa' : 'Nova Tarefa',
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                    letterSpacing: 0.3,
+
+                    // 🔥🔥🔥 AQUI É A CORREÇÃO DO OVERFLOW 🔥🔥🔥
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.of(context).size.height * 0.80, // evita overflow
+                      ),
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.all(24),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // === Cabeçalho ===
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    gradient: isEdit
+                                        ? LinearGradient(
+                                            colors: [
+                                              Colors.orange.shade400,
+                                              Colors.deepOrangeAccent
+                                            ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          )
+                                        : gradient,
+                                  ),
+                                  padding: const EdgeInsets.all(12),
+                                  child: Icon(
+                                    isEdit ? Icons.edit_note_rounded : Icons.task_alt,
+                                    color: Colors.white,
+                                    size: 26,
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    isEdit ? 'Editar Tarefa' : 'Nova Tarefa',
+                                    style: const TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black87,
+                                      letterSpacing: 0.3,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
 
-                          const SizedBox(height: 20),
+                            const SizedBox(height: 20),
 
-                          // === Campos ===
-                          _buildInput(
-                            context,
-                            controller: tituloController,
-                            label: 'Título da Tarefa',
-                            icon: Icons.title_outlined,
-                            color: primary,
-                          ),
-                          const SizedBox(height: 14),
-                          _buildInput(
-                            context,
-                            controller: descricaoController,
-                            label: 'Descrição da Tarefa',
-                            icon: Icons.notes_outlined,
-                            color: primary,
-                            maxLines: 3,
-                          ),
-                          const SizedBox(height: 14),
+                            // === Campos de formulário ===
+                            _buildInput(
+                              context,
+                              controller: tituloController,
+                              label: 'Título da Tarefa',
+                              icon: Icons.title_outlined,
+                              color: primary,
+                            ),
+                            const SizedBox(height: 14),
+                            _buildInput(
+                              context,
+                              controller: descricaoController,
+                              label: 'Descrição da Tarefa',
+                              icon: Icons.notes_outlined,
+                              color: primary,
+                              maxLines: 3,
+                            ),
+                            const SizedBox(height: 14),
 
-                          // === Data Prevista ===
-                          GestureDetector(
-                            onTap: () async {
-                              final novaData = await showDatePicker(
-                                context: context,
-                                initialDate: dataSelecionada,
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                                locale: const Locale('pt', 'BR'),
-                                helpText: 'Selecionar Data Prevista',
-                              );
-                              if (novaData != null) {
-                                setState(() {
-                                  dataSelecionada = novaData;
-                                  dataController.text = DateFormat('dd/MM/yyyy').format(novaData);
-                                });
-                              }
-                            },
-                            child: AbsorbPointer(
-                              child: _buildInput(context,
+                            // === Data Prevista ===
+                            GestureDetector(
+                              onTap: () async {
+                                final novaData = await showDatePicker(
+                                  context: context,
+                                  initialDate: dataSelecionada,
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                  locale: const Locale('pt', 'BR'),
+                                  helpText: 'Selecionar Data Prevista',
+                                );
+                                if (novaData != null) {
+                                  setState(() {
+                                    dataSelecionada = novaData;
+                                    dataController.text = DateFormat('dd/MM/yyyy').format(novaData);
+                                  });
+                                }
+                              },
+                              child: AbsorbPointer(
+                                child: _buildInput(
+                                  context,
                                   controller: dataController,
                                   label: 'Data Prevista',
                                   icon: Icons.calendar_today_outlined,
                                   color: primary,
-                                  readOnly: true),
-                            ),
-                          ),
-
-                          const SizedBox(height: 18),
-
-                          // === Responsável ===
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Responsável pela Tarefa',
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade800,
+                                  readOnly: true,
+                                ),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 10),
 
-                          usuarios.isEmpty
-                              ? const Text('Nenhum usuário disponível 😅')
-                              : SizedBox(
-                                  height: 110,
-                                  child: ListView.separated(
-                                    scrollDirection: Axis.horizontal,
-                                    itemCount: usuarios.length,
-                                    separatorBuilder: (_, __) => const SizedBox(width: 14),
-                                    itemBuilder: (context, index) {
-                                      final usuario = usuarios[index];
-                                      final selecionado = responsavelSelecionado?.idConvidado ==
-                                          usuario.idConvidado;
-                                      return GestureDetector(
-                                        onTap: () {
-                                          setState(() => responsavelSelecionado = usuario);
-                                        },
-                                        child: AnimatedContainer(
-                                          duration: const Duration(milliseconds: 200),
-                                          curve: Curves.easeInOut,
-                                          padding: const EdgeInsets.all(5),
-                                          decoration: BoxDecoration(
-                                            gradient: selecionado ? gradient : null,
-                                            border: Border.all(
-                                              color: selecionado
-                                                  ? Colors.transparent
-                                                  : Colors.grey.shade300,
-                                            ),
-                                            borderRadius: BorderRadius.circular(18),
-                                            boxShadow: [
-                                              if (selecionado)
-                                                BoxShadow(
-                                                  color: primary.withValues(alpha: 0.25),
-                                                  blurRadius: 8,
-                                                  offset: const Offset(0, 3),
-                                                ),
-                                            ],
-                                          ),
-                                          child: Column(
-                                            mainAxisAlignment: MainAxisAlignment.center,
-                                            children: [
-                                              CircleAvatar(
-                                                radius: 28,
-                                                backgroundImage: const NetworkImage(
-                                                  'https://ui-avatars.com/api/?name=Tarefa&background=0D8ABC&color=fff',
-                                                ),
-                                              ),
-                                              const SizedBox(height: 6),
-                                              Text(
-                                                usuario.nome.split(' ')[0],
-                                                style: TextStyle(
-                                                  fontSize: 13,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: selecionado
-                                                      ? Colors.white
-                                                      : Colors.grey.shade800,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
+                            const SizedBox(height: 18),
+
+                            // === Responsável ===
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Responsável pela Tarefa',
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.grey.shade800,
                                 ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
 
-                          const SizedBox(height: 24),
-                          const Divider(height: 1, color: Colors.grey),
-
-                          // === Botões ===
-                          Padding(
-                            padding: const EdgeInsets.only(top: 22),
-                            child: isCelular
+                            // === Lista de usuários atualizada ===
+                            usuarios.isEmpty
                                 ? Column(
-                                    crossAxisAlignment: CrossAxisAlignment.stretch,
                                     children: [
-                                      ElevatedButton.icon(
-                                        onPressed: () async {
-                                          if (tituloController.text.trim().isEmpty ||
-                                              responsavelSelecionado == null) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Preencha o título e selecione um responsável.',
-                                                ),
-                                                backgroundColor: Colors.redAccent,
-                                              ),
-                                            );
-                                            return;
-                                          }
-
-                                          onSave(
-                                            tituloController.text.trim(),
-                                            descricaoController.text.trim(),
-                                            dataSelecionada,
-                                            responsavelSelecionado!,
-                                          );
-
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                isEdit
-                                                    ? 'Tarefa atualizada com sucesso! ✅'
-                                                    : 'Tarefa criada com sucesso! 🎉',
-                                              ),
-                                              backgroundColor: primary,
-                                              behavior: SnackBarBehavior.floating,
-                                            ),
-                                          );
-
-                                          Navigator.pop(context);
-                                        },
-                                        icon: Icon(
-                                          isEdit ? Icons.save_rounded : Icons.add_task_rounded,
-                                          color: Colors.white,
-                                        ),
-                                        label: Text(
-                                          isEdit ? 'Salvar Alterações' : 'Adicionar',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: primary,
-                                          padding: const EdgeInsets.symmetric(vertical: 14),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(14),
-                                          ),
-                                          elevation: 4,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 12),
-                                      OutlinedButton.icon(
-                                        onPressed: () => Navigator.pop(context),
-                                        icon: const Icon(Icons.close, color: Colors.grey),
-                                        label: const Text(
-                                          'Cancelar',
-                                          style: TextStyle(
-                                            color: Colors.grey,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                        style: OutlinedButton.styleFrom(
-                                          padding: const EdgeInsets.symmetric(vertical: 14),
-                                          side: BorderSide(color: Colors.grey.shade300),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(14),
-                                          ),
-                                        ),
-                                      ),
+                                      const Icon(Icons.group_outlined,
+                                          size: 42, color: Colors.grey),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'Nenhum usuário disponível 😅',
+                                        style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
+                                      )
                                     ],
                                   )
-                                : Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      TextButton.icon(
-                                        onPressed: () => Navigator.pop(context),
-                                        icon: const Icon(Icons.close, color: Colors.grey),
-                                        label: const Text(
-                                          'Cancelar',
-                                          style: TextStyle(
-                                            color: Colors.grey,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                      ElevatedButton.icon(
-                                        onPressed: () async {
-                                          if (tituloController.text.trim().isEmpty ||
-                                              responsavelSelecionado == null) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text(
-                                                  'Preencha o título e selecione um responsável.',
-                                                ),
-                                                backgroundColor: Colors.redAccent,
-                                              ),
-                                            );
-                                            return;
-                                          }
+                                : SizedBox(
+                                    height: 120,
+                                    child: ListView.separated(
+                                      scrollDirection: Axis.horizontal,
+                                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                                      itemCount: usuarios.length,
+                                      separatorBuilder: (_, __) => const SizedBox(width: 14),
+                                      itemBuilder: (_, index) {
+                                        final usuario = usuarios[index];
+                                        final selecionado = responsavelSelecionado?.idConvidado ==
+                                            usuario.idConvidado;
 
-                                          onSave(
-                                            tituloController.text.trim(),
-                                            descricaoController.text.trim(),
-                                            dataSelecionada,
-                                            responsavelSelecionado!,
-                                          );
+                                        final isOrganizador = usuario.idConvidado ==
+                                            app.usuarioLogado.value?.idUsuario;
 
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                isEdit
-                                                    ? 'Tarefa atualizada com sucesso! ✅'
-                                                    : 'Tarefa criada com sucesso! 🎉',
-                                              ),
-                                              backgroundColor: primary,
-                                              behavior: SnackBarBehavior.floating,
-                                            ),
-                                          );
-
-                                          Navigator.pop(context);
-                                        },
-                                        icon: Icon(
-                                          isEdit ? Icons.save_rounded : Icons.add_task_rounded,
-                                          color: Colors.white,
-                                        ),
-                                        label: Text(
-                                          isEdit ? 'Salvar Alterações' : 'Adicionar',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
+                                        return GestureDetector(
+                                          onTap: () =>
+                                              setState(() => responsavelSelecionado = usuario),
+                                          child: _buildUserCard(
+                                            usuario,
+                                            selecionado,
+                                            isOrganizador,
+                                            gradient,
+                                            primary,
                                           ),
-                                        ),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: primary,
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 22, vertical: 12),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(14),
-                                          ),
-                                          elevation: 4,
-                                        ),
-                                      ),
-                                    ],
+                                        );
+                                      },
+                                    ),
                                   ),
-                          ),
-                        ],
+
+                            const SizedBox(height: 24),
+                            const Divider(height: 1, color: Colors.grey),
+
+                            // === Botões ===
+                            Padding(
+                                padding: const EdgeInsets.only(top: 22),
+                                child: _buildMobileButtons(
+                                  context,
+                                  tituloController,
+                                  descricaoController,
+                                  primary,
+                                  isEdit,
+                                  responsavelSelecionado,
+                                  dataSelecionada,
+                                  onSave,
+                                )),
+                          ],
+                        ),
                       ),
                     ),
                   );
@@ -408,6 +253,198 @@ Future<void> showTarefaDialog({
         );
       });
     },
+  );
+}
+
+Widget _buildUserCard(
+  ConvidadoModel usuario,
+  bool selecionado,
+  bool isOrganizador,
+  Gradient gradient,
+  Color primary,
+) {
+  return AnimatedContainer(
+    duration: const Duration(milliseconds: 250),
+    curve: Curves.easeOutCubic,
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(18),
+      gradient: selecionado
+          ? gradient
+          : LinearGradient(
+              colors: [
+                Colors.white.withValues(alpha: 0.45),
+                Colors.white.withValues(alpha: 0.25),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+      border: Border.all(
+        color: selecionado ? Colors.white : Colors.black12,
+        width: selecionado ? 2 : 1,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: selecionado ? 0.22 : 0.06),
+          blurRadius: selecionado ? 12 : 6,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        // === Avatar com borda animada ===
+        Container(
+          padding: const EdgeInsets.all(3),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: selecionado ? Colors.white : primary.withValues(alpha: 0.4),
+              width: selecionado ? 3 : 2,
+            ),
+          ),
+          child: CircleAvatar(
+            radius: 26,
+            backgroundImage: NetworkImage(
+              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(usuario.nome)}&background=0D8ABC&color=fff',
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 6),
+
+        // === Nome ===
+        Text(
+          usuario.nome.split(' ')[0],
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: selecionado ? Colors.white : Colors.grey.shade800,
+          ),
+        ),
+
+        // === Badge de Organizador ===
+        if (isOrganizador)
+          Expanded(
+            child: Container(
+              margin: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              decoration: BoxDecoration(
+                color: selecionado ? Colors.white.withValues(alpha: 0.20) : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                "Organizador",
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w500,
+                  color: selecionado ? Colors.white : Colors.grey.shade700,
+                ),
+              ),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+Widget _buildMobileButtons(
+  BuildContext context,
+  TextEditingController tituloController,
+  TextEditingController descricaoController,
+  Color primary,
+  bool isEdit,
+  ConvidadoModel? responsavelSelecionado,
+  DateTime dataSelecionada,
+  void Function(String, String, DateTime, ConvidadoModel) onSave,
+) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      // === BOTÃO PRINCIPAL ===
+      ElevatedButton.icon(
+        onPressed: () async {
+          if (tituloController.text.trim().isEmpty || responsavelSelecionado == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Preencha o título e selecione um responsável.',
+                ),
+                backgroundColor: Colors.redAccent,
+              ),
+            );
+            return;
+          }
+
+          onSave(
+            tituloController.text.trim(),
+            descricaoController.text.trim(),
+            dataSelecionada,
+            responsavelSelecionado,
+          );
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isEdit ? 'Tarefa atualizada com sucesso! ✅' : 'Tarefa criada com sucesso! 🎉',
+              ),
+              backgroundColor: primary,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+
+          Navigator.pop(context);
+        },
+        icon: Icon(
+          isEdit ? Icons.save_rounded : Icons.add_task_rounded,
+          color: Colors.white,
+          size: 22,
+        ),
+        label: Text(
+          isEdit ? 'Salvar Alterações' : 'Adicionar Tarefa',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            letterSpacing: 0.3,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          elevation: 4,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+
+      const SizedBox(height: 14),
+
+      // === BOTÃO CANCELAR ===
+      OutlinedButton.icon(
+        onPressed: () => Navigator.pop(context),
+        icon: const Icon(Icons.close, color: Colors.grey),
+        label: const Text(
+          'Cancelar',
+          style: TextStyle(
+            color: Colors.grey,
+            fontWeight: FontWeight.w500,
+            fontSize: 15,
+          ),
+        ),
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          side: BorderSide(color: Colors.grey.shade300, width: 1.2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+    ],
   );
 }
 

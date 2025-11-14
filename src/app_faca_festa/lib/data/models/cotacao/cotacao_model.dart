@@ -62,6 +62,7 @@ class CotacaoModel {
   final String id;
   final String idEvento;
   final String idUsuarioSolicitante;
+  final String nomeUsuarioSolicitante;
   final String? descricao;
   final String? categoriaNome;
   final DateTime? dataLimiteResposta;
@@ -75,6 +76,7 @@ class CotacaoModel {
     required this.id,
     required this.idEvento,
     required this.idUsuarioSolicitante,
+    required this.nomeUsuarioSolicitante,
     this.descricao,
     this.categoriaNome,
     this.dataLimiteResposta,
@@ -93,6 +95,7 @@ class CotacaoModel {
       id: id,
       idEvento: idEvento,
       idUsuarioSolicitante: idUsuarioSolicitante,
+      nomeUsuarioSolicitante: nomeUsuarioSolicitante,
       descricao: descricao,
       categoriaNome: categoriaNome,
       dataLimiteResposta: dataLimiteResposta,
@@ -111,6 +114,7 @@ class CotacaoModel {
       idUsuarioSolicitante: map['id_usuario_solicitante'] ?? '',
       descricao: map['observacao'],
       categoriaNome: map['categoria_nome'], // ✅ novo
+      nomeUsuarioSolicitante: map['nome_usuario_solicitante'], // ✅ novo
       dataLimiteResposta: map['data_limite_resposta'] is Timestamp
           ? (map['data_limite_resposta'] as Timestamp).toDate()
           : null,
