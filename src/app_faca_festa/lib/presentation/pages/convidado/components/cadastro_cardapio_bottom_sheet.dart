@@ -7,14 +7,31 @@ import './../../../../controllers/convidado/cardapio_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../data/models/cardapio/cardapio_model.dart';
 
-class CadastroCardapioBottomSheet extends StatelessWidget {
+class CadastroCardapioBottomSheet extends StatefulWidget {
   final String idEvento;
-  CadastroCardapioBottomSheet({super.key, required this.idEvento});
+  const CadastroCardapioBottomSheet({super.key, required this.idEvento});
 
-  final tituloCtrl = TextEditingController();
+  @override
+  State<CadastroCardapioBottomSheet> createState() => _CadastroCardapioBottomSheetState();
+}
+
+class _CadastroCardapioBottomSheetState extends State<CadastroCardapioBottomSheet> {
+  late TextEditingController tituloCtrl;
+
   final Rx<IconData> iconeSelecionado = Icons.restaurant_menu.obs;
-
   final Rx<Color> corSelecionada = Rx<Color>(Colors.teal);
+
+  @override
+  void initState() {
+    super.initState();
+    tituloCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    tituloCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +42,7 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
       heightFactor: 0.78,
       child: Container(
         decoration: BoxDecoration(
-          gradient: theme.gradient.value, // 🔥 GRADIENT DO TEMA
+          gradient: theme.gradient.value,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
         ),
         padding: const EdgeInsets.all(24),
@@ -38,7 +55,7 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
                 Obx(() => Icon(
                       iconeSelecionado.value,
                       size: 38,
-                      color: corSelecionada.value, // 🔥 COR DO CARDÁPIO ESCOLHIDO
+                      color: corSelecionada.value,
                     )),
                 const SizedBox(width: 12),
                 Text(
@@ -46,7 +63,7 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: theme.secondaryColor.value, // 🔥 TÍTULO NO TEMA
+                    color: theme.secondaryColor.value,
                   ),
                 ),
               ],
@@ -54,7 +71,7 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
 
             const SizedBox(height: 24),
 
-            // CAMPO TÍTULO
+            // CAMPO: TÍTULO
             TextField(
               controller: tituloCtrl,
               decoration: InputDecoration(
@@ -73,15 +90,12 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
 
             const SizedBox(height: 18),
 
-            // SELETOR DE ÍCONES
+            // ICONES
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 "Ícone",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: theme.secondaryColor.value,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600, color: theme.secondaryColor.value),
               ),
             ),
             const SizedBox(height: 8),
@@ -102,15 +116,12 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
 
             const SizedBox(height: 18),
 
-            // SELETOR DE COR
+            // CORES
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
                 "Cor do cardápio",
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: theme.secondaryColor.value,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600, color: theme.secondaryColor.value),
               ),
             ),
 
@@ -135,7 +146,6 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
             // BOTÕES
             Row(
               children: [
-                // CANCELAR
                 Expanded(
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
@@ -149,15 +159,12 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
                     child: const Text("Cancelar"),
                   ),
                 ),
-
                 const SizedBox(width: 12),
-
-                // SALVAR
                 Expanded(
                   child: Obx(() {
                     return ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: theme.primaryColor.value, // 🔥 DO TEMA
+                        backgroundColor: theme.primaryColor.value,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -165,7 +172,7 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
                       onPressed: () async {
                         final novo = CardapioModel(
                           idCardapio: DateTime.now().millisecondsSinceEpoch.toString(),
-                          idEvento: idEvento,
+                          idEvento: widget.idEvento,
                           titulo: tituloCtrl.text.trim(),
                           icone: iconeSelecionado.value,
                           cor: corSelecionada.value,
@@ -174,7 +181,7 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
                         await controller.adicionarCardapio(novo);
                         Navigator.pop(context);
                       },
-                      child: const Text('Salvar', style: TextStyle(color: Colors.white)),
+                      child: const Text("Salvar", style: TextStyle(color: Colors.white)),
                     );
                   }),
                 ),
@@ -188,23 +195,24 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
     );
   }
 
-  // -------------------------------------------------------------
-  // WIDGET AUXILIAR — ÍCONES COM SELEÇÃO E TEMA
-  // -------------------------------------------------------------
+  // ---------------------------------------------------------
+  // WIDGET AUXILIAR — ÍCONES
+  // ---------------------------------------------------------
   Widget _iconOption(IconData icon, Rx<IconData> target, EventThemeController theme) {
     return Obx(() {
       final selected = target.value == icon;
+
       return GestureDetector(
         onTap: () => target.value = icon,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          margin: const EdgeInsets.symmetric(horizontal: 8),
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 6),
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: selected ? theme.primaryColor.value.withValues(alpha: 0.15) : Colors.transparent,
+            color: selected ? theme.primaryColor.value.withValues(alpha: 0.2) : Colors.white,
             border: Border.all(
-              color: selected ? theme.secondaryColor.value : Colors.white.withValues(alpha: 0.15),
+              color: selected ? theme.secondaryColor.value : Colors.white.withValues(alpha: 0.3),
               width: selected ? 2 : 1,
             ),
           ),
@@ -218,9 +226,9 @@ class CadastroCardapioBottomSheet extends StatelessWidget {
     });
   }
 
-  // -------------------------------------------------------------
-  // WIDGET AUXILIAR — CORES DO CARDÁPIO
-  // -------------------------------------------------------------
+  // ---------------------------------------------------------
+  // WIDGET AUXILIAR — CORES
+  // ---------------------------------------------------------
   Widget _colorOption(Color color, Rx<Color> target) {
     return Obx(() {
       final selected = target.value == color;

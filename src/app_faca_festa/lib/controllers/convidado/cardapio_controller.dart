@@ -14,26 +14,41 @@ class CardapioController extends GetxController {
   Future<void> escutarCardapios(String idEvento) async {
     carregando.value = true;
 
-    _db.collection('cardapios').where('id_evento', isEqualTo: idEvento).snapshots().listen(
-        (snapshot) async {
-      final lista = await Future.wait(snapshot.docs.map((doc) async {
-        final data = doc.data();
+    _db
+        .collection('cardapios')
+        .where('id_evento', isEqualTo: idEvento)
+        .snapshots()
+        .listen((snapshot) async {
+      final List<CardapioModel> listaTemp = [];
 
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
         final cardapio = CardapioModel.fromMap(data);
 
-        // Carrega itens da subcoleção
-        final itensSnapshot =
-            await _db.collection('cardapios').doc(cardapio.idCardapio).collection('itens').get();
+        // 👉 Agora escutamos a SUBCOLEÇÃO DE VERDADE
+        _db
+            .collection('cardapios')
+            .doc(cardapio.idCardapio)
+            .collection('itens')
+            .snapshots()
+            .listen((sub) {
+          final itens = sub.docs.map((i) => CardapioItemModel.fromMap(i.data())).toList();
 
-        final itens = itensSnapshot.docs.map((i) => CardapioItemModel.fromMap(i.data())).toList();
+          final atualizado = cardapio.copyWith(itens: itens);
 
-        return cardapio.copyWith(itens: itens);
-      }));
+          // Atualiza a lista reativa: substitui apenas o cardápio alterado
+          final idx = listaTemp.indexWhere((c) => c.idCardapio == atualizado.idCardapio);
+          if (idx >= 0) {
+            listaTemp[idx] = atualizado;
+          } else {
+            listaTemp.add(atualizado);
+          }
 
-      cardapios.assignAll(lista);
-      carregando.value = false;
-    }, onError: (e) {
-      erro.value = 'Erro ao carregar cardápios: $e';
+          // Atualiza a lista na UI
+          cardapios.assignAll(listaTemp);
+        });
+      }
+
       carregando.value = false;
     });
   }
@@ -61,6 +76,14 @@ class CardapioController extends GetxController {
     await doc.set({
       ...item.toMap(),
       'id_item': doc.id,
+    });
+  }
+
+  Future<void> atualizarCardapio(CardapioModel c) async {
+    await _db.collection("cardapios").doc(c.idCardapio).update({
+      "titulo": c.titulo,
+      "icone": c.icone?.codePoint,
+      "cor_hex": "#${c.cor!.value.toRadixString(16)}",
     });
   }
 

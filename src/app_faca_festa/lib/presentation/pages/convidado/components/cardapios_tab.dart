@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import './../../../../controllers/convidado/cardapio_controller.dart';
 import './../../../../data/models/cardapio/cardapio_item_model.dart';
@@ -39,7 +40,7 @@ class CardapiosTab extends StatelessWidget {
             gradient: theme.gradient.value,
           ),
           child: ListView(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 24),
             children: [
               const SizedBox(height: 10),
               const Center(
@@ -87,70 +88,152 @@ class _CardapioCategoriaCard extends StatelessWidget {
     final theme = Get.find<EventThemeController>();
     final color = cardapio.cor ?? theme.primaryColor.value;
 
-    return Card(
-      elevation: 3,
-      margin: const EdgeInsets.only(bottom: 18),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: ExpansionTile(
-        backgroundColor: Colors.white,
-        leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.15),
-          child: Icon(cardapio.icone ?? Icons.restaurant_menu_rounded, color: color, size: 22),
-        ),
-        title: Text(
-          cardapio.titulo,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: color,
-            fontSize: 17,
-          ),
-        ),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
 
-        // 🔹 Ações: editar + excluir + adicionar item
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              icon: Icon(Icons.add, color: color),
-              onPressed: () => abrirAdicionarItemCardapio(context, cardapio.idCardapio),
-            ),
-            IconButton(
-              icon: Icon(Icons.edit, color: color),
-              onPressed: () => abrirEditarCardapio(context, cardapio),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_forever, color: Colors.red),
-              onPressed: () => controller.excluirCardapio(cardapio.idCardapio),
-            ),
+        // 🌟 Fundo glass + gradiente premium
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withValues(alpha: 0.80),
+            Colors.white.withValues(alpha: 0.55),
           ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
 
-        subtitle: Text(
-          "${cardapio.itens.length} itens incluídos",
-          style: const TextStyle(fontSize: 13, color: Colors.black54),
+        // ✨ Borda leve com brilho
+        border: Border.all(
+          width: 1.2,
+          color: color.withValues(alpha: 0.28),
         ),
 
-        childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        // 🌫️ Sombra moderna
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.07),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent,
+          splashColor: Colors.transparent,
+          highlightColor: Colors.transparent,
+        ),
+        child: ExpansionTile(
+          tilePadding: const EdgeInsets.symmetric(horizontal: 16),
+          childrenPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
 
-        children: cardapio.itens.isNotEmpty
-            ? cardapio.itens
-                .map((i) => _CardapioItemTile(item: i, idCardapio: cardapio.idCardapio))
-                .toList()
-            : [
-                Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.grey[400], size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        "Nenhum item cadastrado neste cardápio.",
-                        style: TextStyle(color: Colors.grey[600], fontSize: 13),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+          // 🔥 Ícone estilizado
+          leading: Container(
+            height: 45,
+            width: 45,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.12),
+              border: Border.all(color: color.withValues(alpha: 0.35), width: 1.2),
+            ),
+            child: Icon(
+              cardapio.icone ?? Icons.restaurant_menu_rounded,
+              color: cardapio.cor,
+              size: 22,
+            ),
+          ),
+
+          // 📝 Título do cardápio
+          title: Text(
+            cardapio.titulo,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 17,
+              color: color,
+              letterSpacing: 0.3,
+            ),
+          ),
+
+          // 📦 Subtítulo com quantidade
+          subtitle: Text(
+            "${cardapio.itens.length} itens incluídos",
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+          ),
+
+          // ➕ Edit / Delete
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _actionIcon(
+                icon: Icons.add_rounded,
+                color: color,
+                onTap: () => abrirAdicionarItemCardapio(context, cardapio.idCardapio),
+              ),
+              _actionIcon(
+                icon: Icons.edit_rounded,
+                color: color,
+                onTap: () => abrirEditarCardapio(context, cardapio),
+              ),
+              _actionIcon(
+                icon: Icons.delete_forever_rounded,
+                color: Colors.red,
+                onTap: () => controller.excluirCardapio(cardapio.idCardapio),
+              ),
+            ],
+          ),
+
+          // 🔽 Conteúdo interno (itens do cardápio)
+          children: cardapio.itens.isNotEmpty
+              ? cardapio.itens
+                  .map(
+                    (i) => _CardapioItemTile(
+                      item: i,
+                      idCardapio: cardapio.idCardapio,
+                    ),
+                  )
+                  .toList()
+              : [
+                  Padding(
+                    padding: const EdgeInsets.all(10),
+                    child: Row(
+                      children: [
+                        Icon(Icons.info_outline, size: 18, color: Colors.grey.shade400),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Nenhum item cadastrado neste cardápio.",
+                          style: TextStyle(color: Colors.grey.shade600),
+                        ),
+                      ],
+                    ),
+                  )
+                ],
+        ),
+      ),
+    );
+  }
+
+  /// 🔧 Botão de ação elegante
+  Widget _actionIcon({
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(30),
+        child: Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color.withValues(alpha: 0.10),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
       ),
     );
   }
@@ -170,36 +253,122 @@ class _CardapioItemTile extends StatelessWidget {
     final controller = Get.find<CardapioController>();
     final theme = Get.find<EventThemeController>();
 
-    return ListTile(
-      dense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 6),
-      leading: GestureDetector(
-        onTap: () => controller.toggleConfirmado(idCardapio, item),
-        child: Icon(
-          item.confirmado ? Icons.check_circle : Icons.circle_outlined,
-          color: item.confirmado ? theme.primaryColor.value : Colors.grey,
-        ),
-      ),
-      title: Text(
-        item.nome,
-        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-      ),
-      subtitle: Text(item.tipo ?? "-"),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          IconButton(
-            icon: Icon(Icons.edit, size: 18, color: theme.primaryColor.value),
-            onPressed: () => abrirEditarItemCardapio(context, idCardapio, item),
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete_forever, color: Colors.red),
-            onPressed: () => controller.excluirItem(idCardapio, item.idItem),
-          ),
-        ],
-      ),
-    );
+    return buildItemCardapio(
+        context: context, item: item, idCardapio: idCardapio, controller: controller, theme: theme);
   }
+}
+
+Widget buildItemCardapio({
+  required BuildContext context,
+  required CardapioItemModel item,
+  required String idCardapio,
+  required CardapioController controller,
+  required EventThemeController theme,
+}) {
+  final primary = theme.primaryColor.value;
+
+  return AnimatedContainer(
+    duration: const Duration(milliseconds: 300),
+    curve: Curves.easeOutCubic,
+    margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(18),
+
+      // 🌟 Bordas premium (gradiente + glass + inner glow)
+      gradient: LinearGradient(
+        colors: [
+          Colors.white.withValues(alpha: 0.65),
+          Colors.white.withValues(alpha: 0.35),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+
+      border: Border.all(
+        width: 1.4,
+        color: primary.withValues(alpha: 0.35),
+      ),
+
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.06),
+          blurRadius: 8,
+          offset: const Offset(0, 3),
+        ),
+      ],
+    ),
+    child: Row(
+      children: [
+        // 🔘 Check elegante
+        GestureDetector(
+          onTap: () => controller.toggleConfirmado(idCardapio, item),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOutBack,
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: item.confirmado ? primary : Colors.grey.shade400,
+                width: 1.7,
+              ),
+              color: item.confirmado
+                  ? primary.withValues(alpha: 0.15)
+                  : Colors.white.withValues(alpha: 0.4),
+            ),
+            child: Icon(
+              item.confirmado ? Icons.check_circle : Icons.circle_outlined,
+              color: item.confirmado ? primary : Colors.grey,
+              size: 22,
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 16),
+
+        // 📄 Nome + tipo
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                item.nome,
+                style: GoogleFonts.poppins(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              Text(
+                item.tipo ?? "-",
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.black54,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // ✏️ Ações
+        Row(
+          children: [
+            IconButton(
+              tooltip: "Editar item",
+              icon: Icon(Icons.edit_rounded, color: primary, size: 20),
+              onPressed: () => abrirEditarItemCardapio(context, idCardapio, item),
+            ),
+            IconButton(
+              tooltip: "Excluir item",
+              icon: const Icon(Icons.delete_forever_rounded, color: Colors.red),
+              onPressed: () => controller.excluirItem(idCardapio, item.idItem),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
 }
 
 /// === CARD de Resumo Dinâmico ===
