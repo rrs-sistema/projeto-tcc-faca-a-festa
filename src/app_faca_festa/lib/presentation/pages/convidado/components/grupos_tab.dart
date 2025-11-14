@@ -238,6 +238,7 @@ class _GraficoGrupos extends StatelessWidget {
             ),
           );
         }),
+        const SizedBox(height: 65),
       ],
     );
   }

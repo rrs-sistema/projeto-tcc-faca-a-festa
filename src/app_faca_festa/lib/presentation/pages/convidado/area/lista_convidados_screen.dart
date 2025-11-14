@@ -2,6 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../components/abrir_adicionar_convidado.dart';
 import './../../../../controllers/convidado/convidado_controller.dart';
 import '../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../data/models/model.dart';
@@ -182,6 +183,14 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
                         icon: Icon(Icons.more_vert, color: Colors.grey.shade600),
                         onSelected: (value) async {
                           switch (value) {
+                            case 'editar':
+                              abrirDialogAdicionarConvidado(
+                                context,
+                                primary,
+                                convidado: convidado, // 🔥 passamos o convidado
+                              );
+                              break;
+
                             case 'confirmar':
                               await convidadoController.atualizarStatus(
                                 convidado.idConvidado,
@@ -213,6 +222,17 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
                           }
                         },
                         itemBuilder: (context) => [
+                          PopupMenuItem(
+                            value: 'editar',
+                            child: Row(
+                              children: [
+                                Icon(Icons.edit_outlined, color: Colors.blue.shade700),
+                                const SizedBox(width: 8),
+                                const Text('Editar convidado'),
+                              ],
+                            ),
+                          ),
+                          const PopupMenuDivider(),
                           PopupMenuItem(
                             value: 'confirmar',
                             child: Row(

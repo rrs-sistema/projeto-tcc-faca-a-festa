@@ -61,8 +61,9 @@ class ConvidadoModel {
   final String? email;
   final StatusConvidado status;
   final DateTime? dataResposta;
-  final bool? adulto; // true = adulto, false = criança
-  final String? grupoMesa; // Ex: "Família", "Principal", "Amigos"
+  final String? grupoMesa;
+  final bool? adulto;
+  final bool? cuidadoEspecial;
 
   const ConvidadoModel({
     required this.idConvidado,
@@ -74,6 +75,7 @@ class ConvidadoModel {
     this.dataResposta,
     this.adulto,
     this.grupoMesa,
+    this.cuidadoEspecial,
   });
 
   Map<String, dynamic> toMap() => {
@@ -86,6 +88,7 @@ class ConvidadoModel {
         'data_resposta': dataResposta != null ? Timestamp.fromDate(dataResposta!) : null,
         'adulto': adulto,
         'grupo_mesa': grupoMesa,
+        'cuidado_especial': cuidadoEspecial,
       };
 
   factory ConvidadoModel.fromMap(Map<String, dynamic> map) {
@@ -100,6 +103,7 @@ class ConvidadoModel {
           map['data_resposta'] is Timestamp ? (map['data_resposta'] as Timestamp).toDate() : null,
       adulto: map['adulto'],
       grupoMesa: map['grupo_mesa'],
+      cuidadoEspecial: map['cuidado_especial'],
     );
   }
 
@@ -112,6 +116,7 @@ class ConvidadoModel {
     DateTime? dataResposta,
     bool? adulto,
     String? grupoMesa,
+    bool? cuidadoEspecial,
   }) {
     return ConvidadoModel(
       idConvidado: idConvidado,
@@ -123,6 +128,7 @@ class ConvidadoModel {
       dataResposta: dataResposta ?? this.dataResposta,
       adulto: adulto ?? this.adulto,
       grupoMesa: grupoMesa ?? this.grupoMesa,
+      cuidadoEspecial: cuidadoEspecial ?? this.cuidadoEspecial,
     );
   }
 }

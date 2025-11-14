@@ -1,7 +1,6 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-
 import './cardapio_item_model.dart';
 
 /// 🔹 Representa uma categoria de cardápio (Adultos, Crianças, Livre)
@@ -22,6 +21,9 @@ class CardapioModel {
     this.itens = const [],
   });
 
+  // -------------------------------------------------------------
+  // 🔹 MAP → FIRESTORE
+  // -------------------------------------------------------------
   Map<String, dynamic> toMap() => {
         'id_cardapio': idCardapio,
         'id_evento': idEvento,
@@ -31,6 +33,9 @@ class CardapioModel {
         'total_itens': itens.length,
       };
 
+  // -------------------------------------------------------------
+  // 🔹 FIRESTORE → MODEL
+  // -------------------------------------------------------------
   factory CardapioModel.fromMap(Map<String, dynamic> map) {
     Color? parseColor(String? hex) {
       if (hex == null) return null;
@@ -41,14 +46,27 @@ class CardapioModel {
       }
     }
 
+    IconData? parseIcon(dynamic codePoint) {
+      if (codePoint == null) return null;
+      try {
+        return IconData(codePoint, fontFamily: 'MaterialIcons');
+      } catch (_) {
+        return null;
+      }
+    }
+
     return CardapioModel(
       idCardapio: map['id_cardapio'] ?? '',
       idEvento: map['id_evento'] ?? '',
       titulo: map['titulo'] ?? '',
+      icone: parseIcon(map['icone']),
       cor: parseColor(map['cor_hex']),
     );
   }
 
+  // -------------------------------------------------------------
+  // 🔹 COPYWITH
+  // -------------------------------------------------------------
   CardapioModel copyWith({
     String? titulo,
     IconData? icone,
@@ -65,7 +83,9 @@ class CardapioModel {
     );
   }
 
-  /// 🔹 Contadores úteis
+  // -------------------------------------------------------------
+  // 🔹 CONTADORES
+  // -------------------------------------------------------------
   int get totalItens => itens.length;
   int get totalConfirmados => itens.where((i) => i.confirmado).length;
   int get totalComidas => itens.where((i) => i.tipo?.toLowerCase() == 'comida').length;

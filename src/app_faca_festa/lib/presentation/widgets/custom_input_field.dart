@@ -26,6 +26,8 @@ class CustomInputField extends StatefulWidget {
 
   // Personalização visual
   final Color? color;
+  final Color? colorIcon;
+  final Color? titleColor;
   final bool readOnly;
   final VoidCallback? onTap;
   final TextInputType? keyboardType;
@@ -48,6 +50,8 @@ class CustomInputField extends StatefulWidget {
     required this.icon,
     required this.controller,
     this.color,
+    this.colorIcon,
+    this.titleColor,
     this.readOnly = false,
     this.onTap,
     this.keyboardType,
@@ -132,11 +136,10 @@ class _CustomInputFieldState extends State<CustomInputField> {
   // =====================================================
   @override
   Widget build(BuildContext context) {
-    final gradient = themeController.gradient.value;
-
     Color bgColor = Colors.white;
     Color textColor = Colors.black87;
-    Color iconColor = widget.color ?? gradient.colors.first;
+    Color iconColor = widget.colorIcon ?? themeController.primaryColor.value;
+    Color titleColor = widget.titleColor ?? Colors.white;
 
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(widget.borderRadius),
@@ -155,7 +158,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,
-              color: iconColor.withValues(alpha: 0.85),
+              color: titleColor.withValues(alpha: 0.85),
             ),
           ),
           const SizedBox(height: 6),
@@ -207,7 +210,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
                 hintText: "Digite ${widget.label.toLowerCase()}...",
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: Colors.grey.shade500,
+                  color: titleColor,
                 ),
 
                 contentPadding: const EdgeInsets.symmetric(

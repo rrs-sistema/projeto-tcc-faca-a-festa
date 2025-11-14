@@ -138,6 +138,21 @@ class ConvidadoController extends GetxController {
     }
   }
 
+  /// =============================================================
+  /// 🔹 Atualiza os dados de um convidado existente
+  /// =============================================================
+  Future<void> atualizarConvidado(ConvidadoModel model) async {
+    try {
+      carregando.value = true;
+
+      await _db.collection('convidado').doc(model.idConvidado).update(model.toMap());
+    } catch (e) {
+      erro.value = 'Erro ao atualizar convidado: $e';
+    } finally {
+      carregando.value = false;
+    }
+  }
+
   /// =====================================================
   /// 🔹 Cria ou atualiza convidado no Firestore
   /// =====================================================
@@ -245,7 +260,6 @@ class ConvidadoController extends GetxController {
     return grupos;
   }
 
-  /// 🔹 Calcula estatísticas gerais de mesas
   /// 🔹 Calcula estatísticas gerais de mesas (AGORA CORRETO)
   Map<String, dynamic> get estatisticasMesas {
     final gruposMesa = grupoController.grupos;
@@ -253,17 +267,25 @@ class ConvidadoController extends GetxController {
     // Total de mesas cadastradas
     final totalMesas = gruposMesa.length;
 
-    // Total de assentos = total de convidados em todas as mesas
-    int totalAssentos = 0;
-    for (var g in gruposMesa) {
-      totalAssentos += g.numeroMesa != null ? g.numeroMesa! : 0;
-    }
+    // Total de assentos cadastrados
+    final totalAssentos = gruposMesa.fold<int>(
+      0,
+      (acc, g) => acc + (g.numeroMesa ?? 0),
+    );
 
-    // Quantos confirmados no total
-    final totalOcupados = gruposMesa
-        .expand((g) => g.convidados)
-        .where((c) => c.status == StatusConvidado.confirmado)
-        .length;
+    // Buscar convidados no controller (fonte real)
+    final todosConvidados = convidados;
+
+    // Confirmados agrupados por mesa real
+    int totalOcupados = 0;
+
+    for (var g in gruposMesa) {
+      final nomeMesa = g.nome;
+
+      totalOcupados += todosConvidados
+          .where((c) => c.grupoMesa == nomeMesa && c.status == StatusConvidado.confirmado)
+          .length;
+    }
 
     // Assentos livres
     final totalLivres = totalAssentos - totalOcupados;

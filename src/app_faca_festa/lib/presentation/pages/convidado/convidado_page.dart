@@ -114,11 +114,23 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
         floatingActionButton: usuarioLogado!.tipo != 'C'
             ? Obx(() {
                 final isGruposTab = abaSelecionada.value == 0;
+                final isCardapioTab = abaSelecionada.value == 2;
                 final grupoController = Get.find<GrupoConvidadoController>();
 
                 return Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    if (isCardapioTab)
+                      FloatingActionButton.extended(
+                        backgroundColor: Colors.yellow.shade900,
+                        icon: const Icon(Icons.add),
+                        label: const Text("Novo Cardápio"),
+                        onPressed: () {
+                          final evento = Get.find<EventoController>().eventoAtual.value!;
+                          abrirCadastroCardapio(context, evento.idEvento);
+                        },
+                      ),
+                    if (isCardapioTab) const SizedBox(height: 16),
                     if (isGruposTab)
                       FloatingActionButton.extended(
                         heroTag: "btnNovoGrupo",
