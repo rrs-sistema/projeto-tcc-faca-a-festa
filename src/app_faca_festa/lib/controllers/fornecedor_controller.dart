@@ -152,12 +152,6 @@ class FornecedorController extends GetxController {
 
           debugPrint("💬 Cotação $idCotacao → não lidas: $count");
 
-          // Recalcular TOTAL
-          int total = 0;
-          for (var doc in fornecedorSnap.docs) {
-            // (não dá para reconsultar aqui porque o listener só retorna 1 cotação por vez)
-          }
-
           mensagensNaoLidas.value += count;
 
           debugPrint("📊 Total atualizado: ${mensagensNaoLidas.value}");

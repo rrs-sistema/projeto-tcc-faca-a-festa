@@ -1,17 +1,18 @@
 // ignore_for_file: use_build_context_synchronously
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/tema/event_theme_controller.dart';
+import '../../../core/utils/biblioteca.dart';
 import './../../../controllers/evento_cadastro_controller.dart';
 import './../../widgets/custom_input_field.dart';
 import './../endereco/endereco_section.dart';
+import './evento_preview_titulo_widget.dart';
 import './../../../data/models/model.dart';
-import 'evento_preview_titulo_widget.dart';
 
 Future<void> showCadastroEventoBottomSheet(
   BuildContext context, {
@@ -405,14 +406,16 @@ List<Widget> _buildCamposPorTipo(
       color: corPrincipal,
       titleColor: corPrincipal,
       readOnly: true,
+      enabled: true,
       onTap: () async {
         final hoje = DateTime.now();
         final picked = await showDatePicker(
           context: Get.context!,
           initialDate: hoje.add(const Duration(days: 30)),
-          firstDate: hoje,
+          firstDate: hoje.add(const Duration(days: 7)),
           lastDate: DateTime(hoje.year + 5),
           locale: const Locale('pt', 'BR'),
+          initialEntryMode: DatePickerEntryMode.calendarOnly,
         );
         if (picked != null) {
           controller.dataFesta.text = DateFormat('dd/MM/yyyy', 'pt_BR').format(picked);
@@ -469,32 +472,14 @@ List<Widget> _buildCamposPorTipo(
       controller: controller.custoEstimado,
       color: corPrincipal,
       titleColor: corPrincipal,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      type: InputType.money,
       validator: (v) {
         if (v == null || v.isEmpty) return "Informe o custo estimado";
-
-        // 🔹 Remove símbolos de moeda e espaços
-        final limpo = v
-            .replaceAll('R\$', '')
-            .replaceAll('r\$', '')
-            .replaceAll('.', '')
-            .replaceAll(',', '.')
-            .trim();
-
-        final valor = double.tryParse(limpo);
-        if (valor == null || valor <= 0) return "Valor inválido";
         return null;
       },
       onChanged: (v) {
-        // Remove tudo que não for número
-        final numeric = v.replaceAll(RegExp(r'[^0-9]'), '');
-        if (numeric.isEmpty) {
-          controller.custoEstimado.text = '';
-          return;
-        }
-
         // Converte centavos → reais
-        final valor = double.parse(numeric) / 100;
+        final valor = Biblioteca.toDouble(v);
 
         // Atualiza formatado, mantendo o cursor no final
         controller.custoEstimado.value = TextEditingValue(

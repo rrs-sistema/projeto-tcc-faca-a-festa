@@ -104,7 +104,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black, size: 20),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
             onPressed: Get.back,
             tooltip: 'Voltar',
           ),
@@ -124,7 +124,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: const Icon(Icons.add_rounded, color: Colors.black, size: 22),
+              icon: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
               onPressed: () {
                 if (appController.usuarioLogado.value?.tipo == 'F') {
                   fotoController.fotos.clear();

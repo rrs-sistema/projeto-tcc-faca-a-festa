@@ -11,8 +11,11 @@ import 'package:get/get.dart';
 import '../../../controllers/avaliacao/avaliacao_controller.dart';
 import '../../../controllers/evento_controller.dart';
 import '../../../controllers/orcamento_gasto_controller.dart';
+import '../../../core/utils/biblioteca.dart';
 import '../../../data/models/avaliacao/avaliacao_model.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
+import '../../widgets/button/botao_cancelar.dart';
+import '../../widgets/button/botao_salvar.dart';
 import '../../widgets/custom_input_field.dart';
 import '../../widgets/festa_app_bar.dart';
 import './../../../controllers/orcamento_controller.dart';
@@ -28,6 +31,8 @@ class OrcamentoScreen extends StatelessWidget {
       statusBarIconBrightness: Brightness.dark,
       statusBarBrightness: Brightness.light,
     ));
+
+    final gastoController = Get.put(OrcamentoGastoController());
 
     final themeController = Get.find<EventThemeController>();
     final orcamentoController = Get.put(OrcamentoController());
@@ -48,9 +53,7 @@ class OrcamentoScreen extends StatelessWidget {
 
       final double custoEstimado = eventoController.eventoAtual.value?.custoEstimado ?? 0.0;
 
-      final double custoFinal = orcamentos
-          .where((o) => o.status == StatusOrcamento.fechado)
-          .fold(0.0, (s, o) => s + (o.custoEstimado ?? 0));
+      final double custoFinal = gastoController.totalGasto;
 
       return Scaffold(
         backgroundColor: Colors.grey.shade100,
@@ -121,11 +124,6 @@ class OrcamentoScreen extends StatelessWidget {
 
                     // 🔹 Caso não tenha fornecedor, exibe os gastos filhos
                     if (!temFornecedor) {
-                      final gastoController = Get.put(
-                        OrcamentoGastoController(),
-                        tag: orcamento.idOrcamento,
-                      );
-
                       gastoController.escutarGastos(orcamento.idOrcamento);
 
                       return Obx(() {
@@ -145,7 +143,10 @@ class OrcamentoScreen extends StatelessWidget {
                                   ),
                                 ),
                               ]
-                            : gastos.map((g) => _gastoItem(g.nome, g.custo, g.pago)).toList();
+                            : gastos
+                                .map((g) =>
+                                    _gastoItem(g.idOrcamento, g.idGasto, g.nome, g.custo, g.pago))
+                                .toList();
 
                         return _categoriaCard(context, orcamento, primary, gastosWidgets,
                             orcamento.idServicoFornecido == null);
@@ -159,6 +160,8 @@ class OrcamentoScreen extends StatelessWidget {
                         primary,
                         [
                           _gastoItem(
+                            orcamento.idOrcamento,
+                            null,
                             orcamento.status.label,
                             orcamento.custoEstimado ?? 0,
                             orcamento.status == StatusOrcamento.fechado
@@ -177,49 +180,79 @@ class OrcamentoScreen extends StatelessWidget {
     });
   }
 
-// === CATEGORIA EXPANSÍVEL (Versão Premium) ===
-  Widget _categoriaCard(BuildContext context, OrcamentoModel orcamento, Color primary,
-      List<Widget> gastos, bool mostrarBotaoAddGasto) {
+  Widget _categoriaCard(
+    BuildContext context,
+    OrcamentoModel orcamento,
+    Color primary,
+    List<Widget> gastos,
+    bool mostrarBotaoAddGasto,
+  ) {
+    final totalPrevisto = 'R\$ ${Biblioteca.formatarValorDecimal(orcamento.custoEstimado)}';
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(22),
         gradient: LinearGradient(
           colors: [
-            primary.withValues(alpha: 0.08),
-            Colors.white,
+            Colors.white.withValues(alpha: 0.90),
+            Colors.white.withValues(alpha: 0.60),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
+        border: Border.all(
+          color: primary.withValues(alpha: 0.12),
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(22),
         child: Theme(
           data: ThemeData(dividerColor: Colors.transparent),
           child: ExpansionTile(
             backgroundColor: Colors.transparent,
             collapsedBackgroundColor: Colors.transparent,
-            tilePadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+            iconColor: primary.withValues(alpha: 0.9),
+            collapsedIconColor: Colors.grey.shade500,
+            tilePadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+            childrenPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 10,
+            ),
+
+            // --------------------------------------------------
+            // TITLE (mais elegante)
+            // --------------------------------------------------
             title: Row(
               children: [
+                // Ícone premium
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(5),
                   decoration: BoxDecoration(
+                    shape: BoxShape.circle,
                     gradient: LinearGradient(
                       colors: [
-                        primary.withValues(alpha: 0.9),
-                        primary.withValues(alpha: 0.6),
+                        primary.withValues(alpha: 0.95),
+                        primary.withValues(alpha: 0.65),
                       ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
                     ),
-                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: primary.withValues(alpha: 0.35),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      )
+                    ],
                   ),
                   child: const Icon(
                     Icons.folder_special_rounded,
@@ -227,13 +260,16 @@ class OrcamentoScreen extends StatelessWidget {
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+
+                const SizedBox(width: 14),
+
+                // Título categoria
                 Expanded(
                   child: Text(
-                    orcamento.anotacoes ?? 'Not Anotation',
+                    orcamento.anotacoes ?? 'Sem nome',
                     style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
                       color: Colors.black87,
                     ),
                     overflow: TextOverflow.ellipsis,
@@ -241,32 +277,69 @@ class OrcamentoScreen extends StatelessWidget {
                 ),
               ],
             ),
+
+            // --------------------------------------------------
+            // SUBTÍTULO
+            // --------------------------------------------------s
             subtitle: Padding(
-              padding: const EdgeInsets.only(left: 44, top: 4),
-              child: Text(
-                'Total previsto: R\$ ${orcamento.custoEstimado?.toStringAsFixed(2)}',
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: Colors.grey.shade700,
+              padding: const EdgeInsets.only(left: 54, top: 6),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.grey.shade100,
+                      Colors.grey.shade200.withValues(alpha: 0.4),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.account_balance_wallet_rounded,
+                        size: 14, color: Colors.grey.shade700),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Total previsto: $totalPrevisto",
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.8,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade800,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
-            iconColor: primary,
-            collapsedIconColor: Colors.grey,
-            childrenPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+
+            // --------------------------------------------------
+            // CHILDREN (conteúdo expandido)
+            // --------------------------------------------------
             children: [
               ...gastos,
-              const SizedBox(height: 10),
+
+              const SizedBox(height: 5),
+
+              // Botão ADD GASTO
               if (mostrarBotaoAddGasto)
                 Align(
                   alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    style: TextButton.styleFrom(
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: primary.withValues(alpha: 0.12),
                       foregroundColor: primary,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                     ),
-                    onPressed: () => _showAddGastoDialog(context,
-                        idOrcamento: orcamento.idOrcamento, categoria: orcamento.anotacoes ?? ''),
+                    onPressed: () => _showAddGastoDialog(
+                      context,
+                      idOrcamento: orcamento.idOrcamento,
+                      categoria: orcamento.anotacoes ?? '',
+                    ),
                     icon: const Icon(Icons.add_circle_outline, size: 18),
                     label: Text(
                       'Adicionar Gasto',
@@ -277,14 +350,20 @@ class OrcamentoScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              // --- Botão de Avaliação ---
+
+              // Botão Avaliação
               if (!mostrarBotaoAddGasto)
                 Align(
                   alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.amber.shade800,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber.shade100,
+                      foregroundColor: Colors.amber.shade900,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     ),
                     onPressed: () => _showAvaliacaoDialog(context, orcamento),
                     icon: const Icon(Icons.star_rate_rounded, size: 18),
@@ -297,20 +376,24 @@ class OrcamentoScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-              // --- Botão de Exclusão ---
+
+              const SizedBox(height: 6),
+
+              // Botão Excluir — versão elegante
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton.icon(
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.redAccent.shade700,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  ),
                   onPressed: () async {
                     final confirm = await Get.dialog<bool>(
                       AlertDialog(
-                        title: const Text('Excluir orçamento'),
+                        title: Text(
+                          'Excluir orçamento',
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                         content: Text(
-                          'Deseja realmente excluir o orçamento "${orcamento.anotacoes}"?',
+                          'Deseja realmente excluir "${orcamento.anotacoes}"?',
                           style: GoogleFonts.poppins(fontSize: 14),
                         ),
                         actions: [
@@ -320,7 +403,9 @@ class OrcamentoScreen extends StatelessWidget {
                           ),
                           ElevatedButton(
                             onPressed: () => Get.back(result: true),
-                            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent,
+                            ),
                             child: const Text('Excluir'),
                           ),
                         ],
@@ -328,23 +413,30 @@ class OrcamentoScreen extends StatelessWidget {
                     );
 
                     if (confirm == true) {
-                      final orcamentoController = Get.find<OrcamentoController>();
-                      await orcamentoController.excluirOrcamento(orcamento.idOrcamento);
+                      final c = Get.find<OrcamentoController>();
+                      await c.excluirOrcamento(orcamento.idOrcamento);
+
                       Get.snackbar(
                         'Orçamento removido',
-                        'O orçamento "${orcamento.anotacoes}" foi excluído com sucesso.',
+                        'O orçamento "${orcamento.anotacoes}" foi excluído.',
                         backgroundColor: Colors.redAccent,
                         colorText: Colors.white,
+                        snackPosition: SnackPosition.BOTTOM,
                         duration: const Duration(seconds: 2),
                       );
                     }
                   },
-                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  icon: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 19,
+                    color: Colors.redAccent.shade700,
+                  ),
                   label: Text(
                     'Excluir',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
                       fontSize: 13.5,
+                      color: Colors.redAccent.shade700,
                     ),
                   ),
                 ),
@@ -356,90 +448,164 @@ class OrcamentoScreen extends StatelessWidget {
     );
   }
 
-// === ITEM DE GASTO (Visual Moderno) ===
-  Widget _gastoItem(String nome, double custo, double pago) {
+  Widget _gastoItem(
+    String? idOrcamento,
+    String? idGasto,
+    String nome,
+    double custo,
+    double pago,
+  ) {
     final restante = (custo - pago).clamp(0.0, custo);
     final percentPago = (custo > 0) ? (pago / custo).clamp(0.0, 1.0) : 0.0;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(18),
+        gradient: LinearGradient(
+          colors: [
+            Colors.white.withValues(alpha: 0.92),
+            Colors.white.withValues(alpha: 0.72),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(color: Colors.grey.shade200, width: 1),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --- Nome e valor principal ---
+          // --------------------------------------------------------------
+          // NOME DO ITEM
+          // --------------------------------------------------------------
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.teal.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.receipt_long_rounded,
+                  size: 16,
+                  color: Colors.teal.shade700,
+                ),
+              ),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   nome,
                   style: GoogleFonts.poppins(
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    fontSize: 14.5,
                     color: Colors.grey.shade800,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Text(
-                'R\$ ${custo.toStringAsFixed(2)}',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                  color: Colors.teal.shade700,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
 
-          // --- Barra de progresso do pagamento ---
-          LinearPercentIndicator(
-            lineHeight: 6,
-            percent: percentPago,
-            barRadius: const Radius.circular(10),
-            progressColor: Colors.teal.shade400,
-            backgroundColor: Colors.grey.shade300,
-            animation: true,
+          const SizedBox(height: 10),
+
+          // --------------------------------------------------------------
+          // VALOR + EXCLUIR (Nova linha separada)
+          // --------------------------------------------------------------
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Valor: R\$ ${custo.toStringAsFixed(2)}',
+                style: GoogleFonts.poppins(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.teal.shade800,
+                ),
+              ),
+              if (idOrcamento != null && idGasto != null)
+                InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => _confirmarExcluirGasto(idOrcamento, idGasto),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.redAccent.shade200,
+                      size: 20,
+                    ),
+                  ),
+                ),
+            ],
           ),
-          const SizedBox(height: 8),
 
-          // --- Detalhes numéricos ---
+          const SizedBox(height: 12),
+
+          // --------------------------------------------------------------
+          // BARRA DE PROGRESSO
+          // --------------------------------------------------------------
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: percentPago,
+              minHeight: 7,
+              backgroundColor: Colors.grey.shade300,
+              valueColor: AlwaysStoppedAnimation(
+                percentPago >= 1 ? Colors.green.shade500 : Colors.teal.shade400,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // --------------------------------------------------------------
+          // PAGO / RESTANTE
+          // --------------------------------------------------------------
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Pago: R\$ ${pago.toStringAsFixed(2)}',
                 style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.black87,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.teal.shade800,
                 ),
               ),
               Text(
                 'Restante: R\$ ${restante.toStringAsFixed(2)}',
                 style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: restante > 0 ? Colors.orange.shade700 : Colors.green.shade600,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                  color: restante > 0 ? Colors.orange.shade700 : Colors.green.shade700,
                 ),
               ),
             ],
           ),
         ],
       ),
+    );
+  }
+
+  void _confirmarExcluirGasto(String idOrcamento, String idGasto) {
+    final gastoController = Get.put(OrcamentoGastoController(), tag: idGasto);
+    Get.defaultDialog(
+      title: "Excluir gasto",
+      middleText: "Tem certeza que deseja excluir este item?",
+      textCancel: "Cancelar",
+      textConfirm: "Excluir",
+      confirmTextColor: Colors.white,
+      onConfirm: () async {
+        await gastoController.removerGasto(idOrcamento, idGasto);
+        Get.back();
+      },
     );
   }
 
@@ -528,7 +694,7 @@ class OrcamentoScreen extends StatelessWidget {
                             Text(
                               categoria,
                               style: GoogleFonts.poppins(
-                                fontSize: 14,
+                                fontSize: 18,
                                 fontWeight: FontWeight.w700,
                                 color: corPrincipal,
                               ),
@@ -541,123 +707,93 @@ class OrcamentoScreen extends StatelessWidget {
 
                       // === FORMULÁRIO ===
                       CustomInputField(
-                        label: "Nome do gasto",
+                        label: "Descrição do gasto",
                         icon: Icons.edit_note_rounded,
                         controller: nomeCtrl,
                         color: corPrincipal,
-                        validator: (v) =>
-                            v == null || v.trim().isEmpty ? "Informe o nome do gasto" : null,
+                        hintlabel: 'Informe onde valor será destinado',
+                        titleColor: corPrincipal,
+                        maxLines: 2,
                       ),
                       CustomInputField(
                         label: "Custo total (R\$)",
                         icon: Icons.attach_money_rounded,
                         controller: custoCtrl,
-                        keyboardType: TextInputType.number,
+                        type: InputType.money,
                         color: corPrincipal,
+                        hintlabel: 'Informe o custo total',
+                        titleColor: corPrincipal,
                       ),
                       CustomInputField(
                         label: "Valor pago (R\$)",
                         icon: Icons.payments_rounded,
                         controller: pagoCtrl,
-                        keyboardType: TextInputType.number,
+                        type: InputType.money,
                         color: corPrincipal,
+                        hintlabel: 'Informe o valor pago',
+                        titleColor: corPrincipal,
                       ),
 
                       const SizedBox(height: 32),
 
                       // === BOTÃO SALVAR ===
-                      Center(
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                corPrincipal.withValues(alpha: 0.9),
-                                corPrincipal.withValues(alpha: 0.7),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(32),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 8,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: ElevatedButton.icon(
-                            icon: const Icon(Icons.check_circle_rounded,
-                                color: Colors.white, size: 26),
-                            label: Text(
-                              'Salvar gasto',
-                              style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w700,
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shadowColor: Colors.transparent,
-                              padding: const EdgeInsets.symmetric(horizontal: 45, vertical: 15),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(32),
-                              ),
-                            ),
-                            onPressed: () async {
-                              if (nomeCtrl.text.isEmpty) {
-                                Get.snackbar(
-                                  'Campo obrigatório',
-                                  'Informe o nome do gasto.',
-                                  backgroundColor: Colors.redAccent.shade200,
-                                  colorText: Colors.white,
-                                );
-                                return;
-                              }
+                      BotaoSalvar(
+                        texto: 'Salvar gasto',
+                        onPressed: () async {
+                          if (nomeCtrl.text.isEmpty) {
+                            Get.snackbar(
+                              'Campo obrigatório',
+                              'Descreva onde o valor foi destinado.',
+                              backgroundColor: Colors.redAccent.shade200,
+                              colorText: Colors.white,
+                            );
+                            return;
+                          }
 
-                              await gastoController.adicionarGasto(
-                                idOrcamento: idOrcamento,
-                                nome: nomeCtrl.text,
-                                custo: double.tryParse(custoCtrl.text) ?? 0.0,
-                                pago: double.tryParse(pagoCtrl.text) ?? 0.0,
-                              );
+                          EasyLoading.show(status: 'Processando...');
 
-                              Get.snackbar(
-                                'Gasto adicionado',
-                                nomeCtrl.text,
-                                backgroundColor: corPrincipal,
-                                colorText: Colors.white,
-                              );
-                              Navigator.pop(context);
-                            },
-                          ),
-                        ),
+                          final result = await gastoController.adicionarGasto(
+                            idOrcamento: idOrcamento,
+                            nome: nomeCtrl.text,
+                            custo: Biblioteca.toDouble(custoCtrl.text),
+                            pago: Biblioteca.toDouble(pagoCtrl.text),
+                          );
+
+                          EasyLoading.dismiss();
+
+                          if (!result.ok) {
+                            // ⚠️ Mostra erro de limite excedido
+                            Get.snackbar(
+                              result.mensagem ?? 'Erro ao adicionar gasto',
+                              result.excedente != null
+                                  ? 'Excedeu o limite em R\$ ${result.excedente!.toStringAsFixed(2)}\n'
+                                      'Limite permitido: R\$ ${result.limite!.toStringAsFixed(2)}'
+                                  : '',
+                              backgroundColor: Colors.redAccent,
+                              colorText: Colors.white,
+                              duration: const Duration(seconds: 4),
+                            );
+                            return; // 🔥 Impede salvar o gasto
+                          }
+
+                          // ✔ Se deu tudo certo
+                          Get.snackbar(
+                            'Gasto adicionado',
+                            nomeCtrl.text,
+                            backgroundColor: corPrincipal,
+                            colorText: Colors.white,
+                          );
+
+                          Navigator.pop(context);
+                        },
                       ),
 
                       const SizedBox(height: 20),
 
                       // === BOTÃO CANCELAR ===
-                      Center(
-                        child: TextButton.icon(
-                          icon: Icon(Icons.close_rounded, color: Colors.white),
-                          label: Text(
-                            'Cancelar',
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          style: TextButton.styleFrom(
-                            overlayColor: corPrincipal.withValues(alpha: 0.15),
-                            backgroundColor: corPrincipal.withValues(alpha: 0.55),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                          onPressed: () => Navigator.pop(context),
-                        ),
+                      BotaoCancelar(
+                        texto: 'Cancelar',
+                        onPressed: () => Navigator.pop(context),
                       ),
                     ],
                   ),
@@ -752,14 +888,14 @@ class OrcamentoScreen extends StatelessWidget {
                   const SizedBox(height: 10),
                   _infoBoxResumo(
                     'Custo Estimado',
-                    'R\$ ${custoEstimado.toStringAsFixed(2)}',
+                    'R\$ ${Biblioteca.formatarValorDecimal(custoEstimado)}',
                     Icons.savings_rounded,
                     Colors.white,
                   ),
                   const SizedBox(height: 6),
                   _infoBoxResumo(
                     'Custo Final',
-                    'R\$ ${custoFinal.toStringAsFixed(2)}',
+                    'R\$ ${Biblioteca.formatarValorDecimal(custoFinal)}',
                     Icons.stacked_bar_chart_rounded,
                     Colors.white,
                   ),
@@ -916,22 +1052,25 @@ class OrcamentoScreen extends StatelessWidget {
                         // === CAMPOS ===
                         CustomInputField(
                           label: "Descrição do gasto",
+                          hintlabel: 'Descreva aqui onde será usado o recurso',
                           icon: Icons.category_outlined,
                           controller: nomeCtrl,
                           color: corPrincipal,
+                          titleColor: corPrincipal,
+                          maxLines: 3,
                           validator: (v) =>
                               v == null || v.trim().isEmpty ? "Informe a descrição do gasto" : null,
                         ),
                         CustomInputField(
                           label: "Custo estimado (R\$)",
+                          hintlabel: 'Informe o custo estimado',
                           icon: Icons.savings_outlined,
                           controller: custoEstimadoCtrl,
+                          type: InputType.money,
                           color: corPrincipal,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          titleColor: corPrincipal,
                           validator: (v) {
                             if (v == null || v.isEmpty) return "Informe o custo estimado";
-                            final valor = double.tryParse(v.replaceAll(',', '.'));
-                            if (valor == null || valor <= 0) return "Valor inválido";
                             return null;
                           },
                         ),
@@ -939,96 +1078,53 @@ class OrcamentoScreen extends StatelessWidget {
                         const SizedBox(height: 36),
 
                         // === BOTÃO SALVAR ===
-                        Center(
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  corPrincipal.withValues(alpha: 0.9),
-                                  corPrincipal.withValues(alpha: 0.7),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(32),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withValues(alpha: 0.15),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton.icon(
-                              icon: const Icon(Icons.check_circle_rounded,
-                                  color: Colors.white, size: 26),
-                              label: Text(
-                                'Salvar orçamento',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                padding: const EdgeInsets.symmetric(horizontal: 45, vertical: 15),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(32),
-                                ),
-                              ),
-                              onPressed: () async {
-                                if (!formKey.currentState!.validate()) return;
+                        BotaoSalvar(
+                          texto: 'Salvar orçamento',
+                          onPressed: () async {
+                            if (!formKey.currentState!.validate()) return;
 
-                                EasyLoading.show(status: 'Salvando...');
-                                final novo = OrcamentoModel(
-                                  idOrcamento: DateTime.now().millisecondsSinceEpoch.toString(),
-                                  idEvento: idEvento,
-                                  idServicoFornecido: null,
-                                  custoEstimado: double.tryParse(custoEstimadoCtrl.text) ?? 0,
-                                  anotacoes: nomeCtrl.text,
-                                  status: StatusOrcamento.pendente,
-                                );
+                            final double custo = Biblioteca.toDouble(custoEstimadoCtrl.text);
 
-                                await orcamentoController.criarOrcamento(novo);
-                                EasyLoading.dismiss();
-                                Navigator.pop(context);
+                            final resultado =
+                                await orcamentoController.validarCriacaoOrcamento(custo);
 
-                                Get.snackbar(
-                                  'Orçamento criado',
-                                  nomeCtrl.text,
-                                  backgroundColor: corPrincipal,
-                                  colorText: Colors.white,
-                                );
-                              },
-                            ),
-                          ),
+                            if (!resultado.$1) {
+                              // ❌ Mostra alerta bonitão
+                              Get.snackbar(
+                                resultado.$2 ?? 'Erro ao criar orçamento',
+                                'Excedente: R\$ ${Biblioteca.formatarValorDecimal(resultado.$3)}\n'
+                                'Limite do evento: R\$ ${Biblioteca.formatarValorDecimal(resultado.$4)}',
+                                backgroundColor: Colors.redAccent,
+                                colorText: Colors.white,
+                                duration: const Duration(seconds: 4),
+                              );
+                              return;
+                            }
+
+                            EasyLoading.show(status: 'Salvando...');
+
+                            final novo = OrcamentoModel(
+                              idOrcamento: DateTime.now().millisecondsSinceEpoch.toString(),
+                              idEvento: idEvento,
+                              idServicoFornecido: null,
+                              custoEstimado: custo,
+                              anotacoes: nomeCtrl.text,
+                              status: StatusOrcamento.pendente,
+                            );
+
+                            await orcamentoController.criarOrcamento(novo);
+
+                            EasyLoading.dismiss();
+                            Navigator.pop(context);
+                          },
                         ),
 
                         const SizedBox(height: 20),
 
                         // === BOTÃO CANCELAR ===
-                        Center(
-                          child: TextButton.icon(
-                            icon: const Icon(Icons.close_rounded, color: Colors.white),
-                            label: Text(
-                              'Cancelar',
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            style: TextButton.styleFrom(
-                              overlayColor: corPrincipal.withValues(alpha: 0.1),
-                              backgroundColor: corPrincipal.withValues(alpha: 0.25),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                            ),
-                            onPressed: () => Navigator.pop(context),
-                          ),
+                        BotaoCancelar(
+                          texto: 'Cancelar',
+                          onPressed: () => Navigator.pop(context),
                         ),
                       ],
                     ),

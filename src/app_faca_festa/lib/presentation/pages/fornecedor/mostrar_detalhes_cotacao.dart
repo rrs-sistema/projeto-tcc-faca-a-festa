@@ -33,7 +33,7 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 18),
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
             child: Column(
@@ -214,6 +214,11 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
                           _ => 'Aguardando'
                         };
 
+                        bool temRespostaFornecedor = (data['observacao_fornecedor'] != null &&
+                                data['observacao_fornecedor'].toString().trim().isNotEmpty) ||
+                            (data['prazo_entrega'] != null) ||
+                            (data['condicao_pagamento'] != null);
+
                         return Container(
                           margin: const EdgeInsets.only(bottom: 14),
                           padding: const EdgeInsets.all(14),
@@ -259,6 +264,149 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
                                 ],
                               ),
                               const SizedBox(height: 8),
+
+                              if (temRespostaFornecedor)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 16, top: 10),
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(14),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade50,
+                                      borderRadius: BorderRadius.circular(14),
+                                      border: Border.all(color: corStatus.withValues(alpha: 0.25)),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        // 🔸 Título
+                                        Row(
+                                          children: [
+                                            Icon(Icons.mark_chat_read_rounded,
+                                                size: 20, color: corStatus),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              "Resposta do fornecedor",
+                                              style: GoogleFonts.poppins(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14,
+                                                color: Colors.grey.shade800,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+
+                                        const SizedBox(height: 10),
+
+                                        // 🔸 Observação / mensagem do fornecedor
+                                        if (data['observacao_fornecedor'] != null &&
+                                            data['observacao_fornecedor']
+                                                .toString()
+                                                .trim()
+                                                .isNotEmpty)
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                data['observacao_fornecedor'],
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 13.5,
+                                                  color: Colors.grey.shade800,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 10),
+                                            ],
+                                          ),
+
+                                        // 🔸 Prazo de entrega
+                                        if (data['prazo_entrega'] != null)
+                                          Row(
+                                            children: [
+                                              Icon(Icons.timer_rounded,
+                                                  size: 18, color: Colors.blueGrey.shade600),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                "Prazo de entrega:",
+                                                style: GoogleFonts.poppins(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 13,
+                                                    color: Colors.grey.shade800),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                DateFormat("dd/MM/yyyy").format(
+                                                  (data['prazo_entrega'] as Timestamp).toDate(),
+                                                ),
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 13,
+                                                  color: Colors.grey.shade700,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+
+                                        const SizedBox(height: 6),
+
+                                        // 🔸 Condição de pagamento
+                                        if (data['condicao_pagamento'] != null &&
+                                            data['condicao_pagamento'].toString().trim().isNotEmpty)
+                                          Row(
+                                            children: [
+                                              Icon(Icons.payments_rounded,
+                                                  size: 18, color: Colors.teal.shade700),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                "Condição de pagamento:",
+                                                style: GoogleFonts.poppins(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 13,
+                                                    color: Colors.grey.shade800),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                child: Text(
+                                                  data['condicao_pagamento'],
+                                                  style: GoogleFonts.poppins(
+                                                    fontSize: 13,
+                                                    color: Colors.grey.shade700,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+
+                                        const SizedBox(height: 6),
+
+                                        // 🔸 Data da resposta
+                                        if (data['data_resposta'] != null)
+                                          Row(
+                                            children: [
+                                              Icon(Icons.calendar_month_rounded,
+                                                  size: 18, color: Colors.deepPurple.shade600),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                "Respondido em:",
+                                                style: GoogleFonts.poppins(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 13,
+                                                    color: Colors.grey.shade800),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                DateFormat("dd/MM/yyyy HH:mm").format(
+                                                  (data['data_resposta'] as Timestamp).toDate(),
+                                                ),
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 13,
+                                                  color: Colors.grey.shade700,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
 
                               // === Lista de serviços ===
                               StreamBuilder<QuerySnapshot>(

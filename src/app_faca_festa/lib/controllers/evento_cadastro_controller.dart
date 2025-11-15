@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
+import '../core/utils/biblioteca.dart';
 import './../presentation/pages/endereco/endereco_section_controller.dart';
 import './../controllers/app_controller.dart';
 import './../data/models/model.dart';
@@ -249,7 +250,7 @@ class EventoCadastroController extends GetxController {
     if (custoEstimado.text.isNotEmpty) {
       final texto =
           custoEstimado.text.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim();
-      valor = double.tryParse(texto) ?? 0.0;
+      valor = Biblioteca.toDouble(texto);
     }
 
     if (valor <= 1.0) {
@@ -352,6 +353,9 @@ class EventoCadastroController extends GetxController {
   // ===============================
   void limpar({bool manterEndereco = false}) {
     idEvento.value = '';
+    nomeEvento.clear();
+    nomePessoalPrincipal.clear();
+    localEvento.clear();
     nomeNoiva.clear();
     parceiro.clear();
     idade.clear();

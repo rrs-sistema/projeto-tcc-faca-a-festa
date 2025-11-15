@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/utils/biblioteca.dart';
 import './../../../../controllers/orcamento_controller.dart';
 import './../../../../data/models/model.dart';
 
@@ -123,7 +124,7 @@ Future<void> showResponderOrcamentoDialog(
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
                     onPressed: () async {
-                      final valor = double.tryParse(valorController.text) ?? 0;
+                      final valor = Biblioteca.toDouble(valorController.text);
                       await controller.responderOrcamento(
                         idOrcamento: orcamento.idOrcamento,
                         custoEstimado: valor,

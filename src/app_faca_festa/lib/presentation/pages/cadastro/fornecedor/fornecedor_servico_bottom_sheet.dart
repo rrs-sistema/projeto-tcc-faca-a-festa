@@ -5,8 +5,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../core/utils/biblioteca.dart';
-import '../../../widgets/custom_input_field.dart';
 import './../../../../data/models/servico_produto/subcategoria_servico_model.dart';
 import './../../../../controllers/categoria/subcategoria_servico_controller.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
@@ -15,6 +13,8 @@ import './../../../../controllers/servico/servico_foto_controller.dart';
 import './../../../../data/models/servico_produto/servico_foto.dart';
 import './../../../../controllers/servico_produto_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
+import './../../../widgets/custom_input_field.dart';
+import './../../../../core/utils/biblioteca.dart';
 import './components/titulo_vinculo_animado.dart';
 import './../../../../data/models/model.dart';
 
@@ -208,8 +208,8 @@ Future<void> showFornecedorServicoBottomSheet(
                           label: "Preço padrão (R\$)",
                           icon: Icons.attach_money_rounded,
                           controller: precoCtrl,
-                          keyboardType: TextInputType.number,
                           titleColor: primary,
+                          type: InputType.money,
                           onChanged: (_) {}, // opcional
                         ),
                         const SizedBox(height: 14),
@@ -217,7 +217,7 @@ Future<void> showFornecedorServicoBottomSheet(
                           label: "Preço promocional (opcional)",
                           icon: Icons.local_offer_outlined,
                           controller: promocaoCtrl,
-                          keyboardType: TextInputType.number,
+                          type: InputType.money,
                           titleColor: primary,
                         ),
                         const Divider(height: 28),
@@ -311,8 +311,9 @@ Future<void> showFornecedorServicoBottomSheet(
                     children: [
                       Expanded(
                         child: ElevatedButton.icon(
-                          icon: const Icon(Icons.add_link_rounded),
-                          label: const Text('Adicionar via URL'),
+                          icon: const Icon(Icons.add_link_rounded, color: Colors.white),
+                          label: const Text('Adicionar via URL',
+                              style: TextStyle(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primary,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -341,8 +342,9 @@ Future<void> showFornecedorServicoBottomSheet(
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton.icon(
-                          icon: const Icon(Icons.add_a_photo_outlined),
-                          label: const Text('Enviar do dispositivo'),
+                          icon: const Icon(Icons.add_a_photo_outlined, color: Colors.white),
+                          label: const Text('Enviar do dispositivo',
+                              style: TextStyle(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.indigo.shade400,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -367,10 +369,11 @@ Future<void> showFornecedorServicoBottomSheet(
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.save_rounded),
+                    icon: const Icon(Icons.save_rounded, color: Colors.white),
                     label: const Text(
                       'Salvar',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
@@ -421,13 +424,14 @@ Future<void> showFornecedorServicoBottomSheet(
                 SizedBox(
                   width: double.infinity,
                   child: TextButton.icon(
-                    icon: const Icon(Icons.exit_to_app_rounded),
+                    icon: const Icon(Icons.exit_to_app_rounded, color: Colors.white),
                     label: const Text(
                       'Sair',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
                     ),
                     style: TextButton.styleFrom(
-                      foregroundColor: Colors.grey.shade700,
+                      foregroundColor: Colors.grey.shade400,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       backgroundColor: Colors.grey.shade400,

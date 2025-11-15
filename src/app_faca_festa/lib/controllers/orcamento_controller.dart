@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'dart:async';
 
 import './../data/models/model.dart';
+import 'evento_controller.dart';
 
 class OrcamentoController extends GetxController {
   final _db = FirebaseFirestore.instance;
@@ -86,6 +87,39 @@ class OrcamentoController extends GetxController {
     totalCustoEstimado.value = orcamentos.fold(0.0, (soma, o) => soma + (o.custoEstimado ?? 0.0));
 
     totalCount.value = orcamentos.length;
+  }
+
+  /// ===========================================================
+  /// 🔹 Valida se é permitido criar um novo orçamento
+  /// ===========================================================
+  Future<(bool ok, String? mensagem, double? excedente, double? limite)> validarCriacaoOrcamento(
+      double novoValor) async {
+    final eventoController = Get.find<EventoController>();
+
+    final double limiteEvento = eventoController.eventoAtual.value?.custoEstimado ?? 0;
+
+    // 🔥 1) O valor do evento é zero → não permitir
+    if (limiteEvento <= 0) {
+      return (false, "O evento não possui orçamento estimado definido!", null, 0.0);
+    }
+
+    // 🔥 2) O novo orçamento sozinho já excede o valor total permitido
+    if (novoValor > limiteEvento) {
+      final exced = novoValor - limiteEvento;
+      return (false, "O valor informado excede o limite total do evento!", exced, limiteEvento);
+    }
+
+    // 🔥 3) Soma total dos orçamentos existentes + novo
+    final double totalAtual = orcamentos.fold(0, (s, o) => s + (o.custoEstimado ?? 0));
+    final double totalPosInsercao = totalAtual + novoValor;
+
+    if (totalPosInsercao > limiteEvento) {
+      final exced = totalPosInsercao - limiteEvento;
+      return (false, "A soma dos orçamentos excede o limite geral do evento!", exced, limiteEvento);
+    }
+
+    // 🔥 OK!
+    return (true, null, null, limiteEvento);
   }
 
   /// ===========================================================

@@ -310,7 +310,6 @@ class PainelCotacaoPage extends StatelessWidget {
                 _buildAcaoCotacao(primary, "Ver detalhes", Icons.visibility_rounded, () {
                   mostrarDetalhesCotacao(cotacao);
                 }),
-                _buildAcaoCotacao(primary, "Conversar com fornecedor", Icons.chat_rounded, () {}),
                 _buildAcaoCotacao(Colors.redAccent, "Cancelar cotação", Icons.cancel_outlined,
                     () async {
                   EasyLoading.show(status: 'Processando...');

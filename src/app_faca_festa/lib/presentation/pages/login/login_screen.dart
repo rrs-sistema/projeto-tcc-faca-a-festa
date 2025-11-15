@@ -56,7 +56,7 @@ class LoginScreen extends StatelessWidget {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -106,21 +106,25 @@ class LoginScreen extends StatelessWidget {
                           // Campo Email
                           CustomInputField(
                             label: 'Email',
+                            hintlabel: 'Digite seu email',
                             icon: Icons.email_outlined,
                             controller: emailCtrl,
                             color: theme.primaryColor.value,
                             titleColor: theme.primaryColor.value,
+                            type: InputType.email,
                             onChanged: (v) => controller.email.value = v,
                           ),
 
                           // Campo Senha
                           CustomInputField(
                             label: 'Senha',
+                            hintlabel: 'Digite sua senha',
                             icon: Icons.lock_outline,
                             controller: senhaCtrl,
                             color: theme.primaryColor.value,
                             obscureText: true,
                             titleColor: theme.primaryColor.value,
+                            type: InputType.password,
                             onChanged: (v) => controller.senha.value = v,
                           ),
 

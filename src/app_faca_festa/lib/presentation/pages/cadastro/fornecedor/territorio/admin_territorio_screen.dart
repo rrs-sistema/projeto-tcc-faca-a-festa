@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../../core/utils/biblioteca.dart';
 import './../../../../../controllers/admin/admin_territorio_controller.dart';
 import './../../../../../controllers/tema/event_theme_controller.dart';
 import '../../../../../controllers/fornecedor_controller.dart';
@@ -377,7 +378,7 @@ class AdminTerritorioScreen extends StatelessWidget {
                                 ),
                               ),
                               onChanged: (v) => setState(() {
-                                t = t.copyWith(raioKm: double.tryParse(v));
+                                t = t.copyWith(raioKm: Biblioteca.toDouble(v));
                               }),
                             ),
                             const SizedBox(height: 16),

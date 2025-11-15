@@ -26,7 +26,7 @@ class EventoPreviewTituloWidget extends StatelessWidget {
       case 'casamento':
         titulo = nome.isEmpty ? '💍 Um dia para celebrar o amor...' : '💍 $nome';
         estilo = GoogleFonts.playfairDisplay(
-          fontSize: 18,
+          fontSize: 16,
           fontWeight: FontWeight.w600,
           letterSpacing: 1.1,
           color: Colors.black,

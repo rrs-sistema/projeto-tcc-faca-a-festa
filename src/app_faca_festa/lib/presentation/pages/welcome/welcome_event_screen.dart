@@ -185,7 +185,7 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                                     'uf': enderecoUsuario.uf ?? 'PR',
                                   };
                                 }
-
+                                eventoCadastroController.limpar(manterEndereco: true);
                                 eventoCadastroController.tipoEventoModel.value = tipo;
                                 EasyLoading.dismiss();
 

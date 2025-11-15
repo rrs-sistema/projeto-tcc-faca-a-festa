@@ -146,7 +146,7 @@ Future<void> showNovoOrcamentoBottomSheet({
                               ),
                             ),
                             onChanged: (v) =>
-                                valorEstimado = double.tryParse(v.replaceAll(',', '.')),
+                                valorEstimado = Biblioteca.toDouble(v.replaceAll(',', '.')),
                           ),
 
                           const SizedBox(height: 16),

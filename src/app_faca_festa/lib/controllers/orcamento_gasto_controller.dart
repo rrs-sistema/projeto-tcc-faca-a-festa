@@ -1,18 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
+import 'package:get/get.dart';
 
-import '../data/models/model.dart';
-import '../data/models/orcamento/orcamento_gasto_model.dart';
+import './../data/models/orcamento/orcamento_validacao_resultado.dart';
+import './../data/models/orcamento/orcamento_gasto_model.dart';
 
 class OrcamentoGastoController extends GetxController {
   final _db = FirebaseFirestore.instance;
   final RxList<OrcamentoGastoModel> gastos = <OrcamentoGastoModel>[].obs;
-
-  /// Calcula o total pago e restante
-  double get totalPago => gastos.fold(0, (soma, g) => soma + (g.pago));
-  double get totalGasto => gastos.fold(0, (soma, g) => soma + (g.custo));
 
   /// Escuta os gastos de um orçamento específico
   void escutarGastos(String idOrcamento) {
@@ -23,19 +18,102 @@ class OrcamentoGastoController extends GetxController {
         .orderBy('data_cadastro', descending: true)
         .snapshots()
         .listen((snapshot) {
-      gastos
-          .assignAll(snapshot.docs.map((doc) => OrcamentoGastoModel.fromMap(doc.data())).toList());
+      gastos.assignAll(
+        snapshot.docs.map((doc) => OrcamentoGastoModel.fromMap(doc.data())).toList(),
+      );
     });
   }
 
-  Future<void> adicionarGasto({
+  Future<OrcamentoValidacaoResultado> adicionarGasto({
     required String idOrcamento,
     required String nome,
     required double custo,
     required double pago,
   }) async {
-    final idGasto = const Uuid().v4();
+    final refOrcamento = _db.collection('orcamento').doc(idOrcamento);
 
+    // =====================================================
+    // 🔹 VALIDACÕES IMEDIATAS (antes de acessar o Firestore)
+    // =====================================================
+
+    // 1. Custo não pode ser menor ou igual a zero
+    if (custo <= 0) {
+      return OrcamentoValidacaoResultado.erro(
+        "O custo do item deve ser maior que zero.",
+      );
+    }
+
+    // 2. Pago não pode ser maior que custo
+    if (pago > custo) {
+      return OrcamentoValidacaoResultado.erro(
+        "O valor pago não pode ser maior que o custo total do item.",
+      );
+    }
+
+    // 3. Pago não pode ser negativo
+    if (pago < 0) {
+      return OrcamentoValidacaoResultado.erro(
+        "O valor pago não pode ser negativo.",
+      );
+    }
+
+    // =====================================================
+    // 🔹 BUSCA ORÇAMENTO
+    // =====================================================
+    final orcamentoSnap = await refOrcamento.get();
+    if (!orcamentoSnap.exists) {
+      return OrcamentoValidacaoResultado.erro("Orçamento não encontrado.");
+    }
+
+    final data = orcamentoSnap.data()!;
+    final double limiteCategoria = (data['custo_estimado'] ?? 0).toDouble();
+    final String idEvento = data['id_evento'];
+
+    // =====================================================
+    // 🔹 SOMA GASTOS DA CATEGORIA
+    // =====================================================
+    final gastosSnap = await refOrcamento.collection('orcamento_gasto').get();
+    final totalAtual = gastosSnap.docs.fold(0.0, (s, d) => s + (d.data()['custo'] ?? 0.0));
+
+    if (totalAtual + custo > limiteCategoria) {
+      final excedente = (totalAtual + custo) - limiteCategoria;
+
+      return OrcamentoValidacaoResultado.excedeuCategoria(
+        excedente: excedente,
+        limite: limiteCategoria,
+      );
+    }
+
+    // =====================================================
+    // 🔹 VALIDA ORÇAMENTO GERAL DO EVENTO
+    // =====================================================
+    final eventoSnap = await _db.collection('evento').doc(idEvento).get();
+    final double limiteEvento = (eventoSnap.data()?['custo_estimado'] ?? 0).toDouble();
+
+    // total gasto no evento
+    double totalEvento = 0;
+    final orcs = await _db.collection('orcamento').where("id_evento", isEqualTo: idEvento).get();
+
+    for (var doc in orcs.docs) {
+      final gastosCat = await doc.reference.collection('orcamento_gasto').get();
+      for (var g in gastosCat.docs) {
+        totalEvento += (g.data()['custo'] ?? 0).toDouble();
+      }
+    }
+
+    if (totalEvento + custo > limiteEvento) {
+      final excedente = (totalEvento + custo) - limiteEvento;
+
+      return OrcamentoValidacaoResultado.excedeuEvento(
+        excedente: excedente,
+        limite: limiteEvento,
+      );
+    }
+
+    // =====================================================
+    // 🔹 SE PASSOU NAS VALIDAÇÕES → SALVAR
+    // =====================================================
+    final idGasto = const Uuid().v4();
     final model = OrcamentoGastoModel(
       idGasto: idGasto,
       idOrcamento: idOrcamento,
@@ -44,54 +122,11 @@ class OrcamentoGastoController extends GetxController {
       pago: pago,
     );
 
-    final refOrcamento = _db.collection('orcamento').doc(idOrcamento);
-    final refGasto = refOrcamento.collection('orcamento_gasto').doc(idGasto);
+    await refOrcamento.collection('orcamento_gasto').doc(idGasto).set(model.toMap());
 
-    // 🔹 1. Adiciona o gasto
-    await refGasto.set(model.toMap());
-
-    // 🔹 2. Recarrega todos os gastos do orçamento
-    final snapshot = await refOrcamento.collection('orcamento_gasto').get();
-
-    final todosGastos = snapshot.docs.map((d) => OrcamentoGastoModel.fromMap(d.data())).toList();
-
-    // 🔹 3. Verifica se todos os gastos estão totalmente pagos
-    final todosPagos =
-        todosGastos.isNotEmpty && todosGastos.every((g) => (g.pago >= g.custo && g.custo > 0));
-
-    // 🔹 4. Atualiza o status do orçamento se estiver tudo pago
-    if (todosPagos) {
-      await refOrcamento.update({
-        'status': StatusOrcamento.fechado.firestoreValue,
-      });
-      Get.snackbar(
-        'Orçamento fechado 🎉',
-        'Todos os gastos foram pagos com sucesso!',
-        backgroundColor: Colors.green.shade600,
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
-    } else {
-      // 🔸 Caso contrário, mantém o status em aberto/pendente
-      await refOrcamento.update({'status': StatusOrcamento.pendente.firestoreValue});
-    }
+    return OrcamentoValidacaoResultado.ok();
   }
 
-  /// Atualiza um gasto existente
-  Future<void> atualizarGasto01({
-    required String idOrcamento,
-    required String idGasto,
-    required double pago,
-  }) async {
-    await _db
-        .collection('orcamento')
-        .doc(idOrcamento)
-        .collection('orcamento_gasto')
-        .doc(idGasto)
-        .update({'pago': pago});
-  }
-
-  /// Remove um gasto
   Future<void> removerGasto(String idOrcamento, String idGasto) async {
     await _db
         .collection('orcamento')
@@ -100,4 +135,8 @@ class OrcamentoGastoController extends GetxController {
         .doc(idGasto)
         .delete();
   }
+
+  /// Totalizadores
+  double get totalPago => gastos.fold(0.0, (soma, g) => soma + g.pago);
+  double get totalGasto => gastos.fold(0.0, (soma, g) => soma + g.custo);
 }

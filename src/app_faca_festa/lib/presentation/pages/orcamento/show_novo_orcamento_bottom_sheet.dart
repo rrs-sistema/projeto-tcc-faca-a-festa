@@ -5,6 +5,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../controllers/orcamento_controller.dart';
+import '../../../core/utils/biblioteca.dart';
 import '../../../data/models/model.dart';
 
 Future<void> showNovoOrcamentoBottomSheet({
@@ -156,7 +157,7 @@ Future<void> showNovoOrcamentoBottomSheet({
                         ),
                         prefixIcon: Icon(Icons.attach_money_rounded, color: cor),
                       ),
-                      onChanged: (v) => valorEstimado = double.tryParse(v),
+                      onChanged: (v) => valorEstimado = Biblioteca.toDouble(v),
                     ),
 
                     const SizedBox(height: 24),
