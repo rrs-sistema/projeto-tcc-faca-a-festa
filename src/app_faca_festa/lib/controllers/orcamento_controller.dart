@@ -5,13 +5,17 @@ import 'dart:async';
 
 import './../data/models/model.dart';
 import 'evento_controller.dart';
+import 'orcamento_gasto_controller.dart';
 
 class OrcamentoController extends GetxController {
   final _db = FirebaseFirestore.instance;
-  final RxList<OrcamentoModel> orcamentos = <OrcamentoModel>[].obs;
 
+  final RxList<OrcamentoModel> orcamentos = <OrcamentoModel>[].obs;
   final RxBool carregando = false.obs;
   StreamSubscription? _orcamentoSubscription;
+
+  /// 🔥 Total geral (pago) usado no resumo financeiro
+  final RxDouble totalPagoGeral = 0.0.obs;
 
   final RxInt fornecedorContatadoCount = 0.obs;
   final RxInt totalCount = 0.obs;
@@ -19,7 +23,7 @@ class OrcamentoController extends GetxController {
   final RxDouble totalCustoEstimado = 0.0.obs;
 
   /// ===========================================================
-  /// 🔹 Escuta orçamentos de um evento específico (organizador)
+  /// 🔹 Escuta orçamentos de um evento específico
   /// ===========================================================
   Future<void> carregarOrcamentosDoEvento(String idEvento) async {
     try {
@@ -36,6 +40,10 @@ class OrcamentoController extends GetxController {
 
         orcamentos.assignAll(lista);
         _atualizarContagens();
+
+        // 🔥 Recalcular o resumo geral sempre que orçamentos mudarem
+        calcularTotalPagoGeral();
+
         carregando.value = false;
       }, onError: (e) {
         carregando.value = false;
@@ -48,7 +56,7 @@ class OrcamentoController extends GetxController {
   }
 
   /// ===========================================================
-  /// 🔹 Escuta orçamentos em tempo real de um fornecedor
+  /// 🔹 Escuta orçamentos por fornecedor (modo fornecedor)
   /// ===========================================================
   void escutarOrcamentos(String idFornecedor) {
     try {
@@ -65,6 +73,9 @@ class OrcamentoController extends GetxController {
 
         orcamentos.assignAll(lista);
         _atualizarContagens();
+
+        calcularTotalPagoGeral();
+
         carregando.value = false;
       }, onError: (e) {
         carregando.value = false;
@@ -77,7 +88,28 @@ class OrcamentoController extends GetxController {
   }
 
   /// ===========================================================
-  /// 🔹 Atualiza métricas e somatórios
+  /// 🔥 Recalcula o total GERAL de valores pagos (usado no resumo)
+  /// ===========================================================
+  Future<void> calcularTotalPagoGeral() async {
+    double total = 0;
+
+    // 🔹 Para cada orçamento, pegar seu controller de gastos
+    for (var o in orcamentos) {
+      if (Get.isRegistered<OrcamentoGastoController>(tag: o.idOrcamento)) {
+        final gastoC = Get.find<OrcamentoGastoController>(tag: o.idOrcamento);
+        total += gastoC.totalPago;
+      }
+      // 🔹 Caso orçamento tenha fornecedor e esteja fechado
+      else if (o.isFechado) {
+        total += (o.custoEstimado ?? 0.0);
+      }
+    }
+
+    totalPagoGeral.value = total;
+  }
+
+  /// ===========================================================
+  /// 🔹 Atualiza métricas e somatórios básicos
   /// ===========================================================
   void _atualizarContagens() {
     fornecedorContatadoCount.value = orcamentos.where((o) => o.idServicoFornecido != null).length;
@@ -90,26 +122,22 @@ class OrcamentoController extends GetxController {
   }
 
   /// ===========================================================
-  /// 🔹 Valida se é permitido criar um novo orçamento
+  /// 🔹 Valida criação de orçamento
   /// ===========================================================
   Future<(bool ok, String? mensagem, double? excedente, double? limite)> validarCriacaoOrcamento(
       double novoValor) async {
     final eventoController = Get.find<EventoController>();
-
     final double limiteEvento = eventoController.eventoAtual.value?.custoEstimado ?? 0;
 
-    // 🔥 1) O valor do evento é zero → não permitir
     if (limiteEvento <= 0) {
       return (false, "O evento não possui orçamento estimado definido!", null, 0.0);
     }
 
-    // 🔥 2) O novo orçamento sozinho já excede o valor total permitido
     if (novoValor > limiteEvento) {
       final exced = novoValor - limiteEvento;
       return (false, "O valor informado excede o limite total do evento!", exced, limiteEvento);
     }
 
-    // 🔥 3) Soma total dos orçamentos existentes + novo
     final double totalAtual = orcamentos.fold(0, (s, o) => s + (o.custoEstimado ?? 0));
     final double totalPosInsercao = totalAtual + novoValor;
 
@@ -118,35 +146,27 @@ class OrcamentoController extends GetxController {
       return (false, "A soma dos orçamentos excede o limite geral do evento!", exced, limiteEvento);
     }
 
-    // 🔥 OK!
     return (true, null, null, limiteEvento);
   }
 
   /// ===========================================================
-  /// 🔹 Cria um novo orçamento
+  /// 🔹 Criar orçamento
   /// ===========================================================
   Future<void> criarOrcamento(OrcamentoModel model) async {
     try {
       await _db.collection('orcamento').doc(model.idOrcamento).set(model.toMap());
-      Get.snackbar(
-        "Orçamento enviado",
-        "O fornecedor será notificado.",
-        backgroundColor: const Color(0xFF388E3C),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3),
-      );
     } catch (e) {
       Get.snackbar(
         "Erro",
         "Falha ao salvar orçamento: $e",
-        backgroundColor: const Color(0xFFD32F2F),
+        backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
     }
   }
 
   /// ===========================================================
-  /// 🔹 Atualiza valor e observações no Firestore
+  /// 🔹 Atualizar orçamento (fornecedor respondendo)
   /// ===========================================================
   Future<void> responderOrcamento({
     required String idOrcamento,
@@ -156,6 +176,7 @@ class OrcamentoController extends GetxController {
   }) async {
     try {
       final status = fechar ? 'fechado' : 'em_negociacao';
+
       await _db.collection('orcamento').doc(idOrcamento).update({
         'custo_estimado': custoEstimado,
         'anotacoes': anotacoes,
@@ -164,29 +185,22 @@ class OrcamentoController extends GetxController {
         if (fechar) 'data_fechamento': FieldValue.serverTimestamp(),
       });
 
-      if (fechar) {
-        Get.snackbar(
-          "Orçamento Fechado",
-          "O contrato foi concluído e o faturamento será atualizado.",
-          backgroundColor: Colors.teal.shade700,
-          colorText: Colors.white,
-        );
-      }
+      // Atualizar resumo ao fechar orçamento
+      calcularTotalPagoGeral();
     } catch (e) {
       debugPrint('❌ Erro ao responder orçamento: $e');
-      Get.snackbar(
-        "Erro",
-        "Falha ao atualizar orçamento: $e",
-        backgroundColor: const Color(0xFFD32F2F),
-        colorText: Colors.white,
-      );
     }
   }
 
+  /// ===========================================================
+  /// 🔹 Excluir orçamento
+  /// ===========================================================
   Future<void> excluirOrcamento(String idOrcamento) async {
     try {
       await _db.collection('orcamento').doc(idOrcamento).delete();
       orcamentos.removeWhere((o) => o.idOrcamento == idOrcamento);
+
+      calcularTotalPagoGeral();
     } catch (e) {
       Get.snackbar(
         'Erro',
@@ -198,7 +212,7 @@ class OrcamentoController extends GetxController {
   }
 
   /// ===========================================================
-  /// 🔹 Reset e ciclo de vida
+  /// 🔹 Ciclo de vida
   /// ===========================================================
   @override
   void onClose() {
@@ -208,5 +222,6 @@ class OrcamentoController extends GetxController {
 
   void reset() {
     orcamentos.clear();
+    totalPagoGeral.value = 0;
   }
 }

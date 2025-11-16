@@ -32,8 +32,6 @@ class OrcamentoScreen extends StatelessWidget {
       statusBarBrightness: Brightness.light,
     ));
 
-    final gastoController = Get.put(OrcamentoGastoController());
-
     final themeController = Get.find<EventThemeController>();
     final orcamentoController = Get.put(OrcamentoController());
     final eventoController = Get.find<EventoController>();
@@ -51,9 +49,8 @@ class OrcamentoScreen extends StatelessWidget {
       final gradient = themeController.gradient.value;
       final orcamentos = orcamentoController.orcamentos;
 
-      final double custoEstimado = eventoController.eventoAtual.value?.custoEstimado ?? 0.0;
-
-      final double custoFinal = gastoController.totalGasto;
+      // ⚠️ Removido cálculo errado: gastoController.totalGasto
+      // Agora o resumo só mostrará o total real somando os gastos de cada categoria individualmente.
 
       return Scaffold(
         backgroundColor: Colors.grey.shade100,
@@ -68,7 +65,7 @@ class OrcamentoScreen extends StatelessWidget {
           ],
         ),
         body: Obx(() {
-          if (orcamentoController.orcamentos.isEmpty) {
+          if (orcamentos.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -111,23 +108,32 @@ class OrcamentoScreen extends StatelessWidget {
               physics: const BouncingScrollPhysics(),
               child: Column(
                 children: [
+                  // Resumo corrigido — será recalculado no final do build
                   resumoCard(
                     gradient,
-                    custoEstimado: custoEstimado,
-                    custoFinal: custoFinal,
+                    custoEstimado: eventoController.eventoAtual.value?.custoEstimado ?? 0,
+                    custoFinal: orcamentoController.totalPagoGeral.value,
                   ),
                   const SizedBox(height: 20),
+
                   ...orcamentos.map((orcamento) {
-                    // 🔹 Verifica se o orçamento tem fornecedor vinculado
                     final temFornecedor = orcamento.idServicoFornecido != null &&
                         orcamento.idServicoFornecido!.isNotEmpty;
 
-                    // 🔹 Caso não tenha fornecedor, exibe os gastos filhos
+                    // =====================================================================
+                    // 🔥 Para ORÇAMENTOS SEM FORNECEDOR → criar CONTROLLER POR TAG
+                    // =====================================================================
                     if (!temFornecedor) {
-                      gastoController.escutarGastos(orcamento.idOrcamento);
+                      final gastoC = Get.put(
+                        OrcamentoGastoController(),
+                        tag: orcamento.idOrcamento,
+                        permanent: false,
+                      );
+
+                      gastoC.escutarGastos(orcamento.idOrcamento);
 
                       return Obx(() {
-                        final gastos = gastoController.gastos;
+                        final gastos = gastoC.gastos;
 
                         final gastosWidgets = gastos.isEmpty
                             ? [
@@ -143,33 +149,46 @@ class OrcamentoScreen extends StatelessWidget {
                                   ),
                                 ),
                               ]
-                            : gastos
-                                .map((g) =>
-                                    _gastoItem(g.idOrcamento, g.idGasto, g.nome, g.custo, g.pago))
-                                .toList();
+                            : gastos.map((g) {
+                                return _gastoItem(
+                                  g.idOrcamento,
+                                  g.idGasto,
+                                  g.nome,
+                                  g.custo,
+                                  g.pago,
+                                );
+                              }).toList();
 
-                        return _categoriaCard(context, orcamento, primary, gastosWidgets,
-                            orcamento.idServicoFornecido == null);
+                        return _categoriaCard(
+                          context,
+                          orcamento,
+                          primary,
+                          gastosWidgets,
+                          true,
+                        );
                       });
                     }
 
-                    // 🔹 Caso tenha fornecedor vinculado, mantém layout padrão
+                    // =====================================================================
+                    // 🔥 SE TEM FORNECEDOR → orçamento resumido fixo
+                    // =====================================================================
                     return _categoriaCard(
-                        context,
-                        orcamento,
-                        primary,
-                        [
-                          _gastoItem(
-                            orcamento.idOrcamento,
-                            null,
-                            orcamento.status.label,
-                            orcamento.custoEstimado ?? 0,
-                            orcamento.status == StatusOrcamento.fechado
-                                ? (orcamento.custoEstimado ?? 0)
-                                : 0,
-                          ),
-                        ],
-                        orcamento.idServicoFornecido == null);
+                      context,
+                      orcamento,
+                      primary,
+                      [
+                        _gastoItem(
+                          orcamento.idOrcamento,
+                          null,
+                          orcamento.status.label,
+                          orcamento.custoEstimado ?? 0,
+                          orcamento.status == StatusOrcamento.fechado
+                              ? (orcamento.custoEstimado ?? 0)
+                              : 0,
+                        ),
+                      ],
+                      false,
+                    );
                   }),
                 ],
               ),
@@ -484,7 +503,7 @@ class OrcamentoScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // --------------------------------------------------------------
-          // NOME DO ITEM
+          // NOME DO ITEM + AÇÕES
           // --------------------------------------------------------------
           Row(
             children: [
@@ -511,25 +530,58 @@ class OrcamentoScreen extends StatelessWidget {
                   ),
                 ),
               ),
-            ],
-          ),
 
-          const SizedBox(height: 10),
+              // --------------------------------------------------------------
+              // BOTÃO PAGAR (se não estiver pago)
+              // --------------------------------------------------------------
+              if (restante > 0 && idOrcamento != null && idGasto != null)
+                InkWell(
+                  onTap: () async {
+                    final gastoC = Get.find<OrcamentoGastoController>(tag: idOrcamento);
 
-          // --------------------------------------------------------------
-          // VALOR + EXCLUIR (Nova linha separada)
-          // --------------------------------------------------------------
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Valor: R\$ ${custo.toStringAsFixed(2)}',
-                style: GoogleFonts.poppins(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.teal.shade800,
+                    await gastoC.marcarComoPago(idOrcamento, idGasto, custo);
+
+                    gastoC.escutarGastos(idOrcamento);
+
+                    Get.snackbar(
+                      "Pago!",
+                      "$nome marcado como pago.",
+                      backgroundColor: Colors.green.shade600,
+                      colorText: Colors.white,
+                      duration: const Duration(seconds: 2),
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.green.shade50,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.green.shade300),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.check_circle_outline, color: Colors.green.shade700, size: 18),
+                        const SizedBox(width: 6),
+                        Text(
+                          "Pagar",
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.green.shade800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
+
+              // ✔ Ícone verde quando já está totalmente pago
+              if (restante == 0)
+                Icon(Icons.check_circle_rounded, color: Colors.green.shade600, size: 22),
+
+              const SizedBox(width: 6),
+
+              // EXCLUIR
               if (idOrcamento != null && idGasto != null)
                 InkWell(
                   borderRadius: BorderRadius.circular(20),

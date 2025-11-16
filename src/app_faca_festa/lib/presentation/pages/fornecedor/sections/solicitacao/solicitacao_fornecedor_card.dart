@@ -1,11 +1,12 @@
+import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../../../../../controllers/contacao/solicitacoes_controller.dart';
+import '../../../../../data/models/model.dart';
 
 class SolicitacaoFornecedorCard extends StatelessWidget {
-  final SolicitacaoModel solicitacao;
+  final CotacaoModel solicitacao;
   const SolicitacaoFornecedorCard({super.key, required this.solicitacao});
 
   Color _statusColor(String status) {
@@ -48,9 +49,9 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _statusColor(solicitacao.status);
-    final icon = _statusIcon(solicitacao.status);
-    final dataFmt = DateFormat('dd/MM/yyyy • HH:mm').format(solicitacao.data);
+    final color = _statusColor(solicitacao.status.name);
+    final icon = _statusIcon(solicitacao.status.name);
+    final dataFmt = DateFormat('dd/MM/yyyy • HH:mm').format(solicitacao.dataCadastro);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
@@ -106,10 +107,10 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                solicitacao.cliente,
+                                solicitacao.nomeUsuarioSolicitante,
                                 style: GoogleFonts.poppins(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 15.5,
+                                  fontSize: 16.5,
                                   color: Colors.grey.shade900,
                                 ),
                                 overflow: TextOverflow.ellipsis,
@@ -123,7 +124,7 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Text(
-                                solicitacao.status.toUpperCase(),
+                                solicitacao.status.label.toUpperCase(),
                                 style: GoogleFonts.poppins(
                                   color: color,
                                   fontSize: 11.5,
@@ -137,9 +138,7 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
 
                         // 🔹 Mensagem ou descrição curta
                         Text(
-                          solicitacao.mensagem.isNotEmpty
-                              ? solicitacao.mensagem
-                              : "Sem descrição adicional.",
+                          solicitacao.descricao ?? "Sem descrição adicional.",
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             color: Colors.grey.shade700,
@@ -206,8 +205,8 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                               ],
                             ),
                             Text(
-                              solicitacao.valor > 0
-                                  ? "Total: R\$ ${solicitacao.valor.toStringAsFixed(2)}"
+                              solicitacao.valorEstimadoTotal != null
+                                  ? "Total: R\$ ${Biblioteca.formatarValorDecimal(solicitacao.valorEstimadoTotal)}"
                                   : "Aguardando valor",
                               style: GoogleFonts.poppins(
                                 fontSize: 13,

@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,6 +34,7 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
   final fornecedorController = Get.find<FornecedorLocalizacaoController>();
   final appController = Get.find<AppController>();
   final RxSet<String> selecionados = <String>{}.obs;
+  final RxSet<double> valorSolicitado = <double>{}.obs;
 
   @override
   Widget build(BuildContext context) {
@@ -196,9 +198,14 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.request_quote_rounded, color: Colors.white),
                       label: Text(
-                        'Solicitar Cotação (${selecionados.length})',
-                        style:
-                            GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
+                        'Solicitar Cotação (${selecionados.length}) - '
+                        'R\$ ${Biblioteca.formatarValorDecimal(
+                          valorSolicitado.fold(0.0, (a, b) => a! + b),
+                        )}',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -235,8 +242,10 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
         final chave = '${s.id}_${s.idFornecedor}';
         if (selecionados.contains(chave)) {
           selecionados.remove(chave);
+          valorSolicitado.remove(s.preco);
         } else {
           selecionados.add(chave);
+          valorSolicitado.add(s.preco);
         }
         HapticFeedback.selectionClick();
       },

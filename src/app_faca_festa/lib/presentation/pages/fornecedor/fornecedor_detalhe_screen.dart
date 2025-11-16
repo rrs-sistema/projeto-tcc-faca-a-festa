@@ -965,7 +965,28 @@ class FornecedorDetalheScreen extends StatelessWidget {
                             elevation: 6,
                           ),
                           onPressed: () {
-                            // Aqui você coloca sua lógica atual
+                            final controllerLocalizacao =
+                                Get.put(FornecedorLocalizacaoController());
+
+                            final serviceComplet =
+                                controllerLocalizacao.allService.firstWhereOrNull(
+                              (sev) =>
+                                  sev.idProdutoServico == detalhe.idProdutoServico &&
+                                  sev.idFornecedor == detalhe.idFornecedor,
+                            );
+
+                            if (serviceComplet == null) return;
+
+                            controllerLocalizacao.servicosFornecedor.removeWhere(
+                                (sev) => sev.idProdutoServico == detalhe.idProdutoServico);
+
+                            controllerLocalizacao.servicosFornecedor.add(serviceComplet);
+
+                            Get.to(() => ServicosParaCotacaoScreen(
+                                  idCategoria: fornecedorDetalhado.categoriaId,
+                                  nomeCategoria: fornecedorDetalhado.categoriaNome,
+                                  fornecedoresSelecionados: [detalhe.idFornecedor],
+                                ));
                           },
                         ),
                       ),

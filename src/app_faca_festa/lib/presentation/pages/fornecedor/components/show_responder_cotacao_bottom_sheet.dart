@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/presentation/widgets/button/botao_cancelar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ Future<void> showResponderCotacaoBottomSheet({
   required String idCotacao,
   required String categoriaNome,
   required String descricao,
+  required String dataLimite,
 }) async {
   final theme = Get.find<EventThemeController>();
   final gradient = theme.gradient.value;
@@ -57,15 +59,15 @@ Future<void> showResponderCotacaoBottomSheet({
                   // === Cabeçalho ===
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
                       gradient: gradient,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: primary.withValues(alpha: 0.25),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+                          color: primary.withValues(alpha: 0.22),
+                          blurRadius: 14,
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
@@ -73,47 +75,111 @@ Future<void> showResponderCotacaoBottomSheet({
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(Icons.request_quote_rounded, color: Colors.white, size: 26),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                categoriaNome,
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                  color: Colors.white,
+                            // Ícone grande do tema
+                            Container(
+                              width: 52,
+                              height: 52,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Colors.white.withValues(alpha: 0.20),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.35),
+                                  width: 1.4,
                                 ),
+                              ),
+                              child: Icon(
+                                theme.icon.value,
+                                color: Colors.white,
+                                size: 28,
+                              ),
+                            ),
+
+                            const SizedBox(width: 14),
+
+                            // Títulos e textos
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    categoriaNome,
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 18,
+                                      color: Colors.white,
+                                      height: 1.2,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    descricao.isNotEmpty ? descricao : "Sem descrição adicional.",
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13.4,
+                                      height: 1.42,
+                                      color: Colors.white.withValues(alpha: 0.92),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          descricao.isNotEmpty ? descricao : 'Sem descrição adicional.',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 13,
-                            height: 1.4,
+
+                        const SizedBox(height: 16),
+
+                        // Chip "Data" à esquerda e "Solicitado por" à direita
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.18),
+                            borderRadius: BorderRadius.circular(40),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.26),
+                              width: 1,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            const Icon(Icons.person_rounded, color: Colors.white70, size: 18),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'Solicitado por: $nomeSolicitante',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white.withValues(alpha: 0.9),
-                                  fontSize: 13,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                                overflow: TextOverflow.ellipsis,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // 🍀 Lado ESQUERDO (DATA)
+                              Row(
+                                children: [
+                                  const Icon(Icons.calendar_today_rounded,
+                                      size: 16, color: Colors.white),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    'Data limite: $dataLimite',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13.2,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+
+                              // 🍀 Lado DIREITO (SOLICITANTE)
+                              Row(
+                                children: [
+                                  const Icon(Icons.person_rounded, size: 18, color: Colors.white),
+                                  const SizedBox(width: 6),
+
+                                  // Nome bem encostado na direita
+                                  Text(
+                                    'Solicitante: $nomeSolicitante',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 13.2,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -381,22 +447,15 @@ Future<void> showResponderCotacaoBottomSheet({
 
                   const SizedBox(height: 24),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: carregando.value ? null : () => Get.back(),
-                          icon: const Icon(Icons.cancel_outlined, color: Colors.grey),
-                          label: const Text("Cancelar/Sair"),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.grey.shade700,
-                            side: BorderSide(color: Colors.grey.shade400),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                        ),
-                      ),
-                    ],
+                  BotaoCancelar(
+                    corBackground: Colors.grey.shade700,
+                    corPrincipal: primary,
+                    texto: "Cancelar/Sair",
+                    onPressed: () {
+                      if (!carregando.value) {
+                        Get.back();
+                      }
+                    },
                   ),
 
                   if (carregando.value) ...[

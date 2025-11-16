@@ -58,6 +58,33 @@ enum StatusCotacao {
   }
 }
 
+/*
+
+/// Modelo limpo (público)
+class SolicitacaoModel {
+  final String id;
+  final String cliente;
+  final String evento;
+  final String status;
+  final String mensagem;
+  final DateTime data;
+  final double valor;
+  final List<Map<String, dynamic>> servicos;
+
+  SolicitacaoModel({
+    required this.id,
+    required this.cliente,
+    required this.evento,
+    required this.status,
+    required this.mensagem,
+    required this.data,
+    required this.valor,
+    required this.servicos,
+  });
+}
+
+*/
+
 class CotacaoModel {
   final String id;
   final String idEvento;
@@ -69,7 +96,7 @@ class CotacaoModel {
   final DateTime dataCadastro;
   final StatusCotacao status;
   final List<String> fornecedores;
-  final List<String> servicos;
+  final List<Map<String, dynamic>> servicos;
   final double? valorEstimadoTotal; // 🔹 Novo campo
 
   CotacaoModel({
@@ -115,6 +142,8 @@ class CotacaoModel {
       descricao: map['observacao'],
       categoriaNome: map['categoria_nome'], // ✅ novo
       nomeUsuarioSolicitante: map['nome_usuario_solicitante'], // ✅ novo
+      valorEstimadoTotal: (map['valor_estimado_total'] as num?)?.toDouble() ?? 0.0,
+
       dataLimiteResposta: map['data_limite_resposta'] is Timestamp
           ? (map['data_limite_resposta'] as Timestamp).toDate()
           : null,

@@ -87,7 +87,12 @@ class ResumoSection extends StatelessWidget {
                                     .format((s['dataEnvio'] as Timestamp).toDate())
                                 : '';
 
-                            return buildCotacaoCard(context, s, dataEnvio);
+                            final dataLimite = s['dataLimite'] is Timestamp
+                                ? DateFormat("dd/MM/yyyy")
+                                    .format((s['dataLimite'] as Timestamp).toDate())
+                                : '';
+
+                            return buildCotacaoCard(context, s, dataEnvio, dataLimite);
                           },
                         ),
                       ),

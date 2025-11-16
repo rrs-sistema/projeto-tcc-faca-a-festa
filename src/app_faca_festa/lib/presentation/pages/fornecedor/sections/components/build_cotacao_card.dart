@@ -1,80 +1,125 @@
 import 'package:google_fonts/google_fonts.dart';
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../../controllers/tema/event_theme_controller.dart';
 import './../../components/show_responder_cotacao_bottom_sheet.dart';
 
-Widget buildCotacaoCard(BuildContext context, Map<String, dynamic> s, String dataEnvio) {
-  final bool isNova = s['nova'] == true; // campo opcional no Firestore
-  final primary = Theme.of(context).colorScheme.primary;
+Widget buildCotacaoCard(
+  BuildContext context,
+  Map<String, dynamic> s,
+  String dataEnvio,
+  String dataLimite,
+) {
+  final theme = Get.find<EventThemeController>();
+
+  final primary = theme.primaryColor.value;
+  final secondary = theme.secondaryColor.value;
+  final temaIcone = theme.icon.value;
+
+  final bool isNova = s['nova'] == true;
 
   return Hero(
     tag: s['idCotacao'],
-    child: FadeInUp(
-      duration: const Duration(milliseconds: 400),
+    child: TweenAnimationBuilder(
+      tween: Tween<double>(begin: 0.96, end: 1),
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutBack,
+      builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(26),
           gradient: LinearGradient(
-            colors: [Colors.white, Colors.grey.shade50],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
+            colors: [
+              secondary.withValues(alpha: 0.35),
+              secondary.withValues(alpha: 0.15),
+            ],
           ),
-          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: primary.withValues(alpha: 0.25),
+            width: 1.6,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
+              color: primary.withValues(alpha: 0.20),
+              blurRadius: 18,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
         child: Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(26),
           child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            splashColor: primary.withValues(alpha: 0.1),
-            highlightColor: Colors.transparent,
+            borderRadius: BorderRadius.circular(26),
+            splashColor: primary.withValues(alpha: 0.08),
             onTap: () {
               Get.back();
               showResponderCotacaoBottomSheet(
-                context: context,
-                idCotacao: s['idCotacao'],
-                categoriaNome: s['categoriaNome'],
-                descricao: s['descricao'],
-                nomeSolicitante: s['nomeSolicitante'],
-              );
+                  context: context,
+                  idCotacao: s['idCotacao'],
+                  categoriaNome: s['categoriaNome'],
+                  descricao: s['descricao'],
+                  nomeSolicitante: s['nomeSolicitante'],
+                  dataLimite: dataLimite);
             },
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // 🟩 Ícone circular com cor primária
+                  // 🔵 Ícone do tema do evento (dinâmico)
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: 56,
+                    height: 56,
                     decoration: BoxDecoration(
-                      color: primary.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        colors: [
+                          primary.withValues(alpha: 0.30),
+                          primary.withValues(alpha: 0.12),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      border: Border.all(
+                        color: primary.withValues(alpha: 0.28),
+                        width: 1.6,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primary.withValues(alpha: 0.35),
+                          blurRadius: 14,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: Icon(Icons.assignment_outlined, color: primary, size: 26),
+                    child: Icon(
+                      temaIcone, // Ícone dinâmico do tema!
+                      color: primary,
+                      size: 30,
+                    ),
                   ),
-                  const SizedBox(width: 14),
 
-                  // 📋 Informações principais
+                  const SizedBox(width: 18),
+
+                  // TEXTOS
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // 🎯 Título + Tag "Nova"
                         Row(
                           children: [
                             Expanded(
                               child: Text(
-                                s['categoriaNome'],
+                                s['categoriaNome'] ?? '',
                                 style: GoogleFonts.poppins(
+                                  fontSize: 17,
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 15.8,
                                   color: Colors.grey.shade900,
                                 ),
                                 maxLines: 1,
@@ -82,58 +127,71 @@ Widget buildCotacaoCard(BuildContext context, Map<String, dynamic> s, String dat
                               ),
                             ),
                             if (isNova)
-                              Pulse(
-                                duration: const Duration(seconds: 2),
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green.shade400,
-                                    borderRadius: BorderRadius.circular(20),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(14),
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      primary.withValues(alpha: 0.90),
+                                      primary.withValues(alpha: 0.65),
+                                    ],
                                   ),
-                                  child: Text(
-                                    "Nova",
-                                    style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w500,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: primary.withValues(alpha: 0.50),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 3),
                                     ),
+                                  ],
+                                ),
+                                child: Text(
+                                  "Nova",
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                           ],
                         ),
+
                         const SizedBox(height: 6),
+
+                        // 📅 Data
                         Text(
-                          "Enviada em: $dataEnvio",
+                          "Enviada em • $dataEnvio",
                           style: GoogleFonts.poppins(
-                            fontSize: 12.5,
+                            fontSize: 13,
                             color: Colors.grey.shade600,
                           ),
                         ),
-                        if (s['descricao'] != null && s['descricao'].toString().isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              s['descricao'],
-                              style: GoogleFonts.poppins(
-                                fontSize: 12.5,
-                                color: Colors.grey.shade700,
-                                height: 1.3,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
+
+                        const SizedBox(height: 4),
+
+                        if (s['descricao'] != null && s['descricao'].trim().isNotEmpty)
+                          Text(
+                            s['descricao'],
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                              fontSize: 13.2,
+                              height: 1.34,
+                              color: Colors.grey.shade700,
                             ),
                           ),
                       ],
                     ),
                   ),
 
-                  // ➡️ Ícone de seta
                   const SizedBox(width: 10),
+
+                  // ➡️ Seta
                   Icon(
-                    Icons.chevron_right_rounded,
-                    color: Colors.grey.shade500,
-                    size: 28,
+                    Icons.arrow_forward_ios_rounded,
+                    size: 18,
+                    color: primary.withValues(alpha: 0.45),
                   ),
                 ],
               ),

@@ -5,7 +5,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
+import 'package:uuid/uuid.dart';
 
+import '../../../data/models/orcamento/orcamento_gasto_model.dart';
 import './../../../controllers/contacao/cotacao_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/fornecedor_controller.dart';
@@ -116,7 +118,7 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
                           const Icon(Icons.send_rounded, size: 16, color: Colors.white),
                           const SizedBox(width: 6),
                           Text(
-                            "Enviada em: ${DateFormat("dd/MM/yyyy").format(cotacao.dataCadastro)}",
+                            "Enviada em: ${DateFormat("dd/MM/yyyy HH:mm").format(cotacao.dataCadastro)}",
                             style: GoogleFonts.poppins(
                                 fontSize: 13, color: Colors.white.withValues(alpha: 0.9)),
                           ),
@@ -615,6 +617,10 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
                                     ),
                                   ),
                                 ),
+                              ],
+                              if (status == 'respondido' ||
+                                  status == 'respondida' ||
+                                  status == 'fechado') ...[
                                 const SizedBox(height: 10),
                                 Align(
                                   alignment: Alignment.centerRight,
@@ -735,7 +741,7 @@ Widget _buildStatusBadge(StatusCotacao status, {bool invertColors = false}) {
 }
 
 // ===============================================================
-// 🔹 Atualizado — busca serviços dentro do fornecedor
+// 🔹 Atualizado — busca serviços dentro do fornecedor + cria gasto inicial
 // ===============================================================
 Future<void> _confirmarFornecedorEscolhido(String idFornecedor, String idCotacao) async {
   final db = FirebaseFirestore.instance;
@@ -746,7 +752,7 @@ Future<void> _confirmarFornecedorEscolhido(String idFornecedor, String idCotacao
       fornecedorController.fornecedores.firstWhere((f) => f.idFornecedor == idFornecedor);
 
   try {
-    EasyLoading.show(status: 'Fechando negócio...');
+    EasyLoading.show(status: 'Fechando negócio... 🔒');
 
     final cotacaoSnap = await cotacaoRef.get();
     if (!cotacaoSnap.exists) throw Exception('Cotação não encontrada.');
@@ -768,7 +774,9 @@ Future<void> _confirmarFornecedorEscolhido(String idFornecedor, String idCotacao
       valorTotal += valor * qtd;
     }
 
-    // Atualiza status de todos os fornecedores
+    // ===============================================================
+    // 🔹 Batch — atualiza cotação + fornecedores + cria orçamento
+    // ===============================================================
     final fornecedoresSnap = await cotacaoRef.collection('fornecedores').get();
     final batch = db.batch();
 
@@ -783,6 +791,7 @@ Future<void> _confirmarFornecedorEscolhido(String idFornecedor, String idCotacao
       'fechado_por': idUsuarioSolicitante,
     });
 
+    // Criar documento de orçamento
     final orcRef = db.collection('orcamento').doc();
     final novo = OrcamentoModel(
       idOrcamento: orcRef.id,
@@ -800,23 +809,54 @@ Future<void> _confirmarFornecedorEscolhido(String idFornecedor, String idCotacao
     batch.set(orcRef, novo.toMap());
 
     await batch.commit();
+
+    // ===============================================================
+    // 🔹 AJUSTE IMPORTANTE:
+    // Criar automaticamente o primeiro gasto (orcamento_gasto)
+    // ===============================================================
+    final gastoId = const Uuid().v4();
+    final gastoData = OrcamentoGastoModel(
+      idGasto: gastoId,
+      idOrcamento: orcRef.id,
+      nome: "Serviço contratado – $categoriaNome",
+      custo: valorTotal,
+      pago: 0,
+    ).toMap()
+      ..['data_cadastro'] = Timestamp.now();
+
+    await db
+        .collection('orcamento')
+        .doc(orcRef.id)
+        .collection('orcamento_gasto')
+        .doc(gastoId)
+        .set(gastoData);
+
+    // ===============================================================
+    // 🔹 Finalização de UX
+    // ===============================================================
     EasyLoading.dismiss();
     HapticFeedback.mediumImpact();
 
     Get.snackbar(
-      'Negócio fechado!',
-      'Orçamento criado com o fornecedor selecionado.',
+      'Negócio fechado! 🎉',
+      'Orçamento criado e gasto inicial registrado.',
       backgroundColor: Colors.green.shade600,
       colorText: Colors.white,
       icon: const Icon(Icons.check_circle, color: Colors.white),
       snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 3),
     );
 
+    // Atualizar listas
     Get.find<CotacaoController>().ouvirMinhasCotacoes();
     Get.find<OrcamentoController>().carregarOrcamentosDoEvento(idEvento);
   } catch (e) {
     EasyLoading.dismiss();
-    Get.snackbar('Erro', 'Não foi possível fechar o negócio.',
-        backgroundColor: Colors.redAccent, colorText: Colors.white);
+    Get.snackbar(
+      'Erro',
+      'Não foi possível fechar o negócio.',
+      backgroundColor: Colors.redAccent,
+      colorText: Colors.white,
+    );
   }
 }

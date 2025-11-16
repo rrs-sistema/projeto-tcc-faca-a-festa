@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import './../data/models/orcamento/orcamento_validacao_resultado.dart';
 import './../data/models/orcamento/orcamento_gasto_model.dart';
+import 'orcamento_controller.dart';
 
 class OrcamentoGastoController extends GetxController {
   final _db = FirebaseFirestore.instance;
@@ -21,6 +22,9 @@ class OrcamentoGastoController extends GetxController {
       gastos.assignAll(
         snapshot.docs.map((doc) => OrcamentoGastoModel.fromMap(doc.data())).toList(),
       );
+
+      // 🔥 Atualiza o total geral do evento automaticamente
+      _atualizarResumoGeral();
     });
   }
 
@@ -32,34 +36,26 @@ class OrcamentoGastoController extends GetxController {
   }) async {
     final refOrcamento = _db.collection('orcamento').doc(idOrcamento);
 
-    // =====================================================
-    // 🔹 VALIDACÕES IMEDIATAS (antes de acessar o Firestore)
-    // =====================================================
-
-    // 1. Custo não pode ser menor ou igual a zero
+    // ======= VALIDAÇÕES PRÉVIAS =======
     if (custo <= 0) {
       return OrcamentoValidacaoResultado.erro(
         "O custo do item deve ser maior que zero.",
       );
     }
 
-    // 2. Pago não pode ser maior que custo
     if (pago > custo) {
       return OrcamentoValidacaoResultado.erro(
         "O valor pago não pode ser maior que o custo total do item.",
       );
     }
 
-    // 3. Pago não pode ser negativo
     if (pago < 0) {
       return OrcamentoValidacaoResultado.erro(
         "O valor pago não pode ser negativo.",
       );
     }
 
-    // =====================================================
-    // 🔹 BUSCA ORÇAMENTO
-    // =====================================================
+    // ======= BUSCA ORÇAMENTO =======
     final orcamentoSnap = await refOrcamento.get();
     if (!orcamentoSnap.exists) {
       return OrcamentoValidacaoResultado.erro("Orçamento não encontrado.");
@@ -69,9 +65,7 @@ class OrcamentoGastoController extends GetxController {
     final double limiteCategoria = (data['custo_estimado'] ?? 0).toDouble();
     final String idEvento = data['id_evento'];
 
-    // =====================================================
-    // 🔹 SOMA GASTOS DA CATEGORIA
-    // =====================================================
+    // ======= SOMA GASTOS DA CATEGORIA =======
     final gastosSnap = await refOrcamento.collection('orcamento_gasto').get();
     final totalAtual = gastosSnap.docs.fold(0.0, (s, d) => s + (d.data()['custo'] ?? 0.0));
 
@@ -84,13 +78,10 @@ class OrcamentoGastoController extends GetxController {
       );
     }
 
-    // =====================================================
-    // 🔹 VALIDA ORÇAMENTO GERAL DO EVENTO
-    // =====================================================
+    // ======= VALIDA LIMITE DO EVENTO =======
     final eventoSnap = await _db.collection('evento').doc(idEvento).get();
     final double limiteEvento = (eventoSnap.data()?['custo_estimado'] ?? 0).toDouble();
 
-    // total gasto no evento
     double totalEvento = 0;
     final orcs = await _db.collection('orcamento').where("id_evento", isEqualTo: idEvento).get();
 
@@ -110,9 +101,7 @@ class OrcamentoGastoController extends GetxController {
       );
     }
 
-    // =====================================================
-    // 🔹 SE PASSOU NAS VALIDAÇÕES → SALVAR
-    // =====================================================
+    // ======= SALVA O GASTO =======
     final idGasto = const Uuid().v4();
     final model = OrcamentoGastoModel(
       idGasto: idGasto,
@@ -124,7 +113,24 @@ class OrcamentoGastoController extends GetxController {
 
     await refOrcamento.collection('orcamento_gasto').doc(idGasto).set(model.toMap());
 
+    // 🔥 Atualiza total geral
+    _atualizarResumoGeral();
+
     return OrcamentoValidacaoResultado.ok();
+  }
+
+  Future<void> marcarComoPago(String idOrcamento, String idGasto, double valorTotal) async {
+    await _db
+        .collection('orcamento')
+        .doc(idOrcamento)
+        .collection('orcamento_gasto')
+        .doc(idGasto)
+        .update({
+      "pago": valorTotal,
+    });
+
+    // 🔥 Atualiza total geral
+    _atualizarResumoGeral();
   }
 
   Future<void> removerGasto(String idOrcamento, String idGasto) async {
@@ -134,9 +140,22 @@ class OrcamentoGastoController extends GetxController {
         .collection('orcamento_gasto')
         .doc(idGasto)
         .delete();
+
+    // 🔥 Atualiza total geral
+    _atualizarResumoGeral();
   }
 
-  /// Totalizadores
+  /// Totalizadores por categoria
   double get totalPago => gastos.fold(0.0, (soma, g) => soma + g.pago);
   double get totalGasto => gastos.fold(0.0, (soma, g) => soma + g.custo);
+
+  /// ==========================================================
+  /// 🔥 NOVO: Atualiza RESUMO DO EVENTO automaticamente
+  /// ==========================================================
+  void _atualizarResumoGeral() {
+    if (Get.isRegistered<OrcamentoController>()) {
+      final c = Get.find<OrcamentoController>();
+      c.calcularTotalPagoGeral(); // método já existente no OrcamentoController
+    }
+  }
 }

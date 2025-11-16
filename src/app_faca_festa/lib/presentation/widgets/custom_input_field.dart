@@ -230,7 +230,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
                 hintText: widget.hintlabel ?? "Digite a ${widget.label.toLowerCase()}...",
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: titleColor,
+                  color: textColor,
                 ),
 
                 contentPadding: const EdgeInsets.symmetric(

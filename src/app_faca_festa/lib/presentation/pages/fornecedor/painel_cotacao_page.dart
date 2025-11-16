@@ -287,7 +287,7 @@ class PainelCotacaoPage extends StatelessWidget {
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
-                              "Enviada em ${DateFormat("dd/MM/yyyy").format(cotacao.dataCadastro)}",
+                              "Enviada em ${DateFormat("dd/MM/yyyy HH:mm").format(cotacao.dataCadastro)}",
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 color: Colors.grey.shade700,

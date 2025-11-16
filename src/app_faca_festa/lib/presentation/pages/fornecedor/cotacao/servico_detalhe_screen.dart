@@ -304,16 +304,6 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                 onCotacaoFinalizada: () => appController.limparServicosSelecionados(),
               ),
             );
-            Get.snackbar(
-              'Solicitação enviada 🎉',
-              'Seu pedido foi encaminhado ao fornecedor!',
-              backgroundColor: primary.withValues(alpha: 0.9),
-              colorText: Colors.white,
-              snackPosition: SnackPosition.BOTTOM,
-              margin: const EdgeInsets.all(12),
-              borderRadius: 12,
-              icon: const Icon(Icons.check_circle, color: Colors.white),
-            );
           },
         )
             .animate(onPlay: (c) => c.repeat(reverse: true))

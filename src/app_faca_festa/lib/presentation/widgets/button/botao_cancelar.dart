@@ -28,7 +28,7 @@ class BotaoCancelar extends StatelessWidget {
       width: double.infinity,
       height: 50,
       child: TextButton.icon(
-        icon: Icon(Icons.close_rounded, color: corPrincipalOpcao),
+        icon: Icon(Icons.cancel_outlined, color: corPrincipalOpcao),
         label: Text(
           texto,
           style: GoogleFonts.poppins(

@@ -1,6 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:app_faca_festa/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -11,6 +12,7 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'dart:ui';
 
+import '../../../widgets/custom_input_field.dart';
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../../controllers/evento_controller.dart';
 import './../../../../controllers/app_controller.dart';
@@ -42,6 +44,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
   final appCtrl = Get.find<AppController>();
 
   final observacaoController = TextEditingController();
+  final precoDesejadoController = TextEditingController();
   late DateTime dataLimite;
   final scrollController = ScrollController();
 
@@ -65,6 +68,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
   @override
   void dispose() {
     observacaoController.dispose();
+    precoDesejadoController.dispose();
     scrollController.dispose();
     for (final c in qtdControllers) {
       c.dispose();
@@ -105,6 +109,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
         'id_usuario_solicitante': usuario?.idUsuario ?? '',
         'nome_usuario_solicitante': usuario?.nome ?? '',
         'observacao': observacaoController.text.trim(),
+        'valor_estimado_total': Biblioteca.toDouble(precoDesejadoController.text),
         'data_limite_resposta': Timestamp.fromDate(dataLimite),
         'data_envio': Timestamp.now(),
         'status': StatusCotacao.pendente.firestoreValue,
@@ -238,6 +243,8 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
                         .fadeIn(duration: 450.ms)
                         .slideX(begin: 0.2),
                     const SizedBox(height: 20),
+                    _buildValorDesejado().animate().fadeIn(duration: 480.ms),
+                    const SizedBox(height: 20),
                     _buildObservacao().animate().fadeIn(duration: 480.ms),
                     const SizedBox(height: 20),
                     _buildDataLimite().animate().fadeIn(duration: 520.ms),
@@ -344,9 +351,9 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Fornecedores:',
+        Text('Fornecedores da cotação:',
             style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600, fontSize: 14, color: Colors.grey[800])),
+                fontWeight: FontWeight.w600, fontSize: 14, color: Colors.white)),
         const SizedBox(height: 8),
         ...fornecedores.map((f) => Container(
               margin: const EdgeInsets.only(bottom: 10),
@@ -369,12 +376,34 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
                 ),
                 title: Text(f.razaoSocial,
                     style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 14)),
-                subtitle: Text(f.email, style: GoogleFonts.poppins(fontSize: 12.5)),
+                //subtitle: Text(f.email, style: GoogleFonts.poppins(fontSize: 12.5)),
               ),
             )),
       ],
     );
   }
+
+  Widget _buildValorDesejado() => Focus(
+        onFocusChange: (hasFocus) {
+          if (hasFocus) {
+            Future.delayed(const Duration(milliseconds: 300), () {
+              scrollController.animateTo(
+                scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOut,
+              );
+            });
+          }
+        },
+        child: CustomInputField(
+          label: "Oferta desejada (R\$)",
+          icon: Icons.attach_money_rounded,
+          controller: precoDesejadoController,
+          type: InputType.money,
+          hintlabel: 'Informe a sua oferta',
+          titleColor: Colors.white,
+        ),
+      );
 
   Widget _buildObservacao() => Focus(
         onFocusChange: (hasFocus) {
@@ -388,7 +417,17 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
             });
           }
         },
-        child: TextField(
+        child: CustomInputField(
+          label: "Observações adicionais (opcional)",
+          icon: Icons.chat_bubble_outline_rounded,
+          controller: observacaoController,
+          type: InputType.multiline,
+          hintlabel: 'Descreva sua oferta para os fornecedores',
+          titleColor: Colors.white,
+          maxLines: 4,
+        ),
+
+        /*TextField(
           controller: observacaoController,
           decoration: InputDecoration(
             labelText: 'Observações adicionais (opcional)',
@@ -400,6 +439,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
           minLines: 2,
           maxLines: 4,
         ),
+        */
       );
 
   Widget _buildDataLimite() => Container(

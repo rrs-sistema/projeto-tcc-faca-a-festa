@@ -10,7 +10,7 @@ import './../../data/models/model.dart';
 class SolicitacoesController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  final solicitacoes = <SolicitacaoModel>[].obs;
+  final solicitacoes = <CotacaoModel>[].obs;
   final carregando = false.obs;
   final erro = ''.obs;
 
@@ -24,9 +24,9 @@ class SolicitacoesController extends GetxController {
     solicitacoes.bindStream(_streamSolicitacoes(idFornecedor));
   }
 
-  Stream<List<SolicitacaoModel>> _streamSolicitacoes(String idFornecedor) {
-    return _db.collection('cotacao').snapshots().asyncMap<List<SolicitacaoModel>>((snapshot) async {
-      final resultado = <SolicitacaoModel>[];
+  Stream<List<CotacaoModel>> _streamSolicitacoes(String idFornecedor) {
+    return _db.collection('cotacao').snapshots().asyncMap<List<CotacaoModel>>((snapshot) async {
+      final resultado = <CotacaoModel>[];
 
       if (snapshot.docs.isEmpty) {
         Future.microtask(() => carregando.value = false);
@@ -44,7 +44,7 @@ class SolicitacoesController extends GetxController {
 
         if (fornecedoresSnap.docs.isEmpty) continue;
 
-        final fornecData = FornecedorCotacaoModel.fromMap(fornecedoresSnap.docs.first.data());
+        //final fornecData = FornecedorCotacaoModel.fromMap(fornecedoresSnap.docs.first.data());
 
         final servicosSnap = await cotacaoDoc.reference.collection('servicos').get();
         final servicos = servicosSnap.docs.map((s) {
@@ -56,23 +56,21 @@ class SolicitacoesController extends GetxController {
           };
         }).toList();
 
-        final usuario = await _getUsuarioSolicitante(cotacao.idUsuarioSolicitante);
-
         resultado.add(
-          SolicitacaoModel(
-            id: cotacao.id,
-            cliente: usuario?.nome ?? usuario?.idUsuario ?? '',
-            evento: cotacao.categoriaNome ?? 'Cotação',
-            data: cotacao.dataCadastro,
-            status: fornecData.status.firestoreValue,
-            valor: servicos.fold<double>(0, (t, s) => t + (s['valor_estimado'] ?? 0.0)),
-            mensagem: cotacao.descricao ?? '',
-            servicos: servicos,
-          ),
+          CotacaoModel(
+              id: cotacao.id,
+              idEvento: cotacao.idEvento,
+              idUsuarioSolicitante: cotacao.idUsuarioSolicitante,
+              nomeUsuarioSolicitante: cotacao.nomeUsuarioSolicitante,
+              dataCadastro: cotacao.dataCadastro,
+              status: cotacao.status,
+              valorEstimadoTotal: cotacao.valorEstimadoTotal,
+              fornecedores: [],
+              servicos: servicos),
         );
       }
 
-      resultado.sort((a, b) => b.data.compareTo(a.data));
+      resultado.sort((a, b) => b.dataCadastro.compareTo(a.dataCadastro));
 
       Future.microtask(() => carregando.value = false);
 
@@ -81,20 +79,6 @@ class SolicitacoesController extends GetxController {
       erro.value = 'Erro no stream: $e';
       carregando.value = false;
     });
-  }
-
-  Future<UsuarioModel?> _getUsuarioSolicitante(String idUsuario) async {
-    try {
-      final snapshot =
-          await _db.collection('usuarios').where('id_usuario', isEqualTo: idUsuario).limit(1).get();
-
-      if (snapshot.docs.isNotEmpty) {
-        return UsuarioModel.fromMap(snapshot.docs.first.data());
-      }
-    } catch (e) {
-      debugPrint('❌ Erro ao buscar solicitante: $e');
-    }
-    return null;
   }
 
   Future<void> cancelarCotacao(String idCotacao) async {
@@ -170,27 +154,4 @@ class SolicitacoesController extends GetxController {
   String formatarData(DateTime data) {
     return DateFormat('dd/MM/yyyy HH:mm').format(data);
   }
-}
-
-/// Modelo limpo (público)
-class SolicitacaoModel {
-  final String id;
-  final String cliente;
-  final String evento;
-  final String status;
-  final String mensagem;
-  final DateTime data;
-  final double valor;
-  final List<Map<String, dynamic>> servicos;
-
-  SolicitacaoModel({
-    required this.id,
-    required this.cliente,
-    required this.evento,
-    required this.status,
-    required this.mensagem,
-    required this.data,
-    required this.valor,
-    required this.servicos,
-  });
 }
