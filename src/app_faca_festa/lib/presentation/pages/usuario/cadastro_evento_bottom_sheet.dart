@@ -1,14 +1,14 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/tema/event_theme_controller.dart';
-import '../../../core/utils/biblioteca.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/evento_cadastro_controller.dart';
+import './../../widgets/button/botao_cancelar.dart';
+import './../../widgets/button/botao_salvar.dart';
 import './../../widgets/custom_input_field.dart';
 import './../endereco/endereco_section.dart';
 import './evento_preview_titulo_widget.dart';
@@ -49,7 +49,7 @@ Future<void> showCadastroEventoBottomSheet(
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: theme.primaryColor.value.withValues(alpha: 0.03),
+    backgroundColor: theme.primaryColor.value,
     builder: (context) {
       return FractionallySizedBox(
         heightFactor: 0.92,
@@ -105,101 +105,27 @@ Future<void> showCadastroEventoBottomSheet(
                       const SizedBox(height: 32),
                       Obx(() => Column(
                             children: [
-                              // === BOTÃO PRINCIPAL ===
-                              Center(
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 300),
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: controller.isEditando
-                                          ? [corPrincipal.withValues(alpha: 0.9), corPrincipal]
-                                          : [
-                                              corPrincipal.withValues(alpha: 0.9),
-                                              corPrincipal.withValues(alpha: 0.7)
-                                            ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(32),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.15),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
-                                  child: ElevatedButton.icon(
-                                      icon: controller.carregando.value
-                                          ? const SizedBox(
-                                              height: 22,
-                                              width: 22,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: Colors.white,
-                                              ),
-                                            )
-                                          : Icon(
-                                              controller.isEditando
-                                                  ? Icons.update_rounded
-                                                  : Icons.check_circle_rounded,
-                                              color: Colors.white,
-                                              size: 26,
-                                            ),
-                                      label: Text(
-                                        controller.isEditando
-                                            ? 'Atualizar evento'
-                                            : 'Salvar e continuar',
-                                        style: GoogleFonts.poppins(
-                                          fontWeight: FontWeight.w700,
-                                          fontSize: 16,
-                                          color: Colors.white,
-                                          letterSpacing: 0.6,
-                                        ),
-                                      ),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.transparent, // usa o gradiente
-                                        shadowColor: Colors.transparent,
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 45, vertical: 15),
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(32),
-                                        ),
-                                      ),
-                                      onPressed: controller.carregando.value
-                                          ? null
-                                          : () async {
-                                              EasyLoading.show(status: 'Processando...');
-                                              await controller.salvarEvento();
-                                              EasyLoading.dismiss();
-                                            }),
+                              BotaoSalvar(
+                                texto: controller.isEditando
+                                    ? 'Atualizar evento'
+                                    : 'Salvar e continuar',
+                                icon: Icon(
+                                  controller.isEditando
+                                      ? Icons.update_rounded
+                                      : Icons.check_circle_rounded,
+                                  color: Colors.white,
+                                  size: 26,
                                 ),
-                              )
-                                  .animate()
-                                  .fadeIn(duration: 400.ms)
-                                  .scaleXY(begin: 0.9, end: 1.0, duration: 400.ms),
-
-                              const SizedBox(height: 20),
-
-                              // === BOTÃO CANCELAR ===
-                              TextButton.icon(
-                                icon: Icon(Icons.close_rounded, color: Colors.white),
-                                label: Text(
-                                  'Cancelar',
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                style: TextButton.styleFrom(
-                                  overlayColor: corPrincipal.withValues(alpha: 0.1),
-                                  backgroundColor: corPrincipal.withValues(alpha: 0.25),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(30),
-                                  ),
-                                ),
-                                onPressed: () => Get.back(),
+                                onPressed: () async {
+                                  if (!controller.carregando.value) {
+                                    EasyLoading.show(status: 'Processando...');
+                                    await controller.salvarEvento();
+                                    EasyLoading.dismiss();
+                                  }
+                                },
                               ),
+                              const SizedBox(height: 20),
+                              BotaoCancelar(texto: 'Fechar', onPressed: () => Get.back()),
                             ],
                           )),
                     ],
@@ -222,10 +148,9 @@ List<Widget> _buildCamposPorTipo(
       .toLowerCase()
       .replaceAll(RegExp(r'[^a-zá-úà-ùãõâêîôûç\s]'), '')
       .trim();
-  final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
   return [
     CustomInputField(
-      label: "Nome do evento",
+      label: "Título do evento",
       icon: Icons.celebration,
       controller: controller.nomeEvento,
       color: corPrincipal,
@@ -465,30 +390,16 @@ List<Widget> _buildCamposPorTipo(
       ],
     ),
     const SizedBox(height: 8),
-// === Custo estimado ===
+    // === Custo estimado ===
     CustomInputField(
       label: "Custo estimado (R\$)",
+      hintlabel: 'Informe o custo estimado',
       icon: Icons.attach_money,
       controller: controller.custoEstimado,
       color: corPrincipal,
       titleColor: corPrincipal,
       type: InputType.money,
-      validator: (v) {
-        if (v == null || v.isEmpty) return "Informe o custo estimado";
-        return null;
-      },
       onChanged: (v) {
-        // Converte centavos → reais
-        final valor = Biblioteca.toDouble(v);
-
-        // Atualiza formatado, mantendo o cursor no final
-        controller.custoEstimado.value = TextEditingValue(
-          text: currencyFormat.format(valor),
-          selection: TextSelection.collapsed(
-            offset: currencyFormat.format(valor).length,
-          ),
-        );
-
         controller.atualizarPreview();
       },
     ),

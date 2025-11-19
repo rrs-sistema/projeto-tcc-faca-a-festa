@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'controllers/evento_cadastro_controller.dart';
 import 'presentation/pages/login/login_screen.dart';
 
 class RoleSelectorScreen extends StatelessWidget {
@@ -10,6 +11,7 @@ class RoleSelectorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<EventoCadastroController>();
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -53,6 +55,7 @@ class RoleSelectorScreen extends StatelessWidget {
                     label: "Sou Organizador",
                     color: Colors.pinkAccent,
                     onTap: () async {
+                      controller.limpar(manterEndereco: false);
                       EasyLoading.show(status: 'Processando...');
                       await Future.delayed(const Duration(milliseconds: 300));
                       Future.microtask(() => Get.toNamed('/register', arguments: {'tipo': 'O'}))
@@ -67,6 +70,7 @@ class RoleSelectorScreen extends StatelessWidget {
                     label: "Sou Fornecedor",
                     color: Colors.green.shade600,
                     onTap: () async {
+                      controller.limpar(manterEndereco: false);
                       EasyLoading.show(status: 'Processando...');
                       await Future.delayed(const Duration(milliseconds: 300));
                       await Get.toNamed('/register', arguments: {'tipo': 'F'});
@@ -81,6 +85,7 @@ class RoleSelectorScreen extends StatelessWidget {
                     label: "Sou Convidado",
                     color: Colors.orange.shade700,
                     onTap: () async {
+                      controller.limpar(manterEndereco: false);
                       EasyLoading.show(status: 'Processando...');
                       await Future.delayed(const Duration(milliseconds: 300));
                       await Get.toNamed('/register', arguments: {'tipo': 'C'});

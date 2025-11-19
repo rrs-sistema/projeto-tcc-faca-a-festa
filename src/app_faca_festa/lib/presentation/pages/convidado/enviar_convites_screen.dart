@@ -2,6 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/services/whatsGw/whatsapp_cloud_service.dart';
 import './../../../controllers/convidado/convidado_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/evento_controller.dart';
@@ -150,7 +151,10 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                                 icon: const Icon(Icons.email_outlined),
                                 label: const Text("Enviar por E-mail"),
                                 onPressed: () async {
-                                  await convidadoController.enviarNovosConvidados();
+                                  if (eventoController.eventoAtual.value != null) {
+                                    await convidadoController
+                                        .enviarNovosConvidados(eventoController.eventoAtual.value!);
+                                  }
                                   _enviarConvites("por E-mail");
                                 },
                               ),
@@ -170,7 +174,12 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                                 icon: const Icon(Icons.sms_outlined),
                                 label: const Text("Enviar por SMS"),
                                 onPressed: () async {
-                                  await convidadoController.enviarNovosConvidados();
+                                  if (eventoController.eventoAtual.value != null) {
+                                    final cloud = Get.find<WhatsAppCloudService>();
+                                    cloud.enviarHelloWorld("554199698377");
+
+                                    //await convidadoController.enviarNovosConvidados(eventoController.eventoAtual.value!);
+                                  }
                                   _enviarConvites("por SMS");
                                 },
                                 //() => _enviarConvites("por SMS"),

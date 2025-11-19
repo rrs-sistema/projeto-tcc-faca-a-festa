@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../../core/utils/biblioteca.dart';
 import './../../../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../../../controllers/servico_produto_controller.dart';
 import './../../../../../core/utils/no_sqflite_cache_manager.dart';
@@ -208,44 +209,44 @@ class FornecedorListTile extends StatelessWidget {
               // 🔸 Aprovação e Ativação
               if (!aprovado)
                 _actionButton(
-                  icon: Icons.check_circle_outline,
-                  label: 'Aprovar',
-                  color: Colors.blue.shade800,
-                  bgColor: Colors.blue.shade50,
-                  borderColor: Colors.blue.shade300,
-                  onTap: () => _confirmarAcao(
-                    context,
-                    title: 'Aprovar fornecedor',
-                    message: 'Deseja realmente aprovar "${fornecedor.razaoSocial}"?',
-                    confirmLabel: 'Aprovar',
-                    color: Colors.blue,
-                    onConfirm: () async {
-                      await controller.aprovarFornecedor(fornecedor.idFornecedor);
-                      Get.snackbar('Sucesso', 'Fornecedor aprovado com sucesso!',
-                          backgroundColor: Colors.blue.shade600, colorText: Colors.white);
-                    },
-                  ),
-                )
+                    icon: Icons.check_circle_outline,
+                    label: 'Aprovar',
+                    color: Colors.blue.shade800,
+                    bgColor: Colors.blue.shade50,
+                    borderColor: Colors.blue.shade300,
+                    onTap: () => Biblioteca.showConfirmDialog(
+                          context,
+                          title: 'Aprovar fornecedor!',
+                          message: 'Deseja realmente aprovar ${fornecedor.razaoSocial}?',
+                          confirmLabel: 'Aprovar',
+                          color: Colors.deepOrange,
+                          onConfirm: () async {
+                            await controller.aprovarFornecedor(fornecedor.idFornecedor);
+                            Get.snackbar('Sucesso', 'Fornecedor aprovado com sucesso!',
+                                backgroundColor: Colors.blue.shade600, colorText: Colors.white);
+                            return true;
+                          },
+                        ))
               else
                 _actionButton(
-                  icon: Icons.cancel_outlined,
-                  label: 'Desaprovar',
-                  color: Colors.deepOrange,
-                  bgColor: Colors.orange.shade50,
-                  borderColor: Colors.orange.shade300,
-                  onTap: () => _confirmarAcao(
-                    context,
-                    title: 'Desaprovar fornecedor',
-                    message: 'Deseja remover a aprovação de "${fornecedor.razaoSocial}"?',
-                    confirmLabel: 'Desaprovar',
+                    icon: Icons.cancel_outlined,
+                    label: 'Desaprovar',
                     color: Colors.deepOrange,
-                    onConfirm: () async {
-                      await controller.reprovarFornecedor(fornecedor.idFornecedor);
-                      Get.snackbar('Alteração salva', 'Fornecedor marcado como não aprovado.',
-                          backgroundColor: Colors.orange.shade700, colorText: Colors.white);
-                    },
-                  ),
-                ),
+                    bgColor: Colors.orange.shade50,
+                    borderColor: Colors.orange.shade300,
+                    onTap: () => Biblioteca.showConfirmDialog(
+                          context,
+                          title: 'Desaprovar fornecedor!',
+                          message: 'Deseja remover a aprovação de ${fornecedor.razaoSocial}?',
+                          confirmLabel: 'Desativar',
+                          color: Colors.deepOrange,
+                          onConfirm: () async {
+                            await controller.reprovarFornecedor(fornecedor.idFornecedor);
+                            Get.snackbar('Alteração salva', 'Fornecedor marcado como não aprovado.',
+                                backgroundColor: Colors.orange.shade700, colorText: Colors.white);
+                            return true;
+                          },
+                        )),
               const SizedBox(width: 10),
 
               if (ativo)
@@ -255,10 +256,10 @@ class FornecedorListTile extends StatelessWidget {
                   color: Colors.redAccent,
                   bgColor: Colors.red.shade50,
                   borderColor: Colors.red.shade300,
-                  onTap: () => _confirmarAcao(
+                  onTap: () => Biblioteca.showConfirmDialog(
                     context,
-                    title: 'Desativar fornecedor',
-                    message: 'Tem certeza que deseja desativar "${fornecedor.razaoSocial}"?',
+                    title: 'Desativar fornecedor!',
+                    message: 'Tem certeza que deseja desativar ${fornecedor.razaoSocial}?',
                     confirmLabel: 'Desativar',
                     color: Colors.red,
                     onConfirm: () async {
@@ -266,6 +267,7 @@ class FornecedorListTile extends StatelessWidget {
                       Get.snackbar(
                           'Fornecedor desativado', 'O fornecedor foi desativado com sucesso.',
                           backgroundColor: Colors.redAccent, colorText: Colors.white);
+                      return true;
                     },
                   ),
                 )
@@ -276,16 +278,17 @@ class FornecedorListTile extends StatelessWidget {
                   color: Colors.green.shade800,
                   bgColor: Colors.green.shade50,
                   borderColor: Colors.green.shade400,
-                  onTap: () => _confirmarAcao(
+                  onTap: () => Biblioteca.showConfirmDialog(
                     context,
-                    title: 'Ativar fornecedor',
-                    message: 'Deseja reativar o fornecedor "${fornecedor.razaoSocial}"?',
+                    title: 'Ativar fornecedor!',
+                    message: 'Deseja reativar o fornecedor ${fornecedor.razaoSocial}?',
                     confirmLabel: 'Ativar',
                     color: Colors.green,
                     onConfirm: () async {
                       await controller.ativarFornecedor(fornecedor.idFornecedor);
                       Get.snackbar('Fornecedor ativado', 'O fornecedor foi reativado com sucesso.',
                           backgroundColor: Colors.green.shade700, colorText: Colors.white);
+                      return true;
                     },
                   ),
                 ),
@@ -367,37 +370,6 @@ class FornecedorListTile extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _confirmarAcao(
-    BuildContext context, {
-    required String title,
-    required String message,
-    required String confirmLabel,
-    required Color color,
-    required Future<void> Function() onConfirm,
-  }) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(title, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-        content: Text(message, style: GoogleFonts.poppins(fontSize: 15)),
-        actions: [
-          TextButton(
-            onPressed: Get.back,
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: color),
-            onPressed: () async {
-              Get.back();
-              await onConfirm();
-            },
-            child: Text(confirmLabel),
-          ),
-        ],
       ),
     );
   }

@@ -36,6 +36,7 @@ class AppController extends GetxController {
   /// 🔹 Lista global de serviços selecionados para cotação
   final RxList<ServicoCotadoDto> servicosSelecionados = <ServicoCotadoDto>[].obs;
 
+  final RxBool contaIncompleta = false.obs;
   final RxBool carregando = false.obs;
   StreamSubscription<User?>? _authSub;
 
@@ -146,7 +147,11 @@ class AppController extends GetxController {
         return;
       }
 
-      if (Get.currentRoute != '/splash') Get.offAllNamed('/splash');
+      if (Get.currentRoute.isEmpty || Get.currentRoute != '/splash') {
+        Future.microtask(() {
+          Get.offAllNamed('/splash');
+        });
+      }
 
       carregando.value = true;
 
@@ -253,6 +258,7 @@ class AppController extends GetxController {
               debugPrint('✅ Evento ${evento.nomeEvento} carregado com sucesso!');
               destino = HomeEventScreen();
             } else {
+              contaIncompleta.value = true;
               Lottie.asset(
                 'assets/animations/confetti_background.json',
                 width: 180,
@@ -269,7 +275,7 @@ class AppController extends GetxController {
                 margin: const EdgeInsets.all(12),
                 borderRadius: 14,
                 icon: const Icon(Icons.celebration_rounded, color: Colors.white),
-                duration: const Duration(seconds: 4),
+                duration: const Duration(seconds: 10),
               );
 
               destino = const WelcomeEventScreen();

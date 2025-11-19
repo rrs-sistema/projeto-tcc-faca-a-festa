@@ -95,20 +95,20 @@ class ServicoProdutoController extends GetxController {
           final idCat = mapaSubParaCat[idSub] ?? '';
 
           return FornecedorServicoDetalhadoDto(
-            id: d.id,
-            idFornecedor: '',
-            idProdutoServico: d.id,
-            idSubcategoria: idSub,
-            nomeServico: data['nome'] ?? 'Serviço sem nome',
-            descricaoServico: data['descricao'] ?? '',
-            tipoMedida: data['tipo_medida'] ?? 'U',
-            preco: 0.0,
-            precoPromocao: null,
-            nomeSubcategoria: mapaSubcategorias[idSub] ?? 'Sem subcategoria',
-            nomeCategoria: mapaCategorias[idCat] ?? 'Sem categoria',
-            imagemUrl: null,
-            ativo: data['ativo'] ?? true,
-          );
+              id: d.id,
+              idFornecedor: '',
+              idProdutoServico: d.id,
+              idSubcategoria: idSub,
+              nomeServico: data['nome'] ?? 'Serviço sem nome',
+              descricaoServico: data['descricao'] ?? '',
+              tipoMedida: data['tipo_medida'] ?? 'U',
+              preco: 0.0,
+              precoPromocao: null,
+              nomeSubcategoria: mapaSubcategorias[idSub] ?? 'Sem subcategoria',
+              nomeCategoria: mapaCategorias[idCat] ?? 'Sem categoria',
+              imagemUrl: null,
+              ativo: data['ativo'] ?? true,
+              quantidade: 1);
         }).toList();
 
         servicosFornecedor.assignAll(lista);
@@ -239,20 +239,20 @@ class ServicoProdutoController extends GetxController {
         final imagemUrl = fotosMap[idServico];
 
         lista.add(FornecedorServicoDetalhadoDto(
-          id: idServico,
-          idFornecedor: idFornecedor,
-          idProdutoServico: idServico,
-          idSubcategoria: idSub,
-          nomeServico: data['nome'] ?? 'Serviço sem nome',
-          descricaoServico: data['descricao'] ?? '',
-          tipoMedida: data['tipo_medida'] ?? 'U',
-          preco: preco,
-          precoPromocao: precoPromocao,
-          nomeSubcategoria: mapaSubcategorias[idSub] ?? 'Sem subcategoria',
-          nomeCategoria: mapaCategorias[mapaSubParaCat[idSub]] ?? 'Sem categoria',
-          imagemUrl: imagemUrl,
-          ativo: ativo,
-        ));
+            id: idServico,
+            idFornecedor: idFornecedor,
+            idProdutoServico: idServico,
+            idSubcategoria: idSub,
+            nomeServico: data['nome'] ?? 'Serviço sem nome',
+            descricaoServico: data['descricao'] ?? '',
+            tipoMedida: data['tipo_medida'] ?? 'U',
+            preco: preco,
+            precoPromocao: precoPromocao,
+            nomeSubcategoria: mapaSubcategorias[idSub] ?? 'Sem subcategoria',
+            nomeCategoria: mapaCategorias[mapaSubParaCat[idSub]] ?? 'Sem categoria',
+            imagemUrl: imagemUrl,
+            ativo: ativo,
+            quantidade: 1));
       }
 
       servicosFornecedor.assignAll(lista);

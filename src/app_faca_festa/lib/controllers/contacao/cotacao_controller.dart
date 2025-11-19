@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
+import '../../core/services/whatsGw/whatsapp_service.dart';
+import '../../presentation/whatsapp/whatsapp_templates.dart';
 import './../../data/models/model.dart';
 import './../app_controller.dart';
 
@@ -14,6 +16,25 @@ class CotacaoController extends GetxController {
   final Map<String, StreamSubscription> _subStreams = {};
   final RxInt totalCount = 0.obs;
   final RxInt contratadosCount = 0.obs;
+
+  Future<void> notificarFornecedorCotacao({
+    required FornecedorModel fornecedor,
+    required CotacaoModel cotacao,
+  }) async {
+    final whats = Get.find<WhatsAppService>();
+    final templates = Get.find<WhatsAppTemplates>();
+
+    final msg = templates.atualizacaoCotacao(
+      nomeFornecedor: fornecedor.razaoSocial,
+      categoria: cotacao.categoriaNome ?? 'Não informada',
+      status: cotacao.status.label,
+    );
+
+    await whats.sendText(
+      phone: fornecedor.telefone,
+      message: msg,
+    );
+  }
 
   void _atualizarContagens() {
     contratadosCount.value = cotacoes.where((o) => o.status == StatusCotacao.concluida).length;

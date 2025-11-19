@@ -3,10 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/evento_controller.dart';
-import './../../controllers/evento_cadastro_controller.dart';
 import './../pages/usuario/cadastro_evento_bottom_sheet.dart';
-import '../../controllers/tema/event_theme_controller.dart';
+import './../../controllers/tema/event_theme_controller.dart';
+import './../../controllers/evento_cadastro_controller.dart';
+import './../../controllers/evento_controller.dart';
+import './../pages/usuario/edit_usuario_screen.dart';
 import './../../controllers/app_controller.dart';
 
 class MenuDrawerFacaFesta extends StatelessWidget {
@@ -43,7 +44,7 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                   ),
                 ],
               ),
-              padding: const EdgeInsets.only(top: 50, bottom: 24),
+              padding: const EdgeInsets.only(top: 50, bottom: 15),
               width: double.infinity,
               child: Column(
                 children: [
@@ -95,23 +96,18 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                       EasyLoading.dismiss();
                     }
                   }),
-                  _menuItem(Icons.group, "Convidados", color: primary),
-                  _menuItem(Icons.attach_money, "Meu Orçamento", color: primary),
-                  _menuItem(Icons.storefront, "Fornecedores", color: primary),
-                  _menuItem(Icons.checklist, "Checklist de Tarefas", color: primary),
-                  _menuItem(Icons.image, "Minhas Referências", color: primary),
-                  const Divider(height: 24, thickness: 0.8),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 16, top: 4, bottom: 4),
-                    child: Text(
-                      "Inspiração & Comunidade",
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                  _menuItem(
+                    Icons.person_outline_rounded,
+                    "Meu Perfil",
+                    color: primary,
+                    onTap: () {
+                      Get.back();
+                      Future.delayed(const Duration(milliseconds: 120), () {
+                        Get.to(() => const EditUsuarioScreen());
+                      });
+                    },
                   ),
+                  const Divider(height: 20, thickness: 0.8),
                   _menuItem(Icons.lightbulb_outline, "Ideias e Inspirações", color: primary),
                   _menuItem(Icons.people_alt_outlined, "Comunidade", color: primary),
                 ],

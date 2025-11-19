@@ -2,6 +2,7 @@
 
 import 'package:app_faca_festa/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
+import 'package:app_faca_festa/presentation/widgets/button/botao_cancelar.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -39,6 +40,7 @@ class CotacaoNovaBottomSheet extends StatefulWidget {
 }
 
 class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
+  late List<FornecedorServicoDetalhadoDto> servicosInternal;
   final fornecedorController = Get.find<FornecedorController>();
   final eventoCtrl = Get.find<EventoController>();
   final appCtrl = Get.find<AppController>();
@@ -58,11 +60,15 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
     super.initState();
     dataLimite = DateTime.now().add(const Duration(days: 7));
     for (final s in widget.servicosSelecionados) {
-      qtdControllers.add(TextEditingController(text: '1'));
+      qtdControllers.add(
+        TextEditingController(text: s.quantidade.toString()),
+      );
+
       valorControllers.add(TextEditingController(
         text: s.precoPromocao?.toStringAsFixed(2) ?? s.preco.toStringAsFixed(2),
       ));
     }
+    servicosInternal = widget.servicosSelecionados.map((e) => e.copyWith()).toList();
   }
 
   @override
@@ -175,9 +181,8 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
         margin: const EdgeInsets.all(12),
         duration: const Duration(seconds: 3),
       );
-    } catch (e, s) {
+    } catch (e) {
       EasyLoading.dismiss();
-      debugPrint('❌ Erro ao enviar cotação: $e\n$s');
       Get.snackbar(
         'Erro ao enviar',
         'Tente novamente mais tarde.',
@@ -218,8 +223,8 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
           ),
           child: Padding(
             padding: EdgeInsets.only(
-              left: 18,
-              right: 18,
+              left: 10,
+              right: 10,
               top: 18,
               bottom: MediaQuery.of(context).viewInsets.bottom + 18,
             ),
@@ -232,27 +237,29 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildHeader().animate().fadeIn(duration: 350.ms).slideY(begin: -0.2),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     _buildServicosSelecionados()
                         .animate()
                         .fadeIn(duration: 400.ms)
                         .slideX(begin: -0.2),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     _buildFornecedores(fornecedores)
                         .animate()
                         .fadeIn(duration: 450.ms)
                         .slideX(begin: 0.2),
                     const SizedBox(height: 20),
                     _buildValorDesejado().animate().fadeIn(duration: 480.ms),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     _buildObservacao().animate().fadeIn(duration: 480.ms),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 10),
                     _buildDataLimite().animate().fadeIn(duration: 520.ms),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 22),
                     _buildEnviarButton()
                         .animate()
                         .fadeIn(duration: 550.ms)
                         .scale(begin: const Offset(0.9, 0.9)),
+                    const SizedBox(height: 22),
+                    _buildCancelarButton(),
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -317,7 +324,10 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
                   Text(
                     'Serviços selecionados (${widget.servicosSelecionados.length})',
                     style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600, color: widget.primary, fontSize: 14),
+                      fontWeight: FontWeight.w600,
+                      color: widget.primary,
+                      fontSize: 14,
+                    ),
                   ),
                   const Spacer(),
                   Icon(
@@ -328,24 +338,201 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
               ),
             ),
             if (expandirServicos)
-              ...widget.servicosSelecionados.map((s) => Padding(
-                    padding: const EdgeInsets.only(top: 12),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.star_rounded, color: Colors.amber, size: 18),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            s.nomeServico ?? 'Serviço sem nome',
-                            style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 13.5),
+              ...widget.servicosSelecionados.asMap().entries.map((entry) {
+                final index = entry.key;
+                final s = entry.value;
+
+                final quantidadeController = qtdControllers[index];
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              s.nomeServico ?? 'Serviço sem nome',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: widget.primary.withValues(alpha: 0.25),
+                            width: 1.2,
                           ),
                         ),
-                      ],
-                    ),
-                  )),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Icon(Icons.numbers_rounded, color: widget.primary, size: 14),
+                            const SizedBox(width: 2),
+                            _buildQuantidadeSelector(
+                              index: index,
+                              s: s,
+                              controller: quantidadeController,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              "x R\$ ${Biblioteca.formatarValorDecimal(s.preco)}",
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            const Spacer(),
+                            _buildTotalAnimado(
+                              servicosInternal[index].preco * servicosInternal[index].quantidade,
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }),
           ],
         ),
       );
+
+  Widget _buildQuantidadeSelector({
+    required int index,
+    required FornecedorServicoDetalhadoDto s,
+    required TextEditingController controller,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+      decoration: BoxDecoration(
+        color: widget.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: widget.primary.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ---------------- BOTÃO - ----------------
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              SystemSound.play(SystemSoundType.click);
+
+              final atual = int.tryParse(controller.text) ?? 1;
+              final novo = (atual > 1) ? atual - 1 : 1;
+
+              controller.text = novo.toString();
+
+              setState(() {
+                servicosInternal[index] = servicosInternal[index].copyWith(quantidade: novo);
+              });
+            },
+            child: Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: widget.primary.withValues(alpha: 0.3)),
+              ),
+              child: const Icon(Icons.remove_rounded, size: 16),
+            ),
+          ),
+
+          // ---------------- CAMPO CENTRAL ----------------
+          SizedBox(
+            width: 38,
+            child: TextField(
+              controller: controller,
+              textAlign: TextAlign.center,
+              keyboardType: TextInputType.number,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                isCollapsed: true,
+              ),
+
+              // Quando digita
+              onChanged: (value) {
+                final qtd = int.tryParse(value) ?? 1;
+
+                setState(() {
+                  servicosInternal[index] = servicosInternal[index].copyWith(quantidade: qtd);
+                });
+              },
+            ),
+          ),
+
+          // ---------------- BOTÃO + ----------------
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.lightImpact();
+              SystemSound.play(SystemSoundType.click);
+
+              final atual = int.tryParse(controller.text) ?? 1;
+              final novo = atual + 1;
+
+              controller.text = novo.toString();
+
+              setState(() {
+                servicosInternal[index] = servicosInternal[index].copyWith(quantidade: novo);
+              });
+            },
+            child: Container(
+              width: 24,
+              height: 24,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: widget.primary,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(Icons.add_rounded, color: Colors.white, size: 16),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTotalAnimado(double total) {
+    return TweenAnimationBuilder<double>(
+      duration: const Duration(milliseconds: 250),
+      tween: Tween<double>(begin: 0, end: total),
+      builder: (_, value, child) {
+        return AnimatedOpacity(
+          duration: const Duration(milliseconds: 200),
+          opacity: 1,
+          child: Transform.translate(
+            offset: const Offset(0, -2),
+            child: Text(
+              "R\$ ${Biblioteca.formatarValorDecimal(value)}",
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: widget.primary,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 
   Widget _buildFornecedores(List<FornecedorModel> fornecedores) {
     return Column(
@@ -426,24 +613,10 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
           titleColor: Colors.white,
           maxLines: 4,
         ),
-
-        /*TextField(
-          controller: observacaoController,
-          decoration: InputDecoration(
-            labelText: 'Observações adicionais (opcional)',
-            prefixIcon: Icon(Icons.chat_bubble_outline_rounded, color: widget.primary),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(18)),
-            filled: true,
-            fillColor: Colors.white.withValues(alpha: 0.85),
-          ),
-          minLines: 2,
-          maxLines: 4,
-        ),
-        */
       );
 
   Widget _buildDataLimite() => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.9),
           borderRadius: BorderRadius.circular(18),
@@ -452,10 +625,10 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
         child: Row(
           children: [
             Icon(Icons.calendar_today_rounded, color: widget.primary, size: 20),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Responder até: ${DateFormat("dd/MM/yyyy").format(dataLimite)}',
+                'Prazo de resposta: ${DateFormat("dd/MM/yyyy").format(dataLimite)}',
                 style: GoogleFonts.poppins(fontSize: 14),
               ),
             ),
@@ -492,4 +665,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
           onPressed: _enviarCotacao,
         ),
       );
+
+  Widget _buildCancelarButton() =>
+      BotaoCancelar(texto: 'Cancelar', onPressed: () => Navigator.pop(context));
 }

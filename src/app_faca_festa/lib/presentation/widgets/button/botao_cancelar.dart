@@ -21,24 +21,21 @@ class BotaoCancelar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Get.find<EventThemeController>();
-    final corPrincipalOpcao = corPrincipal ?? theme.primaryColor.value;
-    final corBackgroundOpcao = corBackground ?? theme.secondaryColor.value.withValues(alpha: 0.03);
+    final corPrincipalOpcao = corPrincipal ?? theme.secondaryColor.value;
 
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: TextButton.icon(
-        icon: Icon(Icons.cancel_outlined, color: corPrincipalOpcao),
+        icon: Icon(Icons.cancel_outlined, color: Colors.white, size: 26),
         label: Text(
           texto,
-          style: GoogleFonts.poppins(
-            color: corPrincipalOpcao,
-            fontWeight: FontWeight.w500,
-          ),
+          style:
+              GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 20),
         ),
         style: TextButton.styleFrom(
           overlayColor: corPrincipalOpcao.withValues(alpha: 0.1),
-          backgroundColor: corBackgroundOpcao.withValues(alpha: 0.25),
+          backgroundColor: Colors.white.withValues(alpha: 0.25),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),

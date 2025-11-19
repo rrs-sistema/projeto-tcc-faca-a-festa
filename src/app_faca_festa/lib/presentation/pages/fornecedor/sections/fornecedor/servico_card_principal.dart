@@ -188,19 +188,19 @@ class ServicoCardPrincipal extends StatelessWidget {
               fornecedoresSelecionados: [fornecedorId],
               servicosSelecionados: [
                 FornecedorServicoDetalhadoDto(
-                  id: fornecedorId,
-                  idFornecedor: fornecedorId,
-                  idProdutoServico: servico.idProdutoServico,
-                  preco: servico.preco,
-                  nomeServico: servico.nomeServico,
-                  descricaoServico: servico.descricaoServico,
-                  idSubcategoria: servico.idSubcategoria,
-                  imagemUrl: servico.imagemUrl,
-                  nomeCategoria: servico.nomeCategoria,
-                  nomeSubcategoria: servico.nomeSubcategoria,
-                  precoPromocao: servico.precoPromocao,
-                  ativo: servico.ativo,
-                )
+                    id: fornecedorId,
+                    idFornecedor: fornecedorId,
+                    idProdutoServico: servico.idProdutoServico,
+                    preco: servico.preco,
+                    nomeServico: servico.nomeServico,
+                    descricaoServico: servico.descricaoServico,
+                    idSubcategoria: servico.idSubcategoria,
+                    imagemUrl: servico.imagemUrl,
+                    nomeCategoria: servico.nomeCategoria,
+                    nomeSubcategoria: servico.nomeSubcategoria,
+                    precoPromocao: servico.precoPromocao,
+                    ativo: servico.ativo,
+                    quantidade: 1)
               ],
               primary: primary,
               onCotacaoFinalizada: () {

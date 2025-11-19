@@ -146,13 +146,13 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
             // 🌟 CONTEÚDO DETALHADO
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.all(22),
+                padding: const EdgeInsets.all(6),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(28),
                   child: BackdropFilter(
                     filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
                     child: Container(
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -200,7 +200,7 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                                 ),
                             ],
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 10),
                           if (servico.nomeSubcategoria?.isNotEmpty ?? false)
                             Chip(
                               label: Text(
@@ -210,7 +210,7 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                               ),
                               backgroundColor: primary.withValues(alpha: 0.12),
                             ),
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 15),
                           _sectionTitle('Descrição', Icons.description_rounded, primary),
                           Text(
                             servico.descricaoServico?.isNotEmpty == true
@@ -222,7 +222,7 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                               color: Colors.grey.shade800,
                             ),
                           ),
-                          const SizedBox(height: 25),
+                          const SizedBox(height: 15),
                           _sectionTitle('Avaliações', Icons.star_rounded, primary),
                           Row(
                             children: [
@@ -240,7 +240,7 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                                       color: Colors.grey.shade700, fontSize: 13)),
                             ],
                           ),
-                          const SizedBox(height: 25),
+                          const SizedBox(height: 15),
                           _sectionTitle('Diferenciais', Icons.favorite_rounded, primary),
                           Text(
                             'Equipe criativa e dedicada, excelente reputação em eventos anteriores e atendimento personalizado. '
@@ -251,7 +251,7 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                               color: Colors.grey.shade800,
                             ),
                           ),
-                          const SizedBox(height: 35),
+                          const SizedBox(height: 15),
                           Divider(color: Colors.grey.shade300, thickness: 0.8),
                           const SizedBox(height: 15),
                           Center(
@@ -263,7 +263,7 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                                   color: Colors.grey.shade600),
                             ),
                           ),
-                          const SizedBox(height: 80),
+                          const SizedBox(height: 110),
                         ],
                       ),
                     ),
@@ -285,7 +285,7 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: primary,
-            padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 18),
+            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             elevation: 16,
             shadowColor: primary.withValues(alpha: 0.45),

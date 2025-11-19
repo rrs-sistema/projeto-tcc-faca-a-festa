@@ -1,4 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
+import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -93,7 +94,7 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 10),
                 Text(
                   "🎊 Faça a Festa",
                   style: GoogleFonts.poppins(
@@ -127,7 +128,7 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                   child: _loading
                       ? const Center(child: CircularProgressIndicator())
                       : GridView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 34, vertical: 6),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 2,
                             mainAxisSpacing: 16,
@@ -228,81 +229,125 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                         ),
                       ),
 
-                      GestureDetector(
-                        onTap: () {
-                          Get.to(
-                            () => const LoginScreen(),
-                            transition: Transition.fadeIn,
-                            duration: const Duration(milliseconds: 500),
-                          );
-                        },
-                        child: MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
-                              style: GoogleFonts.poppins(
-                                color: Colors.black87,
-                                fontSize: 14,
-                                height: 1.5,
-                              ),
-                              children: [
-                                const TextSpan(text: "Já tem uma conta? "),
-                                TextSpan(
-                                  text: "Entrar aqui",
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.pink.shade700,
-                                    fontWeight: FontWeight.w700,
-                                    decoration: TextDecoration.underline,
-                                    decorationThickness: 1.5,
-                                  ),
+                      if (!appController.contaIncompleta.value) ...[
+                        GestureDetector(
+                          onTap: () {
+                            Get.to(
+                              () => const LoginScreen(),
+                              transition: Transition.fadeIn,
+                              duration: const Duration(milliseconds: 500),
+                            );
+                          },
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                style: GoogleFonts.poppins(
+                                  color: Colors.black87,
+                                  fontSize: 14,
+                                  height: 1.5,
                                 ),
-                              ],
+                                children: [
+                                  const TextSpan(text: "Já tem uma conta? "),
+                                  TextSpan(
+                                    text: "Entrar aqui",
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.pink.shade700,
+                                      fontWeight: FontWeight.w700,
+                                      decoration: TextDecoration.underline,
+                                      decorationThickness: 1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
 
-                      const SizedBox(height: 8),
+                        const SizedBox(height: 8),
 
-                      // 🔹 Link para voltar ao início
-                      GestureDetector(
-                        onTap: () {
-                          Get.to(
-                            () => const RoleSelectorScreen(),
-                            transition: Transition.fadeIn,
-                            duration: const Duration(milliseconds: 500),
-                          );
-                        },
-                        child: MouseRegion(
-                          cursor: SystemMouseCursors.click,
-                          child: RichText(
-                            textAlign: TextAlign.center,
-                            text: TextSpan(
-                              style: GoogleFonts.poppins(
-                                color: Colors.black87,
-                                fontSize: 14,
-                                height: 1.5,
-                              ),
-                              children: [
-                                const TextSpan(text: "Deseja voltar para o início? "),
-                                TextSpan(
-                                  text: "Clique aqui",
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.purple.shade700,
-                                    fontWeight: FontWeight.w700,
-                                    decoration: TextDecoration.underline,
-                                    decorationThickness: 1.5,
-                                  ),
+                        // 🔹 Link para voltar ao início
+                        GestureDetector(
+                          onTap: () {
+                            Get.to(
+                              () => const RoleSelectorScreen(),
+                              transition: Transition.fadeIn,
+                              duration: const Duration(milliseconds: 500),
+                            );
+                          },
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                style: GoogleFonts.poppins(
+                                  color: Colors.black87,
+                                  fontSize: 14,
+                                  height: 1.5,
                                 ),
-                              ],
+                                children: [
+                                  const TextSpan(text: "Deseja voltar para o início? "),
+                                  TextSpan(
+                                    text: "Clique aqui",
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.purple.shade700,
+                                      fontWeight: FontWeight.w700,
+                                      decoration: TextDecoration.underline,
+                                      decorationThickness: 1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
 
+                        const SizedBox(height: 8),
+                      ] else
+                        GestureDetector(
+                          onTap: () async {
+                            // Deve desativar a conta cadastrada
+                            Biblioteca.showConfirmDialog(
+                              context,
+                              title: 'Pergunta!',
+                              message: 'Deseja realmente sair dessa conta?',
+                              confirmLabel: 'Sim',
+                              color: themeController.primaryColor.value,
+                              onConfirm: () async {
+                                await appController.logoutFornecedor();
+                                return true;
+                              },
+                            );
+                          },
+                          child: MouseRegion(
+                            cursor: SystemMouseCursors.click,
+                            child: RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                style: GoogleFonts.poppins(
+                                  color: Colors.black87,
+                                  fontSize: 14,
+                                  height: 1.5,
+                                ),
+                                children: [
+                                  const TextSpan(
+                                      text: "\nJá tem uma conta cadastrada nesse dispositivo\n\n"),
+                                  TextSpan(
+                                    text: "Sair da conta cadastrada?",
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.pink.shade700,
+                                      fontWeight: FontWeight.w700,
+                                      decoration: TextDecoration.underline,
+                                      decorationThickness: 1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 8),
-
                       // 🔹 Assinatura com ícone sutil e opacidade
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,

@@ -1,13 +1,13 @@
-import 'package:app_faca_festa/presentation/widgets/button/botao_cancelar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
-import '../../../../data/models/model.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/fornecedor_controller.dart';
+import './../../../../core/utils/biblioteca.dart';
+import './../../../../data/models/model.dart';
 
 Future<void> showResponderCotacaoBottomSheet({
   required BuildContext context,
@@ -16,6 +16,7 @@ Future<void> showResponderCotacaoBottomSheet({
   required String categoriaNome,
   required String descricao,
   required String dataLimite,
+  required double ofertaDesejada,
 }) async {
   final theme = Get.find<EventThemeController>();
   final gradient = theme.gradient.value;
@@ -129,52 +130,186 @@ Future<void> showResponderCotacaoBottomSheet({
 
                         const SizedBox(height: 16),
 
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withValues(alpha: 0.18),
+                                Colors.white.withValues(alpha: 0.05),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(50),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.28),
+                              width: 1.2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              // 🎯 Ícone moderno
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.20),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.attach_money_rounded,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+
+                              const SizedBox(width: 10),
+
+                              // 📝 Texto e valor destacados
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Oferta desejada",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 11.5,
+                                        color: Colors.white.withValues(alpha: 0.95),
+                                        fontWeight: FontWeight.w400,
+                                        letterSpacing: 0.2,
+                                      ),
+                                    ),
+                                    Text(
+                                      "R\$ ${Biblioteca.formatarValorDecimal(ofertaDesejada)}",
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 14.5,
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 16),
+
                         // Chip "Data" à esquerda e "Solicitado por" à direita
                         Container(
                           width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
-                            borderRadius: BorderRadius.circular(40),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.26),
-                              width: 1,
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white.withValues(alpha: 0.18),
+                                Colors.white.withValues(alpha: 0.05),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
                             ),
+                            borderRadius: BorderRadius.circular(50),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.28),
+                              width: 1.2,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.15),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              // 🍀 Lado ESQUERDO (DATA)
+                              // 🔵 Lado ESQUERDO — Data limite
                               Row(
                                 children: [
-                                  const Icon(Icons.calendar_today_rounded,
-                                      size: 16, color: Colors.white),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Data limite: $dataLimite',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13.2,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.20),
+                                      shape: BoxShape.circle,
                                     ),
+                                    child: const Icon(
+                                      Icons.calendar_today_rounded,
+                                      color: Colors.white,
+                                      size: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Data limite",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.white.withValues(alpha: 0.95),
+                                        ),
+                                      ),
+                                      Text(
+                                        dataLimite, // ← formate antes com DateFormat
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
 
-                              // 🍀 Lado DIREITO (SOLICITANTE)
+                              // 🔵 Lado DIREITO — Solicitante
                               Row(
                                 children: [
-                                  const Icon(Icons.person_rounded, size: 18, color: Colors.white),
-                                  const SizedBox(width: 6),
-
-                                  // Nome bem encostado na direita
-                                  Text(
-                                    'Solicitante: $nomeSolicitante',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13.2,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withValues(alpha: 0.20),
+                                      shape: BoxShape.circle,
                                     ),
+                                    child: const Icon(
+                                      Icons.person_rounded,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        "Solicitante",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 11.5,
+                                          fontWeight: FontWeight.w400,
+                                          color: Colors.white.withValues(alpha: 0.95),
+                                        ),
+                                      ),
+                                      Text(
+                                        nomeSolicitante,
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 14.5,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -399,8 +534,11 @@ Future<void> showResponderCotacaoBottomSheet({
                                     },
                                   );
                                 },
-                          icon: const Icon(Icons.send_rounded),
-                          label: const Text("Responder"),
+                          icon: const Icon(Icons.send_rounded, color: Colors.white),
+                          label: const Text(
+                            "Responder",
+                            style: TextStyle(color: Colors.white),
+                          ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.green.shade600,
                             foregroundColor: Colors.white,
@@ -432,8 +570,13 @@ Future<void> showResponderCotacaoBottomSheet({
                                     carregando: carregando,
                                   );
                                 },
-                          icon: const Icon(Icons.cancel_outlined),
-                          label: const Text("Recusar"),
+                          icon: Icon(Icons.cancel_outlined, color: Colors.red.shade700),
+                          label: Text(
+                            "Recusar",
+                            style: TextStyle(
+                              color: Colors.red.shade700,
+                            ),
+                          ),
                           style: OutlinedButton.styleFrom(
                             foregroundColor: Colors.red.shade700,
                             side: BorderSide(color: Colors.red.shade400),
@@ -445,17 +588,27 @@ Future<void> showResponderCotacaoBottomSheet({
                     ],
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  BotaoCancelar(
-                    corBackground: Colors.grey.shade700,
-                    corPrincipal: primary,
-                    texto: "Cancelar/Sair",
-                    onPressed: () {
-                      if (!carregando.value) {
-                        Get.back();
-                      }
-                    },
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () => Get.back(),
+                          icon: const Icon(Icons.cancel_outlined, color: Colors.grey),
+                          label: const Text(
+                            "Sair",
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.grey.shade700,
+                            side: BorderSide(color: Colors.grey.shade400),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
 
                   if (carregando.value) ...[
@@ -472,7 +625,6 @@ Future<void> showResponderCotacaoBottomSheet({
       ),
     ),
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
   );
 }
 

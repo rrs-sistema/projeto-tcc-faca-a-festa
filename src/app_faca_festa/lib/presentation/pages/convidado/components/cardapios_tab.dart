@@ -19,6 +19,7 @@ class CardapiosTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<CardapioController>();
     final theme = Get.find<EventThemeController>();
+    final primary = theme.primaryColor.value;
 
     return Scaffold(
       body: Obx(() {
@@ -27,10 +28,36 @@ class CardapiosTab extends StatelessWidget {
         }
 
         if (controller.cardapios.isEmpty) {
-          return const Center(
-            child: Text(
-              'Nenhum cardápio cadastrado ainda 🍽️',
-              style: TextStyle(color: Colors.black54, fontSize: 16),
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.restaurant_menu_rounded,
+                  color: primary.withValues(alpha: 0.6),
+                  size: 46,
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  "Nenhum cardápio cadastrado",
+                  style: GoogleFonts.poppins(
+                    fontSize: 14.5,
+                    fontWeight: FontWeight.w600,
+                    color: primary.withValues(alpha: 0.85),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Adicione itens ao cardápio para facilitar\n'
+                  'a organização do seu evento 🍽️',
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey.shade700,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           );
         }

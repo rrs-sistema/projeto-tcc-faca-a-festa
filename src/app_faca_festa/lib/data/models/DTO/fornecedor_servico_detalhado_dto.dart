@@ -9,6 +9,7 @@ class FornecedorServicoDetalhadoDto {
   final String? nomeFornecedor;
   final String? descricaoServico;
   final double preco;
+  final int quantidade;
   final double? precoPromocao;
   final String? nomeSubcategoria;
   final String? nomeCategoria;
@@ -25,6 +26,7 @@ class FornecedorServicoDetalhadoDto {
     this.nomeFornecedor,
     this.descricaoServico,
     required this.preco,
+    required this.quantidade,
     this.precoPromocao,
     this.nomeSubcategoria,
     this.nomeCategoria,
@@ -32,4 +34,43 @@ class FornecedorServicoDetalhadoDto {
     this.tipoMedida,
     required this.ativo,
   });
+
+  // ============================================================
+  // ✅ MÉTODO copyWith — cria nova instância mantendo valores atuais
+  // ============================================================
+  FornecedorServicoDetalhadoDto copyWith({
+    String? id,
+    String? idFornecedor,
+    String? idProdutoServico,
+    String? idSubcategoria,
+    String? nomeServico,
+    String? nomeFornecedor,
+    String? descricaoServico,
+    double? preco,
+    int? quantidade,
+    double? precoPromocao,
+    String? nomeSubcategoria,
+    String? nomeCategoria,
+    String? imagemUrl,
+    String? tipoMedida,
+    bool? ativo,
+  }) {
+    return FornecedorServicoDetalhadoDto(
+      id: id ?? this.id,
+      idFornecedor: idFornecedor ?? this.idFornecedor,
+      idProdutoServico: idProdutoServico ?? this.idProdutoServico,
+      idSubcategoria: idSubcategoria ?? this.idSubcategoria,
+      nomeServico: nomeServico ?? this.nomeServico,
+      nomeFornecedor: nomeFornecedor ?? this.nomeFornecedor,
+      descricaoServico: descricaoServico ?? this.descricaoServico,
+      preco: preco ?? this.preco,
+      quantidade: quantidade ?? this.quantidade,
+      precoPromocao: precoPromocao ?? this.precoPromocao,
+      nomeSubcategoria: nomeSubcategoria ?? this.nomeSubcategoria,
+      nomeCategoria: nomeCategoria ?? this.nomeCategoria,
+      imagemUrl: imagemUrl ?? this.imagemUrl,
+      tipoMedida: tipoMedida ?? this.tipoMedida,
+      ativo: ativo ?? this.ativo,
+    );
+  }
 }

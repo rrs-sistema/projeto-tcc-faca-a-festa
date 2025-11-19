@@ -179,9 +179,7 @@ class _GraficoGrupos extends StatelessWidget {
     final total = grupos.fold<int>(0, (s, g) => s + g.convidados.length);
 
     if (total == 0) {
-      return const Center(
-        child: Text("Nenhum convidado para gerar gráfico."),
-      );
+      return const SizedBox.shrink();
     }
 
     return Column(

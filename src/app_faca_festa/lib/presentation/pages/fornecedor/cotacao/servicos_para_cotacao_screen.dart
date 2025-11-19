@@ -121,35 +121,32 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                         // 🧠 Confirma antes de apagar
                         confirmDismiss: (_) async {
                           HapticFeedback.selectionClick();
-                          return await Get.dialog<bool>(
-                            AlertDialog(
-                              title: const Text('Remover serviço'),
-                              content:
-                                  Text('Deseja realmente remover "${s.nomeServico}" da lista?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Get.back(result: false),
-                                  child: const Text('Cancelar'),
-                                ),
-                                ElevatedButton(
-                                  style:
-                                      ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-                                  onPressed: () => Get.back(result: true),
-                                  child: const Text('Remover'),
-                                ),
-                              ],
-                            ),
+                          var result = await Biblioteca.showConfirmDialog(
+                            context,
+                            title: 'Remover serviço!',
+                            message: 'Deseja realmente remover "${s.nomeServico}" da lista?',
+                            confirmLabel: 'Remover',
+                            color: primary,
+                            onConfirm: () async {
+                              return await Future.value(true);
+                            },
                           );
+                          return result;
                         },
 
-                        // 🪄 Quando o usuário confirmar o deslize
                         onDismissed: (_) async {
-                          // Guarda referência para permitir “Desfazer”
                           final itemRemovido = s;
-                          final index = i;
+                          final indexRemovido = i;
 
-                          fornecedorController.servicosFornecedor.removeAt(index);
-                          selecionados.remove(itemRemovido.id);
+                          // ⚠️ PRIMEIRO: remova imediatamente da UI
+                          setState(() {
+                            fornecedorController.servicosFornecedor.removeAt(indexRemovido);
+                            selecionados.remove(itemRemovido.id);
+                          });
+
+                          // ⚠️ Garanta que o frame termine ANTES de mostrar snackbar
+                          await Future.delayed(Duration(milliseconds: 50));
+
                           HapticFeedback.mediumImpact();
 
                           // 🎀 Snackbar elegante com “Desfazer”
@@ -161,11 +158,16 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                             colorText: Colors.black87,
                             margin: const EdgeInsets.all(14),
                             borderRadius: 16,
-                            duration: const Duration(seconds: 3),
+                            duration: Duration(seconds: 3),
                             mainButton: TextButton(
                               onPressed: () {
-                                fornecedorController.servicosFornecedor.insert(index, itemRemovido);
-                                Get.back(); // fecha snackbar
+                                // Retorna o item
+                                setState(() {
+                                  fornecedorController.servicosFornecedor
+                                      .insert(indexRemovido, itemRemovido);
+                                  selecionados.add(itemRemovido.id);
+                                });
+
                                 HapticFeedback.lightImpact();
                               },
                               child: Text(
@@ -380,8 +382,8 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                               children: [
                                 Text(
                                   s.precoPromocao != null && s.precoPromocao! > 0
-                                      ? "R\$ ${s.precoPromocao!.toStringAsFixed(2)}"
-                                      : "R\$ ${s.preco.toStringAsFixed(2)}",
+                                      ? "R\$ ${Biblioteca.formatarValorDecimal(s.precoPromocao)}"
+                                      : "R\$ ${Biblioteca.formatarValorDecimal(s.preco)}",
                                   style: GoogleFonts.poppins(
                                     fontWeight: FontWeight.w700,
                                     color: selecionado ? Colors.white : primary,

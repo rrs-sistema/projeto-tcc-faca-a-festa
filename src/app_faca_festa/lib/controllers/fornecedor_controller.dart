@@ -683,18 +683,18 @@ class FornecedorController extends GetxController {
         final nomeSub = mapaSubcategorias[idSub] ?? 'Sem subcategoria';
 
         lista.add(FornecedorServicoDetalhadoDto(
-          id: d.id,
-          idFornecedor: idFornecedor,
-          idProdutoServico: d.id, // ✅ correto agora
-          idSubcategoria: idSub,
-          nomeServico: nomeServico,
-          descricaoServico: descricao,
-          preco: preco,
-          precoPromocao: precoPromocao,
-          nomeCategoria: nomeCat,
-          nomeSubcategoria: nomeSub,
-          ativo: ativo,
-        ));
+            id: d.id,
+            idFornecedor: idFornecedor,
+            idProdutoServico: d.id, // ✅ correto agora
+            idSubcategoria: idSub,
+            nomeServico: nomeServico,
+            descricaoServico: descricao,
+            preco: preco,
+            precoPromocao: precoPromocao,
+            nomeCategoria: nomeCat,
+            nomeSubcategoria: nomeSub,
+            ativo: ativo,
+            quantidade: 1));
       }
 
       servicosDetalhado.assignAll(lista);
@@ -1006,6 +1006,7 @@ class FornecedorController extends GetxController {
         'condicaoPagamento': dataFornecedor['condicao_pagamento'],
         'observacaoFornecedor': dataFornecedor['observacao_fornecedor'],
         'nomeSolicitante': dataCotacao['nome_usuario_solicitante'],
+        'valorEstimadoTotal': dataCotacao['valor_estimado_total'] ?? 0.0,
       });
     }
 

@@ -1,20 +1,24 @@
+import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../controllers/convidado/convidado_controller.dart';
-import '../../../../controllers/convidado/grupo_convidado_controller.dart';
-import '../../../../core/utils/biblioteca.dart';
-import '../../../../data/models/convidado/grupo_convidado_model.dart';
-import '../../../../data/models/model.dart';
+import './../../../../controllers/convidado/grupo_convidado_controller.dart';
+import './../../../../data/models/convidado/grupo_convidado_model.dart';
+import './../../../../controllers/convidado/convidado_controller.dart';
+import './../../../../controllers/tema/event_theme_controller.dart';
+import './../../../../core/utils/biblioteca.dart';
+import './../../../../data/models/model.dart';
 
 class MesasTab extends StatelessWidget {
   const MesasTab({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Get.find<EventThemeController>();
     final controller = Get.find<ConvidadoController>();
     final grupoController = Get.find<GrupoConvidadoController>();
+    final primary = theme.primaryColor.value;
 
     return Obx(() {
       final grupos = controller.convidadosPorMesa;
@@ -25,10 +29,35 @@ class MesasTab extends StatelessWidget {
       }
 
       if (grupos.isEmpty) {
-        return const Center(
-          child: Text(
-            'Nenhuma mesa cadastrada ainda.',
-            style: TextStyle(color: Colors.black54, fontSize: 16),
+        return Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.event_seat_rounded,
+                color: primary.withValues(alpha: 0.6),
+                size: 46,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                "Nenhuma mesa cadastrada",
+                style: GoogleFonts.poppins(
+                  fontSize: 14.5,
+                  fontWeight: FontWeight.w600,
+                  color: primary.withValues(alpha: 0.85),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Adicione mesas para começar a organizar\nseu evento com mais facilidade.',
+                style: GoogleFonts.poppins(
+                  color: Colors.grey.shade700,
+                  fontSize: 13,
+                  height: 1.4,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
           ),
         );
       }

@@ -72,57 +72,31 @@ class EventoCadastroController extends GetxController {
 // 🔹 ATUALIZAR PRÉ-VISUALIZAÇÃO DO EVENTO
 // ===============================
   void atualizarPreview() {
-    final nomeNoivaStr = _capitalizar(nomeNoiva.text);
-    final parceiroStr = _capitalizar(parceiro.text);
-    final idadeStr = idade.text;
-    final bebeStr = _capitalizar(bebe.text);
-
     if (tipoEventoModel.value == null) return;
     final nomeTipoEvento = _normalizeTipoEvento(tipoEventoModel.value!.nome.toLowerCase());
 
     switch (nomeTipoEvento) {
       case 'casamento':
-        if (nomeNoivaStr.isNotEmpty && parceiroStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Casamento de $nomeNoivaStr & $parceiroStr';
-        } else if (nomeNoivaStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Casamento de $nomeNoivaStr';
-        } else if (parceiroStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Casamento de $parceiroStr';
-        } else {
-          nomeEventoPreview.value = '💍 Casamento';
-        }
+        nomeEventoPreview.value = '💍 Casamento\n ${nomeEvento.text}';
         break;
-
       case 'festa infantil':
-        if (nomeNoivaStr.isNotEmpty && idadeStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Festa de $nomeNoivaStr - $idadeStr anos';
-        } else if (nomeNoivaStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Festa de $nomeNoivaStr';
-        } else {
-          nomeEventoPreview.value = '🎈 Festa Infantil';
-        }
+        nomeEventoPreview.value = '🎈 Festa Infantil\n ${nomeEvento.text}';
         break;
-
       case 'chá de bebê':
-        if (bebeStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Chá do $bebeStr';
-        } else if (nomeNoivaStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Chá de bebê de $nomeNoivaStr';
-        } else {
-          nomeEventoPreview.value = '🍼 Chá de Bebê';
-        }
+      case 'ch de beb':
+        nomeEventoPreview.value = '🍼 Chá de Bebê\n ${nomeEvento.text}';
         break;
-
       case 'aniversário':
-        if (nomeNoivaStr.isNotEmpty && idadeStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Aniversário de $nomeNoivaStr - $idadeStr anos';
-        } else if (nomeNoivaStr.isNotEmpty) {
-          nomeEventoPreview.value = 'Aniversário de $nomeNoivaStr';
-        } else {
-          nomeEventoPreview.value = '🎂 Aniversário';
-        }
+      case 'aniversrio':
+        nomeEventoPreview.value = '🎂 Aniversário\n ${nomeEvento.text}';
         break;
-
+      case 'evento corporativo':
+      case 'corporativo':
+        nomeEventoPreview.value = '💼 Evento Corporativo\n ${nomeEvento.text}';
+        break;
+      case 'formatura':
+        nomeEventoPreview.value = '🎓 Formatura \n ${nomeEvento.text}';
+        break;
       default:
         nomeEventoPreview.value = '🎉 ${_capitalizar(tipoEventoModel.value!.nome)}';
     }
@@ -248,9 +222,7 @@ class EventoCadastroController extends GetxController {
     // ✅ VALIDAÇÃO DO CUSTO ESTIMADO
     double valor = 0.0;
     if (custoEstimado.text.isNotEmpty) {
-      final texto =
-          custoEstimado.text.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim();
-      valor = Biblioteca.toDouble(texto);
+      valor = Biblioteca.toDouble(custoEstimado.text);
     }
 
     if (valor <= 1.0) {

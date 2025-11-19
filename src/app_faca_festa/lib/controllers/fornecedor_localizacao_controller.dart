@@ -329,19 +329,19 @@ class FornecedorLocalizacaoController extends GetxController {
               final imagemUrl =
                   fotoSnap.docs.isNotEmpty ? fotoSnap.docs.first.data()['url'] as String? : null;
               lista.add(FornecedorServicoDetalhadoDto(
-                id: '${idFornecedor}_${servDoc.id}',
-                idFornecedor: idFornecedor,
-                idProdutoServico: servDoc.id,
-                idSubcategoria: idSub,
-                nomeServico: servData['nome'],
-                descricaoServico: servData['descricao'],
-                preco: (servData['preco'] as num?)?.toDouble() ?? 0.0,
-                precoPromocao: (servData['preco_promocao'] as num?)?.toDouble(),
-                nomeSubcategoria: nomeSub,
-                nomeCategoria: nomeCategoria,
-                imagemUrl: imagemUrl,
-                ativo: servData['ativo'] ?? true,
-              ));
+                  id: '${idFornecedor}_${servDoc.id}',
+                  idFornecedor: idFornecedor,
+                  idProdutoServico: servDoc.id,
+                  idSubcategoria: idSub,
+                  nomeServico: servData['nome'],
+                  descricaoServico: servData['descricao'],
+                  preco: (servData['preco'] as num?)?.toDouble() ?? 0.0,
+                  precoPromocao: (servData['preco_promocao'] as num?)?.toDouble(),
+                  nomeSubcategoria: nomeSub,
+                  nomeCategoria: nomeCategoria,
+                  imagemUrl: imagemUrl,
+                  ativo: servData['ativo'] ?? true,
+                  quantidade: 1));
             }
           }
         }
@@ -407,20 +407,20 @@ class FornecedorLocalizacaoController extends GetxController {
                       ?.razaoSocial ??
                   'Não localizado';
               lista.add(FornecedorServicoDetalhadoDto(
-                id: servDoc.id,
-                idFornecedor: idFornecedor ?? '',
-                idProdutoServico: servDoc.id,
-                idSubcategoria: idSub,
-                nomeServico: servData['nome'],
-                nomeFornecedor: nomeFornecedor,
-                descricaoServico: servData['descricao'],
-                preco: preco,
-                precoPromocao: precoPromocao,
-                nomeSubcategoria: nomeSub,
-                nomeCategoria: nomeCategoria,
-                imagemUrl: imagemUrl,
-                ativo: servData['ativo'] ?? true,
-              ));
+                  id: servDoc.id,
+                  idFornecedor: idFornecedor ?? '',
+                  idProdutoServico: servDoc.id,
+                  idSubcategoria: idSub,
+                  nomeServico: servData['nome'],
+                  nomeFornecedor: nomeFornecedor,
+                  descricaoServico: servData['descricao'],
+                  preco: preco,
+                  precoPromocao: precoPromocao,
+                  nomeSubcategoria: nomeSub,
+                  nomeCategoria: nomeCategoria,
+                  imagemUrl: imagemUrl,
+                  ativo: servData['ativo'] ?? true,
+                  quantidade: 1));
             }
           }
         }
@@ -498,20 +498,20 @@ class FornecedorLocalizacaoController extends GetxController {
                 'Fornecedor não localizado';
 
             lista.add(FornecedorServicoDetalhadoDto(
-              id: servDoc.id,
-              idFornecedor: idFornecedor,
-              idProdutoServico: servDoc.id,
-              idSubcategoria: idSub,
-              nomeServico: servData['nome'],
-              nomeFornecedor: nomeFornecedor,
-              descricaoServico: servData['descricao'],
-              preco: preco,
-              precoPromocao: precoPromocao,
-              nomeSubcategoria: nomeSub,
-              nomeCategoria: nomeCategoria,
-              imagemUrl: imagemUrl,
-              ativo: servData['ativo'] ?? true,
-            ));
+                id: servDoc.id,
+                idFornecedor: idFornecedor,
+                idProdutoServico: servDoc.id,
+                idSubcategoria: idSub,
+                nomeServico: servData['nome'],
+                nomeFornecedor: nomeFornecedor,
+                descricaoServico: servData['descricao'],
+                preco: preco,
+                precoPromocao: precoPromocao,
+                nomeSubcategoria: nomeSub,
+                nomeCategoria: nomeCategoria,
+                imagemUrl: imagemUrl,
+                ativo: servData['ativo'] ?? true,
+                quantidade: 1));
           }
         }
       }
@@ -570,20 +570,23 @@ class FornecedorLocalizacaoController extends GetxController {
 
         final imagemUrl =
             fotoSnap.docs.isNotEmpty ? fotoSnap.docs.first.data()['url'] as String? : null;
-        lista.add(FornecedorServicoDetalhadoDto(
-            id: doc.id,
-            idFornecedor: idFornecedor,
-            idProdutoServico: idProdutoServico,
-            idSubcategoria: idSubcategoria,
-            nomeServico: servicoData?['nome'],
-            nomeFornecedor: nomeFornecedor,
-            descricaoServico: servicoData?['descricao'],
-            preco: (data['preco'] as num?)?.toDouble() ?? 0.0,
-            precoPromocao: (data['preco_promocao'] as num?)?.toDouble(),
-            nomeSubcategoria: nomeSubcategoria,
-            nomeCategoria: nomeCategoria,
-            imagemUrl: imagemUrl,
-            ativo: true));
+        lista.add(
+          FornecedorServicoDetalhadoDto(
+              id: doc.id,
+              idFornecedor: idFornecedor,
+              idProdutoServico: idProdutoServico,
+              idSubcategoria: idSubcategoria,
+              nomeServico: servicoData?['nome'],
+              nomeFornecedor: nomeFornecedor,
+              descricaoServico: servicoData?['descricao'],
+              preco: (data['preco'] as num?)?.toDouble() ?? 0.0,
+              precoPromocao: (data['preco_promocao'] as num?)?.toDouble(),
+              nomeSubcategoria: nomeSubcategoria,
+              nomeCategoria: nomeCategoria,
+              imagemUrl: imagemUrl,
+              ativo: true,
+              quantidade: 1),
+        );
       }
       servicosPorCategoria.assignAll(lista);
     } catch (e) {
@@ -640,19 +643,19 @@ class FornecedorLocalizacaoController extends GetxController {
         final cidade = fornData['cidade'] ?? '';
 
         lista.add(FornecedorServicoDetalhadoDto(
-          id: idFornecedor,
-          idFornecedor: idFornecedor,
-          idProdutoServico: '',
-          idSubcategoria: null,
-          nomeServico: 'Sem serviços vinculados',
-          descricaoServico: descricaoFornecedor,
-          preco: 0.0,
-          precoPromocao: null,
-          nomeSubcategoria: null,
-          nomeCategoria: 'Sem categoria',
-          imagemUrl: bannerUrl,
-          ativo: true,
-        ));
+            id: idFornecedor,
+            idFornecedor: idFornecedor,
+            idProdutoServico: '',
+            idSubcategoria: null,
+            nomeServico: 'Sem serviços vinculados',
+            descricaoServico: descricaoFornecedor,
+            preco: 0.0,
+            precoPromocao: null,
+            nomeSubcategoria: null,
+            nomeCategoria: 'Sem categoria',
+            imagemUrl: bannerUrl,
+            ativo: true,
+            quantidade: 1));
 
         debugPrint('✅ Fornecedor sem categoria: $nomeFornecedor ($cidade)');
       }

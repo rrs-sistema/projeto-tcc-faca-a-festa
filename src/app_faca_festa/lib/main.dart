@@ -44,7 +44,12 @@ import './controllers/convidado/grupo_convidado_controller.dart';
 import './controllers/servico/servico_foto_controller.dart';
 import './controllers/admin/admin_territorio_controller.dart';
 import './controllers/tema/event_theme_controller.dart';
+import 'controllers/usuario/endereco_usuario_controller.dart';
+import 'controllers/usuario/usuario_controller.dart';
+import 'core/services/whatsGw/whatsapp_cloud_service.dart';
+import 'core/services/whatsGw/whatsapp_service.dart';
 import 'presentation/pages/home_event_screen.dart';
+import 'presentation/whatsapp/whatsapp_templates.dart';
 // import 'popular_firebase.dart';
 
 /// =============================================================
@@ -99,10 +104,30 @@ Future<void> main() async {
   Get.put(AvaliacaoController(), permanent: true);
   Get.put(ServicoFotoController(), permanent: true);
   Get.put(AdminTerritorioController(), permanent: true);
+  Get.put(EnderecoUsuarioController(), permanent: true);
+  Get.put(UsuarioController(), permanent: true);
 
   debugPrint("✅ [MAIN] Controladores principais registrados com sucesso.");
 
   //await popularFirebase();
+
+  Get.put(
+    WhatsAppService(
+      apiKey: "64824efa-d959-4617-bccc-9a9f2a03e3b2",
+    ),
+    permanent: true,
+  );
+
+  Get.put(
+    WhatsAppCloudService(
+      accessToken:
+          "EAAQBMdidePwBPzF4bgveCltHv5sfLvJXkgTAYM5DlSakC0moxZBQ3kCWy4fxNYOMNh3IqZBa47KSrXZBYbJtbXsBQaHzF0Vyv8xUKPfDZAwcc3cQvP4Hmoe0kVszuin9kZA68lGW6drUAhoBFTXDN8g30yMPeSgeRNCVN72NBEb0ueP5SfTWEthg0kJP0ZAR5VlEBgnWSLl1eOmco4Dt2rNtiXmR56ie0t0Tx9bCXXYcjbEZCm9PmWNI8DetPxQJrAZD",
+      phoneNumberId: "868592606338293",
+    ),
+    permanent: true,
+  );
+
+  Get.put(WhatsAppTemplates(), permanent: true);
 
   runApp(const FacaFestaApp());
 }

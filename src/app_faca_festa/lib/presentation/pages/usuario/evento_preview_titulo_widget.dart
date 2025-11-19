@@ -1,6 +1,9 @@
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import './../../../controllers/evento_cadastro_controller.dart';
 
 class EventoPreviewTituloWidget extends StatelessWidget {
   final String tipoEvento;
@@ -16,6 +19,7 @@ class EventoPreviewTituloWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.find<EventoCadastroController>();
     final tipo = tipoEvento.toLowerCase().trim();
     final nome = nomeEvento.trim();
 
@@ -24,7 +28,9 @@ class EventoPreviewTituloWidget extends StatelessWidget {
 
     switch (tipo) {
       case 'casamento':
-        titulo = nome.isEmpty ? '💍 Um dia para celebrar o amor...' : '💍 $nome';
+        titulo = nome.isEmpty
+            ? '💍 Casamento Um dia para celebrar o amor...'
+            : controller.nomeEventoPreview.value;
         estilo = GoogleFonts.playfairDisplay(
           fontSize: 16,
           fontWeight: FontWeight.w600,
@@ -41,7 +47,9 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         break;
       case 'evento corporativo':
       case 'corporativo':
-        titulo = nome.isEmpty ? '💼 Conectando ideias e pessoas' : '💼 $nome';
+        titulo = nome.isEmpty
+            ? '💼 Evento corporativo - Conectando ideias e pessoas'
+            : controller.nomeEventoPreview.value;
         estilo = GoogleFonts.poppins(
           fontSize: 20,
           fontWeight: FontWeight.w700,
@@ -57,7 +65,9 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         break;
       case 'formatura':
       case 'evento formatura':
-        titulo = nome.isEmpty ? '🎓 Celebre sua conquista!' : '🎓 Formatura de $nome';
+        titulo = nome.isEmpty
+            ? '🎓 Formatura - Celebre sua conquista!'
+            : controller.nomeEventoPreview.value;
         estilo = GoogleFonts.poppins(
           fontSize: 20,
           fontWeight: FontWeight.w700,
@@ -73,7 +83,9 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         break;
 
       case 'festa infantil':
-        titulo = nome.isEmpty ? '🎈 Diversão garantida para os pequenos!' : '🎈 $nome';
+        titulo = nome.isEmpty
+            ? '🎈Festa infantil - Diversão garantida para os pequenos!'
+            : controller.nomeEventoPreview.value;
         estilo = GoogleFonts.fredoka(
           fontSize: 21,
           fontWeight: FontWeight.w600,
@@ -89,7 +101,9 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         break;
 
       case 'chá de bebê':
-        titulo = nome.isEmpty ? '🍼 Esperando com amor...' : '🍼 $nome';
+        titulo = nome.isEmpty
+            ? '🍼 Chá de bebê - Esperando com amor...'
+            : controller.nomeEventoPreview.value;
         estilo = GoogleFonts.dancingScript(
           fontSize: 26,
           fontWeight: FontWeight.w600,
@@ -105,7 +119,9 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         break;
 
       case 'aniversário':
-        titulo = nome.isEmpty ? '🎂 Que venham mais momentos incríveis!' : '🎂 $nome';
+        titulo = nome.isEmpty
+            ? '🎂 Aniversário - Que venham mais momentos incríveis!'
+            : controller.nomeEventoPreview.value;
         estilo = GoogleFonts.poppins(
           fontSize: 20,
           fontWeight: FontWeight.w700,
@@ -121,7 +137,8 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         break;
 
       default:
-        titulo = nome.isEmpty ? '🎉 Sua celebração começa aqui!' : '🎉 $nome';
+        titulo =
+            nome.isEmpty ? '🎉 Sua celebração começa aqui!' : controller.nomeEventoPreview.value;
         estilo = GoogleFonts.poppins(
           fontSize: 20,
           fontWeight: FontWeight.w600,

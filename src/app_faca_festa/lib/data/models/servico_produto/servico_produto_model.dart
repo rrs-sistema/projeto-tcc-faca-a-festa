@@ -69,7 +69,8 @@ class ServicoProdutoModel {
           nomeCategoria: null, // idem
           imagemUrl: null,
           tipoMedida: s.tipoMedida,
-          ativo: s.ativo);
+          ativo: s.ativo,
+          quantidade: 1);
     }).toList();
   }
 }

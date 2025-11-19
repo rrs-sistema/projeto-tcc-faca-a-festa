@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,7 +8,7 @@ import './../../components/show_responder_cotacao_bottom_sheet.dart';
 
 Widget buildCotacaoCard(
   BuildContext context,
-  Map<String, dynamic> s,
+  Map<String, dynamic> servicoMap,
   String dataEnvio,
   String dataLimite,
 ) {
@@ -17,10 +18,10 @@ Widget buildCotacaoCard(
   final secondary = theme.secondaryColor.value;
   final temaIcone = theme.icon.value;
 
-  final bool isNova = s['nova'] == true;
+  final bool isNova = servicoMap['nova'] == true;
 
   return Hero(
-    tag: s['idCotacao'],
+    tag: servicoMap['idCotacao'],
     child: TweenAnimationBuilder(
       tween: Tween<double>(begin: 0.96, end: 1),
       duration: const Duration(milliseconds: 260),
@@ -59,12 +60,14 @@ Widget buildCotacaoCard(
             onTap: () {
               Get.back();
               showResponderCotacaoBottomSheet(
-                  context: context,
-                  idCotacao: s['idCotacao'],
-                  categoriaNome: s['categoriaNome'],
-                  descricao: s['descricao'],
-                  nomeSolicitante: s['nomeSolicitante'],
-                  dataLimite: dataLimite);
+                context: context,
+                idCotacao: servicoMap['idCotacao'],
+                categoriaNome: servicoMap['categoriaNome'],
+                descricao: servicoMap['descricao'],
+                nomeSolicitante: servicoMap['nomeSolicitante'],
+                dataLimite: dataLimite,
+                ofertaDesejada: Biblioteca.toDouble(servicoMap['valorEstimadoTotal'].toString()),
+              );
             },
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -116,7 +119,7 @@ Widget buildCotacaoCard(
                           children: [
                             Expanded(
                               child: Text(
-                                s['categoriaNome'] ?? '',
+                                servicoMap['categoriaNome'] ?? '',
                                 style: GoogleFonts.poppins(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w600,
@@ -170,9 +173,10 @@ Widget buildCotacaoCard(
 
                         const SizedBox(height: 4),
 
-                        if (s['descricao'] != null && s['descricao'].trim().isNotEmpty)
+                        if (servicoMap['descricao'] != null &&
+                            servicoMap['descricao'].trim().isNotEmpty)
                           Text(
-                            s['descricao'],
+                            servicoMap['descricao'],
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(

@@ -207,14 +207,56 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
                         final status = (data['status'] ?? 'aguardando').toString().toLowerCase();
                         final corStatus = switch (status) {
                           'respondido' || 'respondida' => Colors.green.shade600,
-                          'recusado' || 'recusada' => Colors.red.shade600,
+                          'recusado' ||
+                          'recusada' ||
+                          'cancelado' ||
+                          'cancelada' =>
+                            Colors.red.shade600,
+                          'concluido' ||
+                          'concluida' ||
+                          'fechada' ||
+                          'fechado' =>
+                            Colors.blue.shade700,
+                          'parcial' || 'parcialmente' => Colors.orange.shade700,
                           _ => Colors.orange.shade700
                         };
                         final textoStatus = switch (status) {
                           'respondido' || 'respondida' => 'Respondido',
                           'recusado' || 'recusada' => 'Recusado',
+                          'cancelado' || 'cancelada' => 'Cancelada',
+                          'fechado' || 'fechada' => 'Fechado',
+                          'parcial' || 'parcialmente' => 'Parcial',
                           _ => 'Aguardando'
                         };
+
+                        /*
+  switch (status) {
+    case StatusCotacao.respondida:
+      cor = Colors.green.shade600;
+      texto = 'Respondida';
+      icone = Icons.mark_chat_read_rounded;
+      break;
+    case StatusCotacao.parcial:
+      cor = Colors.orange.shade700;
+      texto = 'Parcial';
+      icone = Icons.hourglass_bottom_rounded;
+      break;
+    case StatusCotacao.concluida:
+      cor = Colors.blue.shade700;
+      texto = 'Concluída';
+      icone = Icons.verified_rounded;
+      break;
+    case StatusCotacao.cancelada:
+      cor = Colors.red.shade700;
+      texto = 'Cancelada';
+      icone = Icons.cancel_rounded;
+      break;
+    default:
+      cor = Colors.grey.shade600;
+      texto = 'Pendente';
+      icone = Icons.schedule_rounded;
+  }
+                        */
 
                         bool temRespostaFornecedor = (data['observacao_fornecedor'] != null &&
                                 data['observacao_fornecedor'].toString().trim().isNotEmpty) ||

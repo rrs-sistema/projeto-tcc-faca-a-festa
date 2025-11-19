@@ -1,9 +1,12 @@
 import 'dart:async';
 
+import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/services/whatsGw/whatsapp_service.dart';
+import '../../presentation/whatsapp/whatsapp_templates.dart';
 import './../../data/models/model.dart';
 import 'grupo_convidado_controller.dart';
 
@@ -31,6 +34,59 @@ class ConvidadoController extends GetxController {
 // 🔹 Lista temporária de novos convidados (somente em memória)
 // =============================================================
   final RxList<ConvidadoModel> novosConvidados = <ConvidadoModel>[].obs;
+
+  Future<void> enviarConviteAoAdicionar(ConvidadoModel convidado, EventoModel evento) async {
+    final whats = Get.find<WhatsAppService>();
+    final templates = Get.find<WhatsAppTemplates>();
+
+    final msg = templates.conviteEvento(
+      nomeConvidado: convidado.nome,
+      nomeEvento: evento.nomeEvento,
+      data: Biblioteca.formatarData(evento.data),
+      hora: evento.hora ?? Biblioteca.formatarHora(evento.data),
+      endereco: evento.localEvento,
+    );
+
+    await whats.sendText(
+      phone: convidado.contato,
+      message: msg,
+    );
+  }
+
+  Future<void> confirmarPresenca(ConvidadoModel convidado, EventoModel evento) async {
+    final whats = Get.find<WhatsAppService>();
+    final templates = Get.find<WhatsAppTemplates>();
+
+    final msg = templates.confirmacaoPresenca(
+      nomeConvidado: convidado.nome,
+      nomeEvento: evento.nomeEvento,
+      data: Biblioteca.formatarData(evento.data),
+      hora: evento.hora ?? Biblioteca.formatarHora(evento.data),
+      endereco: evento.localEvento,
+    );
+
+    await whats.sendText(
+      phone: convidado.contato,
+      message: msg,
+    );
+  }
+
+  Future<void> enviarLembreteEvento(ConvidadoModel convidado, EventoModel evento) async {
+    final whats = Get.find<WhatsAppService>();
+    final templates = Get.find<WhatsAppTemplates>();
+
+    final msg = templates.lembreteEvento(
+      nomeConvidado: convidado.nome,
+      nomeEvento: evento.nomeEvento,
+      data: Biblioteca.formatarData(evento.data),
+      hora: evento.hora ?? Biblioteca.formatarHora(evento.data),
+    );
+
+    await whats.sendText(
+      phone: convidado.contato,
+      message: msg,
+    );
+  }
 
   /// 🔹 Adiciona novo convidado temporário
   void adicionarNovoConvidadoLocal(ConvidadoModel convidado) {
@@ -90,13 +146,14 @@ class ConvidadoController extends GetxController {
   }
 
   /// 🔹 Persiste todos os convidados novos no Firestore
-  Future<void> enviarNovosConvidados() async {
+  Future<void> enviarNovosConvidados(EventoModel evento) async {
     if (novosConvidados.isEmpty) return;
 
     try {
       carregando.value = true;
       for (final c in novosConvidados) {
         await _db.collection('convidado').doc(c.idConvidado).set(c.toMap());
+        enviarConviteAoAdicionar(c, evento);
       }
       novosConvidados.clear();
     } catch (e) {

@@ -1,8 +1,8 @@
-import 'package:lottie/lottie.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
+import 'package:get/get.dart';
 
 import '../../../../controllers/tema/event_theme_controller.dart';
 
@@ -10,20 +10,20 @@ Widget buildHeaderFornecedor() {
   final theme = Get.find<EventThemeController>();
 
   return SizedBox(
-    height: 300, // 👈 define uma altura fixa do cabeçalho
+    height: 260,
     width: double.infinity,
     child: Stack(
       alignment: Alignment.center,
       children: [
-        // 🌌 Fundo com partículas elegantes
         Positioned.fill(
+          top: -95,
           child: Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF000000), // preto profundo no topo
-                  Color(0xFF111111), // preto ligeiramente acinzentado
-                  Color(0xFF1A1A1A), // cinza escuro na base
+                  Color(0xFF000000),
+                  Color(0xFF111111),
+                  Color(0xFF1A1A1A),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -37,12 +37,9 @@ Widget buildHeaderFornecedor() {
             ),
           ),
         ),
-
-        // 💎 Conteúdo principal
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // 🔸 Ícone central com brilho metálico
             Container(
               padding: const EdgeInsets.all(18),
               decoration: BoxDecoration(
@@ -66,7 +63,7 @@ Widget buildHeaderFornecedor() {
               child: const Icon(
                 Icons.storefront_rounded,
                 color: Colors.white,
-                size: 44,
+                size: 48,
               ),
             )
                 .animate()
@@ -74,10 +71,7 @@ Widget buildHeaderFornecedor() {
                 .scale(begin: Offset(0.8, 0.0), curve: Curves.easeOutBack)
                 .then(delay: NumDurationExtensions(1).seconds)
                 .shimmer(duration: NumDurationExtensions(2).seconds),
-
-            const SizedBox(height: 16),
-
-            // 🏆 Título elegante
+            const SizedBox(height: 60),
             ShaderMask(
               shaderCallback: (bounds) => LinearGradient(
                 colors: [
@@ -93,28 +87,22 @@ Widget buildHeaderFornecedor() {
                 style: GoogleFonts.poppins(
                   fontSize: 23,
                   fontWeight: FontWeight.bold,
-                  letterSpacing: 0.6,
+                  letterSpacing: 0.1,
                   color: Colors.white,
                 ),
               ),
             ).animate().fadeIn(duration: 900.ms).slideY(begin: 0.4),
-
-            const SizedBox(height: 8),
-
-            // 💬 Subtítulo
+            const SizedBox(height: 6),
             Text(
               'Conecte-se a novos clientes, destaque seus serviços e amplie seus negócios!',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
-                color: Colors.white.withValues(alpha: 0.9),
-                fontSize: 15,
-                height: 1.4,
+                color: Colors.white,
+                fontSize: 16,
+                height: 1.2,
               ),
             ).animate().fadeIn(duration: 1100.ms).slideY(begin: 0.3),
-
-            const SizedBox(height: 25),
-
-            // 🔹 Linha decorativa
+            const SizedBox(height: 15),
             Container(
               height: 4,
               width: 90,

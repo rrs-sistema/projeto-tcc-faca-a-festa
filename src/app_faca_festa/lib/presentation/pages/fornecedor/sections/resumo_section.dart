@@ -81,18 +81,18 @@ class ResumoSection extends StatelessWidget {
                           shrinkWrap: true,
                           itemCount: solicitacoes.length,
                           itemBuilder: (context, index) {
-                            final s = solicitacoes[index];
-                            final dataEnvio = s['dataEnvio'] is Timestamp
+                            final servicoMap = solicitacoes[index];
+                            final dataEnvio = servicoMap['dataEnvio'] is Timestamp
                                 ? DateFormat("dd/MM/yyyy")
-                                    .format((s['dataEnvio'] as Timestamp).toDate())
+                                    .format((servicoMap['dataEnvio'] as Timestamp).toDate())
                                 : '';
 
-                            final dataLimite = s['dataLimite'] is Timestamp
+                            final dataLimite = servicoMap['dataLimite'] is Timestamp
                                 ? DateFormat("dd/MM/yyyy")
-                                    .format((s['dataLimite'] as Timestamp).toDate())
+                                    .format((servicoMap['dataLimite'] as Timestamp).toDate())
                                 : '';
 
-                            return buildCotacaoCard(context, s, dataEnvio, dataLimite);
+                            return buildCotacaoCard(context, servicoMap, dataEnvio, dataLimite);
                           },
                         ),
                       ),

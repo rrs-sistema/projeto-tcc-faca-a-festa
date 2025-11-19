@@ -8,11 +8,13 @@ class BotaoSalvar extends StatelessWidget {
   final String texto;
   final VoidCallback onPressed;
   final Color? cor;
+  final Icon? icon;
 
   const BotaoSalvar({
     super.key,
     required this.texto,
     required this.onPressed,
+    this.icon,
     this.cor,
   });
 
@@ -44,12 +46,12 @@ class BotaoSalvar extends StatelessWidget {
           ],
         ),
         child: ElevatedButton.icon(
-          icon: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 26),
+          icon: icon ?? Icon(Icons.check_circle_rounded, color: Colors.white, size: 26),
           label: Text(
             texto,
             style: GoogleFonts.poppins(
               fontWeight: FontWeight.w700,
-              fontSize: 16,
+              fontSize: 18,
               color: Colors.white,
             ),
           ),
