@@ -1,24 +1,25 @@
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
-import 'package:uuid/uuid.dart';
 
-import '../../../data/models/orcamento/orcamento_gasto_model.dart';
+import '../../../data/models/avaliacao/avaliacao_model.dart';
+import './../../../controllers/avaliacao/avaliacao_servico_controller.dart';
 import './../../../controllers/contacao/cotacao_controller.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/fornecedor_controller.dart';
-import './../../../controllers/orcamento_controller.dart';
+import './../../../controllers/evento_controller.dart';
+import './../../dialogs/enviar_avaliacao_dialog.dart';
 import './../../../controllers/app_controller.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../../data/models/model.dart';
-import 'chat/chat_mensagens_page.dart';
+import './chat/chat_mensagens_page.dart';
 
 void mostrarDetalhesCotacao(CotacaoModel cotacao) {
   final fornecedorController = Get.find<FornecedorController>();
+  final cotacaoController = Get.find<CotacaoController>();
+
   final theme = Get.find<EventThemeController>();
   final primary = theme.primaryColor.value;
   final gradient = theme.gradient.value;
@@ -228,35 +229,6 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
                           'parcial' || 'parcialmente' => 'Parcial',
                           _ => 'Aguardando'
                         };
-
-                        /*
-  switch (status) {
-    case StatusCotacao.respondida:
-      cor = Colors.green.shade600;
-      texto = 'Respondida';
-      icone = Icons.mark_chat_read_rounded;
-      break;
-    case StatusCotacao.parcial:
-      cor = Colors.orange.shade700;
-      texto = 'Parcial';
-      icone = Icons.hourglass_bottom_rounded;
-      break;
-    case StatusCotacao.concluida:
-      cor = Colors.blue.shade700;
-      texto = 'Concluída';
-      icone = Icons.verified_rounded;
-      break;
-    case StatusCotacao.cancelada:
-      cor = Colors.red.shade700;
-      texto = 'Cancelada';
-      icone = Icons.cancel_rounded;
-      break;
-    default:
-      cor = Colors.grey.shade600;
-      texto = 'Pendente';
-      icone = Icons.schedule_rounded;
-  }
-                        */
 
                         bool temRespostaFornecedor = (data['observacao_fornecedor'] != null &&
                                 data['observacao_fornecedor'].toString().trim().isNotEmpty) ||
@@ -640,13 +612,60 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
                                 },
                               ),
 
+                              // === BOTÃO DE AVALIAÇÃO DO ATENDIMENTO ===
+                              if (status == 'respondido' ||
+                                  status == 'respondida' ||
+                                  status == 'recusado' ||
+                                  status == 'cancelado') ...[
+                                const SizedBox(height: 10),
+                                FutureBuilder<bool>(
+                                  future: Get.find<AvaliacaoServicoController>().podeAvaliarCotacao(
+                                    idFornecedor: idFornecedor,
+                                    idEvento: cotacao.idEvento,
+                                    idUsuario:
+                                        Get.find<AppController>().usuarioLogado.value!.idUsuario,
+                                  ),
+                                  builder: (context, snap) {
+                                    if (!snap.hasData || snap.data == false) {
+                                      return const SizedBox.shrink();
+                                    }
+
+                                    return Align(
+                                      alignment: Alignment.centerRight,
+                                      child: ElevatedButton.icon(
+                                        onPressed: () {
+                                          getDialogAvaliacaoFornecedor(fornecedor: fornecedor);
+                                        },
+                                        icon: const Icon(Icons.star_rounded,
+                                            size: 18, color: Colors.white),
+                                        label: Text(
+                                          'Avaliar atendimento',
+                                          style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.amber.shade700,
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 16, vertical: 10),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(14),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ],
+
                               if (status == 'respondido' || status == 'respondida') ...[
                                 const SizedBox(height: 10),
                                 Align(
                                   alignment: Alignment.centerRight,
                                   child: ElevatedButton.icon(
-                                    onPressed: () =>
-                                        _confirmarFornecedorEscolhido(idFornecedor, cotacao.id),
+                                    onPressed: () => cotacaoController.confirmarFornecedorEscolhido(
+                                        idFornecedor, cotacao.id),
                                     icon: const Icon(Icons.check_circle_outline, size: 18),
                                     label: const Text("Fechar negócio"),
                                     style: ElevatedButton.styleFrom(
@@ -782,123 +801,16 @@ Widget _buildStatusBadge(StatusCotacao status, {bool invertColors = false}) {
   );
 }
 
-// ===============================================================
-// 🔹 Atualizado — busca serviços dentro do fornecedor + cria gasto inicial
-// ===============================================================
-Future<void> _confirmarFornecedorEscolhido(String idFornecedor, String idCotacao) async {
-  final db = FirebaseFirestore.instance;
-  final cotacaoRef = db.collection('cotacao').doc(idCotacao);
-  final fornecedorController = Get.find<FornecedorController>();
-  final appController = Get.find<AppController>();
-  final fornecedor =
-      fornecedorController.fornecedores.firstWhere((f) => f.idFornecedor == idFornecedor);
-
-  try {
-    EasyLoading.show(status: 'Fechando negócio... 🔒');
-
-    final cotacaoSnap = await cotacaoRef.get();
-    if (!cotacaoSnap.exists) throw Exception('Cotação não encontrada.');
-
-    final data = cotacaoSnap.data() as Map<String, dynamic>;
-    final idEvento = data['id_evento'];
-    final idUsuarioSolicitante = data['id_usuario_solicitante'];
-    final categoriaNome = data['categoria_nome'];
-
-    // 🔹 Busca apenas serviços do fornecedor escolhido
-    final servicosSnap =
-        await cotacaoRef.collection('fornecedores').doc(idFornecedor).collection('servicos').get();
-
-    double valorTotal = 0.0;
-    for (final s in servicosSnap.docs) {
-      final d = s.data();
-      final valor = (d['valor_estimado'] ?? 0).toDouble();
-      final qtd = (d['quantidade'] ?? 1).toDouble();
-      valorTotal += valor * qtd;
-    }
-
-    // ===============================================================
-    // 🔹 Batch — atualiza cotação + fornecedores + cria orçamento
-    // ===============================================================
-    final fornecedoresSnap = await cotacaoRef.collection('fornecedores').get();
-    final batch = db.batch();
-
-    for (final f in fornecedoresSnap.docs) {
-      final id = f['id_fornecedor'];
-      batch.update(f.reference, {'status': id == idFornecedor ? 'fechado' : 'recusado'});
-    }
-
-    batch.update(cotacaoRef, {
-      'status': StatusCotacao.concluida.firestoreValue,
-      'data_fechamento': Timestamp.now(),
-      'fechado_por': idUsuarioSolicitante,
-    });
-
-    // Criar documento de orçamento
-    final orcRef = db.collection('orcamento').doc();
-    final novo = OrcamentoModel(
-      idOrcamento: orcRef.id,
-      idEvento: idEvento,
-      idFornecedor: idFornecedor,
-      nomeFornecedor: fornecedor.razaoSocial,
-      custoEstimado: valorTotal,
-      idSolicitante: appController.usuarioLogado.value?.idUsuario ?? '',
-      nomeSolicitante: appController.usuarioLogado.value?.nome ?? '',
-      anotacoes: 'Orçamento gerado automaticamente após fechamento da cotação "$categoriaNome".',
-      status: StatusOrcamento.emNegociacao,
-      orcamentoFechado: false,
-      idServicoFornecido: '',
-    );
-    batch.set(orcRef, novo.toMap());
-
-    await batch.commit();
-
-    // ===============================================================
-    // 🔹 AJUSTE IMPORTANTE:
-    // Criar automaticamente o primeiro gasto (orcamento_gasto)
-    // ===============================================================
-    final gastoId = const Uuid().v4();
-    final gastoData = OrcamentoGastoModel(
-      idGasto: gastoId,
-      idOrcamento: orcRef.id,
-      nome: "Serviço contratado – $categoriaNome",
-      custo: valorTotal,
-      pago: 0,
-    ).toMap()
-      ..['data_cadastro'] = Timestamp.now();
-
-    await db
-        .collection('orcamento')
-        .doc(orcRef.id)
-        .collection('orcamento_gasto')
-        .doc(gastoId)
-        .set(gastoData);
-
-    // ===============================================================
-    // 🔹 Finalização de UX
-    // ===============================================================
-    EasyLoading.dismiss();
-    HapticFeedback.mediumImpact();
-
-    Get.snackbar(
-      'Negócio fechado! 🎉',
-      'Orçamento criado e gasto inicial registrado.',
-      backgroundColor: Colors.green.shade600,
-      colorText: Colors.white,
-      icon: const Icon(Icons.check_circle, color: Colors.white),
-      snackPosition: SnackPosition.BOTTOM,
-      duration: const Duration(seconds: 3),
-    );
-
-    // Atualizar listas
-    Get.find<CotacaoController>().ouvirMinhasCotacoes();
-    Get.find<OrcamentoController>().carregarOrcamentosDoEvento(idEvento);
-  } catch (e) {
-    EasyLoading.dismiss();
-    Get.snackbar(
-      'Erro',
-      'Não foi possível fechar o negócio.',
-      backgroundColor: Colors.redAccent,
-      colorText: Colors.white,
-    );
-  }
+void getDialogAvaliacaoFornecedor({required FornecedorModel fornecedor}) {
+  Get.dialog(
+    EnviarAvaliacaoDialog(
+      idFornecedor: fornecedor.idFornecedor,
+      tipo: TipoAvaliacao.fornecedor,
+      idServico: null,
+      idCliente: Get.find<AppController>().usuarioLogado.value!.idUsuario,
+      nomeCliente: Get.find<AppController>().usuarioLogado.value!.nome,
+      idEvento: Get.find<EventoController>().eventoAtual.value!.idEvento,
+      nomeEventoAtual: Get.find<EventoController>().eventoAtual.value!.nomeEvento,
+    ),
+  );
 }

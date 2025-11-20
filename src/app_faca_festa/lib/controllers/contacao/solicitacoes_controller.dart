@@ -65,6 +65,8 @@ class SolicitacoesController extends GetxController {
               dataCadastro: cotacao.dataCadastro,
               status: cotacao.status,
               valorEstimadoTotal: cotacao.valorEstimadoTotal,
+              descricao: cotacao.descricao,
+              categoriaNome: cotacao.categoriaNome,
               fornecedores: [],
               servicos: servicos),
         );

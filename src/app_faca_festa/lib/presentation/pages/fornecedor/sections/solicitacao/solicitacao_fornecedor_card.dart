@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../../data/models/model.dart';
+import '../../components/show_responder_cotacao_bottom_sheet.dart';
 
 class SolicitacaoFornecedorCard extends StatelessWidget {
   final CotacaoModel solicitacao;
@@ -79,7 +80,19 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(18),
           child: InkWell(
             borderRadius: BorderRadius.circular(18),
-            onTap: () => debugPrint('🟢 Clique na solicitação ${solicitacao.id}'),
+            onTap: () {
+              if (solicitacao.status == StatusCotacao.pendente) {
+                showResponderCotacaoBottomSheet(
+                  context: context,
+                  idCotacao: solicitacao.id,
+                  categoriaNome: solicitacao.categoriaNome ?? 'Categoria não informada',
+                  descricao: solicitacao.descricao ?? 'Sem descrição',
+                  nomeSolicitante: solicitacao.nomeUsuarioSolicitante,
+                  dataLimite: dataFmt,
+                  ofertaDesejada: Biblioteca.toDouble(solicitacao.valorEstimadoTotal.toString()),
+                );
+              }
+            },
             child: Padding(
               padding: const EdgeInsets.all(14.0),
               child: Row(
@@ -107,7 +120,7 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                solicitacao.nomeUsuarioSolicitante,
+                                'Solicitante: ${solicitacao.nomeUsuarioSolicitante}',
                                 style: GoogleFonts.poppins(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 16.5,
@@ -134,20 +147,42 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 4),
-
-                        // 🔹 Mensagem ou descrição curta
-                        Text(
-                          solicitacao.descricao ?? "Sem descrição adicional.",
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: Colors.grey.shade700,
-                            height: 1.4,
+                        if (solicitacao.categoriaNome != null &&
+                            solicitacao.categoriaNome!.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  'Categoria: ${solicitacao.categoriaNome}',
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w400,
+                                    fontSize: 14.5,
+                                    color: Colors.grey.shade900,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                        ],
 
+                        if (solicitacao.descricao != null) ...[
+                          const SizedBox(height: 4),
+                          // 🔹 Mensagem ou descrição curta
+                          Text(
+                            'Descrição: ${solicitacao.descricao}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w200,
+                              color: Colors.grey.shade900,
+                              height: 1.4,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                         const SizedBox(height: 8),
                         // 🔹 Serviços listados
                         Column(

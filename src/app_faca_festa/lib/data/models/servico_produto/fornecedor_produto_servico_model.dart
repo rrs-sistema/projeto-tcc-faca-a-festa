@@ -27,12 +27,17 @@ class FornecedorProdutoServicoModel {
   /// Data de cadastro (útil para relatórios)
   final DateTime dataCadastro;
 
+  final double? mediaServico;
+  final int? totalAvaliacoesServico;
+
   FornecedorProdutoServicoModel({
     required this.id,
     required this.idProdutoServico,
     required this.idFornecedor,
     required this.preco,
     this.idSubcategoria,
+    this.mediaServico,
+    this.totalAvaliacoesServico,
     this.precoPromocao,
     this.ativo = true,
     DateTime? dataCadastro,
@@ -51,24 +56,14 @@ class FornecedorProdutoServicoModel {
       'preco_promocao': precoPromocao,
       'ativo': ativo,
       'data_cadastro': Timestamp.fromDate(dataCadastro),
+      'media_servico': mediaServico,
+      'total_avaliacoes_servico': totalAvaliacoesServico,
     };
   }
 
   // ===========================================================
   // 🔹 Conversão a partir do Firestore
   // ===========================================================
-  factory FornecedorProdutoServicoModel.fromMap01(Map<String, dynamic> map) {
-    return FornecedorProdutoServicoModel(
-      id: map['id_fornecedor_servico'] ?? '',
-      idProdutoServico: map['id_produto_servico'] ?? '',
-      idFornecedor: map['id_fornecedor'] ?? '',
-      idSubcategoria: map['id_subcategoria'], // ✅ novo
-      preco: (map['preco'] as num?)?.toDouble() ?? 0.0,
-      precoPromocao: (map['preco_promocao'] as num?)?.toDouble(),
-      ativo: map['ativo'] ?? true,
-      dataCadastro: _toDateTime(map['data_cadastro']),
-    );
-  }
 
   factory FornecedorProdutoServicoModel.fromMap(Map<String, dynamic> map) {
     return FornecedorProdutoServicoModel(
@@ -80,6 +75,8 @@ class FornecedorProdutoServicoModel {
       precoPromocao: (map['preco_promocao'] as num?)?.toDouble(),
       ativo: map['ativo'] ?? true,
       dataCadastro: _toDateTime(map['data_cadastro']),
+      mediaServico: (map['media_servico'] as num?)?.toDouble(),
+      totalAvaliacoesServico: map['total_avaliacoes_servico'],
     );
   }
 

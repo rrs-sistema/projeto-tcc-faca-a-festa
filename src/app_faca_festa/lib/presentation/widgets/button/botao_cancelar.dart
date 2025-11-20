@@ -35,7 +35,7 @@ class BotaoCancelar extends StatelessWidget {
         ),
         style: TextButton.styleFrom(
           overlayColor: corPrincipalOpcao.withValues(alpha: 0.1),
-          backgroundColor: Colors.white.withValues(alpha: 0.25),
+          backgroundColor: corBackground ?? Colors.white.withValues(alpha: 0.25),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),

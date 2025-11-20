@@ -12,13 +12,16 @@ class FornecedorModel {
   final bool ativo;
   final DateTime dataCadastro;
 
-  /// 🔹 Novo campo
   final String? bannerUrl;
 
   /// 🔹 Lista de categorias e subcategorias
-  /// Cada item contém:
-  /// { idCategoria, nomeCategoria, idSubcategoria, nomeSubcategoria }
   final List<Map<String, dynamic>> categorias;
+
+  /// ⭐ NOVOS CAMPOS DE AVALIAÇÃO
+  final double mediaAvaliacoes; // média geral
+  final int totalAvaliacoes; // total de avaliações
+  final bool isTopCategoria; // selo calculado posteriormente
+  final String? fcmToken;
 
   FornecedorModel({
     required this.idFornecedor,
@@ -33,6 +36,12 @@ class FornecedorModel {
     DateTime? dataCadastro,
     this.bannerUrl,
     this.categorias = const [],
+
+    /// campos novos
+    this.mediaAvaliacoes = 0.0,
+    this.totalAvaliacoes = 0,
+    this.isTopCategoria = false,
+    this.fcmToken,
   }) : dataCadastro = dataCadastro ?? DateTime.now();
 
   // =======================================================
@@ -42,12 +51,10 @@ class FornecedorModel {
     final categoriasLimpa = categorias.map((c) {
       final map = Map<String, dynamic>.from(c);
 
-      // 🔹 Converte DateTime → Timestamp
       if (map['dataCadastro'] is DateTime) {
         map['dataCadastro'] = Timestamp.fromDate(map['dataCadastro']);
       }
 
-      // 🔹 Remove serverTimestamp() que Firestore não aceita em arrays
       if (map['dataCadastro'] is FieldValue) {
         map.remove('dataCadastro');
       }
@@ -68,6 +75,12 @@ class FornecedorModel {
       'data_cadastro': Timestamp.fromDate(dataCadastro),
       'banner_url': bannerUrl,
       'categorias': categoriasLimpa,
+
+      // ⭐ Avaliações
+      'media_avaliacoes': mediaAvaliacoes,
+      'total_avaliacoes': totalAvaliacoes,
+      'is_top_categoria': isTopCategoria,
+      'fcm_token': fcmToken,
     };
   }
 
@@ -87,7 +100,6 @@ class FornecedorModel {
     }
 
     return FornecedorModel(
-      // ✅ Usa id_fornecedor OU o documentId
       idFornecedor: map['id_fornecedor'] ?? documentId ?? '',
       idUsuario: map['id_usuario'] ?? '',
       razaoSocial: map['razao_social'] ?? '',
@@ -101,11 +113,16 @@ class FornecedorModel {
       bannerUrl: map['banner_url'],
       categorias:
           map['categorias'] != null ? List<Map<String, dynamic>>.from(map['categorias']) : [],
+
+      /// ⭐ campos novos (com fallback)
+      mediaAvaliacoes: (map['media_avaliacoes'] as num?)?.toDouble() ?? 0.0,
+      totalAvaliacoes: (map['total_avaliacoes'] as num?)?.toInt() ?? 0,
+      isTopCategoria: map['is_top_categoria'] ?? false,
     );
   }
 
   // =======================================================
-  // 🔹 Atualização parcial (copyWith)
+  // 🔹 Atualização parcial
   // =======================================================
   FornecedorModel copyWith({
     String? razaoSocial,
@@ -116,6 +133,10 @@ class FornecedorModel {
     bool? ativo,
     String? bannerUrl,
     List<Map<String, dynamic>>? categorias,
+    double? mediaAvaliacoes,
+    int? totalAvaliacoes,
+    bool? isTopCategoria,
+    String? fcmToken,
   }) {
     return FornecedorModel(
       idFornecedor: idFornecedor,
@@ -128,6 +149,10 @@ class FornecedorModel {
       ativo: ativo ?? this.ativo,
       bannerUrl: bannerUrl ?? this.bannerUrl,
       categorias: categorias ?? this.categorias,
+      mediaAvaliacoes: mediaAvaliacoes ?? this.mediaAvaliacoes,
+      totalAvaliacoes: totalAvaliacoes ?? this.totalAvaliacoes,
+      isTopCategoria: isTopCategoria ?? this.isTopCategoria,
+      fcmToken: fcmToken ?? this.fcmToken,
     );
   }
 }

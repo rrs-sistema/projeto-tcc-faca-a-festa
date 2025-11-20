@@ -1,28 +1,29 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:lottie/lottie.dart';
+import 'package:get/get.dart';
 import 'dart:async';
 
-import '../data/models/DTO/servico_cotado_dto.dart';
 import './../presentation/pages/convidado/area/area_convidado_home_screen.dart';
 import './../presentation/pages/fornecedor/fornecedor_home_screen.dart';
 import './../presentation/pages/admin/admin_dashboard_screen.dart';
 import './../presentation/pages/welcome/welcome_event_screen.dart';
 import './../presentation/pages/convidado/convidado_page.dart';
 import './../presentation/pages/home_event_screen.dart';
+import './../data/models/DTO/servico_cotado_dto.dart';
+import './avaliacao/avaliacao_controller.dart';
+import './convidado/convidado_controller.dart';
+import './contacao/cotacao_controller.dart';
+import './servico_produto_controller.dart';
 import './../role_selector_screen.dart';
+import './fornecedor_controller.dart';
+import './orcamento_controller.dart';
 import './../data/models/model.dart';
-
-import 'avaliacao/avaliacao_controller.dart';
-import 'contacao/cotacao_controller.dart';
-import 'convidado/convidado_controller.dart';
-import 'evento_controller.dart';
-import 'fornecedor_controller.dart';
-import 'orcamento_controller.dart';
-import 'servico_produto_controller.dart';
-import 'tarefa_controller.dart';
+import './evento_controller.dart';
+import './tarefa_controller.dart';
 
 class AppController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -200,6 +201,10 @@ class AppController extends GetxController {
 
             if (fornecedorDoc.exists && fornecedorDoc.data() != null) {
               final fornecedor = FornecedorModel.fromMap(fornecedorDoc.data()!);
+
+              // 🔥 Atualiza Token FCM no login
+              await atualizarFcmTokenFornecedor(usuario.idUsuario);
+
               if (!fornecedor.aptoParaOperar) {
                 Get.snackbar(
                   "Em análise",
@@ -210,8 +215,6 @@ class AppController extends GetxController {
                 );
               }
               fornecedorController.fornecedor.value = fornecedor;
-              //await fornecedorController.buscarServicosFornecedorPorCategorias(fornecedor.idUsuario);
-              //servicoController.converterServicosComDetalhes(fornecedor.idUsuario);
 
               fornecedorController.ouvirMensagensNaoLidas(fornecedor.idUsuario);
               fornecedorController.iniciarListenerFornecedor(fornecedor.idUsuario);
@@ -340,6 +343,33 @@ class AppController extends GetxController {
     final doc = await _db.collection('usuarios').doc(id).get();
     if (!doc.exists) return null;
     return UsuarioModel.fromMap(doc.data()!);
+  }
+
+  Future<void> atualizarFcmTokenFornecedor(String idFornecedor) async {
+    final messaging = FirebaseMessaging.instance;
+
+    try {
+      await messaging.requestPermission();
+
+      final token = await messaging.getToken();
+      if (token == null) return;
+
+      await FirebaseFirestore.instance.collection('fornecedor').doc(idFornecedor).update({
+        'fcm_token': token,
+      });
+
+      // Atualizar automaticamente quando mudar
+      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+        await FirebaseFirestore.instance
+            .collection('fornecedor')
+            .doc(idFornecedor)
+            .update({'fcm_token': newToken});
+      });
+    } catch (e) {
+      if (kDebugMode) {
+        print("❌ Erro ao atualizar FCM token do fornecedor: $e");
+      }
+    }
   }
 
   // ------------------------------------------------------------

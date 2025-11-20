@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../widgets/festa_app_bar.dart';
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../../controllers/servico/servico_foto_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
@@ -91,32 +92,12 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
   @override
   Widget build(BuildContext context) {
     final primary = theme.primaryColor.value;
-    final gradient = theme.gradient.value;
     final medidas = {'U': 'Unidade', 'H': 'Hora', 'D': 'Diária', 'P': 'Pacote'};
 
     return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: Container(
-          margin: const EdgeInsets.only(left: 8),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.25),
-            shape: BoxShape.circle,
-          ),
-          child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
-            onPressed: Get.back,
-            tooltip: 'Voltar',
-          ),
-        ),
-        title: Text(
-          'Serviços e Produtos',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
-        actions: [
+      appBar: FestaAppBar(
+        titulo: 'Serviços e Produtos',
+        acoes: [
           Container(
             margin: const EdgeInsets.only(right: 8),
             decoration: BoxDecoration(
@@ -140,7 +121,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
               },
               tooltip: 'Adicionar novo serviço',
             ),
-          ),
+          )
         ],
       ),
       body: Obx(() {

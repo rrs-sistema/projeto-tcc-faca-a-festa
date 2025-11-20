@@ -6,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
 import 'dart:io';
 
-import '../../data/models/servico_produto/servico_foto.dart';
+import '../../data/models/servico_produto/servico_foto_model.dart';
 
 class ServicoFotoController extends GetxController {
   final fotos = <ServicoFotoModel>[].obs;

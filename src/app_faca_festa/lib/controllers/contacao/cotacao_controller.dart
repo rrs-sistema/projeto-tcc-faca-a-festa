@@ -1,10 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import 'package:uuid/uuid.dart';
 import 'dart:async';
 
 import '../../core/services/whatsGw/whatsapp_service.dart';
+import '../../data/models/orcamento/orcamento_gasto_model.dart';
 import '../../presentation/whatsapp/whatsapp_templates.dart';
+import '../fornecedor_controller.dart';
+import '../orcamento_controller.dart';
 import './../../data/models/model.dart';
 import './../app_controller.dart';
 
@@ -165,6 +171,130 @@ class CotacaoController extends GetxController {
     });
 
     _subStreams[idCotacao] = stream;
+  }
+
+// ===============================================================
+// 🔹 Atualizado — busca serviços dentro do fornecedor + cria gasto inicial
+// ===============================================================
+  Future<void> confirmarFornecedorEscolhido(String idFornecedor, String idCotacao) async {
+    final db = FirebaseFirestore.instance;
+    final cotacaoRef = db.collection('cotacao').doc(idCotacao);
+    final fornecedorController = Get.find<FornecedorController>();
+    final appController = Get.find<AppController>();
+    final fornecedor =
+        fornecedorController.fornecedores.firstWhere((f) => f.idFornecedor == idFornecedor);
+
+    try {
+      EasyLoading.show(status: 'Fechando negócio... 🔒');
+
+      final cotacaoSnap = await cotacaoRef.get();
+      if (!cotacaoSnap.exists) throw Exception('Cotação não encontrada.');
+
+      final data = cotacaoSnap.data() as Map<String, dynamic>;
+      final idEvento = data['id_evento'];
+      final idUsuarioSolicitante = data['id_usuario_solicitante'];
+      final categoriaNome = data['categoria_nome'];
+
+      // 🔹 Busca apenas serviços do fornecedor escolhido
+      final servicosSnap = await cotacaoRef
+          .collection('fornecedores')
+          .doc(idFornecedor)
+          .collection('servicos')
+          .get();
+
+      double valorTotal = 0.0;
+      for (final s in servicosSnap.docs) {
+        final d = s.data();
+        final valor = (d['valor_estimado'] ?? 0).toDouble();
+        final qtd = (d['quantidade'] ?? 1).toDouble();
+        valorTotal += valor * qtd;
+      }
+
+      // ===============================================================
+      // 🔹 Batch — atualiza cotação + fornecedores + cria orçamento
+      // ===============================================================
+      final fornecedoresSnap = await cotacaoRef.collection('fornecedores').get();
+      final batch = db.batch();
+
+      for (final f in fornecedoresSnap.docs) {
+        final id = f['id_fornecedor'];
+        batch.update(f.reference, {'status': id == idFornecedor ? 'fechado' : 'recusado'});
+      }
+
+      batch.update(cotacaoRef, {
+        'status': StatusCotacao.concluida.firestoreValue,
+        'data_fechamento': Timestamp.now(),
+        'fechado_por': idUsuarioSolicitante,
+      });
+
+      // Criar documento de orçamento
+      final orcRef = db.collection('orcamento').doc();
+      final novo = OrcamentoModel(
+        idOrcamento: orcRef.id,
+        idEvento: idEvento,
+        idFornecedor: idFornecedor,
+        nomeFornecedor: fornecedor.razaoSocial,
+        custoEstimado: valorTotal,
+        idSolicitante: appController.usuarioLogado.value?.idUsuario ?? '',
+        nomeSolicitante: appController.usuarioLogado.value?.nome ?? '',
+        anotacoes: 'Orçamento gerado automaticamente após fechamento da cotação "$categoriaNome".',
+        status: StatusOrcamento.emNegociacao,
+        orcamentoFechado: false,
+        idServicoFornecido: '',
+      );
+      batch.set(orcRef, novo.toMap());
+
+      await batch.commit();
+
+      // ===============================================================
+      // 🔹 AJUSTE IMPORTANTE:
+      // Criar automaticamente o primeiro gasto (orcamento_gasto)
+      // ===============================================================
+      final gastoId = const Uuid().v4();
+      final gastoData = OrcamentoGastoModel(
+        idGasto: gastoId,
+        idOrcamento: orcRef.id,
+        nome: "Serviço contratado – $categoriaNome",
+        custo: valorTotal,
+        pago: 0,
+      ).toMap()
+        ..['data_cadastro'] = Timestamp.now();
+
+      await db
+          .collection('orcamento')
+          .doc(orcRef.id)
+          .collection('orcamento_gasto')
+          .doc(gastoId)
+          .set(gastoData);
+
+      // ===============================================================
+      // 🔹 Finalização de UX
+      // ===============================================================
+      EasyLoading.dismiss();
+      HapticFeedback.mediumImpact();
+
+      Get.snackbar(
+        'Negócio fechado! 🎉',
+        'Orçamento criado e gasto inicial registrado.',
+        backgroundColor: Colors.green.shade600,
+        colorText: Colors.white,
+        icon: const Icon(Icons.check_circle, color: Colors.white),
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 3),
+      );
+
+      // Atualizar listas
+      ouvirMinhasCotacoes();
+      Get.find<OrcamentoController>().carregarOrcamentosDoEvento(idEvento);
+    } catch (e) {
+      EasyLoading.dismiss();
+      Get.snackbar(
+        'Erro',
+        'Não foi possível fechar o negócio.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
   }
 
   void _cancelarSubStreams() {

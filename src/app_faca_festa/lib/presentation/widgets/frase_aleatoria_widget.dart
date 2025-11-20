@@ -177,8 +177,7 @@ class _FraseAleatoriaWidgetState extends State<FraseAleatoriaWidget>
     final frases = _selecionarFrasesPorTipo();
     fraseAtual = frases[random.nextInt(frases.length)];
 
-    // ⏱️ Troca automática a cada 7 segundos
-    _timer = Timer.periodic(const Duration(seconds: 10), (_) {
+    _timer = Timer.periodic(const Duration(seconds: 30), (_) {
       setState(() {
         final novasFrases = _selecionarFrasesPorTipo();
         fraseAtual = novasFrases[random.nextInt(novasFrases.length)];
@@ -223,7 +222,7 @@ class _FraseAleatoriaWidgetState extends State<FraseAleatoriaWidget>
           ],
         ),
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 1700),
+          duration: const Duration(milliseconds: 1900),
           transitionBuilder: (child, animation) => FadeTransition(
             opacity: animation,
             child: SlideTransition(

@@ -1,24 +1,23 @@
 // ignore_for_file: use_build_context_synchronously
-
-import 'package:app_faca_festa/controllers/app_controller.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/avaliacao/avaliacao_controller.dart';
-import '../../../controllers/evento_controller.dart';
-import '../../../controllers/orcamento_gasto_controller.dart';
-import '../../../core/utils/biblioteca.dart';
 import '../../../data/models/avaliacao/avaliacao_model.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
-import '../../widgets/button/botao_cancelar.dart';
-import '../../widgets/button/botao_salvar.dart';
-import '../../widgets/custom_input_field.dart';
-import '../../widgets/festa_app_bar.dart';
+import './../../../controllers/orcamento_gasto_controller.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/orcamento_controller.dart';
+import './../../../controllers/evento_controller.dart';
+import './../../dialogs/enviar_avaliacao_dialog.dart';
+import './../../../controllers/app_controller.dart';
+import './../../widgets/button/botao_cancelar.dart';
+import './../../widgets/button/botao_salvar.dart';
+import './../../widgets/custom_input_field.dart';
+import './../../../core/utils/biblioteca.dart';
+import './../../widgets/festa_app_bar.dart';
 import './../../../data/models/model.dart';
 
 class OrcamentoScreen extends StatelessWidget {
@@ -152,6 +151,7 @@ class OrcamentoScreen extends StatelessWidget {
                             : gastos.map((g) {
                                 return _gastoItem(
                                   g.idOrcamento,
+                                  orcamento.idFornecedor ?? '',
                                   g.idGasto,
                                   g.nome,
                                   g.custo,
@@ -179,6 +179,7 @@ class OrcamentoScreen extends StatelessWidget {
                       [
                         _gastoItem(
                           orcamento.idOrcamento,
+                          orcamento.idFornecedor ?? '',
                           null,
                           orcamento.status.label,
                           orcamento.custoEstimado ?? 0,
@@ -207,6 +208,18 @@ class OrcamentoScreen extends StatelessWidget {
     bool mostrarBotaoAddGasto,
   ) {
     final totalPrevisto = 'R\$ ${Biblioteca.formatarValorDecimal(orcamento.custoEstimado)}';
+
+    final double custo = orcamento.custoEstimado ?? 0;
+    final double totalPago =
+        Get.find<OrcamentoController>().totalPagoDoOrcamento(orcamento.idOrcamento);
+    final bool servicoContratado = !mostrarBotaoAddGasto;
+
+// 🔥 REGRA FINAL PARA PERMITIR AVALIAÇÃO:
+    final bool podeAvaliar = servicoContratado &&
+        orcamento.status == StatusOrcamento.fechado &&
+        totalPago >= custo &&
+        orcamento.idServicoFornecido != null &&
+        orcamento.idServicoFornecido!.isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -370,29 +383,23 @@ class OrcamentoScreen extends StatelessWidget {
                   ),
                 ),
 
-              // Botão Avaliação
-              if (!mostrarBotaoAddGasto)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber.shade100,
-                      foregroundColor: Colors.amber.shade900,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+              if (!podeAvaliar && servicoContratado)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Icon(Icons.info_outline_rounded, size: 18, color: Colors.grey.shade600),
+                      const SizedBox(width: 6),
+                      Text(
+                        _mensagemMotivoNaoAvaliar(orcamento, totalPago),
+                        style: GoogleFonts.poppins(
+                          color: Colors.grey.shade600,
+                          fontSize: 12.8,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                    ),
-                    onPressed: () => _showAvaliacaoDialog(context, orcamento),
-                    icon: const Icon(Icons.star_rate_rounded, size: 18),
-                    label: Text(
-                      'Avaliar Fornecedor',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13.5,
-                      ),
-                    ),
+                    ],
                   ),
                 ),
 
@@ -469,6 +476,7 @@ class OrcamentoScreen extends StatelessWidget {
 
   Widget _gastoItem(
     String? idOrcamento,
+    String idFornecedor,
     String? idGasto,
     String nome,
     double custo,
@@ -476,6 +484,8 @@ class OrcamentoScreen extends StatelessWidget {
   ) {
     final restante = (custo - pago).clamp(0.0, custo);
     final percentPago = (custo > 0) ? (pago / custo).clamp(0.0, 1.0) : 0.0;
+
+    final podeAvaliar = restante == 0 && idGasto != null && idOrcamento != null;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -531,9 +541,7 @@ class OrcamentoScreen extends StatelessWidget {
                 ),
               ),
 
-              // --------------------------------------------------------------
-              // BOTÃO PAGAR (se não estiver pago)
-              // --------------------------------------------------------------
+              // Botão de Pagar
               if (restante > 0 && idOrcamento != null && idGasto != null)
                 InkWell(
                   onTap: () async {
@@ -575,13 +583,11 @@ class OrcamentoScreen extends StatelessWidget {
                   ),
                 ),
 
-              // ✔ Ícone verde quando já está totalmente pago
               if (restante == 0)
                 Icon(Icons.check_circle_rounded, color: Colors.green.shade600, size: 22),
 
               const SizedBox(width: 6),
 
-              // EXCLUIR
               if (idOrcamento != null && idGasto != null)
                 InkWell(
                   borderRadius: BorderRadius.circular(20),
@@ -600,9 +606,6 @@ class OrcamentoScreen extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // --------------------------------------------------------------
-          // BARRA DE PROGRESSO
-          // --------------------------------------------------------------
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
             child: LinearProgressIndicator(
@@ -617,9 +620,6 @@ class OrcamentoScreen extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // --------------------------------------------------------------
-          // PAGO / RESTANTE
-          // --------------------------------------------------------------
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -641,6 +641,35 @@ class OrcamentoScreen extends StatelessWidget {
               ),
             ],
           ),
+
+          const SizedBox(height: 10),
+
+          // --------------------------------------------------------------
+          // ⭐ BOTÃO AVALIAR SERVIÇO — DISCRETO E ELEGANTE
+          // --------------------------------------------------------------
+          if (podeAvaliar)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: () {
+                  _abrirDialogAvaliacaoServico(
+                    idGasto: idGasto,
+                    idFornecedor: idFornecedor,
+                    idOrcamento: idOrcamento,
+                    nomeServico: nome,
+                  );
+                },
+                icon: const Icon(Icons.star_rate_rounded, color: Colors.amber, size: 20),
+                label: Text(
+                  "Avaliar serviço",
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: Colors.amber.shade700,
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -1191,180 +1220,39 @@ class OrcamentoScreen extends StatelessWidget {
   }
 }
 
-void _showAvaliacaoDialog(BuildContext context, OrcamentoModel orcamento) {
-  final themeController = Get.find<EventThemeController>();
-  final avaliacaoController = Get.find<AvaliacaoController>();
+void _abrirDialogAvaliacaoServico({
+  required String idFornecedor,
+  required String idOrcamento,
+  required String idGasto,
+  required String nomeServico,
+}) {
+  final usuario = Get.find<AppController>().usuarioLogado.value;
+  final evento = Get.find<EventoController>().eventoAtual.value;
 
-  final primary = themeController.primaryColor.value;
-  final comentarioCtrl = TextEditingController();
-  int nota = 0;
-
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+  Get.dialog(
+    EnviarAvaliacaoDialog(
+      tipo: TipoAvaliacao.servico,
+      idFornecedor: idFornecedor,
+      idServico: idGasto,
+      idCliente: usuario!.idUsuario,
+      nomeCliente: usuario.nome,
+      idEvento: evento!.idEvento,
+      nomeEventoAtual: evento.nomeEvento,
     ),
-    builder: (context) {
-      return DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.75,
-        minChildSize: 0.5,
-        maxChildSize: 0.95,
-        builder: (_, scrollController) {
-          return Container(
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: SafeArea(
-              top: false,
-              child: SingleChildScrollView(
-                controller: scrollController,
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    // --- Cabeçalho ---
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: primary.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(Icons.star_rounded, color: primary, size: 38),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      "Avaliar Fornecedor",
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.grey.shade900,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      orcamento.anotacoes ?? 'No Anotation',
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey.shade600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // --- Avaliação de estrelas ---
-                    StatefulBuilder(
-                      builder: (context, setState) {
-                        return Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: List.generate(5, (index) {
-                            return IconButton(
-                              icon: Icon(
-                                index < nota ? Icons.star_rounded : Icons.star_border_rounded,
-                                color: Colors.amber,
-                                size: 34,
-                              ),
-                              onPressed: () => setState(() => nota = index + 1),
-                            );
-                          }),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    TextField(
-                      controller: comentarioCtrl,
-                      maxLines: 4,
-                      decoration: InputDecoration(
-                        labelText: 'Deixe seu comentário',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        hintText: 'Conte sua experiência com este fornecedor...',
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // --- Botão de Envio ---
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        icon: const Icon(Icons.send_rounded, color: Colors.white),
-                        label: Text(
-                          'Enviar Avaliação',
-                          style: GoogleFonts.poppins(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                        onPressed: () async {
-                          if (nota == 0) {
-                            Get.snackbar('Atenção', 'Selecione uma nota antes de enviar.',
-                                backgroundColor: Colors.orange.shade200, colorText: Colors.black87);
-                            return;
-                          }
-
-                          final eventoController = Get.find<EventoController>();
-                          final appController = Get.find<AppController>();
-                          final usuario = appController.usuarioLogado.value;
-
-                          final novaAvaliacao = AvaliacaoModel(
-                            id: DateTime.now().millisecondsSinceEpoch.toString(),
-                            idFornecedor: orcamento.idFornecedor ?? '',
-                            nomeFornecedor: orcamento.nomeFornecedor ?? '',
-                            idCliente: usuario?.idUsuario ?? '',
-                            nomeCliente: usuario?.nome ?? '',
-                            evento: eventoController.eventoAtual.value?.nomeEvento ?? '',
-                            nota: nota,
-                            comentario: comentarioCtrl.text,
-                            data: DateTime.now(),
-                          );
-
-                          await avaliacaoController.adicionarAvaliacao(novaAvaliacao);
-                          Get.back();
-
-                          Get.snackbar(
-                            'Avaliação enviada',
-                            'Obrigado por compartilhar sua opinião!',
-                            backgroundColor: primary,
-                            colorText: Colors.white,
-                            duration: const Duration(seconds: 3),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextButton(
-                      onPressed: () => Get.back(),
-                      child: Text(
-                        "Cancelar",
-                        style: GoogleFonts.poppins(
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        },
-      );
-    },
   );
+}
+
+String _mensagemMotivoNaoAvaliar(OrcamentoModel o, double totalPago) {
+  final custo = o.custoEstimado ?? 0;
+
+  if (o.status != StatusOrcamento.fechado) {
+    return "Avaliação liberada após fechar o orçamento.";
+  }
+
+  if (totalPago < custo) {
+    final falta = custo - totalPago;
+    return "Pague o restante (R\$ ${falta.toStringAsFixed(2)}) para avaliar.";
+  }
+
+  return "Avaliação ainda não disponível.";
 }

@@ -236,6 +236,15 @@ class OrcamentoController extends GetxController {
     }
   }
 
+  double totalPagoDoOrcamento(String idOrcamento) {
+    try {
+      final gastoC = Get.find<OrcamentoGastoController>(tag: idOrcamento);
+      return gastoC.gastos.fold(0.0, (s, g) => s + g.pago);
+    } catch (_) {
+      return 0.0;
+    }
+  }
+
   /// ===========================================================
   /// 🔹 Ciclo de vida
   /// ===========================================================

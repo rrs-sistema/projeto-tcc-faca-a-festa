@@ -10,7 +10,7 @@ import './../../../../controllers/categoria/subcategoria_servico_controller.dart
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
 import './../../../../controllers/categoria/categoria_servico_controller.dart';
 import './../../../../controllers/servico/servico_foto_controller.dart';
-import './../../../../data/models/servico_produto/servico_foto.dart';
+import '../../../../data/models/servico_produto/servico_foto_model.dart';
 import './../../../../controllers/servico_produto_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import './../../../widgets/custom_input_field.dart';

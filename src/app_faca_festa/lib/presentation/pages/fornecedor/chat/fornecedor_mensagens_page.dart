@@ -8,6 +8,7 @@ import '../../../../controllers/app_controller.dart';
 import '../../../../controllers/fornecedor_controller.dart';
 import '../../../../controllers/tema/event_theme_controller.dart';
 import '../../../../core/utils/biblioteca.dart';
+import '../../../widgets/festa_app_bar.dart';
 import 'chat_mensagens_page.dart';
 
 class FornecedorMensagensPage extends StatelessWidget {
@@ -19,23 +20,13 @@ class FornecedorMensagensPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gradient = theme.gradient.value;
     final fornecedorId = appCtrl.usuarioLogado.value!.idUsuario;
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        title: Text(
-          "Mensagens",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
-        ),
-        flexibleSpace: Container(
-          decoration: BoxDecoration(gradient: gradient),
-        ),
-        centerTitle: true,
+      appBar: FestaAppBar(
+        titulo: 'Mensagens',
+        automaticamenteImplyLeading: true,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance

@@ -4,13 +4,18 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../data/models/avaliacao/avaliacao_model.dart';
 import './../../../data/models/servico_produto/categoria_servico_model.dart';
+import './../../../controllers/avaliacao/avaliacao_servico_controller.dart';
 import './../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../core/utils/no_sqflite_cache_manager.dart';
 import './../../../controllers/fornecedor_controller.dart';
+import './../../../controllers/evento_controller.dart';
+import './../../dialogs/enviar_avaliacao_dialog.dart';
 import './cotacao/servicos_para_cotacao_screen.dart';
+import './../../../controllers/app_controller.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../../data/models/model.dart';
 
@@ -32,6 +37,26 @@ class FornecedorDetalheScreen extends StatelessWidget {
     final distancia = fornecedorDetalhado.distanciaKm;
     final gradient = themeController.gradient.value;
     final primary = themeController.primaryColor.value;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final avaliacaoController = Get.find<AvaliacaoServicoController>();
+      final eventoController = Get.find<EventoController>();
+      final appController = Get.find<AppController>();
+
+      final idFornecedor = fornecedorDetalhado.fornecedor.idFornecedor;
+      final idEvento = eventoController.eventoAtual.value?.idEvento ?? "";
+      final idUsuario = appController.usuarioLogado.value?.idUsuario ?? "";
+
+      if (idEvento.isNotEmpty && idUsuario.isNotEmpty) {
+        final pode = await avaliacaoController.podeAvaliarFornecedor(
+          idFornecedor: idFornecedor,
+          idEvento: idEvento,
+          idUsuario: idUsuario,
+        );
+
+        avaliacaoController.permitidoAvaliarFornecedor.value = pode;
+      }
+    });
 
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
@@ -88,6 +113,55 @@ class FornecedorDetalheScreen extends StatelessWidget {
                   children: [
                     // 🔹 Cabeçalho
                     _headerFornecedorCategoria(fornecedor, fornecedorDetalhado, primary),
+
+                    // ⭐ Selos do Fornecedor
+                    GetBuilder<AvaliacaoServicoController>(
+                      builder: (ctrl) {
+                        final selos = ctrl.getSelosFornecedor(fornecedor);
+
+                        if (selos.isEmpty) return const SizedBox(height: 10);
+
+                        return Wrap(
+                          spacing: 8,
+                          runSpacing: 6,
+                          children: selos.map((s) => seloBadge(texto: s)).toList(),
+                        );
+                      },
+                    ),
+
+                    // 🔹 Botão Avaliar Fornecedor (aparece somente se permitido)
+                    Obx(() {
+                      final avaliacaoController = Get.find<AvaliacaoServicoController>();
+                      final podeAvaliar = avaliacaoController.permitidoAvaliarFornecedor.value;
+
+                      if (!podeAvaliar) return const SizedBox(height: 8);
+
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 12, bottom: 20),
+                        child: ElevatedButton.icon(
+                          icon: const Icon(Icons.star_rounded, color: Colors.white),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.amber.shade700,
+                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                            elevation: 2,
+                          ),
+                          onPressed: () {
+                            getDialogAvaliacaoFornecedor(
+                              fornecedor: fornecedor,
+                            );
+                          },
+                          label: Text(
+                            "Avaliar este fornecedor",
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
 
                     // 🔹 Descrição
                     if (fornecedor.descricao?.isNotEmpty ?? false) ...[
@@ -1293,5 +1367,65 @@ Widget _bannerFornecedor(String fotoCapa, Gradient gradient) {
         ),
       ),
     ],
+  );
+}
+
+void getDialogAvaliacaoFornecedor({required FornecedorModel fornecedor}) {
+  Get.dialog(
+    EnviarAvaliacaoDialog(
+      idFornecedor: fornecedor.idFornecedor,
+      tipo: TipoAvaliacao.fornecedor,
+      idServico: null,
+      idCliente: Get.find<AppController>().usuarioLogado.value!.idUsuario,
+      nomeCliente: Get.find<AppController>().usuarioLogado.value!.nome,
+      idEvento: Get.find<EventoController>().eventoAtual.value!.idEvento,
+      nomeEventoAtual: Get.find<EventoController>().eventoAtual.value!.nomeEvento,
+    ),
+  );
+}
+
+Widget seloBadge({required String texto}) {
+  IconData icone;
+
+  switch (texto) {
+    case "Fornecedor 5 Estrelas":
+      icone = Icons.star_rate_rounded;
+      break;
+    case "Premium":
+      icone = Icons.workspace_premium_rounded;
+      break;
+    case "Muito Recomendado":
+      icone = Icons.thumb_up_alt_rounded;
+      break;
+    case "Top da Categoria":
+      icone = Icons.emoji_events_rounded;
+      break;
+    default:
+      icone = Icons.check_circle_rounded;
+  }
+
+  return Container(
+    margin: const EdgeInsets.only(right: 8, bottom: 6),
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: Colors.amber.shade600.withValues(alpha: 0.12),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: Colors.amber.shade700.withValues(alpha: 0.4)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icone, color: Colors.amber.shade700, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          texto,
+          style: GoogleFonts.poppins(
+            color: Colors.amber.shade800,
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ],
+    ),
   );
 }

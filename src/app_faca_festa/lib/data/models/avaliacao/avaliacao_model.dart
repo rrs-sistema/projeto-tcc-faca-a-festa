@@ -1,5 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+enum TipoAvaliacao {
+  fornecedor,
+  servico,
+}
+
 class AvaliacaoModel {
   final String id;
   final String idCliente;
