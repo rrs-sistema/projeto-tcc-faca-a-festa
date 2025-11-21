@@ -1,5 +1,6 @@
 import 'package:app_faca_festa/presentation/widgets/button/botao_cancelar.dart';
 import 'package:app_faca_festa/presentation/widgets/button/botao_salvar.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -44,6 +45,22 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
     final primary = theme.primaryColor.value;
     final gradient = theme.gradient.value;
 
+    // 🔹 Textos dinâmicos
+    final titulo =
+        widget.tipo == TipoAvaliacao.fornecedor ? "Avaliando o Fornecedor" : "Avaliando o Serviço";
+
+    final mensagemTopo = widget.tipo == TipoAvaliacao.fornecedor
+        ? "Conte como foi sua experiência com este fornecedor."
+        : "Avalie a qualidade do serviço contratado.";
+
+    final hintComentario = widget.tipo == TipoAvaliacao.fornecedor
+        ? "Deixe um comentário sobre o fornecedor (opcional)..."
+        : "Deixe um comentário sobre o serviço (opcional)...";
+
+    final mensagemErroNota = widget.tipo == TipoAvaliacao.fornecedor
+        ? "Escolha uma nota para avaliar o fornecedor."
+        : "Escolha uma nota para avaliar o serviço.";
+
     return Dialog(
       insetPadding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -61,7 +78,7 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Ícone no topo
+                    // Ícone
                     Container(
                       width: 60,
                       height: 60,
@@ -79,7 +96,7 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                     const SizedBox(height: 14),
 
                     Text(
-                      "Avaliar Serviço",
+                      titulo,
                       style: GoogleFonts.poppins(
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -90,7 +107,7 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                     const SizedBox(height: 10),
 
                     Text(
-                      "Sua avaliação ajuda outros organizadores!",
+                      mensagemTopo,
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: 13.5,
@@ -108,7 +125,7 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
 
                     const SizedBox(height: 22),
 
-                    // Campo comentário
+                    // Comentário
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(16),
@@ -121,7 +138,7 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                         style: GoogleFonts.poppins(fontSize: 14),
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.all(14),
-                          hintText: "Deixe um comentário (opcional)...",
+                          hintText: hintComentario,
                           hintStyle: GoogleFonts.poppins(color: Colors.black38),
                           border: InputBorder.none,
                         ),
@@ -136,33 +153,39 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                         if (nota == 0) {
                           Get.snackbar(
                             "Avaliação necessária",
-                            "Escolha uma nota para continuar.",
+                            mensagemErroNota,
                             snackPosition: SnackPosition.BOTTOM,
                           );
                           return;
                         }
 
-                        if (widget.tipo == TipoAvaliacao.fornecedor) {
-                          await controller.adicionarAvaliacaoFornecedor(
-                            idFornecedor: widget.idFornecedor,
-                            idCliente: widget.idCliente,
-                            nomeCliente: widget.nomeCliente,
-                            nota: nota,
-                            comentario: comentarioCtrl.text.trim(),
-                            idEvento: widget.idEvento,
-                            nomeEvento: widget.nomeEventoAtual,
-                          );
-                        } else {
-                          await controller.adicionarAvaliacaoServico(
-                            idFornecedor: widget.idFornecedor,
-                            idServico: widget.idServico!,
-                            idCliente: widget.idCliente,
-                            nomeCliente: widget.nomeCliente,
-                            nota: nota,
-                            comentario: comentarioCtrl.text.trim(),
-                            idEvento: widget.idEvento,
-                            nomeEvento: widget.nomeEventoAtual,
-                          );
+                        try {
+                          EasyLoading.show(status: 'Processando...');
+                          if (widget.tipo == TipoAvaliacao.fornecedor) {
+                            await controller.adicionarAvaliacaoFornecedor(
+                              idFornecedor: widget.idFornecedor,
+                              idCliente: widget.idCliente,
+                              nomeCliente: widget.nomeCliente,
+                              nota: nota,
+                              comentario: comentarioCtrl.text.trim(),
+                              idEvento: widget.idEvento,
+                              nomeEvento: widget.nomeEventoAtual,
+                            );
+                          } else {
+                            await controller.adicionarAvaliacaoServico(
+                              idFornecedor: widget.idFornecedor,
+                              idServico: widget.idServico!,
+                              idCliente: widget.idCliente,
+                              nomeCliente: widget.nomeCliente,
+                              nota: nota,
+                              comentario: comentarioCtrl.text.trim(),
+                              idEvento: widget.idEvento,
+                              nomeEvento: widget.nomeEventoAtual,
+                            );
+                          }
+                        } catch (_) {
+                        } finally {
+                          EasyLoading.dismiss();
                         }
 
                         Get.back();

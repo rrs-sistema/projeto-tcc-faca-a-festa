@@ -389,34 +389,39 @@ class Biblioteca {
           color: Colors.transparent,
           child: Container(
             width: Get.width * 0.86,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+            padding: const EdgeInsets.fromLTRB(24, 26, 24, 26),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: BorderRadius.circular(26),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
-                )
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 22,
+                  offset: const Offset(0, 12),
+                ),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Ícone grande e bonito
+                // 🌟 Ícone com aura elegante
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: color.withValues(alpha: 0.12),
+                    gradient: LinearGradient(
+                      colors: [
+                        color.withValues(alpha: 0.16),
+                        color.withValues(alpha: 0.08),
+                      ],
+                    ),
                   ),
-                  child: Icon(icon, size: 38, color: color),
+                  child: Icon(icon, size: 40, color: color),
                 ),
 
-                const SizedBox(height: 18),
+                const SizedBox(height: 22),
 
-                // Título
+                // 📝 Título elegante
                 Text(
                   title,
                   textAlign: TextAlign.center,
@@ -427,51 +432,47 @@ class Biblioteca {
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
 
-                // Mensagem
+                // ✉️ Mensagem
                 Text(
                   message,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.poppins(
                     fontSize: 15.5,
+                    height: 1.45,
                     color: Colors.black54,
-                    height: 1.4,
                   ),
                 ),
 
-                const SizedBox(height: 26),
+                const SizedBox(height: 30),
 
-                // Botões
+                // 🔘 Botões Premium
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // CANCELAR
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: () async {
-                          Get.back(result: false);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade400,
+                      child: OutlinedButton(
+                        onPressed: () => Get.back(result: false),
+                        style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
+                          side: BorderSide(color: Colors.grey.shade400, width: 1.3),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          elevation: 0,
                         ),
                         child: Text(
                           cancelLabel,
                           style: GoogleFonts.poppins(
                             fontSize: 15,
-                            color: Colors.white,
+                            color: Colors.grey.shade700,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
 
                     // CONFIRMAR
                     Expanded(
@@ -484,9 +485,10 @@ class Biblioteca {
                           backgroundColor: color,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                          elevation: 0,
+                          elevation: 1,
+                          shadowColor: color.withValues(alpha: 0.4),
                         ),
                         child: Text(
                           confirmLabel,

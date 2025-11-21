@@ -1,4 +1,3 @@
-import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,6 +11,7 @@ import './../../../../controllers/fornecedor_localizacao_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import '../components/abrir_nova_cotacao_bottom_sheet.dart';
 import './../../../../controllers/app_controller.dart';
+import './../../../../core/utils/biblioteca.dart';
 
 class ServicosParaCotacaoScreen extends StatefulWidget {
   final String idCategoria;

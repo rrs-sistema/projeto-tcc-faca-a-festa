@@ -5,19 +5,26 @@ enum StatusCotacao {
   respondida,
   parcial,
   concluida,
-  cancelada;
+  cancelada,
+  perdeuCotacao,
+  recusado;
 
   /// 🔹 Rótulo legível para a UI
   String get label {
     switch (this) {
       case StatusCotacao.respondida:
         return 'Respondida';
+
       case StatusCotacao.parcial:
         return 'Parcial';
       case StatusCotacao.concluida:
         return 'Concluída';
       case StatusCotacao.cancelada:
-        return 'Cancelada';
+        return 'Perdeu cotação';
+      case StatusCotacao.perdeuCotacao:
+        return 'Recusado';
+      case StatusCotacao.recusado:
+        return 'Recusado';
       default:
         return 'Pendente';
     }
@@ -28,12 +35,17 @@ enum StatusCotacao {
     switch (this) {
       case StatusCotacao.respondida:
         return 'respondida';
+
       case StatusCotacao.parcial:
         return 'parcial';
       case StatusCotacao.concluida:
         return 'concluida';
       case StatusCotacao.cancelada:
         return 'cancelada';
+      case StatusCotacao.perdeuCotacao:
+        return 'perdeuCotacao';
+      case StatusCotacao.recusado:
+        return 'recusado';
       default:
         return 'pendente';
     }
@@ -46,44 +58,22 @@ enum StatusCotacao {
     switch (value.toLowerCase()) {
       case 'respondida':
         return StatusCotacao.respondida;
+
       case 'parcial':
         return StatusCotacao.parcial;
       case 'concluida':
         return StatusCotacao.concluida;
       case 'cancelada':
         return StatusCotacao.cancelada;
+      case 'perdeuCotacao':
+        return StatusCotacao.perdeuCotacao;
+      case 'recusado':
+        return StatusCotacao.recusado;
       default:
         return StatusCotacao.pendente;
     }
   }
 }
-
-/*
-
-/// Modelo limpo (público)
-class SolicitacaoModel {
-  final String id;
-  final String cliente;
-  final String evento;
-  final String status;
-  final String mensagem;
-  final DateTime data;
-  final double valor;
-  final List<Map<String, dynamic>> servicos;
-
-  SolicitacaoModel({
-    required this.id,
-    required this.cliente,
-    required this.evento,
-    required this.status,
-    required this.mensagem,
-    required this.data,
-    required this.valor,
-    required this.servicos,
-  });
-}
-
-*/
 
 class CotacaoModel {
   final String id;

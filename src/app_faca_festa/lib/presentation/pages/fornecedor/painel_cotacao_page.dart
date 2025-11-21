@@ -310,12 +310,14 @@ class PainelCotacaoPage extends StatelessWidget {
                 _buildAcaoCotacao(primary, "Ver detalhes", Icons.visibility_rounded, () {
                   mostrarDetalhesCotacao(cotacao);
                 }),
-                _buildAcaoCotacao(Colors.redAccent, "Cancelar cotação", Icons.cancel_outlined,
-                    () async {
-                  EasyLoading.show(status: 'Processando...');
-                  await solicitacoeCtrl.cancelarCotacao(cotacao.id);
-                  EasyLoading.dismiss();
-                }),
+                if (cotacao.status == StatusCotacao.pendente ||
+                    cotacao.status == StatusCotacao.parcial)
+                  _buildAcaoCotacao(Colors.redAccent, "Cancelar cotação", Icons.cancel_outlined,
+                      () async {
+                    EasyLoading.show(status: 'Processando...');
+                    await solicitacoeCtrl.cancelarCotacao(cotacao.id);
+                    EasyLoading.dismiss();
+                  }),
               ],
             ),
           ).animate().fade(duration: 300.ms).slideY(begin: 0.1, end: 0);

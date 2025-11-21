@@ -202,12 +202,17 @@ class CotacaoController extends GetxController {
           .collection('servicos')
           .get();
 
+      String? idServicoContratado;
+      String? nomeServicoContratado;
       double valorTotal = 0.0;
       for (final s in servicosSnap.docs) {
         final d = s.data();
         final valor = (d['valor_estimado'] ?? 0).toDouble();
         final qtd = (d['quantidade'] ?? 1).toDouble();
         valorTotal += valor * qtd;
+        // Captura apenas o primeiro serviço
+        idServicoContratado ??= d['id_produto_servico'];
+        nomeServicoContratado ??= d['nome_produto_servico'];
       }
 
       // ===============================================================
@@ -218,7 +223,7 @@ class CotacaoController extends GetxController {
 
       for (final f in fornecedoresSnap.docs) {
         final id = f['id_fornecedor'];
-        batch.update(f.reference, {'status': id == idFornecedor ? 'fechado' : 'recusado'});
+        batch.update(f.reference, {'status': id == idFornecedor ? 'fechado' : 'perdeuCotacao'});
       }
 
       batch.update(cotacaoRef, {
@@ -246,10 +251,9 @@ class CotacaoController extends GetxController {
 
       await batch.commit();
 
-      // ===============================================================
-      // 🔹 AJUSTE IMPORTANTE:
-      // Criar automaticamente o primeiro gasto (orcamento_gasto)
-      // ===============================================================
+      // -------------------------------------------------------------
+      // Criar gasto inicial incluindo ID e nome do serviço real
+      // -------------------------------------------------------------
       final gastoId = const Uuid().v4();
       final gastoData = OrcamentoGastoModel(
         idGasto: gastoId,
@@ -258,6 +262,8 @@ class CotacaoController extends GetxController {
         custo: valorTotal,
         pago: 0,
       ).toMap()
+        ..['id_servico'] = idServicoContratado
+        ..['nome_servico'] = nomeServicoContratado
         ..['data_cadastro'] = Timestamp.now();
 
       await db

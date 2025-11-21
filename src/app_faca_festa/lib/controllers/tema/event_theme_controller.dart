@@ -203,11 +203,72 @@ class EventThemeController extends GetxController {
   // ======================================================
   void mostrarSeletorDeTema(BuildContext context) {
     final temas = [
-      {'nome': 'Casamento', 'icone': Icons.favorite_rounded},
-      {'nome': 'Festa Infantil', 'icone': Icons.celebration_rounded},
-      {'nome': 'Chá de Bebê', 'icone': Icons.baby_changing_station},
-      {'nome': 'Aniversário', 'icone': Icons.cake_rounded},
-      {'nome': 'Padrão', 'icone': Icons.star_rounded},
+      {
+        'nome': 'Casamento',
+        'icone': Icons.favorite_rounded,
+        'gradient': const LinearGradient(
+          colors: [Color(0xFFE91E63), Color(0xFFF06292)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      },
+      {
+        'nome': 'Festa Infantil',
+        'icone': Icons.celebration_rounded,
+        'gradient': const LinearGradient(
+          colors: [Color(0xFFFF9800), Color(0xFFFFB74D)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      },
+      {
+        'nome': 'Chá de Bebê',
+        'icone': Icons.baby_changing_station,
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF03A9F4), Color(0xFF81D4FA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      },
+      {
+        'nome': 'Aniversário',
+        'icone': Icons.cake_rounded,
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF9C27B0), Color(0xFFBA68C8)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      },
+      {
+        'nome': 'Evento Corporativo',
+        'icone': Icons.business_center_rounded,
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF00796B), Color(0xFF48A999)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      },
+      {
+        'nome': 'Formatura',
+        'icone': Icons.school_rounded,
+        'gradient': const LinearGradient(
+          colors: [Color(0xFF7E57C2), Color(0xFFB39DDB)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      },
+      {
+        'nome': 'Padrão',
+        'icone': Icons.star_rounded,
+        'gradient': const LinearGradient(
+          colors: [
+            Color(0xFF455A64), // Cinza grafite
+            Color(0xFF90A4AE), // Cinza leve
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+      },
     ];
 
     showModalBottomSheet(
@@ -218,37 +279,81 @@ class EventThemeController extends GetxController {
         return Container(
           decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.fromLTRB(20, 24, 20, 36),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                "🎨 Escolha o Tema",
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              // --- TÍTULO ---
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Escolha o Tema",
+                    style: GoogleFonts.poppins(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  Icon(Icons.color_lens_rounded, color: primaryColor.value, size: 28),
+                ],
               ),
-              const SizedBox(height: 16),
+
+              const SizedBox(height: 20),
+
+              // --- LISTA COM PRÉVIA ---
               ...temas.map((tema) {
-                return ListTile(
-                  leading: Icon(
-                    tema['icone'] as IconData,
-                    color: primaryColor.value,
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(16),
+                    onTap: () {
+                      aplicarTemaPorNome((tema['nome'] as String).toLowerCase());
+                      Navigator.pop(context);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade100,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
+                      child: Row(
+                        children: [
+                          // Prévia do gradiente
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              gradient: tema['gradient'] as LinearGradient,
+                            ),
+                          ),
+
+                          const SizedBox(width: 14),
+
+                          // Nome do tema
+                          Expanded(
+                            child: Text(
+                              tema['nome'] as String,
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+
+                          Icon(Icons.chevron_right_rounded, color: Colors.grey.shade600),
+                        ],
+                      ),
+                    ),
                   ),
-                  title: Text(
-                    tema['nome'] as String,
-                    style: GoogleFonts.poppins(fontSize: 16),
-                  ),
-                  onTap: () {
-                    aplicarTemaPorNome((tema['nome'] as String).toLowerCase());
-                    Navigator.pop(context);
-                  },
                 );
               }),
-              const SizedBox(height: 55),
             ],
           ),
         );

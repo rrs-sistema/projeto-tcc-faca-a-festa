@@ -77,58 +77,110 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
                 ),
                 const SizedBox(height: 14),
 
-                // === STATUS E DATAS ===
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.all(18),
                   decoration: BoxDecoration(
                     gradient: gradient,
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      width: 1.4,
+                      color: Colors.white.withValues(alpha: 0.45), // borda elegante
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.15),
+                        blurRadius: 12,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.info_rounded, size: 16, color: Colors.white),
-                          const SizedBox(width: 6),
-                          Text("Status:",
-                              style: GoogleFonts.poppins(
-                                  fontSize: 13,
-                                  color: Colors.white70,
-                                  fontWeight: FontWeight.w500)),
-                          const SizedBox(width: 6),
-                          _buildStatusBadge(cotacao.status, invertColors: true),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(Icons.calendar_month_rounded, size: 16, color: Colors.white),
-                          const SizedBox(width: 6),
+                          const Icon(
+                            Icons.work_outline_rounded,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
                           Text(
-                            "Limite: ${DateFormat("dd/MM/yyyy").format(cotacao.dataLimiteResposta ?? DateTime.now())}",
+                            "Status da Cotação",
                             style: GoogleFonts.poppins(
-                                fontSize: 13, color: Colors.white.withValues(alpha: 0.9)),
+                              fontSize: 15.5,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+
+                      const SizedBox(height: 14),
+
+                      // STATUS
                       Row(
                         children: [
-                          const Icon(Icons.send_rounded, size: 16, color: Colors.white),
-                          const SizedBox(width: 6),
+                          const Icon(Icons.verified_rounded, color: Colors.white, size: 20),
+                          const SizedBox(width: 10),
                           Text(
-                            "Enviada em: ${DateFormat("dd/MM/yyyy HH:mm").format(cotacao.dataCadastro)}",
+                            "Status:",
                             style: GoogleFonts.poppins(
-                                fontSize: 13, color: Colors.white.withValues(alpha: 0.9)),
+                              fontSize: 14.5,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildStatusBadge(cotacao.status, invertColors: true),
+                        ],
+                      ),
+
+                      const SizedBox(height: 12),
+                      Divider(color: Colors.white.withValues(alpha: 0.4), thickness: 1),
+
+                      const SizedBox(height: 12),
+
+                      // LIMITE
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_month_rounded, color: Colors.white, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "Limite para resposta: "
+                              "${DateFormat("dd/MM/yyyy").format(cotacao.dataLimiteResposta ?? DateTime.now())}",
+                              style: GoogleFonts.poppins(
+                                fontSize: 14.2,
+                                color: Colors.white.withValues(alpha: 0.95),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 10),
+
+                      // CADASTRO
+                      Row(
+                        children: [
+                          const Icon(Icons.history_rounded, color: Colors.white, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              "Enviada em: "
+                              "${DateFormat("dd/MM/yyyy HH:mm").format(cotacao.dataCadastro)}",
+                              style: GoogleFonts.poppins(
+                                fontSize: 14.2,
+                                color: Colors.white.withValues(alpha: 0.95),
+                              ),
+                            ),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 18),
 
                 // === OBSERVAÇÃO ===
@@ -208,6 +260,7 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
                         final status = (data['status'] ?? 'aguardando').toString().toLowerCase();
                         final corStatus = switch (status) {
                           'respondido' || 'respondida' => Colors.green.shade600,
+                          'perdeucotacao' || 'perdeuCotacao' => Colors.black,
                           'recusado' ||
                           'recusada' ||
                           'cancelado' ||
@@ -221,12 +274,14 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
                           'parcial' || 'parcialmente' => Colors.orange.shade700,
                           _ => Colors.orange.shade700
                         };
+
                         final textoStatus = switch (status) {
                           'respondido' || 'respondida' => 'Respondido',
                           'recusado' || 'recusada' => 'Recusado',
                           'cancelado' || 'cancelada' => 'Cancelada',
                           'fechado' || 'fechada' => 'Fechado',
                           'parcial' || 'parcialmente' => 'Parcial',
+                          'perdeucotacao' || 'perdeuCotacao' => 'Perdeu cotação',
                           _ => 'Aguardando'
                         };
 
@@ -616,6 +671,7 @@ void mostrarDetalhesCotacao(CotacaoModel cotacao) {
                               if (status == 'respondido' ||
                                   status == 'respondida' ||
                                   status == 'recusado' ||
+                                  status == 'perdeuCotacao' ||
                                   status == 'cancelado') ...[
                                 const SizedBox(height: 10),
                                 FutureBuilder<bool>(

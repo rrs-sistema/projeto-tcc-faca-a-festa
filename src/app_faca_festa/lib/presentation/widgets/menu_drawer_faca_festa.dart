@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../core/utils/biblioteca.dart';
 import './../pages/usuario/cadastro_evento_bottom_sheet.dart';
 import './../../controllers/tema/event_theme_controller.dart';
 import './../../controllers/evento_cadastro_controller.dart';
@@ -153,7 +154,20 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                     ),
                     minimumSize: const Size(double.infinity, 48),
                   ),
-                  onPressed: onLogout,
+                  onPressed: () async {
+                    await Biblioteca.showConfirmDialog(
+                      context,
+                      title: 'Encerramento da sessão!',
+                      message: 'Deseja realmente encerrar sua sessão?',
+                      confirmLabel: 'Encerrar',
+                      color: primary,
+                      onConfirm: () async {
+                        onLogout();
+                        await Future.delayed(const Duration(milliseconds: 150));
+                        return await Future.value(true);
+                      },
+                    );
+                  },
                   icon: const Icon(Icons.logout, color: Colors.white),
                   label: Text(
                     "Encerrar sessão",
