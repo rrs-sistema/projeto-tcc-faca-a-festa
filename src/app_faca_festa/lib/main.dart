@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -7,13 +8,16 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:isar/isar.dart';
 import 'dart:async';
 import 'dart:io';
 
 import './presentation/pages/convidado/area/area_convidado_home_screen.dart';
 import './controllers/categoria/subcategoria_servico_controller.dart';
 import './presentation/pages/fornecedor/fornecedor_home_screen.dart';
+import './presentation/modules/gifts/gerenciar_presentes_page.dart';
 import './controllers/categoria/categoria_servico_controller.dart';
+import './presentation/pages/convidado/convite_redirect_page.dart';
 import 'controllers/avaliacao/avaliacao_servico_controller.dart';
 import './controllers/convidado/grupo_convidado_controller.dart';
 import './presentation/pages/fornecedor/orcamentos_screen.dart';
@@ -28,18 +32,21 @@ import './controllers/servico/servico_foto_controller.dart';
 import './presentation/pages/convidado/convidado_page.dart';
 import './controllers/convidado/convidado_controller.dart';
 import './controllers/admin/eventos_admin_controller.dart';
-import './controllers/avaliacao/avaliacao_controller.dart';
 import 'core/services/whatsGw/whatsapp_cloud_service.dart';
 import './controllers/convidado/cardapio_controller.dart';
 import './presentation/pages/login/register_screen.dart';
+import './presentation/whatsapp/whatsapp_templates.dart';
 import './controllers/tema/event_theme_controller.dart';
 import './controllers/contacao/cotacao_controller.dart';
-import 'presentation/whatsapp/whatsapp_templates.dart';
 import './controllers/evento_cadastro_controller.dart';
 import './controllers/orcamento_gasto_controller.dart';
 import './presentation/pages/login/login_screen.dart';
 import 'controllers/usuario/usuario_controller.dart';
 import 'core/services/whatsGw/whatsapp_service.dart';
+import 'data/datasources/local/gift_local_datasource.dart';
+import 'data/datasources/remote/gift_remote_datasource.dart';
+import 'data/services/gift/gift_sync_service.dart';
+import 'data/services/gift/sync_manager.dart';
 import 'presentation/pages/home_event_screen.dart';
 import './controllers/fornecedor_controller.dart';
 import './controllers/orcamento_controller.dart';
@@ -48,6 +55,7 @@ import './controllers/tarefa_controller.dart';
 import 'controllers/ranking_controller.dart';
 import './presentation/widgets/splash.dart';
 import './controllers/app_controller.dart';
+import 'core/database/isar_database.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
 
@@ -123,14 +131,43 @@ void _configureFirebaseForegroundHandler() {
 // =============================================================
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  HttpOverrides.global = MyHttpOverrides();
 
-  await GetStorage.init();
-  await initializeDateFormatting('pt_BR', null);
-
+  // 1. INICIALIZE O FIREBASE PRIMEIRO
+  // (Mova isso para o topo)
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // 🔔 Configurações de Push
+  HttpOverrides.global = MyHttpOverrides();
+  await GetStorage.init();
+
+  final remoteDatasource = GiftRemoteDatasource(FirebaseFirestore.instance);
+  Get.put(remoteDatasource, permanent: true);
+  final isar = await IsarDatabase.init();
+
+  // 3. Verifica se o Isar iniciou com sucesso (Ou seja, NÃO é Web)
+  if (isar != null) {
+    Get.put<Isar>(isar, permanent: true);
+
+    final localDatasource = GiftLocalDatasource(isar);
+    Get.put(localDatasource, permanent: true);
+
+    final giftSyncService = GiftSyncService(
+      local: localDatasource,
+      remote: remoteDatasource,
+    );
+
+    final syncManager = SyncManager(giftSyncService);
+    Get.put(syncManager, permanent: true);
+    await syncManager.start();
+
+    print("📱 [MOBILE] Modo Offline-First Ativado!");
+  } else {
+    // É WEB! Não iniciamos o SyncManager nem o Datasource Local.
+    print("🌐 [WEB] App rodando em modo Cloud-Only (Apenas Firebase).");
+  }
+
+  await initializeDateFormatting('pt_BR', null);
+
+  // 🔔 Configurações de Push (Já pode usar o FirebaseMessaging também)
   await FirebaseMessaging.instance.requestPermission();
   await FirebaseMessaging.instance.getToken();
 
@@ -160,7 +197,6 @@ Future<void> main() async {
   Get.put(GrupoConvidadoController(), permanent: true);
   Get.put(CotacaoController(), permanent: true);
   Get.put(SolicitacoesController(), permanent: true);
-  Get.put(AvaliacaoController(), permanent: true);
   Get.put(ServicoFotoController(), permanent: true);
   Get.put(AdminTerritorioController(), permanent: true);
   Get.put(EnderecoUsuarioController(), permanent: true);
@@ -220,11 +256,39 @@ class FacaFestaApp extends StatelessWidget {
         GetPage(name: '/registerGuest', page: () => const GuestRegisterScreen()),
         GetPage(name: '/convidadosPage', page: () => const ConvidadosPage()),
         GetPage(
+          name: '/gerenciarPresentes',
+          page: () {
+            final args = Get.arguments as Map<String, dynamic>?;
+            return GerenciarPresentesPage(
+              eventoId: args?['eventoId'],
+            );
+          },
+        ),
+        /*
+        GetPage(
+          name: '/cadastrarPresente',
+          page: () {
+            final args = Get.arguments as Map<String, dynamic>?;
+            return CadastrarPresentePage(
+              eventoId: args?['eventoId'],
+            );
+          },
+        ),
+        */
+        // 🔥 NOVA ROTA DE CONVITE
+        GetPage(
+          name: '/convite/:token',
+          page: () => const ConviteRedirectPage(),
+        ),
+
+        GetPage(
           name: '/orcamentos',
           page: () => const OrcamentosScreen(),
           transition: Transition.cupertino,
         ),
+
         GetPage(name: '/fornecedor', page: () => FornecedorHomeScreen()),
+
         GetPage(
           name: '/areaconvidado',
           page: () {

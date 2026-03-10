@@ -44,10 +44,9 @@ class GruposTab extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // 🔥 GRUPOS REAIS DO FIREBASE
             ...grupos.map((g) => _GrupoCard(
                   title: g.nome,
-                  icon: _iconFromKey(g.icone), // (vou te mostrar isso também)
+                  icon: _iconFromKey(g.icone),
                   color: fromHex(g.corHex ?? '#FF7BAC'),
                   convidados: g.convidados.map((c) {
                     return _ConvidadoItem(
@@ -114,7 +113,7 @@ class _ResumoGrupos extends StatelessWidget {
             "📊 Resumo geral dos grupos",
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: 18,
+              fontSize: 16,
               color: Colors.black87,
             ),
           ),
@@ -188,7 +187,7 @@ class _GraficoGrupos extends StatelessWidget {
         const Text(
           "📈 Distribuição de Convidados por Grupo",
           style: TextStyle(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             color: Colors.black87,
           ),

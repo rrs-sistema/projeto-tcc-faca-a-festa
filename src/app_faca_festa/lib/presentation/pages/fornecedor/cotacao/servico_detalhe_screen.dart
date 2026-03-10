@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:ui';
 
+import '../../../../controllers/avaliacao/avaliacao_servico_controller.dart';
+import '../../../widgets/festa_app_bar.dart';
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import './../components/abrir_nova_cotacao_bottom_sheet.dart';
@@ -24,19 +26,59 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
   bool favorito = false;
 
   @override
+  void initState() {
+    super.initState();
+
+    final avaliacaoController = Get.find<AvaliacaoServicoController>();
+
+    avaliacaoController.carregarAvaliacoesServico(
+      idFornecedor: widget.servico.idFornecedor,
+      idServico: widget.servico.idProdutoServico,
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final avaliacaoController = Get.find<AvaliacaoServicoController>();
     final themeController = Get.find<EventThemeController>();
     final appController = Get.find<AppController>();
     final primary = themeController.primaryColor.value;
-    final gradient = themeController.gradient.value;
     final servico = widget.servico;
 
     return Scaffold(
         extendBodyBehindAppBar: true,
         backgroundColor: Colors.grey.shade100,
+        appBar: FestaAppBar(
+          titulo: 'Detalhes do serviço',
+          acoes: [
+            IconButton(
+              icon: Icon(
+                favorito ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                color: favorito ? Colors.pinkAccent : Colors.white,
+                size: 26,
+              ),
+              onPressed: () {
+                setState(() => favorito = !favorito);
+                if (favorito) {
+                  HapticFeedback.mediumImpact();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Adicionado aos favoritos 💖'),
+                      backgroundColor: primary,
+                      behavior: SnackBarBehavior.floating,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        ),
+        /*
         appBar: AppBar(
           elevation: 0,
           backgroundColor: Colors.transparent,
+          title: Text('Detalhes do serviço', style: TextStyle( color: Colors.white)),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
             onPressed: () => Get.back(),
@@ -66,6 +108,7 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
           ],
           flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
         ),
+        */
         body: CustomScrollView(
           physics: const BouncingScrollPhysics(),
           slivers: [
@@ -224,22 +267,24 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                           ),
                           const SizedBox(height: 15),
                           _sectionTitle('Avaliações', Icons.star_rounded, primary),
-                          Row(
-                            children: [
-                              ...List.generate(
-                                5,
-                                (i) => Icon(
-                                  i < 4 ? Icons.star_rounded : Icons.star_half_rounded,
-                                  color: Colors.amber.shade400,
-                                  size: 22,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text('4.5 • 32 avaliações',
+                          Obx(() {
+                            final media = avaliacaoController.mediaServico.value;
+                            final qtd = avaliacaoController.avaliacoesServico.length;
+
+                            return Row(
+                              children: [
+                                ...buildStarRating(media, size: 22),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "${media.toStringAsFixed(1)} • $qtd avaliações",
                                   style: GoogleFonts.poppins(
-                                      color: Colors.grey.shade700, fontSize: 13)),
-                            ],
-                          ),
+                                    color: Colors.grey.shade700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
                           const SizedBox(height: 15),
                           _sectionTitle('Diferenciais', Icons.favorite_rounded, primary),
                           Text(
@@ -308,6 +353,20 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
         )
             .animate(onPlay: (c) => c.repeat(reverse: true))
             .scaleXY(begin: 0.98, end: 1.02, duration: 1200.ms, curve: Curves.easeInOut));
+  }
+
+  List<Widget> buildStarRating(double nota, {double size = 22}) {
+    return List.generate(5, (i) {
+      final index = i + 1;
+
+      if (nota >= index) {
+        return Icon(Icons.star_rounded, color: Colors.amber, size: size);
+      } else if (nota > index - 1) {
+        return Icon(Icons.star_half_rounded, color: Colors.amber, size: size);
+      } else {
+        return Icon(Icons.star_border_rounded, color: Colors.amber, size: size);
+      }
+    });
   }
 
   Widget _sectionTitle(String title, IconData icon, Color color) {

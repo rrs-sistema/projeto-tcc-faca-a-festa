@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../controllers/avaliacao/avaliacao_servico_controller.dart';
 import '../../../widgets/festa_app_bar.dart';
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../../controllers/servico/servico_foto_controller.dart';
@@ -26,6 +27,7 @@ class ServicoProdutoListScreen extends StatefulWidget {
 }
 
 class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
+  final Map<String, double> _cacheMedias = {};
   final controller = Get.put(ServicoProdutoController());
   final fornecedorController = Get.find<FornecedorController>();
   final fotoController = Get.put(ServicoFotoController());
@@ -596,19 +598,50 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
   }
 
   Widget _buildRatingStars(FornecedorServicoDetalhadoDto s) {
-    if (s.precoPromocao == null) {
-      return const SizedBox.shrink();
-    }
+    final avaliacaoController = Get.find<AvaliacaoServicoController>();
 
-    final estrelas = 4; // Você pode puxar do modelo depois
-    return Row(
-      children: List.generate(5, (i) {
-        return Icon(
-          i < estrelas ? Icons.star_rounded : Icons.star_border_rounded,
-          size: 16,
-          color: Colors.amber.shade600,
+    final idChave = '${s.idFornecedor}_${s.idProdutoServico}';
+
+    return FutureBuilder<double>(
+      future: () async {
+        // Se já temos em cache → usa
+        if (_cacheMedias.containsKey(idChave)) {
+          return _cacheMedias[idChave]!;
+        }
+
+        // Se não tem → busca e salva no cache
+        final media = await avaliacaoController.getMediaServico(
+          idFornecedor: s.idFornecedor,
+          idServico: s.idProdutoServico,
         );
-      }),
+
+        _cacheMedias[idChave] = media;
+        return media;
+      }(),
+      builder: (_, snap) {
+        if (!snap.hasData) {
+          return Row(
+            children: List.generate(
+              5,
+              (_) => Icon(Icons.star_border_rounded, size: 16, color: Colors.grey.shade300),
+            ),
+          );
+        }
+
+        final media = snap.data ?? 0;
+
+        return Row(
+          children: List.generate(5, (i) {
+            return Icon(
+              i + 1 <= media
+                  ? Icons.star_rounded
+                  : (i + 1 - media < 1 ? Icons.star_half_rounded : Icons.star_border_rounded),
+              size: 16,
+              color: Colors.amber.shade600,
+            );
+          }),
+        );
+      },
     );
   }
 

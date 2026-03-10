@@ -151,12 +151,13 @@ class OrcamentoScreen extends StatelessWidget {
                             : gastos.map((g) {
                                 return _gastoItem(
                                   context,
-                                  g.idOrcamento,
-                                  orcamento.idFornecedor ?? '',
-                                  g.idGasto,
-                                  g.nome,
-                                  g.custo,
-                                  g.pago,
+                                  idOrcamento: g.idOrcamento,
+                                  idServico: g.idServicoContratado,
+                                  idFornecedor: orcamento.idFornecedor ?? '',
+                                  idGasto: g.idGasto,
+                                  nome: g.nome,
+                                  custo: g.custo,
+                                  pago: g.pago,
                                 );
                               }).toList();
 
@@ -180,6 +181,15 @@ class OrcamentoScreen extends StatelessWidget {
                       [
                         _gastoItem(
                           context,
+                          idOrcamento: orcamento.idOrcamento,
+                          idServico: null,
+                          idFornecedor: orcamento.idFornecedor ?? '',
+                          idGasto: null,
+                          nome: orcamento.status.label,
+                          custo: orcamento.custoEstimado ?? 0,
+                          pago: orcamento.custoEstimado ?? 0,
+                          /*
+                          context,
                           orcamento.idOrcamento,
                           orcamento.idFornecedor ?? '',
                           null,
@@ -188,6 +198,7 @@ class OrcamentoScreen extends StatelessWidget {
                           orcamento.status == StatusOrcamento.fechado
                               ? (orcamento.custoEstimado ?? 0)
                               : 0,
+                              */
                         ),
                       ],
                       false,
@@ -477,14 +488,15 @@ class OrcamentoScreen extends StatelessWidget {
   }
 
   Widget _gastoItem(
-    BuildContext context,
+    BuildContext context, {
     String? idOrcamento,
-    String idFornecedor,
-    String? idGasto,
-    String nome,
-    double custo,
-    double pago,
-  ) {
+    required String? idServico,
+    required String idFornecedor,
+    required String? idGasto,
+    required String nome,
+    required double custo,
+    required double pago,
+  }) {
     final themeController = Get.find<EventThemeController>();
     final restante = (custo - pago).clamp(0.0, custo);
     final percentPago = (custo > 0) ? (pago / custo).clamp(0.0, 1.0) : 0.0;
@@ -674,7 +686,7 @@ class OrcamentoScreen extends StatelessWidget {
               child: TextButton.icon(
                 onPressed: () {
                   _abrirDialogAvaliacaoServico(
-                    idGasto: idGasto,
+                    idServico: idServico ?? '',
                     idFornecedor: idFornecedor,
                     idOrcamento: idOrcamento,
                     nomeServico: nome,
@@ -1246,7 +1258,7 @@ Future<void> showAddOrcamentoBottomSheet(
 void _abrirDialogAvaliacaoServico({
   required String idFornecedor,
   required String idOrcamento,
-  required String idGasto,
+  required String idServico,
   required String nomeServico,
 }) {
   final usuario = Get.find<AppController>().usuarioLogado.value;
@@ -1256,7 +1268,7 @@ void _abrirDialogAvaliacaoServico({
     EnviarAvaliacaoDialog(
       tipo: TipoAvaliacao.servico,
       idFornecedor: idFornecedor,
-      idServico: idGasto,
+      idServico: idServico,
       idCliente: usuario!.idUsuario,
       nomeCliente: usuario.nome,
       idEvento: evento!.idEvento,

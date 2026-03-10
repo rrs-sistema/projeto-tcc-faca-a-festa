@@ -1,67 +1,161 @@
 class WhatsAppTemplates {
-  // Confirmação de presença
+  // =========================================================
+  // 🔹 CONVITES – Formal / Divertido / Emocionante
+  // =========================================================
+
+  // Formal
+  String conviteFormal({
+    required String nomeConvidado,
+    required String tipoEvento,
+    required String nomeEvento,
+    required String data,
+    required String hora,
+    required String endereco,
+    String? linkConfirmacao,
+  }) {
+    return """
+Olá $nomeConvidado.
+
+Você está oficialmente convidado para o(a) *$tipoEvento*  
+de *$nomeEvento*.
+
+🗓 Data: $data  
+⏰ Horário: $hora  
+📍 Local: $endereco  
+
+${linkConfirmacao != null ? "Confirme sua presença: $linkConfirmacao" : "Por favor, confirme sua presença pelo app FAÇA A FESTA."}
+""";
+  }
+
+  // Divertido
+  String conviteDivertido({
+    required String nomeConvidado,
+    required String tipoEvento,
+    required String nomeEvento,
+    required String data,
+    required String hora,
+    required String endereco,
+    String? linkConfirmacao,
+  }) {
+    return """
+Ei $nomeConvidado! 😄🎉
+
+Tem festa chegando! Você está convidado para o(a) *$tipoEvento*  
+de *$nomeEvento*! Vai ser incrível! 🔥✨
+
+📅 $data  
+⏰ $hora  
+📍 $endereco  
+
+${linkConfirmacao != null ? "Clique e confirma aí rapidinho 👉 $linkConfirmacao" : "Confirme sua presença pelo app FAÇA A FESTA 😉"}
+""";
+  }
+
+  // Emocionante
+  String conviteEmocionante({
+    required String nomeConvidado,
+    required String tipoEvento,
+    required String nomeEvento,
+    required String data,
+    required String hora,
+    required String endereco,
+    String? linkConfirmacao,
+  }) {
+    return """
+Olá $nomeConvidado! ❤️
+
+É com muita alegria que convidamos você para o(a) *$tipoEvento*  
+de *$nomeEvento*. Sua presença tornará esse momento ainda mais especial. ✨
+
+📅 Data: $data  
+⏰ Horário: $hora  
+📍 Local: $endereco  
+
+${linkConfirmacao != null ? "Confirme sua presença aqui: $linkConfirmacao" : "Confirme sua presença pelo app FAÇA A FESTA ❤️"}
+""";
+  }
+
+  // Confirmado
   String confirmacaoPresenca({
     required String nomeConvidado,
     required String nomeEvento,
     required String data,
     required String hora,
     required String endereco,
+    String? linkEvento,
   }) {
     return """
 Olá $nomeConvidado! 😊
 
-Sua presença no evento *$nomeEvento* está confirmada! 🎉
+Sua presença no evento *$nomeEvento* foi confirmada! 🎉  
+Estamos muito felizes por ter você conosco!
 
-📅 Data: $data  
-⏰ Horário: $hora  
-📍 Local: $endereco  
+📅 $data  
+⏰ $hora  
+📍 $endereco  
 
-Qualquer dúvida estou à disposição!
+${linkEvento != null ? "Acesse os detalhes do evento: $linkEvento" : ""}
 """;
   }
 
-  // Convite para o evento
-  String conviteEvento({
-    required String nomeConvidado,
-    required String nomeEvento,
-    required String data,
-    required String hora,
-    required String endereco,
-  }) {
-    return """
-Olá $nomeConvidado! 🎈
-
-Você está convidado para o evento *$nomeEvento*!  
-Será uma alegria te receber! 🥳
-
-📅 Data: $data  
-⏰ Horário: $hora  
-📍 Endereço: $endereco  
-
-Por favor, confirme sua presença pelo app.
-""";
-  }
-
-  // Lembrete da data do evento
+  // Padrão
   String lembreteEvento({
     required String nomeConvidado,
     required String nomeEvento,
     required String data,
     required String hora,
+    String? linkEvento,
   }) {
     return """
 Olá $nomeConvidado! ⏰
 
-Lembrete: falta pouco para o evento *$nomeEvento*! 🎉
+Lembrete: está chegando o evento *$nomeEvento*! 🎉
 
-📅 Data: $data  
-⏰ Horário: $hora  
+📅 $data  
+⏰ $hora  
 
+${linkEvento != null ? "Veja os detalhes: $linkEvento" : ""}
 Estamos ansiosos para te ver lá!
 """;
   }
 
-  // Atualização de orçamento
+  // Divertido
+  String lembreteDivertido({
+    required String nomeConvidado,
+    required String nomeEvento,
+    required String data,
+    required String hora,
+  }) {
+    return """
+Atenção $nomeConvidado! 😄🔥
+
+O grande dia do *$nomeEvento* está chegando!  
+Preparado(a)? Porque nós estamos! 🎉✨
+
+📅 $data  
+⏰ $hora  
+Vai ser top demais!
+""";
+  }
+
+  // Emocionante
+  String lembreteEmocionante({
+    required String nomeConvidado,
+    required String nomeEvento,
+    required String data,
+    required String hora,
+  }) {
+    return """
+Olá $nomeConvidado! ❤️
+
+Falta pouco para vivermos juntos o momento especial: *$nomeEvento*.  
+Será um dia marcante e ficaremos honrados com sua presença.
+
+📅 $data  
+⏰ $hora  
+""";
+  }
+
   String atualizacaoOrcamento({
     required String nomeOrganizador,
     required String categoria,
@@ -69,18 +163,17 @@ Estamos ansiosos para te ver lá!
     required double valor,
   }) {
     return """
-Atualização no orçamento 🧾
+🧾 Atualização no orçamento
 
-$item da categoria *$categoria* foi atualizado.
+O item *$item* da categoria *$categoria* foi atualizado.
 
-💰 Valor: R\$ ${valor.toStringAsFixed(2)}  
-👤 Atualizado por: $nomeOrganizador  
+💰 Novo valor: R\$ ${valor.toStringAsFixed(2)}  
+👤 Responsável: $nomeOrganizador  
 
-Acesse o app para ver mais detalhes.
+Acesse o app FAÇA A FESTA para acompanhar tudo.
 """;
   }
 
-  // Atualização de cotação
   String atualizacaoCotacao({
     required String nomeFornecedor,
     required String categoria,
@@ -89,25 +182,25 @@ Acesse o app para ver mais detalhes.
     return """
 Olá $nomeFornecedor! 📩
 
-Sua cotação da categoria *$categoria* foi atualizada:
+Sua cotação da categoria *$categoria* foi atualizada.
 
-📌 Status: *$status*
+📌 Novo status: *$status*  
 
-Acesse o app para mais detalhes.
+Acesse o painel do fornecedor no app FAÇA A FESTA.
 """;
   }
 
-  // Boas-vindas para fornecedor
   String boasVindasFornecedor({
     required String nomeFornecedor,
   }) {
     return """
 Olá $nomeFornecedor! 👋
 
-Bem-vindo ao *Faça a Festa*.  
-Agora você pode receber solicitações de cotação diretamente no app, responder clientes e fechar negócios rapidamente. 🎉  
+Bem-vindo ao *FAÇA A FESTA*! 🎉  
+Agora você pode receber orçamentos, responder clientes e fechar negócios diretamente pelo app.
 
-Qualquer dúvida, conte conosco!
+Estamos felizes em ter você conosco!  
+Conte sempre com nosso suporte. 🤝
 """;
   }
 }

@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class OrcamentoGastoModel {
   final String idGasto;
   final String idOrcamento;
+  final String? idServicoContratado;
+  final String? nomeServicoContratado;
   final String nome;
   final double custo;
   final double pago;
@@ -11,6 +13,8 @@ class OrcamentoGastoModel {
   OrcamentoGastoModel({
     required this.idGasto,
     required this.idOrcamento,
+    this.idServicoContratado,
+    this.nomeServicoContratado,
     required this.nome,
     required this.custo,
     required this.pago,
@@ -22,6 +26,8 @@ class OrcamentoGastoModel {
     return {
       'id_gasto': idGasto,
       'id_orcamento': idOrcamento,
+      'id_servico': idServicoContratado,
+      'nome_servico': nomeServicoContratado,
       'nome': nome,
       'custo': custo,
       'pago': pago,
@@ -34,6 +40,8 @@ class OrcamentoGastoModel {
     return OrcamentoGastoModel(
       idGasto: map['id_gasto'] ?? '',
       idOrcamento: map['id_orcamento'] ?? '',
+      idServicoContratado: map['id_servico'] ?? '',
+      nomeServicoContratado: map['nome_servico'] ?? '',
       nome: map['nome'] ?? '',
       custo: (map['custo'] ?? 0).toDouble(),
       pago: (map['pago'] ?? 0).toDouble(),

@@ -1,15 +1,18 @@
+// ignore_for_file: use_build_context_synchronously
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../core/utils/biblioteca.dart';
+
 import './../pages/usuario/cadastro_evento_bottom_sheet.dart';
 import './../../controllers/tema/event_theme_controller.dart';
 import './../../controllers/evento_cadastro_controller.dart';
-import './../../controllers/evento_controller.dart';
 import './../pages/usuario/edit_usuario_screen.dart';
+import './../../controllers/evento_controller.dart';
 import './../../controllers/app_controller.dart';
+import './../../app/bindings/gift_binding.dart';
+import './../../core/utils/biblioteca.dart';
 
 class MenuDrawerFacaFesta extends StatelessWidget {
   final VoidCallback onLogout;
@@ -23,6 +26,7 @@ class MenuDrawerFacaFesta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final evento = eventoController.eventoAtual.value;
     return Obx(() {
       final gradient = themeController.gradient.value;
       final primary = themeController.primaryColor.value;
@@ -80,7 +84,6 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                 padding: EdgeInsets.zero,
                 children: [
                   _menuItem(Icons.event_note, "Meu Evento", color: primary, onTap: () {
-                    final evento = eventoController.eventoAtual.value;
                     try {
                       if (evento != null) {
                         Get.back(); // fecha a tela atual
@@ -106,6 +109,23 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                       Future.delayed(const Duration(milliseconds: 120), () {
                         Get.to(() => const EditUsuarioScreen());
                       });
+                    },
+                  ),
+                  _menuItem(
+                    Icons.wallet_giftcard_sharp,
+                    "Gerenciar Presentes",
+                    color: primary,
+                    onTap: () {
+                      Get.back();
+                      Get.toNamed(
+                        '/gerenciarPresentes',
+                        arguments: {
+                          "eventoId": evento?.idEvento,
+                        },
+                      );
+
+                      GiftBinding().dependencies();
+                      
                     },
                   ),
                   const Divider(height: 20, thickness: 0.8),

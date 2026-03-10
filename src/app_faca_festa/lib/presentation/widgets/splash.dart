@@ -35,18 +35,13 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
     );
 
     _fadeController.forward();
-    final novoEvento = (Get.arguments?['novoEvento'] ?? false) as bool;
-    if (novoEvento) {
-      Future.delayed(const Duration(seconds: 2), () {
-        Get.offAllNamed('/HomeEventScreen');
-      });
-    } else {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        if (novoEvento) {
-          appController.iniciarSessao();
-        }
-      });
-    }
+
+    // 🔥 inicia sessão após pequeno delay para splash animar
+    Future.delayed(const Duration(milliseconds: 600), () {
+      if (appController.conviteProcessado || appController.usuarioLogado.value == null) {
+        appController.iniciarSessao();
+      }
+    });
   }
 
   @override
@@ -106,10 +101,13 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
                 ),
                 const SizedBox(height: 16),
                 Obx(() {
+                  final token = appController.conviteToken.value;
                   return Text(
-                    appController.carregando.value
-                        ? "Carregando seus dados..."
-                        : "Preparando sua experiência...",
+                    token.isNotEmpty
+                        ? "Carregando seu convite..."
+                        : appController.carregando.value
+                            ? "Carregando seus dados..."
+                            : "Preparando sua experiência...",
                     style: GoogleFonts.poppins(
                       fontSize: 15,
                       color: Colors.white.withValues(alpha: 0.9),

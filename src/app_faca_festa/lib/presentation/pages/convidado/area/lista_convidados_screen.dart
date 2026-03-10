@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../components/abrir_adicionar_convidado.dart';
+import '../enviar_convites_screen.dart';
 import './../../../../controllers/convidado/convidado_controller.dart';
 import '../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../data/models/model.dart';
@@ -41,9 +42,9 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
           decoration: BoxDecoration(gradient: gradient),
         ),
         title: Text(
-          'Convidados do Evento',
+          'Convidados do evento',
           style: GoogleFonts.playfairDisplay(
-            fontSize: 22,
+            fontSize: 20,
             fontWeight: FontWeight.w700,
             color: Colors.white,
             shadows: [
@@ -59,6 +60,15 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
           icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Get.back(),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Novo convidado',
+            icon: const Icon(Icons.person_add_alt_1, color: Colors.white),
+            onPressed: () {
+              Get.to(() => const EnviarConvitesScreen());
+            },
+          ),
+        ],
       ),
 
       body: Column(

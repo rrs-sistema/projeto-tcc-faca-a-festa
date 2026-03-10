@@ -45,10 +45,13 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
   Widget build(BuildContext context) {
     final gradient = theme.gradient.value;
     final icon = theme.icon.value;
-    final titulo = theme.tituloCabecalho.value;
+    
 
     final evento = widget.evento;
     final convidado = convidadoController.convidadoAtual.value;
+
+
+    final titulo = evento.nomeEvento;
 
     final List<Widget> pages = [
       _buildInformacoesPage(evento),
@@ -108,7 +111,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                           ],
                         ),
                         child: Text(
-                          titulo,
+                          '${theme.tituloCabecalho.value} \n $titulo',
                           textAlign: TextAlign.center,
                           overflow: TextOverflow.ellipsis,
                           softWrap: true,

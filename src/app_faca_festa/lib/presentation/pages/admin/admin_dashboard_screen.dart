@@ -326,10 +326,14 @@ class _GlassCardState extends State<_GlassCard> {
                       const SizedBox(height: 10),
                       Text(widget.item.title,
                           textAlign: TextAlign.center,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
                               fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87)),
                       if (widget.item.subtitle != null)
                         Text(widget.item.subtitle!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade700)),
                       const SizedBox(height: 8),
                       if (widget.item.count != null)

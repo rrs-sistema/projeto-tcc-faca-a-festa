@@ -1,14 +1,14 @@
-import 'dart:async';
-
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'dart:async';
 
-import '../../core/services/whatsGw/whatsapp_service.dart';
-import '../../presentation/whatsapp/whatsapp_templates.dart';
+import './../../core/services/whatsGw/whatsapp_service.dart';
+import './../../presentation/whatsapp/whatsapp_templates.dart';
+import './grupo_convidado_controller.dart';
 import './../../data/models/model.dart';
-import 'grupo_convidado_controller.dart';
+import './../evento_controller.dart';
 
 class ConvidadoController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -35,16 +35,19 @@ class ConvidadoController extends GetxController {
 // =============================================================
   final RxList<ConvidadoModel> novosConvidados = <ConvidadoModel>[].obs;
 
-  Future<void> enviarConviteAoAdicionar(ConvidadoModel convidado, EventoModel evento) async {
+  Future<void> enviarConviteAoAdicionar(
+      ConvidadoModel convidado, EventoModel evento, String tipoEvento) async {
     final whats = Get.find<WhatsAppService>();
     final templates = Get.find<WhatsAppTemplates>();
 
-    final msg = templates.conviteEvento(
+    final msg = templates.conviteFormal(
       nomeConvidado: convidado.nome,
+      tipoEvento: tipoEvento,
       nomeEvento: evento.nomeEvento,
       data: Biblioteca.formatarData(evento.data),
       hora: evento.hora ?? Biblioteca.formatarHora(evento.data),
       endereco: evento.localEvento,
+      linkConfirmacao: 'https://www.facaafesta.com.br',
     );
 
     await whats.sendText(
@@ -53,13 +56,14 @@ class ConvidadoController extends GetxController {
     );
   }
 
-  Future<void> confirmarPresenca(ConvidadoModel convidado, EventoModel evento) async {
+  Future<void> confirmarPresenca(
+      ConvidadoModel convidado, EventoModel evento, String tipoEvento) async {
     final whats = Get.find<WhatsAppService>();
     final templates = Get.find<WhatsAppTemplates>();
 
     final msg = templates.confirmacaoPresenca(
       nomeConvidado: convidado.nome,
-      nomeEvento: evento.nomeEvento,
+      nomeEvento: tipoEvento,
       data: Biblioteca.formatarData(evento.data),
       hora: evento.hora ?? Biblioteca.formatarHora(evento.data),
       endereco: evento.localEvento,
@@ -71,13 +75,14 @@ class ConvidadoController extends GetxController {
     );
   }
 
-  Future<void> enviarLembreteEvento(ConvidadoModel convidado, EventoModel evento) async {
+  Future<void> enviarLembreteEvento(
+      ConvidadoModel convidado, EventoModel evento, String tipoEvento) async {
     final whats = Get.find<WhatsAppService>();
     final templates = Get.find<WhatsAppTemplates>();
 
     final msg = templates.lembreteEvento(
       nomeConvidado: convidado.nome,
-      nomeEvento: evento.nomeEvento,
+      nomeEvento: tipoEvento,
       data: Biblioteca.formatarData(evento.data),
       hora: evento.hora ?? Biblioteca.formatarHora(evento.data),
     );
@@ -151,9 +156,12 @@ class ConvidadoController extends GetxController {
 
     try {
       carregando.value = true;
+      final eventoController = Get.find<EventoController>();
+      final tipoEvento = eventoController.tipoEventoAtual.value?.nome ?? evento.nomeEvento;
+
       for (final c in novosConvidados) {
         await _db.collection('convidado').doc(c.idConvidado).set(c.toMap());
-        enviarConviteAoAdicionar(c, evento);
+        enviarConviteAoAdicionar(c, evento, tipoEvento);
       }
       novosConvidados.clear();
     } catch (e) {
@@ -218,6 +226,14 @@ class ConvidadoController extends GetxController {
           convidado.toMap(),
           SetOptions(merge: true),
         );
+  }
+
+  Future<ConvidadoModel?> buscarPorToken(String token) async {
+    final convidadoDoc = await FirebaseFirestore.instance.collection('convidado').doc(token).get();
+
+    if (!convidadoDoc.exists) return null;
+
+    return ConvidadoModel.fromMap(convidadoDoc.data()!);
   }
 
   Future<void> reservarPresente(

@@ -13,8 +13,8 @@ import './../presentation/pages/admin/admin_dashboard_screen.dart';
 import './../presentation/pages/welcome/welcome_event_screen.dart';
 import './../presentation/pages/convidado/convidado_page.dart';
 import './../presentation/pages/home_event_screen.dart';
+import './avaliacao/avaliacao_servico_controller.dart';
 import './../data/models/DTO/servico_cotado_dto.dart';
-import './avaliacao/avaliacao_controller.dart';
 import './convidado/convidado_controller.dart';
 import './contacao/cotacao_controller.dart';
 import './servico_produto_controller.dart';
@@ -24,6 +24,7 @@ import './orcamento_controller.dart';
 import './../data/models/model.dart';
 import './evento_controller.dart';
 import './tarefa_controller.dart';
+import 'tema/event_theme_controller.dart';
 
 class AppController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -38,8 +39,11 @@ class AppController extends GetxController {
   final RxList<ServicoCotadoDto> servicosSelecionados = <ServicoCotadoDto>[].obs;
 
   final RxBool contaIncompleta = false.obs;
+  bool conviteProcessado = false;
+  RxString conviteToken = ''.obs;
   final RxBool carregando = false.obs;
   StreamSubscription<User?>? _authSub;
+  bool devMode = true;
 
   // ✅ Injeção de controladores auxiliares
   final convidadoController = Get.put(ConvidadoController());
@@ -48,12 +52,17 @@ class AppController extends GetxController {
   final cotacaoController = Get.put(CotacaoController());
   final fornecedorController = Get.put(FornecedorController());
   final tarefaController = Get.put(TarefaController());
-  final avaliacaoController = Get.put(AvaliacaoController());
+  final avaliacaoController = Get.put(AvaliacaoServicoController());
   final servicoController = Get.put(ServicoProdutoController());
+  final themeController = Get.put(EventThemeController());
 
   @override
   void onInit() {
     super.onInit();
+    final token = obterTokenConvite();
+    if (token != null) {
+      abrirConvite(token);
+    }
     _monitorarSessao();
   }
 
@@ -119,17 +128,7 @@ class AppController extends GetxController {
   }
 
   void iniciarSessao() {
-    if (_authSub == null) {
-      _monitorarSessao();
-    } else {
-      // já está monitorando — apenas revalida a rota atual
-      final user = usuarioLogado.value;
-      if (user == null) {
-        Get.offAllNamed('/role');
-      } else {
-        debugPrint("👤 Sessão ativa para ${user.nome} (${user.tipo})");
-      }
-    }
+    _monitorarSessao();
   }
 
   // ------------------------------------------------------------
@@ -138,7 +137,17 @@ class AppController extends GetxController {
   void _monitorarSessao() {
     _authSub = _auth.authStateChanges().listen((user) async {
       await Future.delayed(const Duration(milliseconds: 300)); // ✅ pequeno delay
+      // 🔥 verifica token de convite primeiro
+      final token = obterTokenConvite();
+
       if (user == null) {
+        if (token != null && token.isNotEmpty && !conviteProcessado) {
+          debugPrint("🎉 Convidado acessando via convite: $token");
+
+          await abrirConvite(token);
+          return;
+        }
+
         usuarioLogado.value = null;
         enderecoPrincipal.value = null;
         eventoController.eventoAtual.value = null;
@@ -221,7 +230,7 @@ class AppController extends GetxController {
               fornecedorController.escutarSolicitacoesPendentes(fornecedor.idUsuario);
 
               orcamentoController.escutarOrcamentos(fornecedor.idUsuario);
-              avaliacaoController.listenAvaliacoes(fornecedor.idUsuario);
+              avaliacaoController.carregarAvaliacoesFornecedor(fornecedor.idUsuario);
               servicoController.carregarServicosComDetalhesOtimizado(
                   idFornecedor: fornecedor.idUsuario);
             }
@@ -306,6 +315,31 @@ class AppController extends GetxController {
     });
   }
 
+  String? obterTokenConvite() {
+    return 'be6133cb-9450-4e87-8282-e7df2d037581';
+    final uri = Uri.base;
+    if (uri.pathSegments.contains('convite')) {
+      return uri.pathSegments.last;
+    }
+
+    return null;
+  }
+
+  Future<void> abrirConvite(String token) async {
+    final convidado = await convidadoController.buscarPorToken(token);
+
+    if (convidado != null) {
+      final evento = await eventoController.buscarEventoPeloIdEvento(convidado.idEvento);
+
+      if (evento != null) {
+        await themeController.aplicarTemaPorId(evento.idTipoEvento);
+        Get.offAll(() => AreaConvidadoHomeScreen(
+              convidado: convidado,
+              evento: evento,
+            ));
+      }
+    }
+  }
   // ------------------------------------------------------------
   // 🔹 Logout
   // ------------------------------------------------------------

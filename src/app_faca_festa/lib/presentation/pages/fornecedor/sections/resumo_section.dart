@@ -4,12 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
-import '../chat/fornecedor_mensagens_page.dart';
-import './../../../../controllers/avaliacao/avaliacao_controller.dart';
+import './../../../../controllers/avaliacao/avaliacao_servico_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/servico_produto_controller.dart';
 import './../../cadastro/servico/servico_produto_list_screen.dart';
 import './../../../../controllers/fornecedor_controller.dart';
+import './../chat/fornecedor_mensagens_page.dart';
 import './components/build_cotacao_card.dart';
 
 class ResumoSection extends StatelessWidget {
@@ -19,7 +19,7 @@ class ResumoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<FornecedorController>();
     final themeController = Get.find<EventThemeController>();
-    final avaliacaoController = Get.find<AvaliacaoController>();
+    final avaliacaoController = Get.find<AvaliacaoServicoController>();
     final servicoController = Get.find<ServicoProdutoController>();
 
     final gradient = themeController.gradient.value;
@@ -143,7 +143,9 @@ class ResumoSection extends StatelessWidget {
           icon: Icons.star_border_rounded,
           color1: const Color(0xFFC5E1A5),
           color2: const Color(0xFF558B2F),
-          value: avaliacaoController.media.value.round(),
+          value: avaliacaoController.mediaFornecedor.value.isNaN
+              ? 0
+              : avaliacaoController.mediaFornecedor.value.toInt(),
           description: "estrelas",
         ),
       ];

@@ -60,6 +60,7 @@ class ConvidadoModel {
   final String contato;
   final String? email;
   final StatusConvidado status;
+  final DateTime? dataEnvio;
   final DateTime? dataResposta;
   final String? grupoMesa;
   final bool? adulto;
@@ -72,6 +73,7 @@ class ConvidadoModel {
     required this.contato,
     this.email,
     this.status = StatusConvidado.pendente,
+    this.dataEnvio,
     this.dataResposta,
     this.adulto,
     this.grupoMesa,
@@ -85,6 +87,7 @@ class ConvidadoModel {
         'contato': contato,
         'email': email,
         'status': status.firestoreValue,
+        'data_envio': dataEnvio != null ? Timestamp.fromDate(dataEnvio!) : null,
         'data_resposta': dataResposta != null ? Timestamp.fromDate(dataResposta!) : null,
         'adulto': adulto,
         'grupo_mesa': grupoMesa,
@@ -92,6 +95,7 @@ class ConvidadoModel {
       };
 
   factory ConvidadoModel.fromMap(Map<String, dynamic> map) {
+    final dados = map.containsKey('data_envio');
     return ConvidadoModel(
       idConvidado: map['id_convidado'] ?? '',
       idEvento: map['id_evento'] ?? '',
@@ -99,6 +103,9 @@ class ConvidadoModel {
       contato: map['contato'] ?? '',
       email: map['email'],
       status: StatusConvidado.fromString(map['status']),
+      dataEnvio: dados
+          ? (map['data_envio'] is Timestamp ? (map['data_envio'] as Timestamp).toDate() : null)
+          : null,
       dataResposta:
           map['data_resposta'] is Timestamp ? (map['data_resposta'] as Timestamp).toDate() : null,
       adulto: map['adulto'],
@@ -113,6 +120,7 @@ class ConvidadoModel {
     String? contato,
     String? email,
     StatusConvidado? status,
+    DateTime? dataEnvio,
     DateTime? dataResposta,
     bool? adulto,
     String? grupoMesa,
@@ -125,6 +133,7 @@ class ConvidadoModel {
       contato: contato ?? this.contato,
       email: email ?? this.email,
       status: status ?? this.status,
+      dataEnvio: dataEnvio ?? this.dataEnvio,
       dataResposta: dataResposta ?? this.dataResposta,
       adulto: adulto ?? this.adulto,
       grupoMesa: grupoMesa ?? this.grupoMesa,

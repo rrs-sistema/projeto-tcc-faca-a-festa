@@ -261,6 +261,8 @@ class CotacaoController extends GetxController {
         nome: "Serviço contratado – $categoriaNome",
         custo: valorTotal,
         pago: 0,
+        idServicoContratado: idServicoContratado,
+        nomeServicoContratado: nomeServicoContratado,
       ).toMap()
         ..['id_servico'] = idServicoContratado
         ..['nome_servico'] = nomeServicoContratado

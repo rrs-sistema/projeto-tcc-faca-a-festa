@@ -1,20 +1,19 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/avaliacao/avaliacao_controller.dart';
-import './../../../../data/models/avaliacao/avaliacao_model.dart';
+import './../../../../controllers/avaliacao/avaliacao_servico_controller.dart';
 
 class AvaliacoesSection extends StatelessWidget {
   const AvaliacoesSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final c = Get.find<AvaliacaoController>();
+    final c = Get.find<AvaliacaoServicoController>();
 
     return Obx(() {
-      final avaliacoes = c.avaliacoes;
-      final carregando = c.carregando.value;
+      final avaliacoes = c.avaliacoesFornecedor;
 
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -29,7 +28,7 @@ class AvaliacoesSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          // 🔹 Painel de resumo reativo
+          // 🔹 Painel atualizado
           _buildResumo(c),
           const SizedBox(height: 16),
 
@@ -43,31 +42,27 @@ class AvaliacoesSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
 
-          if (carregando)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.all(20),
-                child: CircularProgressIndicator(),
-              ),
-            )
-          else if (avaliacoes.isEmpty)
+          if (avaliacoes.isEmpty)
             _buildMensagemVazia()
           else
-            Obx(() => ListView.separated(
-                  itemCount: c.avaliacoes.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
-                  itemBuilder: (_, i) => _AvaliacaoTile(avaliacao: c.avaliacoes[i]),
-                )),
+            ListView.separated(
+              itemCount: avaliacoes.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
+              itemBuilder: (_, i) => _AvaliacaoTile(avaliacao: avaliacoes[i]),
+            ),
         ],
       );
     });
   }
 
-  Widget _buildResumo(AvaliacaoController c) {
+  // ===============================================================
+  // 🔸 NOVO painel de resumo (sem distribuição)
+  // ===============================================================
+  Widget _buildResumo(AvaliacaoServicoController c) {
     return Obx(() {
-      final media = c.media.value.isNaN ? 0.0 : c.media.value;
+      final media = c.mediaFornecedor.value.isNaN ? 0.0 : c.mediaFornecedor.value;
 
       return Container(
         decoration: BoxDecoration(
@@ -108,7 +103,7 @@ class AvaliacoesSection extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "Média geral",
+                  "${c.avaliacoesFornecedor.length} avaliações",
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     color: Colors.grey.shade600,
@@ -116,53 +111,15 @@ class AvaliacoesSection extends StatelessWidget {
                 ),
               ],
             ),
-
-            const SizedBox(width: 30),
-
-            // 🔹 Distribuição reativa
-            Expanded(
-              child: Obx(() => Column(
-                    children: List.generate(5, (i) {
-                      final estrelas = 5 - i;
-                      final percentual = c.distribuicao[estrelas] ?? 0.0;
-                      return _barraAvaliacoes(estrelas, percentual);
-                    }),
-                  )),
-            ),
           ],
         ),
       );
     });
   }
 
-  Widget _barraAvaliacoes(int estrelas, double percentual) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        children: [
-          Text(
-            "$estrelas",
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
-            ),
-          ),
-          const Icon(Icons.star_rounded, size: 14, color: Colors.amber),
-          const SizedBox(width: 6),
-          Expanded(
-            child: LinearProgressIndicator(
-              value: percentual.isNaN ? 0.0 : percentual,
-              backgroundColor: Colors.grey.shade200,
-              color: Colors.teal.shade700,
-              borderRadius: const BorderRadius.all(Radius.circular(6)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
+  // ===============================================================
+  // 🔸 Mensagem de vazio (igual ao padrão moderno que você usa)
+  // ===============================================================
   Widget _buildMensagemVazia() {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
@@ -182,8 +139,7 @@ class AvaliacoesSection extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              "Quando os organizadores começarem a avaliar seu trabalho,\n"
-              "as notas e comentários aparecerão aqui.",
+              "Quando os organizadores avaliarem você,\nas notas aparecerão aqui.",
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: 13.5,
@@ -199,33 +155,28 @@ class AvaliacoesSection extends StatelessWidget {
 }
 
 class _AvaliacaoTile extends StatelessWidget {
-  final AvaliacaoModel avaliacao;
+  final Map<String, dynamic> avaliacao;
   const _AvaliacaoTile({required this.avaliacao});
+
   String _tempoRelativo(DateTime data) {
     final hoje = DateTime.now();
-
-    final dataLimpa = DateTime(data.year, data.month, data.day);
     final hojeLimpo = DateTime(hoje.year, hoje.month, hoje.day);
-    final diff = hojeLimpo.difference(dataLimpa);
-    final dias = diff.inDays;
-    if (dias <= 0) return 'Hoje';
-    if (dias == 1) return 'Ontem';
-    if (dias == 2) return 'Antes de ontem';
-    if (dias < 7) return 'Há $dias dias';
-    if (dias < 30) {
-      final semanas = (dias / 7).floor();
-      return 'Há $semanas ${semanas == 1 ? 'semana' : 'semanas'}';
-    }
-    if (dias < 365) {
-      final meses = (dias / 30).floor();
-      return 'Há $meses ${meses == 1 ? 'mês' : 'meses'}';
-    }
-    final anos = (dias / 365).floor();
-    return 'Há $anos ${anos == 1 ? 'ano' : 'anos'}';
+    final dataLimpa = DateTime(data.year, data.month, data.day);
+    final diff = hojeLimpo.difference(dataLimpa).inDays;
+
+    if (diff <= 0) return 'Hoje';
+    if (diff == 1) return 'Ontem';
+    if (diff == 2) return 'Antes de ontem';
+    if (diff < 7) return 'Há $diff dias';
+    if (diff < 30) return 'Há ${(diff / 7).floor()} semanas';
+    if (diff < 365) return 'Há ${(diff / 30).floor()} meses';
+    return 'Há ${(diff / 365).floor()} anos';
   }
 
   @override
   Widget build(BuildContext context) {
+    final data = (avaliacao['data'] as Timestamp).toDate();
+
     return ListTile(
       leading: CircleAvatar(
         radius: 26,
@@ -236,7 +187,7 @@ class _AvaliacaoTile extends StatelessWidget {
         children: [
           Expanded(
             child: Text(
-              avaliacao.nomeCliente,
+              avaliacao['nome_cliente'] ?? 'Cliente',
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w600,
                 fontSize: 15,
@@ -247,13 +198,9 @@ class _AvaliacaoTile extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Row(
-            children: List.generate(
-              5,
-              (i) => Icon(
-                i < avaliacao.nota ? Icons.star_rounded : Icons.star_border_rounded,
-                color: Colors.amber,
-                size: 16,
-              ),
+            children: buildStarRating(
+              (avaliacao['nota'] ?? 0).toDouble(),
+              size: 16,
             ),
           ),
         ],
@@ -264,7 +211,7 @@ class _AvaliacaoTile extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              avaliacao.comentario,
+              avaliacao['comentario'] ?? '',
               style: GoogleFonts.poppins(
                 color: Colors.grey.shade700,
                 fontSize: 13.5,
@@ -272,26 +219,33 @@ class _AvaliacaoTile extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            RichText(
-              text: TextSpan(
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  color: Colors.grey.shade500,
-                ),
-                children: [
-                  TextSpan(
-                    text: 'Evento: ',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  TextSpan(text: avaliacao.evento),
-                  const TextSpan(text: ' • '),
-                  TextSpan(text: _tempoRelativo(avaliacao.data)),
-                ],
+            Text(
+              _tempoRelativo(data),
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.grey.shade500,
               ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> buildStarRating(double nota, {double size = 16}) {
+    return List.generate(5, (i) {
+      final index = i + 1;
+
+      if (nota >= index) {
+        // ⭐ estrela cheia
+        return Icon(Icons.star_rounded, color: Colors.amber, size: size);
+      } else if (nota > index - 1 && nota < index) {
+        // ⭐ meia estrela
+        return Icon(Icons.star_half_rounded, color: Colors.amber, size: size);
+      } else {
+        // ☆ estrela vazia
+        return Icon(Icons.star_border_rounded, color: Colors.amber, size: size);
+      }
+    });
   }
 }

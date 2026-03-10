@@ -1,15 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:get/get.dart';
 
-import '../../../../controllers/app_controller.dart';
-import '../../../../controllers/fornecedor_controller.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
-import '../../../../core/utils/biblioteca.dart';
-import '../../../widgets/festa_app_bar.dart';
-import 'chat_mensagens_page.dart';
+import './../../../../controllers/tema/event_theme_controller.dart';
+import './../../../../controllers/fornecedor_controller.dart';
+import './../../../../controllers/app_controller.dart';
+import './../../../../core/utils/biblioteca.dart';
+import './../../../widgets/festa_app_bar.dart';
+import './chat_mensagens_page.dart';
 
 class FornecedorMensagensPage extends StatelessWidget {
   FornecedorMensagensPage({super.key});

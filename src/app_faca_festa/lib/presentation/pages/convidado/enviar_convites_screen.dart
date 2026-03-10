@@ -2,7 +2,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../core/services/whatsGw/whatsapp_cloud_service.dart';
 import './../../../controllers/convidado/convidado_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/evento_controller.dart';
@@ -175,10 +174,11 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                                 label: const Text("Enviar por SMS"),
                                 onPressed: () async {
                                   if (eventoController.eventoAtual.value != null) {
-                                    final cloud = Get.find<WhatsAppCloudService>();
-                                    cloud.enviarHelloWorld("554199698377");
+                                    //final cloud = Get.find<WhatsAppCloudService>();
+                                    //cloud.enviarHelloWorld("554199698377");
 
-                                    //await convidadoController.enviarNovosConvidados(eventoController.eventoAtual.value!);
+                                    await convidadoController
+                                        .enviarNovosConvidados(eventoController.eventoAtual.value!);
                                   }
                                   _enviarConvites("por SMS");
                                 },

@@ -34,7 +34,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.rrs.system.technology.facafesta"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = 36 // <-- Alterado aqui
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -49,7 +49,7 @@ android {
     defaultConfig {
         applicationId = "com.rrs.system.technology.facafesta"
         minSdkVersion 24
-        targetSdkVersion 35
+        targetSdkVersion 36 // <-- Alterado aqui também para acompanhar o compileSdk
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         multiDexEnabled true
