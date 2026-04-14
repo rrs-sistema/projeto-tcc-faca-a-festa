@@ -316,12 +316,11 @@ class AppController extends GetxController {
   }
 
   String? obterTokenConvite() {
-    return 'be6133cb-9450-4e87-8282-e7df2d037581';
+    //return 'be6133cb-9450-4e87-8282-e7df2d037581';
     final uri = Uri.base;
     if (uri.pathSegments.contains('convite')) {
       return uri.pathSegments.last;
     }
-
     return null;
   }
 
@@ -380,28 +379,35 @@ class AppController extends GetxController {
   }
 
   Future<void> atualizarFcmTokenFornecedor(String idFornecedor) async {
-    final messaging = FirebaseMessaging.instance;
+    if (!suportaFcmFornecedor) {
+      if (kDebugMode) {
+        print('ℹ️ FCM não suportado nesta plataforma para fornecedor.');
+      }
+      return;
+    }
 
     try {
+      final messaging = FirebaseMessaging.instance;
+
       await messaging.requestPermission();
 
       final token = await messaging.getToken();
-      if (token == null) return;
+      if (token == null || token.isEmpty) return;
 
       await FirebaseFirestore.instance.collection('fornecedor').doc(idFornecedor).update({
         'fcm_token': token,
       });
 
-      // Atualizar automaticamente quando mudar
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-        await FirebaseFirestore.instance
-            .collection('fornecedor')
-            .doc(idFornecedor)
-            .update({'fcm_token': newToken});
+        if (newToken.isEmpty) return;
+
+        await FirebaseFirestore.instance.collection('fornecedor').doc(idFornecedor).update({
+          'fcm_token': newToken,
+        });
       });
     } catch (e) {
       if (kDebugMode) {
-        print("❌ Erro ao atualizar FCM token do fornecedor: $e");
+        print('❌ Erro ao atualizar FCM token do fornecedor: $e');
       }
     }
   }
@@ -433,6 +439,13 @@ class AppController extends GetxController {
   /// 🔹 Verifica se um serviço está selecionado
   bool isServicoSelecionado(String idProduto) {
     return servicosSelecionados.any((s) => s.idProduto == idProduto);
+  }
+
+  bool get suportaFcmFornecedor {
+    if (kIsWeb) return true;
+
+    return defaultTargetPlatform == TargetPlatform.android ||
+        defaultTargetPlatform == TargetPlatform.iOS;
   }
 
   @override

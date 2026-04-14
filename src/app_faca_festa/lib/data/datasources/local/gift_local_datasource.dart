@@ -1,112 +1,129 @@
-import 'package:isar/isar.dart';
+import 'package:drift/drift.dart';
 
 import './../../../domain/entities/gift/gift_contribution.dart';
-import './../../models/gift/gift_contribution_local.dart';
-import './../../models/gift/gift_local.dart';
+import './../../../core/database/app_database.dart';
 
 class GiftLocalDatasource {
-  final Isar isar;
+  final AppDatabase db;
 
-  GiftLocalDatasource(this.isar);
+  GiftLocalDatasource(this.db);
 
-  // ======================================================
-  // STREAM DE PRESENTES
-  // ======================================================
   Stream<List<GiftLocal>> watchGifts(String eventoId) {
-    return isar.giftLocals.filter().eventoIdEqualTo(eventoId).watch(fireImmediately: true);
+    final query = (db.select(db.giftLocals)
+      ..where((t) => t.eventoId.equals(eventoId) & t.deleted.equals(false))
+      ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]));
+    return query.watch();
   }
 
-  // ======================================================
-  // BUSCAR PRESENTE
-  // ======================================================
-  Future<GiftLocal?> getGift(String giftId) async {
-    return isar.giftLocals.filter().giftIdEqualTo(giftId).findFirst();
+  Future<GiftLocal?> getGift(String giftId) {
+    return (db.select(db.giftLocals)..where((t) => t.giftId.equals(giftId))).getSingleOrNull();
   }
 
-  // ======================================================
-  // SALVAR / ATUALIZAR
-  // ======================================================
-  Future<void> saveGift(GiftLocal gift) async {
-    await isar.writeTxn(() async {
-      await isar.giftLocals.put(gift);
+  Future<void> saveGift(GiftLocalsCompanion gift) async {
+    await db.into(db.giftLocals).insertOnConflictUpdate(gift);
+  }
+
+  Future<void> saveAll(List<GiftLocalsCompanion> gifts) async {
+    await db.batch((batch) {
+      batch.insertAllOnConflictUpdate(db.giftLocals, gifts);
     });
   }
 
-  // ======================================================
-  // SALVAR LISTA (sync remoto)
-  // ======================================================
-  Future<void> saveAll(List<GiftLocal> gifts) async {
-    await isar.writeTxn(() async {
-      await isar.giftLocals.putAll(gifts);
-    });
-  }
-
-  // ======================================================
-  // REMOVER
-  // ======================================================
   Future<void> deleteGift(int id) async {
-    await isar.writeTxn(() async {
-      await isar.giftLocals.delete(id);
-    });
+    await (db.delete(db.giftLocals)..where((t) => t.id.equals(id))).go();
   }
 
-  // ======================================================
-  // LISTAR NÃO SINCRONIZADOS
-  // ======================================================
-  Future<List<GiftLocal>> getUnsynced() async {
-    return isar.giftLocals.filter().syncedEqualTo(false).findAll();
+  Future<void> markDeleted(String giftId) async {
+    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId))).write(
+      GiftLocalsCompanion(
+        deleted: const Value(true),
+        synced: const Value(false),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
-  // ======================================================
-  // MARCAR COMO SINCRONIZADO
-  // ======================================================
-  Future<void> markSynced(GiftLocal gift) async {
-    gift.synced = true;
-
-    await isar.writeTxn(() async {
-      await isar.giftLocals.put(gift);
-    });
+  Future<List<GiftLocal>> getUnsynced() {
+    return (db.select(db.giftLocals)..where((t) => t.synced.equals(false))).get();
   }
 
-  // ======================================================
-  // LIMPAR BANCO LOCAL
-  // ======================================================
+  Future<void> markSynced(String giftId) async {
+    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId))).write(
+      const GiftLocalsCompanion(
+        synced: Value(true),
+      ),
+    );
+  }
+
   Future<void> clear() async {
-    await isar.writeTxn(() async {
-      await isar.giftLocals.clear();
-    });
+    await db.delete(db.giftLocals).go();
   }
 
-  // ===============================
-  // NOVO MÉTODO
-  // ===============================
+  Future<void> updateReservation({
+    required String giftId,
+    required String status,
+    required String reservadoPor,
+    required String reservadoUid,
+    required DateTime dataReserva,
+    required bool synced,
+  }) async {
+    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId))).write(
+      GiftLocalsCompanion(
+        status: Value(status),
+        reservadoPor: Value(reservadoPor),
+        reservadoUid: Value(reservadoUid),
+        dataReserva: Value(dataReserva),
+        synced: Value(synced),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
+  Future<void> updateValorArrecadado({
+    required String giftId,
+    required double valorArrecadado,
+    required bool synced,
+  }) async {
+    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId))).write(
+      GiftLocalsCompanion(
+        valorArrecadado: Value(valorArrecadado),
+        synced: Value(synced),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
 
   Future<void> saveContribution(
     String eventoId,
     String giftId,
     GiftContribution contribution,
   ) async {
-    final local = GiftContributionLocal()
-      ..contributionId = contribution.id
-      ..eventoId = eventoId
-      ..giftId = giftId
-      ..nome = contribution.nome
-      ..uid = contribution.uid
-      ..valor = contribution.valor
-      ..mensagem = contribution.mensagem
-      ..createdAt = contribution.data
-      ..synced = false;
-
-    await isar.writeTxn(() async {
-      await isar.giftContributionLocals.put(local);
-    });
+    await db.into(db.giftContributionLocals).insertOnConflictUpdate(
+          GiftContributionLocalsCompanion(
+            contributionId: Value(contribution.id),
+            eventoId: Value(eventoId),
+            giftId: Value(giftId),
+            nome: Value(contribution.nome),
+            uid: Value(contribution.uid),
+            valor: Value(contribution.valor),
+            mensagem: Value(contribution.mensagem),
+            createdAt: Value(contribution.data),
+            synced: const Value(false),
+          ),
+        );
   }
 
-  // ===============================
-  // LISTAR CONTRIBUTIONS NÃO SINCRONIZADAS
-  // ===============================
-
   Future<List<GiftContributionLocal>> getUnsyncedContributions() {
-    return isar.giftContributionLocals.filter().syncedEqualTo(false).findAll();
+    return (db.select(db.giftContributionLocals)..where((t) => t.synced.equals(false))).get();
+  }
+
+  Future<void> markContributionSynced(String contributionId) async {
+    await (db.update(db.giftContributionLocals)
+          ..where((t) => t.contributionId.equals(contributionId)))
+        .write(
+      const GiftContributionLocalsCompanion(
+        synced: Value(true),
+      ),
+    );
   }
 }

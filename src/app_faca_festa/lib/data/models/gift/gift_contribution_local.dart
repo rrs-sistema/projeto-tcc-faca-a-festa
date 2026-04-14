@@ -1,18 +1,18 @@
-import 'package:isar/isar.dart';
 
-part 'gift_contribution_local.g.dart';
+import 'package:drift/drift.dart';
 
-@Name("ContributionLocal") // 🔥 O TRUQUE ESTÁ AQUI! Isso vai mudar o cálculo do ID.
-@collection
-class GiftContributionLocal {
-  Id id = Isar.autoIncrement;
-  late String contributionId;
-  late String eventoId;
-  late String giftId;
-  late String nome;
-  String? uid;
-  double valor = 0.0;
-  String? mensagem;
-  late DateTime createdAt;
-  bool synced = false;
+class GiftContributionLocals extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  TextColumn get contributionId => text().unique()();
+  TextColumn get eventoId => text()();
+  TextColumn get giftId => text()();
+  TextColumn get nome => text()();
+  TextColumn get uid => text().nullable()();
+
+  RealColumn get valor => real().withDefault(const Constant(0.0))();
+  TextColumn get mensagem => text().nullable()();
+
+  DateTimeColumn get createdAt => dateTime()();
+  BoolColumn get synced => boolean().withDefault(const Constant(false))();
 }

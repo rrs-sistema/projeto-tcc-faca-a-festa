@@ -41,6 +41,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    
     final tipo = (Get.arguments?['tipo'] ?? 'O') as String;
     final isFornecedor = tipo == 'F';
     final theme = Get.find<EventThemeController>();
@@ -123,7 +124,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             bannerFile: bannerFile,
                             onImageSelected: (file) => setState(() => bannerFile = file),
                           )
-                        : RegisterOrganizadorForm(controller: controller),
+                        : RegisterOrganizadorForm(controller: controller, tipo: tipo),
                   ).animate().fadeIn(duration: 900.ms).slideY(begin: 0.3, curve: Curves.easeOut),
 
                   const SizedBox(height: 24),

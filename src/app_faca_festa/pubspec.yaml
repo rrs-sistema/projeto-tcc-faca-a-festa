@@ -56,18 +56,19 @@ dependencies:
   http: ^1.6.0
   firebase_messaging: ^16.0.4
   flutter_local_notifications: ^19.5.0
-  isar: 3.0.5
-  isar_flutter_libs: 3.0.5
-  path_provider: ^2.1.5
   connectivity_plus: ^6.1.5
+  drift: 2.27.0
+  sqlite3_flutter_libs: ^0.5.39
+  path: ^1.9.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.14.4
   flutter_lints: ^5.0.0
-  isar_generator: 3.0.5
-  build_runner: any
+  drift_dev: 2.27.0
+  build_runner: 2.4.15
   bdd_widget_test: ^1.7.3
 
 flutter_launcher_icons:

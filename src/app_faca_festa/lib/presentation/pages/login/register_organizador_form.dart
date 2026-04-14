@@ -9,7 +9,8 @@ import './../endereco/endereco_section.dart';
 
 class RegisterOrganizadorForm extends StatelessWidget {
   final RegisterController controller;
-  const RegisterOrganizadorForm({super.key, required this.controller});
+  final String tipo;
+  const RegisterOrganizadorForm({super.key, required this.controller, required this.tipo});
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +54,7 @@ class RegisterOrganizadorForm extends StatelessWidget {
               onChanged: (v) => controller.senha.value = v,
             )),
         const SizedBox(height: 15),
+        if (tipo != 'C')
         EnderecoSection(
           cor: primary,
           controller: controller.enderecoController.value,

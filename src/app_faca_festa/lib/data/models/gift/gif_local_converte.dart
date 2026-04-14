@@ -1,8 +1,10 @@
-import '../../../domain/entities/gift/gift.dart';
-import 'gift_local.dart';
-import 'gift_model.dart';
+import 'package:drift/drift.dart';
 
-extension GiftLocalMapper on GiftLocal {
+import './../../../core/database/app_database.dart';
+import './../../../domain/entities/gift/gift.dart';
+import './gift_model.dart';
+
+extension GiftRowMapper on GiftLocal {
   GiftModel toModel() {
     return GiftModel(
       id: giftId,
@@ -60,34 +62,37 @@ extension GiftLocalMapper on GiftLocal {
   }
 }
 
-extension GiftEntityToLocalMapper on Gift {
-  GiftLocal toLocal({
+extension GiftEntityToCompanionMapper on Gift {
+  GiftLocalsCompanion toCompanion({
     required String eventoId,
-    GiftLocal? base,
+    bool synced = false,
+    bool deleted = false,
+    DateTime? updatedAtOverride,
   }) {
-    final local = base ?? GiftLocal();
-    local.giftId = id;
-    local.eventoId = eventoId;
-    local.nome = nome;
-    local.descricao = descricao;
-    local.categoria = categoria;
-    local.tipo = tipo.name;
-    local.valor = valor;
-    local.valorArrecadado = valorArrecadado;
-    local.loja = loja;
-    local.link = link;
-    local.pix = pix;
-    local.metaValor = metaValor;
-    local.imagem = imagem;
-    local.status = status.name;
-    local.reservadoPor = reservadoPor;
-    local.reservadoUid = reservadoUid;
-    local.dataReserva = dataReserva;
-    local.synced = false;
-    local.updatedAt = DateTime.now();
+    final now = updatedAtOverride ?? DateTime.now();
 
-    if (base == null) local.createdAt = createdAt;
-
-    return local;
+    return GiftLocalsCompanion(
+      giftId: Value(id),
+      eventoId: Value(eventoId),
+      nome: Value(nome),
+      descricao: Value(descricao),
+      categoria: Value(categoria),
+      tipo: Value(tipo.name),
+      valor: Value(valor),
+      valorArrecadado: Value(valorArrecadado),
+      metaValor: Value(metaValor),
+      loja: Value(loja),
+      link: Value(link),
+      pix: Value(pix),
+      imagem: Value(imagem),
+      status: Value(status.name),
+      reservadoPor: Value(reservadoPor),
+      reservadoUid: Value(reservadoUid),
+      dataReserva: Value(dataReserva),
+      deleted: Value(deleted),
+      synced: Value(synced),
+      createdAt: Value(createdAt),
+      updatedAt: Value(now),
+    );
   }
 }

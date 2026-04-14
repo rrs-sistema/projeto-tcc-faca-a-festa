@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
-import 'package:isar/isar.dart';
 
 import '../../controllers/evento_controller.dart';
 import '../../controllers/gift/gift_controller.dart';
+import '../../core/database/app_database.dart';
 import '../../data/datasources/local/gift_local_datasource.dart';
 import '../../data/datasources/remote/gift_remote_datasource.dart';
 import '../../data/repositories_impl/gift_repository_impl.dart';
@@ -14,7 +14,7 @@ class GiftBinding extends Bindings {
   @override
   void dependencies() {
     // 1. Registra os Datasources
-    Get.lazyPut<GiftLocalDatasource>(() => GiftLocalDatasource(Get.find<Isar>()));
+    Get.lazyPut<GiftLocalDatasource>(() => GiftLocalDatasource(Get.find<AppDatabase>()));
     Get.lazyPut<GiftRemoteDatasource>(() => GiftRemoteDatasource(FirebaseFirestore.instance));
 
     // 2. Registra o Repository

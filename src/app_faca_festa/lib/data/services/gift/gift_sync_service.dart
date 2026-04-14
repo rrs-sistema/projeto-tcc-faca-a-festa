@@ -1,8 +1,10 @@
-import 'package:app_faca_festa/data/models/gift/gif_local_converte.dart';
+import 'package:app_faca_festa/core/database/app_database.dart';
+import 'package:app_faca_festa/domain/entities/gift/gift_contribution.dart';
 import 'package:flutter/foundation.dart';
 
 import './../../datasources/remote/gift_remote_datasource.dart';
 import './../../datasources/local/gift_local_datasource.dart';
+import './../../models/gift/gif_local_converte.dart';
 
 class GiftSyncService {
   final GiftRemoteDatasource remote;
@@ -21,25 +23,54 @@ class GiftSyncService {
         if (gift.deleted) {
           await remote.deleteGift(gift.eventoId, gift.giftId);
         } else {
-          // 💡 Lembrete: Garanta que o createGift do seu Datasource
-          // use .set(dados, SetOptions(merge: true)) para funcionar como Upsert.
           await remote.createGift(gift.eventoId, gift.toModel());
         }
 
-        // Se chegou aqui, o Firebase confirmou a gravação!
-        gift.synced = true;
-
-        // Aqui, a dica do @Index(unique: true, replace: true) que te passei
-        // na classe GiftLocal brilha: ele vai atualizar o status no Isar sem duplicar.
-        await local.saveGift(gift);
+        await local.markSynced(gift.giftId);
       } catch (e) {
         if (kDebugMode) {
-          print("Erro ao sincronizar gift ${gift.giftId}: $e");
+          print('Erro ao sincronizar gift ${gift.giftId}: $e');
         }
-        // 🔥 MUDANÇA CRÍTICA: De 'break' para 'continue'
-        // Ignora o item problemático e tenta salvar o resto da fila.
         continue;
       }
     }
+
+    await _syncContributionsPendentes();
+  }
+
+  Future<void> _syncContributionsPendentes() async {
+    final pendentes = await local.getUnsyncedContributions();
+
+    for (final contribution in pendentes) {
+      try {
+        await remote.saveContribution(
+          contribution.eventoId,
+          contribution.giftId,
+          contribution.toEntity(),
+        );
+
+        await local.markContributionSynced(contribution.contributionId);
+      } catch (e) {
+        if (kDebugMode) {
+          print(
+            'Erro ao sincronizar contribution ${contribution.contributionId}: $e',
+          );
+        }
+        continue;
+      }
+    }
+  }
+}
+
+extension GiftContributionRowMapper on GiftContributionLocal {
+  GiftContribution toEntity() {
+    return GiftContribution(
+      id: contributionId,
+      nome: nome,
+      uid: uid,
+      valor: valor,
+      mensagem: mensagem,
+      data: createdAt,
+    );
   }
 }

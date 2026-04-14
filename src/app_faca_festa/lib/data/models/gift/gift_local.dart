@@ -1,30 +1,34 @@
-import 'package:isar/isar.dart';
+import 'package:drift/drift.dart';
 
-part 'gift_local.g.dart';
+class GiftLocals extends Table {
+  IntColumn get id => integer().autoIncrement()();
 
-@collection
-class GiftLocal {
-  Id id = Isar.autoIncrement;
-  @Index(name: 'fb_gift_id', unique: true, replace: true)
-  late String giftId;
-  late String eventoId;
-  late String nome;
-  String? descricao;
-  String? categoria;
-  late String tipo;
-  double? valor;
-  double valorArrecadado = 0.0;
-  double? metaValor;
-  String? loja;
-  String? link;
-  String? pix;
-  String? imagem;
-  String status = "disponivel";
-  String? reservadoPor;
-  String? reservadoUid;
-  DateTime? dataReserva;
-  bool deleted = false;
-  bool synced = false;
-  DateTime createdAt = DateTime.now();
-  DateTime updatedAt = DateTime.now();
+  TextColumn get giftId => text().unique()();
+  TextColumn get eventoId => text()();
+  TextColumn get nome => text()();
+
+  TextColumn get descricao => text().nullable()();
+  TextColumn get categoria => text().nullable()();
+  TextColumn get tipo => text()();
+
+  RealColumn get valor => real().nullable()();
+  RealColumn get valorArrecadado => real().withDefault(const Constant(0.0))();
+  RealColumn get metaValor => real().nullable()();
+
+  TextColumn get loja => text().nullable()();
+  TextColumn get link => text().nullable()();
+  TextColumn get pix => text().nullable()();
+  TextColumn get imagem => text().nullable()();
+
+  TextColumn get status => text().withDefault(const Constant('disponivel'))();
+
+  TextColumn get reservadoPor => text().nullable()();
+  TextColumn get reservadoUid => text().nullable()();
+  DateTimeColumn get dataReserva => dateTime().nullable()();
+
+  BoolColumn get deleted => boolean().withDefault(const Constant(false))();
+  BoolColumn get synced => boolean().withDefault(const Constant(false))();
+
+  DateTimeColumn get createdAt => dateTime()();
+  DateTimeColumn get updatedAt => dateTime()();
 }

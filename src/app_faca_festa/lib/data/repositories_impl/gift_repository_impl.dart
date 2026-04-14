@@ -1,17 +1,18 @@
-import 'package:app_faca_festa/data/models/gift/gif_local_converte.dart';
 import 'package:flutter/foundation.dart';
 
 import './../datasources/remote/gift_remote_datasource.dart';
 import './../../domain/entities/gift/gift_contribution.dart';
 import './../datasources/local/gift_local_datasource.dart';
 import './../../domain/repositories/gift_repository.dart';
+import './../models/gift/gif_local_converte.dart';
+import './../../core/database/app_database.dart';
 import './../../domain/entities/gift/gift.dart';
-import './../models/gift/gift_local.dart';
 import './../models/gift/gift_model.dart';
 
 class GiftRepositoryImpl implements GiftRepository {
   final GiftLocalDatasource local;
   final GiftRemoteDatasource remote;
+
   bool _syncing = false;
 
   GiftRepositoryImpl({
@@ -19,9 +20,6 @@ class GiftRepositoryImpl implements GiftRepository {
     required this.remote,
   });
 
-  // ================================
-  // GET GIFTS
-  // ================================
   @override
   Stream<List<Gift>> getGifts(String eventoId) {
     return local.watchGifts(eventoId).map(
@@ -29,128 +27,119 @@ class GiftRepositoryImpl implements GiftRepository {
         );
   }
 
-  // ================================
-  // CREATE GIFT
-  // ================================
   @override
   Future<void> createGift(String eventoId, Gift gift) async {
     final model = gift as GiftModel;
 
-    final localGift = GiftLocal()
-      ..giftId = model.id
-      ..eventoId = eventoId
-      ..nome = model.nome
-      ..descricao = model.descricao
-      ..tipo = model.tipo.name
-      ..valor = model.valor
-      ..valorArrecadado = model.valorArrecadado
-      ..loja = model.loja
-      ..link = model.link
-      ..pix = model.pix
-      ..metaValor = model.metaValor
-      ..status = model.status.name
-      ..synced = false // Sempre falso no início
-      ..createdAt = DateTime.now()
-      ..updatedAt = DateTime.now();
+    final companion = model.toCompanion(
+      eventoId: eventoId,
+      synced: false,
+      deleted: false,
+      updatedAtOverride: DateTime.now(),
+    );
 
-    await local.saveGift(localGift);
+    await local.saveGift(companion);
 
-    // 🔥 Tenta enviar para o Firebase imediatamente
-    await _trySyncRemote(localGift);
+    final saved = await local.getGift(model.id);
+    if (saved != null) {
+      await _trySyncRemote(saved);
+    }
   }
 
-// ================================
-  // UPDATE GIFT
-  // ================================
   @override
   Future<void> updateGift(String eventoId, Gift gift) async {
     final model = gift as GiftModel;
     final existing = await local.getGift(model.id);
     if (existing == null) return;
 
-    existing.nome = model.nome;
-    existing.descricao = model.descricao;
-    existing.tipo = model.tipo.name;
-    existing.valor = model.valor;
-    existing.loja = model.loja;
-    existing.link = model.link;
-    existing.pix = model.pix;
-    existing.imagem = model.imagem;
-    existing.metaValor = model.metaValor;
-    existing.synced = false;
-    existing.updatedAt = DateTime.now();
+    final updated = model.toCompanion(
+      eventoId: eventoId,
+      synced: false,
+      deleted: existing.deleted,
+      updatedAtOverride: DateTime.now(),
+    );
 
-    await local.saveGift(existing);
+    await local.saveGift(updated);
 
-    // 🔥 Sincroniza atualização
-    await _trySyncRemote(existing);
+    final saved = await local.getGift(model.id);
+    if (saved != null) {
+      await _trySyncRemote(saved);
+    }
   }
 
-  // ================================
-  // DELETE GIFT
-  // ================================
   @override
   Future<void> deleteGift(String eventoId, String giftId) async {
     final gift = await local.getGift(giftId);
-
     if (gift == null) return;
 
-    gift.deleted = true;
-    gift.synced = false;
-    gift.updatedAt = DateTime.now();
+    await local.markDeleted(giftId);
 
-    await local.saveGift(gift);
+    final updated = await local.getGift(giftId);
+    if (updated != null) {
+      await _trySyncRemote(updated);
+    }
   }
 
-  // ================================
-  // RESERVAR
-  // ================================
   @override
-  Future<bool> reservarGift(String eventoId, String giftId, String nome, String uid) async {
+  Future<bool> reservarGift(
+    String eventoId,
+    String giftId,
+    String nome,
+    String uid,
+  ) async {
     final gift = await local.getGift(giftId);
-    if (gift == null || gift.status != "disponivel") return false;
+    if (gift == null || gift.status != 'disponivel') return false;
 
-    gift.status = "reservado";
-    gift.reservadoPor = nome;
-    gift.reservadoUid = uid;
-    gift.dataReserva = DateTime.now();
-    gift.synced = false;
-    gift.updatedAt = DateTime.now();
+    await local.updateReservation(
+      giftId: giftId,
+      status: 'reservado',
+      reservadoPor: nome,
+      reservadoUid: uid,
+      dataReserva: DateTime.now(),
+      synced: false,
+    );
 
-    await local.saveGift(gift);
+    final updated = await local.getGift(giftId);
+    if (updated != null) {
+      await _trySyncRemote(updated);
+    }
 
-    // 🔥 Sincroniza reserva
-    await _trySyncRemote(gift);
     return true;
   }
 
-  // ================================
-  // CONTRIBUIR PIX
-  // ================================
   @override
-  Future<void> contribuirPix(String eventoId, String giftId, GiftContribution contribution) async {
+  Future<void> contribuirPix(
+    String eventoId,
+    String giftId,
+    GiftContribution contribution,
+  ) async {
     final gift = await local.getGift(giftId);
     if (gift == null) return;
 
-    gift.valorArrecadado += contribution.valor;
-    gift.synced = false;
-    gift.updatedAt = DateTime.now();
+    await local.updateValorArrecadado(
+      giftId: giftId,
+      valorArrecadado: gift.valorArrecadado + contribution.valor,
+      synced: false,
+    );
 
-    await local.saveGift(gift);
-
-    // Salva contribuição local e remota
-    await local.saveContribution(eventoId, giftId, contribution);
+    await local.saveContribution(
+      eventoId,
+      giftId,
+      contribution,
+    );
 
     try {
       await remote.saveContribution(eventoId, giftId, contribution);
-      await _trySyncRemote(gift); // Atualiza o valor total do presente no remoto
+
+      final updated = await local.getGift(giftId);
+      if (updated != null) {
+        await _trySyncRemote(updated);
+      }
     } catch (_) {}
   }
 
-  // Helper para tentar sincronizar remotamente sem travar o fluxo local
   Future<void> _trySyncRemote(GiftLocal localGift) async {
     if (_syncing) return;
-
     _syncing = true;
 
     try {
@@ -160,14 +149,13 @@ class GiftRepositoryImpl implements GiftRepository {
         await remote.createGift(localGift.eventoId, localGift.toModel());
       }
 
-      localGift.synced = true;
-      await local.saveGift(localGift);
+      await local.markSynced(localGift.giftId);
     } catch (e) {
       if (kDebugMode) {
-        print("Erro sync gift ${localGift.giftId}: $e");
+        print('Erro sync gift ${localGift.giftId}: $e');
       }
+    } finally {
+      _syncing = false;
     }
-
-    _syncing = false;
   }
 }
