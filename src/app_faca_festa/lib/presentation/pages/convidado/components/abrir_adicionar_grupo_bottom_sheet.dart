@@ -262,21 +262,39 @@ Future<void> abrirAdicionarGrupoBottomSheet({
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () async {
-                        if (nomeCtrl.text.trim().isEmpty) {
-                          Get.snackbar("Atenção", "Informe o nome do grupo",
-                              backgroundColor: Colors.orangeAccent, colorText: Colors.white);
+                        final nome = nomeCtrl.text.trim();
+                        final descricao = descCtrl.text.trim();
+
+                        if (nome.isEmpty) {
+                          Get.snackbar(
+                            "Atenção",
+                            "Informe o nome do grupo",
+                            backgroundColor: Colors.orangeAccent,
+                            colorText: Colors.white,
+                          );
                           return;
                         }
+
+                        final agora = DateTime.now();
 
                         final novo = GrupoConvidadoModel(
                           idGrupo: DateTime.now().millisecondsSinceEpoch.toString(),
                           idEvento: idEvento,
-                          nome: nomeCtrl.text.trim(),
-                          descricao: descCtrl.text.trim(),
+                          nome: nome,
+                          descricao: descricao.isEmpty ? null : descricao,
                           icone: iconeSelecionado.value,
                           corHex: corSelecionada.value,
-                          numeroMesa: int.tryParse(numeroMesaCtrl.text.trim()) ?? 5,
-                          convidados: [],
+
+                          // Totais começam zerados porque os convidados
+                          // agora ficam separados do grupo.
+                          totalConvidados: 0,
+                          totalAdultos: 0,
+                          totalCriancas: 0,
+                          totalBebes: 0,
+                          totalConfirmados: 0,
+
+                          dataCadastro: agora,
+                          dataAtualizacao: agora,
                         );
 
                         await controller.adicionarGrupo(novo);

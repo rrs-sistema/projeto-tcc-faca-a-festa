@@ -170,12 +170,30 @@ class _CadastroCardapioBottomSheetState extends State<CadastroCardapioBottomShee
                         ),
                       ),
                       onPressed: () async {
+                        final titulo = tituloCtrl.text.trim();
+
+                        if (titulo.isEmpty) {
+                          Get.snackbar(
+                            "Atenção",
+                            "Informe o título do cardápio",
+                            backgroundColor: Colors.orangeAccent,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
                         final novo = CardapioModel(
                           idCardapio: DateTime.now().millisecondsSinceEpoch.toString(),
                           idEvento: widget.idEvento,
-                          titulo: tituloCtrl.text.trim(),
-                          icone: iconeSelecionado.value,
-                          cor: corSelecionada.value,
+                          titulo: titulo,
+                          icone: _iconDataToString(iconeSelecionado.value),
+                          corHex: _colorToHex(corSelecionada.value),
+                          publicoAlvo: PublicoAlvoCardapio.todos,
+                          totalItens: 0,
+                          totalComidas: 0,
+                          totalBebidas: 0,
+                          totalSobremesas: 0,
+                          ativo: true,
                         );
 
                         await controller.adicionarCardapio(novo);
@@ -193,6 +211,24 @@ class _CadastroCardapioBottomSheetState extends State<CadastroCardapioBottomShee
         ),
       ),
     );
+  }
+
+  String _iconDataToString(IconData icon) {
+    return icon.codePoint.toString();
+  }
+
+  String _colorToHex(Color color) {
+    String channelToHex(double value) {
+      final intValue = (value * 255).round().clamp(0, 255);
+      return intValue.toRadixString(16).padLeft(2, '0');
+    }
+
+    final alpha = channelToHex(color.a);
+    final red = channelToHex(color.r);
+    final green = channelToHex(color.g);
+    final blue = channelToHex(color.b);
+
+    return '#$alpha$red$green$blue'.toUpperCase();
   }
 
   // ---------------------------------------------------------

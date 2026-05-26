@@ -26,20 +26,75 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
   void initState() {
     super.initState();
 
-    // Preenche o título
     tituloCtrl = TextEditingController(text: widget.cardapio.titulo);
 
-    // Preenche ícone
-    iconeSelecionado.value = widget.cardapio.icone ?? Icons.restaurant_menu;
+    // Agora o ícone vem como String no model.
+    iconeSelecionado.value = _iconFromString(widget.cardapio.icone);
 
-    // Preenche cor
-    corSelecionada.value = widget.cardapio.cor ?? Colors.teal;
+    // Agora a cor vem como corHex no model.
+    corSelecionada.value = _colorFromHex(
+      widget.cardapio.corHex,
+      fallback: Colors.teal,
+    );
   }
 
   @override
   void dispose() {
     tituloCtrl.dispose();
     super.dispose();
+  }
+
+  IconData _iconFromString(String? value) {
+    final codePoint = int.tryParse(value ?? '');
+
+    if (codePoint == null) {
+      return Icons.restaurant_menu;
+    }
+
+    return IconData(
+      codePoint,
+      fontFamily: 'MaterialIcons',
+    );
+  }
+
+  String _iconToString(IconData icon) {
+    return icon.codePoint.toString();
+  }
+
+  Color _colorFromHex(String? hex, {Color fallback = Colors.teal}) {
+    try {
+      if (hex == null || hex.trim().isEmpty) {
+        return fallback;
+      }
+
+      var value = hex.replaceAll('#', '').trim();
+
+      if (value.length == 6) {
+        value = 'FF$value';
+      }
+
+      if (value.length != 8) {
+        return fallback;
+      }
+
+      return Color(int.parse(value, radix: 16));
+    } catch (_) {
+      return fallback;
+    }
+  }
+
+  String _colorToHex(Color color) {
+    String channelToHex(double value) {
+      final intValue = (value * 255).round().clamp(0, 255);
+      return intValue.toRadixString(16).padLeft(2, '0');
+    }
+
+    final alpha = channelToHex(color.a);
+    final red = channelToHex(color.r);
+    final green = channelToHex(color.g);
+    final blue = channelToHex(color.b);
+
+    return '#$alpha$red$green$blue'.toUpperCase();
   }
 
   @override
@@ -179,12 +234,30 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       onPressed: () async {
+                        final titulo = tituloCtrl.text.trim();
+
+                        if (titulo.isEmpty) {
+                          Get.snackbar(
+                            "Atenção",
+                            "Informe o título do cardápio",
+                            backgroundColor: Colors.orangeAccent,
+                            colorText: Colors.white,
+                          );
+                          return;
+                        }
+
                         final atualizado = CardapioModel(
                           idCardapio: widget.cardapio.idCardapio,
                           idEvento: widget.cardapio.idEvento,
-                          titulo: tituloCtrl.text.trim(),
-                          icone: iconeSelecionado.value,
-                          cor: corSelecionada.value,
+                          titulo: titulo,
+                          publicoAlvo: widget.cardapio.publicoAlvo,
+                          icone: _iconToString(iconeSelecionado.value),
+                          corHex: _colorToHex(corSelecionada.value),
+                          totalItens: widget.cardapio.totalItens,
+                          totalComidas: widget.cardapio.totalComidas,
+                          totalBebidas: widget.cardapio.totalBebidas,
+                          totalSobremesas: widget.cardapio.totalSobremesas,
+                          ativo: widget.cardapio.ativo,
                         );
 
                         await controller.atualizarCardapio(atualizado);

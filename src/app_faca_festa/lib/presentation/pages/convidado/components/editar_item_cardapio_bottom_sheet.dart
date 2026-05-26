@@ -24,7 +24,7 @@ class EditarItemCardapioBottomSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<CardapioController>();
 
-    tipo.value = item.tipo ?? "comida";
+    final Rx<TipoItemCardapio> tipo = TipoItemCardapio.comida.obs;
     confirmado.value = item.confirmado;
 
     return FractionallySizedBox(
@@ -68,11 +68,39 @@ class EditarItemCardapioBottomSheet extends StatelessWidget {
             const SizedBox(height: 8),
 
             Obx(() => Wrap(
-                  spacing: 12,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
-                    _tipoChip("comida", tipo),
-                    _tipoChip("bebida", tipo),
-                    _tipoChip("sobremesa", tipo),
+                    _tipoChip(
+                      label: 'Comida',
+                      value: TipoItemCardapio.comida,
+                      tipo: tipo,
+                    ),
+                    _tipoChip(
+                      label: 'Bebida',
+                      value: TipoItemCardapio.bebida,
+                      tipo: tipo,
+                    ),
+                    _tipoChip(
+                      label: 'Sobremesa',
+                      value: TipoItemCardapio.sobremesa,
+                      tipo: tipo,
+                    ),
+                    _tipoChip(
+                      label: 'Bolo',
+                      value: TipoItemCardapio.bolo,
+                      tipo: tipo,
+                    ),
+                    _tipoChip(
+                      label: 'Descartável',
+                      value: TipoItemCardapio.descartavel,
+                      tipo: tipo,
+                    ),
+                    _tipoChip(
+                      label: 'Outro',
+                      value: TipoItemCardapio.outro,
+                      tipo: tipo,
+                    ),
                   ],
                 )),
 
@@ -99,6 +127,8 @@ class EditarItemCardapioBottomSheet extends StatelessWidget {
                   nome: nomeCtrl.text.trim(),
                   tipo: tipo.value,
                   confirmado: confirmado.value,
+                  idEvento: item.idEvento,
+                  idCardapio: idCardapio,
                 );
 
                 await controller.addItem(idCardapio, atualizado);
@@ -113,12 +143,22 @@ class EditarItemCardapioBottomSheet extends StatelessWidget {
     );
   }
 
-  Widget _tipoChip(String label, RxString tipo) {
-    return ChoiceChip(
-      label: Text(label.toUpperCase()),
-      selected: tipo.value == label,
-      onSelected: (_) => tipo.value = label,
-      selectedColor: Colors.teal.withValues(alpha: 0.25),
+  Widget _tipoChip({
+    required String label,
+    required TipoItemCardapio value,
+    required Rx<TipoItemCardapio> tipo,
+  }) {
+    return Obx(
+      () => ChoiceChip(
+        label: Text(label.toUpperCase()),
+        selected: tipo.value == value,
+        onSelected: (_) => tipo.value = value,
+        selectedColor: Colors.teal.withValues(alpha: 0.25),
+        labelStyle: TextStyle(
+          fontWeight: FontWeight.w700,
+          color: tipo.value == value ? Colors.teal.shade900 : Colors.black54,
+        ),
+      ),
     );
   }
 }

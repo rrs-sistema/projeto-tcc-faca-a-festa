@@ -56,6 +56,87 @@ class ConvidadoController extends GetxController {
     );
   }
 
+  Future<void> migrarTipoConvidadoLegado() async {
+    try {
+      carregando.value = true;
+
+      final snapshot = await _db.collection('convidado').get();
+
+      if (snapshot.docs.isEmpty) {
+        Get.snackbar(
+          'Migração',
+          'Nenhum convidado encontrado para migrar.',
+          backgroundColor: Colors.orangeAccent,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      WriteBatch batch = _db.batch();
+
+      int contadorBatch = 0;
+      int totalAtualizados = 0;
+      int totalIgnorados = 0;
+
+      for (final doc in snapshot.docs) {
+        final data = doc.data();
+
+        final tipoAtual = data['tipo_convidado'];
+
+        final jaTemTipo = tipoAtual != null && tipoAtual.toString().trim().isNotEmpty;
+
+        if (jaTemTipo) {
+          totalIgnorados++;
+          continue;
+        }
+
+        final adultoValue = data['adulto'];
+
+        String tipoConvidado;
+
+        if (adultoValue == false) {
+          tipoConvidado = 'crianca';
+        } else {
+          tipoConvidado = 'adulto';
+        }
+
+        batch.update(doc.reference, {
+          'tipo_convidado': tipoConvidado,
+          'data_atualizacao': FieldValue.serverTimestamp(),
+        });
+
+        contadorBatch++;
+        totalAtualizados++;
+
+        if (contadorBatch == 450) {
+          await batch.commit();
+          batch = _db.batch();
+          contadorBatch = 0;
+        }
+      }
+
+      if (contadorBatch > 0) {
+        await batch.commit();
+      }
+
+      Get.snackbar(
+        'Migração concluída',
+        '$totalAtualizados convidados atualizados. $totalIgnorados já estavam corretos.',
+        backgroundColor: Colors.teal,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Erro na migração',
+        'Não foi possível migrar os convidados: $e',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    } finally {
+      carregando.value = false;
+    }
+  }
+
   Future<void> confirmarPresenca(
       ConvidadoModel convidado, EventoModel evento, String tipoEvento) async {
     final whats = Get.find<WhatsAppService>();
@@ -326,7 +407,7 @@ class ConvidadoController extends GetxController {
   Map<String, List<ConvidadoModel>> get convidadosPorMesa {
     final Map<String, List<ConvidadoModel>> grupos = {};
     for (var c in convidados) {
-      final grupo = c.grupoMesa ?? 'Sem mesa';
+      final grupo = c.nomeGrupo ?? 'Sem mesa';
       grupos.putIfAbsent(grupo, () => []);
       grupos[grupo]!.add(c);
     }
@@ -343,7 +424,7 @@ class ConvidadoController extends GetxController {
     // Total de assentos cadastrados
     final totalAssentos = gruposMesa.fold<int>(
       0,
-      (acc, g) => acc + (g.numeroMesa ?? 0),
+      (acc, g) => acc + (g.totalConvidados),
     );
 
     // Buscar convidados no controller (fonte real)
@@ -356,7 +437,7 @@ class ConvidadoController extends GetxController {
       final nomeMesa = g.nome;
 
       totalOcupados += todosConvidados
-          .where((c) => c.grupoMesa == nomeMesa && c.status == StatusConvidado.confirmado)
+          .where((c) => c.nomeGrupo == nomeMesa && c.status == StatusConvidado.confirmado)
           .length;
     }
 

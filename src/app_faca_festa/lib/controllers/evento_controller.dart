@@ -160,6 +160,7 @@ class EventoController extends GetxController {
           orcamentoController.carregarOrcamentosDoEvento(evento.idEvento).asStream().listen((_) {});
       _convidadosSub =
           convidadoController.escutarConvidados(evento.idEvento).asStream().listen((_) {});
+
       _cardapiosSub =
           cardapioController.escutarCardapios(evento.idEvento).asStream().listen((_) {});
       _gruposSub = grupoController.escutarGrupos(evento.idEvento).asStream().listen((_) {});

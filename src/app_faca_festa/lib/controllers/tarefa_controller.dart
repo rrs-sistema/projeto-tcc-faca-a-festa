@@ -109,9 +109,11 @@ class TarefaController extends GetxController {
           contato: user.email,
           email: user.email,
           status: StatusConvidado.confirmado, // Organizador sempre confirmado
-          adulto: true,
-          grupoMesa: null,
-          cuidadoEspecial: false,
+          //adulto: true,
+          //grupoMesa: null,
+          cuidadoEspecial: false, 
+          dataCadastro: DateTime.now(),
+          dataAtualizacao: DateTime.now(),
         );
 
         // Evitar duplicação caso o organizador também esteja na coleção "convidado"

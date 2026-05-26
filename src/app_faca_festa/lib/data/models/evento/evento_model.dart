@@ -62,6 +62,7 @@ class EventoModel {
   final DateTime data;
   final String? hora;
   final double? custoEstimado;
+  final int? totalConvidados;
   final StatusEvento? status;
   final String? descricao;
 
@@ -106,6 +107,7 @@ class EventoModel {
     this.uf,
     this.hora,
     this.custoEstimado,
+    this.totalConvidados,
     this.status = StatusEvento.planejamento,
     this.descricao,
     this.cep,
@@ -149,6 +151,7 @@ class EventoModel {
       'data': Timestamp.fromDate(data),
       'hora': hora,
       'custo_estimado': custoEstimado,
+      'total_convidados': totalConvidados,
       'status': status?.value ?? StatusEvento.planejamento.value,
       'descricao': descricao,
       'cep': cep,
@@ -200,6 +203,8 @@ class EventoModel {
       hora: map['hora'],
       custoEstimado:
           map['custo_estimado'] != null ? (map['custo_estimado'] as num).toDouble() : null,
+      totalConvidados:
+          map['total_convidados'] != null ? (map['total_convidados'] as num).toInt() : 5,
       status: _parseStatus(map['status']),
       descricao: map['descricao'],
       cep: map['cep'],
@@ -259,6 +264,7 @@ class EventoModel {
     DateTime? data,
     String? hora,
     double? custoEstimado,
+    int? totalConvidados,
     StatusEvento? status,
     String? descricao,
     String? cep,
@@ -298,6 +304,7 @@ class EventoModel {
       data: data ?? this.data,
       hora: hora ?? this.hora,
       custoEstimado: custoEstimado ?? this.custoEstimado,
+      totalConvidados: totalConvidados ?? this.totalConvidados,
       status: status ?? this.status,
       descricao: descricao ?? this.descricao,
       cep: cep ?? this.cep,

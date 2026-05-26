@@ -1,103 +1,126 @@
-// ignore_for_file: deprecated_member_use
+enum PublicoAlvoCardapio {
+  todos,
+  adultos,
+  criancas,
+  bebes;
 
-import 'package:flutter/material.dart';
-import './cardapio_item_model.dart';
+  String get firestoreValue {
+    switch (this) {
+      case PublicoAlvoCardapio.todos:
+        return 'todos';
+      case PublicoAlvoCardapio.adultos:
+        return 'adultos';
+      case PublicoAlvoCardapio.criancas:
+        return 'criancas';
+      case PublicoAlvoCardapio.bebes:
+        return 'bebes';
+    }
+  }
 
-/// 🔹 Representa uma categoria de cardápio (Adultos, Crianças, Livre)
+  static PublicoAlvoCardapio fromString(String? value) {
+    switch (value?.trim().toLowerCase()) {
+      case 'adultos':
+        return PublicoAlvoCardapio.adultos;
+      case 'criancas':
+      case 'crianças':
+        return PublicoAlvoCardapio.criancas;
+      case 'bebes':
+      case 'bebês':
+        return PublicoAlvoCardapio.bebes;
+      case 'todos':
+      default:
+        return PublicoAlvoCardapio.todos;
+    }
+  }
+}
+
 class CardapioModel {
   final String idCardapio;
   final String idEvento;
+
   final String titulo;
-  final IconData? icone;
-  final Color? cor;
-  final List<CardapioItemModel> itens;
+  final PublicoAlvoCardapio publicoAlvo;
+
+  final String? icone;
+  final String? corHex;
+
+  final int totalItens;
+  final int totalComidas;
+  final int totalBebidas;
+  final int totalSobremesas;
+
+  final bool ativo;
 
   const CardapioModel({
     required this.idCardapio,
     required this.idEvento,
     required this.titulo,
+    this.publicoAlvo = PublicoAlvoCardapio.todos,
     this.icone,
-    this.cor,
-    this.itens = const [],
+    this.corHex,
+    this.totalItens = 0,
+    this.totalComidas = 0,
+    this.totalBebidas = 0,
+    this.totalSobremesas = 0,
+    this.ativo = true,
   });
 
-  // -------------------------------------------------------------
-  // 🔹 MAP → FIRESTORE
-  // -------------------------------------------------------------
-  Map<String, dynamic> toMap() => {
-        'id_cardapio': idCardapio,
-        'id_evento': idEvento,
-        'titulo': titulo,
-        'icone': icone?.codePoint,
-        'cor_hex': cor != null ? '#${cor!.value.toRadixString(16)}' : null,
-        'total_itens': itens.length,
-      };
+  Map<String, dynamic> toMap() {
+    return {
+      'id_cardapio': idCardapio,
+      'id_evento': idEvento,
+      'titulo': titulo,
+      'publico_alvo': publicoAlvo.firestoreValue,
+      'icone': icone,
+      'cor_hex': corHex,
+      'total_itens': totalItens,
+      'total_comidas': totalComidas,
+      'total_bebidas': totalBebidas,
+      'total_sobremesas': totalSobremesas,
+      'ativo': ativo,
+    };
+  }
 
-  // -------------------------------------------------------------
-  // 🔹 FIRESTORE → MODEL
-  // -------------------------------------------------------------
   factory CardapioModel.fromMap(Map<String, dynamic> map) {
-    Color? parseColor(String? hex) {
-      if (hex == null) return null;
-      try {
-        return Color(int.parse(hex.replaceAll('#', '0xff')));
-      } catch (_) {
-        return null;
-      }
-    }
-
-    IconData? parseIcon(dynamic codePoint) {
-      if (codePoint == null) return null;
-
-      try {
-        // Converte para int de forma segura
-        final int cp = codePoint is int ? codePoint : int.tryParse(codePoint.toString()) ?? 0;
-
-        return IconData(
-          cp,
-          fontFamily: 'MaterialIcons',
-          fontPackage: null,
-        );
-      } catch (e) {
-        // Caso algo inesperado aconteça
-        return null;
-      }
-    }
-
     return CardapioModel(
-      idCardapio: map['id_cardapio'] ?? '',
-      idEvento: map['id_evento'] ?? '',
-      titulo: map['titulo'] ?? '',
-      icone: parseIcon(map['icone']),
-      cor: parseColor(map['cor_hex']),
+      idCardapio: map['id_cardapio']?.toString() ?? '',
+      idEvento: map['id_evento']?.toString() ?? '',
+      titulo: map['titulo']?.toString() ?? '',
+      publicoAlvo: PublicoAlvoCardapio.fromString(map['publico_alvo']),
+      icone: map['icone']?.toString(),
+      corHex: map['cor_hex']?.toString(),
+      totalItens: map['total_itens'] is num ? (map['total_itens'] as num).toInt() : 0,
+      totalComidas: map['total_comidas'] is num ? (map['total_comidas'] as num).toInt() : 0,
+      totalBebidas: map['total_bebidas'] is num ? (map['total_bebidas'] as num).toInt() : 0,
+      totalSobremesas:
+          map['total_sobremesas'] is num ? (map['total_sobremesas'] as num).toInt() : 0,
+      ativo: map['ativo'] ?? true,
     );
   }
 
-  // -------------------------------------------------------------
-  // 🔹 COPYWITH
-  // -------------------------------------------------------------
   CardapioModel copyWith({
     String? titulo,
-    IconData? icone,
-    Color? cor,
-    List<CardapioItemModel>? itens,
+    PublicoAlvoCardapio? publicoAlvo,
+    String? icone,
+    String? corHex,
+    int? totalItens,
+    int? totalComidas,
+    int? totalBebidas,
+    int? totalSobremesas,
+    bool? ativo,
   }) {
     return CardapioModel(
       idCardapio: idCardapio,
       idEvento: idEvento,
       titulo: titulo ?? this.titulo,
+      publicoAlvo: publicoAlvo ?? this.publicoAlvo,
       icone: icone ?? this.icone,
-      cor: cor ?? this.cor,
-      itens: itens ?? this.itens,
+      corHex: corHex ?? this.corHex,
+      totalItens: totalItens ?? this.totalItens,
+      totalComidas: totalComidas ?? this.totalComidas,
+      totalBebidas: totalBebidas ?? this.totalBebidas,
+      totalSobremesas: totalSobremesas ?? this.totalSobremesas,
+      ativo: ativo ?? this.ativo,
     );
   }
-
-  // -------------------------------------------------------------
-  // 🔹 CONTADORES
-  // -------------------------------------------------------------
-  int get totalItens => itens.length;
-  int get totalConfirmados => itens.where((i) => i.confirmado).length;
-  int get totalComidas => itens.where((i) => i.tipo?.toLowerCase() == 'comida').length;
-  int get totalBebidas => itens.where((i) => i.tipo?.toLowerCase() == 'bebida').length;
-  int get totalSobremesas => itens.where((i) => i.tipo?.toLowerCase() == 'sobremesa').length;
 }

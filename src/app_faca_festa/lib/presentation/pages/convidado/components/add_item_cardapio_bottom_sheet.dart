@@ -5,13 +5,23 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../controllers/tema/event_theme_controller.dart';
+import '../../../../data/models/cardapio/cardapio_model.dart';
 import './../../../../controllers/convidado/cardapio_controller.dart';
 import './../../../../data/models/cardapio/cardapio_item_model.dart';
 
 class AddItemCardapioBottomSheet extends StatefulWidget {
   final String idCardapio;
 
-  const AddItemCardapioBottomSheet({super.key, required this.idCardapio});
+  /// Opcional para não quebrar as chamadas atuais.
+  /// Se não for informado, o bottom sheet tenta encontrar o idEvento
+  /// pelo CardapioController usando o idCardapio.
+  final String? idEvento;
+
+  const AddItemCardapioBottomSheet({
+    super.key,
+    required this.idCardapio,
+    this.idEvento,
+  });
 
   @override
   State<AddItemCardapioBottomSheet> createState() => _AddItemCardapioBottomSheetState();
@@ -19,7 +29,10 @@ class AddItemCardapioBottomSheet extends StatefulWidget {
 
 class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet> {
   final nomeCtrl = TextEditingController();
-  final RxString tipo = "comida".obs;
+
+  /// Agora o tipo não é mais String.
+  /// O novo CardapioItemModel espera TipoItemCardapio.
+  final Rx<TipoItemCardapio> tipo = TipoItemCardapio.comida.obs;
 
   @override
   void dispose() {
@@ -49,11 +62,15 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
             Row(
               children: [
                 const SizedBox(width: 12),
-                Icon(Icons.add_circle_rounded, size: 40, color: theme.secondaryColor.value),
+                Icon(
+                  Icons.add_circle_rounded,
+                  size: 40,
+                  color: theme.secondaryColor.value,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    "Novo Item do Cardápio",
+                    'Novo Item do Cardápio',
                     style: GoogleFonts.poppins(
                       color: theme.secondaryColor.value,
                       fontWeight: FontWeight.w700,
@@ -61,10 +78,12 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
                     ),
                   ),
                 ),
-
-                // Botão de sair
                 IconButton(
-                  icon: const Icon(Icons.close_rounded, size: 28, color: Colors.white),
+                  icon: const Icon(
+                    Icons.close_rounded,
+                    size: 28,
+                    color: Colors.white,
+                  ),
                   onPressed: () => Navigator.pop(context),
                 ),
                 const SizedBox(width: 4),
@@ -82,7 +101,6 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // INPUT NOME
                     Container(
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
@@ -97,20 +115,19 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
                         controller: nomeCtrl,
                         style: const TextStyle(color: Colors.white),
                         decoration: InputDecoration(
-                          labelText: "Nome do item",
+                          labelText: 'Nome do item',
                           labelStyle: const TextStyle(color: Colors.white70),
-                          prefixIcon: Icon(Icons.fastfood_rounded,
-                              color: Colors.white.withValues(alpha: 0.8)),
+                          prefixIcon: Icon(
+                            Icons.fastfood_rounded,
+                            color: Colors.white.withValues(alpha: 0.8),
+                          ),
                           border: InputBorder.none,
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 28),
-
-                    // TÍTULO TIPO
                     Text(
-                      "Tipo de Item",
+                      'Tipo de Item',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 16,
@@ -118,17 +135,44 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
                       ),
                     ),
                     const SizedBox(height: 12),
-
-                    // CHIPS DE TIPO
-                    Obx(() => Wrap(
-                          spacing: 16,
-                          runSpacing: 10,
-                          children: [
-                            _tipoChip("comida", tipo, theme),
-                            _tipoChip("bebida", tipo, theme),
-                            _tipoChip("sobremesa", tipo, theme),
-                          ],
-                        )),
+                    Obx(
+                      () => Wrap(
+                        spacing: 16,
+                        runSpacing: 10,
+                        children: [
+                          _tipoChip(
+                            label: 'Comida',
+                            valor: TipoItemCardapio.comida,
+                            tipoSelecionado: tipo,
+                            theme: theme,
+                          ),
+                          _tipoChip(
+                            label: 'Bebida',
+                            valor: TipoItemCardapio.bebida,
+                            tipoSelecionado: tipo,
+                            theme: theme,
+                          ),
+                          _tipoChip(
+                            label: 'Sobremesa',
+                            valor: TipoItemCardapio.sobremesa,
+                            tipoSelecionado: tipo,
+                            theme: theme,
+                          ),
+                          _tipoChip(
+                            label: 'Bolo',
+                            valor: TipoItemCardapio.bolo,
+                            tipoSelecionado: tipo,
+                            theme: theme,
+                          ),
+                          _tipoChip(
+                            label: 'Descartável',
+                            valor: TipoItemCardapio.descartavel,
+                            tipoSelecionado: tipo,
+                            theme: theme,
+                          ),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -152,18 +196,14 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
                       ),
                     ),
                     onPressed: () async {
-                      final novoItem = CardapioItemModel(
-                        idItem: "",
-                        nome: nomeCtrl.text.trim(),
-                        tipo: tipo.value,
-                        confirmado: false,
+                      await _salvarItem(
+                        context: context,
+                        controller: controller,
+                        primaryColor: theme.primaryColor.value,
                       );
-
-                      await controller.addItem(widget.idCardapio, novoItem);
-                      Navigator.pop(context);
                     },
                     child: Text(
-                      "Adicionar Item",
+                      'Adicionar Item',
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -180,16 +220,92 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
     );
   }
 
+  Future<void> _salvarItem({
+    required BuildContext context,
+    required CardapioController controller,
+    required Color primaryColor,
+  }) async {
+    final nome = nomeCtrl.text.trim();
+
+    if (nome.isEmpty) {
+      Get.snackbar(
+        'Atenção',
+        'Informe o nome do item',
+        backgroundColor: Colors.orangeAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final idEvento = _resolverIdEvento(controller);
+
+    if (idEvento.isEmpty) {
+      Get.snackbar(
+        'Atenção',
+        'Não foi possível identificar o evento deste cardápio.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final novoItem = CardapioItemModel(
+      idItem: '',
+      idEvento: idEvento,
+      idCardapio: widget.idCardapio,
+      nome: nome,
+      tipo: tipo.value,
+      publicoAlvo: PublicoAlvoCardapio.todos,
+      quantidadeSugerida: 0,
+      quantidadeFinal: 0,
+      unidade: 'un',
+      confirmado: false,
+      geradoPelaCalculadora: false,
+    );
+
+    await controller.addItem(widget.idCardapio, novoItem);
+
+    Navigator.pop(context);
+
+    Get.snackbar(
+      'Item adicionado',
+      nome,
+      backgroundColor: primaryColor,
+      colorText: Colors.white,
+    );
+  }
+
+  String _resolverIdEvento(CardapioController controller) {
+    final idEventoInformado = widget.idEvento?.trim() ?? '';
+
+    if (idEventoInformado.isNotEmpty) {
+      return idEventoInformado;
+    }
+
+    for (final cardapio in controller.cardapios) {
+      if (cardapio.idCardapio == widget.idCardapio) {
+        return cardapio.idEvento;
+      }
+    }
+
+    return '';
+  }
+
   // ──────────────────────────────────────────────────────────
   // CHIP ESTILIZADO PREMIUM
   // ──────────────────────────────────────────────────────────
-  Widget _tipoChip(String label, RxString tipo, EventThemeController theme) {
-    final bool selected = tipo.value == label;
+  Widget _tipoChip({
+    required String label,
+    required TipoItemCardapio valor,
+    required Rx<TipoItemCardapio> tipoSelecionado,
+    required EventThemeController theme,
+  }) {
+    final bool selected = tipoSelecionado.value == valor;
     final primary = theme.primaryColor.value;
 
     return ChoiceChip(
       label: Text(
-        label[0].toUpperCase() + label.substring(1), // “Comida”, “Bebida”...
+        label,
         style: GoogleFonts.poppins(
           color: selected ? Colors.white : Colors.grey.withValues(alpha: 0.85),
           fontWeight: FontWeight.w600,
@@ -198,13 +314,9 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
       ),
       checkmarkColor: selected ? Colors.white : Colors.grey.withValues(alpha: 0.85),
       selected: selected,
-      onSelected: (_) => tipo.value = label,
-
-      // Fundo profissional
+      onSelected: (_) => tipoSelecionado.value = valor,
       selectedColor: primary.withValues(alpha: 0.85),
       backgroundColor: Colors.white.withValues(alpha: 0.15),
-
-      // Borda REALMENTE profissional
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
@@ -212,11 +324,7 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
           width: 1.2,
         ),
       ),
-
-      // Mais elegante
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-
-      // remove brilho padrão
       pressElevation: 0,
       visualDensity: VisualDensity.compact,
       shadowColor: Colors.transparent,

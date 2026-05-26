@@ -1,82 +1,102 @@
-import 'package:flutter/material.dart';
-import 'convidado_model.dart';
-
 class GrupoConvidadoModel {
   final String idGrupo;
   final String idEvento;
+
   final String nome;
   final String? descricao;
-  final String? icone; // opcional, se quiser salvar o ícone escolhido
-  final String? corHex; // cor base no formato "#RRGGBB"
-  final int? numeroMesa;
-  final List<ConvidadoModel> convidados;
+  final String? icone;
+  final String? corHex;
+
+  final int totalConvidados;
+  final int totalAdultos;
+  final int totalCriancas;
+  final int totalBebes;
+  final int totalConfirmados;
+
+  final DateTime dataCadastro;
+  final DateTime dataAtualizacao;
 
   const GrupoConvidadoModel({
     required this.idGrupo,
     required this.idEvento,
     required this.nome,
-    required this.numeroMesa,
     this.descricao,
     this.icone,
     this.corHex,
-    this.convidados = const [],
+    this.totalConvidados = 0,
+    this.totalAdultos = 0,
+    this.totalCriancas = 0,
+    this.totalBebes = 0,
+    this.totalConfirmados = 0,
+    required this.dataCadastro,
+    required this.dataAtualizacao,
   });
 
-  /// 🔹 Conversão para Firestore
-  Map<String, dynamic> toMap() => {
-        'id_grupo': idGrupo,
-        'id_evento': idEvento,
-        'nome': nome,
-        'numero_mesa': numeroMesa,
-        'descricao': descricao,
-        'icone': icone,
-        'cor_hex': corHex,
-        'total_convidados': convidados.length,
-      };
+  Map<String, dynamic> toMap() {
+    return {
+      'id_grupo': idGrupo,
+      'id_evento': idEvento,
+      'nome': nome,
+      'descricao': descricao,
+      'icone': icone,
+      'cor_hex': corHex,
+      'total_convidados': totalConvidados,
+      'total_adultos': totalAdultos,
+      'total_criancas': totalCriancas,
+      'total_bebes': totalBebes,
+      'total_confirmados': totalConfirmados,
+      'data_cadastro': dataCadastro,
+      'data_atualizacao': dataAtualizacao,
+    };
+  }
 
-  /// 🔹 Conversão a partir do Firestore
   factory GrupoConvidadoModel.fromMap(Map<String, dynamic> map) {
     return GrupoConvidadoModel(
-      idGrupo: map['id_grupo'] ?? '',
-      idEvento: map['id_evento'] ?? '',
-      numeroMesa: map['numero_mesa'] ?? 5,
-      nome: map['nome'] ?? '',
-      descricao: map['descricao'],
-      icone: map['icone'],
-      corHex: map['cor_hex'],
+      idGrupo: map['id_grupo']?.toString() ?? '',
+      idEvento: map['id_evento']?.toString() ?? '',
+      nome: map['nome']?.toString() ?? '',
+      descricao: map['descricao']?.toString(),
+      icone: map['icone']?.toString(),
+      corHex: map['cor_hex']?.toString(),
+      totalConvidados:
+          map['total_convidados'] is num ? (map['total_convidados'] as num).toInt() : 0,
+      totalAdultos: map['total_adultos'] is num ? (map['total_adultos'] as num).toInt() : 0,
+      totalCriancas: map['total_criancas'] is num ? (map['total_criancas'] as num).toInt() : 0,
+      totalBebes: map['total_bebes'] is num ? (map['total_bebes'] as num).toInt() : 0,
+      totalConfirmados:
+          map['total_confirmados'] is num ? (map['total_confirmados'] as num).toInt() : 0,
+      dataCadastro: DateTime.tryParse(map['data_cadastro']?.toString() ?? '') ?? DateTime.now(),
+      dataAtualizacao:
+          DateTime.tryParse(map['data_atualizacao']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 
-  /// 🔹 Cria uma cópia com modificações
   GrupoConvidadoModel copyWith({
-    String? idGrupo,
-    String? idEvento,
     String? nome,
-    int? numeroMesa,
     String? descricao,
     String? icone,
     String? corHex,
-    List<ConvidadoModel>? convidados,
+    int? totalConvidados,
+    int? totalAdultos,
+    int? totalCriancas,
+    int? totalBebes,
+    int? totalConfirmados,
+    DateTime? dataAtualizacao,
   }) {
     return GrupoConvidadoModel(
-      idGrupo: idGrupo ?? this.idGrupo,
-      idEvento: idEvento ?? this.idEvento,
+      idGrupo: idGrupo,
+      idEvento: idEvento,
       nome: nome ?? this.nome,
-      numeroMesa: numeroMesa ?? this.numeroMesa,
       descricao: descricao ?? this.descricao,
       icone: icone ?? this.icone,
       corHex: corHex ?? this.corHex,
-      convidados: convidados ?? this.convidados,
+      totalConvidados: totalConvidados ?? this.totalConvidados,
+      totalAdultos: totalAdultos ?? this.totalAdultos,
+      totalCriancas: totalCriancas ?? this.totalCriancas,
+      totalBebes: totalBebes ?? this.totalBebes,
+      totalConfirmados: totalConfirmados ?? this.totalConfirmados,
+      dataCadastro: dataCadastro,
+      dataAtualizacao: dataAtualizacao ?? DateTime.now(),
     );
-  }
-
-  /// 🔹 Converte cor hexadecimal para `Color`
-  Color get color {
-    try {
-      if (corHex == null) return Colors.grey;
-      return Color(int.parse(corHex!.replaceAll('#', '0xff')));
-    } catch (_) {
-      return Colors.grey;
-    }
   }
 }

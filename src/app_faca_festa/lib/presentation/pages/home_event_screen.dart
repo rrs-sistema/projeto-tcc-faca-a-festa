@@ -30,6 +30,7 @@ import './convidado/convidado_page.dart';
 import './../../data/models/model.dart';
 import './contador_evento_screen.dart';
 import './tarefa/tarefas_screen.dart';
+import 'calculadora_festa_screen.dart';
 
 class HomeEventScreen extends StatefulWidget {
   const HomeEventScreen({super.key});
@@ -371,6 +372,12 @@ Widget _buildQuickActions(EventThemeController theme) {
                   'color': Colors.blueAccent,
                   'value': "${(progress * 100).toStringAsFixed(0)}%",
                 },
+                {
+                  'icon': Icons.calculate_rounded,
+                  'label': 'Calculadora',
+                  'color': Colors.deepPurpleAccent,
+                  'value': 'IA',
+                },
               ];
 
               return GridView.builder(
@@ -418,6 +425,11 @@ Widget _buildQuickActions(EventThemeController theme) {
                           Navigator.push(
                             context,
                             MaterialPageRoute(builder: (_) => const TarefasScreen()),
+                          );
+                        case 4:
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const CalculadoraFestaScreen()),
                           );
                       }
                     },

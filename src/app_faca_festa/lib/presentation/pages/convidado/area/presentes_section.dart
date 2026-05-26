@@ -310,7 +310,9 @@ class GuestGiftTile extends StatelessWidget {
     final imagem = item['imagem'] ?? '';
     final temFoto = imagem.trim().isNotEmpty;
 
-    print('IMAGEM DO PRODUTO ==> $imagem');
+    if (kDebugMode) {
+      print('IMAGEM DO PRODUTO ==> $imagem');
+    }
 
     // 🧠 2. Tratamento e Formatação Rigorosa do Valor (Ex: 0 -> 0,00)
     final rawValor = item['valor']?.toString() ?? '0';
@@ -575,8 +577,9 @@ class GuestGiftTile extends StatelessWidget {
       label = "Comprar na Loja";
       icon = Icons.open_in_new;
       action = () async {
-        if (await canLaunchUrl(Uri.parse(link)))
+        if (await canLaunchUrl(Uri.parse(link))) {
           await launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+        }
       };
     }
 

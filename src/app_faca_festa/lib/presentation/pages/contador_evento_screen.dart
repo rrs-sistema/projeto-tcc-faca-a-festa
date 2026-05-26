@@ -26,6 +26,7 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
   late AnimationController _animController;
   final Random _random = Random();
   bool _mostrarConfete = false;
+  bool _eventoEncerradoProcessado = false;
   Timer? _confeteTimer;
 
   // 🔹 Controle da cor e posição
@@ -47,8 +48,12 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
   }
 
   void _detectarTopo() {
-    final posicao = widget.scrollController!.offset;
+    final controller = widget.scrollController;
+    if (controller == null || !mounted) return;
+
+    final posicao = controller.offset;
     final bool noTopo = posicao > 60; // Quando sobe mais que 60px
+
     if (noTopo != _estaNoTopo) {
       setState(() {
         _estaNoTopo = noTopo;
@@ -61,18 +66,31 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
     final agora = DateTime.now();
     final diferenca = widget.dataEvento.difference(agora);
 
-    if (diferenca.isNegative && !_mostrarConfete) {
+    if (!mounted) return;
+
+    if (diferenca.isNegative) {
       setState(() {
         _duracaoRestante = Duration.zero;
-        _mostrarConfete = true;
       });
 
-      _confeteTimer = Timer(const Duration(seconds: 3), () {
-        setState(() => _mostrarConfete = false);
-      });
-    } else if (!diferenca.isNegative) {
-      setState(() => _duracaoRestante = diferenca);
+      if (!_eventoEncerradoProcessado) {
+        _eventoEncerradoProcessado = true;
+
+        setState(() {
+          _mostrarConfete = true;
+        });
+
+        _confeteTimer?.cancel();
+        _confeteTimer = Timer(const Duration(seconds: 3), () {
+          if (!mounted) return;
+          setState(() => _mostrarConfete = false);
+        });
+      }
+
+      return;
     }
+
+    setState(() => _duracaoRestante = diferenca);
   }
 
   @override

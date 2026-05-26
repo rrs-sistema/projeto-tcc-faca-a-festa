@@ -13,6 +13,7 @@ import './../../widgets/custom_input_field.dart';
 import './../endereco/endereco_section.dart';
 import './evento_preview_titulo_widget.dart';
 import './../../../data/models/model.dart';
+import './../calculadora_festa_screen.dart';
 
 Future<void> showCadastroEventoBottomSheet(
   BuildContext context, {
@@ -101,7 +102,11 @@ Future<void> showCadastroEventoBottomSheet(
                             nomeEvento: controller.nomeEventoPreview.value,
                             corPrincipal: corPrincipal,
                           )),
-                      ..._buildCamposPorTipo(corPrincipal, controller),
+                      ..._buildCamposPorTipo(
+                        corPrincipal,
+                        controller,
+                        eventoParaEdicao,
+                      ),
                       const SizedBox(height: 32),
                       Obx(() => Column(
                             children: [
@@ -143,6 +148,7 @@ Future<void> showCadastroEventoBottomSheet(
 List<Widget> _buildCamposPorTipo(
   Color corPrincipal,
   EventoCadastroController controller,
+  EventoModel? eventoParaEdicao,
 ) {
   final tipoNormalizado = controller.tipoEventoModel.value?.nome
       .toLowerCase()
@@ -404,12 +410,128 @@ List<Widget> _buildCamposPorTipo(
       },
     ),
 
+    const SizedBox(height: 12),
+    _buildBotaoCalculadoraFesta(
+      corPrincipal: corPrincipal,
+      controller: controller,
+      eventoParaEdicao: eventoParaEdicao,
+    ),
+    const SizedBox(height: 12),
+
     EnderecoSection(
       cor: corPrincipal,
       controller: controller.enderecoController.value,
       titulo: 'Endereço do evento',
     ),
   ];
+}
+
+Widget _buildBotaoCalculadoraFesta({
+  required Color corPrincipal,
+  required EventoCadastroController controller,
+  required EventoModel? eventoParaEdicao,
+}) {
+  final idEvento = eventoParaEdicao?.idEvento.trim() ?? '';
+  final eventoJaSalvo = idEvento.isNotEmpty;
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: corPrincipal.withValues(alpha: 0.06),
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: corPrincipal.withValues(alpha: 0.14)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: corPrincipal.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(Icons.calculate_rounded, color: corPrincipal),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Quer estimar os itens da festa?',
+                    style: GoogleFonts.poppins(
+                      color: corPrincipal,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    eventoJaSalvo
+                        ? 'Use os convidados cadastrados ou informe uma quantidade manual para recalcular.'
+                        : 'Informe adultos, crianças e bebês para ter uma estimativa antes de cadastrar os convidados.',
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey.shade700,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: OutlinedButton.icon(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: corPrincipal,
+              side: BorderSide(color: corPrincipal.withValues(alpha: 0.55)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              backgroundColor: Colors.white,
+            ),
+            onPressed: () {
+              FocusManager.instance.primaryFocus?.unfocus();
+
+              Get.to(
+                () => CalculadoraFestaScreen(
+                  idEvento: eventoJaSalvo ? idEvento : null,
+                  tipoEvento: _resolverTipoEventoCalculadora(controller),
+                  permitirEstimativaSemEvento: true,
+                ),
+                fullscreenDialog: true,
+              );
+            },
+            icon: const Icon(Icons.auto_graph_rounded),
+            label: Text(
+              eventoJaSalvo ? 'Abrir calculadora da festa' : 'Calcular estimativa agora',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+String _resolverTipoEventoCalculadora(EventoCadastroController controller) {
+  final tipoSelecionado = controller.tipoEventoModel.value?.nome.trim() ?? '';
+  if (tipoSelecionado.isNotEmpty) return tipoSelecionado;
+
+  final nomeEvento = controller.nomeEvento.text.trim();
+  if (nomeEvento.isNotEmpty) return nomeEvento;
+
+  final preview = controller.nomeEventoPreview.value.trim();
+  if (preview.isNotEmpty) return preview;
+
+  return 'Evento';
 }
 
 Widget _buildCampoPadrinhos(Color cor, EventoCadastroController controller) {

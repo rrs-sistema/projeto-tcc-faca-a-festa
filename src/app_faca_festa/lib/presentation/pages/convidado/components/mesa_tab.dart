@@ -13,6 +13,81 @@ import './../../../../data/models/model.dart';
 class MesasTab extends StatelessWidget {
   const MesasTab({super.key});
 
+  GrupoConvidadoModel? _buscarGrupoPorNome(
+    Iterable<GrupoConvidadoModel> grupos,
+    String nome,
+  ) {
+    final nomeNormalizado = nome.trim().toLowerCase();
+
+    for (final grupo in grupos) {
+      if (grupo.nome.trim().toLowerCase() == nomeNormalizado) {
+        return grupo;
+      }
+    }
+
+    return null;
+  }
+
+  int _resolverAssentosMesa({
+    required GrupoConvidadoModel? grupoAtual,
+    required int quantidadeConvidados,
+    required int ocupados,
+  }) {
+    // Como o novo GrupoConvidadoModel não possui mais numeroMesa,
+    // a capacidade real deve vir futuramente de MesaEventoModel.
+    // Enquanto isso, usamos uma capacidade mínima segura para exibição.
+    const capacidadePadraoMesa = 5;
+
+    final totalGrupo = grupoAtual?.totalConvidados ?? 0;
+    var capacidade = totalGrupo > 0 ? totalGrupo : quantidadeConvidados;
+
+    if (capacidade < capacidadePadraoMesa) {
+      capacidade = capacidadePadraoMesa;
+    }
+
+    if (capacidade < ocupados) {
+      capacidade = ocupados;
+    }
+
+    return capacidade;
+  }
+
+  Map<String, dynamic> _montarEstatisticasMesas({
+    required Map<String, List<ConvidadoModel>> grupos,
+    required GrupoConvidadoController grupoController,
+  }) {
+    var totalAssentos = 0;
+    var totalOcupados = 0;
+
+    for (final entry in grupos.entries) {
+      final nomeMesa = entry.key;
+      final convidados = entry.value;
+
+      final ocupados = convidados.where((c) => c.status == StatusConvidado.confirmado).length;
+
+      final grupoAtual = _buscarGrupoPorNome(
+        grupoController.grupos,
+        nomeMesa,
+      );
+
+      final assentos = _resolverAssentosMesa(
+        grupoAtual: grupoAtual,
+        quantidadeConvidados: convidados.length,
+        ocupados: ocupados,
+      );
+
+      totalAssentos += assentos;
+      totalOcupados += ocupados;
+    }
+
+    return {
+      'totalMesas': grupos.length,
+      'assentos': totalAssentos,
+      'ocupados': totalOcupados,
+      'livres': totalAssentos - totalOcupados,
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Get.find<EventThemeController>();
@@ -22,7 +97,10 @@ class MesasTab extends StatelessWidget {
 
     return Obx(() {
       final grupos = controller.convidadosPorMesa;
-      final estat = controller.estatisticasMesas;
+      final estat = _montarEstatisticasMesas(
+        grupos: grupos,
+        grupoController: grupoController,
+      );
 
       if (controller.carregando.value) {
         return const Center(child: CircularProgressIndicator());
@@ -91,23 +169,25 @@ class MesasTab extends StatelessWidget {
               final nome = entry.key;
               final convidados = entry.value;
 
-              // 🔹 Buscar mesa cadastrada (se existir)
-              final grupoAtual = grupoController.grupos.firstWhere(
-                (g) => g.nome == nome,
-                orElse: () => GrupoConvidadoModel(
-                  idGrupo: '',
-                  idEvento: '',
-                  nome: nome,
-                  numeroMesa: 0, // padrão
-                ),
-              );
-
-              // 🔹 Quantidade de assentos da mesa
-              final assentos = grupoAtual.numeroMesa ?? 0;
-
               // 🔹 Convidados confirmados
               final ocupados =
                   convidados.where((c) => c.status == StatusConvidado.confirmado).length;
+
+              // 🔹 Busca o grupo relacionado apenas para usar os totais do novo modelo.
+              // O GrupoConvidadoModel não possui mais numeroMesa.
+              final grupoAtual = _buscarGrupoPorNome(
+                grupoController.grupos,
+                nome,
+              );
+
+              // 🔹 Quantidade de assentos da mesa.
+              // Enquanto não existir MesaEventoModel nesta tela, usamos uma
+              // capacidade mínima segura e os totais do grupo/convidados.
+              final assentos = _resolverAssentosMesa(
+                grupoAtual: grupoAtual,
+                quantidadeConvidados: convidados.length,
+                ocupados: ocupados,
+              );
 
               // 🔹 Cor gerada baseada no nome da mesa (estável)
               final color = Biblioteca.gerarCorPorChaves([nome]);
@@ -247,8 +327,8 @@ class _MesaCard extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    final livres = assentos - ocupados;
-    final ocupacao = (ocupados / assentos).clamp(0, 1);
+    final livres = (assentos - ocupados).clamp(0, assentos).toInt();
+    final ocupacao = assentos <= 0 ? 0.0 : (ocupados / assentos).clamp(0.0, 1.0).toDouble();
     return AnimatedContainer(
       duration: const Duration(milliseconds: 400),
       curve: Curves.easeOutCubic,
