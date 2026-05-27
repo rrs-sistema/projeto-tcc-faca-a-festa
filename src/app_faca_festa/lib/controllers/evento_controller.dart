@@ -8,8 +8,10 @@ import './convidado/convidado_controller.dart';
 import './convidado/cardapio_controller.dart';
 import './../data/models/model.dart';
 import './orcamento_controller.dart';
+import 'inspiracao_controller.dart';
 import 'tarefa_controller.dart';
 import 'tema/event_theme_controller.dart';
+import 'usuario/usuario_controller.dart';
 
 class EventoController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -155,6 +157,9 @@ class EventoController extends GetxController {
       final cardapioController = Get.find<CardapioController>();
       final grupoController = Get.find<GrupoConvidadoController>();
       final tarefaController = Get.find<TarefaController>();
+      final inspiracaoController = Get.find<InspiracaoController>();
+      final usuarioController = Get.find<UsuarioController>();
+      
 
       _orcamentosSub =
           orcamentoController.carregarOrcamentosDoEvento(evento.idEvento).asStream().listen((_) {});
@@ -165,6 +170,12 @@ class EventoController extends GetxController {
           cardapioController.escutarCardapios(evento.idEvento).asStream().listen((_) {});
       _gruposSub = grupoController.escutarGrupos(evento.idEvento).asStream().listen((_) {});
       _tarefasSub = tarefaController.listenTarefas(evento.idEvento).asStream().listen((_) {});
+      final userLogado = usuarioController.usuario.value;
+
+      inspiracaoController
+          .configurarContextoEvento(eventoId: evento.idEvento, userId: userLogado?.idUsuario ?? '')
+          .asStream()
+          .listen((_) {});
 
       debugPrint(
           "✅ [EventoController] Evento '${evento.nomeEvento}' inicializado com sucesso e escutando alterações.");

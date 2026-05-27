@@ -1,5 +1,7 @@
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -22,6 +24,8 @@ import './presentation/pages/welcome/welcome_event_screen.dart';
 import './presentation/pages/admin/admin_dashboard_screen.dart';
 import './presentation/pages/login/guest_register_screen.dart';
 import './controllers/admin/admin_territorio_controller.dart';
+import 'controllers/calculadora_festa_controller.dart';
+import 'controllers/inspiracao_controller.dart';
 import 'controllers/usuario/endereco_usuario_controller.dart';
 import './controllers/admin/orcamentos_admin_controller.dart';
 import 'data/datasources/remote/gift_remote_datasource.dart';
@@ -43,7 +47,6 @@ import './presentation/pages/login/login_screen.dart';
 import 'controllers/usuario/usuario_controller.dart';
 import 'core/services/whatsGw/whatsapp_service.dart';
 
-
 import 'core/services/push/notification_service.dart';
 import 'core/database/database.dart';
 
@@ -60,6 +63,8 @@ import './controllers/app_controller.dart';
 import 'core/database/app_database.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
+import 'data/repositories/evento/calculadora_festa_remote_ai_service.dart';
+import 'data/repositories/i_calculadora_festa_ai_service.dart';
 
 // =============================================================
 //  MAIN
@@ -70,6 +75,18 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await FirebaseAppCheck.instance.activate(
+    providerAndroid: AndroidDebugProvider(),
+    providerApple: AppleDebugProvider(),
+  );
+
+  /*
+  await FirebaseAppCheck.instance.activate(
+    providerAndroid: kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+    providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+  );
+  */
 
   await GetStorage.init();
 
@@ -226,6 +243,38 @@ void _registerControllers() {
   Get.put(UsuarioController(), permanent: true);
   Get.put(AvaliacaoServicoController(), permanent: true);
   Get.put(RankingController(), permanent: true);
+  Get.put(InspiracaoController(), permanent: true);
+  Get.put(CalculadoraFestaController(), permanent: true);
+  Get.lazyPut<ICalculadoraFestaAIService>(
+    () => CalculadoraFestaRemoteAIService(
+      executor: (payload) async {
+        final callable = FirebaseFunctions.instanceFor(
+          region: 'southamerica-east1',
+        ).httpsCallable(
+          'analisarCalculadoraFestaIA',
+          options: HttpsCallableOptions(
+            timeout: const Duration(seconds: 60),
+          ),
+        );
+        final result = await callable.call(payload);
+        final data = result.data;
+        if (data is Map) {
+          return Map<String, dynamic>.from(data);
+        }
+        throw Exception(
+          'Resposta inválida da Cloud Function analisarCalculadoraFestaIA.',
+        );
+      },
+    ),
+    fenix: true,
+  );
+
+  Get.lazyPut<CalculadoraFestaController>(
+    () => CalculadoraFestaController(
+      aiService: Get.find<ICalculadoraFestaAIService>(),
+    ),
+    fenix: true,
+  );
 
   Get.put(
     WhatsAppService(apiKey: "64824efa-d959-4617-bccc-9a9f2a03e3b2"),

@@ -35,6 +35,17 @@ class EventoCadastroController extends GetxController {
   final descricao = TextEditingController();
   final custoEstimado = TextEditingController();
 
+  /// Quantidade estimada de convidados por tipo.
+  ///
+  /// O campo totalConvidados continua existindo para manter compatibilidade
+  /// com as telas antigas e relatórios que usam apenas o total geral.
+  /// A calculadora inteligente usa adultos/crianças/bebês para aplicar
+  /// pesos de consumo diferentes.
+  final totalAdultos = TextEditingController();
+  final totalCriancas = TextEditingController();
+  final totalBebes = TextEditingController();
+  final totalConvidados = TextEditingController();
+
   final tipoCerimonia = ''.obs;
   final estiloCasamento = ''.obs;
 
@@ -133,6 +144,26 @@ class EventoCadastroController extends GetxController {
     dataFesta.text = DateFormat('dd/MM/yyyy', 'pt_BR').format(evento.data);
     horaFesta.text = evento.hora ?? '';
     padrinhos.assignAll(evento.padrinhos ?? []);
+
+    // ✅ Preenche a estimativa de convidados por tipo.
+    //
+    // Para eventos antigos, onde só existia total_convidados,
+    // mantemos compatibilidade jogando o total em adultos quando
+    // ainda não houver distribuição por adultos/crianças/bebês.
+    final adultosSalvos = evento.totalAdultos ?? 0;
+    final criancasSalvas = evento.totalCriancas ?? 0;
+    final bebesSalvos = evento.totalBebes ?? 0;
+    final totalPorTipoSalvo = adultosSalvos + criancasSalvas + bebesSalvos;
+    final totalSalvo = evento.totalConvidados ?? totalPorTipoSalvo;
+
+    final adultosParaTela = totalPorTipoSalvo > 0 ? adultosSalvos : totalSalvo;
+    final criancasParaTela = totalPorTipoSalvo > 0 ? criancasSalvas : 0;
+    final bebesParaTela = totalPorTipoSalvo > 0 ? bebesSalvos : 0;
+
+    totalAdultos.text = adultosParaTela > 0 ? adultosParaTela.toString() : '';
+    totalCriancas.text = criancasParaTela > 0 ? criancasParaTela.toString() : '';
+    totalBebes.text = bebesParaTela > 0 ? bebesParaTela.toString() : '';
+    totalConvidados.text = totalSalvo > 0 ? totalSalvo.toString() : '';
 
     // ✅ Formata custo estimado no padrão BR
     if (evento.custoEstimado != null && evento.custoEstimado! > 0) {
@@ -255,6 +286,17 @@ class EventoCadastroController extends GetxController {
       final endereco = end.toModel(user.idUsuario);
       if (!_validarCamposEnderecor(endereco)) return;
 
+      // ✅ Quantidade de convidados por tipo
+      //
+      // O total geral é sempre derivado dos campos adultos/crianças/bebês
+      // para evitar inconsistência entre o total e a distribuição.
+      final totalAdultosValor = _parseIntController(totalAdultos);
+      final totalCriancasValor = _parseIntController(totalCriancas);
+      final totalBebesValor = _parseIntController(totalBebes);
+      final totalConvidadosValor = totalAdultosValor + totalCriancasValor + totalBebesValor;
+
+      totalConvidados.text = totalConvidadosValor > 0 ? totalConvidadosValor.toString() : '';
+
       carregando.value = true;
 
       // ⚙️ Mapeamento da cidade e estado
@@ -273,6 +315,10 @@ class EventoCadastroController extends GetxController {
             ? nomeEvento.text.trim()
             : nomeEventoPreview.value.trim(),
         nomePessoalPrincipal: nomePessoalPrincipal.text,
+        totalConvidados: totalConvidadosValor,
+        totalAdultos: totalAdultosValor,
+        totalCriancas: totalCriancasValor,
+        totalBebes: totalBebesValor,
         localEvento: localEvento.text.trim(),
         custoEstimado: valor,
         data: dataCompleta,
@@ -343,12 +389,22 @@ class EventoCadastroController extends GetxController {
     celular.clear();
     padrinhos.clear();
     custoEstimado.clear();
+    totalAdultos.clear();
+    totalCriancas.clear();
+    totalBebes.clear();
+    totalConvidados.clear();
     nomeEventoPreview.value = '';
 
     // ✅ Só limpa o endereço se não for pedido para manter
     if (!manterEndereco) {
       enderecoController.value.limpar();
     }
+  }
+
+  int _parseIntController(TextEditingController controller) {
+    final raw = controller.text.replaceAll(RegExp(r'[^0-9]'), '').trim();
+    if (raw.isEmpty) return 0;
+    return int.tryParse(raw) ?? 0;
   }
 
   bool _validarCamposEnderecor(EnderecoUsuarioModel endereco) {

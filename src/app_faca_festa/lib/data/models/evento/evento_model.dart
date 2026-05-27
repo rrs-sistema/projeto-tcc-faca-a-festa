@@ -62,7 +62,18 @@ class EventoModel {
   final DateTime data;
   final String? hora;
   final double? custoEstimado;
+
+  /// Total geral informado/estimado para o evento.
+  /// Mantido para compatibilidade com telas antigas e consultas rápidas.
   final int? totalConvidados;
+
+  /// Quantidade estimada por tipo de convidado.
+  /// Esses campos alimentam a calculadora inteligente, pois cada tipo possui
+  /// peso de consumo diferente: adulto, criança e bebê.
+  final int? totalAdultos;
+  final int? totalCriancas;
+  final int? totalBebes;
+
   final StatusEvento? status;
   final String? descricao;
 
@@ -108,6 +119,9 @@ class EventoModel {
     this.hora,
     this.custoEstimado,
     this.totalConvidados,
+    this.totalAdultos,
+    this.totalCriancas,
+    this.totalBebes,
     this.status = StatusEvento.planejamento,
     this.descricao,
     this.cep,
@@ -136,6 +150,32 @@ class EventoModel {
   }) : dataCadastro = dataCadastro ?? DateTime.now();
 
   // ======================================================
+  // 🔹 Getters auxiliares
+  // ======================================================
+
+  int get totalAdultosCalculado => totalAdultos ?? 0;
+
+  int get totalCriancasCalculado => totalCriancas ?? 0;
+
+  int get totalBebesCalculado => totalBebes ?? 0;
+
+  int get totalConvidadosPorTipo {
+    return totalAdultosCalculado + totalCriancasCalculado + totalBebesCalculado;
+  }
+
+  int get totalConvidadosCalculado {
+    if (totalConvidados != null && totalConvidados! > 0) {
+      return totalConvidados!;
+    }
+
+    return totalConvidadosPorTipo;
+  }
+
+  bool get possuiQuantidadePorTipo {
+    return totalConvidadosPorTipo > 0;
+  }
+
+  // ======================================================
   // 🔹 Conversão para Firestore
   // ======================================================
   Map<String, dynamic> toMap() {
@@ -148,10 +188,14 @@ class EventoModel {
       'uf': uf,
       'nome_pessoa_principal': nomePessoalPrincipal,
       'nome_evento': nomeEvento,
+      'local_evento': localEvento,
       'data': Timestamp.fromDate(data),
       'hora': hora,
       'custo_estimado': custoEstimado,
-      'total_convidados': totalConvidados,
+      'total_convidados': totalConvidadosCalculado,
+      'total_adultos': totalAdultosCalculado,
+      'total_criancas': totalCriancasCalculado,
+      'total_bebes': totalBebesCalculado,
       'status': status?.value ?? StatusEvento.planejamento.value,
       'descricao': descricao,
       'cep': cep,
@@ -196,15 +240,17 @@ class EventoModel {
       uf: map['uf'],
       nomeEvento: map['nome_evento'] ?? '',
       nomePessoalPrincipal: map['nome_pessoa_principal'] ?? '',
-      localEvento: map['local_evento'] ?? map['logradouro'],
+      localEvento: map['local_evento'] ?? map['logradouro'] ?? '',
       data: map['data'] is Timestamp
           ? (map['data'] as Timestamp).toDate()
           : DateTime.tryParse(map['data']?.toString() ?? '') ?? DateTime.now(),
       hora: map['hora'],
       custoEstimado:
           map['custo_estimado'] != null ? (map['custo_estimado'] as num).toDouble() : null,
-      totalConvidados:
-          map['total_convidados'] != null ? (map['total_convidados'] as num).toInt() : 5,
+      totalConvidados: _parseTotalConvidados(map),
+      totalAdultos: _parseIntNullable(map['total_adultos']),
+      totalCriancas: _parseIntNullable(map['total_criancas']),
+      totalBebes: _parseIntNullable(map['total_bebes']),
       status: _parseStatus(map['status']),
       descricao: map['descricao'],
       cep: map['cep'],
@@ -238,6 +284,27 @@ class EventoModel {
   }
 
   // ======================================================
+  // 🔹 Funções auxiliares
+  // ======================================================
+
+  static int? _parseIntNullable(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString());
+  }
+
+  static int _parseTotalConvidados(Map<String, dynamic> map) {
+    final total = _parseIntNullable(map['total_convidados']);
+    if (total != null && total > 0) return total;
+
+    final adultos = _parseIntNullable(map['total_adultos']) ?? 0;
+    final criancas = _parseIntNullable(map['total_criancas']) ?? 0;
+    final bebes = _parseIntNullable(map['total_bebes']) ?? 0;
+
+    return adultos + criancas + bebes;
+  }
+
+  // ======================================================
   // 🔹 Função auxiliar - converte string em enum
   // ======================================================
   static StatusEvento _parseStatus(dynamic value) {
@@ -265,6 +332,9 @@ class EventoModel {
     String? hora,
     double? custoEstimado,
     int? totalConvidados,
+    int? totalAdultos,
+    int? totalCriancas,
+    int? totalBebes,
     StatusEvento? status,
     String? descricao,
     String? cep,
@@ -305,6 +375,9 @@ class EventoModel {
       hora: hora ?? this.hora,
       custoEstimado: custoEstimado ?? this.custoEstimado,
       totalConvidados: totalConvidados ?? this.totalConvidados,
+      totalAdultos: totalAdultos ?? this.totalAdultos,
+      totalCriancas: totalCriancas ?? this.totalCriancas,
+      totalBebes: totalBebes ?? this.totalBebes,
       status: status ?? this.status,
       descricao: descricao ?? this.descricao,
       cep: cep ?? this.cep,

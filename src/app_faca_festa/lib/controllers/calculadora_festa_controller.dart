@@ -2,47 +2,120 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../core/services/calculadora_festa_ai_service.dart';
 import '../core/services/calculadora_festa_service.dart';
 import '../data/models/cardapio/cardapio_item_model.dart';
 import '../data/models/cardapio/cardapio_model.dart';
+import '../data/models/evento/analise_calculadora_ia_model.dart';
 import '../data/models/evento/calculadora_festa_item_model.dart';
 import '../data/models/evento/calculadora_festa_model.dart';
+import '../data/models/evento/convidados_equivalentes_model.dart';
+import '../data/models/evento/estimativa_financeira_model.dart';
+import '../data/models/evento/perfil_festa_model.dart';
+import '../data/repositories/calculadora_festa_repository.dart';
+import '../data/repositories/i_calculadora_festa_ai_service.dart';
 import './../data/models/model.dart';
 
 class CalculadoraFestaController extends GetxController {
   final FirebaseFirestore _db;
   final CalculadoraFestaService _service;
+  final ICalculadoraFestaAIService _aiService;
+  final CalculadoraFestaRepository _repository;
 
   CalculadoraFestaController({
     FirebaseFirestore? firestore,
     CalculadoraFestaService? service,
+    ICalculadoraFestaAIService? aiService,
+    CalculadoraFestaRepository? repository,
   })  : _db = firestore ?? FirebaseFirestore.instance,
-        _service = service ?? CalculadoraFestaService();
+        _service = service ?? const CalculadoraFestaService(),
+        _aiService = aiService ?? const CalculadoraFestaAIService(),
+        _repository = repository ?? CalculadoraFestaRepository(firestore: firestore);
 
   static const String _collectionConvidado = 'convidado';
   static const String _collectionCalculadora = 'calculadora_festa';
   static const String _collectionCardapios = 'cardapios';
+  static const String _collectionOrcamentos = 'orcamento';
 
   final RxBool loading = false.obs;
   final RxBool salvando = false.obs;
   final RxBool enviandoParaCardapio = false.obs;
+  final RxBool convertendoOrcamento = false.obs;
+  final RxBool analisandoIA = false.obs;
 
   final RxString idEventoAtual = ''.obs;
   final RxString tipoEventoAtual = ''.obs;
   final RxBool estimativaSemEvento = false.obs;
 
   final Rx<BaseCalculoFesta> baseCalculo = BaseCalculoFesta.todosConvidados.obs;
+  final Rx<PerfilFestaModel> perfilSelecionado = PerfilFestaModel.padrao().obs;
 
   final RxInt totalAdultos = 0.obs;
   final RxInt totalCriancas = 0.obs;
   final RxInt totalBebes = 0.obs;
+
+  /// Totais vindos do cadastro do evento.
+  /// São usados como fallback quando o evento ainda não possui convidados
+  /// cadastrados individualmente.
+  final RxInt totalAdultosEvento = 0.obs;
+  final RxInt totalCriancasEvento = 0.obs;
+  final RxInt totalBebesEvento = 0.obs;
+
   final RxInt duracaoHoras = 4.obs;
 
+  /// Orçamento informado pelo usuário para a IA avaliar se a festa cabe no limite.
+  final Rxn<double> orcamentoDisponivel = Rxn<double>();
+
+  /// Quando null, usa a margem padrão do perfil selecionado.
+  final Rxn<double> margemPersonalizada = Rxn<double>();
+
+  final RxInt _versaoAnaliseIA = 0.obs;
+  Worker? _workerAnaliseIA;
+
   final RxList<ConvidadoModel> convidados = <ConvidadoModel>[].obs;
+  final RxList<ItemEstimativaFinanceiraModel> itensEstimativa =
+      CalculadoraFestaService.itensPadraoEstimativa.obs;
   final RxList<CalculadoraFestaItemModel> itensCalculados = <CalculadoraFestaItemModel>[].obs;
+  final RxList<CalculadoraFestaModel> simulacoesSalvas = <CalculadoraFestaModel>[].obs;
+  final RxBool carregandoSimulacoes = false.obs;
+
   final Rxn<CalculadoraFestaModel> calculoAtual = Rxn<CalculadoraFestaModel>();
+  final Rxn<EstimativaFinanceiraModel> estimativaAtual = Rxn<EstimativaFinanceiraModel>();
+  final Rxn<AnaliseCalculadoraIAModel> analiseIA = Rxn<AnaliseCalculadoraIAModel>();
 
   int get totalConvidados => totalAdultos.value + totalCriancas.value + totalBebes.value;
+
+  int get totalConvidadosEvento {
+    return totalAdultosEvento.value + totalCriancasEvento.value + totalBebesEvento.value;
+  }
+
+  bool get possuiTotaisDoEvento => totalConvidadosEvento > 0;
+
+  bool get possuiConvidadosCadastrados => convidados.isNotEmpty;
+
+  bool get usandoTotaisDoCadastroDoEvento {
+    return baseCalculo.value == BaseCalculoFesta.todosConvidados &&
+        !possuiConvidadosCadastrados &&
+        possuiTotaisDoEvento;
+  }
+
+  ConvidadosEquivalentesModel get convidadosEquivalentes => ConvidadosEquivalentesModel(
+        adultos: totalAdultos.value,
+        criancas: totalCriancas.value,
+        bebes: totalBebes.value,
+      );
+
+  int get totalConvidadosEquivalentes => convidadosEquivalentes.totalEquivalenteArredondado;
+
+  double get custoTotalEstimado {
+    return itensCalculados.fold<double>(0, (total, item) => total + item.custoEstimado);
+  }
+
+  String get custoTotalEstimadoFormatado => _formatMoney(custoTotalEstimado);
+
+  double get margemEmUso {
+    return margemPersonalizada.value ?? perfilSelecionado.value.margemSegurancaPadrao;
+  }
 
   bool get possuiEventoVinculado => idEventoAtual.value.trim().isNotEmpty;
 
@@ -50,16 +123,39 @@ class CalculadoraFestaController extends GetxController {
 
   bool get possuiResultado => itensCalculados.isNotEmpty;
 
+  bool get possuiAnaliseIA => analiseIA.value != null;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _workerAnaliseIA = debounce<int>(
+      _versaoAnaliseIA,
+      (_) => _executarAnaliseIA(),
+      time: const Duration(milliseconds: 500),
+    );
+  }
+
+  @override
+  void onClose() {
+    _workerAnaliseIA?.dispose();
+    super.onClose();
+  }
+
   Future<void> prepararCalculadora({
     required String idEvento,
     required String tipoEvento,
     BaseCalculoFesta base = BaseCalculoFesta.todosConvidados,
+    TipoPerfilFesta perfilInicial = TipoPerfilFesta.padrao,
     int duracaoInicialHoras = 4,
     bool calcularAutomaticamente = true,
     bool permitirEstimativaSemEvento = false,
     int adultosManuais = 0,
     int criancasManuais = 0,
     int bebesManuais = 0,
+    int adultosEvento = 0,
+    int criancasEvento = 0,
+    int bebesEvento = 0,
+    int totalConvidadosEvento = 0,
   }) async {
     final idEventoNormalizado = idEvento.trim();
     final modoEstimativa = idEventoNormalizado.isEmpty && permitirEstimativaSemEvento;
@@ -68,15 +164,23 @@ class CalculadoraFestaController extends GetxController {
     tipoEventoAtual.value = tipoEvento.trim().isEmpty ? 'Evento' : tipoEvento.trim();
     estimativaSemEvento.value = modoEstimativa;
     baseCalculo.value = modoEstimativa ? BaseCalculoFesta.manual : base;
+    perfilSelecionado.value = PerfilFestaModel.fromTipo(perfilInicial);
     duracaoHoras.value = duracaoInicialHoras <= 0 ? 4 : duracaoInicialHoras;
+    _registrarTotaisDoEvento(
+      adultos: adultosEvento,
+      criancas: criancasEvento,
+      bebes: bebesEvento,
+      totalLegado: totalConvidadosEvento,
+    );
     calculoAtual.value = null;
+    estimativaAtual.value = null;
     itensCalculados.clear();
 
     if (modoEstimativa) {
       convidados.clear();
-      totalAdultos.value = adultosManuais < 0 ? 0 : adultosManuais;
-      totalCriancas.value = criancasManuais < 0 ? 0 : criancasManuais;
-      totalBebes.value = bebesManuais < 0 ? 0 : bebesManuais;
+      totalAdultos.value = _normalizarQuantidade(adultosManuais);
+      totalCriancas.value = _normalizarQuantidade(criancasManuais);
+      totalBebes.value = _normalizarQuantidade(bebesManuais);
 
       if (calcularAutomaticamente) calcular();
       return;
@@ -95,12 +199,19 @@ class CalculadoraFestaController extends GetxController {
     if (baseCalculo.value != BaseCalculoFesta.manual) {
       aplicarTotaisDosConvidados();
     } else {
-      totalAdultos.value = adultosManuais < 0 ? 0 : adultosManuais;
-      totalCriancas.value = criancasManuais < 0 ? 0 : criancasManuais;
-      totalBebes.value = bebesManuais < 0 ? 0 : bebesManuais;
+      final totalManual = adultosManuais + criancasManuais + bebesManuais;
+
+      if (totalManual > 0) {
+        totalAdultos.value = _normalizarQuantidade(adultosManuais);
+        totalCriancas.value = _normalizarQuantidade(criancasManuais);
+        totalBebes.value = _normalizarQuantidade(bebesManuais);
+      } else {
+        aplicarTotaisDoCadastroDoEvento();
+      }
     }
 
     if (calcularAutomaticamente) calcular();
+    await carregarSimulacoesSalvas();
   }
 
   Future<void> carregarConvidadosDoEvento(String idEvento) async {
@@ -158,9 +269,27 @@ class CalculadoraFestaController extends GetxController {
       base = convidados.where((c) => c.status == StatusConvidado.confirmado);
     }
 
-    totalAdultos.value = base.where((c) => c.tipoConvidado == TipoConvidado.adulto).length;
-    totalCriancas.value = base.where((c) => c.tipoConvidado == TipoConvidado.crianca).length;
-    totalBebes.value = base.where((c) => c.tipoConvidado == TipoConvidado.bebe).length;
+    final adultos = base.where((c) => c.tipoConvidado == TipoConvidado.adulto).length;
+    final criancas = base.where((c) => c.tipoConvidado == TipoConvidado.crianca).length;
+    final bebes = base.where((c) => c.tipoConvidado == TipoConvidado.bebe).length;
+    final totalEncontrado = adultos + criancas + bebes;
+
+    if (totalEncontrado > 0 || baseCalculo.value == BaseCalculoFesta.apenasConfirmados) {
+      totalAdultos.value = adultos;
+      totalCriancas.value = criancas;
+      totalBebes.value = bebes;
+      return;
+    }
+
+    // Quando ainda não existe lista de convidados, usamos a estimativa salva
+    // no cadastro do evento: total_adultos, total_criancas e total_bebes.
+    aplicarTotaisDoCadastroDoEvento();
+  }
+
+  void aplicarTotaisDoCadastroDoEvento() {
+    totalAdultos.value = totalAdultosEvento.value;
+    totalCriancas.value = totalCriancasEvento.value;
+    totalBebes.value = totalBebesEvento.value;
   }
 
   void alterarBaseCalculo(BaseCalculoFesta novaBase) {
@@ -173,15 +302,53 @@ class CalculadoraFestaController extends GetxController {
     calcular();
   }
 
+  void selecionarPerfil(TipoPerfilFesta tipo) {
+    perfilSelecionado.value = PerfilFestaModel.fromTipo(tipo);
+    margemPersonalizada.value = null;
+    calcular();
+  }
+
+  void atualizarMargemPersonalizada(double? margem) {
+    if (margem == null) {
+      margemPersonalizada.value = null;
+    } else {
+      margemPersonalizada.value = margem.clamp(0, 0.30).toDouble();
+    }
+
+    calcular();
+  }
+
+  void alternarItemEstimativa(String idItem, bool selecionado) {
+    itensEstimativa.assignAll(
+      itensEstimativa.map((item) {
+        if (item.id != idItem) return item;
+        return item.copyWith(selecionado: selecionado);
+      }).toList(),
+    );
+
+    calcular();
+  }
+
+  void atualizarValorMedioItem(String idItem, double valorUnitarioMedio) {
+    itensEstimativa.assignAll(
+      itensEstimativa.map((item) {
+        if (item.id != idItem) return item;
+        return item.copyWith(valorUnitarioMedio: valorUnitarioMedio < 0 ? 0 : valorUnitarioMedio);
+      }).toList(),
+    );
+
+    calcular();
+  }
+
   void atualizarTotaisManuais({
     required int adultos,
     required int criancas,
     required int bebes,
   }) {
     baseCalculo.value = BaseCalculoFesta.manual;
-    totalAdultos.value = adultos < 0 ? 0 : adultos;
-    totalCriancas.value = criancas < 0 ? 0 : criancas;
-    totalBebes.value = bebes < 0 ? 0 : bebes;
+    totalAdultos.value = _normalizarQuantidade(adultos);
+    totalCriancas.value = _normalizarQuantidade(criancas);
+    totalBebes.value = _normalizarQuantidade(bebes);
     calcular();
   }
 
@@ -194,6 +361,8 @@ class CalculadoraFestaController extends GetxController {
     if (!possuiEventoVinculado && !estimativaSemEvento.value) {
       itensCalculados.clear();
       calculoAtual.value = null;
+      estimativaAtual.value = null;
+      analiseIA.value = null;
       return;
     }
 
@@ -203,7 +372,7 @@ class CalculadoraFestaController extends GetxController {
     final idCalculo = calculoAtual.value?.idCalculo ??
         '${prefixo}_${idBaseCalculo}_${agora.microsecondsSinceEpoch}';
 
-    final calculo = CalculadoraFestaModel(
+    final calculoBase = CalculadoraFestaModel(
       idCalculo: idCalculo,
       idEvento: possuiEventoVinculado ? idEventoAtual.value : 'estimativa_temporaria',
       tipoEvento: tipoEventoAtual.value.trim().isEmpty ? 'Evento' : tipoEventoAtual.value,
@@ -214,10 +383,94 @@ class CalculadoraFestaController extends GetxController {
       duracaoHoras: duracaoHoras.value,
       dataCalculo: calculoAtual.value?.dataCalculo ?? agora,
       dataAtualizacao: agora,
+      perfilFesta: perfilSelecionado.value,
+      margemPersonalizada: margemPersonalizada.value,
+      orcamentoDisponivel: orcamentoDisponivel.value,
     );
 
-    calculoAtual.value = calculo;
-    itensCalculados.assignAll(_service.calcularItens(calculo: calculo));
+    final itens = _service.calcularItens(
+      calculo: calculoBase,
+      itensBase: itensEstimativa,
+    );
+
+    final custoTotal = itens.fold<double>(0, (total, item) => total + item.custoEstimado);
+    final calculoFinal = calculoBase.copyWith(custoTotalEstimado: custoTotal);
+
+    calculoAtual.value = calculoFinal;
+    itensCalculados.assignAll(itens);
+    estimativaAtual.value = _service.calcularEstimativa(
+      calculo: calculoFinal,
+      itensBase: itensEstimativa,
+    );
+    _agendarAnaliseIA();
+  }
+
+  void atualizarOrcamentoDisponivel(double? valor) {
+    if (valor == null || valor <= 0) {
+      orcamentoDisponivel.value = null;
+    } else {
+      orcamentoDisponivel.value = valor;
+    }
+
+    final calculo = calculoAtual.value;
+    if (calculo != null) {
+      calculoAtual.value = calculo.copyWith(
+        orcamentoDisponivel: orcamentoDisponivel.value,
+        limparOrcamentoDisponivel: orcamentoDisponivel.value == null,
+        dataAtualizacao: DateTime.now(),
+      );
+    }
+
+    _agendarAnaliseIA();
+  }
+
+  void _agendarAnaliseIA() {
+    _versaoAnaliseIA.value++;
+  }
+
+  Future<void> _executarAnaliseIA({bool force = false}) async {
+    final estimativa = estimativaAtual.value;
+    final calculoReferencia = calculoAtual.value;
+    final versaoSolicitada = _versaoAnaliseIA.value;
+
+    if (estimativa == null || calculoReferencia == null || itensCalculados.isEmpty) {
+      analiseIA.value = null;
+      return;
+    }
+
+    try {
+      analisandoIA.value = true;
+
+      final analise = await _aiService.analisarEstimativa(
+        estimativa: estimativa,
+        itensCalculados: itensCalculados.toList(),
+        tipoEvento: tipoEventoAtual.value,
+        orcamentoDisponivel: orcamentoDisponivel.value,
+      );
+
+      if (!force && versaoSolicitada != _versaoAnaliseIA.value) {
+        return;
+      }
+
+      final calculoAtualizado = calculoAtual.value;
+
+      if (calculoAtualizado == null || calculoAtualizado.idCalculo != calculoReferencia.idCalculo) {
+        return;
+      }
+
+      analiseIA.value = analise;
+
+      calculoAtual.value = calculoAtualizado.copyWith(
+        analiseIA: analise,
+        orcamentoDisponivel: orcamentoDisponivel.value,
+        limparOrcamentoDisponivel: orcamentoDisponivel.value == null,
+        dataAtualizacao: DateTime.now(),
+      );
+    } catch (e) {
+      debugPrint('Erro ao executar análise inteligente da calculadora: $e');
+    } finally {
+      analisandoIA.value = false;
+    }
   }
 
   Future<void> salvarCalculo() async {
@@ -246,34 +499,323 @@ class CalculadoraFestaController extends GetxController {
     try {
       salvando.value = true;
 
-      final calculoRef = _db.collection(_collectionCalculadora).doc(calculo.idCalculo);
-      await calculoRef.set(calculo.toMap(), SetOptions(merge: true));
+      final calculoParaSalvar = calculo.copyWith(
+        orcamentoDisponivel: orcamentoDisponivel.value,
+        limparOrcamentoDisponivel: orcamentoDisponivel.value == null,
+        analiseIA: analiseIA.value,
+        limparAnaliseIA: analiseIA.value == null,
+        dataAtualizacao: DateTime.now(),
+      );
 
-      final batch = _db.batch();
-      for (final item in itensCalculados) {
-        batch.set(
-          calculoRef.collection('itens').doc(item.idItemResultado),
-          item.toMap(),
-          SetOptions(merge: true),
-        );
-      }
-      await batch.commit();
+      await _repository.salvarSimulacao(
+        calculo: calculoParaSalvar,
+        itens: itensCalculados,
+      );
+
+      calculoAtual.value = calculoParaSalvar;
+      await carregarSimulacoesSalvas();
 
       Get.snackbar(
-        'Cálculo salvo',
-        'As sugestões foram salvas com sucesso.',
+        'Simulação salva',
+        'O cálculo e a análise inteligente foram salvos com sucesso.',
         backgroundColor: Colors.teal,
         colorText: Colors.white,
       );
     } catch (e) {
       Get.snackbar(
         'Erro',
-        'Não foi possível salvar o cálculo: $e',
+        'Não foi possível salvar a simulação: $e',
         backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
     } finally {
       salvando.value = false;
+    }
+  }
+
+  Future<void> carregarSimulacoesSalvas() async {
+    if (!possuiEventoVinculado) {
+      simulacoesSalvas.clear();
+      return;
+    }
+
+    try {
+      carregandoSimulacoes.value = true;
+      final simulacoes = await _repository.listarSimulacoesPorEvento(idEventoAtual.value);
+      simulacoesSalvas.assignAll(simulacoes);
+    } catch (e) {
+      Get.snackbar(
+        'Erro',
+        'Não foi possível carregar as simulações: $e',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    } finally {
+      carregandoSimulacoes.value = false;
+    }
+  }
+
+  Future<List<CalculadoraFestaItemModel>> listarItensDaSimulacao(String idCalculo) {
+    return _repository.listarItensDaSimulacao(idCalculo);
+  }
+
+  /// Aplica uma simulação salva no estado atual da calculadora.
+  ///
+  /// Uso principal: BottomSheet "Minhas simulações". O usuário abre um cenário
+  /// antigo, revisa os itens e pode continuar trabalhando sobre ele.
+  Future<void> carregarSimulacaoNoEditor(CalculadoraFestaModel simulacao) async {
+    try {
+      loading.value = true;
+
+      final itens = await _repository.listarItensDaSimulacao(simulacao.idCalculo);
+
+      idEventoAtual.value = simulacao.idEvento;
+      tipoEventoAtual.value = simulacao.tipoEvento;
+      estimativaSemEvento.value = false;
+      baseCalculo.value = simulacao.baseCalculo;
+      perfilSelecionado.value = simulacao.perfilFesta;
+      margemPersonalizada.value = simulacao.margemPersonalizada;
+      orcamentoDisponivel.value = simulacao.orcamentoDisponivel;
+      totalAdultos.value = _normalizarQuantidade(simulacao.totalAdultos);
+      totalCriancas.value = _normalizarQuantidade(simulacao.totalCriancas);
+      totalBebes.value = _normalizarQuantidade(simulacao.totalBebes);
+      duracaoHoras.value = simulacao.duracaoHoras <= 0 ? 4 : simulacao.duracaoHoras;
+      calculoAtual.value = simulacao;
+      analiseIA.value = simulacao.analiseIA;
+      itensCalculados.assignAll(itens);
+
+      // Mantém a estimativa em memória coerente para novas análises de IA.
+      estimativaAtual.value = _service.calcularEstimativa(
+        calculo: simulacao,
+        itensBase: itensEstimativa,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Erro',
+        'Não foi possível carregar a simulação: $e',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    } finally {
+      loading.value = false;
+    }
+  }
+
+  Future<void> aprovarSimulacao(String idCalculo) async {
+    try {
+      await _repository.atualizarStatusSimulacao(
+        idCalculo: idCalculo,
+        status: StatusSimulacaoCalculadora.aprovada,
+      );
+      await carregarSimulacoesSalvas();
+    } catch (e) {
+      Get.snackbar(
+        'Erro',
+        'Não foi possível aprovar a simulação: $e',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  Future<void> excluirSimulacao(String idCalculo) async {
+    try {
+      await _repository.excluirSimulacao(idCalculo);
+      simulacoesSalvas.removeWhere((item) => item.idCalculo == idCalculo);
+
+      if (calculoAtual.value?.idCalculo == idCalculo) {
+        calculoAtual.value = null;
+        itensCalculados.clear();
+        estimativaAtual.value = null;
+        analiseIA.value = null;
+      }
+
+      Get.snackbar(
+        'Simulação excluída',
+        'A simulação foi removida com sucesso.',
+        backgroundColor: Colors.teal,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Erro',
+        'Não foi possível excluir a simulação: $e',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
+  }
+
+  /// Converte uma simulação aprovada em itens oficiais do orçamento.
+  ///
+  /// Fluxo:
+  /// 1. Valida se a simulação pertence a um evento salvo.
+  /// 2. Exige status "aprovada" para evitar converter rascunhos por acidente.
+  /// 3. Cria/atualiza os itens na coleção de orçamento.
+  /// 4. Marca os itens da calculadora como enviados para orçamento.
+  /// 5. Marca a simulação como convertida.
+  Future<void> transformarSimulacaoEmOrcamento(CalculadoraFestaModel simulacao) async {
+    if (simulacao.idEvento.trim().isEmpty || simulacao.idEvento == 'estimativa_temporaria') {
+      Get.snackbar(
+        'Evento não salvo',
+        'Salve o evento antes de transformar a simulação em orçamento.',
+        backgroundColor: Colors.orangeAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (simulacao.convertidoEmOrcamento ||
+        simulacao.statusSimulacao == StatusSimulacaoCalculadora.convertidaOrcamento) {
+      Get.snackbar(
+        'Simulação já convertida',
+        'Esta simulação já foi transformada em orçamento.',
+        backgroundColor: Colors.blueGrey,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    if (simulacao.statusSimulacao != StatusSimulacaoCalculadora.aprovada) {
+      Get.snackbar(
+        'Aprovação necessária',
+        'Aprove a simulação antes de transformar em orçamento.',
+        backgroundColor: Colors.orangeAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    try {
+      convertendoOrcamento.value = true;
+
+      final itens = await _repository.listarItensDaSimulacao(simulacao.idCalculo);
+      final itensPendentes = itens.where((item) => !item.adicionadoAoOrcamento).toList();
+
+      if (itensPendentes.isEmpty) {
+        await _repository.marcarComoConvertidaEmOrcamento(simulacao.idCalculo);
+        await carregarSimulacoesSalvas();
+
+        Get.snackbar(
+          'Orçamento já atualizado',
+          'Não há novos itens pendentes para adicionar ao orçamento.',
+          backgroundColor: Colors.blueGrey,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      final agora = DateTime.now();
+      WriteBatch batch = _db.batch();
+      int operations = 0;
+
+      for (final item in itensPendentes) {
+        final idOrcamento = _gerarIdOrcamento(
+          idCalculo: simulacao.idCalculo,
+          idItemResultado: item.idItemResultado,
+          nome: item.nome,
+        );
+
+        final orcamentoRef = _db.collection(_collectionOrcamentos).doc(idOrcamento);
+        final itemCalculadoraRef = _db
+            .collection(_collectionCalculadora)
+            .doc(simulacao.idCalculo)
+            .collection('itens')
+            .doc(item.idItemResultado);
+
+        batch.set(
+          orcamentoRef,
+          _mapearItemCalculadoraParaOrcamento(
+            simulacao: simulacao,
+            item: item,
+            idOrcamento: idOrcamento,
+            data: agora,
+          ),
+          SetOptions(merge: true),
+        );
+        operations++;
+
+        batch.set(
+          itemCalculadoraRef,
+          item
+              .copyWith(
+                adicionadoAoOrcamento: true,
+                idOrcamentoGerado: idOrcamento,
+                dataAdicionadoAoOrcamento: agora,
+              )
+              .toMap(),
+          SetOptions(merge: true),
+        );
+        operations++;
+
+        // Limite de segurança do batch do Firestore.
+        if (operations >= 440) {
+          await batch.commit();
+          batch = _db.batch();
+          operations = 0;
+        }
+      }
+
+      final calculoRef = _db.collection(_collectionCalculadora).doc(simulacao.idCalculo);
+      batch.set(
+        calculoRef,
+        {
+          'status_simulacao': StatusSimulacaoCalculadora.convertidaOrcamento.value,
+          'status_simulacao_label': StatusSimulacaoCalculadora.convertidaOrcamento.label,
+          'convertido_em_orcamento': true,
+          'data_conversao_orcamento': agora.toIso8601String(),
+          'data_atualizacao': agora.toIso8601String(),
+        },
+        SetOptions(merge: true),
+      );
+
+      await batch.commit();
+
+      if (calculoAtual.value?.idCalculo == simulacao.idCalculo) {
+        calculoAtual.value = calculoAtual.value!.copyWith(
+          statusSimulacao: StatusSimulacaoCalculadora.convertidaOrcamento,
+          convertidoEmOrcamento: true,
+          dataConversaoOrcamento: agora,
+          dataAtualizacao: agora,
+        );
+
+        final idsConvertidos = itensPendentes.map((e) => e.idItemResultado).toSet();
+        itensCalculados.assignAll(
+          itensCalculados.map((item) {
+            if (!idsConvertidos.contains(item.idItemResultado)) return item;
+
+            final idOrcamento = _gerarIdOrcamento(
+              idCalculo: simulacao.idCalculo,
+              idItemResultado: item.idItemResultado,
+              nome: item.nome,
+            );
+
+            return item.copyWith(
+              adicionadoAoOrcamento: true,
+              idOrcamentoGerado: idOrcamento,
+              dataAdicionadoAoOrcamento: agora,
+            );
+          }).toList(),
+        );
+      }
+
+      await carregarSimulacoesSalvas();
+
+      Get.snackbar(
+        'Orçamento criado',
+        '${itensPendentes.length} item(ns) foram adicionados ao orçamento do evento.',
+        backgroundColor: Colors.teal,
+        colorText: Colors.white,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Erro',
+        'Não foi possível transformar a simulação em orçamento: $e',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    } finally {
+      convertendoOrcamento.value = false;
     }
   }
 
@@ -330,7 +872,8 @@ class CalculadoraFestaController extends GetxController {
           unidade: item.unidade,
           confirmado: false,
           geradoPelaCalculadora: true,
-          observacao: item.regraAplicada,
+          observacao:
+              '${item.regraAplicada}\nCusto estimado: ${item.custoEstimadoFormatado}. Valor médio: ${item.valorUnitarioFormatado}.',
         );
 
         batch.set(
@@ -416,6 +959,74 @@ class CalculadoraFestaController extends GetxController {
     );
   }
 
+  String _gerarIdOrcamento({
+    required String idCalculo,
+    required String idItemResultado,
+    required String nome,
+  }) {
+    final safeCalculo = _normalizarIdTexto(idCalculo, fallback: 'calculo');
+    final safeItem = _normalizarIdTexto(idItemResultado, fallback: nome);
+    return 'orc_calc_${safeCalculo}_$safeItem';
+  }
+
+  String _normalizarIdTexto(String value, {required String fallback}) {
+    final source = value.trim().isEmpty ? fallback : value.trim();
+
+    final normalized = source
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9áéíóúâêîôûãõç]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_+'), '')
+        .replaceAll(RegExp(r'_+$'), '');
+
+    return normalized.isEmpty ? 'item' : normalized;
+  }
+
+  Map<String, dynamic> _mapearItemCalculadoraParaOrcamento({
+    required CalculadoraFestaModel simulacao,
+    required CalculadoraFestaItemModel item,
+    required String idOrcamento,
+    required DateTime data,
+  }) {
+    return {
+      'id_orcamento': idOrcamento,
+      'id_evento': simulacao.idEvento,
+      'id_calculo_origem': simulacao.idCalculo,
+      'id_item_calculadora': item.idItemResultado,
+      'origem': 'calculadora_ia',
+
+      // Campos compatíveis com o módulo de orçamento.
+      'categoria': item.categoria,
+      'item': item.nome,
+      'nome': item.nome,
+      'descricao': 'Gerado automaticamente pela Calculadora Inteligente.',
+      'quantidade': item.quantidade,
+      'unidade': item.unidade,
+      'custo_estimado': item.custoEstimado,
+      'custo_real': 0.0,
+      'valor_unitario_medio': item.valorUnitarioMedio,
+      'forma_pagamento': '',
+      'status_pagamento': 'pendente',
+      'status_orcamento': 'pendente',
+      'pago': false,
+
+      // Dados úteis para rastreabilidade.
+      'tipo_evento': simulacao.tipoEvento,
+      'perfil_festa': simulacao.perfilFesta.nome,
+      'regra_aplicada': item.regraAplicada,
+      'publico_alvo': item.publicoAlvo,
+      'tipo_item': item.tipoItem,
+      'observacao': '${item.regraAplicada}\nQuantidade sugerida: ${item.quantidadeFormatada}.\n'
+          'Valor médio: ${item.valorUnitarioFormatado}.\n'
+          'Custo estimado: ${item.custoEstimadoFormatado}.',
+
+      'ativo': true,
+      'deletado': false,
+      'data_criacao': data.toIso8601String(),
+      'data_atualizacao': data.toIso8601String(),
+    };
+  }
+
   String _gerarIdItemCardapio(String idCalculo, String nome) {
     final normalized = nome
         .toLowerCase()
@@ -433,12 +1044,63 @@ class CalculadoraFestaController extends GetxController {
     tipoEventoAtual.value = '';
     estimativaSemEvento.value = false;
     baseCalculo.value = BaseCalculoFesta.todosConvidados;
+    perfilSelecionado.value = PerfilFestaModel.padrao();
+    margemPersonalizada.value = null;
+    orcamentoDisponivel.value = null;
     totalAdultos.value = 0;
     totalCriancas.value = 0;
     totalBebes.value = 0;
+    totalAdultosEvento.value = 0;
+    totalCriancasEvento.value = 0;
+    totalBebesEvento.value = 0;
     duracaoHoras.value = 4;
     convidados.clear();
+    itensEstimativa.assignAll(CalculadoraFestaService.itensPadraoEstimativa);
     itensCalculados.clear();
+    simulacoesSalvas.clear();
+    carregandoSimulacoes.value = false;
+    convertendoOrcamento.value = false;
     calculoAtual.value = null;
+    estimativaAtual.value = null;
+    analiseIA.value = null;
+    analisandoIA.value = false;
+  }
+
+  void _registrarTotaisDoEvento({
+    required int adultos,
+    required int criancas,
+    required int bebes,
+    required int totalLegado,
+  }) {
+    final adultosNormalizados = _normalizarQuantidade(adultos);
+    final criancasNormalizadas = _normalizarQuantidade(criancas);
+    final bebesNormalizados = _normalizarQuantidade(bebes);
+    final totalPorTipo = adultosNormalizados + criancasNormalizadas + bebesNormalizados;
+    final totalLegadoNormalizado = _normalizarQuantidade(totalLegado);
+
+    // Compatibilidade com eventos antigos que tinham apenas total_convidados:
+    // nesse caso, tratamos o total legado como adultos para não zerar a estimativa.
+    if (totalPorTipo == 0 && totalLegadoNormalizado > 0) {
+      totalAdultosEvento.value = totalLegadoNormalizado;
+      totalCriancasEvento.value = 0;
+      totalBebesEvento.value = 0;
+      return;
+    }
+
+    totalAdultosEvento.value = adultosNormalizados;
+    totalCriancasEvento.value = criancasNormalizadas;
+    totalBebesEvento.value = bebesNormalizados;
+  }
+
+  int _normalizarQuantidade(int value) => value < 0 ? 0 : value;
+
+  String _formatMoney(double value) {
+    final normalized = value.toStringAsFixed(2).replaceAll('.', ',');
+    final parts = normalized.split(',');
+    final integer = parts.first.replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => '.',
+    );
+    return 'R\$ $integer,${parts.last}';
   }
 }

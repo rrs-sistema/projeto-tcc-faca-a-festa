@@ -411,6 +411,12 @@ List<Widget> _buildCamposPorTipo(
     ),
 
     const SizedBox(height: 12),
+    _buildSecaoConvidadosEstimados(
+      corPrincipal: corPrincipal,
+      controller: controller,
+    ),
+
+    const SizedBox(height: 12),
     _buildBotaoCalculadoraFesta(
       corPrincipal: corPrincipal,
       controller: controller,
@@ -424,6 +430,187 @@ List<Widget> _buildCamposPorTipo(
       titulo: 'Endereço do evento',
     ),
   ];
+}
+
+Widget _buildSecaoConvidadosEstimados({
+  required Color corPrincipal,
+  required EventoCadastroController controller,
+}) {
+  void atualizarTotal() {
+    final adultos = _parseIntText(controller.totalAdultos.text);
+    final criancas = _parseIntText(controller.totalCriancas.text);
+    final bebes = _parseIntText(controller.totalBebes.text);
+    final total = adultos + criancas + bebes;
+
+    controller.totalConvidados.text = total.toString();
+    controller.atualizarPreview();
+  }
+
+  atualizarTotal();
+
+  return Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: 0.78),
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: corPrincipal.withValues(alpha: 0.12)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.035),
+          blurRadius: 14,
+          offset: const Offset(0, 6),
+        ),
+      ],
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: corPrincipal.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(Icons.groups_rounded, color: corPrincipal),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Estimativa de convidados',
+                    style: GoogleFonts.poppins(
+                      color: corPrincipal,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    'Informe a quantidade por tipo. O total será calculado automaticamente e usado na calculadora da festa.',
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey.shade700,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 14),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final isCompact = constraints.maxWidth < 420;
+            final fields = [
+              _buildCampoQuantidadeConvidado(
+                label: 'Adultos',
+                icon: Icons.person_rounded,
+                controller: controller.totalAdultos,
+                corPrincipal: corPrincipal,
+                onChanged: atualizarTotal,
+              ),
+              _buildCampoQuantidadeConvidado(
+                label: 'Crianças',
+                icon: Icons.child_care_rounded,
+                controller: controller.totalCriancas,
+                corPrincipal: corPrincipal,
+                onChanged: atualizarTotal,
+              ),
+              _buildCampoQuantidadeConvidado(
+                label: 'Bebês',
+                icon: Icons.baby_changing_station_rounded,
+                controller: controller.totalBebes,
+                corPrincipal: corPrincipal,
+                onChanged: atualizarTotal,
+              ),
+            ];
+
+            if (isCompact) {
+              return Column(
+                children: fields
+                    .map(
+                      (field) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: field,
+                      ),
+                    )
+                    .toList(),
+              );
+            }
+
+            return Row(
+              children: fields
+                  .map(
+                    (field) => Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: field,
+                      ),
+                    ),
+                  )
+                  .toList(),
+            );
+          },
+        ),
+        const SizedBox(height: 10),
+        CustomInputField(
+          label: 'Total de convidados',
+          hintlabel: 'Total calculado automaticamente',
+          icon: Icons.summarize_rounded,
+          controller: controller.totalConvidados,
+          color: corPrincipal,
+          titleColor: corPrincipal,
+          keyboardType: TextInputType.number,
+          readOnly: true,
+          enabled: true,
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildCampoQuantidadeConvidado({
+  required String label,
+  required IconData icon,
+  required TextEditingController controller,
+  required Color corPrincipal,
+  required VoidCallback onChanged,
+}) {
+  return CustomInputField(
+    label: label,
+    hintlabel: '0',
+    icon: icon,
+    controller: controller,
+    color: corPrincipal,
+    titleColor: corPrincipal,
+    keyboardType: TextInputType.number,
+    onChanged: (_) => onChanged(),
+    validator: (value) {
+      final raw = value?.trim() ?? '';
+      if (raw.isEmpty) return null;
+
+      final number = int.tryParse(raw);
+      if (number == null || number < 0) {
+        return 'Valor inválido';
+      }
+
+      return null;
+    },
+  );
+}
+
+int _parseIntText(String? value) {
+  final normalized = (value ?? '').replaceAll(RegExp(r'[^0-9]'), '').trim();
+  if (normalized.isEmpty) return 0;
+  return int.tryParse(normalized) ?? 0;
 }
 
 Widget _buildBotaoCalculadoraFesta({
@@ -505,6 +692,9 @@ Widget _buildBotaoCalculadoraFesta({
                   idEvento: eventoJaSalvo ? idEvento : null,
                   tipoEvento: _resolverTipoEventoCalculadora(controller),
                   permitirEstimativaSemEvento: true,
+                  adultosIniciais: _parseIntText(controller.totalAdultos.text),
+                  criancasIniciais: _parseIntText(controller.totalCriancas.text),
+                  bebesIniciais: _parseIntText(controller.totalBebes.text),
                 ),
                 fullscreenDialog: true,
               );

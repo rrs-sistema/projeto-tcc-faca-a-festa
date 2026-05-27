@@ -2,6 +2,13 @@ import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import { onRequest } from "firebase-functions/v1/https";
 
+import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { logger } from "firebase-functions";
+import { openaiApiKey, runOpenAIAnalysis } from "./openaiClient";
+import { validateAndNormalizePayload } from "./validators";
+import { buildFallbackAnalysis } from "./fallback";
+import { saveAnalysisIfPossible } from "./firestore";
+
 admin.initializeApp();
 
 export const novaAvaliacaoProcessar = onDocumentCreated(
@@ -169,3 +176,64 @@ export const testarNotificacaoFornecedor = onRequest(async (req, res) => {
     res.status(500).send("Erro ao enviar notificação: " + error);
   }
 });
+
+/**
+ * Callable Function: analisarCalculadoraFestaIA
+ *
+ * Esta função recebe o payload calculado pelo app Flutter, envia para a IA
+ * generativa no backend e retorna uma resposta estruturada compatível com o
+ * AnaliseCalculadoraIAModel.
+ *
+ * Importante:
+ * - Não expor chave de IA no Flutter.
+ * - Não substituir os cálculos locais pela IA.
+ * - A IA interpreta, recomenda e sugere ações.
+ */
+export const analisarCalculadoraFestaIA = onCall(
+  {
+    region: "southamerica-east1",
+    timeoutSeconds: 60,
+    memory: "512MiB",
+    secrets: [openaiApiKey],
+    enforceAppCheck: false,
+  },
+  async (request) => {
+    if (!request.auth) {
+      throw new HttpsError("unauthenticated", "Usuário não autenticado.");
+    }
+
+    const payload = validateAndNormalizePayload({
+      ...request.data,
+      id_usuario: request.data?.id_usuario ?? request.auth.uid,
+    });
+
+    logger.info("🤖 [IA Calculadora] Iniciando análise generativa", {
+      idCalculo: payload.id_calculo,
+      idEvento: payload.id_evento,
+      uid: request.auth.uid,
+      totalItens: payload.itens?.length ?? 0,
+    });
+
+    try {
+      const analysis = await runOpenAIAnalysis(payload);
+      await saveAnalysisIfPossible(payload, analysis);
+
+      logger.info("✅ [IA Calculadora] Análise generativa concluída", {
+        idCalculo: payload.id_calculo,
+        fonte: analysis.fonte,
+        totalSugestoes: analysis.sugestoes.length,
+      });
+
+      return analysis;
+    } catch (error) {
+      logger.error("⚠️ [IA Calculadora] Falha na IA generativa; usando fallback local", {
+        idCalculo: payload.id_calculo,
+        error: error instanceof Error ? error.message : String(error),
+      });
+
+      const fallback = buildFallbackAnalysis(payload);
+      await saveAnalysisIfPossible(payload, fallback);
+      return fallback;
+    }
+  },
+);

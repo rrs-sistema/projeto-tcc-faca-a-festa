@@ -1,18 +1,20 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../data/models/evento/analise_calculadora_ia_model.dart';
 import '../../data/models/evento/calculadora_festa_item_model.dart';
 import './../../controllers/convidado/cardapio_controller.dart';
 import '../../data/models/evento/calculadora_festa_model.dart';
 import './../../controllers/calculadora_festa_controller.dart';
 import './../../controllers/evento_controller.dart';
+import './minhas_simulacoes_calculadora_bottom_sheet.dart';
 
 // ============================================================================
-// 🔹 Tela da Calculadora Inteligente de Festa
-// Mantida neste arquivo para aproveitar a tela/rota já existente do contador.
-// O ContadorEventoScreen continua sendo usado como header fixo na Home.
+// 🔹 Tela da Calculadora Inteligente de Festa (Versão Ultracompacta)
 // ============================================================================
 
 class CalculadoraFestaScreen extends StatefulWidget {
@@ -20,7 +22,6 @@ class CalculadoraFestaScreen extends StatefulWidget {
   final String? tipoEvento;
   final int duracaoInicialHoras;
   final bool permitirEstimativaSemEvento;
-  final BaseCalculoFesta? baseInicial;
   final int adultosIniciais;
   final int criancasIniciais;
   final int bebesIniciais;
@@ -31,7 +32,6 @@ class CalculadoraFestaScreen extends StatefulWidget {
     this.tipoEvento,
     this.duracaoInicialHoras = 4,
     this.permitirEstimativaSemEvento = false,
-    this.baseInicial,
     this.adultosIniciais = 0,
     this.criancasIniciais = 0,
     this.bebesIniciais = 0,
@@ -89,13 +89,11 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
   }
 
   Future<void> _prepararCalculadora() async {
-    final idEventoInformado = widget.idEvento?.trim() ?? '';
-    final podeAbrirComoEstimativa = widget.permitirEstimativaSemEvento && idEventoInformado.isEmpty;
-    final evento = podeAbrirComoEstimativa ? null : eventoController.eventoAtual.value;
-    final idEvento = idEventoInformado.isNotEmpty ? idEventoInformado : evento?.idEvento ?? '';
-    final estimativaSemEvento = idEvento.trim().isEmpty && widget.permitirEstimativaSemEvento;
+    final evento = eventoController.eventoAtual.value;
+    final idEvento = widget.idEvento ?? evento?.idEvento ?? '';
+    final permiteSemEvento = widget.permitirEstimativaSemEvento;
 
-    if (idEvento.isEmpty && !estimativaSemEvento) {
+    if (idEvento.isEmpty && !permiteSemEvento) {
       Get.snackbar(
         'Atenção',
         'Nenhum evento selecionado para calcular as quantidades.',
@@ -110,24 +108,29 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
         evento?.nomeEvento ??
         'Evento';
 
-    final baseInicial = widget.baseInicial ??
-        (estimativaSemEvento ? BaseCalculoFesta.manual : BaseCalculoFesta.todosConvidados);
+    final adultosIniciais = _normalizarQuantidadeInicial(widget.adultosIniciais);
+    final criancasIniciais = _normalizarQuantidadeInicial(widget.criancasIniciais);
+    final bebesIniciais = _normalizarQuantidadeInicial(widget.bebesIniciais);
+    final totalInicial = adultosIniciais + criancasIniciais + bebesIniciais;
 
     await calculadoraController.prepararCalculadora(
       idEvento: idEvento,
       tipoEvento: tipoEvento,
-      base: baseInicial,
+      base: idEvento.isEmpty ? BaseCalculoFesta.manual : BaseCalculoFesta.todosConvidados,
       duracaoInicialHoras: widget.duracaoInicialHoras,
-      permitirEstimativaSemEvento: widget.permitirEstimativaSemEvento,
-      adultosManuais: widget.adultosIniciais,
-      criancasManuais: widget.criancasIniciais,
-      bebesManuais: widget.bebesIniciais,
+      permitirEstimativaSemEvento: permiteSemEvento,
+      adultosManuais: adultosIniciais,
+      criancasManuais: criancasIniciais,
+      bebesManuais: bebesIniciais,
+      adultosEvento: adultosIniciais,
+      criancasEvento: criancasIniciais,
+      bebesEvento: bebesIniciais,
+      totalConvidadosEvento: totalInicial,
     );
 
-    if (calculadoraController.possuiEventoVinculado) {
+    if (idEvento.isNotEmpty) {
       await cardapioController.escutarCardapios(idEvento);
     } else {
-      cardapioController.cardapios.clear();
       idCardapioSelecionado.value = '';
     }
 
@@ -162,6 +165,10 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
     return int.tryParse(value.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
   }
 
+  int _normalizarQuantidadeInicial(int value) {
+    return value < 0 ? 0 : value;
+  }
+
   void _atualizarManual() {
     calculadoraController.atualizarTotaisManuais(
       adultos: _parseInt(adultosCtrl.text),
@@ -180,7 +187,6 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
       );
       return;
     }
-
     await calculadoraController.salvarCalculo();
   }
 
@@ -207,9 +213,20 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
       return;
     }
 
-    await calculadoraController.enviarResultadoParaCardapio(
-      idCardapio: idCardapio,
+    await calculadoraController.enviarResultadoParaCardapio(idCardapio: idCardapio);
+  }
+
+  Future<void> _abrirMinhasSimulacoes() async {
+    await calculadoraController.carregarSimulacoesSalvas();
+
+    final aplicouSimulacao = await MinhasSimulacoesCalculadoraBottomSheet.show(
+      context: context,
+      controller: calculadoraController,
     );
+
+    if (aplicouSimulacao == true) {
+      _sincronizarCamposManuais();
+    }
   }
 
   @override
@@ -222,10 +239,18 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF111827),
+        toolbarHeight: 48, // AppBar mais fina
         title: Text(
-          'Calculadora Inteligente',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
+          'Calculadora',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 16),
         ),
+        actions: [
+          IconButton(
+            tooltip: 'Minhas simulações',
+            onPressed: _abrirMinhasSimulacoes,
+            icon: const Icon(Icons.history_rounded, size: 22),
+          ),
+        ],
       ),
       body: Obx(() {
         if (calculadoraController.loading.value) {
@@ -235,26 +260,27 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
         return RefreshIndicator(
           onRefresh: _prepararCalculadora,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 120),
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 80), // Margens laterais reduzidas
             children: [
               _buildHero(primary),
-              const SizedBox(height: 16),
-              if (calculadoraController.modoEstimativaManualSemEvento) ...[
-                _buildAvisoEstimativaSemEvento(primary),
-                const SizedBox(height: 16),
-              ],
+              const SizedBox(height: 10), // Espaçamentos gerais reduzidos
+              _buildSimulacoesCard(primary),
+              const SizedBox(height: 10),
               _buildBaseCalculoCard(primary),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               _buildTotaisCard(primary),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               _buildDuracaoCard(primary),
-              const SizedBox(height: 16),
-              _buildResultadoCard(primary),
-              if (calculadoraController.possuiEventoVinculado) ...[
-                const SizedBox(height: 16),
-                _buildCardapioCard(primary),
+              const SizedBox(height: 10),
+              if (calculadoraController.analisandoIA.value ||
+                  calculadoraController.analiseIA.value != null) ...[
+                _buildAssistenteIACard(primary),
+                const SizedBox(height: 10),
               ],
-              const SizedBox(height: 18),
+              _buildResultadoCard(primary),
+              const SizedBox(height: 10),
+              _buildCardapioCard(primary),
+              const SizedBox(height: 12),
               _buildAcoes(primary),
             ],
           ),
@@ -265,19 +291,19 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
 
   Widget _buildHero(Color primary) {
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [primary.withValues(alpha: 0.92), primary.withValues(alpha: 0.62)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: primary.withValues(alpha: 0.25),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+            color: primary.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -287,33 +313,33 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
           Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+                child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Calcule o número de cada item para sua festa',
+                  'Cálculo de Itens',
                   style: GoogleFonts.poppins(
                     color: Colors.white,
-                    fontSize: 18,
+                    fontSize: 15,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           Text(
-            'Sugestões baseadas em adultos, crianças, bebês, duração e tipo do evento.',
+            'Sugestões inteligentes baseadas no público e duração.',
             style: GoogleFonts.poppins(
-              color: Colors.white.withValues(alpha: 0.88),
-              fontSize: 13.5,
+              color: Colors.white.withValues(alpha: 0.9),
+              fontSize: 11.5,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -322,76 +348,74 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
     );
   }
 
-  Widget _buildAvisoEstimativaSemEvento(Color primary) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: primary.withValues(alpha: 0.14)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.lightbulb_outline_rounded, color: primary),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Esta é uma estimativa rápida para apoiar o cadastro do evento. '
-              'Depois que o evento for salvo, você poderá usar os convidados cadastrados, '
-              'salvar o cálculo e enviar as sugestões para o cardápio.',
-              style: GoogleFonts.poppins(
-                color: const Color(0xFF334155),
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-              ),
+  Widget _buildSimulacoesCard(Color primary) {
+    return _SectionCard(
+      title: 'Simulações salvas',
+      icon: Icons.history_rounded,
+      trailing: Obx(() {
+        final total = calculadoraController.simulacoesSalvas.length;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: primary.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(999),
+          ),
+          child: Text(
+            total.toString(),
+            style: GoogleFonts.poppins(
+              color: primary,
+              fontWeight: FontWeight.w900,
+              fontSize: 11,
             ),
           ),
-        ],
+        );
+      }),
+      child: SizedBox(
+        width: double.infinity,
+        height: 38, // Botão mais compacto
+        child: OutlinedButton.icon(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: primary,
+            side: BorderSide(color: primary.withValues(alpha: 0.45)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            padding: EdgeInsets.zero,
+          ),
+          onPressed: _abrirMinhasSimulacoes,
+          icon: const Icon(Icons.auto_awesome_motion_rounded, size: 18),
+          label: Text(
+            'Abrir minhas simulações',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildBaseCalculoCard(Color primary) {
-    final baseAtual = calculadoraController.baseCalculo.value;
-    final possuiEvento = calculadoraController.possuiEventoVinculado;
-    final totalCadastrado = calculadoraController.convidados.length;
-
     return _SectionCard(
-      title: 'Como deseja calcular?',
+      title: 'Base de cálculo',
       icon: Icons.tune_rounded,
-      child: Column(
-        children: [
-          _BaseOptionTile(
-            icon: Icons.groups_rounded,
-            title: 'Usar convidados cadastrados',
-            subtitle: possuiEvento
-                ? totalCadastrado > 0
-                    ? 'Preenche adultos, crianças e bebês usando a lista do evento.'
-                    : 'O evento ainda não possui convidados cadastrados.'
-                : 'Disponível depois que o evento for salvo.',
-            selected: baseAtual != BaseCalculoFesta.manual,
-            enabled: possuiEvento,
-            primary: primary,
-            onTap: () {
-              calculadoraController.alterarBaseCalculo(BaseCalculoFesta.todosConvidados);
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 0, // Removido espaçamento vertical para manter na mesma linha
+        children: BaseCalculoFesta.values.map((base) {
+          final selected = calculadoraController.baseCalculo.value == base;
+          return ChoiceChip(
+            label: Text(base.label),
+            selected: selected,
+            selectedColor: primary.withValues(alpha: 0.18),
+            padding: EdgeInsets.zero,
+            labelStyle: GoogleFonts.poppins(
+              fontWeight: FontWeight.w700,
+              fontSize: 11.5,
+              color: selected ? primary : Colors.grey.shade700,
+            ),
+            onSelected: (_) {
+              calculadoraController.alterarBaseCalculo(base);
               _sincronizarCamposManuais();
             },
-          ),
-          const SizedBox(height: 10),
-          _BaseOptionTile(
-            icon: Icons.edit_note_rounded,
-            title: 'Informar quantidade manualmente',
-            subtitle: 'Use para simular uma estimativa antes de cadastrar todos os convidados.',
-            selected: baseAtual == BaseCalculoFesta.manual,
-            enabled: true,
-            primary: primary,
-            onTap: () {
-              calculadoraController.alterarBaseCalculo(BaseCalculoFesta.manual);
-              _sincronizarCamposManuais();
-            },
-          ),
-        ],
+          );
+        }).toList(),
       ),
     );
   }
@@ -402,19 +426,12 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
     return _SectionCard(
       title: 'Convidados',
       icon: Icons.groups_rounded,
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: primary.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Text(
-          '${calculadoraController.totalConvidados} no total',
-          style: GoogleFonts.poppins(
-            color: primary,
-            fontWeight: FontWeight.w800,
-            fontSize: 12,
-          ),
+      trailing: Text(
+        '${calculadoraController.totalConvidados} total',
+        style: GoogleFonts.poppins(
+          color: primary,
+          fontWeight: FontWeight.w800,
+          fontSize: 12,
         ),
       ),
       child: Column(
@@ -430,7 +447,7 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
                   onChanged: (_) => _atualizarManual(),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: _NumberField(
                   controller: criancasCtrl,
@@ -440,35 +457,37 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
                   onChanged: (_) => _atualizarManual(),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _NumberField(
-            controller: bebesCtrl,
-            label: 'Bebês',
-            icon: Icons.baby_changing_station_rounded,
-            enabled: manual,
-            onChanged: (_) => _atualizarManual(),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Icon(Icons.info_outline_rounded, size: 16, color: Colors.grey.shade500),
-              const SizedBox(width: 6),
+              const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  manual
-                      ? 'Informe uma quantidade estimada para simular os itens da festa.'
-                      : 'Os totais foram preenchidos automaticamente pela lista de convidados.',
-                  style: GoogleFonts.poppins(
-                    color: Colors.grey.shade600,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
+                child: _NumberField(
+                  controller: bebesCtrl,
+                  label: 'Bebês',
+                  icon: Icons.baby_changing_station_rounded,
+                  enabled: manual,
+                  onChanged: (_) => _atualizarManual(),
                 ),
               ),
             ],
           ),
+          if (!manual) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(Icons.info_outline_rounded, size: 14, color: Colors.grey.shade500),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'Preenchido via lista de convidados.',
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey.shade600,
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -476,25 +495,32 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
 
   Widget _buildDuracaoCard(Color primary) {
     return _SectionCard(
-      title: 'Duração da festa',
+      title: 'Duração',
       icon: Icons.schedule_rounded,
       trailing: Text(
         '${calculadoraController.duracaoHoras.value}h',
         style: GoogleFonts.poppins(
           color: primary,
           fontWeight: FontWeight.w900,
-          fontSize: 18,
+          fontSize: 14,
         ),
       ),
-      child: Slider(
-        value: calculadoraController.duracaoHoras.value.toDouble(),
-        min: 2,
-        max: 8,
-        divisions: 6,
-        label: '${calculadoraController.duracaoHoras.value}h',
-        onChanged: (value) {
-          calculadoraController.atualizarDuracao(value.round());
-        },
+      child: SizedBox(
+        height: 24, // Comprime a altura do slider
+        child: SliderTheme(
+          data: SliderTheme.of(context).copyWith(
+            trackHeight: 3.0,
+            thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8.0),
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 16.0),
+          ),
+          child: Slider(
+            value: calculadoraController.duracaoHoras.value.toDouble(),
+            min: 2,
+            max: 8,
+            divisions: 6,
+            onChanged: (value) => calculadoraController.atualizarDuracao(value.round()),
+          ),
+        ),
       ),
     );
   }
@@ -503,12 +529,12 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
     final itens = calculadoraController.itensCalculados;
 
     return _SectionCard(
-      title: 'Sugestão inteligente',
+      title: 'Sugestões',
       icon: Icons.insights_rounded,
       child: itens.isEmpty
-          ? _EmptyMessage(
+          ? const _EmptyMessage(
               icon: Icons.calculate_outlined,
-              text: 'Informe convidados para gerar as sugestões.',
+              text: 'Informe convidados para calcular.',
             )
           : Column(
               children: itens.map((item) => _ResultadoItemTile(item: item)).toList(),
@@ -516,42 +542,104 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
     );
   }
 
+  Widget _buildAssistenteIACard(Color primary) {
+    final analisando = calculadoraController.analisandoIA.value;
+    final analise = calculadoraController.analiseIA.value;
+
+    return _SectionCard(
+      title: 'Assistente IA',
+      icon: Icons.auto_awesome_rounded,
+      trailing: analisando
+          ? SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2, color: primary),
+            )
+          : _MiniBadge(
+              label: analise?.statusOrcamento ?? 'Pronta',
+              color: analise?.acimaDoOrcamento == true ? Colors.orange : Colors.teal,
+            ),
+      child: analisando && analise == null
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Analisando sua simulação...',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    minHeight: 4,
+                    color: primary,
+                    backgroundColor: primary.withValues(alpha: 0.10),
+                  ),
+                ),
+              ],
+            )
+          : _AnaliseIACompacta(
+              analise: analise,
+              primary: primary,
+              onDetalhes: analise == null ? null : () => _abrirDetalhesIA(analise),
+            ),
+    );
+  }
+
+  Future<void> _abrirDetalhesIA(AnaliseCalculadoraIAModel analise) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _AnaliseIADetalhesSheet(analise: analise),
+    );
+  }
+
   Widget _buildCardapioCard(Color primary) {
     return _SectionCard(
-      title: 'Enviar para cardápio',
+      title: 'Cardápio',
       icon: Icons.restaurant_menu_rounded,
       child: Obx(() {
         final cardapios = cardapioController.cardapios;
 
         if (cardapios.isEmpty) {
-          return _EmptyMessage(
+          return const _EmptyMessage(
             icon: Icons.no_meals_outlined,
-            text: 'Crie um cardápio antes de enviar os itens calculados.',
+            text: 'Crie um cardápio antes de enviar.',
           );
         }
 
-        final selectedValue = cardapios.any(
-          (cardapio) => cardapio.idCardapio == idCardapioSelecionado.value,
-        )
+        final selectedValue = cardapios.any((c) => c.idCardapio == idCardapioSelecionado.value)
             ? idCardapioSelecionado.value
             : null;
 
-        return DropdownButtonFormField<String>(
-          value: selectedValue,
-          decoration: InputDecoration(
-            labelText: 'Cardápio de destino',
-            prefixIcon: const Icon(Icons.restaurant_rounded),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-            filled: true,
-            fillColor: Colors.grey.shade50,
+        return SizedBox(
+          height: 44, // Força uma altura menor no dropdown
+          child: DropdownButtonFormField<String>(
+            value: selectedValue,
+            isDense: true,
+            decoration: InputDecoration(
+              labelText: 'Destino',
+              labelStyle: GoogleFonts.poppins(fontSize: 12),
+              prefixIcon: const Icon(Icons.restaurant_rounded, size: 18),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              filled: true,
+              fillColor: Colors.grey.shade50,
+            ),
+            items: cardapios.map((cardapio) {
+              return DropdownMenuItem<String>(
+                value: cardapio.idCardapio,
+                child: Text(cardapio.titulo, style: GoogleFonts.poppins(fontSize: 12)),
+              );
+            }).toList(),
+            onChanged: (value) => idCardapioSelecionado.value = value ?? '',
           ),
-          items: cardapios.map((cardapio) {
-            return DropdownMenuItem<String>(
-              value: cardapio.idCardapio,
-              child: Text(cardapio.titulo),
-            );
-          }).toList(),
-          onChanged: (value) => idCardapioSelecionado.value = value ?? '',
         );
       }),
     );
@@ -561,89 +649,57 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
     return Obx(() {
       final salvando = calculadoraController.salvando.value;
       final enviando = calculadoraController.enviandoParaCardapio.value;
-      final possuiEvento = calculadoraController.possuiEventoVinculado;
 
-      if (!possuiEvento) {
-        return Column(
-          children: [
-            SizedBox(
-              width: double.infinity,
-              height: 52,
+      return Row(
+        // Colocando os botões lado a lado para economizar mais espaço
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 44,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: EdgeInsets.zero,
                 ),
-                onPressed: () => Get.back(),
-                icon: const Icon(Icons.arrow_back_rounded),
+                onPressed: salvando ? null : _salvarCalculo,
+                icon: salvando
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.save_rounded, size: 18),
                 label: Text(
-                  'Voltar ao cadastro do evento',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
+                  salvando ? 'Salvando...' : 'Salvar',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
                 ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Para salvar este cálculo ou enviar ao cardápio, primeiro salve o evento.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                color: Colors.grey.shade600,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        );
-      }
-
-      return Column(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              onPressed: salvando ? null : _salvarCalculo,
-              icon: salvando
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Icon(Icons.save_rounded),
-              label: Text(
-                salvando ? 'Salvando...' : 'Salvar cálculo',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: primary,
-                side: BorderSide(color: primary.withValues(alpha: 0.55)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              onPressed:
-                  enviando || idCardapioSelecionado.value.isEmpty ? null : _enviarParaCardapio,
-              icon: enviando
-                  ? SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: primary),
-                    )
-                  : const Icon(Icons.playlist_add_check_rounded),
-              label: Text(
-                enviando ? 'Enviando...' : 'Adicionar ao cardápio',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
+          const SizedBox(width: 8),
+          Expanded(
+            child: SizedBox(
+              height: 44,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: primary,
+                  side: BorderSide(color: primary.withValues(alpha: 0.55)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  padding: EdgeInsets.zero,
+                ),
+                onPressed:
+                    enviando || idCardapioSelecionado.value.isEmpty ? null : _enviarParaCardapio,
+                icon: enviando
+                    ? SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: primary))
+                    : const Icon(Icons.playlist_add_check_rounded, size: 18),
+                label: Text(
+                  enviando ? 'Enviando...' : 'Adicionar',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+                ),
               ),
             ),
           ),
@@ -653,116 +709,26 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
   }
 }
 
-class _BaseOptionTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final bool selected;
-  final bool enabled;
-  final Color primary;
-  final VoidCallback onTap;
-
-  const _BaseOptionTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.selected,
-    required this.enabled,
-    required this.primary,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = enabled ? primary : Colors.grey.shade400;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: enabled ? onTap : null,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.all(13),
-        decoration: BoxDecoration(
-          color: selected ? primary.withValues(alpha: 0.08) : Colors.grey.shade50,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? primary.withValues(alpha: 0.42) : Colors.grey.shade200,
-            width: selected ? 1.4 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: enabled ? 0.12 : 0.08),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: color),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.poppins(
-                      color: enabled ? const Color(0xFF111827) : Colors.grey.shade500,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: GoogleFonts.poppins(
-                      color: enabled ? Colors.grey.shade600 : Colors.grey.shade500,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded,
-              color: selected ? primary : Colors.grey.shade400,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Widget child;
   final Widget? trailing;
 
-  const _SectionCard({
-    required this.title,
-    required this.icon,
-    required this.child,
-    this.trailing,
-  });
+  const _SectionCard({required this.title, required this.icon, required this.child, this.trailing});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -771,13 +737,13 @@ class _SectionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, color: Theme.of(context).primaryColor),
-              const SizedBox(width: 8),
+              Icon(icon, size: 18, color: Theme.of(context).primaryColor),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   title,
                   style: GoogleFonts.poppins(
-                    fontSize: 16,
+                    fontSize: 13,
                     fontWeight: FontWeight.w800,
                     color: const Color(0xFF111827),
                   ),
@@ -786,7 +752,7 @@ class _SectionCard extends StatelessWidget {
               if (trailing != null) trailing!,
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           child,
         ],
       ),
@@ -811,18 +777,480 @@ class _NumberField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      enabled: enabled,
-      keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
-        filled: true,
-        fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
+    return SizedBox(
+      height: 40, // Altura restrita do TextField
+      child: TextField(
+        controller: controller,
+        enabled: enabled,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+        onChanged: onChanged,
+        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.poppins(fontSize: 11),
+          prefixIcon: Icon(icon, size: 16),
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          filled: true,
+          fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
+        ),
+      ),
+    );
+  }
+}
+
+class _AnaliseIACompacta extends StatelessWidget {
+  final AnaliseCalculadoraIAModel? analise;
+  final Color primary;
+  final VoidCallback? onDetalhes;
+
+  const _AnaliseIACompacta({
+    required this.analise,
+    required this.primary,
+    required this.onDetalhes,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final data = analise;
+
+    if (data == null) {
+      return const _EmptyMessage(
+        icon: Icons.auto_awesome_outlined,
+        text: 'A análise inteligente aparecerá após o cálculo.',
+      );
+    }
+
+    final primeiraSugestao = data.sugestoes.isNotEmpty ? data.sugestoes.first : null;
+    final resumo = data.resumo.trim().isNotEmpty
+        ? data.resumo.trim()
+        : primeiraSugestao?.descricao.trim() ?? 'Análise inteligente concluída.';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _IndicadorIA(
+                label: 'Conforto',
+                value: _formatPercent(data.indiceConforto),
+                color: Colors.teal,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _IndicadorIA(
+                label: 'Risco',
+                value: _formatPercent(data.indiceRiscoFaltarItens),
+                color: data.indiceRiscoFaltarItens >= 70 ? Colors.redAccent : Colors.orange,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Expanded(
+              child: _IndicadorIA(
+                label: 'Economia',
+                value: _formatPercent(data.indiceEconomia),
+                color: primary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          resumo,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.poppins(
+            fontSize: 11.2,
+            height: 1.25,
+            color: Colors.grey.shade700,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        if (primeiraSugestao != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
+            decoration: BoxDecoration(
+              color: _corSugestao(primeiraSugestao).withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: _corSugestao(primeiraSugestao).withValues(alpha: 0.12),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  _iconeSugestao(primeiraSugestao),
+                  size: 16,
+                  color: _corSugestao(primeiraSugestao),
+                ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Text(
+                    primeiraSugestao.titulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                ),
+                if (onDetalhes != null)
+                  InkWell(
+                    onTap: onDetalhes,
+                    borderRadius: BorderRadius.circular(999),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      child: Text(
+                        'Ver',
+                        style: GoogleFonts.poppins(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w900,
+                          color: primary,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  static String _formatPercent(double value) {
+    final normalized = value.clamp(0, 100).round();
+    return '$normalized%';
+  }
+
+  static Color _corSugestao(SugestaoCalculadoraIAModel sugestao) {
+    switch (sugestao.prioridade) {
+      case PrioridadeSugestaoCalculadoraIA.alta:
+        return Colors.orange;
+      case PrioridadeSugestaoCalculadoraIA.media:
+        return Colors.blueGrey;
+      case PrioridadeSugestaoCalculadoraIA.baixa:
+        return Colors.teal;
+    }
+  }
+
+  static IconData _iconeSugestao(SugestaoCalculadoraIAModel sugestao) {
+    switch (sugestao.tipo) {
+      case TipoSugestaoCalculadoraIA.economia:
+        return Icons.savings_rounded;
+      case TipoSugestaoCalculadoraIA.alerta:
+        return Icons.warning_amber_rounded;
+      case TipoSugestaoCalculadoraIA.melhoria:
+        return Icons.trending_up_rounded;
+      case TipoSugestaoCalculadoraIA.excesso:
+        return Icons.remove_circle_outline_rounded;
+      case TipoSugestaoCalculadoraIA.falta:
+        return Icons.add_circle_outline_rounded;
+      case TipoSugestaoCalculadoraIA.planejamento:
+        return Icons.event_note_rounded;
+    }
+  }
+}
+
+class _IndicadorIA extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _IndicadorIA({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.07),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: GoogleFonts.poppins(
+              fontSize: 12.5,
+              fontWeight: FontWeight.w900,
+              color: color,
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(
+              fontSize: 9.5,
+              fontWeight: FontWeight.w700,
+              color: Colors.grey.shade600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _MiniBadge({
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 130),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.poppins(
+          color: color,
+          fontSize: 9.8,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _AnaliseIADetalhesSheet extends StatelessWidget {
+  final AnaliseCalculadoraIAModel analise;
+
+  const _AnaliseIADetalhesSheet({required this.analise});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).primaryColor;
+    final topSugestoes = analise.sugestoes.take(5).toList();
+
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.72,
+      ),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.auto_awesome_rounded, color: primary, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    analise.titulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded, size: 20),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 20),
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: _IndicadorIA(
+                        label: 'Conforto',
+                        value: _AnaliseIACompacta._formatPercent(analise.indiceConforto),
+                        color: Colors.teal,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _IndicadorIA(
+                        label: 'Risco',
+                        value: _AnaliseIACompacta._formatPercent(
+                          analise.indiceRiscoFaltarItens,
+                        ),
+                        color:
+                            analise.indiceRiscoFaltarItens >= 70 ? Colors.redAccent : Colors.orange,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _IndicadorIA(
+                        label: 'Economia',
+                        value: _AnaliseIACompacta._formatPercent(analise.indiceEconomia),
+                        color: primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _DetalheBloco(
+                  title: 'Resumo',
+                  text: analise.resumo.trim().isEmpty
+                      ? 'Análise inteligente concluída para esta simulação.'
+                      : analise.resumo,
+                ),
+                const SizedBox(height: 10),
+                _DetalheBloco(
+                  title: 'Orçamento',
+                  text:
+                      '${analise.statusOrcamento} • Diferença: ${_formatMoney(analise.diferencaOrcamento)}',
+                ),
+                if (topSugestoes.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    'Sugestões',
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w900,
+                      color: const Color(0xFF111827),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  for (final sugestao in topSugestoes) _SugestaoIATile(sugestao: sugestao),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetalheBloco extends StatelessWidget {
+  final String title;
+  final String text;
+
+  const _DetalheBloco({
+    required this.title,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            text,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              height: 1.3,
+              color: const Color(0xFF111827),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SugestaoIATile extends StatelessWidget {
+  final SugestaoCalculadoraIAModel sugestao;
+
+  const _SugestaoIATile({required this.sugestao});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _AnaliseIACompacta._corSugestao(sugestao);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 7),
+      padding: const EdgeInsets.all(9),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(_AnaliseIACompacta._iconeSugestao(sugestao), size: 17, color: color),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  sugestao.titulo,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w900,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  sugestao.descricao,
+                  style: GoogleFonts.poppins(
+                    fontSize: 10.5,
+                    height: 1.25,
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -838,25 +1266,25 @@ class _ResultadoItemTile extends StatelessWidget {
     final Color color = item.adicionadoAoCardapio ? Colors.teal : Theme.of(context).primaryColor;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.12)),
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withValues(alpha: 0.1)),
       ),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 32,
+            height: 32,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(14),
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(_iconeItem(item.tipoItem), color: color),
+            child: Icon(_iconeItem(item.tipoItem), color: color, size: 16),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -864,30 +1292,26 @@ class _ResultadoItemTile extends StatelessWidget {
                 Text(
                   item.nome,
                   style: GoogleFonts.poppins(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w800,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
                     color: const Color(0xFF111827),
                   ),
                 ),
-                const SizedBox(height: 2),
                 Text(
                   item.regraAplicada,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.5,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade600),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Text(
             item.quantidadeFormatada,
             style: GoogleFonts.poppins(
               color: color,
-              fontSize: 15,
+              fontSize: 13,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -924,21 +1348,22 @@ class _EmptyMessage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
-          Icon(icon, color: Colors.grey.shade500),
-          const SizedBox(width: 10),
+          Icon(icon, color: Colors.grey.shade400, size: 18),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
               style: GoogleFonts.poppins(
                 color: Colors.grey.shade600,
-                fontWeight: FontWeight.w600,
+                fontSize: 11.5,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ),
@@ -946,4 +1371,14 @@ class _EmptyMessage extends StatelessWidget {
       ),
     );
   }
+}
+
+String _formatMoney(double value) {
+  final normalized = value.toStringAsFixed(2).replaceAll('.', ',');
+  final parts = normalized.split(',');
+  final integer = parts.first.replaceAllMapped(
+    RegExp(r'\B(?=(\d{3})+(?!\d))'),
+    (_) => '.',
+  );
+  return 'R\$ $integer,${parts.last}';
 }

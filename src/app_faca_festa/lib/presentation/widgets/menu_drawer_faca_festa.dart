@@ -4,13 +4,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-
+import '../../data/models/evento/tipo_evento.dart';
+import '../pages/inspiracao/inspiracao_screen.dart';
+import '../pages/inspiracao/minhas_referencias_evento_screen.dart';
 import './../pages/usuario/cadastro_evento_bottom_sheet.dart';
 import './../../controllers/tema/event_theme_controller.dart';
 import './../../controllers/evento_cadastro_controller.dart';
 import './../pages/usuario/edit_usuario_screen.dart';
 import './../../controllers/evento_controller.dart';
 import './../../controllers/app_controller.dart';
+import './../../controllers/inspiracao_controller.dart';
+import './../../controllers/usuario/usuario_controller.dart';
 import './../../app/bindings/gift_binding.dart';
 import './../../core/utils/biblioteca.dart';
 
@@ -23,6 +27,8 @@ class MenuDrawerFacaFesta extends StatelessWidget {
   final appController = Get.find<AppController>();
   final eventoCadastroController = Get.find<EventoCadastroController>();
   final eventoController = Get.find<EventoController>();
+  final inspiracaoController = Get.find<InspiracaoController>();
+  final usuarioController = Get.find<UsuarioController>();
 
   @override
   Widget build(BuildContext context) {
@@ -125,11 +131,21 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                       );
 
                       GiftBinding().dependencies();
-                      
                     },
                   ),
                   const Divider(height: 20, thickness: 0.8),
-                  _menuItem(Icons.lightbulb_outline, "Ideias e Inspirações", color: primary),
+                  _menuItem(
+                    Icons.lightbulb_outline,
+                    "Ideias e Inspirações",
+                    color: primary,
+                    onTap: () => _abrirIdeiasEInspiracoes(),
+                  ),
+                  _menuItem(
+                    Icons.collections_bookmark_outlined,
+                    "Minhas Referências",
+                    color: primary,
+                    onTap: () => _abrirMinhasReferencias(),
+                  ),
                   _menuItem(Icons.people_alt_outlined, "Comunidade", color: primary),
                 ],
               ),
@@ -202,6 +218,99 @@ class MenuDrawerFacaFesta extends StatelessWidget {
     });
   }
 
+  Future<void> _abrirIdeiasEInspiracoes() async {
+    final contexto = await _resolverContextoEvento();
+    if (contexto == null) return;
+
+    await inspiracaoController.configurarContextoEvento(
+      eventoId: contexto.eventoId,
+      userId: contexto.userId,
+    );
+
+    await inspiracaoController.carregarInspiracoes(
+      contexto.tipoEvento.nome,
+      eventoId: contexto.eventoId,
+      userId: contexto.userId,
+    );
+
+    Get.back();
+
+    await Future.delayed(const Duration(milliseconds: 120));
+
+    Get.to(
+      () => InspiracaoScreen(
+        tipoEvento: contexto.tipoEvento,
+        eventoId: contexto.eventoId,
+        userId: contexto.userId,
+      ),
+      arguments: {
+        'eventoId': contexto.eventoId,
+        'idEvento': contexto.eventoId,
+        'userId': contexto.userId,
+        'idUsuario': contexto.userId,
+        'tipoEvento': contexto.tipoEvento,
+        'tipoEventoNome': contexto.tipoEvento.nome,
+      },
+    );
+  }
+
+  Future<void> _abrirMinhasReferencias() async {
+    final contexto = await _resolverContextoEvento();
+    if (contexto == null) return;
+
+    await inspiracaoController.configurarContextoEvento(
+      eventoId: contexto.eventoId,
+      userId: contexto.userId,
+    );
+
+    await inspiracaoController.recarregarReferenciasDoEvento();
+
+    Get.back();
+
+    await Future.delayed(const Duration(milliseconds: 120));
+
+    Get.to(
+      () => MinhasReferenciasEventoScreen(
+        eventoId: contexto.eventoId,
+        userId: contexto.userId,
+      ),
+    );
+  }
+
+  Future<_InspiracaoMenuContexto?> _resolverContextoEvento() async {
+    final evento = eventoController.eventoAtual.value;
+    final usuario = usuarioController.usuario.value;
+
+    if (evento == null) {
+      EasyLoading.showInfo('Selecione ou cadastre um evento antes de acessar esta área.');
+      return null;
+    }
+
+    final userId = usuario?.idUsuario ?? '';
+    if (userId.trim().isEmpty) {
+      EasyLoading.showInfo('Não foi possível identificar o usuário logado.');
+      return null;
+    }
+
+    var tipoEvento = eventoController.tipoEventoAtual.value;
+
+    if (tipoEvento == null) {
+      await eventoController.buscarTipoEvento(evento.idTipoEvento);
+      tipoEvento = eventoController.tipoEventoAtual.value;
+    }
+
+    if (tipoEvento == null || tipoEvento.nome.trim().isEmpty) {
+      EasyLoading.showInfo('Não foi possível identificar o tipo do evento.');
+      return null;
+    }
+
+    return _InspiracaoMenuContexto(
+      eventoId: evento.idEvento,
+      userId: userId,
+      tipoEvento: tipoEvento,
+    );
+  }
+
   Widget _menuItem(IconData icon, String title, {Color? color, VoidCallback? onTap}) {
     return ListTile(
       leading: Icon(icon, color: color?.withValues(alpha: 0.9) ?? Colors.grey.shade700),
@@ -217,4 +326,16 @@ class MenuDrawerFacaFesta extends StatelessWidget {
       onTap: onTap,
     );
   }
+}
+
+class _InspiracaoMenuContexto {
+  final String eventoId;
+  final String userId;
+  final TipoEventoModel tipoEvento;
+
+  const _InspiracaoMenuContexto({
+    required this.eventoId,
+    required this.userId,
+    required this.tipoEvento,
+  });
 }

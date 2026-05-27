@@ -92,3 +92,5 @@ Thumbs.db
 # ============================
 *.map.json
 *.symbols
+
+.env*

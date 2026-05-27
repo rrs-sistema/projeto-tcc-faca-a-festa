@@ -46,7 +46,7 @@ dependencies:
   image_picker: ^1.2.0
   lottie: ^3.3.1
   smooth_page_indicator: ^1.2.1
-  flutter_tts: ^4.2.3
+  flutter_tts: 4.2.2
   geolocator: ^13.0.4
   email_validator: ^3.0.0
   br_validators: ^2.0.4
@@ -61,6 +61,8 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.39
   path: ^1.9.0
   path_provider: ^2.1.5
+  cloud_functions: ^6.3.1
+  firebase_app_check: ^0.4.4+1
 
 dev_dependencies:
   flutter_test:

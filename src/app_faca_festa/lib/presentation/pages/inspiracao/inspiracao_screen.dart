@@ -4,33 +4,43 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../controllers/categoria/categoria_servico_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/inspiracao_controller.dart';
 import './../../widgets/confetti_background.dart';
 import './../../../data/models/model.dart';
 import './inspiracao_detalhe_screen.dart';
+import 'minhas_referencias_evento_screen.dart';
 
 class InspiracaoScreen extends StatefulWidget {
   final TipoEventoModel tipoEvento;
-  const InspiracaoScreen({super.key, required this.tipoEvento});
+  final String? eventoId;
+  final String? userId;
+
+  const InspiracaoScreen({
+    super.key,
+    required this.tipoEvento,
+    this.eventoId,
+    this.userId,
+  });
 
   @override
   State<InspiracaoScreen> createState() => _InspiracaoScreenState();
 }
 
 class _InspiracaoScreenState extends State<InspiracaoScreen> {
-  final categoriaController = Get.find<CategoriaServicoController>();
-  final controller = Get.put(InspiracaoController());
+  final controller = Get.isRegistered<InspiracaoController>()
+      ? Get.find<InspiracaoController>()
+      : Get.put(InspiracaoController());
   final themeController = Get.find<EventThemeController>();
-
-  final RxString categoriaSelecionada = 'Tudo'.obs;
-  final categorias = ['Tudo', 'Decoração', 'Doces', 'Comidas', 'DIY', 'Vestidos', 'Flores'];
 
   @override
   void initState() {
     super.initState();
-    controller.carregarInspiracoes(widget.tipoEvento.idTipoEvento);
+    controller.carregarInspiracoes(
+      widget.tipoEvento.nome,
+      eventoId: widget.eventoId,
+      userId: widget.userId,
+    );
   }
 
   @override
@@ -137,6 +147,10 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
               child: _filtrosCategoria(primary),
             ),
 
+            SliverToBoxAdapter(
+              child: _atalhoMinhasReferencias(primary),
+            ),
+
             // === Carrossel de Destaques ===
             SliverToBoxAdapter(
               child: Padding(
@@ -178,22 +192,16 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
 
   Widget _filtrosCategoria(Color primary) {
     return Obx(() {
-      if (categoriaController.carregando.value) {
-        return const Padding(
-          padding: EdgeInsets.all(16),
-          child: Center(child: CircularProgressIndicator()),
-        );
-      }
+      final categorias = controller.categoriasDisponiveis();
 
-      final categorias = ['Tudo', ...categoriaController.categorias.map((c) => c.nome)];
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: Row(
           children: categorias.map((c) {
-            final selected = categoriaSelecionada.value == c;
+            final selected = controller.categoriaSelecionada.value == c;
             return GestureDetector(
-              onTap: () => categoriaSelecionada.value = c,
+              onTap: () => controller.aplicarFiltro(c),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 300),
                 margin: const EdgeInsets.only(right: 8),
@@ -221,6 +229,77 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
               ),
             );
           }).toList(),
+        ),
+      );
+    });
+  }
+
+  Widget _atalhoMinhasReferencias(Color primary) {
+    return Obx(() {
+      final total = controller.referenciasEvento.length;
+
+      if (!controller.possuiContextoEvento) {
+        return const SizedBox.shrink();
+      }
+
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: primary.withValues(alpha: 0.15)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 14,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ListTile(
+            leading: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.10),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.collections_bookmark_outlined, color: primary),
+            ),
+            title: Text(
+              'Minhas Referências do Evento',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF172033),
+              ),
+            ),
+            subtitle: Text(
+              total == 0 ? 'Nenhuma referência salva ainda' : '$total referência(s) salva(s)',
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            trailing: Icon(Icons.chevron_right_rounded, color: primary),
+            onTap: () {
+              final eventoId = widget.eventoId ?? controller.eventoIdAtual;
+              final userId = widget.userId ?? controller.userIdAtual;
+
+              if (eventoId == null || eventoId.isEmpty || userId == null || userId.isEmpty) {
+                Get.snackbar(
+                  'Evento não identificado',
+                  'Abra um evento antes de acessar suas referências.',
+                  snackPosition: SnackPosition.BOTTOM,
+                );
+                return;
+              }
+
+              Get.to(
+                () => MinhasReferenciasEventoScreen(
+                  eventoId: eventoId,
+                  userId: userId,
+                ),
+              );
+            },
+          ),
         ),
       );
     });
