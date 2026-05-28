@@ -943,13 +943,63 @@ class _AnaliseIACompacta extends StatelessWidget {
   }
 
   static IconData _iconeSugestao(SugestaoCalculadoraIAModel sugestao) {
+    final text = _normalizarTextoSugestao(
+      '${sugestao.titulo} ${sugestao.descricao}',
+    );
+
+    if (text.contains('bolo')) {
+      return Icons.cake_rounded;
+    }
+
+    if (text.contains('docinho') || text.contains('doce') || text.contains('sobremesa')) {
+      return Icons.bakery_dining_rounded;
+    }
+
+    if (text.contains('salgadinho') ||
+        text.contains('buffet') ||
+        text.contains('comida') ||
+        text.contains('cardapio')) {
+      return Icons.restaurant_menu_rounded;
+    }
+
+    if (text.contains('bebida') || text.contains('refrigerante') || text.contains('suco')) {
+      return Icons.local_drink_rounded;
+    }
+
+    if (text.contains('agua')) {
+      return Icons.water_drop_rounded;
+    }
+
+    if (text.contains('descart')) {
+      return Icons.inventory_2_rounded;
+    }
+
+    if (text.contains('lembrancinha') || text.contains('brinde')) {
+      return Icons.card_giftcard_rounded;
+    }
+
+    if (text.contains('convidado') || text.contains('presenca')) {
+      return Icons.groups_rounded;
+    }
+
+    if (text.contains('orcamento') ||
+        text.contains('custo') ||
+        text.contains('valor') ||
+        text.contains('econom')) {
+      return Icons.savings_rounded;
+    }
+
+    if (text.contains('prazo') || text.contains('planejamento') || text.contains('organizar')) {
+      return Icons.event_note_rounded;
+    }
+
     switch (sugestao.tipo) {
       case TipoSugestaoCalculadoraIA.economia:
         return Icons.savings_rounded;
       case TipoSugestaoCalculadoraIA.alerta:
         return Icons.warning_amber_rounded;
       case TipoSugestaoCalculadoraIA.melhoria:
-        return Icons.trending_up_rounded;
+        return Icons.tips_and_updates_rounded;
       case TipoSugestaoCalculadoraIA.excesso:
         return Icons.remove_circle_outline_rounded;
       case TipoSugestaoCalculadoraIA.falta:
@@ -957,6 +1007,42 @@ class _AnaliseIACompacta extends StatelessWidget {
       case TipoSugestaoCalculadoraIA.planejamento:
         return Icons.event_note_rounded;
     }
+  }
+
+  static String _normalizarTextoSugestao(String value) {
+    var text = value.toLowerCase().trim();
+
+    const replacements = {
+      'á': 'a',
+      'à': 'a',
+      'ã': 'a',
+      'â': 'a',
+      'ä': 'a',
+      'é': 'e',
+      'è': 'e',
+      'ê': 'e',
+      'ë': 'e',
+      'í': 'i',
+      'ì': 'i',
+      'î': 'i',
+      'ï': 'i',
+      'ó': 'o',
+      'ò': 'o',
+      'õ': 'o',
+      'ô': 'o',
+      'ö': 'o',
+      'ú': 'u',
+      'ù': 'u',
+      'û': 'u',
+      'ü': 'u',
+      'ç': 'c',
+    };
+
+    replacements.forEach((accented, plain) {
+      text = text.replaceAll(accented, plain);
+    });
+
+    return text;
   }
 }
 
@@ -1282,7 +1368,7 @@ class _ResultadoItemTile extends StatelessWidget {
               color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(_iconeItem(item.tipoItem), color: color, size: 16),
+            child: Icon(_iconeItem(item), color: color, size: 16),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1320,21 +1406,156 @@ class _ResultadoItemTile extends StatelessWidget {
     );
   }
 
-  IconData _iconeItem(String tipo) {
-    switch (tipo.toLowerCase()) {
-      case 'comida':
-        return Icons.lunch_dining_rounded;
-      case 'bolo':
-        return Icons.cake_rounded;
-      case 'sobremesa':
-        return Icons.icecream_rounded;
-      case 'bebida':
-        return Icons.local_drink_rounded;
-      case 'descartavel':
-        return Icons.local_cafe_rounded;
-      default:
-        return Icons.restaurant_rounded;
+  IconData _iconeItem(CalculadoraFestaItemModel item) {
+    final text = _normalizarTexto(
+      '${item.tipoItem} ${item.nome} ${item.regraAplicada}',
+    );
+
+    if (text.contains('bolo')) {
+      return Icons.cake_rounded;
     }
+
+    if (text.contains('bem casado') || text.contains('bem_casado')) {
+      return Icons.favorite_rounded;
+    }
+
+    if (text.contains('docinho') || text.contains('doce')) {
+      return Icons.bakery_dining_rounded;
+    }
+
+    if (text.contains('salgadinho')) {
+      return Icons.lunch_dining_rounded;
+    }
+
+    if (text.contains('buffet')) {
+      return Icons.dinner_dining_rounded;
+    }
+
+    if (text.contains('refrigerante') || text.contains('suco')) {
+      return Icons.local_drink_rounded;
+    }
+
+    if (text.contains('agua')) {
+      return Icons.water_drop_rounded;
+    }
+
+    if (text.contains('descart')) {
+      return Icons.inventory_2_rounded;
+    }
+
+    if (text.contains('lembrancinha')) {
+      return Icons.redeem_rounded;
+    }
+
+    if (text.contains('brinde')) {
+      return Icons.card_giftcard_rounded;
+    }
+
+    if (text.contains('decoracao')) {
+      return Icons.celebration_rounded;
+    }
+
+    if (text.contains('painel')) {
+      return Icons.photo_library_rounded;
+    }
+
+    if (text.contains('foto')) {
+      return Icons.photo_camera_rounded;
+    }
+
+    if (text.contains('cerimonial')) {
+      return Icons.event_available_rounded;
+    }
+
+    if (text.contains('musica') || text.contains('dj') || text.contains('banda')) {
+      return Icons.music_note_rounded;
+    }
+
+    if (text.contains('recreacao')) {
+      return Icons.sports_esports_rounded;
+    }
+
+    if (text.contains('brinquedo')) {
+      return Icons.toys_rounded;
+    }
+
+    if (text.contains('pipoca')) {
+      return Icons.fastfood_rounded;
+    }
+
+    if (text.contains('algodao')) {
+      return Icons.icecream_rounded;
+    }
+
+    if (text.contains('coffee') || text.contains('cafe')) {
+      return Icons.coffee_rounded;
+    }
+
+    if (text.contains('material grafico')) {
+      return Icons.article_rounded;
+    }
+
+    if (text.contains('credenciamento')) {
+      return Icons.how_to_reg_rounded;
+    }
+
+    if (text.contains('equipamento')) {
+      return Icons.settings_input_component_rounded;
+    }
+
+    if (text.contains('convite')) {
+      return Icons.mail_rounded;
+    }
+
+    if (text.contains('bebida')) {
+      return Icons.local_drink_rounded;
+    }
+
+    if (text.contains('sobremesa')) {
+      return Icons.bakery_dining_rounded;
+    }
+
+    if (text.contains('comida')) {
+      return Icons.restaurant_rounded;
+    }
+
+    return Icons.restaurant_menu_rounded;
+  }
+
+  String _normalizarTexto(String value) {
+    var text = value.toLowerCase().trim();
+
+    const replacements = {
+      'á': 'a',
+      'à': 'a',
+      'ã': 'a',
+      'â': 'a',
+      'ä': 'a',
+      'é': 'e',
+      'è': 'e',
+      'ê': 'e',
+      'ë': 'e',
+      'í': 'i',
+      'ì': 'i',
+      'î': 'i',
+      'ï': 'i',
+      'ó': 'o',
+      'ò': 'o',
+      'õ': 'o',
+      'ô': 'o',
+      'ö': 'o',
+      'ú': 'u',
+      'ù': 'u',
+      'û': 'u',
+      'ü': 'u',
+      'ç': 'c',
+    };
+
+    replacements.forEach((accented, plain) {
+      text = text.replaceAll(accented, plain);
+    });
+
+    return text;
   }
 }
 

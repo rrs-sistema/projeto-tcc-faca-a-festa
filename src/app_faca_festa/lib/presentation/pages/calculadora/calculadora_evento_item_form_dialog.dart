@@ -105,225 +105,268 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bottomPadding = MediaQuery.of(context).viewInsets.bottom;
+    final mediaQuery = MediaQuery.of(context);
+    final bottomPadding = mediaQuery.viewInsets.bottom;
+    final availableHeight = mediaQuery.size.height -
+        mediaQuery.padding.top -
+        mediaQuery.padding.bottom -
+        bottomPadding -
+        12;
+
+    final maxSheetHeight = availableHeight
+        .clamp(
+          360.0,
+          mediaQuery.size.height * 0.92,
+        )
+        .toDouble();
 
     return SafeArea(
-      child: Padding(
+      child: AnimatedPadding(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
         padding: EdgeInsets.only(bottom: bottomPadding),
         child: Align(
           alignment: Alignment.bottomCenter,
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 820),
+            constraints: BoxConstraints(
+              maxWidth: 820,
+              maxHeight: maxSheetHeight,
+            ),
             child: Material(
               color: theme.colorScheme.surface,
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(26),
               ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
-                child: Form(
-                  key: _formKey,
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _Header(
-                          title: isEditing ? 'Editar regra do evento' : 'Nova regra por evento',
-                          subtitle: isEditing
-                              ? 'Ajuste a quantidade, valores e perfis da calculadora'
-                              : 'Configure como um item aparece em um tipo de evento',
-                        ),
-                        const SizedBox(height: 14),
-                        _buildIdPreview(context),
-                        const SizedBox(height: 12),
-                        Obx(() => _buildItemBaseSelector(context)),
-                        const SizedBox(height: 12),
-                        _ResponsiveFields(
-                          children: [
-                            DropdownButtonFormField<String>(
-                              value: _tipoEvento,
-                              decoration: _decoration(
-                                label: 'Tipo de evento',
-                                icon: Icons.event_outlined,
-                              ),
-                              items: CalculadoraItensAdminController.tiposEvento
-                                  .map(
-                                    (value) => DropdownMenuItem(
-                                      value: value,
-                                      child: Text(controller.labelTipoEvento(value)),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: isEditing
-                                  ? null
-                                  : (value) {
-                                      if (value == null) return;
-                                      setState(() => _tipoEvento = value);
-                                    },
-                            ),
-                            _textField(
-                              controller: _nomeController,
-                              label: 'Nome',
-                              icon: Icons.sell_outlined,
-                              requiredField: true,
-                            ),
-                            _textField(
-                              controller: _categoriaController,
-                              label: 'Categoria',
-                              icon: Icons.category_outlined,
-                              requiredField: true,
-                            ),
-                            _textField(
-                              controller: _unidadeController,
-                              label: 'Unidade',
-                              icon: Icons.straighten_outlined,
-                              requiredField: true,
-                            ),
-                            DropdownButtonFormField<String>(
-                              value: _publicoAlvo,
-                              decoration: _decoration(
-                                label: 'Público-alvo',
-                                icon: Icons.groups_2_outlined,
-                              ),
-                              items: CalculadoraItensAdminController.publicosAlvo
-                                  .map(
-                                    (value) => DropdownMenuItem(
-                                      value: value,
-                                      child: Text(_labelPublico(value)),
-                                    ),
-                                  )
-                                  .toList(),
-                              onChanged: (value) {
-                                if (value == null) return;
-                                setState(() => _publicoAlvo = value);
-                              },
-                            ),
-                            _textField(
-                              controller: _quantidadeController,
-                              label: 'Qtd. por convidado equivalente',
-                              icon: Icons.calculate_outlined,
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
-                              requiredField: true,
-                            ),
-                            _textField(
-                              controller: _valorController,
-                              label: 'Valor unitário médio',
-                              icon: Icons.attach_money_outlined,
-                              keyboardType: const TextInputType.numberWithOptions(
-                                decimal: true,
-                              ),
-                              requiredField: true,
-                            ),
-                            _textField(
-                              controller: _ordemController,
-                              label: 'Ordem',
-                              icon: Icons.sort_outlined,
-                              keyboardType: TextInputType.number,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 14),
-                        Text(
-                          'Perfis da festa',
-                          style: theme.textTheme.labelLarge?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children: CalculadoraItensAdminController.perfisFestaPadrao
-                              .map(
-                                (perfil) => FilterChip(
-                                  label: Text(_labelPerfil(perfil)),
-                                  selected: _perfisSelecionados.contains(perfil),
-                                  onSelected: (selected) {
-                                    setState(() {
-                                      if (selected) {
-                                        _perfisSelecionados.add(perfil);
-                                      } else {
-                                        _perfisSelecionados.remove(perfil);
-                                      }
-                                    });
-                                  },
-                                ),
-                              )
-                              .toList(),
-                        ),
-                        const SizedBox(height: 12),
-                        _textField(
-                          controller: _observacaoController,
-                          label: 'Observação',
-                          icon: Icons.notes_outlined,
-                          maxLines: 3,
-                        ),
-                        const SizedBox(height: 10),
-                        _SwitchGrid(
-                          children: [
-                            SwitchListTile.adaptive(
-                              value: _selecionadoPadrao,
-                              title: const Text('Selecionado por padrão'),
-                              contentPadding: EdgeInsets.zero,
-                              onChanged: (value) => setState(
-                                () => _selecionadoPadrao = value,
-                              ),
-                            ),
-                            SwitchListTile.adaptive(
-                              value: _obrigatorio,
-                              title: const Text('Obrigatório'),
-                              contentPadding: EdgeInsets.zero,
-                              onChanged: (value) => setState(
-                                () => _obrigatorio = value,
-                              ),
-                            ),
-                            SwitchListTile.adaptive(
-                              value: _ativo,
-                              title: const Text('Ativo'),
-                              contentPadding: EdgeInsets.zero,
-                              onChanged: (value) => setState(() => _ativo = value),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        Obx(
-                          () => Row(
+              clipBehavior: Clip.antiAlias,
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(18, 14, 18, 8),
+                      child: _Header(
+                        title: isEditing ? 'Editar regra do evento' : 'Nova regra por evento',
+                        subtitle: isEditing
+                            ? 'Ajuste a quantidade, valores e perfis da calculadora'
+                            : 'Configure como um item aparece em um tipo de evento',
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView(
+                        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                        padding: const EdgeInsets.fromLTRB(18, 4, 18, 12),
+                        children: [
+                          _buildIdPreview(context),
+                          const SizedBox(height: 12),
+                          Obx(() => _buildItemBaseSelector(context)),
+                          const SizedBox(height: 12),
+                          _ResponsiveFields(
                             children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed:
-                                      controller.saving.value ? null : () => Get.back<void>(),
-                                  icon: const Icon(Icons.close),
-                                  label: const Text('Cancelar'),
+                              DropdownButtonFormField<String>(
+                                value: _tipoEvento,
+                                decoration: _decoration(
+                                  label: 'Tipo de evento',
+                                  icon: Icons.event_outlined,
                                 ),
+                                items: CalculadoraItensAdminController.tiposEvento
+                                    .map(
+                                      (value) => DropdownMenuItem(
+                                        value: value,
+                                        child: Text(controller.labelTipoEvento(value)),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: isEditing
+                                    ? null
+                                    : (value) {
+                                        if (value == null) return;
+                                        setState(() => _tipoEvento = value);
+                                      },
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: FilledButton.icon(
-                                  onPressed: controller.saving.value ? null : _submit,
-                                  icon: controller.saving.value
-                                      ? const SizedBox(
-                                          width: 18,
-                                          height: 18,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
-                                          ),
-                                        )
-                                      : const Icon(Icons.save_outlined),
-                                  label: Text(
-                                    controller.saving.value ? 'Salvando...' : 'Salvar',
-                                  ),
+                              _textField(
+                                controller: _nomeController,
+                                label: 'Nome',
+                                icon: _iconeItemBaseSelecionado,
+                                requiredField: true,
+                              ),
+                              _textField(
+                                controller: _categoriaController,
+                                label: 'Categoria',
+                                icon: Icons.category_outlined,
+                                requiredField: true,
+                              ),
+                              _textField(
+                                controller: _unidadeController,
+                                label: 'Unidade',
+                                icon: Icons.straighten_outlined,
+                                requiredField: true,
+                              ),
+                              DropdownButtonFormField<String>(
+                                value: _publicoAlvo,
+                                decoration: _decoration(
+                                  label: 'Público-alvo',
+                                  icon: Icons.groups_2_outlined,
                                 ),
+                                items: CalculadoraItensAdminController.publicosAlvo
+                                    .map(
+                                      (value) => DropdownMenuItem(
+                                        value: value,
+                                        child: Text(_labelPublico(value)),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  setState(() => _publicoAlvo = value);
+                                },
+                              ),
+                              _textField(
+                                controller: _quantidadeController,
+                                label: 'Qtd. por convidado equivalente',
+                                icon: Icons.calculate_outlined,
+                                keyboardType: const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                requiredField: true,
+                              ),
+                              _textField(
+                                controller: _valorController,
+                                label: 'Valor unitário médio',
+                                icon: Icons.attach_money_outlined,
+                                keyboardType: const TextInputType.numberWithOptions(
+                                  decimal: true,
+                                ),
+                                requiredField: true,
+                              ),
+                              _textField(
+                                controller: _ordemController,
+                                label: 'Ordem',
+                                icon: Icons.sort_outlined,
+                                keyboardType: TextInputType.number,
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 14),
+                          Text(
+                            'Perfis da festa',
+                            style: theme.textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: CalculadoraItensAdminController.perfisFestaPadrao
+                                .map(
+                                  (perfil) => FilterChip(
+                                    label: Text(_labelPerfil(perfil)),
+                                    selected: _perfisSelecionados.contains(perfil),
+                                    onSelected: (selected) {
+                                      setState(() {
+                                        if (selected) {
+                                          _perfisSelecionados.add(perfil);
+                                        } else {
+                                          _perfisSelecionados.remove(perfil);
+                                        }
+                                      });
+                                    },
+                                  ),
+                                )
+                                .toList(),
+                          ),
+                          const SizedBox(height: 12),
+                          _textField(
+                            controller: _observacaoController,
+                            label: 'Observação',
+                            icon: Icons.notes_outlined,
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 10),
+                          _SwitchGrid(
+                            children: [
+                              SwitchListTile.adaptive(
+                                value: _selecionadoPadrao,
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
+                                title: const Text('Selecionado por padrão'),
+                                contentPadding: EdgeInsets.zero,
+                                onChanged: (value) => setState(
+                                  () => _selecionadoPadrao = value,
+                                ),
+                              ),
+                              SwitchListTile.adaptive(
+                                value: _obrigatorio,
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
+                                title: const Text('Obrigatório'),
+                                contentPadding: EdgeInsets.zero,
+                                onChanged: (value) => setState(
+                                  () => _obrigatorio = value,
+                                ),
+                              ),
+                              SwitchListTile.adaptive(
+                                value: _ativo,
+                                dense: true,
+                                visualDensity: VisualDensity.compact,
+                                title: const Text('Ativo'),
+                                contentPadding: EdgeInsets.zero,
+                                onChanged: (value) => setState(() => _ativo = value),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                    Container(
+                      padding: EdgeInsets.fromLTRB(
+                        18,
+                        10,
+                        18,
+                        12 + mediaQuery.padding.bottom,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        border: Border(
+                          top: BorderSide(
+                            color: theme.dividerColor.withValues(alpha: 0.22),
+                          ),
+                        ),
+                      ),
+                      child: Obx(
+                        () => Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: controller.saving.value ? null : () => Get.back<void>(),
+                                icon: const Icon(Icons.close),
+                                label: const Text('Cancelar'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: FilledButton.icon(
+                                onPressed: controller.saving.value ? null : _submit,
+                                icon: controller.saving.value
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(Icons.save_outlined),
+                                label: Text(
+                                  controller.saving.value ? 'Salvando...' : 'Salvar',
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -331,6 +374,137 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
         ),
       ),
     );
+  }
+
+  IconData get _iconeItemBaseSelecionado {
+    final itemBase = controller.itensBaseAtivos.firstWhereOrNull(
+      (item) => item.id == _idItemBase,
+    );
+
+    final text = _normalizarTexto(
+      '${itemBase?.id ?? ''} '
+      '${itemBase?.nome ?? ''} '
+      '${itemBase?.tipoItem ?? ''} '
+      '${itemBase?.categoriaPadrao ?? ''}',
+    );
+
+    return _resolverIconeItem(text);
+  }
+
+  IconData _resolverIconeItem(String text) {
+    if (text.contains('bolo')) {
+      return Icons.cake_rounded;
+    }
+
+    if (text.contains('bem_casado') || text.contains('bem casado')) {
+      return Icons.favorite_rounded;
+    }
+
+    if (text.contains('docinho') || text.contains('doce')) {
+      return Icons.bakery_dining_rounded;
+    }
+
+    if (text.contains('salgadinho') || text.contains('buffet')) {
+      return Icons.restaurant_menu_rounded;
+    }
+
+    if (text.contains('refrigerante') || text.contains('suco')) {
+      return Icons.local_drink_rounded;
+    }
+
+    if (text.contains('agua')) {
+      return Icons.water_drop_rounded;
+    }
+
+    if (text.contains('descart')) {
+      return Icons.inventory_2_rounded;
+    }
+
+    if (text.contains('lembrancinha') || text.contains('brinde')) {
+      return Icons.card_giftcard_rounded;
+    }
+
+    if (text.contains('decoracao')) {
+      return Icons.celebration_rounded;
+    }
+
+    if (text.contains('painel') || text.contains('foto')) {
+      return Icons.photo_camera_rounded;
+    }
+
+    if (text.contains('cerimonial')) {
+      return Icons.event_available_rounded;
+    }
+
+    if (text.contains('musica') || text.contains('dj') || text.contains('banda')) {
+      return Icons.music_note_rounded;
+    }
+
+    if (text.contains('recreacao') || text.contains('brinquedo')) {
+      return Icons.toys_rounded;
+    }
+
+    if (text.contains('pipoca')) {
+      return Icons.fastfood_rounded;
+    }
+
+    if (text.contains('algodao')) {
+      return Icons.icecream_rounded;
+    }
+
+    if (text.contains('coffee') || text.contains('cafe')) {
+      return Icons.coffee_rounded;
+    }
+
+    if (text.contains('grafico') || text.contains('convite')) {
+      return Icons.article_rounded;
+    }
+
+    if (text.contains('credenciamento')) {
+      return Icons.how_to_reg_rounded;
+    }
+
+    if (text.contains('equipamento')) {
+      return Icons.settings_input_component_rounded;
+    }
+
+    return Icons.inventory_2_outlined;
+  }
+
+  String _normalizarTexto(String value) {
+    var text = value.toLowerCase().trim();
+
+    const replacements = {
+      'á': 'a',
+      'à': 'a',
+      'ã': 'a',
+      'â': 'a',
+      'ä': 'a',
+      'é': 'e',
+      'è': 'e',
+      'ê': 'e',
+      'ë': 'e',
+      'í': 'i',
+      'ì': 'i',
+      'î': 'i',
+      'ï': 'i',
+      'ó': 'o',
+      'ò': 'o',
+      'õ': 'o',
+      'ô': 'o',
+      'ö': 'o',
+      'ú': 'u',
+      'ù': 'u',
+      'û': 'u',
+      'ü': 'u',
+      'ç': 'c',
+    };
+
+    replacements.forEach((accented, plain) {
+      text = text.replaceAll(accented, plain);
+    });
+
+    return text;
   }
 
   Widget _buildIdPreview(BuildContext context) {
@@ -394,7 +568,25 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
           .map(
             (item) => DropdownMenuItem(
               value: item.id,
-              child: Text('${item.nome}  •  ${item.categoriaPadrao}'),
+              child: Row(
+                children: [
+                  Icon(
+                    _resolverIconeItem(
+                      _normalizarTexto(
+                        '${item.id} ${item.nome} ${item.tipoItem} ${item.categoriaPadrao}',
+                      ),
+                    ),
+                    size: 18,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${item.nome}  •  ${item.categoriaPadrao}',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
             ),
           )
           .toList(),
@@ -500,6 +692,7 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
+      scrollPadding: const EdgeInsets.only(bottom: 140),
       decoration: _decoration(label: label, icon: icon),
       validator: requiredField
           ? (value) {

@@ -8,6 +8,7 @@ import '../../controllers/inspiracao_controller.dart';
 import '../../controllers/usuario/usuario_controller.dart';
 import '../../data/models/model.dart';
 import '../pages/calculadora/calculadora_itens_admin_page.dart';
+import '../pages/inspiracao/inspiracao_admin_page.dart';
 import '../pages/inspiracao/inspiracao_screen.dart';
 import '../pages/inspiracao/minhas_referencias_evento_screen.dart';
 import './../pages/usuario/cadastro_evento_bottom_sheet.dart';
@@ -108,11 +109,11 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                     _sectionTitle('Administração'),
                     _menuItem(
                       Icons.lightbulb_outline_rounded,
-                      'Ideias e Inspirações',
-                      subtitle: 'Explore ideias para o evento',
+                      'Gerenciar Inspirações',
+                      subtitle: 'Cadastre, publique e destaque ideias',
                       color: primary,
                       badgeText: 'Admin',
-                      onTap: () => _abrirIdeiasEInspiracoes(),
+                      onTap: () => _abrirIdeiasEInspiracoesAdmin(),
                     ),
                     _menuItem(
                       Icons.tune_rounded,
@@ -526,56 +527,11 @@ class MenuDrawerFacaFesta extends StatelessWidget {
     );
   }
 
-  Future<void> _abrirIdeiasEInspiracoes() async {
-    final evento = eventoController.eventoAtual.value;
-    final usuarioId = _resolverUsuarioIdAtual();
-
-    if (evento == null) {
-      EasyLoading.showInfo(
-        'Selecione ou cadastre um evento antes de acessar as inspirações.',
-      );
-      return;
-    }
-
-    if (usuarioId.isEmpty) {
-      EasyLoading.showInfo(
-        'Não foi possível identificar o usuário logado.',
-      );
-      return;
-    }
-
-    final tipoEvento = await _resolverTipoEventoAtual();
-
-    if (tipoEvento == null || tipoEvento.nome.trim().isEmpty) {
-      EasyLoading.showInfo(
-        'Não foi possível identificar o tipo do evento.',
-      );
-      return;
-    }
-
-    await inspiracaoController.configurarContextoEvento(
-      eventoId: evento.idEvento,
-      userId: usuarioId,
-    );
-
-    Get.back();
-
-    await Future.delayed(const Duration(milliseconds: 120));
-
+  void _abrirIdeiasEInspiracoesAdmin() {
     Get.to(
-      () => InspiracaoScreen(
-        tipoEvento: tipoEvento,
-        eventoId: evento.idEvento,
-        userId: usuarioId,
-      ),
-      arguments: {
-        'eventoId': evento.idEvento,
-        'idEvento': evento.idEvento,
-        'userId': usuarioId,
-        'idUsuario': usuarioId,
-        'tipoEvento': tipoEvento,
-        'tipoEventoNome': tipoEvento.nome,
-      },
+      () => const InspiracaoAdminPage(),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 260),
     );
   }
 
