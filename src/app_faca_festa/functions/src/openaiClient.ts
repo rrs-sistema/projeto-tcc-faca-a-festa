@@ -4,6 +4,7 @@ import { defineSecret } from "firebase-functions/params";
 import {
   CalculadoraIARequest,
   AnaliseCalculadoraIAResponse,
+  SugestaoBaseIA,
 } from "./types";
 
 import {
@@ -20,6 +21,7 @@ const OPENAI_MODEL = "gpt-4.1-mini";
 
 export async function runOpenAIAnalysis(
   request: CalculadoraIARequest,
+  sugestoesBase: SugestaoBaseIA[] = [],
 ): Promise<AnaliseCalculadoraIAResponse> {
   const client = new OpenAI({
     apiKey: openaiApiKey.value(),
@@ -28,7 +30,7 @@ export async function runOpenAIAnalysis(
   const response = await client.responses.create({
     model: OPENAI_MODEL,
     instructions: buildInstructions(),
-    input: buildInput(request),
+    input: buildInput(request, sugestoesBase),
     text: {
       format: {
         type: "json_schema",
@@ -41,7 +43,7 @@ export async function runOpenAIAnalysis(
 
   const outputText = response.output_text;
 
-  if (!outputText || outputText.trim() === '') {
+  if (!outputText || outputText.trim() === "") {
     throw new Error("A IA não retornou conteúdo textual para análise.");
   }
 

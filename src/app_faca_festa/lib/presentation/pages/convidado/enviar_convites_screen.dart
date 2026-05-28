@@ -440,12 +440,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
   }
 
   List<ConvidadoModel> _listaParaEnvio() {
-    final filtrada = convidadoController.listaFiltrada;
-    if (filtrada.isNotEmpty) {
-      return filtrada;
-    }
-
-    return convidadoController.novosConvidados;
+    return convidadoController.listaFiltrada;
   }
 
   bool _isSelecionado(ConvidadoModel convidado) {
@@ -510,32 +505,64 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
 
   Future<void> _executarEnvio(String tipo) async {
     final evento = eventoController.eventoAtual.value;
-    if (evento != null) {
-      await convidadoController.enviarNovosConvidados(evento);
+
+    if (evento == null || evento.idEvento.trim().isEmpty) {
+      Get.snackbar(
+        'Evento não encontrado',
+        'Selecione um evento antes de enviar os convites.',
+        backgroundColor: Colors.orangeAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
     }
 
-    final nomes = _selecionados.map((c) => c.nome).join(', ');
-    Get.snackbar(
-      'Convites $tipo enviados!',
-      'Enviados para: $nomes',
-      backgroundColor: themeController.primaryColor.value,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 14,
-      duration: const Duration(seconds: 3),
-    );
+    final selecionados = List<ConvidadoModel>.from(_selecionados);
 
-    _selecionados.clear();
+    try {
+      await convidadoController.enviarConvitesSelecionados(
+        convidadosSelecionados: selecionados,
+        evento: evento,
+        tipoEnvio: tipo,
+      );
+
+      final nomes = selecionados.map((c) => c.nome).join(', ');
+
+      Get.snackbar(
+        'Convites $tipo enviados!',
+        'Enviados para: $nomes',
+        backgroundColor: themeController.primaryColor.value,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 14,
+        duration: const Duration(seconds: 3),
+      );
+
+      _selecionados.clear();
+    } catch (e) {
+      Get.snackbar(
+        'Erro ao enviar',
+        'Não foi possível enviar os convites: $e',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 14,
+      );
+    }
   }
 
-  void _carregarConvidadosDoEventoAtual({bool mostrarSnack = false}) {
+  Future<void> _carregarConvidadosDoEventoAtual({
+    bool mostrarSnack = false,
+  }) async {
     final idEvento = eventoController.eventoAtual.value?.idEvento;
+
     if (idEvento == null || idEvento.trim().isEmpty) {
       return;
     }
 
-    convidadoController.escutarConvidados(idEvento);
+    await convidadoController.escutarConvidados(idEvento);
 
     if (mostrarSnack) {
       Get.snackbar(

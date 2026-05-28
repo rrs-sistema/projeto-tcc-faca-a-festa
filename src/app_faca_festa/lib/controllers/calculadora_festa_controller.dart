@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../core/services/calculadora_festa_ai_service.dart';
 import '../core/services/calculadora_festa_service.dart';
+import '../data/models/calculadora/calculadora_evento_item_model.dart';
 import '../data/models/cardapio/cardapio_item_model.dart';
 import '../data/models/cardapio/cardapio_model.dart';
 import '../data/models/evento/analise_calculadora_ia_model.dart';
@@ -12,25 +13,48 @@ import '../data/models/evento/calculadora_festa_model.dart';
 import '../data/models/evento/convidados_equivalentes_model.dart';
 import '../data/models/evento/estimativa_financeira_model.dart';
 import '../data/models/evento/perfil_festa_model.dart';
+import '../data/repositories/calculadora/calculadora_itens_base_repository.dart';
 import '../data/repositories/calculadora_festa_repository.dart';
 import '../data/repositories/i_calculadora_festa_ai_service.dart';
 import './../data/models/model.dart';
+
+enum OrigemItensCalculadora {
+  firestore,
+  fallbackLocal,
+}
+
+extension OrigemItensCalculadoraExtension on OrigemItensCalculadora {
+  String get label {
+    switch (this) {
+      case OrigemItensCalculadora.firestore:
+        return 'Firestore';
+      case OrigemItensCalculadora.fallbackLocal:
+        return 'Base padrão local';
+    }
+  }
+}
 
 class CalculadoraFestaController extends GetxController {
   final FirebaseFirestore _db;
   final CalculadoraFestaService _service;
   final ICalculadoraFestaAIService _aiService;
   final CalculadoraFestaRepository _repository;
+  final CalculadoraItensBaseRepository _itensBaseRepository;
 
   CalculadoraFestaController({
     FirebaseFirestore? firestore,
     CalculadoraFestaService? service,
     ICalculadoraFestaAIService? aiService,
     CalculadoraFestaRepository? repository,
+    CalculadoraItensBaseRepository? itensBaseRepository,
   })  : _db = firestore ?? FirebaseFirestore.instance,
         _service = service ?? const CalculadoraFestaService(),
         _aiService = aiService ?? const CalculadoraFestaAIService(),
-        _repository = repository ?? CalculadoraFestaRepository(firestore: firestore);
+        _repository = repository ?? CalculadoraFestaRepository(firestore: firestore),
+        _itensBaseRepository = itensBaseRepository ??
+            (Get.isRegistered<CalculadoraItensBaseRepository>()
+                ? Get.find<CalculadoraItensBaseRepository>()
+                : CalculadoraItensBaseRepository(firestore: firestore));
 
   static const String _collectionConvidado = 'convidado';
   static const String _collectionCalculadora = 'calculadora_festa';
@@ -42,6 +66,27 @@ class CalculadoraFestaController extends GetxController {
   final RxBool enviandoParaCardapio = false.obs;
   final RxBool convertendoOrcamento = false.obs;
   final RxBool analisandoIA = false.obs;
+  final RxBool carregandoItensBase = false.obs;
+  final RxBool itensOrigemRemota = false.obs;
+  final Rx<OrigemItensCalculadora> origemItensCalculadora =
+      OrigemItensCalculadora.fallbackLocal.obs;
+  final RxString erroItensBase = ''.obs;
+
+  bool get usandoItensDoFirestore {
+    return origemItensCalculadora.value == OrigemItensCalculadora.firestore;
+  }
+
+  bool get usandoFallbackLocalCalculadora {
+    return origemItensCalculadora.value == OrigemItensCalculadora.fallbackLocal;
+  }
+
+  String get mensagemOrigemItensCalculadora {
+    if (usandoItensDoFirestore) {
+      return 'Usando base configurada da calculadora.';
+    }
+
+    return 'Usando base padrão da calculadora.';
+  }
 
   final RxString idEventoAtual = ''.obs;
   final RxString tipoEventoAtual = ''.obs;
@@ -182,6 +227,10 @@ class CalculadoraFestaController extends GetxController {
       totalCriancas.value = _normalizarQuantidade(criancasManuais);
       totalBebes.value = _normalizarQuantidade(bebesManuais);
 
+      await carregarItensBasePorTipoEvento(
+        recalcularAposCarregar: false,
+      );
+
       if (calcularAutomaticamente) calcular();
       return;
     }
@@ -210,8 +259,137 @@ class CalculadoraFestaController extends GetxController {
       }
     }
 
+    await carregarItensBasePorTipoEvento(
+      recalcularAposCarregar: false,
+    );
+
     if (calcularAutomaticamente) calcular();
     await carregarSimulacoesSalvas();
+  }
+
+  Future<void> carregarItensBasePorTipoEvento({
+    bool recalcularAposCarregar = true,
+  }) async {
+    final tipoEventoKey = _normalizarTipoEventoParaConsulta(
+      tipoEventoAtual.value,
+    );
+    final perfilFestaKey = _normalizarPerfilFestaParaConsulta();
+
+    if (tipoEventoKey.isEmpty) {
+      _usarItensFixosComoFallback(
+        motivo: 'Tipo de evento não informado para a calculadora.',
+        recalcularAposCarregar: recalcularAposCarregar,
+      );
+      return;
+    }
+
+    try {
+      carregandoItensBase.value = true;
+      erroItensBase.value = '';
+
+      final itensRemotos = await _itensBaseRepository.buscarItensPorTipoEventoComFallback(
+        tipoEvento: tipoEventoKey,
+        perfilFesta: perfilFestaKey.isEmpty ? null : perfilFestaKey,
+      );
+
+      if (itensRemotos.isEmpty) {
+        _usarItensFixosComoFallback(
+          motivo: 'Nenhum item remoto encontrado para $tipoEventoKey.',
+          recalcularAposCarregar: recalcularAposCarregar,
+        );
+        return;
+      }
+
+      final itensConvertidos =
+          itensRemotos.where((item) => item.ativo).map(_converterItemEventoParaEstimativa).toList();
+
+      if (itensConvertidos.isEmpty) {
+        _usarItensFixosComoFallback(
+          motivo: 'Os itens remotos encontrados não puderam ser convertidos.',
+          recalcularAposCarregar: recalcularAposCarregar,
+        );
+        return;
+      }
+
+      itensEstimativa.assignAll(itensConvertidos);
+      itensOrigemRemota.value = true;
+      origemItensCalculadora.value = OrigemItensCalculadora.firestore;
+      erroItensBase.value = '';
+
+      debugPrint(
+        '[CalculadoraFestaController] Itens carregados do Firestore | '
+        'tipoEvento=$tipoEventoKey | perfil=$perfilFestaKey | total=${itensConvertidos.length}',
+      );
+
+      if (recalcularAposCarregar) {
+        calcular();
+      }
+    } catch (e) {
+      _usarItensFixosComoFallback(
+        motivo: 'Erro ao carregar itens remotos da calculadora: $e',
+        recalcularAposCarregar: recalcularAposCarregar,
+      );
+    } finally {
+      carregandoItensBase.value = false;
+    }
+  }
+
+  Future<void> atualizarTipoEventoCalculadora(String tipoEvento) async {
+    tipoEventoAtual.value = tipoEvento.trim().isEmpty ? 'Evento' : tipoEvento.trim();
+    await carregarItensBasePorTipoEvento();
+  }
+
+  void _usarItensFixosComoFallback({
+    required String motivo,
+    required bool recalcularAposCarregar,
+  }) {
+    erroItensBase.value = motivo;
+    itensOrigemRemota.value = false;
+    origemItensCalculadora.value = OrigemItensCalculadora.fallbackLocal;
+    itensEstimativa.assignAll(CalculadoraFestaService.itensPadraoEstimativa);
+
+    debugPrint(
+      '[CalculadoraFestaController] $motivo '
+      'Usando fallback local: CalculadoraFestaService.itensPadraoEstimativa.',
+    );
+
+    if (recalcularAposCarregar) {
+      calcular();
+    }
+  }
+
+  ItemEstimativaFinanceiraModel _converterItemEventoParaEstimativa(
+    CalculadoraEventoItemModel item,
+  ) {
+    final selecionado = item.obrigatorio || item.selecionadoPadrao;
+
+    return ItemEstimativaFinanceiraModel.fromMap({
+      'id': item.id,
+      'id_item_base': item.idItemBase,
+      'idItemBase': item.idItemBase,
+      'nome': item.nome,
+      'categoria': item.categoria,
+      'tipo_item': item.idItemBase.trim().isNotEmpty ? item.idItemBase : _normalizarSlug(item.nome),
+      'tipoItem': item.idItemBase.trim().isNotEmpty ? item.idItemBase : _normalizarSlug(item.nome),
+      'unidade': item.unidade,
+      'publico_alvo': item.publicoAlvo,
+      'publicoAlvo': item.publicoAlvo,
+      'quantidade_por_convidado_equivalente': item.quantidadePorConvidadoEquivalente,
+      'quantidadePorConvidadoEquivalente': item.quantidadePorConvidadoEquivalente,
+      'quantidade_por_convidado': item.quantidadePorConvidadoEquivalente,
+      'quantidadePorConvidado': item.quantidadePorConvidadoEquivalente,
+      'valor_unitario_medio': item.valorUnitarioMedio,
+      'valorUnitarioMedio': item.valorUnitarioMedio,
+      'perfis_festa': item.perfisFesta,
+      'perfisFesta': item.perfisFesta,
+      'selecionado': selecionado,
+      'selecionado_padrao': item.selecionadoPadrao,
+      'selecionadoPadrao': item.selecionadoPadrao,
+      'obrigatorio': item.obrigatorio,
+      'ativo': item.ativo,
+      'ordem': item.ordem,
+      'observacao': item.observacao,
+    });
   }
 
   Future<void> carregarConvidadosDoEvento(String idEvento) async {
@@ -305,7 +483,11 @@ class CalculadoraFestaController extends GetxController {
   void selecionarPerfil(TipoPerfilFesta tipo) {
     perfilSelecionado.value = PerfilFestaModel.fromTipo(tipo);
     margemPersonalizada.value = null;
-    calcular();
+
+    // O perfil pode alterar os itens retornados pelo Firestore
+    // por causa do filtro perfis_festa. A tela não precisa mudar:
+    // ela continua observando os mesmos estados reativos.
+    carregarItensBasePorTipoEvento();
   }
 
   void atualizarMargemPersonalizada(double? margem) {
@@ -1064,6 +1246,10 @@ class CalculadoraFestaController extends GetxController {
     estimativaAtual.value = null;
     analiseIA.value = null;
     analisandoIA.value = false;
+    carregandoItensBase.value = false;
+    itensOrigemRemota.value = false;
+    origemItensCalculadora.value = OrigemItensCalculadora.fallbackLocal;
+    erroItensBase.value = '';
   }
 
   void _registrarTotaisDoEvento({
@@ -1090,6 +1276,110 @@ class CalculadoraFestaController extends GetxController {
     totalAdultosEvento.value = adultosNormalizados;
     totalCriancasEvento.value = criancasNormalizadas;
     totalBebesEvento.value = bebesNormalizados;
+  }
+
+  String _normalizarTipoEventoParaConsulta(String value) {
+    final slug = _normalizarSlug(value);
+
+    if (slug.isEmpty || slug == 'evento') {
+      return '';
+    }
+
+    if (slug.contains('cha') && slug.contains('bebe')) {
+      return 'cha_de_bebe';
+    }
+
+    if (slug.contains('festa') && slug.contains('infantil')) {
+      return 'festa_infantil';
+    }
+
+    if (slug.contains('aniversario')) {
+      return 'aniversario';
+    }
+
+    if (slug.contains('formatura')) {
+      return 'formatura';
+    }
+
+    if (slug.contains('casamento')) {
+      return 'casamento';
+    }
+
+    if (slug.contains('corporativo') || slug.contains('empresa') || slug.contains('empresarial')) {
+      return 'evento_corporativo';
+    }
+
+    return slug;
+  }
+
+  String _normalizarPerfilFestaParaConsulta() {
+    final slug = _normalizarSlug(perfilSelecionado.value.nome);
+
+    if (slug.contains('econom')) {
+      return 'economico';
+    }
+
+    if (slug.contains('premium') || slug.contains('luxo')) {
+      return 'premium';
+    }
+
+    if (slug.contains('padrao') || slug.contains('medio') || slug.contains('normal')) {
+      return 'padrao';
+    }
+
+    return slug.isEmpty ? 'padrao' : slug;
+  }
+
+  String _normalizarSlug(String value) {
+    var text = value.trim().toLowerCase();
+
+    if (text.isEmpty) {
+      return '';
+    }
+
+    text = _removerAcentos(text);
+
+    return text
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_+'), '')
+        .replaceAll(RegExp(r'_+$'), '');
+  }
+
+  String _removerAcentos(String value) {
+    const accents = {
+      'á': 'a',
+      'à': 'a',
+      'ã': 'a',
+      'â': 'a',
+      'ä': 'a',
+      'é': 'e',
+      'è': 'e',
+      'ê': 'e',
+      'ë': 'e',
+      'í': 'i',
+      'ì': 'i',
+      'î': 'i',
+      'ï': 'i',
+      'ó': 'o',
+      'ò': 'o',
+      'õ': 'o',
+      'ô': 'o',
+      'ö': 'o',
+      'ú': 'u',
+      'ù': 'u',
+      'û': 'u',
+      'ü': 'u',
+      'ç': 'c',
+    };
+
+    var result = value;
+
+    accents.forEach((accented, plain) {
+      result = result.replaceAll(accented, plain);
+    });
+
+    return result;
   }
 
   int _normalizarQuantidade(int value) => value < 0 ? 0 : value;

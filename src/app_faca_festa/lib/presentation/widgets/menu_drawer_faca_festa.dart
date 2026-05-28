@@ -4,7 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../data/models/evento/tipo_evento.dart';
+import '../../controllers/inspiracao_controller.dart';
+import '../../controllers/usuario/usuario_controller.dart';
+import '../../data/models/model.dart';
+import '../pages/calculadora/calculadora_itens_admin_page.dart';
 import '../pages/inspiracao/inspiracao_screen.dart';
 import '../pages/inspiracao/minhas_referencias_evento_screen.dart';
 import './../pages/usuario/cadastro_evento_bottom_sheet.dart';
@@ -13,8 +16,6 @@ import './../../controllers/evento_cadastro_controller.dart';
 import './../pages/usuario/edit_usuario_screen.dart';
 import './../../controllers/evento_controller.dart';
 import './../../controllers/app_controller.dart';
-import './../../controllers/inspiracao_controller.dart';
-import './../../controllers/usuario/usuario_controller.dart';
 import './../../app/bindings/gift_binding.dart';
 import './../../core/utils/biblioteca.dart';
 
@@ -27,88 +28,48 @@ class MenuDrawerFacaFesta extends StatelessWidget {
   final appController = Get.find<AppController>();
   final eventoCadastroController = Get.find<EventoCadastroController>();
   final eventoController = Get.find<EventoController>();
-  final inspiracaoController = Get.find<InspiracaoController>();
   final usuarioController = Get.find<UsuarioController>();
+  final inspiracaoController = Get.find<InspiracaoController>();
 
   @override
   Widget build(BuildContext context) {
-    final evento = eventoController.eventoAtual.value;
     return Obx(() {
       final gradient = themeController.gradient.value;
       final primary = themeController.primaryColor.value;
       final icon = themeController.icon.value;
       final tituloCabecalho = themeController.tituloCabecalho.value;
+      final evento = eventoController.eventoAtual.value;
+      final eventoTitulo = _resolverTituloEvento(evento, tituloCabecalho);
 
       return Drawer(
-        backgroundColor: Colors.grey.shade50,
+        width: _drawerWidth(context),
+        backgroundColor: const Color(0xFFF8FAFC),
         child: Column(
           children: [
-            // ===== CABEÇALHO TEMÁTICO =====
-            Container(
-              decoration: BoxDecoration(
-                gradient: gradient,
-                boxShadow: [
-                  BoxShadow(
-                    color: primary.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              padding: const EdgeInsets.only(top: 50, bottom: 15),
-              width: double.infinity,
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 38,
-                    backgroundColor: Colors.white,
-                    child: Icon(icon, size: 40, color: primary),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    tituloCabecalho,
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  Text(
-                    "Seu organizador digital de eventos",
-                    style: GoogleFonts.poppins(
-                      color: Colors.white70,
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ),
+            _buildHeader(
+              context: context,
+              gradient: gradient,
+              primary: primary,
+              icon: icon,
+              titulo: tituloCabecalho,
+              eventoTitulo: eventoTitulo,
             ),
-
-            // ===== LISTA DE ITENS =====
             Expanded(
               child: ListView(
-                padding: EdgeInsets.zero,
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
                 children: [
-                  _menuItem(Icons.event_note, "Meu Evento", color: primary, onTap: () {
-                    try {
-                      if (evento != null) {
-                        Get.back(); // fecha a tela atual
-                        EasyLoading.show(status: 'Carregando informações...');
-                        eventoCadastroController.carregarEvento(evento);
-
-                        Future.delayed(const Duration(milliseconds: 200), () {
-                          showCadastroEventoBottomSheet(Get.context!, eventoParaEdicao: evento);
-                        });
-                      }
-                    } catch (e) {
-                      EasyLoading.dismiss();
-                    } finally {
-                      EasyLoading.dismiss();
-                    }
-                  }),
+                  _sectionTitle('Principal'),
+                  _menuItem(
+                    Icons.event_note_rounded,
+                    'Meu Evento',
+                    subtitle: evento == null ? 'Cadastre ou edite seu evento' : eventoTitulo,
+                    color: primary,
+                    onTap: () => _abrirMeuEvento(evento),
+                  ),
                   _menuItem(
                     Icons.person_outline_rounded,
-                    "Meu Perfil",
+                    'Meu Perfil',
+                    subtitle: 'Dados da conta',
                     color: primary,
                     onTap: () {
                       Get.back();
@@ -118,119 +79,483 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                     },
                   ),
                   _menuItem(
-                    Icons.wallet_giftcard_sharp,
-                    "Gerenciar Presentes",
+                    Icons.wallet_giftcard_rounded,
+                    'Gerenciar Presentes',
+                    subtitle: 'Sugestões e lista de presentes',
                     color: primary,
                     onTap: () {
                       Get.back();
+                      GiftBinding().dependencies();
                       Get.toNamed(
                         '/gerenciarPresentes',
                         arguments: {
-                          "eventoId": evento?.idEvento,
+                          'eventoId': evento?.idEvento,
                         },
                       );
-
-                      GiftBinding().dependencies();
                     },
                   ),
-                  const Divider(height: 20, thickness: 0.8),
-                  _menuItem(
-                    Icons.lightbulb_outline,
-                    "Ideias e Inspirações",
-                    color: primary,
-                    onTap: () => _abrirIdeiasEInspiracoes(),
-                  ),
+                  const SizedBox(height: 10),
+                  _sectionTitle('Planejamento'),
                   _menuItem(
                     Icons.collections_bookmark_outlined,
-                    "Minhas Referências",
+                    'Minhas Referências',
+                    subtitle: _resumoReferenciasDrawer(),
                     color: primary,
                     onTap: () => _abrirMinhasReferencias(),
                   ),
-                  _menuItem(Icons.people_alt_outlined, "Comunidade", color: primary),
+                  if (_deveExibirAdminCalculadora()) ...[
+                    const SizedBox(height: 10),
+                    _sectionTitle('Administração'),
+                    _menuItem(
+                      Icons.lightbulb_outline_rounded,
+                      'Ideias e Inspirações',
+                      subtitle: 'Explore ideias para o evento',
+                      color: primary,
+                      badgeText: 'Admin',
+                      onTap: () => _abrirIdeiasEInspiracoes(),
+                    ),
+                    _menuItem(
+                      Icons.tune_rounded,
+                      'Itens da Calculadora',
+                      subtitle: 'Catálogo e regras por evento',
+                      color: primary,
+                      badgeText: 'Admin',
+                      onTap: () => _abrirCalculadoraItensAdmin(),
+                    ),
+                  ],
+                  const SizedBox(height: 10),
+                  _sectionTitle('Social'),
+                  _menuItem(
+                    Icons.people_alt_outlined,
+                    'Comunidade',
+                    subtitle: 'Em breve',
+                    color: primary,
+                    enabled: false,
+                  ),
                 ],
               ),
             ),
-
-            const Divider(height: 8, thickness: 0.8),
-
-            // ===== BOTÃO DE TEMA =====
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  minimumSize: const Size(double.infinity, 48),
-                ),
-                onPressed: () => themeController.mostrarSeletorDeTema(context),
-                icon: const Icon(
-                  Icons.color_lens_outlined,
-                  color: Colors.white,
-                ),
-                label: Text(
-                  "Alterar tema",
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white),
-                ),
-              ),
-            ),
-
-            // ===== BOTÃO DE LOGOUT =====
-            SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade400,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    minimumSize: const Size(double.infinity, 48),
-                  ),
-                  onPressed: () async {
-                    await Biblioteca.showConfirmDialog(
-                      context,
-                      title: 'Encerramento da sessão!',
-                      message: 'Deseja realmente encerrar sua sessão?',
-                      confirmLabel: 'Encerrar',
-                      color: primary,
-                      onConfirm: () async {
-                        onLogout();
-                        await Future.delayed(const Duration(milliseconds: 150));
-                        return await Future.value(true);
-                      },
-                    );
-                  },
-                  icon: const Icon(Icons.logout, color: Colors.white),
-                  label: Text(
-                    "Encerrar sessão",
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white),
-                  ),
-                ),
-              ),
-            ),
+            _buildFooter(context, primary),
           ],
         ),
       );
     });
   }
 
+  double _drawerWidth(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+
+    if (width >= 900) {
+      return 310;
+    }
+
+    if (width >= 600) {
+      return 300;
+    }
+
+    return width * 0.84;
+  }
+
+  Widget _buildHeader({
+    required BuildContext context,
+    required LinearGradient gradient,
+    required Color primary,
+    required IconData icon,
+    required String titulo,
+    required String eventoTitulo,
+  }) {
+    final topPadding = MediaQuery.paddingOf(context).top;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.fromLTRB(16, topPadding + 14, 16, 14),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(22),
+          bottomRight: Radius.circular(22),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: primary.withValues(alpha: 0.20),
+            blurRadius: 14,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.08),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(
+              icon,
+              size: 27,
+              color: primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  titulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 15.5,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.24),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.event_available_rounded,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                      const SizedBox(width: 5),
+                      Flexible(
+                        child: Text(
+                          eventoTitulo,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 10.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _sectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(6, 2, 6, 6),
+      child: Text(
+        title.toUpperCase(),
+        style: GoogleFonts.poppins(
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.8,
+          color: const Color(0xFF94A3B8),
+        ),
+      ),
+    );
+  }
+
+  Widget _menuItem(
+    IconData icon,
+    String title, {
+    String? subtitle,
+    Color? color,
+    VoidCallback? onTap,
+    bool enabled = true,
+    String? badgeText,
+  }) {
+    final itemColor = color ?? const Color(0xFF64748B);
+    final effectiveOpacity = enabled ? 1.0 : 0.52;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: enabled ? onTap : null,
+          child: Ink(
+            padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: enabled ? 1 : 0.65),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFE2E8F0),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.025),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: itemColor.withValues(alpha: 0.10 * effectiveOpacity),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 18,
+                    color: itemColor.withValues(alpha: 0.95 * effectiveOpacity),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13.2,
+                                height: 1.15,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1E293B).withValues(
+                                  alpha: effectiveOpacity,
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (badgeText != null && badgeText.trim().isNotEmpty) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: itemColor.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                badgeText,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  color: itemColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      if (subtitle != null && subtitle.trim().isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 10.7,
+                            height: 1.15,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF64748B).withValues(
+                              alpha: effectiveOpacity,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: const Color(0xFFCBD5E1).withValues(
+                    alpha: effectiveOpacity,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFooter(BuildContext context, Color primary) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(color: Color(0xFFE2E8F0)),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: _footerButton(
+                icon: Icons.color_lens_outlined,
+                label: 'Tema',
+                backgroundColor: primary.withValues(alpha: 0.10),
+                foregroundColor: primary,
+                onPressed: () => themeController.mostrarSeletorDeTema(context),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _footerButton(
+                icon: Icons.logout_rounded,
+                label: 'Sair',
+                backgroundColor: Colors.red.shade50,
+                foregroundColor: Colors.red.shade500,
+                onPressed: () async {
+                  await Biblioteca.showConfirmDialog(
+                    context,
+                    title: 'Encerramento da sessão!',
+                    message: 'Deseja realmente encerrar sua sessão?',
+                    confirmLabel: 'Encerrar',
+                    color: primary,
+                    onConfirm: () async {
+                      onLogout();
+                      await Future.delayed(const Duration(milliseconds: 150));
+                      return Future.value(true);
+                    },
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _footerButton({
+    required IconData icon,
+    required String label,
+    required Color backgroundColor,
+    required Color foregroundColor,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      height: 42,
+      child: ElevatedButton.icon(
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: backgroundColor,
+          foregroundColor: foregroundColor,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        onPressed: onPressed,
+        icon: Icon(icon, size: 17),
+        label: Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _abrirMeuEvento(dynamic evento) {
+    try {
+      if (evento == null) {
+        EasyLoading.showInfo('Nenhum evento selecionado para edição.');
+        return;
+      }
+
+      Get.back();
+      EasyLoading.show(status: 'Carregando informações...');
+      eventoCadastroController.carregarEvento(evento);
+
+      Future.delayed(const Duration(milliseconds: 200), () {
+        EasyLoading.dismiss();
+        showCadastroEventoBottomSheet(
+          Get.context!,
+          eventoParaEdicao: evento,
+        );
+      });
+    } catch (_) {
+      EasyLoading.dismiss();
+    }
+  }
+
+  Future<void> _abrirCalculadoraItensAdmin() async {
+    Get.back();
+    await Future.delayed(const Duration(milliseconds: 120));
+    Get.to(
+      () => CalculadoraItensAdminPage(),
+    );
+  }
+
   Future<void> _abrirIdeiasEInspiracoes() async {
-    final contexto = await _resolverContextoEvento();
-    if (contexto == null) return;
+    final evento = eventoController.eventoAtual.value;
+    final usuarioId = _resolverUsuarioIdAtual();
+
+    if (evento == null) {
+      EasyLoading.showInfo(
+        'Selecione ou cadastre um evento antes de acessar as inspirações.',
+      );
+      return;
+    }
+
+    if (usuarioId.isEmpty) {
+      EasyLoading.showInfo(
+        'Não foi possível identificar o usuário logado.',
+      );
+      return;
+    }
+
+    final tipoEvento = await _resolverTipoEventoAtual();
+
+    if (tipoEvento == null || tipoEvento.nome.trim().isEmpty) {
+      EasyLoading.showInfo(
+        'Não foi possível identificar o tipo do evento.',
+      );
+      return;
+    }
 
     await inspiracaoController.configurarContextoEvento(
-      eventoId: contexto.eventoId,
-      userId: contexto.userId,
-    );
-
-    await inspiracaoController.carregarInspiracoes(
-      contexto.tipoEvento.nome,
-      eventoId: contexto.eventoId,
-      userId: contexto.userId,
+      eventoId: evento.idEvento,
+      userId: usuarioId,
     );
 
     Get.back();
@@ -239,31 +564,43 @@ class MenuDrawerFacaFesta extends StatelessWidget {
 
     Get.to(
       () => InspiracaoScreen(
-        tipoEvento: contexto.tipoEvento,
-        eventoId: contexto.eventoId,
-        userId: contexto.userId,
+        tipoEvento: tipoEvento,
+        eventoId: evento.idEvento,
+        userId: usuarioId,
       ),
       arguments: {
-        'eventoId': contexto.eventoId,
-        'idEvento': contexto.eventoId,
-        'userId': contexto.userId,
-        'idUsuario': contexto.userId,
-        'tipoEvento': contexto.tipoEvento,
-        'tipoEventoNome': contexto.tipoEvento.nome,
+        'eventoId': evento.idEvento,
+        'idEvento': evento.idEvento,
+        'userId': usuarioId,
+        'idUsuario': usuarioId,
+        'tipoEvento': tipoEvento,
+        'tipoEventoNome': tipoEvento.nome,
       },
     );
   }
 
   Future<void> _abrirMinhasReferencias() async {
-    final contexto = await _resolverContextoEvento();
-    if (contexto == null) return;
+    final evento = eventoController.eventoAtual.value;
+    final usuarioId = _resolverUsuarioIdAtual();
+
+    if (evento == null) {
+      EasyLoading.showInfo(
+        'Selecione ou cadastre um evento antes de acessar suas referências.',
+      );
+      return;
+    }
+
+    if (usuarioId.isEmpty) {
+      EasyLoading.showInfo(
+        'Não foi possível identificar o usuário logado.',
+      );
+      return;
+    }
 
     await inspiracaoController.configurarContextoEvento(
-      eventoId: contexto.eventoId,
-      userId: contexto.userId,
+      eventoId: evento.idEvento,
+      userId: usuarioId,
     );
-
-    await inspiracaoController.recarregarReferenciasDoEvento();
 
     Get.back();
 
@@ -271,71 +608,207 @@ class MenuDrawerFacaFesta extends StatelessWidget {
 
     Get.to(
       () => MinhasReferenciasEventoScreen(
-        eventoId: contexto.eventoId,
-        userId: contexto.userId,
+        eventoId: evento.idEvento,
+        userId: usuarioId,
       ),
+      arguments: {
+        'eventoId': evento.idEvento,
+        'idEvento': evento.idEvento,
+        'userId': usuarioId,
+        'idUsuario': usuarioId,
+      },
     );
   }
 
-  Future<_InspiracaoMenuContexto?> _resolverContextoEvento() async {
+  Future<TipoEventoModel?> _resolverTipoEventoAtual() async {
     final evento = eventoController.eventoAtual.value;
-    final usuario = usuarioController.usuario.value;
-
-    if (evento == null) {
-      EasyLoading.showInfo('Selecione ou cadastre um evento antes de acessar esta área.');
-      return null;
-    }
-
-    final userId = usuario?.idUsuario ?? '';
-    if (userId.trim().isEmpty) {
-      EasyLoading.showInfo('Não foi possível identificar o usuário logado.');
-      return null;
-    }
 
     var tipoEvento = eventoController.tipoEventoAtual.value;
 
-    if (tipoEvento == null) {
-      await eventoController.buscarTipoEvento(evento.idTipoEvento);
-      tipoEvento = eventoController.tipoEventoAtual.value;
+    if (tipoEvento != null && tipoEvento.nome.trim().isNotEmpty) {
+      return tipoEvento;
     }
 
-    if (tipoEvento == null || tipoEvento.nome.trim().isEmpty) {
-      EasyLoading.showInfo('Não foi possível identificar o tipo do evento.');
+    if (evento == null || evento.idTipoEvento.trim().isEmpty) {
       return null;
     }
 
-    return _InspiracaoMenuContexto(
-      eventoId: evento.idEvento,
-      userId: userId,
-      tipoEvento: tipoEvento,
-    );
+    await eventoController.buscarTipoEvento(evento.idTipoEvento);
+
+    tipoEvento = eventoController.tipoEventoAtual.value;
+
+    if (tipoEvento != null && tipoEvento.nome.trim().isNotEmpty) {
+      return tipoEvento;
+    }
+
+    return null;
   }
 
-  Widget _menuItem(IconData icon, String title, {Color? color, VoidCallback? onTap}) {
-    return ListTile(
-      leading: Icon(icon, color: color?.withValues(alpha: 0.9) ?? Colors.grey.shade700),
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(
-          fontSize: 15,
-          fontWeight: FontWeight.w500,
-          color: Colors.grey.shade800,
-        ),
-      ),
-      hoverColor: color?.withValues(alpha: 0.08),
-      onTap: onTap,
-    );
+  String _resolverUsuarioIdAtual() {
+    try {
+      final dynamic usuario = (appController as dynamic).usuarioLogado.value;
+      final id = (usuario?.idUsuario ?? usuario?.id ?? '').toString().trim();
+
+      if (id.isNotEmpty) return id;
+    } catch (_) {}
+
+    try {
+      final dynamic usuario = (usuarioController as dynamic).usuarioLogado.value;
+      final id = (usuario?.idUsuario ?? usuario?.id ?? '').toString().trim();
+
+      if (id.isNotEmpty) return id;
+    } catch (_) {}
+
+    try {
+      final dynamic usuario = (usuarioController as dynamic).usuarioAtual.value;
+      final id = (usuario?.idUsuario ?? usuario?.id ?? '').toString().trim();
+
+      if (id.isNotEmpty) return id;
+    } catch (_) {}
+
+    return '';
   }
-}
 
-class _InspiracaoMenuContexto {
-  final String eventoId;
-  final String userId;
-  final TipoEventoModel tipoEvento;
+  String _resumoReferenciasDrawer() {
+    final referencias = inspiracaoController.referenciasEvento.where((ref) {
+      return ref.ativo && !ref.deletado;
+    }).toList();
 
-  const _InspiracaoMenuContexto({
-    required this.eventoId,
-    required this.userId,
-    required this.tipoEvento,
-  });
+    final total = referencias.length;
+
+    if (total == 0) {
+      return 'Nenhuma referência salva';
+    }
+
+    final aprovadas = referencias.where((ref) => ref.status == 'aprovada').length;
+
+    final pendentes = referencias.where((ref) {
+      return ref.status == 'salva' || ref.status == 'em_analise' || ref.status == 'orcar';
+    }).length;
+
+    if (aprovadas > 0 && pendentes > 0) {
+      return '$total salvas • $aprovadas aprovadas • $pendentes pendentes';
+    }
+
+    if (aprovadas > 0) {
+      return '$total salvas • $aprovadas aprovadas';
+    }
+
+    if (pendentes > 0) {
+      return '$total salvas • $pendentes pendentes';
+    }
+
+    return '$total referências salvas';
+  }
+
+  String _resolverTituloEvento(dynamic evento, String fallback) {
+    if (evento == null) {
+      return 'Nenhum evento selecionado';
+    }
+
+    final candidatos = <String>[];
+
+    try {
+      candidatos.add((evento.nomeEvento ?? '').toString());
+    } catch (_) {}
+
+    try {
+      candidatos.add((evento.nome ?? '').toString());
+    } catch (_) {}
+
+    try {
+      candidatos.add((evento.titulo ?? '').toString());
+    } catch (_) {}
+
+    try {
+      candidatos.add((evento.descricao ?? '').toString());
+    } catch (_) {}
+
+    for (final candidato in candidatos) {
+      final value = candidato.trim();
+
+      if (value.isNotEmpty) {
+        return value;
+      }
+    }
+
+    return fallback.trim().isEmpty ? 'Evento selecionado' : fallback;
+  }
+
+  bool _deveExibirAdminCalculadora() {
+    var encontrouAlgumaPermissao = false;
+    var possuiPermissao = false;
+
+    bool lerPermissao(bool Function() getter) {
+      try {
+        final permitido = getter();
+        encontrouAlgumaPermissao = true;
+        return permitido;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    possuiPermissao = possuiPermissao ||
+        lerPermissao(() {
+          final dynamic value = (usuarioController as dynamic).adminEnabled.value;
+          return _asBool(value);
+        });
+
+    possuiPermissao = possuiPermissao ||
+        lerPermissao(() {
+          final dynamic value = (usuarioController as dynamic).suporteEnabled.value;
+          return _asBool(value);
+        });
+
+    possuiPermissao = possuiPermissao ||
+        lerPermissao(() {
+          final dynamic value = (usuarioController as dynamic).isAdmin.value;
+          return _asBool(value);
+        });
+
+    possuiPermissao = possuiPermissao ||
+        lerPermissao(() {
+          final dynamic value = (usuarioController as dynamic).userLogado.value.adminEnabled;
+          return _asBool(value);
+        });
+
+    possuiPermissao = possuiPermissao ||
+        lerPermissao(() {
+          final dynamic value = (usuarioController as dynamic).userLogado.value.suporteEnabled;
+          return _asBool(value);
+        });
+
+    if (!encontrouAlgumaPermissao) {
+      return true;
+    }
+
+    return possuiPermissao;
+  }
+
+  bool _asBool(dynamic value) {
+    if (value == null) {
+      return false;
+    }
+
+    if (value is bool) {
+      return value;
+    }
+
+    if (value is num) {
+      return value == 1;
+    }
+
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+
+      return normalized == 'true' ||
+          normalized == '1' ||
+          normalized == 's' ||
+          normalized == 'sim' ||
+          normalized == 'yes';
+    }
+
+    return false;
+  }
 }

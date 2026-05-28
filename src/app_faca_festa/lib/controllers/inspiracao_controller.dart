@@ -370,6 +370,93 @@ class InspiracaoController extends GetxController {
     }
   }
 
+  bool inspiracaoJaSalva(String inspiracaoId) {
+    if (inspiracaoId.trim().isEmpty) return false;
+    return referenciasSalvasIds.contains(inspiracaoId.trim());
+  }
+
+  bool checklistJaCriado(String inspiracaoId) {
+    return _existeVinculoLocalPorInspiracao(
+      tarefasInspiracaoEvento,
+      inspiracaoId,
+    );
+  }
+
+  bool orcamentoJaCriado(String inspiracaoId) {
+    return _existeVinculoLocalPorInspiracao(
+      orcamentosInspiracaoEvento,
+      inspiracaoId,
+    );
+  }
+
+  bool _existeVinculoLocalPorInspiracao(
+    Iterable<Map<String, dynamic>> itens,
+    String inspiracaoId,
+  ) {
+    final id = inspiracaoId.trim();
+
+    if (id.isEmpty) return false;
+
+    return itens.any((item) {
+      final itemInspiracaoId = (item['inspiracaoId'] ?? '').toString().trim();
+      final origem = (item['origem'] ?? '').toString().trim().toLowerCase();
+      final ativo = item['ativo'] != false;
+      final deletado = item['deletado'] == true || item['deleted'] == true;
+
+      return itemInspiracaoId == id && origem == 'inspiracao' && ativo && !deletado;
+    });
+  }
+
+  Future<bool> _existeDocumentoAtivoDaInspiracao({
+    required CollectionReference<Map<String, dynamic>> collection,
+    required String inspiracaoId,
+  }) async {
+    final id = inspiracaoId.trim();
+
+    if (id.isEmpty) return false;
+
+    final snapshot = await collection.where('inspiracaoId', isEqualTo: id).limit(20).get();
+
+    return snapshot.docs.any((doc) {
+      final data = doc.data();
+      final origem = (data['origem'] ?? '').toString().trim().toLowerCase();
+      final ativo = data['ativo'] != false;
+      final deletado = data['deletado'] == true || data['deleted'] == true;
+
+      return origem == 'inspiracao' && ativo && !deletado;
+    });
+  }
+
+  Future<void> _atualizarIndicadoresReferencia({
+    required InspiracaoModel inspiracao,
+    bool? checklistCriado,
+    bool? orcamentoCriado,
+  }) async {
+    if (!_temContextoEvento) return;
+
+    final dados = <String, dynamic>{
+      'atualizadoEm': FieldValue.serverTimestamp(),
+    };
+
+    if (checklistCriado != null) {
+      dados['checklistCriado'] = checklistCriado;
+      if (checklistCriado) {
+        dados['checklistCriadoEm'] = FieldValue.serverTimestamp();
+      }
+    }
+
+    if (orcamentoCriado != null) {
+      dados['orcamentoCriado'] = orcamentoCriado;
+      if (orcamentoCriado) {
+        dados['orcamentoCriadoEm'] = FieldValue.serverTimestamp();
+      }
+    }
+
+    await _referenciasCollection
+        .doc(_referenciaDocId(inspiracao.id))
+        .set(dados, SetOptions(merge: true));
+  }
+
   Future<void> gerarChecklistDaInspiracao(InspiracaoModel inspiracao) async {
     if (!_temContextoEvento) {
       EasyLoading.showInfo('Carregue o evento antes de criar checklist.');
@@ -377,6 +464,21 @@ class InspiracaoController extends GetxController {
     }
 
     try {
+      final jaExisteLocal = checklistJaCriado(inspiracao.id);
+      final jaExisteRemoto = jaExisteLocal
+          ? true
+          : await _existeDocumentoAtivoDaInspiracao(
+              collection: _tarefasCollection,
+              inspiracaoId: inspiracao.id,
+            );
+
+      if (jaExisteRemoto) {
+        EasyLoading.showInfo(
+          'Essa inspiração já gerou um checklist para este evento.',
+        );
+        return;
+      }
+
       EasyLoading.show(status: 'Criando checklist...');
 
       final batch = FirebaseFirestore.instance.batch();
@@ -427,6 +529,10 @@ class InspiracaoController extends GetxController {
       await batch.commit();
 
       await salvarInspiracaoNoEvento(inspiracao, showSuccessMessage: false);
+      await _atualizarIndicadoresReferencia(
+        inspiracao: inspiracao,
+        checklistCriado: true,
+      );
 
       EasyLoading.showSuccess('Checklist criado a partir da inspiração ✨');
     } catch (e) {
@@ -446,6 +552,21 @@ class InspiracaoController extends GetxController {
     }
 
     try {
+      final jaExisteLocal = orcamentoJaCriado(inspiracao.id);
+      final jaExisteRemoto = jaExisteLocal
+          ? true
+          : await _existeDocumentoAtivoDaInspiracao(
+              collection: _orcamentoCollection,
+              inspiracaoId: inspiracao.id,
+            );
+
+      if (jaExisteRemoto) {
+        EasyLoading.showInfo(
+          'Essa inspiração já gerou orçamento para este evento.',
+        );
+        return;
+      }
+
       EasyLoading.show(status: 'Criando orçamento...');
 
       final batch = FirebaseFirestore.instance.batch();
@@ -495,6 +616,10 @@ class InspiracaoController extends GetxController {
       await batch.commit();
 
       await salvarInspiracaoNoEvento(inspiracao, showSuccessMessage: false);
+      await _atualizarIndicadoresReferencia(
+        inspiracao: inspiracao,
+        orcamentoCriado: true,
+      );
 
       EasyLoading.showSuccess('Orçamento criado a partir da inspiração ✨');
     } catch (e) {
@@ -539,23 +664,138 @@ class InspiracaoController extends GetxController {
     }
   }
 
-  Future<void> removerReferenciaDoEvento(String referenciaId) async {
-    if (!_temContextoEvento) return;
+  Future<bool> removerReferenciaDoEvento(
+    String referenciaId, {
+    bool removerPlanejamentoVinculado = false,
+    String motivo = '',
+  }) async {
+    if (!_temContextoEvento) {
+      EasyLoading.showInfo('Carregue o evento antes de remover a referência.');
+      return false;
+    }
+
+    final id = referenciaId.trim();
+
+    if (id.isEmpty) {
+      EasyLoading.showInfo('Referência não identificada.');
+      return false;
+    }
 
     try {
-      await _referenciasCollection.doc(referenciaId).set({
-        'ativo': false,
-        'deletado': true,
-        'status': 'descartada',
-        'atualizadoEm': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      EasyLoading.show(status: 'Removendo referência...');
+
+      final refDoc = _referenciasCollection.doc(id);
+      final snapshot = await refDoc.get();
+
+      if (!snapshot.exists) {
+        EasyLoading.showInfo('Referência não encontrada.');
+        return false;
+      }
+
+      final data = snapshot.data() ?? <String, dynamic>{};
+      final inspiracaoId = (data['inspiracaoId'] ?? '').toString().trim();
+
+      final batch = FirebaseFirestore.instance.batch();
+
+      batch.set(
+        refDoc,
+        {
+          'ativo': false,
+          'deletado': true,
+          'status': 'descartada',
+          'motivoRemocao': motivo.trim().isEmpty ? 'removida_pelo_organizador' : motivo.trim(),
+          'removidaEm': FieldValue.serverTimestamp(),
+          'removidaPor': _userIdAtual,
+          'planejamentoMantido': !removerPlanejamentoVinculado,
+          'atualizadoEm': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+
+      if (removerPlanejamentoVinculado && inspiracaoId.isNotEmpty) {
+        final tarefas =
+            await _tarefasCollection.where('inspiracaoId', isEqualTo: inspiracaoId).get();
+
+        for (final tarefa in tarefas.docs) {
+          batch.set(
+            tarefa.reference,
+            {
+              'ativo': false,
+              'deletado': true,
+              'status': 'descartada',
+              'motivoRemocao': 'referencia_removida',
+              'removidaEm': FieldValue.serverTimestamp(),
+              'removidaPor': _userIdAtual,
+              'atualizadoEm': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+
+        final orcamentos =
+            await _orcamentoCollection.where('inspiracaoId', isEqualTo: inspiracaoId).get();
+
+        for (final orcamento in orcamentos.docs) {
+          batch.set(
+            orcamento.reference,
+            {
+              'ativo': false,
+              'deletado': true,
+              'statusPagamento': 'descartado',
+              'status': 'descartado',
+              'motivoRemocao': 'referencia_removida',
+              'removidoEm': FieldValue.serverTimestamp(),
+              'removidoPor': _userIdAtual,
+              'atualizadoEm': FieldValue.serverTimestamp(),
+            },
+            SetOptions(merge: true),
+          );
+        }
+      }
+
+      await batch.commit();
+
+      referenciasEvento.removeWhere((ref) => ref.id == id);
+
+      if (inspiracaoId.isNotEmpty) {
+        final aindaExisteReferenciaAtiva = referenciasEvento.any((ref) {
+          return ref.inspiracaoId == inspiracaoId && ref.ativo && !ref.deletado;
+        });
+
+        if (!aindaExisteReferenciaAtiva) {
+          referenciasSalvasIds.remove(inspiracaoId);
+          favoritasIds.remove(inspiracaoId);
+        }
+      }
+
+      referenciasEvento.refresh();
+      referenciasSalvasIds.refresh();
+      favoritasIds.refresh();
+
+      _atualizarFavoritosLocais();
+      _aplicarFiltroAtual();
+
+      if (removerPlanejamentoVinculado && inspiracaoId.isNotEmpty) {
+        tarefasInspiracaoEvento.removeWhere(
+          (t) => (t['inspiracaoId'] ?? '').toString() == inspiracaoId,
+        );
+        orcamentosInspiracaoEvento.removeWhere(
+          (o) => (o['inspiracaoId'] ?? '').toString() == inspiracaoId,
+        );
+        tarefasInspiracaoEvento.refresh();
+        orcamentosInspiracaoEvento.refresh();
+      }
 
       EasyLoading.showSuccess('Referência removida');
+      return true;
     } catch (e) {
       EasyLoading.showError('Erro ao remover referência');
       if (kDebugMode) {
         print('❌ Erro ao remover referência: $e');
       }
+      return false;
+    } finally {
+      EasyLoading.dismiss();
     }
   }
 

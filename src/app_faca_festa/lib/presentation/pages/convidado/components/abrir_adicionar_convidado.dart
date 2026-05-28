@@ -120,7 +120,7 @@ void abrirDialogAdicionarConvidado(
     }
   }
 
-  Future<void> salvarConvidado() async {
+Future<void> salvarConvidado() async {
     if (salvando.value) return;
 
     final nome = nomeCtrl.text.trim();
@@ -179,11 +179,13 @@ void abrirDialogAdicionarConvidado(
         await convidadoController.atualizarConvidado(atualizado);
 
         Get.back();
+
         showSnack(
           title: 'Convidado atualizado',
           message: nome,
           color: primary,
         );
+
         return;
       }
 
@@ -203,9 +205,10 @@ void abrirDialogAdicionarConvidado(
         dataAtualizacao: agora,
       );
 
-      convidadoController.adicionarNovoConvidadoLocal(novo);
+      await convidadoController.adicionarConvidado(novo);
 
       Get.back();
+
       showSnack(
         title: 'Convidado adicionado',
         message: nome,
@@ -221,7 +224,7 @@ void abrirDialogAdicionarConvidado(
       salvando.value = false;
     }
   }
-
+  
   Widget buildDragHandle() {
     return Center(
       child: Container(

@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -9,7 +10,7 @@ import './../../../controllers/inspiracao_controller.dart';
 import './../../widgets/confetti_background.dart';
 import './../../../data/models/model.dart';
 import './inspiracao_detalhe_screen.dart';
-import 'minhas_referencias_evento_screen.dart';
+import './minhas_referencias_evento_screen.dart';
 
 class InspiracaoScreen extends StatefulWidget {
   final TipoEventoModel tipoEvento;
@@ -61,7 +62,15 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
               expandedHeight: 220,
               floating: true,
               pinned: true,
-              backgroundColor: themeController.primaryColor.value, // cor sólida ao colapsar
+              backgroundColor: themeController.primaryColor.value,
+              foregroundColor: Colors.white,
+              iconTheme: const IconThemeData(
+                color: Colors.white,
+              ),
+              actionsIconTheme: const IconThemeData(
+                color: Colors.white,
+              ),
+              systemOverlayStyle: SystemUiOverlayStyle.light,
               flexibleSpace: LayoutBuilder(
                 builder: (context, constraints) {
                   final percent = (constraints.maxHeight - kToolbarHeight) / (220 - kToolbarHeight);
@@ -71,7 +80,7 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                     centerTitle: true,
                     titlePadding: const EdgeInsets.only(bottom: 12),
                     title: Opacity(
-                      opacity: 1 - progress, // título aparece conforme colapsa
+                      opacity: 1 - progress,
                       child: Text(
                         'Inspiração',
                         style: GoogleFonts.poppins(
@@ -83,34 +92,27 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
-                        // Fundo com gradiente principal
                         Container(decoration: BoxDecoration(gradient: gradient)),
-
-                        // Animação de confete com blend sutil
                         Stack(
                           fit: StackFit.expand,
                           children: [
                             ConfettiBackground(seconds: 35),
-                            Container(color: Colors.black12), // camada de blend neutro
+                            Container(color: Colors.black12),
                           ],
                         ),
-
-                        // Gradiente overlay neutro
                         Container(
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Color(0xCC000000), // preto mais forte no topo
-                                Color(0x66000000), // meio
-                                Colors.transparent // base limpa
+                                Color(0xCC000000),
+                                Color(0x66000000),
+                                Colors.transparent,
                               ],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
                             ),
                           ),
                         ),
-
-                        // Texto central com fade-out conforme rola
                         Opacity(
                           opacity: progress,
                           child: Container(
@@ -141,7 +143,6 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                 },
               ),
             ),
-
             // === Categorias ===
             SliverToBoxAdapter(
               child: _filtrosCategoria(primary),
@@ -399,7 +400,6 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
           final insp = list[i];
           final url = insp.imagemUrl;
 
-          // função interna segura para montar a imagem
           Widget buildImagem(String? url) {
             if (url == null || url.isEmpty) {
               return Container(
@@ -409,7 +409,11 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Center(
-                  child: Icon(Icons.image_not_supported_rounded, color: Colors.grey, size: 48),
+                  child: Icon(
+                    Icons.image_not_supported_rounded,
+                    color: Colors.grey,
+                    size: 48,
+                  ),
                 ),
               );
             }
@@ -421,7 +425,11 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                 height: 180,
                 color: Colors.grey.shade200,
                 alignment: Alignment.center,
-                child: const Icon(Icons.broken_image_rounded, color: Colors.grey, size: 40),
+                child: const Icon(
+                  Icons.broken_image_rounded,
+                  color: Colors.grey,
+                  size: 40,
+                ),
               ),
             );
           }
@@ -435,6 +443,20 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
               child: Stack(
                 children: [
                   buildImagem(url),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.50),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ),
                   Positioned(
                     top: 6,
                     right: 6,
@@ -454,11 +476,90 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                       ),
                     ),
                   ),
+                  Positioned(
+                    left: 8,
+                    right: 8,
+                    bottom: 8,
+                    child: _badgesPlanejamento(insp, primary),
+                  ),
                 ],
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _badgesPlanejamento(InspiracaoModel inspiracao, Color primary) {
+    return Obx(() {
+      final salva = controller.inspiracaoJaSalva(inspiracao.id);
+      final checklist = controller.checklistJaCriado(inspiracao.id);
+      final orcamento = controller.orcamentoJaCriado(inspiracao.id);
+
+      if (!salva && !checklist && !orcamento) {
+        return const SizedBox.shrink();
+      }
+
+      return Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: [
+          if (salva)
+            _planejamentoBadge(
+              label: 'Salva',
+              icon: Icons.bookmark_added_rounded,
+              color: primary,
+            ),
+          if (checklist)
+            _planejamentoBadge(
+              label: 'Checklist',
+              icon: Icons.checklist_rounded,
+              color: Colors.green.shade700,
+            ),
+          if (orcamento)
+            _planejamentoBadge(
+              label: 'Orçamento',
+              icon: Icons.account_balance_wallet_rounded,
+              color: Colors.orange.shade800,
+            ),
+        ],
+      );
+    });
+  }
+
+  Widget _planejamentoBadge({
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.16),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
       ),
     );
   }

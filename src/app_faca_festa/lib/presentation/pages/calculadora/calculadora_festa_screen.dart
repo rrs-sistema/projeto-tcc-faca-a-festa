@@ -5,13 +5,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../data/models/evento/analise_calculadora_ia_model.dart';
-import '../../data/models/evento/calculadora_festa_item_model.dart';
-import './../../controllers/convidado/cardapio_controller.dart';
-import '../../data/models/evento/calculadora_festa_model.dart';
-import './../../controllers/calculadora_festa_controller.dart';
-import './../../controllers/evento_controller.dart';
-import './minhas_simulacoes_calculadora_bottom_sheet.dart';
+import '../../../data/models/evento/analise_calculadora_ia_model.dart';
+import '../../../data/models/evento/calculadora_festa_item_model.dart';
+import '../../../controllers/convidado/cardapio_controller.dart';
+import '../../../data/models/evento/calculadora_festa_model.dart';
+import '../../../controllers/calculadora_festa_controller.dart';
+import '../../../controllers/evento_controller.dart';
+import 'minhas_simulacoes_calculadora_bottom_sheet.dart';
 
 // ============================================================================
 // 🔹 Tela da Calculadora Inteligente de Festa (Versão Ultracompacta)

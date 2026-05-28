@@ -57,7 +57,7 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                         vertical: 6,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha:0.18),
+                        color: Colors.white.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
                           color: Colors.white.withValues(alpha:0.25),
@@ -312,143 +312,221 @@ class InspiracaoDetalheScreen extends StatelessWidget {
     required InspiracaoModel inspiracao,
     required Color primary,
   }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha:0.045),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: primary.withValues(alpha:0.16)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: primary.withValues(alpha:0.12),
-                  borderRadius: BorderRadius.circular(14),
+    return Obx(() {
+      final salva = controller.inspiracaoJaSalva(inspiracao.id);
+      final checklist = controller.checklistJaCriado(inspiracao.id);
+      final orcamento = controller.orcamentoJaCriado(inspiracao.id);
+
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: primary.withValues(alpha: 0.045),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: primary.withValues(alpha: 0.16)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.auto_awesome_rounded,
+                    color: primary,
+                  ),
                 ),
-                child: Icon(
-                  Icons.auto_awesome_rounded,
-                  color: primary,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Transformar em planejamento',
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Transformar em planejamento',
+                        style: GoogleFonts.poppins(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'Use essa ideia para criar referências, tarefas e orçamento.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12.5,
-                        color: Colors.grey.shade700,
+                      const SizedBox(height: 2),
+                      Text(
+                        'Use essa ideia para criar referências, tarefas e orçamento.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          color: Colors.grey.shade700,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
+              ],
+            ),
+            if (salva || checklist || orcamento) ...[
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (salva)
+                    _planningStatusPill(
+                      label: 'Salva no evento',
+                      icon: Icons.bookmark_added_rounded,
+                      color: primary,
+                    ),
+                  if (checklist)
+                    _planningStatusPill(
+                      label: 'Checklist criado',
+                      icon: Icons.checklist_rounded,
+                      color: Colors.green.shade700,
+                    ),
+                  if (orcamento)
+                    _planningStatusPill(
+                      label: 'Orçamento criado',
+                      icon: Icons.account_balance_wallet_rounded,
+                      color: Colors.orange.shade800,
+                    ),
+                ],
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () => controller.salvarInspiracaoNoEvento(inspiracao),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: salva ? null : () => controller.salvarInspiracaoNoEvento(inspiracao),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                disabledBackgroundColor: Colors.grey.shade300,
+                disabledForegroundColor: Colors.grey.shade700,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                elevation: 2,
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              elevation: 2,
-            ),
-            icon: const Icon(Icons.bookmark_add_rounded, color: Colors.white),
-            label: Text(
-              'Salvar no meu evento',
-              style: GoogleFonts.poppins(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
+              icon: Icon(
+                salva ? Icons.bookmark_added_rounded : Icons.bookmark_add_rounded,
+                color: salva ? Colors.grey.shade700 : Colors.white,
               ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: () => controller.gerarChecklistDaInspiracao(inspiracao),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: primary,
-              side: BorderSide(color: primary.withValues(alpha:0.45)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            ),
-            icon: const Icon(Icons.checklist_rounded),
-            label: Text(
-              'Criar checklist dessa ideia',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(height: 10),
-          OutlinedButton.icon(
-            onPressed: () => controller.gerarOrcamentoDaInspiracao(inspiracao),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: primary,
-              side: BorderSide(color: primary.withValues(alpha:0.45)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-            ),
-            icon: const Icon(Icons.account_balance_wallet_rounded),
-            label: Text(
-              'Criar orçamento dessa ideia',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextButton.icon(
-            onPressed: () {
-              Get.toNamed(
-                '/fornecedores',
-                arguments: {
-                  'categoria': inspiracao.categoria,
-                  'inspiracaoId': inspiracao.id,
-                  'titulo': inspiracao.titulo,
-                },
-              );
-            },
-            icon: Icon(Icons.storefront_rounded, color: primary),
-            label: Text(
-              'Ver fornecedores deste estilo',
-              style: GoogleFonts.poppins(
-                color: primary,
-                fontWeight: FontWeight.w700,
+              label: Text(
+                salva ? 'Já salva no meu evento' : 'Salvar no meu evento',
+                style: GoogleFonts.poppins(
+                  color: salva ? Colors.grey.shade700 : Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
-          ),
-          TextButton.icon(
-            onPressed: () => controller.adicionarReferenciaPessoal(),
-            icon: Icon(
-              Icons.add_photo_alternate_rounded,
-              color: Colors.grey.shade700,
-            ),
-            label: Text(
-              'Adicionar imagem da minha galeria',
-              style: GoogleFonts.poppins(
-                color: Colors.grey.shade800,
-                fontWeight: FontWeight.w600,
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: checklist ? null : () => controller.gerarChecklistDaInspiracao(inspiracao),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: primary,
+                disabledForegroundColor: Colors.grey.shade500,
+                side: BorderSide(
+                  color: checklist ? Colors.grey.shade300 : primary.withValues(alpha: 0.45),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
               ),
+              icon: Icon(
+                checklist ? Icons.check_circle_rounded : Icons.checklist_rounded,
+              ),
+              label: Text(
+                checklist ? 'Checklist já criado' : 'Criar checklist dessa ideia',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: orcamento ? null : () => controller.gerarOrcamentoDaInspiracao(inspiracao),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: primary,
+                disabledForegroundColor: Colors.grey.shade500,
+                side: BorderSide(
+                  color: orcamento ? Colors.grey.shade300 : primary.withValues(alpha: 0.45),
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+              ),
+              icon: Icon(
+                orcamento ? Icons.check_circle_rounded : Icons.account_balance_wallet_rounded,
+              ),
+              label: Text(
+                orcamento ? 'Orçamento já criado' : 'Criar orçamento dessa ideia',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: () {
+                Get.toNamed(
+                  '/fornecedores',
+                  arguments: {
+                    'categoria': inspiracao.categoria,
+                    'inspiracaoId': inspiracao.id,
+                    'titulo': inspiracao.titulo,
+                  },
+                );
+              },
+              icon: Icon(Icons.storefront_rounded, color: primary),
+              label: Text(
+                'Ver fornecedores deste estilo',
+                style: GoogleFonts.poppins(
+                  color: primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            TextButton.icon(
+              onPressed: () => controller.adicionarReferenciaPessoal(),
+              icon: Icon(
+                Icons.add_photo_alternate_rounded,
+                color: Colors.grey.shade700,
+              ),
+              label: Text(
+                'Adicionar imagem da minha galeria',
+                style: GoogleFonts.poppins(
+                  color: Colors.grey.shade800,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _planningStatusPill({
+    required String label,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.24)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              color: color,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],

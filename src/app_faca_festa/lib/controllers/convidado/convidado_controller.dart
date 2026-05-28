@@ -259,44 +259,148 @@ class ConvidadoController extends GetxController {
   /// 🔹 Escuta convidados do evento em tempo real
   /// =====================================================
   Future<void> escutarConvidados(String idEvento) async {
-    _db
-        .collection('convidado')
-        .where('id_evento', isEqualTo: idEvento)
-        .snapshots()
-        .listen((snapshot) {
-      convidados.assignAll(
-        snapshot.docs.map((d) => ConvidadoModel.fromMap(d.data())).toList(),
-      );
-    });
+    final idEventoLimpo = idEvento.trim();
+
+    if (idEventoLimpo.isEmpty) {
+      convidados.clear();
+      idEventoAtual.value = '';
+      return;
+    }
+
+    if (idEventoAtual.value == idEventoLimpo && _convidadosSub != null) {
+      return;
+    }
+
+    await _convidadosSub?.cancel();
+
+    idEventoAtual.value = idEventoLimpo;
+    carregando.value = true;
+    erro.value = '';
+
+    _convidadosSub =
+        _db.collection('convidado').where('id_evento', isEqualTo: idEventoLimpo).snapshots().listen(
+      (snapshot) {
+        final lista = snapshot.docs.map((doc) => ConvidadoModel.fromMap(doc.data())).toList();
+
+        lista.sort(
+          (a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()),
+        );
+
+        convidados.assignAll(lista);
+        carregando.value = false;
+      },
+      onError: (e) {
+        erro.value = 'Erro ao carregar convidados: $e';
+        carregando.value = false;
+      },
+    );
   }
 
-  /// =============================================================
-  /// 🔹 Adiciona um novo convidado ao evento
-  /// =============================================================
   Future<void> adicionarConvidado(ConvidadoModel model) async {
     try {
       carregando.value = true;
-      await _db.collection('convidado').doc(model.idConvidado).set(model.toMap());
+      erro.value = '';
+
+      await _db.collection('convidado').doc(model.idConvidado).set(
+            model.toMap(),
+            SetOptions(merge: true),
+          );
     } catch (e) {
       erro.value = 'Erro ao salvar convidado: $e';
+      rethrow;
     } finally {
       carregando.value = false;
     }
   }
 
-  /// =============================================================
-  /// 🔹 Atualiza os dados de um convidado existente
-  /// =============================================================
   Future<void> atualizarConvidado(ConvidadoModel model) async {
     try {
       carregando.value = true;
+      erro.value = '';
 
-      await _db.collection('convidado').doc(model.idConvidado).update(model.toMap());
+      await _db.collection('convidado').doc(model.idConvidado).set(
+            model.toMap(),
+            SetOptions(merge: true),
+          );
     } catch (e) {
       erro.value = 'Erro ao atualizar convidado: $e';
+      rethrow;
     } finally {
       carregando.value = false;
     }
+  }
+
+  Future<void> excluirConvidado(String idConvidado) async {
+    try {
+      await _db.collection('convidado').doc(idConvidado).delete();
+    } catch (e) {
+      erro.value = 'Erro ao excluir convidado: $e';
+      rethrow;
+    }
+  }
+
+  Future<void> enviarConvitesSelecionados({
+    required List<ConvidadoModel> convidadosSelecionados,
+    required EventoModel evento,
+    required String tipoEnvio,
+  }) async {
+    if (convidadosSelecionados.isEmpty) return;
+
+    try {
+      carregando.value = true;
+      erro.value = '';
+
+      final eventoController = Get.find<EventoController>();
+      final tipoEvento = eventoController.tipoEventoAtual.value?.nome ?? evento.nomeEvento;
+
+      final batch = _db.batch();
+
+      for (final convidado in convidadosSelecionados) {
+        await enviarConviteAoAdicionar(
+          convidado,
+          evento,
+          tipoEvento,
+        );
+
+        final ref = _db.collection('convidado').doc(convidado.idConvidado);
+
+        batch.set(
+          ref,
+          {
+            'convite_enviado': true,
+            'canal_ultimo_convite': tipoEnvio,
+            'data_envio_convite': FieldValue.serverTimestamp(),
+            'data_atualizacao': FieldValue.serverTimestamp(),
+          },
+          SetOptions(merge: true),
+        );
+      }
+
+      await batch.commit();
+    } catch (e) {
+      erro.value = 'Erro ao enviar convites: $e';
+      rethrow;
+    } finally {
+      carregando.value = false;
+    }
+  }
+
+  @override
+  void onClose() {
+    _convidadosSub?.cancel();
+    super.onClose();
+  }
+
+  void limpar() {
+    _convidadosSub?.cancel();
+    _convidadosSub = null;
+
+    convidados.clear();
+    novosConvidados.clear();
+    idEventoAtual.value = '';
+    termoBusca.value = '';
+    erro.value = '';
+    convidadoAtual.value = null;
   }
 
   /// =====================================================
@@ -392,17 +496,6 @@ class ConvidadoController extends GetxController {
     }
   }
 
-  /// =============================================================
-  /// 🔹 Exclui um convidado
-  /// =============================================================
-  Future<void> excluirConvidado(String idConvidado) async {
-    try {
-      await _db.collection('convidado').doc(idConvidado).delete();
-    } catch (e) {
-      erro.value = 'Erro ao excluir convidado: $e';
-    }
-  }
-
   /// 🔹 Agrupa convidados por mesa/grupo
   Map<String, List<ConvidadoModel>> get convidadosPorMesa {
     final Map<String, List<ConvidadoModel>> grupos = {};
@@ -494,21 +587,5 @@ class ConvidadoController extends GetxController {
             c.nome.toLowerCase().contains(termo) ||
             (c.email?.toLowerCase().contains(termo) ?? false))
         .toList();
-  }
-
-  /// =============================================================
-  /// 🔹 Resetar tudo (ex: ao trocar de evento)
-  /// =============================================================
-  void limpar() {
-    convidados.clear();
-    idEventoAtual.value = '';
-    termoBusca.value = '';
-    erro.value = '';
-  }
-
-  @override
-  void onClose() {
-    _convidadosSub?.cancel();
-    super.onClose();
   }
 }

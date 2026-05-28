@@ -24,8 +24,10 @@ import './presentation/pages/welcome/welcome_event_screen.dart';
 import './presentation/pages/admin/admin_dashboard_screen.dart';
 import './presentation/pages/login/guest_register_screen.dart';
 import './controllers/admin/admin_territorio_controller.dart';
+import 'controllers/calculadora/calculadora_itens_admin_controller.dart';
 import 'controllers/calculadora_festa_controller.dart';
 import 'controllers/inspiracao_controller.dart';
+import 'controllers/sugestao_base_festa_controller.dart';
 import 'controllers/usuario/endereco_usuario_controller.dart';
 import './controllers/admin/orcamentos_admin_controller.dart';
 import 'data/datasources/remote/gift_remote_datasource.dart';
@@ -63,8 +65,11 @@ import './controllers/app_controller.dart';
 import 'core/database/app_database.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
+import 'data/repositories/calculadora/calculadora_itens_base_repository.dart';
 import 'data/repositories/evento/calculadora_festa_remote_ai_service.dart';
 import 'data/repositories/i_calculadora_festa_ai_service.dart';
+import 'data/repositories/sugestao_base_festa_repository.dart';
+import 'data/services/calculadora/calculadora_itens_seed.dart';
 
 // =============================================================
 //  MAIN
@@ -80,6 +85,11 @@ Future<void> main() async {
     providerAndroid: AndroidDebugProvider(),
     providerApple: AppleDebugProvider(),
   );
+  /*
+  await CalculadoraItensSeedService().popularSeeds(
+    sobrescrever: false,
+  );
+  */
 
   /*
   await FirebaseAppCheck.instance.activate(
@@ -268,10 +278,33 @@ void _registerControllers() {
     ),
     fenix: true,
   );
-
   Get.lazyPut<CalculadoraFestaController>(
     () => CalculadoraFestaController(
       aiService: Get.find<ICalculadoraFestaAIService>(),
+    ),
+    fenix: true,
+  );
+  Get.lazyPut<SugestaoBaseFestaRepository>(
+    () => SugestaoBaseFestaRepository(),
+    fenix: true,
+  );
+
+  Get.lazyPut<SugestaoBaseFestaController>(
+    () => SugestaoBaseFestaController(
+      repository: Get.find<SugestaoBaseFestaRepository>(),
+    ),
+    fenix: true,
+  );
+  if (!Get.isRegistered<CalculadoraItensBaseRepository>()) {
+    Get.lazyPut<CalculadoraItensBaseRepository>(
+      () => CalculadoraItensBaseRepository(),
+      fenix: true,
+    );
+  }
+
+  Get.lazyPut<CalculadoraItensAdminController>(
+    () => CalculadoraItensAdminController(
+      repository: Get.find<CalculadoraItensBaseRepository>(),
     ),
     fenix: true,
   );

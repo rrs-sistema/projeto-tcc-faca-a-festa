@@ -159,7 +159,6 @@ class EventoController extends GetxController {
       final tarefaController = Get.find<TarefaController>();
       final inspiracaoController = Get.find<InspiracaoController>();
       final usuarioController = Get.find<UsuarioController>();
-      
 
       _orcamentosSub =
           orcamentoController.carregarOrcamentosDoEvento(evento.idEvento).asStream().listen((_) {});
@@ -266,4 +265,5 @@ class EventoController extends GetxController {
   void reset() {
     eventoAtual.value = null;
   }
+
 }

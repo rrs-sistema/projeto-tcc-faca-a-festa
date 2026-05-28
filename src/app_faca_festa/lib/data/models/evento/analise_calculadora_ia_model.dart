@@ -121,7 +121,9 @@ class SugestaoCalculadoraIAModel {
           : _gerarIdPorTitulo(titulo),
       titulo: titulo,
       descricao: map['descricao']?.toString() ?? '',
-      tipo: TipoSugestaoCalculadoraIAExtension.fromString(map['tipo']?.toString()),
+      tipo: TipoSugestaoCalculadoraIAExtension.fromString(
+        map['tipo']?.toString(),
+      ),
       prioridade: PrioridadeSugestaoCalculadoraIAExtension.fromString(
         map['prioridade']?.toString(),
       ),
@@ -131,6 +133,27 @@ class SugestaoCalculadoraIAModel {
       impactoEstimado: _asDouble(
         map['impacto_estimado'] ?? map['impactoEstimado'],
       ),
+    );
+  }
+
+  SugestaoCalculadoraIAModel copyWith({
+    String? id,
+    String? titulo,
+    String? descricao,
+    TipoSugestaoCalculadoraIA? tipo,
+    PrioridadeSugestaoCalculadoraIA? prioridade,
+    String? itemRelacionado,
+    bool limparItemRelacionado = false,
+    double? impactoEstimado,
+  }) {
+    return SugestaoCalculadoraIAModel(
+      id: id ?? this.id,
+      titulo: titulo ?? this.titulo,
+      descricao: descricao ?? this.descricao,
+      tipo: tipo ?? this.tipo,
+      prioridade: prioridade ?? this.prioridade,
+      itemRelacionado: limparItemRelacionado ? null : (itemRelacionado ?? this.itemRelacionado),
+      impactoEstimado: impactoEstimado ?? this.impactoEstimado,
     );
   }
 
@@ -177,6 +200,13 @@ class AnaliseCalculadoraIAModel {
   /// Mantidos opcionais para não quebrar o layout compacto atual.
   final String fonte;
   final String versaoSchema;
+  final String versaoPrompt;
+  final String nomePrompt;
+  final String modeloIAUtilizado;
+  final List<String> idsSugestoesBaseUtilizadas;
+  final Map<String, int> versoesSugestoesBaseUtilizadas;
+  final int totalSugestoesBaseUtilizadas;
+  final DateTime? dataProcessamento;
   final String diagnosticoFinanceiro;
   final String diagnosticoConsumo;
   final String recomendacaoFinal;
@@ -196,6 +226,13 @@ class AnaliseCalculadoraIAModel {
     required this.sugestoes,
     this.fonte = 'local',
     this.versaoSchema = '1.0.0',
+    this.versaoPrompt = 'local',
+    this.nomePrompt = 'analise_calculadora_local',
+    this.modeloIAUtilizado = 'local',
+    this.idsSugestoesBaseUtilizadas = const [],
+    this.versoesSugestoesBaseUtilizadas = const <String, int>{},
+    this.totalSugestoesBaseUtilizadas = 0,
+    this.dataProcessamento,
     this.diagnosticoFinanceiro = '',
     this.diagnosticoConsumo = '',
     this.recomendacaoFinal = '',
@@ -214,6 +251,13 @@ class AnaliseCalculadoraIAModel {
   bool get geradaPorIAGenerativa => fonte.trim().toLowerCase() == 'ia_generativa';
 
   bool get geradaPorFallbackLocal => fonte.trim().toLowerCase() == 'fallback_local';
+
+  bool get possuiRastreabilidadeIA {
+    return versaoPrompt.trim().isNotEmpty ||
+        versaoSchema.trim().isNotEmpty ||
+        idsSugestoesBaseUtilizadas.isNotEmpty ||
+        modeloIAUtilizado.trim().isNotEmpty;
+  }
 
   String get fonteLabel {
     if (geradaPorIAGenerativa) return 'IA generativa';
@@ -234,6 +278,28 @@ class AnaliseCalculadoraIAModel {
     return acimaDoOrcamento ? 'Acima do orçamento' : 'Dentro do orçamento';
   }
 
+  String get rastreabilidadeResumo {
+    final partes = <String>[];
+
+    if (versaoPrompt.trim().isNotEmpty) {
+      partes.add('Prompt $versaoPrompt');
+    }
+
+    if (versaoSchema.trim().isNotEmpty) {
+      partes.add('Schema $versaoSchema');
+    }
+
+    if (modeloIAUtilizado.trim().isNotEmpty) {
+      partes.add('Modelo $modeloIAUtilizado');
+    }
+
+    if (totalSugestoesBaseUtilizadas > 0) {
+      partes.add('$totalSugestoesBaseUtilizadas sugestões base');
+    }
+
+    return partes.join(' • ');
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'titulo': titulo,
@@ -250,7 +316,14 @@ class AnaliseCalculadoraIAModel {
       'sugestoes': sugestoes.map((item) => item.toMap()).toList(),
       'fonte': fonte,
       'fonte_label': fonteLabel,
+      'versao_prompt': versaoPrompt,
+      'nome_prompt': nomePrompt,
       'versao_schema': versaoSchema,
+      'ids_sugestoes_base_utilizadas': idsSugestoesBaseUtilizadas,
+      'versoes_sugestoes_base_utilizadas': versoesSugestoesBaseUtilizadas,
+      'total_sugestoes_base_utilizadas': totalSugestoesBaseUtilizadas,
+      'modelo_ia_utilizado': modeloIAUtilizado,
+      'data_processamento': dataProcessamento?.toIso8601String(),
       'diagnostico_financeiro': diagnosticoFinanceiro,
       'diagnostico_consumo': diagnosticoConsumo,
       'recomendacao_final': recomendacaoFinal,
@@ -264,7 +337,11 @@ class AnaliseCalculadoraIAModel {
     final sugestoes = rawSugestoes is List
         ? rawSugestoes
             .whereType<Map>()
-            .map((item) => SugestaoCalculadoraIAModel.fromMap(Map<String, dynamic>.from(item)))
+            .map(
+              (item) => SugestaoCalculadoraIAModel.fromMap(
+                Map<String, dynamic>.from(item),
+              ),
+            )
             .toList()
         : <SugestaoCalculadoraIAModel>[];
 
@@ -274,6 +351,18 @@ class AnaliseCalculadoraIAModel {
       map['resumoExecutivo'],
       map['summary'],
     ]);
+
+    final idsSugestoesBaseUtilizadas = _asStringList(
+      map['ids_sugestoes_base_utilizadas'] ??
+          map['idsSugestoesBaseUtilizadas'] ??
+          map['suggestionBaseIds'],
+    );
+
+    final versoesSugestoesBaseUtilizadas = _asStringIntMap(
+      map['versoes_sugestoes_base_utilizadas'] ??
+          map['versoesSugestoesBaseUtilizadas'] ??
+          map['suggestionBaseVersions'],
+    );
 
     return AnaliseCalculadoraIAModel(
       titulo: map['titulo']?.toString() ?? 'Análise inteligente',
@@ -296,12 +385,39 @@ class AnaliseCalculadoraIAModel {
       diferencaOrcamento: _asDouble(
         map['diferenca_orcamento'] ?? map['diferencaOrcamento'],
       ),
-      dataAnalise: DateTime.tryParse(map['data_analise']?.toString() ?? '') ??
-          DateTime.tryParse(map['dataAnalise']?.toString() ?? '') ??
-          DateTime.now(),
+      dataAnalise: _asDateTime(map['data_analise'] ?? map['dataAnalise']) ?? DateTime.now(),
       sugestoes: sugestoes,
       fonte: map['fonte']?.toString() ?? 'local',
-      versaoSchema: map['versao_schema']?.toString() ?? map['versaoSchema']?.toString() ?? '1.0.0',
+      versaoPrompt: _firstNotEmpty([
+        map['versao_prompt'],
+        map['versaoPrompt'],
+        map['prompt_version'],
+      ], fallback: 'local'),
+      nomePrompt: _firstNotEmpty([
+        map['nome_prompt'],
+        map['nomePrompt'],
+        map['prompt_name'],
+      ], fallback: 'analise_calculadora_local'),
+      versaoSchema: _firstNotEmpty([
+        map['versao_schema'],
+        map['versaoSchema'],
+        map['schema_version'],
+      ], fallback: '1.0.0'),
+      modeloIAUtilizado: _firstNotEmpty([
+        map['modelo_ia_utilizado'],
+        map['modeloIAUtilizado'],
+        map['modelo'],
+        map['model'],
+      ], fallback: 'local'),
+      idsSugestoesBaseUtilizadas: idsSugestoesBaseUtilizadas,
+      versoesSugestoesBaseUtilizadas: versoesSugestoesBaseUtilizadas,
+      totalSugestoesBaseUtilizadas: _asInt(
+        map['total_sugestoes_base_utilizadas'] ?? map['totalSugestoesBaseUtilizadas'],
+        fallback: idsSugestoesBaseUtilizadas.length,
+      ),
+      dataProcessamento: _asDateTime(
+        map['data_processamento'] ?? map['dataProcessamento'],
+      ),
       diagnosticoFinanceiro: _firstNotEmpty([
         map['diagnostico_financeiro'],
         map['diagnosticoFinanceiro'],
@@ -323,21 +439,134 @@ class AnaliseCalculadoraIAModel {
     );
   }
 
-  static String _firstNotEmpty(List<dynamic> values) {
+  AnaliseCalculadoraIAModel copyWith({
+    String? titulo,
+    String? resumo,
+    double? indiceEconomia,
+    double? indiceRiscoFaltarItens,
+    double? indiceConforto,
+    double? custoTotalEstimado,
+    double? orcamentoDisponivel,
+    bool limparOrcamentoDisponivel = false,
+    double? diferencaOrcamento,
+    DateTime? dataAnalise,
+    List<SugestaoCalculadoraIAModel>? sugestoes,
+    String? fonte,
+    String? versaoSchema,
+    String? versaoPrompt,
+    String? nomePrompt,
+    String? modeloIAUtilizado,
+    List<String>? idsSugestoesBaseUtilizadas,
+    Map<String, int>? versoesSugestoesBaseUtilizadas,
+    int? totalSugestoesBaseUtilizadas,
+    DateTime? dataProcessamento,
+    bool limparDataProcessamento = false,
+    String? diagnosticoFinanceiro,
+    String? diagnosticoConsumo,
+    String? recomendacaoFinal,
+    List<String>? pontosDeAtencao,
+    List<String>? proximasAcoes,
+  }) {
+    return AnaliseCalculadoraIAModel(
+      titulo: titulo ?? this.titulo,
+      resumo: resumo ?? this.resumo,
+      indiceEconomia: indiceEconomia ?? this.indiceEconomia,
+      indiceRiscoFaltarItens: indiceRiscoFaltarItens ?? this.indiceRiscoFaltarItens,
+      indiceConforto: indiceConforto ?? this.indiceConforto,
+      custoTotalEstimado: custoTotalEstimado ?? this.custoTotalEstimado,
+      orcamentoDisponivel:
+          limparOrcamentoDisponivel ? null : (orcamentoDisponivel ?? this.orcamentoDisponivel),
+      diferencaOrcamento: diferencaOrcamento ?? this.diferencaOrcamento,
+      dataAnalise: dataAnalise ?? this.dataAnalise,
+      sugestoes: sugestoes ?? this.sugestoes,
+      fonte: fonte ?? this.fonte,
+      versaoSchema: versaoSchema ?? this.versaoSchema,
+      versaoPrompt: versaoPrompt ?? this.versaoPrompt,
+      nomePrompt: nomePrompt ?? this.nomePrompt,
+      modeloIAUtilizado: modeloIAUtilizado ?? this.modeloIAUtilizado,
+      idsSugestoesBaseUtilizadas: idsSugestoesBaseUtilizadas ?? this.idsSugestoesBaseUtilizadas,
+      versoesSugestoesBaseUtilizadas:
+          versoesSugestoesBaseUtilizadas ?? this.versoesSugestoesBaseUtilizadas,
+      totalSugestoesBaseUtilizadas:
+          totalSugestoesBaseUtilizadas ?? this.totalSugestoesBaseUtilizadas,
+      dataProcessamento:
+          limparDataProcessamento ? null : (dataProcessamento ?? this.dataProcessamento),
+      diagnosticoFinanceiro: diagnosticoFinanceiro ?? this.diagnosticoFinanceiro,
+      diagnosticoConsumo: diagnosticoConsumo ?? this.diagnosticoConsumo,
+      recomendacaoFinal: recomendacaoFinal ?? this.recomendacaoFinal,
+      pontosDeAtencao: pontosDeAtencao ?? this.pontosDeAtencao,
+      proximasAcoes: proximasAcoes ?? this.proximasAcoes,
+    );
+  }
+
+  static String _firstNotEmpty(List<dynamic> values, {String fallback = ''}) {
     for (final value in values) {
       final text = value?.toString().trim() ?? '';
       if (text.isNotEmpty && text != 'null') return text;
     }
-    return '';
+    return fallback;
   }
 
   static List<String> _asStringList(dynamic value) {
-    if (value is! List) return const [];
+    if (value == null) return const [];
 
-    return value
-        .map((item) => item.toString().trim())
-        .where((item) => item.isNotEmpty && item != 'null')
-        .toList();
+    if (value is List) {
+      return value
+          .map((item) => item.toString().trim())
+          .where((item) => item.isNotEmpty && item != 'null')
+          .toSet()
+          .toList();
+    }
+
+    if (value is String) {
+      return value
+          .split(',')
+          .map((item) => item.trim())
+          .where((item) => item.isNotEmpty && item != 'null')
+          .toSet()
+          .toList();
+    }
+
+    return const [];
+  }
+
+  static Map<String, int> _asStringIntMap(dynamic value) {
+    if (value == null) return const <String, int>{};
+
+    if (value is Map) {
+      return value.map(
+        (key, mapValue) => MapEntry(
+          key.toString(),
+          _asInt(mapValue, fallback: 1),
+        ),
+      );
+    }
+
+    if (value is List) {
+      final result = <String, int>{};
+
+      for (final item in value) {
+        if (item is Map) {
+          final id = item['id']?.toString().trim();
+          if (id == null || id.isEmpty) continue;
+
+          result[id] = _asInt(
+            item['versao'] ?? item['version'],
+            fallback: 1,
+          );
+        }
+      }
+
+      return result;
+    }
+
+    return const <String, int>{};
+  }
+
+  static int _asInt(dynamic value, {int fallback = 0}) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value?.toString() ?? '') ?? fallback;
   }
 
   static double _asDouble(dynamic value) {
@@ -349,5 +578,20 @@ class AnaliseCalculadoraIAModel {
     if (value == null) return null;
     if (value is num) return value.toDouble();
     return double.tryParse(value.toString().replaceAll(',', '.'));
+  }
+
+  static DateTime? _asDateTime(dynamic value) {
+    if (value == null) return null;
+    if (value is DateTime) return value;
+
+    try {
+      final dynamic dynamicValue = value;
+      final converted = dynamicValue.toDate();
+      if (converted is DateTime) return converted;
+    } catch (_) {
+      // Ignora e tenta parsear como texto.
+    }
+
+    return DateTime.tryParse(value.toString());
   }
 }

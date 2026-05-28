@@ -1,4 +1,4 @@
-export const ANALISE_CALCULADORA_IA_SCHEMA_VERSION = "1.0.0";
+export const ANALISE_CALCULADORA_IA_SCHEMA_VERSION = "1.1.0";
 
 export const analiseCalculadoraIASchema = {
   type: "object",

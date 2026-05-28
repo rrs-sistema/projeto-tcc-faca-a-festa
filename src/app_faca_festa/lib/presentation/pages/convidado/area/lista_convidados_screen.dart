@@ -91,12 +91,9 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          _buildResumo(convidadoController, primary),
-          _buildSearchAndFilter(convidadoController, primary),
-          Expanded(child: _buildGuestList(primary)),
-        ],
+      body: SafeArea(
+        top: false,
+        child: _buildBody(primary),
       ),
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primary,
@@ -112,45 +109,80 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
     );
   }
 
-  Widget _buildGuestList(Color primary) {
+  Widget _buildBody(Color primary) {
     return Obx(() {
       final lista = _filtrarLista(convidadoController.listaFiltrada);
-
-      if (convidadoController.carregando.value) {
-        return Center(child: CircularProgressIndicator(color: primary));
-      }
-
-      if (lista.isEmpty) {
-        return _EmptyGuestsState(
-          primary: primary,
-          onAdd: () => abrirDialogAdicionarConvidado(context, primary),
-        );
-      }
+      final carregando = convidadoController.carregando.value;
 
       return RefreshIndicator(
         color: primary,
         onRefresh: () async => _carregarConvidadosDoEventoAtual(mostrarSnack: true),
-        child: ListView.separated(
+        child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(14, 4, 14, 110),
-          itemCount: lista.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, index) {
-            final convidado = lista[index];
-            return _GuestCard(
-              convidado: convidado,
-              primary: primary,
-              onEdit: () => abrirDialogAdicionarConvidado(
-                context,
-                primary,
-                convidado: convidado,
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          slivers: [
+            SliverToBoxAdapter(
+              child: _buildResumo(convidadoController, primary),
+            ),
+            SliverToBoxAdapter(
+              child: _buildSearchAndFilter(convidadoController, primary),
+            ),
+            if (carregando)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: CircularProgressIndicator(color: primary),
+                ),
+              )
+            else if (lista.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _EmptyGuestsState(
+                  primary: primary,
+                  onAdd: () => abrirDialogAdicionarConvidado(context, primary),
+                ),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(14, 4, 14, 110),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      if (index.isOdd) {
+                        return const SizedBox(height: 10);
+                      }
+
+                      final itemIndex = index ~/ 2;
+                      final convidado = lista[itemIndex];
+
+                      return _GuestCard(
+                        convidado: convidado,
+                        primary: primary,
+                        onEdit: () => abrirDialogAdicionarConvidado(
+                          context,
+                          primary,
+                          convidado: convidado,
+                        ),
+                        onConfirm: () => _atualizarStatus(
+                          convidado,
+                          StatusConvidado.confirmado,
+                        ),
+                        onPending: () => _atualizarStatus(
+                          convidado,
+                          StatusConvidado.pendente,
+                        ),
+                        onRefuse: () => _atualizarStatus(
+                          convidado,
+                          StatusConvidado.recusado,
+                        ),
+                        onDelete: () => _confirmarExclusao(convidado),
+                      );
+                    },
+                    childCount: lista.isEmpty ? 0 : (lista.length * 2) - 1,
+                  ),
+                ),
               ),
-              onConfirm: () => _atualizarStatus(convidado, StatusConvidado.confirmado),
-              onPending: () => _atualizarStatus(convidado, StatusConvidado.pendente),
-              onRefuse: () => _atualizarStatus(convidado, StatusConvidado.recusado),
-              onDelete: () => _confirmarExclusao(convidado),
-            );
-          },
+          ],
         ),
       );
     });

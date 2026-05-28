@@ -30,7 +30,7 @@ import './convidado/convidado_page.dart';
 import './../../data/models/model.dart';
 import './contador_evento_screen.dart';
 import './tarefa/tarefas_screen.dart';
-import 'calculadora_festa_screen.dart';
+import 'calculadora/calculadora_festa_screen.dart';
 
 class HomeEventScreen extends StatefulWidget {
   const HomeEventScreen({super.key});

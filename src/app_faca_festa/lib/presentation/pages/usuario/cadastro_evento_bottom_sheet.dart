@@ -13,7 +13,7 @@ import './../../widgets/custom_input_field.dart';
 import './../endereco/endereco_section.dart';
 import './evento_preview_titulo_widget.dart';
 import './../../../data/models/model.dart';
-import './../calculadora_festa_screen.dart';
+import '../calculadora/calculadora_festa_screen.dart';
 
 Future<void> showCadastroEventoBottomSheet(
   BuildContext context, {

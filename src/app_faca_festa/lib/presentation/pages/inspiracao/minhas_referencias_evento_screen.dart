@@ -68,6 +68,7 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
         final referencias = _referenciasFiltradas();
 
         return CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
             SliverAppBar(
               expandedHeight: 220,
@@ -83,6 +84,7 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                 ),
               ),
               flexibleSpace: FlexibleSpaceBar(
+                collapseMode: CollapseMode.pin,
                 background: Container(
                   decoration: BoxDecoration(
                     gradient: gradient,
@@ -91,44 +93,55 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                     bottom: false,
                     child: LayoutBuilder(
                       builder: (context, constraints) {
+                        final availableHeight = constraints.maxHeight;
+
+                        if (availableHeight <= 120) {
+                          return const SizedBox.shrink();
+                        }
+
                         return ClipRect(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 64, 20, 20),
-                            child: Align(
-                              alignment: Alignment.bottomLeft,
-                              child: FittedBox(
-                                fit: BoxFit.scaleDown,
-                                alignment: Alignment.bottomLeft,
-                                child: ConstrainedBox(
-                                  constraints: BoxConstraints(
-                                    maxWidth: MediaQuery.of(context).size.width - 40,
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Painel de decisões do evento',
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.playfairDisplay(
-                                          fontSize: 24,
-                                          fontWeight: FontWeight.w800,
-                                          color: Colors.white,
+                          child: Align(
+                            alignment: Alignment.bottomLeft,
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(20, 0, 20, 22),
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  maxWidth: MediaQuery.of(context).size.width - 40,
+                                ),
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.bottomLeft,
+                                  child: SizedBox(
+                                    width: MediaQuery.of(context).size.width - 40,
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Painel de decisões do evento',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.playfairDisplay(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.w800,
+                                            color: Colors.white,
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'Gerencie as ideias salvas, status, prioridades, checklist e orçamento ligados às suas inspirações.',
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 13,
-                                          color: Colors.white.withValues(alpha: 0.88),
-                                          height: 1.35,
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          'Gerencie as ideias salvas, status, prioridades, checklist e orçamento ligados às suas inspirações.',
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13,
+                                            color: Colors.white.withValues(
+                                              alpha: 0.88,
+                                            ),
+                                            height: 1.35,
+                                          ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
@@ -180,18 +193,23 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
 
   List<ReferenciaEventoModel> _referenciasFiltradas() {
     final status = filtroStatus.value;
-    final refs = controller.referenciasEvento.toList();
+
+    final refs = controller.referenciasEvento.where((ref) {
+      return ref.ativo && !ref.deletado;
+    }).toList();
 
     if (status == 'todos') return refs;
+
     return refs.where((ref) => ref.status == status).toList();
   }
 
   Widget _resumoCards(Color primary) {
     return Obx(() {
-      final total = controller.referenciasEvento.length;
-      final favoritas = controller.referenciasEvento.where((r) => r.favorito).length;
-      final aprovadas = controller.referenciasEvento.where((r) => r.status == 'aprovada').length;
-      final orcar = controller.referenciasEvento.where((r) => r.status == 'orcar').length;
+      final refsAtivas = controller.referenciasEvento.where((r) => r.ativo && !r.deletado).toList();
+      final total = refsAtivas.length;
+      final favoritas = refsAtivas.where((r) => r.favorito).length;
+      final aprovadas = refsAtivas.where((r) => r.status == 'aprovada').length;
+      final orcar = refsAtivas.where((r) => r.status == 'orcar').length;
 
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
@@ -590,7 +608,7 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
   void _abrirEditorReferencia(ReferenciaEventoModel ref, Color primary) {
     final statusSelecionado = ref.status.obs;
     final prioridadeSelecionada = ref.prioridade.obs;
-    final anotacaoController = TextEditingController(text: ref.anotacao);
+    String anotacaoAtual = ref.anotacao;
 
     Get.bottomSheet(
       SafeArea(
@@ -601,6 +619,7 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
@@ -627,56 +646,76 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                 const SizedBox(height: 6),
                 Text(
                   ref.titulo,
-                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
                 const SizedBox(height: 18),
-                Text('Status', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+                Text(
+                  'Status',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 8),
-                Obx(() => Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: statusOptions.where((s) => s != 'todos').map((status) {
-                        final selected = statusSelecionado.value == status;
-                        return ChoiceChip(
-                          selected: selected,
-                          label: Text(_labelStatus(status)),
-                          onSelected: (_) => statusSelecionado.value = status,
-                          selectedColor: primary.withValues(alpha: 0.18),
-                          labelStyle: GoogleFonts.poppins(
-                            color: selected ? primary : Colors.grey.shade800,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        );
-                      }).toList(),
-                    )),
+                Obx(
+                  () => Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: statusOptions.where((s) => s != 'todos').map((status) {
+                      final selected = statusSelecionado.value == status;
+
+                      return ChoiceChip(
+                        selected: selected,
+                        label: Text(_labelStatus(status)),
+                        onSelected: (_) => statusSelecionado.value = status,
+                        selectedColor: primary.withValues(alpha: 0.18),
+                        labelStyle: GoogleFonts.poppins(
+                          color: selected ? primary : Colors.grey.shade800,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
                 const SizedBox(height: 18),
-                Text('Prioridade', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+                Text(
+                  'Prioridade',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 8),
-                Obx(() => Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: prioridadeOptions.map((prioridade) {
-                        final selected = prioridadeSelecionada.value == prioridade;
-                        return ChoiceChip(
-                          selected: selected,
-                          label: Text(_labelPrioridade(prioridade)),
-                          onSelected: (_) => prioridadeSelecionada.value = prioridade,
-                          selectedColor: primary.withValues(alpha: 0.18),
-                          labelStyle: GoogleFonts.poppins(
-                            color: selected ? primary : Colors.grey.shade800,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        );
-                      }).toList(),
-                    )),
+                Obx(
+                  () => Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: prioridadeOptions.map((prioridade) {
+                      final selected = prioridadeSelecionada.value == prioridade;
+
+                      return ChoiceChip(
+                        selected: selected,
+                        label: Text(_labelPrioridade(prioridade)),
+                        onSelected: (_) => prioridadeSelecionada.value = prioridade,
+                        selectedColor: primary.withValues(alpha: 0.18),
+                        labelStyle: GoogleFonts.poppins(
+                          color: selected ? primary : Colors.grey.shade800,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
                 const SizedBox(height: 18),
-                Text('Anotação do organizador',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+                Text(
+                  'Anotação do organizador',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 8),
-                TextField(
-                  controller: anotacaoController,
+                TextFormField(
+                  initialValue: anotacaoAtual,
                   minLines: 3,
                   maxLines: 5,
+                  onChanged: (value) => anotacaoAtual = value,
                   decoration: InputDecoration(
                     hintText: 'Ex.: gostei dessa ideia, mas quero trocar as cores...',
                     filled: true,
@@ -696,23 +735,36 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                   width: double.infinity,
                   child: ElevatedButton.icon(
                     onPressed: () async {
+                      FocusScope.of(Get.context!).unfocus();
+
                       await controller.atualizarReferenciaPlanejamento(
                         referenciaId: ref.id,
                         status: statusSelecionado.value,
                         prioridade: prioridadeSelecionada.value,
-                        anotacao: anotacaoController.text.trim(),
+                        anotacao: anotacaoAtual.trim(),
                       );
-                      Get.back();
+
+                      if (Get.isBottomSheetOpen == true) {
+                        Get.back();
+                      }
                     },
-                    icon: const Icon(Icons.save_rounded, color: Colors.white),
+                    icon: const Icon(
+                      Icons.save_rounded,
+                      color: Colors.white,
+                    ),
                     label: Text(
                       'Salvar alterações',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w800, color: Colors.white),
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                      ),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
                     ),
                   ),
                 ),
@@ -722,29 +774,111 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
         ),
       ),
       isScrollControlled: true,
-    ).whenComplete(anotacaoController.dispose);
+    );
   }
 
-  void _confirmarRemocao(ReferenciaEventoModel ref, Color primary) {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: Text('Remover referência?', style: GoogleFonts.poppins(fontWeight: FontWeight.w800)),
-        content: Text(
-          'Essa referência será marcada como descartada e não aparecerá mais na lista principal.',
-          style: GoogleFonts.poppins(fontSize: 13.5),
-        ),
-        actions: [
-          TextButton(onPressed: Get.back, child: const Text('Cancelar')),
-          ElevatedButton(
-            onPressed: () async {
-              Get.back();
-              await controller.removerReferenciaDoEvento(ref.id);
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade600),
-            child: const Text('Remover', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+  Future<void> _confirmarRemocao(ReferenciaEventoModel ref, Color primary) async {
+    var removerPlanejamento = false;
+
+    final totalTarefas = controller.totalTarefasPorInspiracao(ref.inspiracaoId);
+    final totalOrcamentos = controller.totalOrcamentosPorInspiracao(ref.inspiracaoId);
+    final possuiPlanejamentoVinculado = totalTarefas > 0 || totalOrcamentos > 0;
+
+    await Get.dialog<void>(
+      StatefulBuilder(
+        builder: (context, setStateDialog) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+            title: Text(
+              'Remover referência?',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Essa referência será marcada como descartada e não aparecerá mais na lista principal.',
+                  style: GoogleFonts.poppins(fontSize: 13.5, height: 1.35),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.orange.shade100),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.info_outline_rounded, color: Colors.orange.shade800, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          possuiPlanejamentoVinculado
+                              ? 'Existem $totalTarefas tarefa(s) e $totalOrcamentos item(ns) de orçamento ligados a essa referência. Por padrão, eles serão mantidos.'
+                              : 'Nenhuma tarefa ou orçamento vinculado será removido.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12.5,
+                            height: 1.35,
+                            color: Colors.orange.shade900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (possuiPlanejamentoVinculado) ...[
+                  const SizedBox(height: 8),
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: removerPlanejamento,
+                    activeColor: Colors.red.shade600,
+                    title: Text(
+                      'Também descartar checklist e orçamento vinculados',
+                      style: GoogleFonts.poppins(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    subtitle: Text(
+                      'Use somente se essa ideia realmente não será mais usada no evento.',
+                      style: GoogleFonts.poppins(fontSize: 11.5),
+                    ),
+                    onChanged: (value) {
+                      setStateDialog(() {
+                        removerPlanejamento = value ?? false;
+                      });
+                    },
+                  ),
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: Get.back,
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  Get.back();
+
+                  await controller.removerReferenciaDoEvento(
+                    ref.id,
+                    removerPlanejamentoVinculado: removerPlanejamento,
+                    motivo: 'removida_pelo_organizador',
+                  );
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red.shade600),
+                child: const Text(
+                  'Remover',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -770,7 +904,7 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
               children: [
                 Center(
                   child: Container(
-                    width: 42,
+                    width: 44,
                     height: 5,
                     decoration: BoxDecoration(
                       color: Colors.grey.shade300,
@@ -782,8 +916,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                 Row(
                   children: [
                     Container(
-                      width: 44,
-                      height: 44,
+                      width: 46,
+                      height: 46,
                       decoration: BoxDecoration(
                         color: primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(16),
@@ -800,7 +934,7 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                         style: GoogleFonts.poppins(
                           fontSize: 18,
                           fontWeight: FontWeight.w800,
-                          color: const Color(0xFF111827),
+                          color: const Color(0xFF172033),
                         ),
                       ),
                     ),
@@ -808,7 +942,7 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Use este resumo para enviar a referência ao fornecedor e explicar melhor o que você deseja para o evento.',
+                  'Use este resumo para explicar melhor ao fornecedor o que você deseja para o evento.',
                   style: GoogleFonts.poppins(
                     fontSize: 13,
                     height: 1.4,

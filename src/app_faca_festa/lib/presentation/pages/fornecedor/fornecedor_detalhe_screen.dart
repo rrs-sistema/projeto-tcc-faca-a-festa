@@ -2,8 +2,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import '../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../../../data/models/avaliacao/avaliacao_model.dart';
 import './../../../data/models/servico_produto/categoria_servico_model.dart';
 import './../../../controllers/avaliacao/avaliacao_servico_controller.dart';
@@ -22,15 +24,21 @@ import './../../../data/models/model.dart';
 class FornecedorDetalheScreen extends StatelessWidget {
   final bool selecionouCategoria;
   final FornecedorDetalhadoDto fornecedorDetalhado;
-  const FornecedorDetalheScreen(
-      {super.key, required this.fornecedorDetalhado, required this.selecionouCategoria});
+
+  const FornecedorDetalheScreen({
+    super.key,
+    required this.fornecedorDetalhado,
+    required this.selecionouCategoria,
+  });
 
   @override
   Widget build(BuildContext context) {
     final themeController = Get.find<EventThemeController>();
     final fornecedorController = Get.find<FornecedorController>();
 
-    fornecedorController.escutarServicosFornecedor(fornecedorDetalhado.fornecedor.idFornecedor);
+    fornecedorController.escutarServicosFornecedor(
+      fornecedorDetalhado.fornecedor.idFornecedor,
+    );
 
     final fornecedor = fornecedorDetalhado.fornecedor;
     final territorio = fornecedorDetalhado.territorio;
@@ -44,8 +52,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
       final appController = Get.find<AppController>();
 
       final idFornecedor = fornecedorDetalhado.fornecedor.idFornecedor;
-      final idEvento = eventoController.eventoAtual.value?.idEvento ?? "";
-      final idUsuario = appController.usuarioLogado.value?.idUsuario ?? "";
+      final idEvento = eventoController.eventoAtual.value?.idEvento ?? '';
+      final idUsuario = appController.usuarioLogado.value?.idUsuario ?? '';
 
       if (idEvento.isNotEmpty && idUsuario.isNotEmpty) {
         final pode = await avaliacaoController.podeAvaliarFornecedor(
@@ -59,9 +67,14 @@ class FornecedorDetalheScreen extends StatelessWidget {
     });
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F8FA),
+      backgroundColor: const Color(0xFFF6F7FB),
       extendBodyBehindAppBar: true,
       appBar: _buildAppBar(context, fornecedor, gradient),
+      bottomNavigationBar: _buildBottomActionBar(
+        primary: primary,
+        fornecedorController: fornecedorController,
+        detalhe: fornecedorDetalhado,
+      ),
       body: Obx(() {
         final fotos = fornecedorController.fotosServico
             .where((f) => f.idFornecedor == fornecedor.idFornecedor)
@@ -71,161 +84,744 @@ class FornecedorDetalheScreen extends StatelessWidget {
             ? fotos.first.url
             : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media&token=6a769a8b-b604-41d0-ac63-ebd38b4af5f6';
 
-        final fotoCapa = fornecedor.bannerUrl ?? fotoCapaService;
+        final fotoCapa = (fornecedor.bannerUrl?.trim().isNotEmpty ?? false)
+            ? fornecedor.bannerUrl!.trim()
+            : fotoCapaService;
 
         return Stack(
           children: [
-            // 🔹 Capa principal
-            // 🔹 Capa principal
             _bannerFornecedor(fotoCapa, gradient),
-
-            // 🔹 Gradiente sobre a imagem
             Container(
-              height: 280,
+              height: 315,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Colors.black.withValues(alpha: 0.4), Colors.transparent],
+                  colors: [
+                    Colors.black.withValues(alpha: 0.60),
+                    Colors.black.withValues(alpha: 0.10),
+                    const Color(0xFFF6F7FB).withValues(alpha: 0.98),
+                  ],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
               ),
             ),
-
-            // 🔹 Corpo principal
             SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.only(top: 240),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 10,
-                      offset: const Offset(0, -2),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // 🔹 Cabeçalho
-                    _headerFornecedorCategoria(fornecedor, fornecedorDetalhado, primary),
-
-                    // ⭐ Selos do Fornecedor
-                    GetBuilder<AvaliacaoServicoController>(
-                      builder: (ctrl) {
-                        final selos = ctrl.getSelosFornecedor(fornecedor);
-
-                        if (selos.isEmpty) return const SizedBox(height: 10);
-
-                        return Wrap(
-                          spacing: 8,
-                          runSpacing: 6,
-                          children: selos.map((s) => seloBadge(texto: s)).toList(),
-                        );
-                      },
-                    ),
-
-                    // 🔹 Botão Avaliar Fornecedor (aparece somente se permitido)
-                    Obx(() {
-                      final avaliacaoController = Get.find<AvaliacaoServicoController>();
-                      final podeAvaliar = avaliacaoController.permitidoAvaliarFornecedor.value;
-
-                      if (!podeAvaliar) return const SizedBox(height: 8);
-
-                      return Padding(
-                        padding: const EdgeInsets.only(top: 12, bottom: 20),
-                        child: ElevatedButton.icon(
-                          icon: const Icon(Icons.star_rounded, color: Colors.white),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.amber.shade700,
-                            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                            elevation: 2,
-                          ),
-                          onPressed: () {
-                            getDialogAvaliacaoFornecedor(
-                              fornecedor: fornecedor,
-                            );
-                          },
-                          label: Text(
-                            "Avaliar este fornecedor",
-                            style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
+              padding: const EdgeInsets.fromLTRB(0, 198, 0, 96),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildFornecedorHeroCard(
+                    fornecedor: fornecedor,
+                    detalhe: fornecedorDetalhado,
+                    primary: primary,
+                    distancia: distancia,
+                    territorioDescricao: territorio?.descricao,
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildResumoContratacaoCard(
+                          primary: primary,
+                          fornecedor: fornecedor,
+                          detalhe: fornecedorDetalhado,
+                          totalServicos: fornecedorController.allServicosFornecedor
+                              .where((s) => s.idFornecedor == fornecedor.idFornecedor)
+                              .length,
                         ),
-                      );
-                    }),
-
-                    // 🔹 Descrição
-                    if (fornecedor.descricao?.isNotEmpty ?? false) ...[
-                      Text(
-                        fornecedor.descricao!,
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          height: 1.5,
-                          color: Colors.black87.withValues(alpha: 0.75),
+                        if (fornecedor.descricao?.trim().isNotEmpty ?? false) ...[
+                          const SizedBox(height: 14),
+                          _buildDescricaoCard(fornecedor.descricao!),
+                        ],
+                        sectionHeader(
+                          titulo: 'Serviço principal',
+                          icon: Icons.workspace_premium_rounded,
+                          iconColor: primary,
                         ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                    sectionHeader(
-                      titulo: 'Serviço Principal',
-                      icon: Icons.workspace_premium_rounded,
-                      iconColor: Colors.deepPurple,
+                        _buildServicoPrincipal(
+                          fornecedorDetalhado,
+                          fornecedorController,
+                          primary,
+                          gradient,
+                          context,
+                        ),
+                        sectionHeader(
+                          titulo: 'Outros serviços deste fornecedor',
+                          icon: Icons.design_services_rounded,
+                          iconColor: Colors.blueGrey,
+                        ),
+                        _buildServicosMesmoFornecedor(
+                          fornecedorDetalhado,
+                          fornecedorController,
+                          primary,
+                          gradient,
+                          context,
+                        ),
+                        if (selecionouCategoria) ...[
+                          sectionHeader(
+                            titulo: 'Serviços da mesma categoria',
+                            icon: Icons.category_rounded,
+                            iconColor: Colors.indigo,
+                          ),
+                          _buildServicosMesmaCategoria(
+                            fornecedorDetalhado,
+                            fornecedorController,
+                            primary,
+                            gradient,
+                            context,
+                          ),
+                        ],
+                        sectionHeader(
+                          titulo: 'Informações de contato',
+                          icon: Icons.contact_phone_rounded,
+                          iconColor: Colors.teal,
+                        ),
+                        _buildContatoCard(
+                          fornecedor: fornecedor,
+                          territorioDescricao: territorio?.descricao,
+                          distancia: distancia,
+                          primary: primary,
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 12),
-                    _buildServicoPrincipal(
-                        fornecedorDetalhado, fornecedorController, primary, gradient, context),
-
-                    sectionHeader(
-                      titulo: "Outros serviços deste fornecedor",
-                      icon: Icons.design_services_rounded,
-                      iconColor: Colors.blueGrey,
-                    ),
-
-                    _buildServicosMesmoFornecedor(
-                        fornecedorDetalhado, fornecedorController, primary, gradient, context),
-                    if (selecionouCategoria) ...[
-                      sectionHeader(
-                        titulo: 'Serviços da mesma categoria',
-                        icon: Icons.category_rounded,
-                        iconColor: Colors.indigo,
-                      ),
-                      _buildServicosMesmaCategoria(
-                          fornecedorDetalhado, fornecedorController, primary, gradient, context),
-                      const SizedBox(height: 16),
-                    ],
-
-                    const SizedBox(height: 16),
-                    sectionHeader(
-                      titulo: 'Informações de contato',
-                      icon: Icons.contact_phone_rounded,
-                      iconColor: Colors.teal,
-                    ),
-                    const SizedBox(height: 10),
-                    if (fornecedor.telefone.isNotEmpty)
-                      _InfoTile(Icons.call_outlined, fornecedor.telefone),
-                    if (fornecedor.email.isNotEmpty)
-                      _InfoTile(Icons.email_outlined, fornecedor.email),
-                    if (territorio?.descricao?.isNotEmpty ?? false)
-                      _InfoTile(Icons.map_outlined, territorio!.descricao!),
-                    if (distancia != null)
-                      _InfoTile(Icons.location_on_outlined,
-                          '${distancia.toStringAsFixed(1)} km de distância'),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ],
         );
       }),
+    );
+  }
+
+  Widget _buildFornecedorHeroCard({
+    required FornecedorModel fornecedor,
+    required FornecedorDetalhadoDto detalhe,
+    required Color primary,
+    required double? distancia,
+    required String? territorioDescricao,
+  }) {
+    final categoria = detalhe.categoriaNome.trim();
+    final regiao = territorioDescricao?.trim();
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: primary.withValues(alpha: 0.14)),
+                ),
+                child: Icon(
+                  Icons.storefront_rounded,
+                  color: primary,
+                  size: 27,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      fornecedor.razaoSocial,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        color: const Color(0xFF111827),
+                        height: 1.12,
+                      ),
+                    ),
+                    if (categoria.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        categoria,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: primary,
+                          height: 1.25,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildInfoChip(
+                icon: Icons.request_quote_rounded,
+                text: 'Orçamento pelo app',
+                color: primary,
+              ),
+              if (distancia != null)
+                _buildInfoChip(
+                  icon: Icons.location_on_rounded,
+                  text: '${distancia.toStringAsFixed(1)} km',
+                  color: Colors.teal,
+                ),
+              if (regiao != null && regiao.isNotEmpty)
+                _buildInfoChip(
+                  icon: Icons.map_rounded,
+                  text: regiao,
+                  color: Colors.indigo,
+                ),
+            ],
+          ),
+          GetBuilder<AvaliacaoServicoController>(
+            builder: (ctrl) {
+              final selos = ctrl.getSelosFornecedor(fornecedor);
+              if (selos.isEmpty) return const SizedBox(height: 2);
+
+              return Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: selos.take(3).map((s) => seloBadge(texto: s)).toList(),
+                ),
+              );
+            },
+          ),
+          Obx(() {
+            final avaliacaoController = Get.find<AvaliacaoServicoController>();
+            final podeAvaliar = avaliacaoController.permitidoAvaliarFornecedor.value;
+
+            if (!podeAvaliar) return const SizedBox.shrink();
+
+            return Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: SizedBox(
+                width: double.infinity,
+                height: 42,
+                child: OutlinedButton.icon(
+                  icon: Icon(Icons.star_rounded, color: Colors.amber.shade700, size: 18),
+                  label: Text(
+                    'Avaliar este fornecedor',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12.8,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.amber.shade800,
+                    side: BorderSide(color: Colors.amber.shade700.withValues(alpha: 0.35)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onPressed: () {
+                    HapticFeedback.lightImpact();
+                    getDialogAvaliacaoFornecedor(fornecedor: fornecedor);
+                  },
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String text,
+    required Color color,
+  }) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 210),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.14)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildResumoContratacaoCard({
+    required Color primary,
+    required FornecedorModel fornecedor,
+    required FornecedorDetalhadoDto detalhe,
+    required int totalServicos,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Contratação organizada',
+            style: GoogleFonts.poppins(
+              fontSize: 14.5,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF111827),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Veja os serviços, compare opções e solicite orçamento sem sair do planejamento da festa.',
+            style: GoogleFonts.poppins(
+              fontSize: 12.2,
+              color: const Color(0xFF64748B),
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _buildMiniMetric(
+                  icon: Icons.design_services_rounded,
+                  value: '$totalServicos',
+                  label: totalServicos == 1 ? 'serviço' : 'serviços',
+                  color: primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMiniMetric(
+                  icon: Icons.request_quote_rounded,
+                  value: 'Cotação',
+                  label: 'pelo app',
+                  color: Colors.deepPurple,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildMiniMetric(
+                  icon: Icons.phone_in_talk_rounded,
+                  value:
+                      fornecedor.telefone.isNotEmpty || fornecedor.email.isNotEmpty ? 'Sim' : 'Não',
+                  label: 'contato',
+                  color: Colors.teal,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniMetric({
+    required IconData icon,
+    required String value,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 18),
+          const SizedBox(height: 5),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF111827),
+            ),
+          ),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.poppins(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF64748B),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDescricaoCard(String descricao) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.notes_rounded, size: 18, color: Color(0xFF64748B)),
+              const SizedBox(width: 8),
+              Text(
+                'Sobre o fornecedor',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF111827),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            descricao,
+            style: GoogleFonts.inter(
+              fontSize: 13.5,
+              height: 1.48,
+              color: const Color(0xFF475569),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContatoCard({
+    required FornecedorModel fornecedor,
+    required String? territorioDescricao,
+    required double? distancia,
+    required Color primary,
+  }) {
+    final hasTelefone = fornecedor.telefone.isNotEmpty;
+    final hasEmail = fornecedor.email.isNotEmpty;
+    final hasTerritorio = territorioDescricao?.trim().isNotEmpty ?? false;
+    final hasDistancia = distancia != null;
+
+    if (!hasTelefone && !hasEmail && !hasTerritorio && !hasDistancia) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.contact_support_outlined, color: Colors.grey.shade400, size: 34),
+            const SizedBox(height: 8),
+            Text(
+              'Nenhuma informação de contato disponível.',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                color: Colors.black54,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          if (hasTelefone)
+            _buildContactLine(
+              icon: Icons.call_rounded,
+              label: 'Telefone',
+              value: fornecedor.telefone,
+              color: primary,
+            ),
+          if (hasEmail)
+            _buildContactLine(
+              icon: Icons.email_rounded,
+              label: 'E-mail',
+              value: fornecedor.email,
+              color: Colors.indigo,
+            ),
+          if (hasTerritorio)
+            _buildContactLine(
+              icon: Icons.map_rounded,
+              label: 'Região de atendimento',
+              value: territorioDescricao!.trim(),
+              color: Colors.teal,
+            ),
+          if (hasDistancia)
+            _buildContactLine(
+              icon: Icons.location_on_rounded,
+              label: 'Distância aproximada',
+              value: '${distancia.toStringAsFixed(1)} km de distância',
+              color: Colors.deepOrange,
+              showDivider: false,
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactLine({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    bool showDivider = true,
+  }) {
+    return Column(
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13.2,
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF111827),
+                      height: 1.25,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        if (showDivider)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Divider(height: 1, color: Colors.grey.shade200),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildBottomActionBar({
+    required Color primary,
+    required FornecedorController fornecedorController,
+    required FornecedorDetalhadoDto detalhe,
+  }) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.10),
+              blurRadius: 18,
+              offset: const Offset(0, -8),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    HapticFeedback.mediumImpact();
+                    _abrirCotacaoPrincipal(
+                      fornecedorController: fornecedorController,
+                      detalhe: detalhe,
+                    );
+                  },
+                  icon: const Icon(Icons.request_quote_rounded, size: 19, color: Colors.white),
+                  label: Text(
+                    'Pedir orçamento',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 13.4,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Container(
+              height: 46,
+              width: 48,
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: IconButton(
+                tooltip: 'Ver contatos',
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  Get.snackbar(
+                    'Contato do fornecedor',
+                    'Veja telefone, e-mail e região no final da página.',
+                    snackPosition: SnackPosition.BOTTOM,
+                    margin: const EdgeInsets.all(16),
+                  );
+                },
+                icon: Icon(Icons.contact_phone_rounded, color: primary, size: 21),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _abrirCotacaoPrincipal({
+    required FornecedorController fornecedorController,
+    required FornecedorDetalhadoDto detalhe,
+  }) {
+    final fornecedor = detalhe.fornecedor;
+    final controllerLocalizacao = Get.isRegistered<FornecedorLocalizacaoController>()
+        ? Get.find<FornecedorLocalizacaoController>()
+        : Get.put(FornecedorLocalizacaoController());
+
+    final servicoFornecedor = fornecedorController.allServicosFornecedor.firstWhereOrNull(
+      (s) => s.idFornecedor == fornecedor.idFornecedor,
+    );
+
+    if (servicoFornecedor == null) {
+      Get.snackbar(
+        'Fornecedor sem serviços',
+        'Este fornecedor ainda não possui serviços disponíveis para cotação.',
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+      );
+      return;
+    }
+
+    FornecedorServicoDetalhadoDto? serviceComplet =
+        (controllerLocalizacao.allService.firstWhereOrNull(
+              (sev) =>
+                  sev.idFornecedor == fornecedor.idFornecedor &&
+                  sev.idProdutoServico == servicoFornecedor.idProdutoServico,
+            ) ??
+            servicoFornecedor) as FornecedorServicoDetalhadoDto?;
+
+    if (serviceComplet == null) return;
+
+    controllerLocalizacao.servicosFornecedor.removeWhere(
+      (sev) =>
+          sev.idFornecedor == serviceComplet.idFornecedor &&
+          sev.idProdutoServico == serviceComplet.idProdutoServico,
+    );
+
+    controllerLocalizacao.servicosFornecedor.add(serviceComplet);
+
+    Get.to(
+      () => ServicosParaCotacaoScreen(
+        idCategoria: detalhe.categoriaId,
+        nomeCategoria: detalhe.categoriaNome,
+        fornecedoresSelecionados: [fornecedor.idFornecedor],
+      ),
     );
   }
 
@@ -257,145 +853,51 @@ class FornecedorDetalheScreen extends StatelessWidget {
   }
 
   // -------------------------
-  // 🔹 Cabeçalho elegante
-  // -------------------------
-  Widget _headerFornecedorCategoria(
-      FornecedorModel fornecedor, FornecedorDetalhadoDto detalhe, Color primary) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4, bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            textAlign: TextAlign.center,
-            fornecedor.razaoSocial,
-            style: GoogleFonts.playfairDisplay(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: const Color(0xFF1E1E1E),
-              height: 1.25,
-              letterSpacing: 0.2,
-            ),
-          ),
-          const SizedBox(height: 6),
-          if (detalhe.categoriaNome.isNotEmpty)
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 36,
-                  height: 1.4,
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [primary.withValues(alpha: 0.8), primary.withValues(alpha: 0.1)],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-
-                /// 👉 O texto agora ocupa o espaço disponível
-                Expanded(
-                  child: ShaderMask(
-                    shaderCallback: (bounds) => const LinearGradient(
-                      colors: [
-                        Color(0xFF81D4FA),
-                        Color(0xFFCE93D8),
-                        Color(0xFFFF80AB),
-                      ],
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                    ).createShader(bounds),
-                    child: Text(
-                      detalhe.categoriaNome,
-                      softWrap: true,
-                      overflow: TextOverflow.visible,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
-                        fontStyle: FontStyle.italic,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-        ],
-      ),
-    );
-  }
-
   Widget sectionHeader({
     required String titulo,
     required IconData icon,
     Color? iconColor,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.only(top: 22, bottom: 12),
       child: Row(
         children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: (iconColor ?? Colors.black54).withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              icon,
+              size: 19,
+              color: iconColor ?? Colors.black54,
+            ),
+          ),
+          const SizedBox(width: 10),
           Expanded(
-            child: Container(
-              height: 1.3,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.grey.shade300,
-                    Colors.grey.shade100,
-                  ],
-                ),
+            child: Text(
+              titulo,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w800,
+                fontSize: 15,
+                color: const Color(0xFF111827),
+                height: 1.15,
               ),
             ),
           ),
-
-          // 🔹 BLOCO CENTRAL COM ÍCONE + TEXTO
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            width: 46,
+            height: 1,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 18,
-                  color: iconColor ?? Colors.black54,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  titulo,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Colors.black87,
-                  ),
-                )
-              ],
-            ),
-          ),
-
-          Expanded(
-            child: Container(
-              height: 1.3,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.grey.shade100,
-                    Colors.grey.shade300,
-                  ],
-                ),
+              gradient: LinearGradient(
+                colors: [
+                  Colors.grey.shade300,
+                  Colors.grey.shade100,
+                ],
               ),
             ),
           ),
@@ -836,12 +1338,20 @@ class FornecedorDetalheScreen extends StatelessWidget {
     required FornecedorController fornecedorController,
     required BuildContext context,
   }) {
-    final detalhe = fornecedorController.allServicosFornecedor
-        .where((s) =>
-            s.idFornecedor == fornecedor!.idFornecedor &&
-            s.idSubcategoria == servicoCatalogo.idSubcategoria &&
-            s.idProdutoServico == servicoCatalogo.id)
-        .first;
+    if (fornecedor == null) {
+      return const SizedBox.shrink();
+    }
+
+    final detalhe = fornecedorController.allServicosFornecedor.firstWhereOrNull(
+      (s) =>
+          s.idFornecedor == fornecedor.idFornecedor &&
+          s.idSubcategoria == servicoCatalogo.idSubcategoria &&
+          s.idProdutoServico == servicoCatalogo.id,
+    );
+
+    if (detalhe == null) {
+      return const SizedBox.shrink();
+    }
 
     final preco = detalhe.preco;
     final precoPromocao = detalhe.precoPromocao;
@@ -934,7 +1444,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              fornecedor?.razaoSocial ?? "Fornecedor desconhecido",
+                              fornecedor.razaoSocial,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
@@ -1172,7 +1682,9 @@ Widget _cardServicoCarrossel({
         fit: StackFit.expand,
         children: [
           CachedNetworkImage(
-            imageUrl: fotoUrl,
+            imageUrl: fotoUrl.isNotEmpty
+                ? fotoUrl
+                : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media&token=6a769a8b-b604-41d0-ac63-ebd38b4af5f6',
             cacheManager: AdaptiveCacheManager.instance,
             fit: BoxFit.cover,
             fadeInDuration: const Duration(milliseconds: 400),
@@ -1264,46 +1776,6 @@ Widget _cardServicoCarrossel({
       ),
     ),
   );
-}
-
-// -------------------------
-// 🔹 Tile de informações
-// -------------------------
-class _InfoTile extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _InfoTile(this.icon, this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 5,
-              offset: const Offset(0, 2)),
-        ],
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Theme.of(context).primaryColor.withValues(alpha: 0.8)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style:
-                  GoogleFonts.poppins(fontSize: 14, color: Colors.black87.withValues(alpha: 0.8)),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 Widget _bannerFornecedor(String fotoCapa, Gradient gradient) {

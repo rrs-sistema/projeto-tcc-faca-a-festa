@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../controllers/calculadora_festa_controller.dart';
-import '../../data/models/evento/analise_calculadora_ia_model.dart';
-import '../../data/models/evento/calculadora_festa_item_model.dart';
-import '../../data/models/evento/calculadora_festa_model.dart';
+import '../../../controllers/calculadora_festa_controller.dart';
+import '../../../data/models/evento/analise_calculadora_ia_model.dart';
+import '../../../data/models/evento/calculadora_festa_item_model.dart';
+import '../../../data/models/evento/calculadora_festa_model.dart';
 
 class MinhasSimulacoesCalculadoraBottomSheet extends StatelessWidget {
   final CalculadoraFestaController controller;
