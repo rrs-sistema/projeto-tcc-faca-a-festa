@@ -19,183 +19,190 @@ class FinanceiroSection extends StatelessWidget {
     final cotacaoController = Get.find<CotacaoController>();
     final Rx<TipoVisualizacao> tipoVisualizacao = TipoVisualizacao.semana.obs;
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Obx(() {
-        final orcamentos = orcamentoController.orcamentos;
-        final cotacoes = cotacaoController.cotacoes;
+    return Obx(() {
+      final orcamentos = orcamentoController.orcamentos;
+      final cotacoes = cotacaoController.cotacoes;
 
-        // === INDICADORES ===
-        final recebido = orcamentos
-            .where((o) => o.status == StatusOrcamento.fechado)
-            .fold(0.0, (soma, o) => soma + (o.custoEstimado ?? 0));
+      final recebido = orcamentos
+          .where((o) => o.status == StatusOrcamento.fechado)
+          .fold(0.0, (soma, o) => soma + (o.custoEstimado ?? 0));
+      final estimado = cotacoes
+          .where((c) =>
+              c.status == StatusCotacao.pendente ||
+              c.status == StatusCotacao.respondida ||
+              c.status == StatusCotacao.parcial)
+          .fold(0.0, (soma, c) => soma + (c.valorEstimadoTotal ?? 0));
+      final agora = DateTime.now();
+      final faturamentoMes = orcamentos
+          .where((o) =>
+              o.status == StatusOrcamento.fechado &&
+              o.dataFechamento != null &&
+              o.dataFechamento!.month == agora.month &&
+              o.dataFechamento!.year == agora.year)
+          .fold(0.0, (soma, o) => soma + (o.custoEstimado ?? 0));
 
-        final estimado = cotacoes
-            .where((c) =>
-                c.status == StatusCotacao.pendente ||
-                c.status == StatusCotacao.respondida ||
-                c.status == StatusCotacao.parcial)
-            .fold(0.0, (soma, c) => soma + (c.valorEstimadoTotal ?? 0));
+      final topContratos = _pegarContratosRecentes(orcamentos);
+      final resumoCategorias = _agruparPorCategoria(orcamentos);
 
-        final agora = DateTime.now();
-        final faturamentoMes = orcamentos
-            .where((o) =>
-                o.status == StatusOrcamento.fechado &&
-                o.dataFechamento != null &&
-                o.dataFechamento!.month == agora.month &&
-                o.dataFechamento!.year == agora.year)
-            .fold(0.0, (soma, o) => soma + (o.custoEstimado ?? 0));
-
-        final topContratos = _pegarContratosRecentes(orcamentos);
-        final resumoCategorias = _agruparPorCategoria(orcamentos);
-
-        return Column(
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ]),
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "💼 Financeiro do Fornecedor",
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.grey.shade800,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // === INDICADORES ===
+            // 🔹 CABEÇALHO RESPONSIVO
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _indicador("Recebido", recebido, Colors.green, Icons.check_circle_rounded),
-                _indicador("Estimativa", estimado, Colors.teal, Icons.timeline_rounded),
-                _indicador(
-                    "Faturamento Mês", faturamentoMes, Colors.blue, Icons.show_chart_rounded),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(Icons.monetization_on_outlined,
+                            size: 20, color: Colors.grey.shade800),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          "Relatório Financeiro",
+                          style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade900),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton.icon(
+                  onPressed: () => Get.snackbar("Relatório", "Gerando documento em PDF...",
+                      backgroundColor: Colors.grey.shade900, colorText: Colors.white),
+                  icon: Icon(Icons.download_rounded, size: 16, color: Colors.grey.shade700),
+                  label: Text("Exportar PDF",
+                      style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w500, fontSize: 12, color: Colors.grey.shade800)),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    side: BorderSide(color: Colors.grey.shade300),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // 🔹 INDICADORES FLEXÍVEIS (Wrap impede quebras no mobile)
+            Wrap(
+              spacing: 24,
+              runSpacing: 16,
+              children: [
+                _indicador("Recebido (Fechado)", recebido, Colors.green.shade700),
+                _indicador("Estimado (Aberto)", estimado, Colors.blue.shade700),
+                _indicador("Faturamento do Mês", faturamentoMes, Colors.grey.shade900),
               ],
             ),
 
-            const SizedBox(height: 32),
-
-            // === GRÁFICO ===
+            const Divider(height: 48, color: Color(0xFFEEEEEE)),
             _graficoComCabecalho(tipoVisualizacao, orcamentoController),
+            const Divider(height: 48, color: Color(0xFFEEEEEE)),
 
-            const SizedBox(height: 40),
-
-            // === CONTRATOS ===
-            Text(
-              "📋 Últimos Contratos Fechados",
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: Colors.grey.shade800,
-              ),
-            ),
-            const SizedBox(height: 8),
+            Text("Últimos Contratos Firmados",
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600, fontSize: 14, color: Colors.grey.shade800)),
+            const SizedBox(height: 16),
             _tabelaContratos(topContratos),
 
             const SizedBox(height: 32),
-
-            // === CATEGORIAS ===
-            Text(
-              "📈 Faturamento por Categoria",
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: Colors.grey.shade800,
-              ),
-            ),
-            const SizedBox(height: 8),
+            Text("Distribuição de Receita por Categoria",
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600, fontSize: 14, color: Colors.grey.shade800)),
+            const SizedBox(height: 16),
             _listaCategorias(resumoCategorias),
-
-            const SizedBox(height: 24),
-
-            // === BOTÃO PDF ===
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () => Get.snackbar(
-                  "Relatório Financeiro",
-                  "Exportando relatório completo...",
-                  backgroundColor: Colors.teal.shade700,
-                  colorText: Colors.white,
-                ),
-                icon: const Icon(Icons.picture_as_pdf_rounded, color: Colors.white),
-                label: Text(
-                  "Exportar relatório em PDF",
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.teal.shade700,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ),
           ],
-        );
-      }),
+        ),
+      );
+    });
+  }
+
+  Widget _indicador(String titulo, double valor, Color cor) {
+    return SizedBox(
+      width: 140, // Largura base para o Wrap distribuir bem na tela
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(titulo,
+              style: GoogleFonts.poppins(
+                  color: Colors.grey.shade500, fontSize: 11, fontWeight: FontWeight.w500),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 4),
+          Text(
+            NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(valor),
+            style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600, color: cor, fontSize: 16, letterSpacing: -0.5),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
     );
   }
 
-  // === CABEÇALHO + GRÁFICO ===
   Widget _graficoComCabecalho(
       Rx<TipoVisualizacao> tipoVisualizacao, OrcamentoController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          margin: const EdgeInsets.only(bottom: 10),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.stacked_line_chart_rounded, color: Colors.teal.shade600),
-                  const SizedBox(width: 8),
-                  Text(
-                    tipoVisualizacao.value == TipoVisualizacao.semana
-                        ? "Faturamento Semanal"
-                        : "Faturamento Mensal",
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                      color: Colors.grey.shade800,
-                    ),
-                  ),
-                ],
-              ),
-              DropdownButton<TipoVisualizacao>(
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text("Evolução Mensal",
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600, fontSize: 14, color: Colors.grey.shade800)),
+            ),
+            Container(
+              height: 32,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(6)),
+              child: DropdownButton<TipoVisualizacao>(
                 value: tipoVisualizacao.value,
                 underline: const SizedBox(),
-                icon: const Icon(Icons.expand_more_rounded, color: Colors.teal),
-                dropdownColor: Colors.white,
-                borderRadius: BorderRadius.circular(12),
+                icon: Icon(Icons.expand_more_rounded, color: Colors.grey.shade600, size: 18),
+                style: GoogleFonts.poppins(
+                    fontSize: 12, color: Colors.grey.shade800, fontWeight: FontWeight.w500),
                 onChanged: (v) => tipoVisualizacao.value = v!,
                 items: const [
                   DropdownMenuItem(value: TipoVisualizacao.semana, child: Text('Semanal')),
                   DropdownMenuItem(value: TipoVisualizacao.mes, child: Text('Mensal')),
                 ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
+        const SizedBox(height: 24),
         AnimatedSwitcher(
-          duration: const Duration(milliseconds: 400),
+          duration: const Duration(milliseconds: 300),
           child: _graficoHistorico(
             tipoVisualizacao.value == TipoVisualizacao.semana
                 ? _gerarHistoricoSemanal(controller)
@@ -208,63 +215,36 @@ class FinanceiroSection extends StatelessWidget {
     );
   }
 
-  // === GRÁFICO ===
   Widget _graficoHistorico(List<Map<String, dynamic>> dados, TipoVisualizacao tipo, {Key? key}) {
     if (dados.isEmpty) {
       return Container(
         key: key,
         height: 200,
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200)),
+        alignment: Alignment.center,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.query_stats_rounded, size: 32, color: Colors.grey.shade300),
+            const SizedBox(height: 8),
+            Text("Sem dados de faturamento para o período",
+                style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13)),
           ],
-        ),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.insert_chart_outlined_rounded, size: 42, color: Colors.teal.shade300),
-              const SizedBox(height: 8),
-              Text(
-                "Sem dados de faturamento",
-                style: GoogleFonts.poppins(
-                  color: Colors.grey.shade600,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
         ),
       );
     }
-
     final valores = dados.map((e) => (e['valor'] as num).toDouble()).toList();
     final maxValor = valores.reduce((a, b) => a > b ? a : b);
-    final topY = (maxValor * 1.2).clamp(300, double.infinity);
+    final topY = (maxValor * 1.2).clamp(100, double.infinity);
     final spots = valores.asMap().entries.map((e) => FlSpot(e.key.toDouble(), e.value)).toList();
 
     return Container(
       key: key,
-      height: 250,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      height: 200,
+      padding: const EdgeInsets.only(right: 16),
       child: LineChart(
         LineChartData(
           minY: 0,
@@ -273,7 +253,7 @@ class FinanceiroSection extends StatelessWidget {
             drawHorizontalLine: true,
             horizontalInterval: topY / 4,
             getDrawingHorizontalLine: (value) =>
-                FlLine(color: Colors.grey.shade200, strokeWidth: 1),
+                FlLine(color: Colors.grey.shade100, strokeWidth: 1),
             drawVerticalLine: false,
           ),
           borderData: FlBorderData(show: false),
@@ -281,21 +261,18 @@ class FinanceiroSection extends StatelessWidget {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 28,
+                reservedSize: 26,
                 interval: 1,
                 getTitlesWidget: (v, _) {
                   final idx = v.toInt();
                   if (idx < 0 || idx >= dados.length) return const SizedBox.shrink();
-
                   final label = tipo == TipoVisualizacao.semana
-                      ? '${dados[idx]['semana']}º Semana'
+                      ? '${dados[idx]['semana']}ª S'
                       : dados[idx]['mes'].toString().substring(0, 3).toUpperCase();
-
                   return Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(label,
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600)),
-                  );
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(label,
+                          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500)));
                 },
               ),
             ),
@@ -303,356 +280,123 @@ class FinanceiroSection extends StatelessWidget {
               sideTitles: SideTitles(
                 showTitles: true,
                 interval: topY / 4,
-                reservedSize: 46,
-                getTitlesWidget: (v, _) => Text(
-                  'R\$${v.toInt()}',
-                  style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade500),
-                ),
+                reservedSize: 44,
+                getTitlesWidget: (v, _) => Text('R\$${v.toInt()}',
+                    style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade400)),
               ),
             ),
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
           ),
           lineBarsData: [
             LineChartBarData(
               spots: spots,
               isCurved: true,
-              gradient: LinearGradient(
-                colors: [Colors.teal.shade400, Colors.teal.shade800],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              barWidth: 3,
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.teal.shade200.withValues(alpha: 0.4),
-                    Colors.teal.shade50.withValues(alpha: 0.05)
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
+              color: Colors.grey.shade900,
+              barWidth: 2.5,
+              belowBarData:
+                  BarAreaData(show: true, color: Colors.grey.shade900.withValues(alpha: 0.05)),
               dotData: FlDotData(
-                show: true,
-                getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
-                  radius: 4.5,
-                  color: Colors.white,
-                  strokeWidth: 3,
-                  strokeColor: Colors.teal.shade600,
-                ),
-              ),
+                  show: true,
+                  getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
+                      radius: 3.5,
+                      color: Colors.white,
+                      strokeWidth: 2,
+                      strokeColor: Colors.grey.shade900)),
             ),
           ],
-          lineTouchData: LineTouchData(
-            handleBuiltInTouches: true,
-            touchTooltipData: LineTouchTooltipData(
-              tooltipRoundedRadius: 10,
-              tooltipPadding: const EdgeInsets.all(10),
-              getTooltipItems: (spots) => spots.map((s) {
-                final idx = s.x.toInt();
-                final label = tipo == TipoVisualizacao.semana
-                    ? '${dados[idx]['semana']}º Semana'
-                    : dados[idx]['mes'];
-                final valor = s.y.toStringAsFixed(2);
-                return LineTooltipItem(
-                  "$label\nR\$ $valor",
-                  GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
         ),
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutQuart,
       ),
     );
   }
 
-  // === INDICADOR ===
-  Widget _indicador(String titulo, double valor, Color cor, IconData icone) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [cor.withValues(alpha: 0.6), cor],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              BoxShadow(
-                color: cor.withValues(alpha: 0.25),
-                blurRadius: 6,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Icon(icone, color: Colors.white, size: 22),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          "R\$ ${valor.toStringAsFixed(2)}",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            color: cor,
-            fontSize: 15,
-          ),
-        ),
-        Text(
-          titulo,
-          style: GoogleFonts.poppins(
-            color: Colors.grey.shade600,
-            fontSize: 12.5,
-          ),
-        ),
-      ],
-    );
-  }
-
-// === TABELA CONTRATOS (versão full width e elegante) ===
+  // 🔹 DATATABLE PROTEGIDA CONTRA OVERFLOW (Scroll Horizontal)
   Widget _tabelaContratos(List<OrcamentoModel> contratos) {
     if (contratos.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          children: [
-            Icon(Icons.assignment_outlined, size: 40, color: Colors.teal.shade300),
-            const SizedBox(height: 8),
-            Text(
-              "Nenhum contrato fechado ainda.",
-              style: GoogleFonts.poppins(
-                color: Colors.grey.shade600,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      );
+      return Text("Nenhum contrato fechado recentemente.",
+          style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13));
     }
-
     return Container(
-      width: double.infinity, // 🔹 ocupa toda a largura
+      width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+          border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(10)),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            headingRowHeight: 40,
+            dataRowMinHeight: 40,
+            dataRowMaxHeight: 48,
+            horizontalMargin: 16,
+            columnSpacing: 32,
+            headingTextStyle: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600, color: Colors.grey.shade800, fontSize: 12),
+            dataTextStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade900),
+            headingRowColor: WidgetStateProperty.all(Colors.grey.shade50),
+            columns: const [
+              DataColumn(label: Text("Categoria do Serviço")),
+              DataColumn(label: Text("Valor Negociado")),
+              DataColumn(label: Text("Data Efetiva"))
+            ],
+            rows: contratos.map((o) {
+              final valor = o.custoEstimado ?? 0;
+              return DataRow(cells: [
+                DataCell(Text(o.idCategoria ?? "-", overflow: TextOverflow.ellipsis)),
+                DataCell(Text("R\$ ${valor.toStringAsFixed(2)}",
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600))),
+                DataCell(Text(
+                    o.dataFechamento != null
+                        ? DateFormat('dd/MM/yyyy').format(o.dataFechamento!)
+                        : "-",
+                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600))),
+              ]);
+            }).toList(),
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // === CABEÇALHO COM GRADIENTE ===
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.teal.shade400, Colors.teal.shade700],
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-              ),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.teal.shade100.withValues(alpha: 0.4),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.assignment_rounded, color: Colors.white, size: 22),
-                const SizedBox(width: 10),
-                Text(
-                  "Últimos Contratos",
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                    fontSize: 15,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // === TABELA ===
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal, // 🔹 garante rolagem horizontal se necessário
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(minWidth: 600), // 🔹 largura mínima bonita
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: DataTable(
-                    headingTextStyle: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      color: Colors.teal.shade800,
-                    ),
-                    dataTextStyle: GoogleFonts.poppins(fontSize: 13),
-                    headingRowColor: WidgetStateProperty.all(
-                      Colors.teal.shade50.withValues(alpha: 0.4),
-                    ),
-                    dataRowColor: WidgetStateProperty.resolveWith<Color?>(
-                      (Set<WidgetState> states) {
-                        if (states.contains(WidgetState.hovered)) {
-                          return Colors.teal.shade50.withValues(alpha: 0.5);
-                        }
-                        return null;
-                      },
-                    ),
-                    columnSpacing: 22,
-                    horizontalMargin: 16,
-                    border: TableBorder(
-                      horizontalInside: BorderSide(
-                        color: Colors.grey.shade200,
-                        width: 0.6,
-                      ),
-                    ),
-                    columns: [
-                      DataColumn(
-                        label: Row(
-                          children: [
-                            const Icon(Icons.category_outlined, size: 18, color: Colors.teal),
-                            const SizedBox(width: 6),
-                            const Text("Categoria"),
-                          ],
-                        ),
-                      ),
-                      DataColumn(
-                        label: Row(
-                          children: [
-                            const Icon(Icons.monetization_on_outlined,
-                                size: 18, color: Colors.teal),
-                            const SizedBox(width: 6),
-                            const Text("Valor"),
-                          ],
-                        ),
-                      ),
-                      DataColumn(
-                        label: Row(
-                          children: [
-                            const Icon(Icons.event_outlined, size: 18, color: Colors.teal),
-                            const SizedBox(width: 6),
-                            const Text("Data"),
-                          ],
-                        ),
-                      ),
-                    ],
-                    rows: contratos.asMap().entries.map((entry) {
-                      final i = entry.key;
-                      final o = entry.value;
-                      final corLinha = i.isEven ? Colors.grey.shade50 : Colors.white;
-                      final valor = o.custoEstimado ?? 0;
-                      return DataRow(
-                        color: WidgetStateProperty.all(corLinha),
-                        cells: [
-                          DataCell(Row(
-                            children: [
-                              const Icon(Icons.label_outline_rounded, color: Colors.grey, size: 16),
-                              const SizedBox(width: 6),
-                              Expanded(
-                                child: Text(
-                                  o.idCategoria ?? "-",
-                                  overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.grey.shade800,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          )),
-                          DataCell(Row(
-                            children: [
-                              Icon(
-                                valor > 0 ? Icons.arrow_upward_rounded : Icons.remove_rounded,
-                                color: valor > 0 ? Colors.green.shade600 : Colors.grey.shade500,
-                                size: 16,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "R\$ ${valor.toStringAsFixed(2)}",
-                                style: GoogleFonts.poppins(
-                                  color: valor > 0 ? Colors.green.shade700 : Colors.grey.shade600,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          )),
-                          DataCell(Row(
-                            children: [
-                              const Icon(Icons.calendar_today_outlined,
-                                  color: Colors.grey, size: 15),
-                              const SizedBox(width: 6),
-                              Text(
-                                o.dataFechamento != null
-                                    ? DateFormat('dd/MM/yyyy').format(o.dataFechamento!)
-                                    : "-",
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12.5,
-                                  color: Colors.grey.shade700,
-                                ),
-                              ),
-                            ],
-                          )),
-                        ],
-                      );
-                    }).toList(),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  // === LISTA CATEGORIAS ===
   Widget _listaCategorias(Map<String, double> categorias) {
-    if (categorias.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(8),
-        child: Text("Sem dados de faturamento por categoria.",
-            style: GoogleFonts.poppins(color: Colors.grey.shade500)),
-      );
-    }
-
+    if (categorias.isEmpty)
+      return Text("Não há faturamento categorizado.",
+          style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13));
     return Column(
       children: categorias.entries.map((e) {
         final total = categorias.values.fold(0.0, (soma, v) => soma + v);
         final percentual = total == 0 ? 0 : (e.value / total) * 100;
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.only(bottom: 12),
           child: Row(
             children: [
               Expanded(
-                child: LinearProgressIndicator(
-                  value: percentual / 100,
-                  color: Colors.teal,
-                  backgroundColor: Colors.grey.shade200,
-                  minHeight: 8,
-                  borderRadius: BorderRadius.circular(6),
+                  flex: 2,
+                  child: Text(e.key,
+                      style: GoogleFonts.poppins(
+                          fontSize: 13, color: Colors.grey.shade800, fontWeight: FontWeight.w500),
+                      overflow: TextOverflow.ellipsis)),
+              Expanded(
+                flex: 3,
+                child: Row(
+                  children: [
+                    Expanded(
+                        child: ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                          value: percentual / 100,
+                          color: Colors.grey.shade900,
+                          backgroundColor: Colors.grey.shade100,
+                          minHeight: 6),
+                    )),
+                    const SizedBox(width: 12),
+                    Text("${percentual.toStringAsFixed(1)}%",
+                        style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.grey.shade600,
+                            fontWeight: FontWeight.w600)),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                "${e.key} (${percentual.toStringAsFixed(1)}%)",
-                style: GoogleFonts.poppins(fontSize: 13),
               ),
             ],
           ),
@@ -661,7 +405,7 @@ class FinanceiroSection extends StatelessWidget {
     );
   }
 
-  // === AUXILIARES ===
+  // Métodos auxiliares
   List<Map<String, dynamic>> _gerarHistoricoSemanal(OrcamentoController controller) {
     final agora = DateTime.now();
     final orcs = controller.orcamentos
@@ -671,35 +415,29 @@ class FinanceiroSection extends StatelessWidget {
             o.dataFechamento!.month == agora.month &&
             o.dataFechamento!.year == agora.year)
         .toList();
-
     final agrupado = <int, double>{};
     for (final o in orcs) {
       final semana = _semanaDoMes(o.dataFechamento!);
       agrupado[semana] = (agrupado[semana] ?? 0) + (o.custoEstimado ?? 0);
     }
-
-    return List.generate(5, (i) {
-      final idx = i + 1;
-      return {'semana': idx, 'valor': agrupado[idx] ?? 0.0};
-    });
+    return List.generate(5, (i) => {'semana': i + 1, 'valor': agrupado[i + 1] ?? 0.0});
   }
 
   List<Map<String, dynamic>> _gerarHistoricoMensal(OrcamentoController controller) {
     final orcs = controller.orcamentos
         .where((o) => o.status == StatusOrcamento.fechado && o.dataFechamento != null)
         .toList();
-
     final agrupado = <int, double>{};
     for (final o in orcs) {
       final mes = o.dataFechamento!.month;
       agrupado[mes] = (agrupado[mes] ?? 0) + (o.custoEstimado ?? 0);
     }
-
-    return List.generate(12, (i) {
-      final mes = i + 1;
-      final nomeMes = DateFormat('MMM', 'pt_BR').format(DateTime(0, mes));
-      return {'mes': nomeMes, 'valor': agrupado[mes] ?? 0.0};
-    });
+    return List.generate(
+        12,
+        (i) => {
+              'mes': DateFormat('MMM', 'pt_BR').format(DateTime(0, i + 1)),
+              'valor': agrupado[i + 1] ?? 0.0
+            });
   }
 
   int _semanaDoMes(DateTime date) {
@@ -710,7 +448,7 @@ class FinanceiroSection extends StatelessWidget {
   List<OrcamentoModel> _pegarContratosRecentes(List<OrcamentoModel> orcs) {
     final fechados = orcs.where((o) => o.status == StatusOrcamento.fechado).toList()
       ..sort((a, b) => b.dataFechamento!.compareTo(a.dataFechamento!));
-    return fechados.take(5).toList();
+    return fechados.take(4).toList();
   }
 
   Map<String, double> _agruparPorCategoria(List<OrcamentoModel> orcs) {

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/calculadora_festa_controller.dart';
+import '../../controllers/calculadora/calculadora_festa_controller.dart';
 import '../../controllers/evento_controller.dart';
 import '../../controllers/gift/gift_controller.dart';
 import '../../core/database/app_database.dart';

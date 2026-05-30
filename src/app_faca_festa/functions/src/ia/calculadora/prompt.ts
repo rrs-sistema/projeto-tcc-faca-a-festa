@@ -1,4 +1,4 @@
-import { CalculadoraIARequest, SugestaoBaseIA } from "../../types";
+import { CalculadoraIARequest, SugestaoBaseIA } from "../../types/calculadoraIA.types";
 
 /**
  * Nome estável do prompt usado pela calculadora inteligente.

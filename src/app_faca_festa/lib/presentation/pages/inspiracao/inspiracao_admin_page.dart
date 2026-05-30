@@ -1,16 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../controllers/inspiracao/inspiracao_admin_controller.dart';
-import './../../../data/models/model.dart';
-
-import 'package:flutter/material.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-
 import './../../../data/models/model.dart';
 import 'inspiracao_admin_form_page.dart';
 
@@ -71,11 +63,12 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
         centerTitle: false,
         backgroundColor: Colors.white,
         foregroundColor: _dark,
+        toolbarHeight: 54, // Mais compacto
         titleSpacing: 16,
         title: Text(
           'Inspirações Públicas',
           style: GoogleFonts.poppins(
-            fontSize: 18,
+            fontSize: 16, // Reduzido
             fontWeight: FontWeight.w800,
             color: _dark,
           ),
@@ -85,23 +78,7 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
             () => IconButton(
               tooltip: 'Atualizar',
               onPressed: controller.loading.value ? null : () => controller.recarregar(),
-              icon: const Icon(Icons.refresh_rounded),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: FilledButton.icon(
-              onPressed: _abrirCadastro,
-              style: FilledButton.styleFrom(
-                backgroundColor: _primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              ),
-              icon: const Icon(Icons.add_rounded, size: 20),
-              label: const Text('Nova'),
+              icon: const Icon(Icons.refresh_rounded, size: 20), // Ícone menor
             ),
           ),
         ],
@@ -125,8 +102,8 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
                     () => AnimatedSwitcher(
                       duration: const Duration(milliseconds: 220),
                       child: controller.salvando.value || controller.loading.value
-                          ? const LinearProgressIndicator(minHeight: 3)
-                          : const SizedBox(height: 3),
+                          ? const LinearProgressIndicator(minHeight: 2)
+                          : const SizedBox(height: 2),
                     ),
                   ),
                 ),
@@ -134,7 +111,7 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
                 SliverToBoxAdapter(child: _buildResumoCards(context)),
                 SliverToBoxAdapter(child: _buildFiltros(context)),
                 _buildConteudo(context),
-                const SliverToBoxAdapter(child: SizedBox(height: 96)),
+                const SliverToBoxAdapter(child: SizedBox(height: 60)), // Menos espaço no rodapé
               ],
             ),
           );
@@ -148,15 +125,16 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
       builder: (context, constraints) {
         final width = MediaQuery.of(context).size.width;
         if (width >= 720) {
-          return const SizedBox.shrink();
+          return const SizedBox.shrink(); // Some no desktop porque já tem botão no topo
         }
 
         return FloatingActionButton.extended(
           onPressed: _abrirCadastro,
           backgroundColor: _primary,
           foregroundColor: Colors.white,
-          icon: const Icon(Icons.add_rounded),
-          label: const Text('Nova inspiração'),
+          icon: const Icon(Icons.add_rounded, size: 20),
+          label:
+              Text('Nova', style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600)),
         );
       },
     );
@@ -164,10 +142,10 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(20), // Mais quadrado para desktop
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -175,9 +153,9 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
         ),
         boxShadow: [
           BoxShadow(
-            color: _primary.withValues(alpha: 0.22),
-            blurRadius: 24,
-            offset: const Offset(0, 14),
+            color: _primary.withValues(alpha: 0.15),
+            blurRadius: 15,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -189,7 +167,7 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.16),
                   borderRadius: BorderRadius.circular(999),
@@ -198,40 +176,33 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.auto_awesome_rounded,
-                      color: Colors.white,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 6),
+                    const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 12),
+                    const SizedBox(width: 4),
                     Text(
                       'Área administrativa',
                       style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
+                          color: Colors.white, fontWeight: FontWeight.w700, fontSize: 10),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 'Gerencie ideias e inspirações públicas',
                 style: GoogleFonts.playfairDisplay(
                   color: Colors.white,
-                  fontSize: compact ? 26 : 32,
+                  fontSize: compact ? 20 : 24, // Menor
                   height: 1.05,
                   fontWeight: FontWeight.w800,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Text(
-                'Cadastre, publique, destaque e organize as referências que aparecem para os organizadores de eventos.',
+                'Cadastre, publique, destaque e organize as referências para os usuários.',
                 style: GoogleFonts.poppins(
                   color: Colors.white.withValues(alpha: 0.92),
-                  fontSize: 13,
-                  height: 1.35,
+                  fontSize: 11.5,
+                  height: 1.3,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -244,15 +215,13 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
               backgroundColor: Colors.white,
               foregroundColor: _primary,
               elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10), // Mais fino
             ),
-            icon: const Icon(Icons.add_photo_alternate_rounded),
+            icon: const Icon(Icons.add_photo_alternate_rounded, size: 18),
             label: Text(
-              'Cadastrar inspiração',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
+              'Nova inspiração',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 12),
             ),
           );
 
@@ -261,7 +230,7 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 texto,
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 SizedBox(width: double.infinity, child: botao),
               ],
             );
@@ -270,7 +239,7 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
           return Row(
             children: [
               Expanded(child: texto),
-              const SizedBox(width: 18),
+              const SizedBox(width: 16),
               botao,
             ],
           );
@@ -283,45 +252,41 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
     return Obx(() {
       final cards = [
         _ResumoInfo(
-          titulo: 'Total',
-          valor: controller.totalInspiracoes.value,
-          icon: Icons.dashboard_customize_rounded,
-          color: _primary,
-        ),
+            titulo: 'Total',
+            valor: controller.totalInspiracoes.value,
+            icon: Icons.dashboard_customize_rounded,
+            color: _primary),
         _ResumoInfo(
-          titulo: 'Ativas',
-          valor: controller.totalAtivas.value,
-          icon: Icons.check_circle_rounded,
-          color: _success,
-        ),
+            titulo: 'Ativas',
+            valor: controller.totalAtivas.value,
+            icon: Icons.check_circle_rounded,
+            color: _success),
         _ResumoInfo(
-          titulo: 'Publicadas',
-          valor: controller.totalPublicadas.value,
-          icon: Icons.public_rounded,
-          color: _info,
-        ),
+            titulo: 'Publicadas',
+            valor: controller.totalPublicadas.value,
+            icon: Icons.public_rounded,
+            color: _info),
         _ResumoInfo(
-          titulo: 'Destaques',
-          valor: controller.totalDestaques.value,
-          icon: Icons.star_rounded,
-          color: _warning,
-        ),
+            titulo: 'Destaques',
+            valor: controller.totalDestaques.value,
+            icon: Icons.star_rounded,
+            color: _warning),
       ];
 
       return LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 680;
           return Padding(
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 10),
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 6),
             child: GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: cards.length,
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: compact ? 2 : 4,
-                mainAxisExtent: 86,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
+                mainAxisExtent: 68, // Super compacto (era 86)
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
               ),
               itemBuilder: (_, index) => _ResumoCard(info: cards[index]),
             ),
@@ -338,62 +303,60 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
       final statuses = controller.statusDisponiveis();
 
       return Container(
-        margin: const EdgeInsets.fromLTRB(16, 4, 16, 14),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        padding: const EdgeInsets.all(10), // Menos espaço interno
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
-            ),
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4)),
           ],
         ),
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final compact = constraints.maxWidth < 760;
+            final compact = constraints.maxWidth < 800;
 
             final busca = SizedBox(
-              width: compact ? double.infinity : 330,
+              width: compact ? double.infinity : 280,
               child: TextField(
                 controller: _searchController,
                 onChanged: controller.atualizarBusca,
                 textInputAction: TextInputAction.search,
+                style: GoogleFonts.poppins(fontSize: 12),
                 decoration: InputDecoration(
-                  hintText: 'Buscar por título, categoria, descrição ou tags...',
-                  prefixIcon: const Icon(Icons.search_rounded),
+                  hintText: 'Buscar inspirações...',
+                  hintStyle: GoogleFonts.poppins(fontSize: 12, color: _muted),
+                  prefixIcon: const Icon(Icons.search_rounded, size: 18),
                   suffixIcon: controller.termoBusca.value.trim().isEmpty
                       ? null
                       : IconButton(
-                          tooltip: 'Limpar busca',
+                          padding: EdgeInsets.zero,
+                          tooltip: 'Limpar',
                           onPressed: () {
                             _searchController.clear();
                             controller.atualizarBusca('');
                           },
-                          icon: const Icon(Icons.close_rounded),
+                          icon: const Icon(Icons.close_rounded, size: 16),
                         ),
                   filled: true,
                   fillColor: _surface,
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 10), // Super justinho
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
+                      borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
                 ),
               ),
             );
 
             final categoria = _FiltroDropdown(
               label: 'Categoria',
-              value: _safeDropdownValue(
-                controller.categoriaSelecionada.value,
-                categorias,
-                fallback: 'Todas',
-              ),
+              value: _safeDropdownValue(controller.categoriaSelecionada.value, categorias,
+                  fallback: 'Todas'),
               items: categorias,
               onChanged: (value) {
                 if (value != null) controller.filtrarPorCategoria(value);
@@ -402,11 +365,8 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
 
             final tipoEvento = _FiltroDropdown(
               label: 'Tipo de evento',
-              value: _safeDropdownValue(
-                controller.tipoEventoSelecionado.value,
-                tiposEvento,
-                fallback: 'Todos',
-              ),
+              value: _safeDropdownValue(controller.tipoEventoSelecionado.value, tiposEvento,
+                  fallback: 'Todos'),
               items: tiposEvento,
               onChanged: (value) {
                 if (value != null) controller.filtrarPorTipoEvento(value);
@@ -415,11 +375,8 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
 
             final status = _FiltroDropdown(
               label: 'Status',
-              value: _safeDropdownValue(
-                controller.statusSelecionado.value,
-                statuses,
-                fallback: InspiracaoAdminController.statusTodos,
-              ),
+              value: _safeDropdownValue(controller.statusSelecionado.value, statuses,
+                  fallback: InspiracaoAdminController.statusTodos),
               items: statuses,
               labelBuilder: _statusLabel,
               onChanged: (value) {
@@ -437,11 +394,13 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
               style: OutlinedButton.styleFrom(
                 foregroundColor: _primary,
                 side: BorderSide(color: _primary.withValues(alpha: 0.34)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                minimumSize: const Size(0, 38), // Mesma altura dos inputs
               ),
-              icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
-              label: const Text('Limpar'),
+              icon: const Icon(Icons.filter_alt_off_rounded, size: 16),
+              label: Text('Limpar',
+                  style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600)),
             );
 
             if (compact) {
@@ -449,27 +408,31 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   busca,
-                  const SizedBox(height: 10),
-                  categoria,
-                  const SizedBox(height: 10),
-                  tipoEvento,
-                  const SizedBox(height: 10),
-                  status,
-                  const SizedBox(height: 10),
-                  limpar,
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    Expanded(child: categoria),
+                    const SizedBox(width: 8),
+                    Expanded(child: status)
+                  ]),
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    Expanded(child: tipoEvento),
+                    const SizedBox(width: 8),
+                    Expanded(child: limpar)
+                  ]),
                 ],
               );
             }
 
             return Wrap(
-              spacing: 10,
-              runSpacing: 10,
+              spacing: 8,
+              runSpacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 busca,
-                SizedBox(width: 190, child: categoria),
-                SizedBox(width: 210, child: tipoEvento),
-                SizedBox(width: 180, child: status),
+                SizedBox(width: 150, child: categoria),
+                SizedBox(width: 170, child: tipoEvento),
+                SizedBox(width: 130, child: status),
                 limpar,
               ],
             );
@@ -500,18 +463,15 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
       return SliverLayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.crossAxisExtent;
-          final isMobile = width < 680;
+          final isMobile = width < 600;
 
           if (isMobile) {
             return SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
               sliver: SliverList(
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
-                    if (index.isOdd) {
-                      return const SizedBox(height: 12);
-                    }
-
+                    if (index.isOdd) return const SizedBox(height: 8);
                     final item = inspiracoes[index ~/ 2];
                     return _InspiracaoAdminCard(
                       inspiracao: item,
@@ -531,13 +491,13 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
           }
 
           return SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
             sliver: SliverGrid(
               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: _gridColumns(width),
-                mainAxisExtent: 412,
-                crossAxisSpacing: 14,
-                mainAxisSpacing: 14,
+                mainAxisExtent: 290, // 🔥 DRÁSTICA REDUÇÃO (era 412) -> Compacto pro PC
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
               ),
               delegate: SliverChildBuilderDelegate(
                 (context, index) {
@@ -561,9 +521,12 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
     });
   }
 
+  // 🔹 Breakpoints otimizados para Desktop (mostra mais itens)
   int _gridColumns(double width) {
-    if (width >= 1320) return 4;
-    if (width >= 980) return 3;
+    if (width >= 1600) return 6;
+    if (width >= 1300) return 5;
+    if (width >= 1000) return 4;
+    if (width >= 750) return 3;
     return 2;
   }
 
@@ -579,11 +542,8 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
       return;
     }
 
-    Get.to(
-      () => const InspiracaoAdminFormPage(),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 260),
-    );
+    Get.to(() => const InspiracaoAdminFormPage(),
+        transition: Transition.rightToLeft, duration: const Duration(milliseconds: 260));
   }
 
   void _abrirEdicao(InspiracaoModel inspiracao) {
@@ -598,11 +558,8 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
       return;
     }
 
-    Get.to(
-      () => InspiracaoAdminFormPage(inspiracao: inspiracao),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 260),
-    );
+    Get.to(() => InspiracaoAdminFormPage(inspiracao: inspiracao),
+        transition: Transition.rightToLeft, duration: const Duration(milliseconds: 260));
   }
 
   Future<void> _confirmarExclusao(InspiracaoModel inspiracao) async {
@@ -610,54 +567,38 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
 
     final confirmar = await Get.dialog<bool>(
       AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        titlePadding: const EdgeInsets.fromLTRB(22, 22, 22, 0),
-        contentPadding: const EdgeInsets.fromLTRB(22, 12, 22, 0),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+        contentPadding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
         actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         title: Row(
           children: [
             Container(
-              width: 42,
-              height: 42,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
-                color: _danger.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: const Icon(Icons.delete_outline_rounded, color: _danger),
+                  color: _danger.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10)),
+              child: const Icon(Icons.delete_outline_rounded, color: _danger, size: 20),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
-              child: Text(
-                'Excluir inspiração?',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18,
-                ),
-              ),
-            ),
+                child: Text('Excluir inspiração?',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16))),
           ],
         ),
         content: Text(
-          'Essa ação fará exclusão lógica de "$titulo". O documento será mantido no Firestore com ativo=false e deletado=true.',
-          style: GoogleFonts.poppins(
-            color: _muted,
-            height: 1.35,
-            fontSize: 13,
-          ),
+          'Essa ação fará exclusão lógica de "$titulo". O documento será mantido no banco de dados como inativo.',
+          style: GoogleFonts.poppins(color: _muted, height: 1.3, fontSize: 12),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancelar'),
-          ),
+          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancelar')),
           FilledButton.icon(
             onPressed: () => Get.back(result: true),
             style: FilledButton.styleFrom(
-              backgroundColor: _danger,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            ),
-            icon: const Icon(Icons.delete_rounded, size: 18),
+                backgroundColor: _danger,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+            icon: const Icon(Icons.delete_rounded, size: 16),
             label: const Text('Excluir'),
           ),
         ],
@@ -669,11 +610,7 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
     }
   }
 
-  String _safeDropdownValue(
-    String value,
-    List<String> items, {
-    required String fallback,
-  }) {
+  String _safeDropdownValue(String value, List<String> items, {required String fallback}) {
     if (items.contains(value)) return value;
     if (items.contains(fallback)) return fallback;
     return items.isEmpty ? '' : items.first;
@@ -688,9 +625,9 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
       case InspiracaoAdminController.statusPublicadas:
         return 'Publicadas';
       case InspiracaoAdminController.statusRascunhos:
-        return 'Rascunho';
+        return 'Rascunhos';
       case InspiracaoAdminController.statusDestaques:
-        return 'Destaque';
+        return 'Destaques';
       case InspiracaoAdminController.statusExcluidas:
         return 'Excluídas';
       case InspiracaoAdminController.statusTodos:
@@ -739,14 +676,13 @@ class _InspiracaoAdminCard extends StatelessWidget {
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16), // Menor arredondamento no PC
           border: Border.all(color: const Color(0xFFE2E8F0)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
-            ),
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4)),
           ],
         ),
         child: compact
@@ -756,7 +692,6 @@ class _InspiracaoAdminCard extends StatelessWidget {
                 categoria: categoria,
                 tipoEvento: tipoEvento,
                 descricao: descricao,
-                tags: tags,
                 ativo: ativo,
                 publicado: publicado,
                 destaque: destaque,
@@ -782,63 +717,44 @@ class _InspiracaoAdminCard extends StatelessWidget {
     required String categoria,
     required String tipoEvento,
     required String descricao,
-    required List<String> tags,
     required bool ativo,
     required bool publicado,
     required bool destaque,
   }) {
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(12),
             child: SizedBox(
-              width: 96,
-              height: 118,
+              width: 80, // Menor
+              height: 100,
               child: _InspiracaoImage(url: imagemUrl),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
                 _buildTitle(),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 _buildBadges(
-                  ativo: ativo,
-                  publicado: publicado,
-                  destaque: destaque,
-                  tipoEvento: tipoEvento,
-                  compact: true,
-                ),
+                    ativo: ativo,
+                    publicado: publicado,
+                    destaque: destaque,
+                    tipoEvento: tipoEvento,
+                    compact: true),
                 if (categoria.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   _SmallMeta(icon: Icons.category_rounded, text: categoria),
                 ],
-                if (descricao.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    descricao,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      color: _InspiracaoAdminPageState._muted,
-                      fontSize: 12,
-                      height: 1.25,
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 _buildActionBar(
-                  ativo: ativo,
-                  publicado: publicado,
-                  destaque: destaque,
-                  compact: true,
-                ),
+                    ativo: ativo, publicado: publicado, destaque: destaque, compact: true),
               ],
             ),
           ),
@@ -864,57 +780,52 @@ class _InspiracaoAdminCard extends StatelessWidget {
         Stack(
           children: [
             SizedBox(
-              height: 148,
+              height: 110, // Muito mais baixo (era 148)
               width: double.infinity,
               child: _InspiracaoImage(url: imagemUrl),
             ),
             Positioned(
-              left: 10,
-              top: 10,
-              right: 10,
+              left: 6,
+              top: 6,
+              right: 6,
               child: _buildBadges(
-                ativo: ativo,
-                publicado: publicado,
-                destaque: destaque,
-                tipoEvento: tipoEvento,
-                onImage: true,
-              ),
+                  ativo: ativo,
+                  publicado: publicado,
+                  destaque: destaque,
+                  tipoEvento: tipoEvento,
+                  onImage: true),
             ),
           ],
         ),
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+            padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildTitle(),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 if (categoria.isNotEmpty) _SmallMeta(icon: Icons.category_rounded, text: categoria),
                 if (descricao.isNotEmpty) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
                     descricao,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
-                      color: _InspiracaoAdminPageState._muted,
-                      fontSize: 12.5,
-                      height: 1.32,
-                    ),
+                        color: _InspiracaoAdminPageState._muted,
+                        fontSize: 10.5,
+                        height: 1.25), // Fonte menor
                   ),
                 ],
                 if (tags.isNotEmpty) ...[
-                  const SizedBox(height: 9),
+                  const Spacer(),
                   _buildTags(tags),
+                  const SizedBox(height: 6),
+                ] else ...[
+                  const Spacer(),
                 ],
-                const Spacer(),
-                const SizedBox(height: 10),
-                _buildActionBar(
-                  ativo: ativo,
-                  publicado: publicado,
-                  destaque: destaque,
-                ),
+                _buildActionBar(ativo: ativo, publicado: publicado, destaque: destaque),
               ],
             ),
           ),
@@ -926,16 +837,15 @@ class _InspiracaoAdminCard extends StatelessWidget {
   Widget _buildTitle() {
     final titulo =
         inspiracao.titulo.trim().isEmpty ? 'Inspiração sem título' : inspiracao.titulo.trim();
-
     return Text(
       titulo,
       maxLines: 2,
       overflow: TextOverflow.ellipsis,
       style: GoogleFonts.poppins(
         color: _InspiracaoAdminPageState._dark,
-        fontSize: 15.5,
+        fontSize: 13, // Reduzido (era 15.5)
         height: 1.15,
-        fontWeight: FontWeight.w800,
+        fontWeight: FontWeight.w700,
       ),
     );
   }
@@ -978,90 +888,71 @@ class _InspiracaoAdminCard extends StatelessWidget {
     ];
 
     return Wrap(
-      spacing: 6,
-      runSpacing: 6,
+      spacing: 4,
+      runSpacing: 4,
       children: compact ? badges.take(4).toList() : badges,
     );
   }
 
   Widget _buildTags(List<String> tags) {
     return Wrap(
-      spacing: 6,
-      runSpacing: 6,
+      spacing: 4,
+      runSpacing: 4,
       children: tags.take(3).map((tag) {
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(999),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration:
+              BoxDecoration(color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(6)),
           child: Text(
             '#$tag',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.poppins(
-              color: _InspiracaoAdminPageState._muted,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
-            ),
+                color: _InspiracaoAdminPageState._muted,
+                fontSize: 9,
+                fontWeight: FontWeight.w600), // Fonte super compacta
           ),
         );
       }).toList(),
     );
   }
 
-  Widget _buildActionBar({
-    required bool ativo,
-    required bool publicado,
-    required bool destaque,
-    bool compact = false,
-  }) {
+  Widget _buildActionBar(
+      {required bool ativo,
+      required bool publicado,
+      required bool destaque,
+      bool compact = false}) {
     final actions = [
       _CardAction(
-        tooltip: 'Editar',
-        icon: Icons.edit_rounded,
-        color: _InspiracaoAdminPageState._info,
-        onPressed: onEditar,
-      ),
+          tooltip: 'Editar',
+          icon: Icons.edit_rounded,
+          color: _InspiracaoAdminPageState._info,
+          onPressed: onEditar),
       _CardAction(
-        tooltip: ativo ? 'Desativar' : 'Ativar',
-        icon: ativo ? Icons.visibility_off_rounded : Icons.visibility_rounded,
-        color: ativo ? _InspiracaoAdminPageState._danger : _InspiracaoAdminPageState._success,
-        onPressed: onAtivo,
-      ),
+          tooltip: ativo ? 'Desativar' : 'Ativar',
+          icon: ativo ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+          color: ativo ? _InspiracaoAdminPageState._danger : _InspiracaoAdminPageState._success,
+          onPressed: onAtivo),
       _CardAction(
-        tooltip: publicado ? 'Despublicar' : 'Publicar',
-        icon: publicado ? Icons.unpublished_rounded : Icons.public_rounded,
-        color: publicado ? _InspiracaoAdminPageState._warning : _InspiracaoAdminPageState._info,
-        onPressed: onPublicado,
-      ),
+          tooltip: publicado ? 'Ocultar' : 'Publicar',
+          icon: publicado ? Icons.unpublished_rounded : Icons.public_rounded,
+          color: publicado ? _InspiracaoAdminPageState._warning : _InspiracaoAdminPageState._info,
+          onPressed: onPublicado),
       _CardAction(
-        tooltip: destaque ? 'Remover destaque' : 'Marcar destaque',
-        icon: destaque ? Icons.star_rounded : Icons.star_border_rounded,
-        color: _InspiracaoAdminPageState._warning,
-        onPressed: onDestaque,
-      ),
+          tooltip: destaque ? 'Remover' : 'Destacar',
+          icon: destaque ? Icons.star_rounded : Icons.star_border_rounded,
+          color: _InspiracaoAdminPageState._warning,
+          onPressed: onDestaque),
       _CardAction(
-        tooltip: 'Excluir logicamente',
-        icon: Icons.delete_outline_rounded,
-        color: _InspiracaoAdminPageState._danger,
-        onPressed: onExcluir,
-      ),
+          tooltip: 'Excluir',
+          icon: Icons.delete_outline_rounded,
+          color: _InspiracaoAdminPageState._danger,
+          onPressed: onExcluir),
     ];
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: actions
-            .map(
-              (action) => Padding(
-                padding: const EdgeInsets.only(right: 7),
-                child: action,
-              ),
-            )
-            .toList(),
-      ),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: actions.map((action) => action).toList(),
     );
   }
 
@@ -1080,20 +971,13 @@ class _InspiracaoAdminCard extends StatelessWidget {
   String _tipoEvento(Map<String, dynamic> data) {
     final nomes = _readStringList(data, 'tipoEventoNomes');
     if (nomes.isNotEmpty) {
-      if (nomes.length == 1) return nomes.first;
-      return '${nomes.first} +${nomes.length - 1}';
+      return nomes.length == 1 ? nomes.first : '${nomes.first} +${nomes.length - 1}';
     }
-
     final nome = _readString(data, 'tipoEvento');
     if (nome.isNotEmpty) return nome;
-
     final slugs = _readStringList(data, 'tipoEventoSlugs');
     if (slugs.isNotEmpty) return _humanize(slugs.first);
-
-    final ids = _readStringList(data, 'tipoEventoIds');
-    if (ids.isNotEmpty) return 'Múltiplos eventos';
-
-    return '';
+    return _readStringList(data, 'tipoEventoIds').isNotEmpty ? 'Múltiplos' : '';
   }
 
   String _descricao(Map<String, dynamic> data) {
@@ -1108,16 +992,11 @@ class _InspiracaoAdminCard extends StatelessWidget {
     return inspiracao.tags.map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
   }
 
-  String _readString(Map<String, dynamic> data, String key) {
-    final value = data[key];
-    if (value == null) return '';
-    return value.toString().trim();
-  }
+  String _readString(Map<String, dynamic> data, String key) => data[key]?.toString().trim() ?? '';
 
   List<String> _readStringList(Map<String, dynamic> data, String key) {
     final value = data[key];
     if (value == null) return <String>[];
-
     if (value is List) {
       return value
           .map((e) => e?.toString().trim() ?? '')
@@ -1125,26 +1004,26 @@ class _InspiracaoAdminCard extends StatelessWidget {
           .toSet()
           .toList();
     }
-
     final text = value.toString().trim();
-    if (text.isEmpty) return <String>[];
-
-    return text
-        .split(RegExp(r'[,;|]'))
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toSet()
-        .toList();
+    return text.isEmpty
+        ? <String>[]
+        : text
+            .split(RegExp(r'[,;|]'))
+            .map((e) => e.trim())
+            .where((e) => e.isNotEmpty)
+            .toSet()
+            .toList();
   }
 
   String _humanize(String value) {
     final clean = value.replaceAll(RegExp(r'[_-]+'), ' ').trim();
-    if (clean.isEmpty) return '';
-    return clean
-        .split(' ')
-        .where((part) => part.trim().isNotEmpty)
-        .map((part) => part[0].toUpperCase() + part.substring(1).toLowerCase())
-        .join(' ');
+    return clean.isEmpty
+        ? ''
+        : clean
+            .split(' ')
+            .where((part) => part.trim().isNotEmpty)
+            .map((part) => part[0].toUpperCase() + part.substring(1).toLowerCase())
+            .join(' ');
   }
 }
 
@@ -1153,48 +1032,39 @@ class _ResumoInfo {
   final int valor;
   final IconData icon;
   final Color color;
-
-  const _ResumoInfo({
-    required this.titulo,
-    required this.valor,
-    required this.icon,
-    required this.color,
-  });
+  const _ResumoInfo(
+      {required this.titulo, required this.valor, required this.icon, required this.color});
 }
 
 class _ResumoCard extends StatelessWidget {
   final _ResumoInfo info;
-
   const _ResumoCard({required this.info});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.035),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4))
         ],
       ),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
+            width: 34,
+            height: 34,
             decoration: BoxDecoration(
-              color: info.color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(info.icon, color: info.color, size: 22),
+                color: info.color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10)),
+            child: Icon(info.icon, color: info.color, size: 16),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -1203,24 +1073,19 @@ class _ResumoCard extends StatelessWidget {
                 Text(
                   '${info.valor}',
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
-                    color: _InspiracaoAdminPageState._dark,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 20,
-                    height: 1,
-                  ),
+                      color: _InspiracaoAdminPageState._dark,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 16,
+                      height: 1),
                 ),
-                const SizedBox(height: 5),
                 Text(
                   info.titulo,
                   maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
-                    color: _InspiracaoAdminPageState._muted,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11.5,
-                  ),
+                      color: _InspiracaoAdminPageState._muted,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10),
                 ),
               ],
             ),
@@ -1238,49 +1103,43 @@ class _FiltroDropdown extends StatelessWidget {
   final ValueChanged<String?> onChanged;
   final String Function(String value)? labelBuilder;
 
-  const _FiltroDropdown({
-    required this.label,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-    this.labelBuilder,
-  });
+  const _FiltroDropdown(
+      {required this.label,
+      required this.value,
+      required this.items,
+      required this.onChanged,
+      this.labelBuilder});
 
   @override
   Widget build(BuildContext context) {
     final effectiveItems = items.isEmpty ? <String>[value] : items;
     final effectiveValue = effectiveItems.contains(value) ? value : effectiveItems.first;
 
-    return DropdownButtonFormField<String>(
-      value: effectiveValue,
-      isExpanded: true,
-      items: effectiveItems.map((item) {
-        final text = labelBuilder?.call(item) ?? item;
-        return DropdownMenuItem<String>(
-          value: item,
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-        );
-      }).toList(),
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        labelText: label,
-        filled: true,
-        fillColor: _InspiracaoAdminPageState._surface,
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
+    return SizedBox(
+      height: 38, // Fixo para ficar compacto junto do botão e input
+      child: DropdownButtonFormField<String>(
+        value: effectiveValue,
+        isExpanded: true,
+        icon: const Icon(Icons.expand_more_rounded, size: 18),
+        items: effectiveItems
+            .map((item) => DropdownMenuItem<String>(
+                value: item,
+                child: Text(labelBuilder?.call(item) ?? item,
+                    maxLines: 1, overflow: TextOverflow.ellipsis)))
+            .toList(),
+        onChanged: onChanged,
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.poppins(fontSize: 11),
+          filled: true,
+          fillColor: _InspiracaoAdminPageState._surface,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0), // Mais justo
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
         ),
-      ),
-      style: GoogleFonts.poppins(
-        color: _InspiracaoAdminPageState._dark,
-        fontSize: 12.5,
-        fontWeight: FontWeight.w700,
+        style: GoogleFonts.poppins(
+            color: _InspiracaoAdminPageState._dark, fontSize: 11.5, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -1292,12 +1151,8 @@ class _StatusBadge extends StatelessWidget {
   final IconData icon;
   final bool onImage;
 
-  const _StatusBadge({
-    required this.label,
-    required this.color,
-    required this.icon,
-    this.onImage = false,
-  });
+  const _StatusBadge(
+      {required this.label, required this.color, required this.icon, this.onImage = false});
 
   @override
   Widget build(BuildContext context) {
@@ -1305,29 +1160,18 @@ class _StatusBadge extends StatelessWidget {
     final border = onImage ? Colors.white.withValues(alpha: 0.65) : color.withValues(alpha: 0.12);
 
     return Container(
-      constraints: const BoxConstraints(maxWidth: 170),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: border),
-      ),
+          color: bg, borderRadius: BorderRadius.circular(6), border: Border.all(color: border)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: color),
+          Icon(icon, size: 10, color: color),
           const SizedBox(width: 4),
           Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                color: color,
-                fontSize: 10.5,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
+            child: Text(label,
+                maxLines: 1,
+                style: GoogleFonts.poppins(color: color, fontSize: 9, fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -1338,7 +1182,6 @@ class _StatusBadge extends StatelessWidget {
 class _SmallMeta extends StatelessWidget {
   final IconData icon;
   final String text;
-
   const _SmallMeta({required this.icon, required this.text});
 
   @override
@@ -1346,20 +1189,16 @@ class _SmallMeta extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 15, color: _InspiracaoAdminPageState._primary),
-        const SizedBox(width: 5),
+        Icon(icon, size: 12, color: _InspiracaoAdminPageState._primary),
+        const SizedBox(width: 4),
         Flexible(
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              color: _InspiracaoAdminPageState._muted,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
+            child: Text(text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                    color: _InspiracaoAdminPageState._muted,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600))),
       ],
     );
   }
@@ -1371,12 +1210,8 @@ class _CardAction extends StatelessWidget {
   final Color color;
   final VoidCallback onPressed;
 
-  const _CardAction({
-    required this.tooltip,
-    required this.icon,
-    required this.color,
-    required this.onPressed,
-  });
+  const _CardAction(
+      {required this.tooltip, required this.icon, required this.color, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -1384,14 +1219,14 @@ class _CardAction extends StatelessWidget {
       message: tooltip,
       child: Material(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(10),
         child: InkWell(
           onTap: onPressed,
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(10),
           child: SizedBox(
-            width: 38,
-            height: 36,
-            child: Icon(icon, color: color, size: 20),
+            width: 28, // Super compacto
+            height: 28,
+            child: Icon(icon, color: color, size: 15),
           ),
         ),
       ),
@@ -1401,32 +1236,23 @@ class _CardAction extends StatelessWidget {
 
 class _InspiracaoImage extends StatelessWidget {
   final String url;
-
   const _InspiracaoImage({required this.url});
 
   @override
   Widget build(BuildContext context) {
-    if (url.trim().isEmpty) {
-      return const _ImageFallback();
-    }
-
+    if (url.trim().isEmpty) return const _ImageFallback();
     return Image.network(
       url,
       fit: BoxFit.cover,
       width: double.infinity,
       height: double.infinity,
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return Container(
-          color: const Color(0xFFFFF1F5),
-          alignment: Alignment.center,
-          child: const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2.4),
-          ),
-        );
-      },
+      loadingBuilder: (context, child, p) => p == null
+          ? child
+          : Container(
+              color: const Color(0xFFFFF1F5),
+              alignment: Alignment.center,
+              child: const SizedBox(
+                  width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))),
       errorBuilder: (_, __, ___) => const _ImageFallback(),
     );
   }
@@ -1434,33 +1260,22 @@ class _InspiracaoImage extends StatelessWidget {
 
 class _ImageFallback extends StatelessWidget {
   const _ImageFallback();
-
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFFFF1F5),
-            Color(0xFFFFEDD5),
-          ],
-        ),
-      ),
+          gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFFF1F5), Color(0xFFFFEDD5)])),
       child: Center(
         child: Container(
-          width: 54,
-          height: 54,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.75),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: const Icon(
-            Icons.image_outlined,
-            color: _InspiracaoAdminPageState._primary,
-            size: 28,
-          ),
+              color: Colors.white.withValues(alpha: 0.75), borderRadius: BorderRadius.circular(14)),
+          child:
+              const Icon(Icons.image_outlined, color: _InspiracaoAdminPageState._primary, size: 20),
         ),
       ),
     );
@@ -1472,110 +1287,48 @@ class _EmptyState extends StatelessWidget {
   final VoidCallback onLimparFiltros;
   final VoidCallback onCriar;
 
-  const _EmptyState({
-    required this.possuiFiltros,
-    required this.onLimparFiltros,
-    required this.onCriar,
-  });
+  const _EmptyState(
+      {required this.possuiFiltros, required this.onLimparFiltros, required this.onCriar});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 24, 22, 120),
+      padding: const EdgeInsets.all(22),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 430),
-          child: Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.04),
-                  blurRadius: 20,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: _InspiracaoAdminPageState._primary.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(26),
-                  ),
-                  child: Icon(
-                    possuiFiltros ? Icons.filter_alt_off_rounded : Icons.auto_awesome_rounded,
-                    color: _InspiracaoAdminPageState._primary,
-                    size: 34,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  possuiFiltros ? 'Nenhuma inspiração encontrada' : 'Nenhuma inspiração cadastrada',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
+          constraints: const BoxConstraints(maxWidth: 400),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(possuiFiltros ? Icons.filter_alt_off_rounded : Icons.auto_awesome_rounded,
+                  color: _InspiracaoAdminPageState._primary, size: 40),
+              const SizedBox(height: 16),
+              Text(
+                possuiFiltros ? 'Nenhuma inspiração' : 'Comece a inspirar!',
+                style: GoogleFonts.poppins(
                     color: _InspiracaoAdminPageState._dark,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 18,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  possuiFiltros
-                      ? 'Tente ajustar os filtros ou limpar a busca para visualizar outras ideias cadastradas.'
-                      : 'Cadastre as primeiras inspirações públicas para alimentar a aba de ideias do app Faça a Festa.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    color: _InspiracaoAdminPageState._muted,
-                    fontSize: 13,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 10,
-                  runSpacing: 10,
-                  children: [
-                    if (possuiFiltros)
-                      OutlinedButton.icon(
-                        onPressed: onLimparFiltros,
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: _InspiracaoAdminPageState._primary,
-                          side: BorderSide(
-                            color: _InspiracaoAdminPageState._primary.withValues(alpha: 0.34),
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        ),
-                        icon: const Icon(Icons.filter_alt_off_rounded),
-                        label: const Text('Limpar filtros'),
-                      ),
-                    FilledButton.icon(
-                      onPressed: onCriar,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: _InspiracaoAdminPageState._primary,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      ),
-                      icon: const Icon(Icons.add_rounded),
-                      label: const Text('Nova inspiração'),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                possuiFiltros
+                    ? 'Ajuste os filtros de busca.'
+                    : 'Cadastre ideias para ajudar os usuários do app.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(color: _InspiracaoAdminPageState._muted, fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: possuiFiltros ? onLimparFiltros : onCriar,
+                style: FilledButton.styleFrom(
+                    backgroundColor: _InspiracaoAdminPageState._primary,
+                    foregroundColor: Colors.white),
+                icon: Icon(possuiFiltros ? Icons.filter_alt_off_rounded : Icons.add_rounded,
+                    size: 18),
+                label: Text(possuiFiltros ? 'Limpar filtros' : 'Nova inspiração'),
+              ),
+            ],
           ),
         ),
       ),
@@ -1585,40 +1338,16 @@ class _EmptyState extends StatelessWidget {
 
 class _InspiracaoAdminLoadingState extends StatelessWidget {
   const _InspiracaoAdminLoadingState();
-
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 76,
-            height: 76,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 22,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: const Padding(
-              padding: EdgeInsets.all(22),
-              child: CircularProgressIndicator(strokeWidth: 3),
-            ),
-          ),
+          const CircularProgressIndicator(),
           const SizedBox(height: 16),
-          Text(
-            'Carregando inspirações...',
-            style: GoogleFonts.poppins(
-              color: _InspiracaoAdminPageState._muted,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text('Carregando...',
+              style: GoogleFonts.poppins(color: _InspiracaoAdminPageState._muted, fontSize: 12)),
         ],
       ),
     );

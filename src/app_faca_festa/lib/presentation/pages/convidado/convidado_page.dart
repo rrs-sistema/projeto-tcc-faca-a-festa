@@ -156,8 +156,8 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
                   ),
                   tabs: const [
                     Tab(icon: Icon(Icons.groups_rounded, size: 18), text: 'Grupos'),
-                    Tab(icon: Icon(Icons.table_restaurant_rounded, size: 18), text: 'Mesas'),
                     Tab(icon: Icon(Icons.restaurant_menu_rounded, size: 18), text: 'Cardápio'),
+                    Tab(icon: Icon(Icons.table_restaurant_rounded, size: 18), text: 'Mesas'),
                     Tab(icon: Icon(Icons.query_stats_rounded, size: 18), text: 'Status'),
                   ],
                 ),
@@ -173,8 +173,8 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
                 controller: _tabController,
                 children: const [
                   GruposTab(),
-                  MesasTab(),
                   CardapiosTab(),
+                  MesasTab(),
                   EstatisticasTab(),
                 ],
               ),
@@ -222,7 +222,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
     return Obx(() {
       final aba = abaSelecionada.value;
 
-      if (aba == 2) {
+      if (aba == 1) {
         return FloatingActionButton.extended(
           heroTag: 'btnNovoCardapio',
           backgroundColor: primary,

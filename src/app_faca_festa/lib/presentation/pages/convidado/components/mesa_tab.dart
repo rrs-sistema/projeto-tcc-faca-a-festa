@@ -13,78 +13,44 @@ import './../../../../data/models/model.dart';
 class MesasTab extends StatelessWidget {
   const MesasTab({super.key});
 
-  GrupoConvidadoModel? _buscarGrupoPorNome(
-    Iterable<GrupoConvidadoModel> grupos,
-    String nome,
-  ) {
+  GrupoConvidadoModel? _buscarGrupoPorNome(Iterable<GrupoConvidadoModel> grupos, String nome) {
     final nomeNormalizado = nome.trim().toLowerCase();
-
     for (final grupo in grupos) {
-      if (grupo.nome.trim().toLowerCase() == nomeNormalizado) {
-        return grupo;
-      }
+      if (grupo.nome.trim().toLowerCase() == nomeNormalizado) return grupo;
     }
-
     return null;
   }
 
-  int _resolverAssentosMesa({
-    required GrupoConvidadoModel? grupoAtual,
-    required int quantidadeConvidados,
-    required int ocupados,
-  }) {
-    // Como o novo GrupoConvidadoModel não possui mais numeroMesa,
-    // a capacidade real deve vir futuramente de MesaEventoModel.
-    // Enquanto isso, usamos uma capacidade mínima segura para exibição.
+  int _resolverAssentosMesa(
+      {required GrupoConvidadoModel? grupoAtual,
+      required int quantidadeConvidados,
+      required int ocupados}) {
     const capacidadePadraoMesa = 5;
-
     final totalGrupo = grupoAtual?.totalConvidados ?? 0;
     var capacidade = totalGrupo > 0 ? totalGrupo : quantidadeConvidados;
-
-    if (capacidade < capacidadePadraoMesa) {
-      capacidade = capacidadePadraoMesa;
-    }
-
-    if (capacidade < ocupados) {
-      capacidade = ocupados;
-    }
-
+    if (capacidade < capacidadePadraoMesa) capacidade = capacidadePadraoMesa;
+    if (capacidade < ocupados) capacidade = ocupados;
     return capacidade;
   }
 
-  Map<String, dynamic> _montarEstatisticasMesas({
-    required Map<String, List<ConvidadoModel>> grupos,
-    required GrupoConvidadoController grupoController,
-  }) {
-    var totalAssentos = 0;
-    var totalOcupados = 0;
-
+  Map<String, dynamic> _montarEstatisticasMesas(
+      {required Map<String, List<ConvidadoModel>> grupos,
+      required GrupoConvidadoController grupoController}) {
+    var totalAssentos = 0, totalOcupados = 0;
     for (final entry in grupos.entries) {
-      final nomeMesa = entry.key;
-      final convidados = entry.value;
-
-      final ocupados = convidados.where((c) => c.status == StatusConvidado.confirmado).length;
-
-      final grupoAtual = _buscarGrupoPorNome(
-        grupoController.grupos,
-        nomeMesa,
-      );
-
+      final ocupados = entry.value.where((c) => c.status == StatusConvidado.confirmado).length;
       final assentos = _resolverAssentosMesa(
-        grupoAtual: grupoAtual,
-        quantidadeConvidados: convidados.length,
-        ocupados: ocupados,
-      );
-
+          grupoAtual: _buscarGrupoPorNome(grupoController.grupos, entry.key),
+          quantidadeConvidados: entry.value.length,
+          ocupados: ocupados);
       totalAssentos += assentos;
       totalOcupados += ocupados;
     }
-
     return {
       'totalMesas': grupos.length,
       'assentos': totalAssentos,
       'ocupados': totalOcupados,
-      'livres': totalAssentos - totalOcupados,
+      'livres': totalAssentos - totalOcupados
     };
   }
 
@@ -97,44 +63,23 @@ class MesasTab extends StatelessWidget {
 
     return Obx(() {
       final grupos = controller.convidadosPorMesa;
-      final estat = _montarEstatisticasMesas(
-        grupos: grupos,
-        grupoController: grupoController,
-      );
+      final estat = _montarEstatisticasMesas(grupos: grupos, grupoController: grupoController);
 
-      if (controller.carregando.value) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
+      if (controller.carregando.value) return const Center(child: CircularProgressIndicator());
       if (grupos.isEmpty) {
         return Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.event_seat_rounded,
-                color: primary.withValues(alpha: 0.6),
-                size: 46,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                "Nenhuma mesa cadastrada",
-                style: GoogleFonts.poppins(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w600,
-                  color: primary.withValues(alpha: 0.85),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Adicione mesas para começar a organizar\nseu evento com mais facilidade.',
-                style: GoogleFonts.poppins(
-                  color: Colors.grey.shade700,
-                  fontSize: 13,
-                  height: 1.4,
-                ),
-                textAlign: TextAlign.center,
-              ),
+              Icon(Icons.event_seat_rounded, color: primary.withValues(alpha: 0.6), size: 36),
+              const SizedBox(height: 10),
+              Text("Nenhuma mesa",
+                  style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: primary.withValues(alpha: 0.85))),
+              Text('Adicione mesas.',
+                  style: GoogleFonts.poppins(color: Colors.grey.shade700, fontSize: 11)),
             ],
           ),
         );
@@ -142,76 +87,44 @@ class MesasTab extends StatelessWidget {
 
       return Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFFFFFF), Color(0xFFFFF9F9)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+            gradient: LinearGradient(
+                colors: [Color(0xFFFFFFFF), Color(0xFFFFF9F9)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter)),
         child: ListView(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.all(12),
           children: [
-            const SizedBox(height: 10),
             const Center(
-              child: Text(
-                "🍷 Disposição das Mesas",
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // 🔹 Mesas dinâmicas -- Amigos da Faculdade
+                child: Text("🍷 Mesas",
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87))),
+            const SizedBox(height: 12),
             ...grupos.entries.map((entry) {
               final nome = entry.key;
               final convidados = entry.value;
-
-              // 🔹 Convidados confirmados
               final ocupados =
                   convidados.where((c) => c.status == StatusConvidado.confirmado).length;
-
-              // 🔹 Busca o grupo relacionado apenas para usar os totais do novo modelo.
-              // O GrupoConvidadoModel não possui mais numeroMesa.
-              final grupoAtual = _buscarGrupoPorNome(
-                grupoController.grupos,
-                nome,
-              );
-
-              // 🔹 Quantidade de assentos da mesa.
-              // Enquanto não existir MesaEventoModel nesta tela, usamos uma
-              // capacidade mínima segura e os totais do grupo/convidados.
               final assentos = _resolverAssentosMesa(
-                grupoAtual: grupoAtual,
-                quantidadeConvidados: convidados.length,
-                ocupados: ocupados,
-              );
-
-              // 🔹 Cor gerada baseada no nome da mesa (estável)
+                  grupoAtual: _buscarGrupoPorNome(grupoController.grupos, nome),
+                  quantidadeConvidados: convidados.length,
+                  ocupados: ocupados);
               final color = Biblioteca.gerarCorPorChaves([nome]);
-
               return _MesaCard(
-                nome: nome,
-                assentos: assentos,
-                ocupados: ocupados,
-                color: color,
-                icon: Icons.chair,
-                convidados: convidados
-                    .map((c) => _ConvidadoItem(
-                          nome: c.nome,
-                          confirmado: c.status == StatusConvidado.confirmado,
-                        ))
-                    .toList(),
-              );
+                  nome: nome,
+                  assentos: assentos,
+                  ocupados: ocupados,
+                  color: color,
+                  icon: Icons.chair,
+                  convidados: convidados
+                      .map((c) => _ConvidadoItem(
+                          nome: c.nome, confirmado: c.status == StatusConvidado.confirmado))
+                      .toList());
             }),
-
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             _ResumoMesas(estat: estat),
-            const SizedBox(height: 32),
+            const SizedBox(height: 20),
             _GraficoMesas(estat: estat),
-            const SizedBox(height: 110),
+            const SizedBox(height: 80),
           ],
         ),
       );
@@ -222,94 +135,54 @@ class MesasTab extends StatelessWidget {
 class _ResumoMesas extends StatelessWidget {
   final Map<String, dynamic> estat;
   const _ResumoMesas({required this.estat});
-
   @override
   Widget build(BuildContext context) {
     final resumo = [
-      {"label": "Mesas totais", "value": estat['totalMesas'], "color": Colors.teal},
-      {"label": "Assentos totais", "value": estat['assentos'], "color": Colors.orange},
+      {"label": "Mesas", "value": estat['totalMesas'], "color": Colors.teal},
+      {"label": "Assentos", "value": estat['assentos'], "color": Colors.orange},
       {"label": "Ocupados", "value": estat['ocupados'], "color": Colors.pinkAccent},
-      {"label": "Livres", "value": estat['livres'], "color": Colors.blueAccent},
+      {"label": "Livres", "value": estat['livres'], "color": Colors.blueAccent}
     ];
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: Text(
-            "📊 Resumo geral das mesas",
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 18,
-              color: Colors.black87,
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
+            padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+            child: Text("📊 Resumo",
+                style:
+                    TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: Colors.black87))),
+        const SizedBox(height: 8),
         Wrap(
-          spacing: 14,
-          runSpacing: 14,
-          children: resumo
-              .map((r) => _metricCard(
-                    context,
-                    r["label"] as String,
-                    r["value"].toString(),
-                    r["color"] as Color,
-                  ))
-              .toList(),
-        ),
+            spacing: 8,
+            runSpacing: 8,
+            children: resumo
+                .map((r) => _metricCard(
+                    context, r["label"] as String, r["value"].toString(), r["color"] as Color))
+                .toList()),
       ],
     );
   }
 
   Widget _metricCard(BuildContext context, String label, String value, Color color) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final double cardWidth = (screenWidth / 2) - 28;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
+    final cardWidth = (MediaQuery.of(context).size.width / 2) - 16;
+    return Container(
       width: cardWidth,
-      padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      decoration:
+          BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: [
+        BoxShadow(color: color.withValues(alpha: 0.15), blurRadius: 6, offset: const Offset(0, 2))
+      ]),
+      child: Column(children: [
+        Text(value, style: TextStyle(color: color, fontSize: 18, fontWeight: FontWeight.bold)),
+        Text(label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
-              color: Colors.black87,
-            ),
-          ),
-        ],
-      ),
+            style:
+                const TextStyle(fontWeight: FontWeight.w500, fontSize: 11, color: Colors.black87))
+      ]),
     );
   }
 }
 
-/// === CARD de Mesa ===
 class _MesaCard extends StatelessWidget {
   final String nome;
   final int assentos;
@@ -317,73 +190,50 @@ class _MesaCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final List<Widget> convidados;
-  const _MesaCard({
-    required this.nome,
-    required this.assentos,
-    required this.ocupados,
-    required this.icon,
-    required this.color,
-    required this.convidados,
-  });
+  const _MesaCard(
+      {required this.nome,
+      required this.assentos,
+      required this.ocupados,
+      required this.icon,
+      required this.color,
+      required this.convidados});
   @override
   Widget build(BuildContext context) {
     final livres = (assentos - ocupados).clamp(0, assentos).toInt();
     final ocupacao = assentos <= 0 ? 0.0 : (ocupados / assentos).clamp(0.0, 1.0).toDouble();
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      curve: Curves.easeOutCubic,
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.15),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration:
+          BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14), boxShadow: [
+        BoxShadow(color: color.withValues(alpha: 0.1), blurRadius: 6, offset: const Offset(0, 2))
+      ]),
       child: ExpansionTile(
         backgroundColor: Colors.white,
+        tilePadding: const EdgeInsets.symmetric(horizontal: 12),
         leading: CircleAvatar(
-          backgroundColor: color.withValues(alpha: 0.15),
-          child: Icon(icon, color: color),
-        ),
-        title: Text(
-          nome,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: color,
-            fontSize: 16,
-          ),
-        ),
-        subtitle: Row(
-          children: [
-            Text(
-              "$livres assentos livres",
-              style: const TextStyle(color: Colors.black54, fontSize: 13),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
+            radius: 16,
+            backgroundColor: color.withValues(alpha: 0.15),
+            child: Icon(icon, color: color, size: 16)),
+        title:
+            Text(nome, style: TextStyle(fontWeight: FontWeight.w600, color: color, fontSize: 14)),
+        subtitle: Row(children: [
+          Text("$livres livres", style: const TextStyle(color: Colors.black54, fontSize: 11)),
+          const SizedBox(width: 8),
+          Expanded(
               child: LinearProgressIndicator(
-                value: ocupacao.toDouble(),
-                color: color,
-                backgroundColor: Colors.grey.shade200,
-                minHeight: 5,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ],
-        ),
-        childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  value: ocupacao.toDouble(),
+                  color: color,
+                  backgroundColor: Colors.grey.shade200,
+                  minHeight: 4,
+                  borderRadius: BorderRadius.circular(4)))
+        ]),
+        childrenPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         children: convidados,
       ),
     );
   }
 }
 
-/// === ITEM Convidado ===
 class _ConvidadoItem extends StatelessWidget {
   final String nome;
   final bool confirmado;
@@ -392,31 +242,24 @@ class _ConvidadoItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       dense: true,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-      leading: Icon(
-        confirmado ? Icons.event_available : Icons.event_busy,
-        color: confirmado ? Colors.teal : Colors.redAccent,
-      ),
-      title: Text(
-        nome,
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-          color: confirmado ? Colors.black87 : Colors.black54,
-        ),
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+      leading: Icon(confirmado ? Icons.event_available : Icons.event_busy,
+          color: confirmado ? Colors.teal : Colors.redAccent, size: 18),
+      title: Text(nome,
+          style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: confirmado ? Colors.black87 : Colors.black54)),
       trailing: confirmado
-          ? const Icon(Icons.check_circle, color: Colors.teal, size: 18)
-          : const Icon(Icons.hourglass_empty, color: Colors.redAccent, size: 18),
+          ? const Icon(Icons.check_circle, color: Colors.teal, size: 14)
+          : const Icon(Icons.hourglass_empty, color: Colors.redAccent, size: 14),
     );
   }
 }
 
-/// === GRÁFICO das MESAS (Dinâmico) ===
 class _GraficoMesas extends StatelessWidget {
   final Map<String, dynamic> estat;
   const _GraficoMesas({required this.estat});
-
   @override
   Widget build(BuildContext context) {
     final totalAssentos = (estat['assentos'] ?? 0).toDouble();
@@ -425,80 +268,43 @@ class _GraficoMesas extends StatelessWidget {
 
     if (totalAssentos == 0) {
       return const Padding(
-        padding: EdgeInsets.all(24),
-        child: Center(
-          child: Text(
-            'Ainda não há dados suficientes para gerar o gráfico.',
-            style: TextStyle(color: Colors.black54, fontSize: 15),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      );
+          padding: EdgeInsets.all(16),
+          child: Center(
+              child: Text('Sem dados suficientes.',
+                  style: TextStyle(color: Colors.black54, fontSize: 12))));
     }
-
-    final ocupadosPercent = totalOcupados / totalAssentos;
-    final livresPercent = totalLivres / totalAssentos;
 
     return Column(
       children: [
-        const SizedBox(height: 20),
-        const Text(
-          "🪑 Distribuição dos Assentos",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
+        const Text("🪑 Assentos",
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700, color: Colors.black87)),
+        const SizedBox(height: 12),
         SizedBox(
-          height: 240,
-          child: PieChart(
-            PieChartData(
-              sectionsSpace: 3,
-              centerSpaceRadius: 55,
-              sections: [
-                _pieSection("Ocupados", ocupadosPercent, Colors.teal),
-                _pieSection("Livres", livresPercent, Colors.orangeAccent),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 20),
+            height: 180,
+            child: PieChart(PieChartData(sectionsSpace: 2, centerSpaceRadius: 40, sections: [
+              _pieSection("Ocupados", totalOcupados / totalAssentos, Colors.teal),
+              _pieSection("Livres", totalLivres / totalAssentos, Colors.orangeAccent)
+            ]))),
+        const SizedBox(height: 12),
         _graficoLegenda("Ocupados (${totalOcupados.toInt()})", Colors.teal),
         _graficoLegenda("Livres (${totalLivres.toInt()})", Colors.orangeAccent),
+        const SizedBox(height: 35),
       ],
     );
   }
 
-  PieChartSectionData _pieSection(String label, double percent, Color color) {
-    return PieChartSectionData(
+  PieChartSectionData _pieSection(String label, double percent, Color color) => PieChartSectionData(
       color: color,
       value: percent,
       title: "${(percent * 100).toStringAsFixed(0)}%",
-      radius: 70,
-      titleStyle: const TextStyle(
-        color: Colors.white,
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-
-  Widget _graficoLegenda(String label, Color color) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.circle, color: color, size: 12),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 13, color: Colors.black87),
-          ),
-        ],
-      ),
-    );
-  }
+      radius: 50,
+      titleStyle: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold));
+  Widget _graficoLegenda(String label, Color color) => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Icon(Icons.circle, color: color, size: 10),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(fontSize: 11, color: Colors.black87))
+      ]));
 }

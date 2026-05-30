@@ -1,4 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
@@ -7,9 +8,6 @@ import 'package:get/get.dart';
 
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/evento_cadastro_controller.dart';
-import './../../widgets/button/botao_cancelar.dart';
-import './../../widgets/button/botao_salvar.dart';
-import './../../widgets/custom_input_field.dart';
 import './../endereco/endereco_section.dart';
 import './evento_preview_titulo_widget.dart';
 import './../../../data/models/model.dart';
@@ -21,21 +19,17 @@ Future<void> showCadastroEventoBottomSheet(
 }) async {
   final controller = Get.find<EventoCadastroController>();
   final theme = Get.find<EventThemeController>();
-  EasyLoading.show(status: 'Carregando informações...');
-  // 🔹 Carrega tipos de evento antes de abrir o formulário
+  EasyLoading.show(status: 'A carregar informações...');
 
   await controller.carregarTiposEvento();
 
-  // 🔹 Se estiver editando, carrega os dados do evento
   if (eventoParaEdicao != null) {
     controller.carregarEvento(eventoParaEdicao);
   } else {
-    controller.limpar(manterEndereco: true); // 👈 mantém o endereço que você setou antes
+    controller.limpar(manterEndereco: true);
   }
 
-  // 🔹 Define cores baseadas no tipo atual (ou padrão)
-  Color corPrincipal = theme.primaryColor.value;
-  Color corSecundaria = theme.secondaryColor.value.withValues(alpha: 0.03);
+  final primary = theme.primaryColor.value;
 
   final tipoNormalizado = controller.tipoEventoModel.value?.nome
           .toLowerCase()
@@ -44,99 +38,110 @@ Future<void> showCadastroEventoBottomSheet(
       '';
 
   EasyLoading.dismiss();
-  // ===============================
-  // 🔹 ABRE O BOTTOM SHEET
-  // ===============================
+
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: theme.primaryColor.value,
+    backgroundColor: Colors.transparent,
     builder: (context) {
       return FractionallySizedBox(
-        heightFactor: 0.92,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                corSecundaria.withValues(alpha: 0.9),
-                Colors.white,
-                corPrincipal.withValues(alpha: 0.05),
-              ],
-              stops: const [0.0, 0.6, 1.0],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        heightFactor: 0.90, // Altura ideal para o teclado e visibilidade
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: SafeArea(
             top: false,
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 14,
-                right: 14,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-              ),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Form(
-                  key: controller.formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            child: Column(
+              children: [
+                // 🔹 Cabeçalho Compacto
+                Center(
+                  child: Container(
+                    margin: const EdgeInsets.only(top: 12, bottom: 8),
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
                     children: [
-                      const SizedBox(height: 16),
-                      Center(
-                        child: Container(
-                          width: 60,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Icon(Icons.celebration_rounded, color: primary, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              controller.isEditando ? 'Editar Evento' : 'Novo Evento',
+                              style: GoogleFonts.poppins(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF111827),
+                              ),
+                            ),
+                            Text(
+                              'Preencha as informações da festa.',
+                              style: GoogleFonts.poppins(
+                                fontSize: 11,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      Obx(() => EventoPreviewTituloWidget(
-                            tipoEvento: tipoNormalizado,
-                            nomeEvento: controller.nomeEventoPreview.value,
-                            corPrincipal: corPrincipal,
-                          )),
-                      ..._buildCamposPorTipo(
-                        corPrincipal,
-                        controller,
-                        eventoParaEdicao,
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Icons.close_rounded, size: 22),
+                        onPressed: () => Get.back(),
                       ),
-                      const SizedBox(height: 32),
-                      Obx(() => Column(
-                            children: [
-                              BotaoSalvar(
-                                texto: controller.isEditando
-                                    ? 'Atualizar evento'
-                                    : 'Salvar e continuar',
-                                icon: Icon(
-                                  controller.isEditando
-                                      ? Icons.update_rounded
-                                      : Icons.check_circle_rounded,
-                                  color: Colors.white,
-                                  size: 26,
-                                ),
-                                onPressed: () async {
-                                  if (!controller.carregando.value) {
-                                    EasyLoading.show(status: 'Processando...');
-                                    await controller.salvarEvento();
-                                    EasyLoading.dismiss();
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 20),
-                              BotaoCancelar(texto: 'Fechar', onPressed: () => Get.back()),
-                            ],
-                          )),
                     ],
                   ),
                 ),
-              ),
+                Divider(color: Colors.grey.shade200, height: 1),
+
+                // 🔹 Formulário Rolável
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: EdgeInsets.only(
+                      left: 10,
+                      right: 10,
+                      top: 10,
+                      bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+                    ),
+                    child: Form(
+                      key: controller.formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Obx(() => EventoPreviewTituloWidget(
+                                tipoEvento: tipoNormalizado,
+                                nomeEvento: controller.nomeEventoPreview.value,
+                                corPrincipal: primary,
+                              )),
+                          const SizedBox(height: 10),
+                          ..._buildCamposPorTipo(primary, controller, eventoParaEdicao, context),
+                          const SizedBox(height: 10),
+                          _buildAcoes(primary, controller),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -145,297 +150,412 @@ Future<void> showCadastroEventoBottomSheet(
   );
 }
 
+// ============================================================================
+// 🔹 Geração Condicional de Campos
+// ============================================================================
 List<Widget> _buildCamposPorTipo(
-  Color corPrincipal,
+  Color primary,
   EventoCadastroController controller,
   EventoModel? eventoParaEdicao,
+  BuildContext context,
 ) {
   final tipoNormalizado = controller.tipoEventoModel.value?.nome
       .toLowerCase()
       .replaceAll(RegExp(r'[^a-zá-úà-ùãõâêîôûç\s]'), '')
       .trim();
+
   return [
-    CustomInputField(
-      label: "Título do evento",
-      icon: Icons.celebration,
-      controller: controller.nomeEvento,
-      color: corPrincipal,
-      titleColor: corPrincipal,
-      validator: (v) => v == null || v.trim().isEmpty ? "Informe o nome do evento" : null,
-      onChanged: (p0) {
-        controller.nomeEventoPreview.value = p0;
-        controller.atualizarPreview();
-      },
-      //(_) => controller.atualizarPreview(),
+    _SectionCard(
+      title: 'Informações Básicas',
+      icon: Icons.info_outline_rounded,
+      child: Column(
+        children: [
+          _CompactInputField(
+            label: "Título do evento",
+            icon: Icons.celebration_rounded,
+            controller: controller.nomeEvento,
+            validator: (v) => v == null || v.trim().isEmpty ? "Obrigatório" : null,
+            onChanged: (p0) {
+              controller.nomeEventoPreview.value = p0;
+              controller.atualizarPreview();
+            },
+          ),
+          if (tipoNormalizado == 'aniversario' || tipoNormalizado == 'aniversário') ...[
+            const SizedBox(height: 8),
+            _CompactInputField(
+              label: "Nome do(a) aniversariante",
+              icon: Icons.cake_rounded,
+              controller: controller.nomePessoalPrincipal,
+              validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+              onChanged: (_) => controller.atualizarPreview(),
+            ),
+          ],
+          if (tipoNormalizado == 'formatura' || tipoNormalizado == 'eventoformatura') ...[
+            const SizedBox(height: 8),
+            _CompactInputField(
+              label: "Nome do(a) formando(a)",
+              icon: Icons.school_rounded,
+              controller: controller.nomePessoalPrincipal,
+              validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+              onChanged: (_) => controller.atualizarPreview(),
+            ),
+          ],
+          if (tipoNormalizado == 'corporativo' || tipoNormalizado == 'eventocorporativo') ...[
+            const SizedBox(height: 8),
+            _CompactInputField(
+              label: "Empresa ou setor",
+              icon: Icons.business_rounded,
+              controller: controller.nomePessoalPrincipal,
+              validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+              onChanged: (_) => controller.atualizarPreview(),
+            ),
+          ],
+          if (tipoNormalizado == 'festainfantil') ...[
+            const SizedBox(height: 8),
+            _CompactInputField(
+              label: "Nome da criança",
+              icon: Icons.child_care_rounded,
+              controller: controller.nomeNoiva, // reaproveitado do modelo
+              validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+              onChanged: (_) => controller.atualizarPreview(),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 1,
+                  child: _CompactInputField(
+                    label: "Idade",
+                    icon: Icons.cake_rounded,
+                    controller: controller.idade,
+                    keyboardType: TextInputType.number,
+                    onChanged: (_) => controller.atualizarPreview(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  flex: 2,
+                  child: _CompactInputField(
+                    label: "Tema",
+                    icon: Icons.star_rounded,
+                    controller: controller.tema,
+                    onChanged: (_) => controller.atualizarPreview(),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
     ),
-
-    if (tipoNormalizado == 'aniversário' || tipoNormalizado == 'aniversario') ...[
-      CustomInputField(
-        label: "Nome do(a) aniversariante",
-        icon: Icons.cake_rounded,
-        controller: controller.nomePessoalPrincipal,
-        color: corPrincipal,
-        titleColor: corPrincipal,
-        validator: (v) => v!.isEmpty ? "Informe o nome do(a) aniversariante" : null,
-        onChanged: (_) => controller.atualizarPreview(),
-      ),
-    ],
-
-    if (tipoNormalizado == 'formatura' || tipoNormalizado == 'evento formatura') ...[
-      CustomInputField(
-        label: "Nome do(a) formando(a)",
-        icon: Icons.school_rounded,
-        controller: controller.nomePessoalPrincipal,
-        color: corPrincipal,
-        titleColor: corPrincipal,
-        validator: (v) => v!.isEmpty ? "Informe o nome do(a) formando(a)" : null,
-        onChanged: (_) => controller.atualizarPreview(),
-      ),
-    ],
-    if (tipoNormalizado == 'corporativo' || tipoNormalizado == 'evento corporativo') ...[
-      CustomInputField(
-        label: "Nome da empresa ou setor",
-        icon: Icons.business_rounded,
-        controller: controller.nomePessoalPrincipal,
-        color: corPrincipal,
-        titleColor: corPrincipal,
-        validator: (v) => v!.isEmpty ? "Informe o nome da empresa ou setor" : null,
-        onChanged: (_) => controller.atualizarPreview(),
-      ),
-    ],
-
-    if (tipoNormalizado == 'casamento') ...[
-      CustomInputField(
-        label: "Nome da noiva",
-        icon: Icons.female,
-        controller: controller.nomeNoiva,
-        color: corPrincipal,
-        titleColor: corPrincipal,
-        validator: (v) => v!.isEmpty ? "Informe o nome da noiva" : null,
-        onChanged: (_) => controller.atualizarPreview(),
-      ),
-      CustomInputField(
-        label: "Nome do noivo",
-        icon: Icons.male,
-        controller: controller.parceiro,
-        color: corPrincipal,
-        titleColor: corPrincipal,
-        validator: (v) => v!.isEmpty ? "Informe o nome do noivo" : null,
-        onChanged: (_) => controller.atualizarPreview(),
-      ),
-      const SizedBox(height: 12),
-      Divider(color: corPrincipal.withValues(alpha: 0.3)),
-      const SizedBox(height: 12),
-      Text("💡 Em resumo",
-          style: GoogleFonts.poppins(
-            color: corPrincipal,
-            fontWeight: FontWeight.w600,
-            fontSize: 16,
-          )),
-      const SizedBox(height: 12),
-      Obx(() => DropdownButtonFormField<String>(
-            value:
-                controller.tipoCerimonia.value.isNotEmpty ? controller.tipoCerimonia.value : null,
-            decoration: InputDecoration(
-              labelText: "Tipo de cerimônia",
-              labelStyle: GoogleFonts.poppins(color: corPrincipal),
-              prefixIcon: Icon(Icons.church, color: corPrincipal),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: corPrincipal, width: 1.5),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            items: const [
-              DropdownMenuItem(value: 'civil', child: Text('Civil')),
-              DropdownMenuItem(value: 'religiosa', child: Text('Religiosa')),
-              DropdownMenuItem(value: 'religiosa_civil', child: Text('Religiosa + Civil')),
-              DropdownMenuItem(value: 'simbolica', child: Text('Simbólica')),
-              DropdownMenuItem(value: 'ao_ar_livre', child: Text('Ao ar livre')),
-            ],
-            onChanged: (v) => controller.tipoCerimonia.value = v ?? '',
-            validator: (v) => v == null || v.isEmpty ? "Selecione o tipo de cerimônia" : null,
-          )),
-
-      const SizedBox(height: 10),
-      Divider(color: corPrincipal.withValues(alpha: 0.3)),
-      const SizedBox(height: 10),
-
-      // === Estilo do casamento (com opções pré-definidas)
-      Obx(() => DropdownButtonFormField<String>(
-            value: controller.estiloCasamento.value.isNotEmpty
-                ? controller.estiloCasamento.value
-                : null,
-            decoration: InputDecoration(
-              labelText: "Estilo do casamento",
-              labelStyle: GoogleFonts.poppins(color: corPrincipal),
-              prefixIcon: Icon(Icons.palette, color: corPrincipal),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(color: corPrincipal, width: 1.5),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            items: const [
-              DropdownMenuItem(value: 'classico', child: Text('Clássico')),
-              DropdownMenuItem(value: 'rustico', child: Text('Rústico')),
-              DropdownMenuItem(value: 'praia', child: Text('Praia')),
-              DropdownMenuItem(value: 'campo', child: Text('Campo')),
-              DropdownMenuItem(value: 'boho', child: Text('Boho')),
-              DropdownMenuItem(value: 'moderno', child: Text('Moderno')),
-              DropdownMenuItem(value: 'industrial', child: Text('Industrial')),
-              DropdownMenuItem(value: 'minimalista', child: Text('Minimalista')),
-            ],
-            onChanged: (v) => controller.estiloCasamento.value = v ?? '',
-            validator: (v) => v == null || v.isEmpty ? "Selecione o estilo do casamento" : null,
-          )),
-
-      const SizedBox(height: 8),
-      _buildCampoPadrinhos(corPrincipal, controller),
-      const SizedBox(height: 10),
-    ],
-
-    if (tipoNormalizado == 'festa infantil') ...[
-      CustomInputField(
-        label: "Nome da criança",
-        icon: Icons.child_care,
-        controller: controller.nomeNoiva,
-        color: corPrincipal,
-        titleColor: corPrincipal,
-        validator: (v) => v!.isEmpty ? "Informe o nome da criança" : null,
-        onChanged: (_) => controller.atualizarPreview(),
-      ),
-      CustomInputField(
-        label: "Idade",
-        icon: Icons.cake,
-        controller: controller.idade,
-        color: corPrincipal,
-        titleColor: corPrincipal,
-        keyboardType: TextInputType.number,
-        onChanged: (_) => controller.atualizarPreview(),
-      ),
-      CustomInputField(
-        label: "Tema da festa",
-        icon: Icons.star,
-        controller: controller.tema,
-        color: corPrincipal,
-        titleColor: corPrincipal,
-        onChanged: (_) => controller.atualizarPreview(),
-      ),
-    ],
-
-    /// Campos comuns
     const SizedBox(height: 10),
-    CustomInputField(
-      label: "Data do evento",
-      icon: Icons.calendar_month,
-      controller: controller.dataFesta,
-      color: corPrincipal,
-      titleColor: corPrincipal,
-      readOnly: true,
-      enabled: true,
-      onTap: () async {
-        final hoje = DateTime.now();
-        final picked = await showDatePicker(
-          context: Get.context!,
-          initialDate: hoje.add(const Duration(days: 30)),
-          firstDate: hoje.add(const Duration(days: 7)),
-          lastDate: DateTime(hoje.year + 5),
-          locale: const Locale('pt', 'BR'),
-          initialEntryMode: DatePickerEntryMode.calendarOnly,
-        );
-        if (picked != null) {
-          controller.dataFesta.text = DateFormat('dd/MM/yyyy', 'pt_BR').format(picked);
-        }
-      },
-      validator: (v) => v!.isEmpty ? "Selecione a data do evento" : null,
-    ),
-    CustomInputField(
-      label: "Hora do evento",
-      icon: Icons.access_time,
-      controller: controller.horaFesta,
-      color: corPrincipal,
-      titleColor: corPrincipal,
-      readOnly: true,
-      onTap: () async {
-        final picked = await showTimePicker(
-          context: Get.context!,
-          initialTime: TimeOfDay.now(),
-        );
-        if (picked != null) {
-          controller.horaFesta.text =
-              "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
-        }
-      },
-      validator: (v) => v!.isEmpty ? "Informe a hora" : null,
-    ),
-
-    Row(
-      children: [
-        Expanded(
-          child: Column(
+    if (tipoNormalizado == 'casamento') ...[
+      _SectionCard(
+        title: 'Noivos e Cerimônia',
+        icon: Icons.favorite_rounded,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _CompactInputField(
+                    label: "Nome da noiva(o)",
+                    icon: Icons.female_rounded,
+                    controller: controller.nomeNoiva,
+                    validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                    onChanged: (_) => controller.atualizarPreview(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _CompactInputField(
+                    label: "Nome do noivo(a)",
+                    icon: Icons.male_rounded,
+                    controller: controller.parceiro,
+                    validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                    onChanged: (_) => controller.atualizarPreview(),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Obx(() => DropdownButtonFormField<String>(
+                        isExpanded:
+                            true, // 🔹 Adicionado para evitar overflow (Garante que o texto encolhe)
+                        value: controller.tipoCerimonia.value.isNotEmpty
+                            ? controller.tipoCerimonia.value
+                            : null,
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+                        decoration: InputDecoration(
+                          labelText: "Cerimônia",
+                          labelStyle: GoogleFonts.poppins(fontSize: 11),
+                          prefixIcon: const Icon(Icons.church_rounded, size: 16),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'civil',
+                              child: Text('Civil', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'religiosa',
+                              child: Text('Religiosa', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'religiosa_civil',
+                              child: Text('Religiosa + Civil', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'simbolica',
+                              child: Text('Simbólica', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'ao_ar_livre',
+                              child: Text('Ao ar livre', overflow: TextOverflow.ellipsis)),
+                        ],
+                        onChanged: (v) => controller.tipoCerimonia.value = v ?? '',
+                        validator: (v) => v == null || v.isEmpty ? "Obrigatório" : null,
+                      )),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Obx(() => DropdownButtonFormField<String>(
+                        isExpanded: true, // 🔹 Adicionado para evitar overflow
+                        value: controller.estiloCasamento.value.isNotEmpty
+                            ? controller.estiloCasamento.value
+                            : null,
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+                        decoration: InputDecoration(
+                          labelText: "Estilo",
+                          labelStyle: GoogleFonts.poppins(fontSize: 11),
+                          prefixIcon: const Icon(Icons.palette_rounded, size: 16),
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          filled: true,
+                          fillColor: Colors.grey.shade50,
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                              value: 'classico',
+                              child: Text('Clássico', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'rustico',
+                              child: Text('Rústico', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'praia',
+                              child: Text('Praia', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'campo',
+                              child: Text('Campo', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'boho', child: Text('Boho', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'moderno',
+                              child: Text('Moderno', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'industrial',
+                              child: Text('Industrial', overflow: TextOverflow.ellipsis)),
+                          DropdownMenuItem(
+                              value: 'minimalista',
+                              child: Text('Minimalista', overflow: TextOverflow.ellipsis)),
+                        ],
+                        onChanged: (v) => controller.estiloCasamento.value = v ?? '',
+                        validator: (v) => v == null || v.isEmpty ? "Obrigatório" : null,
+                      )),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            _buildCampoPadrinhos(primary, controller),
+          ],
+        ),
+      ),
+      const SizedBox(height: 10),
+    ],
+    _SectionCard(
+      title: 'Planeamento',
+      icon: Icons.event_note_rounded,
+      child: Column(
+        children: [
+          Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.auto_awesome_rounded, color: corPrincipal, size: 26),
-              Text(
-                "Quanto deseja investir na sua alegria",
-                style: GoogleFonts.poppins(
-                  color: corPrincipal,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
+              Expanded(
+                child: _CompactInputField(
+                  label: "Data do evento",
+                  icon: Icons.calendar_month_rounded,
+                  controller: controller.dataFesta,
+                  readOnly: true,
+                  onTap: () async {
+                    final hoje = DateTime.now();
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: hoje.add(const Duration(days: 30)),
+                      firstDate: hoje.add(const Duration(days: 7)),
+                      lastDate: DateTime(hoje.year + 5),
+                      locale: const Locale('pt', 'BR'),
+                      initialEntryMode: DatePickerEntryMode.calendarOnly,
+                    );
+                    if (picked != null) {
+                      controller.dataFesta.text = DateFormat('dd/MM/yyyy', 'pt_BR').format(picked);
+                    }
+                  },
+                  validator: (v) => v!.isEmpty ? "Obrigatório" : null,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _CompactInputField(
+                  label: "Hora",
+                  icon: Icons.access_time_rounded,
+                  controller: controller.horaFesta,
+                  readOnly: true,
+                  onTap: () async {
+                    final picked = await showTimePicker(
+                      context: context,
+                      initialTime: TimeOfDay.now(),
+                    );
+                    if (picked != null) {
+                      controller.horaFesta.text =
+                          "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
+                    }
+                  },
+                  validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                ),
+              ),
             ],
           ),
-        ),
-      ],
+          const SizedBox(height: 10),
+          _CompactInputField(
+            label: "Custo estimado (R\$)",
+            icon: Icons.attach_money_rounded,
+            controller: controller.custoEstimado,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (v) => controller.atualizarPreview(),
+          ),
+        ],
+      ),
     ),
-    const SizedBox(height: 8),
-    // === Custo estimado ===
-    CustomInputField(
-      label: "Custo estimado (R\$)",
-      hintlabel: 'Informe o custo estimado',
-      icon: Icons.attach_money,
-      controller: controller.custoEstimado,
-      color: corPrincipal,
-      titleColor: corPrincipal,
-      type: InputType.money,
-      onChanged: (v) {
-        controller.atualizarPreview();
-      },
-    ),
-
-    const SizedBox(height: 12),
-    _buildSecaoConvidadosEstimados(
-      corPrincipal: corPrincipal,
-      controller: controller,
-    ),
-
-    const SizedBox(height: 12),
-    _buildBotaoCalculadoraFesta(
-      corPrincipal: corPrincipal,
-      controller: controller,
-      eventoParaEdicao: eventoParaEdicao,
-    ),
-    const SizedBox(height: 12),
-
-    EnderecoSection(
-      cor: corPrincipal,
-      controller: controller.enderecoController.value,
-      titulo: 'Endereço do evento',
+    const SizedBox(height: 10),
+    _buildSecaoConvidadosEstimados(primary, controller),
+    const SizedBox(height: 10),
+    _buildBotaoCalculadoraFesta(primary, controller, eventoParaEdicao),
+    const SizedBox(height: 10),
+    Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: EnderecoSection(
+        cor: primary,
+        controller: controller.enderecoController.value,
+        titulo: 'Endereço do evento',
+      ),
     ),
   ];
 }
 
-Widget _buildSecaoConvidadosEstimados({
-  required Color corPrincipal,
-  required EventoCadastroController controller,
-}) {
+// ============================================================================
+// 🔹 Secções Específicas
+// ============================================================================
+Widget _buildCampoPadrinhos(Color primary, EventoCadastroController controller) {
+  final padrinhoController = TextEditingController();
+
+  return Obx(() => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: padrinhoController,
+                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+                    decoration: InputDecoration(
+                      hintText: "💖 Nome dos padrinhos / casal",
+                      hintStyle: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 11),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                    onSubmitted: (v) {
+                      if (v.trim().isNotEmpty) controller.addPadrinho(v);
+                      padrinhoController.clear();
+                    },
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.add_circle_rounded, color: primary, size: 20),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () {
+                    if (padrinhoController.text.trim().isNotEmpty) {
+                      controller.addPadrinho(padrinhoController.text);
+                    }
+                    padrinhoController.clear();
+                  },
+                ),
+              ],
+            ),
+          ),
+          if (controller.padrinhos.isNotEmpty) const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: controller.padrinhos.map((p) {
+              return Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: primary.withValues(alpha: 0.2)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      p,
+                      style: GoogleFonts.poppins(
+                          color: primary, fontWeight: FontWeight.w600, fontSize: 10),
+                    ),
+                    const SizedBox(width: 4),
+                    InkWell(
+                      onTap: () => controller.removePadrinho(p),
+                      child: Icon(Icons.close_rounded, color: primary, size: 12),
+                    )
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ));
+}
+
+Widget _buildSecaoConvidadosEstimados(Color primary, EventoCadastroController controller) {
   void atualizarTotal() {
     final adultos = _parseIntText(controller.totalAdultos.text);
     final criancas = _parseIntText(controller.totalCriancas.text);
@@ -446,247 +566,102 @@ Widget _buildSecaoConvidadosEstimados({
     controller.atualizarPreview();
   }
 
+  // Atualiza assim que constrói a view
   atualizarTotal();
 
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: 0.78),
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: corPrincipal.withValues(alpha: 0.12)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.035),
-          blurRadius: 14,
-          offset: const Offset(0, 6),
-        ),
-      ],
-    ),
+  return _SectionCard(
+    title: 'Estimativa de convidados',
+    icon: Icons.groups_rounded,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: corPrincipal.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(Icons.groups_rounded, color: corPrincipal),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Estimativa de convidados',
-                    style: GoogleFonts.poppins(
-                      color: corPrincipal,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    'Informe a quantidade por tipo. O total será calculado automaticamente e usado na calculadora da festa.',
-                    style: GoogleFonts.poppins(
-                      color: Colors.grey.shade700,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        Text(
+          'A quantidade total será calculada automaticamente.',
+          style: GoogleFonts.poppins(
+            color: Colors.grey.shade600,
+            fontSize: 11,
+          ),
         ),
-        const SizedBox(height: 14),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final isCompact = constraints.maxWidth < 420;
-            final fields = [
-              _buildCampoQuantidadeConvidado(
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _CompactInputField(
                 label: 'Adultos',
                 icon: Icons.person_rounded,
                 controller: controller.totalAdultos,
-                corPrincipal: corPrincipal,
-                onChanged: atualizarTotal,
+                keyboardType: TextInputType.number,
+                onChanged: (_) => atualizarTotal(),
               ),
-              _buildCampoQuantidadeConvidado(
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _CompactInputField(
                 label: 'Crianças',
                 icon: Icons.child_care_rounded,
                 controller: controller.totalCriancas,
-                corPrincipal: corPrincipal,
-                onChanged: atualizarTotal,
+                keyboardType: TextInputType.number,
+                onChanged: (_) => atualizarTotal(),
               ),
-              _buildCampoQuantidadeConvidado(
-                label: 'Bebês',
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _CompactInputField(
+                label: 'Bebés',
                 icon: Icons.baby_changing_station_rounded,
                 controller: controller.totalBebes,
-                corPrincipal: corPrincipal,
-                onChanged: atualizarTotal,
+                keyboardType: TextInputType.number,
+                onChanged: (_) => atualizarTotal(),
               ),
-            ];
-
-            if (isCompact) {
-              return Column(
-                children: fields
-                    .map(
-                      (field) => Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
-                        child: field,
-                      ),
-                    )
-                    .toList(),
-              );
-            }
-
-            return Row(
-              children: fields
-                  .map(
-                    (field) => Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(right: 8),
-                        child: field,
-                      ),
-                    ),
-                  )
-                  .toList(),
-            );
-          },
+            ),
+          ],
         ),
         const SizedBox(height: 10),
-        CustomInputField(
+        _CompactInputField(
           label: 'Total de convidados',
-          hintlabel: 'Total calculado automaticamente',
           icon: Icons.summarize_rounded,
           controller: controller.totalConvidados,
-          color: corPrincipal,
-          titleColor: corPrincipal,
-          keyboardType: TextInputType.number,
           readOnly: true,
-          enabled: true,
+          enabled: false,
         ),
       ],
     ),
   );
 }
 
-Widget _buildCampoQuantidadeConvidado({
-  required String label,
-  required IconData icon,
-  required TextEditingController controller,
-  required Color corPrincipal,
-  required VoidCallback onChanged,
-}) {
-  return CustomInputField(
-    label: label,
-    hintlabel: '0',
-    icon: icon,
-    controller: controller,
-    color: corPrincipal,
-    titleColor: corPrincipal,
-    keyboardType: TextInputType.number,
-    onChanged: (_) => onChanged(),
-    validator: (value) {
-      final raw = value?.trim() ?? '';
-      if (raw.isEmpty) return null;
-
-      final number = int.tryParse(raw);
-      if (number == null || number < 0) {
-        return 'Valor inválido';
-      }
-
-      return null;
-    },
-  );
-}
-
-int _parseIntText(String? value) {
-  final normalized = (value ?? '').replaceAll(RegExp(r'[^0-9]'), '').trim();
-  if (normalized.isEmpty) return 0;
-  return int.tryParse(normalized) ?? 0;
-}
-
-Widget _buildBotaoCalculadoraFesta({
-  required Color corPrincipal,
-  required EventoCadastroController controller,
-  required EventoModel? eventoParaEdicao,
-}) {
+Widget _buildBotaoCalculadoraFesta(
+    Color primary, EventoCadastroController controller, EventoModel? eventoParaEdicao) {
   final idEvento = eventoParaEdicao?.idEvento.trim() ?? '';
   final eventoJaSalvo = idEvento.isNotEmpty;
 
-  return Container(
-    width: double.infinity,
-    padding: const EdgeInsets.all(14),
-    decoration: BoxDecoration(
-      color: corPrincipal.withValues(alpha: 0.06),
-      borderRadius: BorderRadius.circular(18),
-      border: Border.all(color: corPrincipal.withValues(alpha: 0.14)),
-    ),
+  return _SectionCard(
+    title: 'Assistente de Quantidades',
+    icon: Icons.auto_graph_rounded,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: corPrincipal.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(Icons.calculate_rounded, color: corPrincipal),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Quer estimar os itens da festa?',
-                    style: GoogleFonts.poppins(
-                      color: corPrincipal,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 3),
-                  Text(
-                    eventoJaSalvo
-                        ? 'Use os convidados cadastrados ou informe uma quantidade manual para recalcular.'
-                        : 'Informe adultos, crianças e bebês para ter uma estimativa antes de cadastrar os convidados.',
-                    style: GoogleFonts.poppins(
-                      color: Colors.grey.shade700,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        Text(
+          eventoJaSalvo
+              ? 'Recalcule os itens baseados na sua lista de convidados.'
+              : 'Faça uma estimativa de comes e bebes para o evento.',
+          style: GoogleFonts.poppins(
+            color: Colors.grey.shade600,
+            fontSize: 11,
+          ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         SizedBox(
           width: double.infinity,
-          height: 48,
+          height: 38,
           child: OutlinedButton.icon(
             style: OutlinedButton.styleFrom(
-              foregroundColor: corPrincipal,
-              side: BorderSide(color: corPrincipal.withValues(alpha: 0.55)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              backgroundColor: Colors.white,
+              foregroundColor: primary,
+              side: BorderSide(color: primary.withValues(alpha: 0.45)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              padding: EdgeInsets.zero,
             ),
             onPressed: () {
               FocusManager.instance.primaryFocus?.unfocus();
-
               Get.to(
                 () => CalculadoraFestaScreen(
                   idEvento: eventoJaSalvo ? idEvento : null,
@@ -699,10 +674,10 @@ Widget _buildBotaoCalculadoraFesta({
                 fullscreenDialog: true,
               );
             },
-            icon: const Icon(Icons.auto_graph_rounded),
+            icon: const Icon(Icons.calculate_rounded, size: 18),
             label: Text(
-              eventoJaSalvo ? 'Abrir calculadora da festa' : 'Calcular estimativa agora',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
+              eventoJaSalvo ? 'Abrir calculadora da festa' : 'Calcular estimativa',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
             ),
           ),
         ),
@@ -711,98 +686,187 @@ Widget _buildBotaoCalculadoraFesta({
   );
 }
 
+Widget _buildAcoes(Color primary, EventoCadastroController controller) {
+  return Obx(() {
+    final salvando = controller.carregando.value;
+
+    return Row(
+      children: [
+        Expanded(
+          child: SizedBox(
+            height: 44,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: primary,
+                side: BorderSide(color: primary.withValues(alpha: 0.55)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: EdgeInsets.zero,
+              ),
+              onPressed: () => Get.back(),
+              icon: const Icon(Icons.close_rounded, size: 18),
+              label: Text(
+                'Cancelar',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: SizedBox(
+            height: 44,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: EdgeInsets.zero,
+              ),
+              onPressed: salvando
+                  ? null
+                  : () async {
+                      EasyLoading.show(status: 'A processar...');
+                      await controller.salvarEvento();
+                      EasyLoading.dismiss();
+                    },
+              icon: salvando
+                  ? const SizedBox(
+                      width: 14,
+                      height: 14,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                  : Icon(
+                      controller.isEditando ? Icons.update_rounded : Icons.check_circle_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
+              label: Text(
+                controller.isEditando ? 'Atualizar' : 'Salvar',
+                style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  });
+}
+
+// ============================================================================
+// 🔹 Componentes Auxiliares (Design System Idêntico à Calculadora)
+// ============================================================================
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Widget child;
+  final Widget? trailing;
+
+  const _SectionCard({required this.title, required this.icon, required this.child, this.trailing});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: Theme.of(context).primaryColor),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF111827),
+                  ),
+                ),
+              ),
+              if (trailing != null) trailing!,
+            ],
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactInputField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final bool enabled;
+  final bool readOnly;
+  final VoidCallback? onTap;
+  final ValueChanged<String>? onChanged;
+  final TextInputType? keyboardType;
+  final FormFieldValidator<String>? validator;
+
+  const _CompactInputField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.enabled = true,
+    this.readOnly = false,
+    this.onTap,
+    this.onChanged,
+    this.keyboardType,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      enabled: enabled,
+      readOnly: readOnly,
+      onTap: onTap,
+      keyboardType: keyboardType,
+      onChanged: onChanged,
+      validator: validator,
+      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.poppins(fontSize: 11),
+        prefixIcon: Icon(icon, size: 16),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        filled: true,
+        fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
+        errorStyle: const TextStyle(fontSize: 9, height: 0.8),
+      ),
+    );
+  }
+}
+
+// Helpers
+int _parseIntText(String? value) {
+  final normalized = (value ?? '').replaceAll(RegExp(r'[^0-9]'), '').trim();
+  if (normalized.isEmpty) return 0;
+  return int.tryParse(normalized) ?? 0;
+}
+
 String _resolverTipoEventoCalculadora(EventoCadastroController controller) {
   final tipoSelecionado = controller.tipoEventoModel.value?.nome.trim() ?? '';
   if (tipoSelecionado.isNotEmpty) return tipoSelecionado;
-
   final nomeEvento = controller.nomeEvento.text.trim();
   if (nomeEvento.isNotEmpty) return nomeEvento;
-
   final preview = controller.nomeEventoPreview.value.trim();
   if (preview.isNotEmpty) return preview;
-
   return 'Evento';
-}
-
-Widget _buildCampoPadrinhos(Color cor, EventoCadastroController controller) {
-  final padrinhoController = TextEditingController();
-
-  return Obx(() => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [
-                cor.withValues(alpha: 0.9),
-                cor.withValues(alpha: 0.6),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ).createShader(bounds),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: padrinhoController,
-                    decoration: InputDecoration(
-                      labelText: "💖 Padrinhos / Nome do casal",
-                      labelStyle: GoogleFonts.poppins(color: cor),
-                      focusedBorder: UnderlineInputBorder(
-                        borderSide: BorderSide(color: cor),
-                      ),
-                    ),
-                    onSubmitted: (v) {
-                      controller.addPadrinho(v);
-                      padrinhoController.clear();
-                    },
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(Icons.add_circle, color: cor),
-                  onPressed: () {
-                    controller.addPadrinho(padrinhoController.text);
-                    padrinhoController.clear();
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: controller.padrinhos.map((p) {
-              return ClipRRect(
-                borderRadius: BorderRadius.circular(24),
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        cor.withValues(alpha: 0.5),
-                        cor.withValues(alpha: 0.3),
-                        cor.withValues(alpha: 0.2),
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Chip(
-                    backgroundColor: cor.withValues(alpha: 0.9), // 👈 usa o gradiente do container
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 6),
-                    label: Text(
-                      p,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    deleteIcon: const Icon(Icons.delete, color: Colors.white, size: 20),
-                    onDeleted: () => controller.removePadrinho(p),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ],
-      ));
 }

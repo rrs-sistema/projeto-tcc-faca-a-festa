@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -9,6 +8,21 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/models/model.dart';
+
+
+class ImagemGaleriaUploadPendente {
+  final String localId;
+  final XFile arquivo;
+  final Uint8List bytes;
+  final String nomeArquivo;
+
+  const ImagemGaleriaUploadPendente({
+    required this.localId,
+    required this.arquivo,
+    required this.bytes,
+    required this.nomeArquivo,
+  });
+}
 
 class InspiracaoAdminController extends GetxController {
   InspiracaoAdminController({
@@ -37,7 +51,31 @@ class InspiracaoAdminController extends GetxController {
   final RxBool loading = false.obs;
   final RxBool salvando = false.obs;
   final RxBool enviandoImagem = false.obs;
+  final RxBool selecionandoImagem = false.obs;
+  final RxBool uploadImagemPrincipalLoading = false.obs;
+  final RxBool uploadGaleriaLoading = false.obs;
   final RxBool escutaAtiva = false.obs;
+
+  final Rxn<XFile> imagemPrincipalSelecionada = Rxn<XFile>();
+  final Rxn<Uint8List> imagemPrincipalSelecionadaBytes = Rxn<Uint8List>();
+  final RxString imagemPrincipalSelecionadaNome = ''.obs;
+  final RxString imagemPrincipalUrlAtual = ''.obs;
+  final RxList<String> galeriaUrlsFormulario = <String>[].obs;
+  final RxList<ImagemGaleriaUploadPendente> imagensGaleriaPendentes =
+      <ImagemGaleriaUploadPendente>[].obs;
+
+  /// Lista reativa usada pelo formulário administrativo para cadastrar
+  /// tarefas que serão sugeridas ao organizador quando ele salvar a inspiração.
+  ///
+  /// Mantemos como Map para ficar 100% compatível com Firestore e com os
+  /// métodos existentes que já consomem `tarefasSugeridas`.
+  final RxList<Map<String, dynamic>> tarefasSugeridasFormulario = <Map<String, dynamic>>[].obs;
+
+  /// Lista reativa usada pelo formulário administrativo para cadastrar
+  /// itens de orçamento que poderão ser criados automaticamente para
+  /// o organizador ao salvar uma inspiração no evento.
+  final RxList<Map<String, dynamic>> itensOrcamentoSugeridosFormulario =
+      <Map<String, dynamic>>[].obs;
 
   final RxString termoBusca = ''.obs;
   final RxString tipoEventoSelecionado = 'Todos'.obs;
@@ -68,6 +106,24 @@ class InspiracaoAdminController extends GetxController {
   }
 
   int get totalFiltradas => inspiracoesFiltradas.length;
+
+  bool get possuiImagemPrincipalSelecionada => imagemPrincipalSelecionadaBytes.value != null;
+
+  bool get possuiImagemPrincipalFormulario {
+    return imagemPrincipalSelecionadaBytes.value != null ||
+        imagemPrincipalUrlAtual.value.trim().isNotEmpty;
+  }
+
+  int get totalGaleriaFormulario => galeriaUrlsFormulario.length + imagensGaleriaPendentes.length;
+
+  double get totalEstimadoItensOrcamentoSugeridos {
+    return itensOrcamentoSugeridosFormulario.fold<double>(
+      0.0,
+      (total, item) => total + _readDouble(item, 'custoEstimado', defaultValue: 0.0),
+    );
+  }
+
+  int get totalItensOrcamentoSugeridos => itensOrcamentoSugeridosFormulario.length;
 
   int proximaOrdemSugerida() => _proximaOrdem();
 
@@ -319,6 +375,12 @@ class InspiracaoAdminController extends GetxController {
 
       await docRef.set(payload, SetOptions(merge: true));
 
+      await salvarUploadsPendentesNoFirestore(
+        inspiracaoId: id,
+        usuarioId: operador,
+        mostrarMensagem: false,
+      );
+
       if (mostrarMensagem) {
         EasyLoading.showSuccess('Inspiração criada com sucesso.');
       }
@@ -381,6 +443,12 @@ class InspiracaoAdminController extends GetxController {
       }
 
       await _collection.doc(id).set(payload, SetOptions(merge: true));
+
+      await salvarUploadsPendentesNoFirestore(
+        inspiracaoId: id,
+        usuarioId: operador,
+        mostrarMensagem: false,
+      );
 
       if (mostrarMensagem) {
         EasyLoading.showSuccess('Inspiração atualizada com sucesso.');
@@ -578,8 +646,9 @@ class InspiracaoAdminController extends GetxController {
     String id, {
     String? usuarioId,
     bool mostrarMensagem = true,
-  }) {
-    return _atualizarCampos(
+    bool removerArquivoStorage = false,
+  }) async {
+    final sucesso = await _atualizarCampos(
       id,
       <String, dynamic>{'imagemUrl': ''},
       usuarioId: usuarioId,
@@ -588,6 +657,657 @@ class InspiracaoAdminController extends GetxController {
       mensagemSucesso: 'Imagem principal removida.',
       mensagemErro: 'Erro ao remover imagem principal.',
     );
+
+    if (sucesso) {
+      imagemPrincipalUrlAtual.value = '';
+      limparImagemPrincipalSelecionada();
+
+      if (removerArquivoStorage) {
+        await _removerArquivoStorageSilencioso(_storagePathCapa(id));
+      }
+    }
+
+    return sucesso;
+  }
+
+  void prepararImagensFormulario({
+    String? imagemUrl,
+    List<String>? galeriaUrls,
+    bool limparPendentes = true,
+  }) {
+    imagemPrincipalUrlAtual.value = imagemUrl?.trim() ?? '';
+    galeriaUrlsFormulario.assignAll(
+      (galeriaUrls ?? const <String>[])
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toSet()
+          .toList(),
+    );
+
+    if (limparPendentes) {
+      limparImagemPrincipalSelecionada();
+      imagensGaleriaPendentes.clear();
+    }
+  }
+
+  void atualizarImagemPrincipalUrlFormulario(String value) {
+    imagemPrincipalUrlAtual.value = value.trim();
+  }
+
+  void atualizarGaleriaUrlsFormulario(List<String> urls) {
+    galeriaUrlsFormulario.assignAll(
+      urls.map((e) => e.trim()).where((e) => e.isNotEmpty).toSet().toList(),
+    );
+  }
+
+  void prepararTarefasSugeridasFormulario(
+    List<Map<String, dynamic>> tarefas, {
+    bool limparAntes = true,
+  }) {
+    final normalizadas = _normalizarTarefasSugeridas(tarefas);
+
+    if (limparAntes) {
+      tarefasSugeridasFormulario.assignAll(normalizadas);
+    } else {
+      tarefasSugeridasFormulario.addAll(normalizadas);
+      _reordenarTarefasSugeridasInternamente();
+    }
+
+    tarefasSugeridasFormulario.refresh();
+  }
+
+  void limparTarefasSugeridasFormulario() {
+    tarefasSugeridasFormulario.clear();
+  }
+
+  void adicionarTarefaSugerida(Map<String, dynamic> tarefa) {
+    final normalizada = _normalizarTarefaSugerida(
+      tarefa,
+      ordemPadrao: tarefasSugeridasFormulario.length + 1,
+    );
+
+    if (_readString(normalizada, 'titulo').isEmpty) {
+      EasyLoading.showInfo('Informe o título da tarefa sugerida.');
+      return;
+    }
+
+    tarefasSugeridasFormulario.add(normalizada);
+    _reordenarTarefasSugeridasInternamente();
+  }
+
+  void editarTarefaSugerida(int index, Map<String, dynamic> tarefa) {
+    if (index < 0 || index >= tarefasSugeridasFormulario.length) {
+      EasyLoading.showInfo('Tarefa inválida para edição.');
+      return;
+    }
+
+    final ordemAtual = _readInt(
+      tarefasSugeridasFormulario[index],
+      'ordem',
+      defaultValue: index + 1,
+    );
+
+    final normalizada = _normalizarTarefaSugerida(
+      tarefa,
+      ordemPadrao: ordemAtual,
+    );
+
+    if (_readString(normalizada, 'titulo').isEmpty) {
+      EasyLoading.showInfo('Informe o título da tarefa sugerida.');
+      return;
+    }
+
+    tarefasSugeridasFormulario[index] = normalizada;
+    _reordenarTarefasSugeridasInternamente();
+  }
+
+  void removerTarefaSugerida(int index) {
+    if (index < 0 || index >= tarefasSugeridasFormulario.length) {
+      return;
+    }
+
+    tarefasSugeridasFormulario.removeAt(index);
+    _reordenarTarefasSugeridasInternamente();
+  }
+
+  void reordenarTarefaSugerida(int oldIndex, int newIndex) {
+    if (oldIndex < 0 || oldIndex >= tarefasSugeridasFormulario.length) {
+      return;
+    }
+
+    var destino = newIndex;
+    if (destino > oldIndex) {
+      destino -= 1;
+    }
+
+    if (destino < 0) {
+      destino = 0;
+    }
+
+    if (destino > tarefasSugeridasFormulario.length - 1) {
+      destino = tarefasSugeridasFormulario.length - 1;
+    }
+
+    final item = tarefasSugeridasFormulario.removeAt(oldIndex);
+    tarefasSugeridasFormulario.insert(destino, item);
+    _reordenarTarefasSugeridasInternamente();
+  }
+
+  List<Map<String, dynamic>> tarefasSugeridasParaFirestore() {
+    return _normalizarTarefasSugeridas(tarefasSugeridasFormulario);
+  }
+
+  String? validarTarefasSugeridasFormulario() {
+    for (var i = 0; i < tarefasSugeridasFormulario.length; i++) {
+      final tarefa = tarefasSugeridasFormulario[i];
+      final titulo = _readString(tarefa, 'titulo');
+
+      if (titulo.isEmpty) {
+        return 'A tarefa sugerida ${i + 1} precisa ter título.';
+      }
+
+      final dias = tarefa['diasAntesEvento'];
+      if (dias != null && dias is! int && int.tryParse(dias.toString().trim()) == null) {
+        return 'O campo dias antes do evento da tarefa "$titulo" precisa ser um número inteiro.';
+      }
+    }
+
+    return null;
+  }
+
+  void prepararItensOrcamentoSugeridosFormulario(
+    List<Map<String, dynamic>> itens, {
+    bool limparAntes = true,
+  }) {
+    final normalizados = _normalizarItensOrcamentoSugeridos(itens);
+
+    if (limparAntes) {
+      itensOrcamentoSugeridosFormulario.assignAll(normalizados);
+    } else {
+      itensOrcamentoSugeridosFormulario.addAll(normalizados);
+      _reordenarItensOrcamentoSugeridosInternamente();
+    }
+
+    itensOrcamentoSugeridosFormulario.refresh();
+  }
+
+  void limparItensOrcamentoSugeridosFormulario() {
+    itensOrcamentoSugeridosFormulario.clear();
+  }
+
+  void adicionarItemOrcamentoSugerido(Map<String, dynamic> item) {
+    final normalizado = _normalizarItemOrcamentoSugerido(
+      item,
+      ordemPadrao: itensOrcamentoSugeridosFormulario.length + 1,
+    );
+
+    final erro = _validarItemOrcamentoSugerido(normalizado);
+    if (erro != null) {
+      EasyLoading.showInfo(erro);
+      return;
+    }
+
+    itensOrcamentoSugeridosFormulario.add(normalizado);
+    _reordenarItensOrcamentoSugeridosInternamente();
+  }
+
+  void editarItemOrcamentoSugerido(int index, Map<String, dynamic> item) {
+    if (index < 0 || index >= itensOrcamentoSugeridosFormulario.length) {
+      EasyLoading.showInfo('Item de orçamento inválido para edição.');
+      return;
+    }
+
+    final ordemAtual = _readInt(
+      itensOrcamentoSugeridosFormulario[index],
+      'ordem',
+      defaultValue: index + 1,
+    );
+
+    final normalizado = _normalizarItemOrcamentoSugerido(
+      item,
+      ordemPadrao: ordemAtual,
+    );
+
+    final erro = _validarItemOrcamentoSugerido(normalizado);
+    if (erro != null) {
+      EasyLoading.showInfo(erro);
+      return;
+    }
+
+    itensOrcamentoSugeridosFormulario[index] = normalizado;
+    _reordenarItensOrcamentoSugeridosInternamente();
+  }
+
+  void removerItemOrcamentoSugerido(int index) {
+    if (index < 0 || index >= itensOrcamentoSugeridosFormulario.length) {
+      return;
+    }
+
+    itensOrcamentoSugeridosFormulario.removeAt(index);
+    _reordenarItensOrcamentoSugeridosInternamente();
+  }
+
+  void reordenarItemOrcamentoSugerido(int oldIndex, int newIndex) {
+    if (oldIndex < 0 || oldIndex >= itensOrcamentoSugeridosFormulario.length) {
+      return;
+    }
+
+    var destino = newIndex;
+    if (destino > oldIndex) {
+      destino -= 1;
+    }
+
+    if (destino < 0) {
+      destino = 0;
+    }
+
+    if (destino > itensOrcamentoSugeridosFormulario.length - 1) {
+      destino = itensOrcamentoSugeridosFormulario.length - 1;
+    }
+
+    final item = itensOrcamentoSugeridosFormulario.removeAt(oldIndex);
+    itensOrcamentoSugeridosFormulario.insert(destino, item);
+    _reordenarItensOrcamentoSugeridosInternamente();
+  }
+
+  List<Map<String, dynamic>> itensOrcamentoSugeridosParaFirestore() {
+    return _normalizarItensOrcamentoSugeridos(itensOrcamentoSugeridosFormulario);
+  }
+
+  String? validarItensOrcamentoSugeridosFormulario() {
+    for (var i = 0; i < itensOrcamentoSugeridosFormulario.length; i++) {
+      final item = itensOrcamentoSugeridosFormulario[i];
+      final erro = _validarItemOrcamentoSugerido(item, indice: i);
+      if (erro != null) {
+        return erro;
+      }
+    }
+
+    return null;
+  }
+
+  Future<XFile?> selecionarImagemPrincipal({
+    ImageSource source = ImageSource.gallery,
+    int imageQuality = 82,
+    double? maxWidth = 1920,
+  }) async {
+    try {
+      selecionandoImagem.value = true;
+
+      final imagem = await escolherImagem(
+        source: source,
+        imageQuality: imageQuality,
+        maxWidth: maxWidth,
+        mostrarErro: true,
+      );
+
+      if (imagem == null) {
+        return null;
+      }
+
+      final bytes = await imagem.readAsBytes();
+
+      imagemPrincipalSelecionada.value = imagem;
+      imagemPrincipalSelecionadaBytes.value = bytes;
+      imagemPrincipalSelecionadaNome.value = imagem.name.trim().isEmpty ? 'capa.jpg' : imagem.name;
+
+      _log('Imagem principal selecionada: ${imagem.name} | ${bytes.length} bytes');
+      return imagem;
+    } catch (e, s) {
+      EasyLoading.showError('Erro ao preparar imagem principal.');
+      _log('Erro ao selecionar imagem principal: $e', s);
+      return null;
+    } finally {
+      selecionandoImagem.value = false;
+    }
+  }
+
+  void limparImagemPrincipalSelecionada() {
+    imagemPrincipalSelecionada.value = null;
+    imagemPrincipalSelecionadaBytes.value = null;
+    imagemPrincipalSelecionadaNome.value = '';
+  }
+
+  Future<String?> uploadImagemPrincipal({
+    required String inspiracaoId,
+    XFile? arquivo,
+    Uint8List? bytes,
+    String? nomeArquivo,
+    String? usuarioId,
+    bool salvarNoFirestore = true,
+    bool mostrarMensagem = true,
+  }) async {
+    final id = inspiracaoId.trim();
+    if (id.isEmpty) {
+      EasyLoading.showInfo('Salve a inspiração antes de enviar a imagem principal.');
+      return null;
+    }
+
+    final arquivoUpload = arquivo ?? imagemPrincipalSelecionada.value;
+    final bytesUpload = bytes ?? imagemPrincipalSelecionadaBytes.value;
+
+    if (arquivoUpload == null && bytesUpload == null) {
+      EasyLoading.showInfo('Selecione uma imagem principal.');
+      return null;
+    }
+
+    try {
+      uploadImagemPrincipalLoading.value = true;
+      enviandoImagem.value = true;
+
+      if (mostrarMensagem) {
+        EasyLoading.show(status: 'Enviando imagem principal...');
+      }
+
+      final imageBytes = bytesUpload ?? await arquivoUpload!.readAsBytes();
+      final path = _storagePathCapa(id);
+      final url = await _enviarBytesParaStorage(
+        path: path,
+        bytes: imageBytes,
+        contentType: 'image/jpeg',
+        customMetadata: <String, String>{
+          'inspiracaoId': id,
+          'tipo': 'capa',
+          'originalName':
+              nomeArquivo ?? arquivoUpload?.name ?? imagemPrincipalSelecionadaNome.value,
+        },
+      );
+
+      imagemPrincipalUrlAtual.value = url;
+
+      if (salvarNoFirestore) {
+        await salvarUrlsNoFirestore(
+          inspiracaoId: id,
+          imagemUrl: url,
+          usuarioId: usuarioId,
+          mostrarMensagem: false,
+        );
+      }
+
+      limparImagemPrincipalSelecionada();
+
+      if (mostrarMensagem) {
+        EasyLoading.showSuccess('Imagem principal atualizada.');
+      }
+
+      _log('Imagem principal enviada para $path');
+      return url;
+    } catch (e, s) {
+      if (mostrarMensagem) {
+        EasyLoading.showError('Erro ao enviar imagem principal.');
+      }
+      _log('Erro ao enviar imagem principal da inspiração $id: $e', s);
+      return null;
+    } finally {
+      uploadImagemPrincipalLoading.value = false;
+      enviandoImagem.value = false;
+    }
+  }
+
+  Future<ImagemGaleriaUploadPendente?> adicionarImagemGaleria({
+    ImageSource source = ImageSource.gallery,
+    int imageQuality = 82,
+    double? maxWidth = 1920,
+  }) async {
+    try {
+      selecionandoImagem.value = true;
+
+      final imagem = await escolherImagem(
+        source: source,
+        imageQuality: imageQuality,
+        maxWidth: maxWidth,
+        mostrarErro: true,
+      );
+
+      if (imagem == null) {
+        return null;
+      }
+
+      final bytes = await imagem.readAsBytes();
+      final timestamp = DateTime.now().microsecondsSinceEpoch;
+      final pendente = ImagemGaleriaUploadPendente(
+        localId: 'local_$timestamp',
+        arquivo: imagem,
+        bytes: bytes,
+        nomeArquivo: imagem.name.trim().isEmpty ? 'galeria_$timestamp.jpg' : imagem.name,
+      );
+
+      imagensGaleriaPendentes.add(pendente);
+      imagensGaleriaPendentes.refresh();
+
+      _log('Imagem adicionada à galeria local: ${pendente.nomeArquivo} | ${bytes.length} bytes');
+      return pendente;
+    } catch (e, s) {
+      EasyLoading.showError('Erro ao adicionar imagem à galeria.');
+      _log('Erro ao adicionar imagem à galeria: $e', s);
+      return null;
+    } finally {
+      selecionandoImagem.value = false;
+    }
+  }
+
+  void removerImagemGaleriaPendente(String localId) {
+    imagensGaleriaPendentes.removeWhere((item) => item.localId == localId);
+    imagensGaleriaPendentes.refresh();
+  }
+
+  Future<List<String>> uploadImagensGaleriaPendentes({
+    required String inspiracaoId,
+    String? usuarioId,
+    bool salvarNoFirestore = true,
+    bool mostrarMensagem = true,
+  }) async {
+    final id = inspiracaoId.trim();
+    if (id.isEmpty) {
+      EasyLoading.showInfo('Salve a inspiração antes de enviar imagens da galeria.');
+      return <String>[];
+    }
+
+    if (imagensGaleriaPendentes.isEmpty) {
+      return <String>[];
+    }
+
+    try {
+      uploadGaleriaLoading.value = true;
+      enviandoImagem.value = true;
+
+      if (mostrarMensagem) {
+        EasyLoading.show(status: 'Enviando imagens da galeria...');
+      }
+
+      final urls = <String>[];
+      final pendentes = List<ImagemGaleriaUploadPendente>.from(imagensGaleriaPendentes);
+
+      for (final item in pendentes) {
+        final timestamp = DateTime.now().microsecondsSinceEpoch;
+        final path = _storagePathGaleria(id, timestamp);
+
+        final url = await _enviarBytesParaStorage(
+          path: path,
+          bytes: item.bytes,
+          contentType: 'image/jpeg',
+          customMetadata: <String, String>{
+            'inspiracaoId': id,
+            'tipo': 'galeria',
+            'localId': item.localId,
+            'originalName': item.nomeArquivo,
+          },
+        );
+
+        urls.add(url);
+        await Future<void>.delayed(const Duration(milliseconds: 2));
+      }
+
+      if (urls.isNotEmpty && salvarNoFirestore) {
+        await salvarUrlsNoFirestore(
+          inspiracaoId: id,
+          galeriaUrls: urls,
+          usuarioId: usuarioId,
+          adicionarNaGaleria: true,
+          mostrarMensagem: false,
+        );
+      }
+
+      galeriaUrlsFormulario.addAll(urls);
+      galeriaUrlsFormulario.assignAll(galeriaUrlsFormulario.toSet().toList());
+      imagensGaleriaPendentes.clear();
+
+      if (mostrarMensagem) {
+        EasyLoading.showSuccess('Galeria atualizada.');
+      }
+
+      return urls;
+    } catch (e, s) {
+      if (mostrarMensagem) {
+        EasyLoading.showError('Erro ao enviar galeria.');
+      }
+      _log('Erro ao enviar galeria da inspiração $id: $e', s);
+      return <String>[];
+    } finally {
+      uploadGaleriaLoading.value = false;
+      enviandoImagem.value = false;
+    }
+  }
+
+  Future<bool> removerImagemGaleria({
+    required String inspiracaoId,
+    required String imagemUrl,
+    String? usuarioId,
+    bool removerArquivoStorage = false,
+  }) async {
+    final url = imagemUrl.trim();
+    if (url.isEmpty) {
+      EasyLoading.showInfo('Imagem inválida para remoção.');
+      return false;
+    }
+
+    final sucesso = await _atualizarCampos(
+      inspiracaoId,
+      <String, dynamic>{
+        'galeriaUrls': FieldValue.arrayRemove(<String>[url]),
+      },
+      usuarioId: usuarioId,
+      mensagemLoading: 'Removendo imagem da galeria...',
+      mensagemSucesso: 'Imagem removida da galeria.',
+      mensagemErro: 'Erro ao remover imagem da galeria.',
+    );
+
+    if (sucesso) {
+      galeriaUrlsFormulario.remove(url);
+      galeriaUrlsFormulario.refresh();
+
+      if (removerArquivoStorage) {
+        await _removerArquivoPorUrlSilencioso(url);
+      }
+    }
+
+    return sucesso;
+  }
+
+  Future<bool> salvarUrlsNoFirestore({
+    required String inspiracaoId,
+    String? imagemUrl,
+    List<String>? galeriaUrls,
+    String? usuarioId,
+    bool adicionarNaGaleria = false,
+    bool mostrarMensagem = true,
+  }) async {
+    final id = inspiracaoId.trim();
+    if (id.isEmpty) {
+      EasyLoading.showInfo('Inspiração inválida para salvar URLs.');
+      return false;
+    }
+
+    final campos = <String, dynamic>{};
+
+    final capa = imagemUrl?.trim();
+    if (capa != null && capa.isNotEmpty) {
+      campos['imagemUrl'] = capa;
+    }
+
+    final urlsGaleria = (galeriaUrls ?? const <String>[])
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toSet()
+        .toList();
+
+    if (urlsGaleria.isNotEmpty) {
+      campos['galeriaUrls'] = adicionarNaGaleria ? FieldValue.arrayUnion(urlsGaleria) : urlsGaleria;
+    }
+
+    if (campos.isEmpty) {
+      return true;
+    }
+
+    return _atualizarCampos(
+      id,
+      campos,
+      usuarioId: usuarioId,
+      mostrarMensagem: mostrarMensagem,
+      mensagemLoading: 'Salvando URLs das imagens...',
+      mensagemSucesso: 'URLs das imagens salvas.',
+      mensagemErro: 'Erro ao salvar URLs das imagens.',
+    );
+  }
+
+  Future<bool> salvarUploadsPendentesNoFirestore({
+    required String inspiracaoId,
+    String? usuarioId,
+    bool mostrarMensagem = true,
+  }) async {
+    final id = inspiracaoId.trim();
+    if (id.isEmpty) {
+      return false;
+    }
+
+    try {
+      if (mostrarMensagem &&
+          (imagemPrincipalSelecionadaBytes.value != null || imagensGaleriaPendentes.isNotEmpty)) {
+        EasyLoading.show(status: 'Enviando imagens...');
+      }
+
+      String? imagemUrl;
+      if (imagemPrincipalSelecionadaBytes.value != null ||
+          imagemPrincipalSelecionada.value != null) {
+        imagemUrl = await uploadImagemPrincipal(
+          inspiracaoId: id,
+          usuarioId: usuarioId,
+          salvarNoFirestore: false,
+          mostrarMensagem: false,
+        );
+      }
+
+      final galeriaUrls = await uploadImagensGaleriaPendentes(
+        inspiracaoId: id,
+        usuarioId: usuarioId,
+        salvarNoFirestore: false,
+        mostrarMensagem: false,
+      );
+
+      if ((imagemUrl != null && imagemUrl.isNotEmpty) || galeriaUrls.isNotEmpty) {
+        await salvarUrlsNoFirestore(
+          inspiracaoId: id,
+          imagemUrl: imagemUrl,
+          galeriaUrls: galeriaUrls,
+          usuarioId: usuarioId,
+          adicionarNaGaleria: true,
+          mostrarMensagem: false,
+        );
+      }
+
+      if (mostrarMensagem &&
+          ((imagemUrl != null && imagemUrl.isNotEmpty) || galeriaUrls.isNotEmpty)) {
+        EasyLoading.showSuccess('Imagens salvas com sucesso.');
+      }
+
+      return true;
+    } catch (e, s) {
+      if (mostrarMensagem) {
+        EasyLoading.showError('Erro ao salvar imagens.');
+      }
+      _log('Erro ao salvar uploads pendentes da inspiração $id: $e', s);
+      return false;
+    }
   }
 
   Future<String?> uploadImagemInspiracao({
@@ -598,7 +1318,8 @@ class InspiracaoAdminController extends GetxController {
     String? pastaCustomizada,
     bool mostrarMensagem = true,
   }) async {
-    if (inspiracaoId.trim().isEmpty) {
+    final id = inspiracaoId.trim();
+    if (id.isEmpty) {
       EasyLoading.showInfo('Salve a inspiração antes de enviar imagens.');
       return null;
     }
@@ -616,36 +1337,31 @@ class InspiracaoAdminController extends GetxController {
       }
 
       final imageBytes = bytes ?? await arquivo!.readAsBytes();
-      final originalName = nomeArquivo ?? arquivo?.name ?? 'imagem.jpg';
-      final safeName = _safeFileName(originalName);
-      final extension = _extensionFromName(safeName);
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final path =
-          '${pastaCustomizada ?? storageRoot}/${_safeDocId(inspiracaoId)}/${timestamp}_$safeName';
+      final timestamp = DateTime.now().microsecondsSinceEpoch;
+      final path = '${pastaCustomizada ?? storageRoot}/${_safeDocId(id)}/$timestamp.jpg';
 
-      final ref = _storage.ref().child(path);
-      final metadata = SettableMetadata(
-        contentType: _contentTypeFromExtension(extension),
+      final url = await _enviarBytesParaStorage(
+        path: path,
+        bytes: imageBytes,
+        contentType: 'image/jpeg',
         customMetadata: <String, String>{
-          'inspiracaoId': inspiracaoId,
-          'originalName': originalName,
+          'inspiracaoId': id,
+          'tipo': 'legado',
+          'originalName': nomeArquivo ?? arquivo?.name ?? 'imagem.jpg',
         },
       );
-
-      await ref.putData(imageBytes, metadata);
-      final url = await ref.getDownloadURL();
 
       if (mostrarMensagem) {
         EasyLoading.showSuccess('Imagem enviada com sucesso.');
       }
 
-      _log('Imagem enviada para inspiração $inspiracaoId: $path');
+      _log('Imagem enviada para inspiração $id: $path');
       return url;
     } catch (e, s) {
       if (mostrarMensagem) {
         EasyLoading.showError('Erro ao enviar imagem.');
       }
-      _log('Erro ao enviar imagem da inspiração $inspiracaoId: $e', s);
+      _log('Erro ao enviar imagem da inspiração $id: $e', s);
       return null;
     } finally {
       enviandoImagem.value = false;
@@ -658,34 +1374,16 @@ class InspiracaoAdminController extends GetxController {
     Uint8List? bytes,
     String? nomeArquivo,
     String? usuarioId,
-  }) async {
-    final url = await uploadImagemInspiracao(
+  }) {
+    return uploadImagemPrincipal(
       inspiracaoId: inspiracaoId,
       arquivo: arquivo,
       bytes: bytes,
       nomeArquivo: nomeArquivo,
-    );
-
-    if (url == null || url.isEmpty) {
-      return null;
-    }
-
-    final sucesso = await _atualizarCampos(
-      inspiracaoId,
-      <String, dynamic>{'imagemUrl': url},
       usuarioId: usuarioId,
-      mostrarMensagem: false,
-      mensagemLoading: '',
-      mensagemSucesso: '',
-      mensagemErro: 'Erro ao vincular imagem principal.',
+      salvarNoFirestore: true,
+      mostrarMensagem: true,
     );
-
-    if (sucesso) {
-      EasyLoading.showSuccess('Imagem principal atualizada.');
-      return url;
-    }
-
-    return null;
   }
 
   Future<String?> adicionarImagemNaGaleria({
@@ -695,35 +1393,67 @@ class InspiracaoAdminController extends GetxController {
     String? nomeArquivo,
     String? usuarioId,
   }) async {
-    final url = await uploadImagemInspiracao(
-      inspiracaoId: inspiracaoId,
-      arquivo: arquivo,
-      bytes: bytes,
-      nomeArquivo: nomeArquivo,
-    );
-
-    if (url == null || url.isEmpty) {
+    final id = inspiracaoId.trim();
+    if (id.isEmpty) {
+      EasyLoading.showInfo('Salve a inspiração antes de enviar imagens da galeria.');
       return null;
     }
 
-    final sucesso = await _atualizarCampos(
-      inspiracaoId,
-      <String, dynamic>{
-        'galeriaUrls': FieldValue.arrayUnion(<String>[url]),
-      },
-      usuarioId: usuarioId,
-      mostrarMensagem: false,
-      mensagemLoading: '',
-      mensagemSucesso: '',
-      mensagemErro: 'Erro ao vincular imagem na galeria.',
-    );
+    if (arquivo == null && bytes == null) {
+      final pendente = await adicionarImagemGaleria();
+      if (pendente == null) {
+        return null;
+      }
 
-    if (sucesso) {
-      EasyLoading.showSuccess('Imagem adicionada à galeria.');
-      return url;
+      final urls = await uploadImagensGaleriaPendentes(
+        inspiracaoId: id,
+        usuarioId: usuarioId,
+        salvarNoFirestore: true,
+        mostrarMensagem: true,
+      );
+
+      return urls.isEmpty ? null : urls.last;
     }
 
-    return null;
+    try {
+      uploadGaleriaLoading.value = true;
+      enviandoImagem.value = true;
+      EasyLoading.show(status: 'Enviando imagem da galeria...');
+
+      final imageBytes = bytes ?? await arquivo!.readAsBytes();
+      final timestamp = DateTime.now().microsecondsSinceEpoch;
+      final path = _storagePathGaleria(id, timestamp);
+      final url = await _enviarBytesParaStorage(
+        path: path,
+        bytes: imageBytes,
+        contentType: 'image/jpeg',
+        customMetadata: <String, String>{
+          'inspiracaoId': id,
+          'tipo': 'galeria',
+          'originalName': nomeArquivo ?? arquivo?.name ?? 'galeria_$timestamp.jpg',
+        },
+      );
+
+      await salvarUrlsNoFirestore(
+        inspiracaoId: id,
+        galeriaUrls: <String>[url],
+        usuarioId: usuarioId,
+        adicionarNaGaleria: true,
+        mostrarMensagem: false,
+      );
+
+      galeriaUrlsFormulario.add(url);
+      galeriaUrlsFormulario.assignAll(galeriaUrlsFormulario.toSet().toList());
+      EasyLoading.showSuccess('Imagem adicionada à galeria.');
+      return url;
+    } catch (e, s) {
+      EasyLoading.showError('Erro ao adicionar imagem à galeria.');
+      _log('Erro ao adicionar imagem à galeria da inspiração $id: $e', s);
+      return null;
+    } finally {
+      uploadGaleriaLoading.value = false;
+      enviandoImagem.value = false;
+    }
   }
 
   Future<bool> removerImagemDaGaleria(
@@ -731,22 +1461,18 @@ class InspiracaoAdminController extends GetxController {
     String imagemUrl, {
     String? usuarioId,
   }) {
-    return _atualizarCampos(
-      inspiracaoId,
-      <String, dynamic>{
-        'galeriaUrls': FieldValue.arrayRemove(<String>[imagemUrl]),
-      },
+    return removerImagemGaleria(
+      inspiracaoId: inspiracaoId,
+      imagemUrl: imagemUrl,
       usuarioId: usuarioId,
-      mensagemLoading: 'Removendo imagem da galeria...',
-      mensagemSucesso: 'Imagem removida da galeria.',
-      mensagemErro: 'Erro ao remover imagem da galeria.',
     );
   }
 
   Future<XFile?> escolherImagem({
     ImageSource source = ImageSource.gallery,
-    int imageQuality = 85,
-    double? maxWidth = 1600,
+    int imageQuality = 82,
+    double? maxWidth = 1920,
+    bool mostrarErro = true,
   }) async {
     try {
       final picker = ImagePicker();
@@ -756,9 +1482,52 @@ class InspiracaoAdminController extends GetxController {
         maxWidth: maxWidth,
       );
     } catch (e, s) {
-      EasyLoading.showError('Erro ao selecionar imagem.');
+      if (mostrarErro) {
+        EasyLoading.showError('Erro ao selecionar imagem.');
+      }
       _log('Erro ao selecionar imagem: $e', s);
       return null;
+    }
+  }
+
+  Future<String> _enviarBytesParaStorage({
+    required String path,
+    required Uint8List bytes,
+    required String contentType,
+    Map<String, String>? customMetadata,
+  }) async {
+    final ref = _storage.ref().child(path);
+    final metadata = SettableMetadata(
+      contentType: contentType,
+      customMetadata: customMetadata,
+      cacheControl: 'public,max-age=3600',
+    );
+
+    await ref.putData(bytes, metadata);
+    return ref.getDownloadURL();
+  }
+
+  String _storagePathCapa(String inspiracaoId) {
+    return '$storageRoot/${_safeDocId(inspiracaoId)}/capa.jpg';
+  }
+
+  String _storagePathGaleria(String inspiracaoId, int timestamp) {
+    return '$storageRoot/${_safeDocId(inspiracaoId)}/galeria/$timestamp.jpg';
+  }
+
+  Future<void> _removerArquivoStorageSilencioso(String path) async {
+    try {
+      await _storage.ref().child(path).delete();
+    } catch (e, s) {
+      _log('Não foi possível remover arquivo do Storage ($path): $e', s);
+    }
+  }
+
+  Future<void> _removerArquivoPorUrlSilencioso(String url) async {
+    try {
+      await _storage.refFromURL(url).delete();
+    } catch (e, s) {
+      _log('Não foi possível remover arquivo por URL: $e', s);
     }
   }
 
@@ -875,8 +1644,12 @@ class InspiracaoAdminController extends GetxController {
     payload['fornecedoresRelacionados'] = _readDynamicList(payload, 'fornecedoresRelacionados');
     payload['categoriasFornecedorSugeridas'] =
         _readStringList(payload, 'categoriasFornecedorSugeridas');
-    payload['tarefasSugeridas'] = _readMapList(payload, 'tarefasSugeridas');
-    payload['itensOrcamentoSugeridos'] = _readMapList(payload, 'itensOrcamentoSugeridos');
+    payload['tarefasSugeridas'] = _normalizarTarefasSugeridas(
+      _readMapList(payload, 'tarefasSugeridas'),
+    );
+    payload['itensOrcamentoSugeridos'] = _normalizarItensOrcamentoSugeridos(
+      _readMapList(payload, 'itensOrcamentoSugeridos'),
+    );
     payload['ordem'] = _readInt(payload, 'ordem', defaultValue: _proximaOrdem());
 
     if (isCreate || payload.containsKey('destaque')) {
@@ -1218,6 +1991,41 @@ class InspiracaoAdminController extends GetxController {
     return int.tryParse(value.toString().trim()) ?? defaultValue;
   }
 
+  double _readDouble(
+    Map<String, dynamic> data,
+    String key, {
+    required double defaultValue,
+  }) {
+    final value = data[key];
+    if (value == null) {
+      return defaultValue;
+    }
+
+    if (value is double) {
+      return value;
+    }
+
+    if (value is int) {
+      return value.toDouble();
+    }
+
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    var text = value.toString().replaceAll('R\$', '').replaceAll(RegExp(r'\s+'), '').trim();
+
+    if (text.isEmpty) {
+      return defaultValue;
+    }
+
+    if (text.contains(',')) {
+      text = text.replaceAll('.', '').replaceAll(',', '.');
+    }
+
+    return double.tryParse(text) ?? defaultValue;
+  }
+
   List<String> _readStringList(Map<String, dynamic> data, String key) {
     final value = data[key];
     if (value == null) {
@@ -1273,6 +2081,213 @@ class InspiracaoAdminController extends GetxController {
     }
 
     return <Map<String, dynamic>>[];
+  }
+
+  List<Map<String, dynamic>> _normalizarItensOrcamentoSugeridos(
+    Iterable<Map<String, dynamic>> itens,
+  ) {
+    final normalizados = <Map<String, dynamic>>[];
+
+    var ordem = 1;
+    for (final item in itens) {
+      final normalizado = _normalizarItemOrcamentoSugerido(
+        item,
+        ordemPadrao: ordem,
+      );
+
+      if (_readString(normalizado, 'categoria').isNotEmpty &&
+          _readString(normalizado, 'item').isNotEmpty) {
+        normalizados.add(normalizado);
+        ordem++;
+      }
+    }
+
+    return normalizados;
+  }
+
+  Map<String, dynamic> _normalizarItemOrcamentoSugerido(
+    Map<String, dynamic> item, {
+    required int ordemPadrao,
+  }) {
+    final categoria = _readString(item, 'categoria', defaultValue: 'Geral');
+    final nomeItem = _readString(
+      item,
+      'item',
+      defaultValue: _readString(item, 'nome'),
+    );
+
+    final custoEstimado = _readDouble(
+      item,
+      'custoEstimado',
+      defaultValue: _readDouble(item, 'valorEstimado', defaultValue: 0.0),
+    );
+
+    return <String, dynamic>{
+      'categoria': categoria.isEmpty ? 'Geral' : categoria,
+      'item': nomeItem,
+      // Campos de compatibilidade com rotinas antigas de orçamento.
+      'nome': nomeItem,
+      'descricao': _readString(item, 'descricao'),
+      'custoEstimado': custoEstimado,
+      'valorEstimado': custoEstimado,
+      'custoMinimo': _readDouble(item, 'custoMinimo', defaultValue: 0.0),
+      'custoMaximo': _readDouble(item, 'custoMaximo', defaultValue: 0.0),
+      'unidade': _readString(item, 'unidade', defaultValue: 'unidade'),
+      'quantidadeBase': _readDouble(item, 'quantidadeBase', defaultValue: 1.0),
+      'custoPorConvidado': _readDouble(item, 'custoPorConvidado', defaultValue: 0.0),
+      'obrigatorio': _readBool(item, 'obrigatorio', defaultValue: false),
+      'ordem': _readInt(item, 'ordem', defaultValue: ordemPadrao),
+      'custoReal': _readDouble(item, 'custoReal', defaultValue: 0.0),
+      'statusPagamento': _readString(item, 'statusPagamento', defaultValue: 'pendente'),
+      'origem': _readString(item, 'origem', defaultValue: 'inspiracao_admin'),
+    };
+  }
+
+  String? _validarItemOrcamentoSugerido(
+    Map<String, dynamic> item, {
+    int? indice,
+  }) {
+    final posicao = indice == null ? '' : ' ${indice + 1}';
+    final categoria = _readString(item, 'categoria');
+    final nomeItem = _readString(item, 'item');
+
+    if (categoria.isEmpty) {
+      return 'Informe a categoria do item de orçamento$posicao.';
+    }
+
+    if (nomeItem.isEmpty) {
+      return 'Informe o nome do item de orçamento$posicao.';
+    }
+
+    final camposMonetarios = <String>[
+      'custoEstimado',
+      'custoMinimo',
+      'custoMaximo',
+      'custoPorConvidado',
+    ];
+
+    for (final campo in camposMonetarios) {
+      final valorOriginal = item[campo];
+      if (valorOriginal == null || valorOriginal.toString().trim().isEmpty) {
+        continue;
+      }
+
+      final valor = _readDouble(item, campo, defaultValue: double.nan);
+      if (valor.isNaN) {
+        return 'O campo $campo do item "$nomeItem" precisa ser um valor numérico.';
+      }
+
+      if (valor < 0) {
+        return 'O campo $campo do item "$nomeItem" não pode ser negativo.';
+      }
+    }
+
+    final quantidade = _readDouble(item, 'quantidadeBase', defaultValue: 0.0);
+    if (quantidade < 0) {
+      return 'A quantidade base do item "$nomeItem" não pode ser negativa.';
+    }
+
+    return null;
+  }
+
+  void _reordenarItensOrcamentoSugeridosInternamente() {
+    final lista = <Map<String, dynamic>>[];
+
+    for (var i = 0; i < itensOrcamentoSugeridosFormulario.length; i++) {
+      lista.add(
+        _normalizarItemOrcamentoSugerido(
+          itensOrcamentoSugeridosFormulario[i],
+          ordemPadrao: i + 1,
+        )..['ordem'] = i + 1,
+      );
+    }
+
+    itensOrcamentoSugeridosFormulario.assignAll(lista);
+  }
+
+  List<Map<String, dynamic>> _normalizarTarefasSugeridas(
+    Iterable<Map<String, dynamic>> tarefas,
+  ) {
+    final normalizadas = <Map<String, dynamic>>[];
+
+    var ordem = 1;
+    for (final tarefa in tarefas) {
+      final normalizada = _normalizarTarefaSugerida(
+        tarefa,
+        ordemPadrao: ordem,
+      );
+
+      if (_readString(normalizada, 'titulo').isNotEmpty) {
+        normalizadas.add(normalizada);
+        ordem++;
+      }
+    }
+
+    return normalizadas;
+  }
+
+  Map<String, dynamic> _normalizarTarefaSugerida(
+    Map<String, dynamic> tarefa, {
+    required int ordemPadrao,
+  }) {
+    final titulo = _readString(
+      tarefa,
+      'titulo',
+      defaultValue: _readString(tarefa, 'nome'),
+    );
+
+    final descricao = _readString(tarefa, 'descricao');
+    final categoria = _readString(tarefa, 'categoria', defaultValue: 'Geral');
+    final prioridade = _normalizarPrioridadeTarefa(
+      _readString(tarefa, 'prioridade', defaultValue: 'media'),
+    );
+
+    return <String, dynamic>{
+      'titulo': titulo,
+      // Campo mantido para compatibilidade com rotinas antigas que esperam `nome`.
+      'nome': titulo,
+      'descricao': descricao,
+      'categoria': categoria.isEmpty ? 'Geral' : categoria,
+      'diasAntesEvento': _readInt(
+        tarefa,
+        'diasAntesEvento',
+        defaultValue: _readInt(tarefa, 'diasAntes', defaultValue: 30),
+      ),
+      'prioridade': prioridade,
+      'obrigatoria': _readBool(tarefa, 'obrigatoria', defaultValue: false),
+      'ordem': _readInt(tarefa, 'ordem', defaultValue: ordemPadrao),
+      'status': _readString(tarefa, 'status', defaultValue: 'pendente'),
+      'origem': _readString(tarefa, 'origem', defaultValue: 'inspiracao_admin'),
+    };
+  }
+
+  String _normalizarPrioridadeTarefa(String value) {
+    final prioridade = _normalizeKey(value);
+
+    if (prioridade == 'alta' || prioridade == 'alto' || prioridade == 'high') {
+      return 'alta';
+    }
+
+    if (prioridade == 'baixa' || prioridade == 'baixo' || prioridade == 'low') {
+      return 'baixa';
+    }
+
+    return 'media';
+  }
+
+  void _reordenarTarefasSugeridasInternamente() {
+    final lista = <Map<String, dynamic>>[];
+
+    for (var i = 0; i < tarefasSugeridasFormulario.length; i++) {
+      lista.add(
+        _normalizarTarefaSugerida(
+          tarefasSugeridasFormulario[i],
+          ordemPadrao: i + 1,
+        )..['ordem'] = i + 1,
+      );
+    }
+
+    tarefasSugeridasFormulario.assignAll(lista);
   }
 
   Map<String, dynamic> _removeNulls(Map<String, dynamic> data) {
@@ -1343,37 +2358,6 @@ class InspiracaoAdminController extends GetxController {
     return _normalizeKey(value).isEmpty ? 'sem_id' : _normalizeKey(value);
   }
 
-  String _safeFileName(String value) {
-    final normalized = _normalizeText(value);
-    final name = normalized.replaceAll(RegExp(r'[^a-z0-9._-]+'), '_');
-    final clean = name.replaceAll(RegExp(r'_+'), '_');
-    return clean.isEmpty ? 'imagem.jpg' : clean;
-  }
-
-  String _extensionFromName(String fileName) {
-    final index = fileName.lastIndexOf('.');
-    if (index == -1 || index == fileName.length - 1) {
-      return 'jpg';
-    }
-
-    return fileName.substring(index + 1).toLowerCase();
-  }
-
-  String _contentTypeFromExtension(String extension) {
-    switch (extension.toLowerCase()) {
-      case 'png':
-        return 'image/png';
-      case 'webp':
-        return 'image/webp';
-      case 'gif':
-        return 'image/gif';
-      case 'jpeg':
-      case 'jpg':
-      default:
-        return 'image/jpeg';
-    }
-  }
-
   void _log(String message, [StackTrace? stackTrace]) {
     if (!kDebugMode) return;
 
@@ -1386,6 +2370,10 @@ class InspiracaoAdminController extends GetxController {
   @override
   void onClose() {
     _subInspiracoes?.cancel();
+    limparImagemPrincipalSelecionada();
+    imagensGaleriaPendentes.clear();
+    tarefasSugeridasFormulario.clear();
+    itensOrcamentoSugeridosFormulario.clear();
     super.onClose();
   }
 }

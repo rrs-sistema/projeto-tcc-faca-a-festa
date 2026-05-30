@@ -5,11 +5,11 @@ import 'package:latlong2/latlong.dart';
 import 'package:get/get.dart';
 import 'dart:math';
 
-import './../data/models/servico_produto/fornecedor_categoria_model.dart';
-import './../data/models/servico_produto/categoria_servico_model.dart';
-import './../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import './../data/models/DTO/fornecedor_detalhado_dto.dart';
-import './../data/models/model.dart';
+import '../../data/models/servico_produto/fornecedor_categoria_model.dart';
+import '../../data/models/servico_produto/categoria_servico_model.dart';
+import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
+import '../../data/models/DTO/fornecedor_detalhado_dto.dart';
+import '../../data/models/model.dart';
 
 class FornecedorLocalizacaoController extends GetxController {
   final db = FirebaseFirestore.instance;

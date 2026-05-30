@@ -41,23 +41,23 @@ class PresentesSection extends StatelessWidget {
           return _emptyState(primary);
         }
 
-        // 🔹 Extrair dados da Query
+        // Extrair dados da Query
         List<Map<String, dynamic>> presentes = docs.map((doc) {
           final data = doc.data() as Map<String, dynamic>;
-          data['id'] = doc.id; // Guardamos o ID do doc para uso futuro
+          data['id'] = doc.id;
           return data;
         }).toList();
 
-        // 🔹 Ordenar: Disponíveis no topo, "Já Escolhidos" vão para o final
+        // Ordenar: Disponíveis no topo, "Já Escolhidos" vão para o final
         presentes.sort((a, b) {
           final resA = _isIndisponivel(a) ? 1 : 0;
           final resB = _isIndisponivel(b) ? 1 : 0;
           return resA.compareTo(resB);
         });
 
-        // 🔹 Renderiza a lista na tela
+        // Renderiza a lista na tela de forma mais compacta
         return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 120), // Espaço pro BottomBar
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 100), // Paddings menores
           itemCount: presentes.length,
           itemBuilder: (context, index) {
             final data = presentes[index];
@@ -65,7 +65,6 @@ class PresentesSection extends StatelessWidget {
             return GuestGiftTile(
               item: data,
               primary: primary,
-              // 🎯 Ação 1: Abrir Modal PIX inteligente
               onPixTap: () {
                 _mostrarPixQrModal(
                   data['nome'] ?? 'Presente',
@@ -74,7 +73,6 @@ class PresentesSection extends StatelessWidget {
                   primary,
                 );
               },
-              // 🎯 Ação 2: Contribuir em Cota
               onContributeTap: () {
                 _mostrarPixQrModal(
                   data['nome'] ?? 'Cota Coletiva',
@@ -83,16 +81,14 @@ class PresentesSection extends StatelessWidget {
                   primary,
                 );
               },
-              // 🎯 Ação 3: Reservar Presente Físico
               onReserveTap: () {
-                // TODO: Implementar lógica de update no Firestore para setar reservado_por
                 Get.snackbar(
                   'Em breve',
                   'Lógica de confirmação de reserva do presente físico.',
                   backgroundColor: primary.withValues(alpha: 0.8),
                   colorText: Colors.white,
                   snackPosition: SnackPosition.BOTTOM,
-                  margin: const EdgeInsets.all(16),
+                  margin: const EdgeInsets.all(12), // Compacto
                 );
               },
             );
@@ -102,7 +98,6 @@ class PresentesSection extends StatelessWidget {
     );
   }
 
-  // Lógica inteligente para saber se o item já foi levado
   bool _isIndisponivel(Map<String, dynamic> data) {
     final reservadoPor = data['reservado_por'];
     final status = data['status'];
@@ -118,34 +113,33 @@ class PresentesSection extends StatelessWidget {
     return isReservado || metaAlcancada;
   }
 
-  // Estado Vazio
   Widget _emptyState(Color primary) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.redeem_rounded, color: primary, size: 56),
+              child: Icon(Icons.redeem_rounded, color: primary, size: 40),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               'Lista sendo preparada 🎁',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
-                  fontSize: 18, fontWeight: FontWeight.w600, color: Colors.black87),
+                  fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'O organizador vai disponibilizar as opções de presentes em breve!',
               textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade600),
+              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
             ),
           ],
         ),
@@ -153,51 +147,45 @@ class PresentesSection extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // 💳 MODAL INTELIGENTE DE PIX (Com campo editável)
-  // ============================================================
   void _mostrarPixQrModal(String nome, String valorInicial, String chavePix, Color primary) {
     final TextEditingController valorController = TextEditingController(text: valorInicial);
 
     Get.dialog(
       Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        insetPadding: const EdgeInsets.all(20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        insetPadding: const EdgeInsets.all(16), // Menos margem no modal
         child: StatefulBuilder(
           builder: (context, setState) {
             return Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                         color: primary.withValues(alpha: 0.1), shape: BoxShape.circle),
-                    child: Icon(Icons.pix_rounded, color: primary, size: 40),
+                    child: Icon(Icons.pix_rounded, color: primary, size: 30),
                   ),
-                  const SizedBox(height: 16),
-
+                  const SizedBox(height: 12),
                   Text(
                     'Presentear: $nome',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 18),
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
-
-                  // 🧠 Campo de texto editável para o convidado mudar o valor
+                  const SizedBox(height: 12),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0), // Mais fino
                     decoration: BoxDecoration(
                       color: Colors.grey.shade50,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: Row(
                       children: [
                         Text('R\$',
                             style: TextStyle(
-                                fontSize: 18,
+                                fontSize: 16,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.grey.shade600)),
                         const SizedBox(width: 8),
@@ -206,64 +194,59 @@ class PresentesSection extends StatelessWidget {
                             controller: valorController,
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
                             style: GoogleFonts.poppins(
-                                fontSize: 22, fontWeight: FontWeight.bold, color: primary),
+                                fontSize: 18, fontWeight: FontWeight.bold, color: primary),
                             decoration:
                                 const InputDecoration(border: InputBorder.none, hintText: '0,00'),
                           ),
                         ),
-                        Icon(Icons.edit, size: 16, color: Colors.grey.shade400),
+                        Icon(Icons.edit, size: 14, color: Colors.grey.shade400),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     'Você pode alterar o valor sugerido se desejar.',
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                    style: TextStyle(fontSize: 10, color: Colors.grey.shade500),
                     textAlign: TextAlign.center,
                   ),
-
-                  const SizedBox(height: 24),
-
+                  const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: primary.withValues(alpha: 0.2)),
                     ),
                     child: QrImageView(
                       data: chavePix,
-                      size: 160,
+                      size: 140, // QR um pouco menor
                       backgroundColor: Colors.white,
                     ),
                   ),
-
-                  const SizedBox(height: 24),
-
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
+                    height: 44, // Botão alinhado e compacto
                     child: ElevatedButton.icon(
-                      icon: const Icon(Icons.copy_rounded, color: Colors.white),
+                      icon: const Icon(Icons.copy_rounded, color: Colors.white, size: 18),
                       label: const Text('Copiar Chave PIX'),
                       onPressed: () {
                         Clipboard.setData(ClipboardData(text: chavePix));
-                        Get.back(); // Fecha modal
+                        Get.back();
                         Get.snackbar(
                           'Copiado com sucesso!',
                           'A chave PIX foi copiada. É só colar no app do seu banco.',
                           backgroundColor: Colors.green.shade600,
                           colorText: Colors.white,
                           snackPosition: SnackPosition.BOTTOM,
-                          margin: const EdgeInsets.all(16),
+                          margin: const EdgeInsets.all(12),
                         );
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        textStyle: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w600),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        textStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
                       ),
                     ),
                   ),
@@ -277,9 +260,6 @@ class PresentesSection extends StatelessWidget {
   }
 }
 
-// ============================================================
-// 🛍️ CARD DO CONVIDADO (VISUAL DA VITRINE CORRIGIDO)
-// ============================================================
 class GuestGiftTile extends StatelessWidget {
   final Map<String, dynamic> item;
   final Color primary;
@@ -298,7 +278,6 @@ class GuestGiftTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🧠 1. Validação Estrita de Tipo (Impede que vire PIX por acidente)
     final tipoStr = item['tipo']?.toString().toLowerCase() ?? 'fisico';
     final isColetivo = tipoStr == 'coletivo';
     final isPix = tipoStr == 'pix';
@@ -310,11 +289,6 @@ class GuestGiftTile extends StatelessWidget {
     final imagem = item['imagem'] ?? '';
     final temFoto = imagem.trim().isNotEmpty;
 
-    if (kDebugMode) {
-      print('IMAGEM DO PRODUTO ==> $imagem');
-    }
-
-    // 🧠 2. Tratamento e Formatação Rigorosa do Valor (Ex: 0 -> 0,00)
     final rawValor = item['valor']?.toString() ?? '0';
     final double valorNumerico = double.tryParse(rawValor.replaceAll(',', '.')) ?? 0.0;
     final String valorFormatado = valorNumerico.toStringAsFixed(2).replaceAll('.', ',');
@@ -332,32 +306,31 @@ class GuestGiftTile extends StatelessWidget {
     return Opacity(
       opacity: indisponivel ? 0.6 : 1.0,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
+        margin: const EdgeInsets.only(bottom: 10), // Margem inferior reduzida
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16), // Borda ligeiramente mais suave
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 5),
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
             )
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0), // Padding do card mais justinho
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Exibe imagem se for físico e tiver URL, senão ícone
                   (isFisico && temFoto)
                       ? _buildProductImage(imagem)
                       : _buildIconContainer(isPix, isColetivo),
 
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10), // Espaçamento menor
 
                   Expanded(
                     child: Column(
@@ -367,33 +340,31 @@ class GuestGiftTile extends StatelessWidget {
                           nome,
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.bold,
-                            fontSize: 16,
+                            fontSize: 14, // Fonte do título reduzida
                             color: Colors.black87,
                             decoration: indisponivel ? TextDecoration.lineThrough : null,
                           ),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         _buildSubtitleRow(tipoStr, link.isNotEmpty, loja),
                       ],
                     ),
                   ),
-
+                  const SizedBox(width: 6),
                   _buildStatusBadge(indisponivel, metaAlcancada),
                 ],
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 12), // Margem centralizada menor
 
-              // 🧠 3. Lógica inteligente de exibição de preço
               if (isColetivo)
                 _buildProgressSection(meta, arrecadado)
               else if (valorNumerico > 0 || isPix)
-                // Exibe valor apenas se for maior que zero ou se for Pix explicitamente
                 _buildSimplePrice(valorFormatado),
 
-              const Divider(height: 24),
+              const Divider(height: 16), // Divisor menor
 
               _buildGuestAction(indisponivel, isPix, isColetivo, isFisico, link),
             ],
@@ -404,42 +375,33 @@ class GuestGiftTile extends StatelessWidget {
   }
 
   Widget _buildProductImage(String url) {
-    // 🧠 Inteligência contra o CORS:
-    // Se estiver na Web, usamos um proxy para contornar o bloqueio do navegador.
-    // Se for Mobile (Android/iOS), usa a URL direta pois não há CORS.
     String finalUrl = url;
     if (kIsWeb) {
-      // Opção 1: corsproxy.io (muito rápido e estável)
       finalUrl = 'https://corsproxy.io/?${Uri.encodeComponent(url)}';
-
-      // Opção 2 (caso a opção 1 falhe algum dia):
-      // finalUrl = 'https://api.allorigins.win/raw?url=${Uri.encodeComponent(url)}';
     }
 
     return Container(
-      width: 60,
-      height: 60,
+      width: 50, // Imagem mais compacta
+      height: 50,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(color: Colors.grey.withValues(alpha: 0.2)),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(11),
+        borderRadius: BorderRadius.circular(9),
         child: Image.network(
           finalUrl,
           fit: BoxFit.contain,
           errorBuilder: (context, error, stackTrace) {
-            // Se der erro mesmo com o proxy, exibe o ícone de presente elegantemente
-            debugPrint('Erro ao carregar imagem: $error');
             return _buildIconContainer(false, false, isError: true);
           },
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
             return Center(
               child: SizedBox(
-                width: 20,
-                height: 20,
+                width: 16,
+                height: 16,
                 child: CircularProgressIndicator(
                     strokeWidth: 2, color: primary.withValues(alpha: 0.5)),
               ),
@@ -461,11 +423,11 @@ class GuestGiftTile extends StatelessWidget {
     }
 
     return Container(
-      width: 60,
-      height: 60,
+      width: 50, // Ícone alinhado ao tamanho da imagem compacta
+      height: 50,
       decoration: BoxDecoration(
-          color: primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-      child: Icon(icon, color: isError ? Colors.grey : primary, size: 28),
+          color: primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+      child: Icon(icon, color: isError ? Colors.grey : primary, size: 24),
     );
   }
 
@@ -477,13 +439,13 @@ class GuestGiftTile extends StatelessWidget {
       children: [
         Expanded(
           child: Text(texto,
-              style: TextStyle(color: Colors.grey[600], fontSize: 13),
+              style: TextStyle(color: Colors.grey[600], fontSize: 11), // Fonte reduzida
               maxLines: 1,
               overflow: TextOverflow.ellipsis),
         ),
         if (temLink) ...[
-          const SizedBox(width: 6),
-          Icon(Icons.link, size: 14, color: primary.withValues(alpha: 0.6)),
+          const SizedBox(width: 4),
+          Icon(Icons.link, size: 12, color: primary.withValues(alpha: 0.6)),
         ]
       ],
     );
@@ -494,18 +456,17 @@ class GuestGiftTile extends StatelessWidget {
     Color cor = Colors.green;
 
     if (metaAlcancada) {
-      texto = "Meta Atingida";
+      texto = "Atingida";
       cor = Colors.purple;
     } else if (indisponivel) {
-      texto = "Já Escolhido";
-      cor = Colors.orange;
+      texto = "Escolhido";
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4), // Badge reduzida
       decoration:
-          BoxDecoration(color: cor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20)),
-      child: Text(texto, style: TextStyle(color: cor, fontSize: 10, fontWeight: FontWeight.bold)),
+          BoxDecoration(color: cor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+      child: Text(texto, style: TextStyle(color: cor, fontSize: 9, fontWeight: FontWeight.bold)),
     );
   }
 
@@ -517,22 +478,22 @@ class GuestGiftTile extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text("Progresso da Meta", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+            Text("Progresso da Meta", style: TextStyle(fontSize: 11, color: Colors.grey[600])),
             Text("${(percent * 100).toStringAsFixed(0)}%",
-                style: TextStyle(fontWeight: FontWeight.bold, color: primary)),
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: primary)),
           ],
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
         LinearProgressIndicator(
           value: percent.clamp(0.0, 1.0),
           backgroundColor: Colors.grey[200],
           color: primary,
-          minHeight: 8,
+          minHeight: 6, // Barra mais fina
           borderRadius: BorderRadius.circular(10),
         ),
         const SizedBox(height: 4),
         Text("R\$ ${arrecadado.toStringAsFixed(2)} arrecadados",
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -540,9 +501,9 @@ class GuestGiftTile extends StatelessWidget {
   Widget _buildSimplePrice(String valorFormatado) {
     return Row(
       children: [
-        Text("Valor: ", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+        Text("Valor: ", style: TextStyle(color: Colors.grey[600], fontSize: 12)),
         Text("R\$ $valorFormatado",
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)), // Preço reduzido
       ],
     );
   }
@@ -553,10 +514,10 @@ class GuestGiftTile extends StatelessWidget {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.favorite, size: 16, color: Colors.grey.shade400),
-          const SizedBox(width: 8),
+          Icon(Icons.favorite, size: 14, color: Colors.grey.shade400),
+          const SizedBox(width: 6),
           Text("Este presente já foi garantido!",
-              style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 11)),
         ],
       );
     }
@@ -585,17 +546,18 @@ class GuestGiftTile extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
+      height: 40, // Botão ligeiramente mais baixo
       child: ElevatedButton.icon(
-        icon: Icon(icon, size: 18),
+        icon: Icon(icon, size: 16),
         label: Text(label),
         onPressed: action,
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: Colors.white,
-          elevation: 2,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+          elevation: 1,
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), // Borda menor
+          textStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
         ),
       ),
     );

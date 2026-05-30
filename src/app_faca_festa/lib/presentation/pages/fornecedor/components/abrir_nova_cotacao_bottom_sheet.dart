@@ -1,6 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:app_faca_festa/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/controllers/fornecedor/fornecedor_controller.dart';
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/presentation/widgets/button/botao_cancelar.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';

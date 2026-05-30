@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import './../../../controllers/usuario/endereco_usuario_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/usuario/usuario_controller.dart';
-import './../../widgets/custom_input_field.dart';
 import './../../widgets/festa_app_bar.dart';
 
 class EditUsuarioScreen extends StatefulWidget {
@@ -20,18 +19,8 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
   final userController = Get.find<UsuarioController>();
   final enderecoController = Get.find<EnderecoUsuarioController>();
 
-  // Controllers
-  late TextEditingController nomeCtrl;
-  late TextEditingController emailCtrl;
-  late TextEditingController cpfCtrl;
-
-  late TextEditingController cepCtrl;
-  late TextEditingController logCtrl;
-  late TextEditingController numCtrl;
-  late TextEditingController compCtrl;
-  late TextEditingController bairroCtrl;
-  late TextEditingController cidadeCtrl;
-  late TextEditingController ufCtrl;
+  late TextEditingController nomeCtrl, emailCtrl, cpfCtrl;
+  late TextEditingController cepCtrl, logCtrl, numCtrl, compCtrl, bairroCtrl, cidadeCtrl, ufCtrl;
 
   @override
   void initState() {
@@ -55,230 +44,218 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Get.find<EventThemeController>();
-    final gradient = theme.gradient.value;
     final primary = theme.primaryColor.value;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: FestaAppBar(
         titulo: 'Editar Perfil',
         automaticamenteImplyLeading: true,
       ),
-      // --------------------
-      // BODY SCROLLÁVEL
-      // --------------------
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(8, 10, 8, 100),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
         children: [
           // ------------------------
-          // FOTO + NOME (Card lindo)
+          // FOTO DE PERFIL
           // ------------------------
-          _cardContainer(
-            child: Column(
-              children: [
-                GestureDetector(
-                  onTap: () => userController.trocarFotoPerfil(),
-                  child: Obx(() {
-                    final url = userController.usuario.value?.fotoPerfilUrl;
-
-                    return Container(
-                      padding: const EdgeInsets.all(3),
+          Center(
+            child: GestureDetector(
+              onTap: () => userController.trocarFotoPerfil(),
+              child: Obx(() {
+                final url = userController.usuario.value?.fotoPerfilUrl;
+                return Stack(
+                  alignment: Alignment.bottomRight,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        gradient: gradient,
+                        color: primary.withValues(alpha: 0.05),
+                        border: Border.all(color: primary.withValues(alpha: 0.15), width: 2),
                       ),
                       child: CircleAvatar(
-                        radius: 55,
-                        backgroundColor: Colors.white,
+                        radius: 40,
+                        backgroundColor: Colors.grey.shade100,
                         backgroundImage: url != null ? NetworkImage(url) : null,
-                        child:
-                            url == null ? Icon(Icons.camera_alt, size: 40, color: primary) : null,
+                        child: url == null
+                            ? Icon(Icons.person_rounded,
+                                size: 34, color: primary.withValues(alpha: 0.6))
+                            : null,
                       ),
-                    );
-                  }),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  nomeCtrl.text,
-                  style: GoogleFonts.poppins(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade900,
-                  ),
-                ),
-                Text(
-                  emailCtrl.text,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-              ],
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: const Icon(Icons.camera_alt_rounded, size: 14, color: Colors.white),
+                    )
+                  ],
+                );
+              }),
             ),
           ),
+          const SizedBox(height: 20),
 
           // ------------------------
           // DADOS PESSOAIS
           // ------------------------
-          _sectionHeader(icon: Icons.person, title: "Informações pessoais"),
-          _cardContainer(
+          _SectionCard(
+            title: 'Informações pessoais',
+            icon: Icons.person_rounded,
+            primary: primary,
             child: Column(
               children: [
-                CustomInputField(
-                  label: "Nome completo",
-                  icon: Icons.person,
-                  controller: nomeCtrl,
-                ),
-                CustomInputField(
-                  label: "E-mail",
-                  icon: Icons.alternate_email,
-                  controller: emailCtrl,
-                  readOnly: true,
-                  type: InputType.email,
-                ),
-                CustomInputField(
-                  label: "CPF",
-                  icon: Icons.badge,
-                  controller: cpfCtrl,
-                  type: InputType.cpfCnpj,
-                  autoFormat: true,
-                ),
+                _CompactField(
+                    label: "Nome completo", icon: Icons.person_rounded, controller: nomeCtrl),
                 const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: _CompactField(
+                          label: "E-mail",
+                          icon: Icons.alternate_email_rounded,
+                          controller: emailCtrl,
+                          readOnly: true),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: _CompactField(
+                          label: "CPF",
+                          icon: Icons.badge_rounded,
+                          controller: cpfCtrl,
+                          keyboardType: TextInputType.number),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
+          const SizedBox(height: 12),
 
           // ------------------------
           // ENDEREÇO
           // ------------------------
-          _sectionHeader(icon: Icons.location_on, title: "Endereço"),
-          _cardContainer(
+          _SectionCard(
+            title: 'Endereço',
+            icon: Icons.location_on_rounded,
+            primary: primary,
             child: Column(
               children: [
-                CustomInputField(
-                  label: "CEP",
-                  hintlabel: 'Informe o CEP',
-                  icon: Icons.pin_drop_outlined,
-                  controller: cepCtrl,
-                  type: InputType.cep,
-                  margin: const EdgeInsets.only(bottom: 1),
-                ),
-                CustomInputField(
-                  label: "Logradouro",
-                  icon: Icons.home,
-                  controller: logCtrl,
-                  margin: const EdgeInsets.only(bottom: 1),
-                ),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      flex: 2,
-                      child: CustomInputField(
-                        label: "Complemento",
-                        icon: Icons.add_home_work,
-                        controller: compCtrl,
-                        margin: const EdgeInsets.only(bottom: 1),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: CustomInputField(
-                        label: "Nº",
-                        icon: Icons.tag,
-                        controller: numCtrl,
-                        margin: const EdgeInsets.only(bottom: 0),
-                      ),
-                    ),
-                  ],
-                ),
-                CustomInputField(
-                  label: "Bairro",
-                  icon: Icons.map,
-                  controller: bairroCtrl,
-                  margin: const EdgeInsets.only(bottom: 1),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: CustomInputField(
-                        label: "Cidade",
-                        icon: Icons.location_city,
-                        controller: cidadeCtrl,
-                        margin: const EdgeInsets.only(bottom: 1),
-                      ),
-                    ),
+                        flex: 2,
+                        child: _CompactField(
+                            label: "CEP",
+                            icon: Icons.pin_drop_rounded,
+                            controller: cepCtrl,
+                            keyboardType: TextInputType.number)),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: SizedBox(
-                        child: CustomInputField(
-                          label: "UF",
-                          icon: Icons.flag,
-                          controller: ufCtrl,
-                          margin: const EdgeInsets.only(bottom: 1),
-                        ),
-                      ),
-                    ),
+                        flex: 3,
+                        child: _CompactField(
+                            label: "Bairro", icon: Icons.map_rounded, controller: bairroCtrl)),
                   ],
                 ),
-                const SizedBox(height: 25),
+                const SizedBox(height: 10),
+                _CompactField(label: "Logradouro", icon: Icons.home_rounded, controller: logCtrl),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                        flex: 1,
+                        child: _CompactField(
+                            label: "Nº", icon: Icons.tag_rounded, controller: numCtrl)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                        flex: 3,
+                        child: _CompactField(
+                            label: "Complemento",
+                            icon: Icons.add_home_work_rounded,
+                            controller: compCtrl)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                        flex: 3,
+                        child: _CompactField(
+                            label: "Cidade",
+                            icon: Icons.location_city_rounded,
+                            controller: cidadeCtrl)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                        flex: 1,
+                        child: _CompactField(
+                            label: "UF",
+                            icon: Icons.flag_rounded,
+                            controller: ufCtrl,
+                            maxLength: 2)),
+                  ],
+                ),
               ],
             ),
           ),
-        ],
-      ),
+          const SizedBox(height: 24),
 
-      // ------------------------
-      // BOTÃO FIXO DE SALVAR
-      // ------------------------
-      bottomSheet: Container(
-        padding: const EdgeInsets.fromLTRB(10, 10, 10, 55),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, -3),
-            ),
-          ],
-        ),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            minimumSize: const Size(double.infinity, 52),
+          // ------------------------
+          // AÇÕES
+          // ------------------------
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: primary,
+                    side: BorderSide(color: primary.withValues(alpha: 0.45)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                  label: Text('Cancelar',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13)),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: _salvarPerfil,
+                  icon: const Icon(Icons.save_rounded, size: 18, color: Colors.white),
+                  label: Text('Salvar',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13)),
+                ),
+              ),
+            ],
           ),
-          onPressed: _salvarPerfil,
-          child: Text(
-            "Salvar alterações",
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              fontSize: 16,
-              color: Colors.white,
-            ),
-          ),
-        ),
+          const SizedBox(height: 30),
+        ],
       ),
     );
   }
 
-  // --------------------------
-  // SALVAR PERFIL
-  // --------------------------
   Future<void> _salvarPerfil() async {
-    EasyLoading.show(status: "Perfil atualizado!");
+    EasyLoading.show(status: "Atualizando...");
     try {
-      await userController.salvarPerfil(
-        nome: nomeCtrl.text.trim(),
-        cpf: cpfCtrl.text.trim(),
-      );
-
+      await userController.salvarPerfil(nome: nomeCtrl.text.trim(), cpf: cpfCtrl.text.trim());
       final uid = userController.usuario.value!.idUsuario;
-
       await enderecoController.salvarEnderecoPrincipal(
         idUsuario: uid,
         cep: cepCtrl.text.trim(),
@@ -289,57 +266,114 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
         nomeCidade: cidadeCtrl.text.trim(),
         uf: ufCtrl.text.trim(),
       );
-
-      EasyLoading.dismiss();
+      EasyLoading.showSuccess("Perfil atualizado!");
       Get.back();
     } catch (e) {
-      EasyLoading.show(status: "Erro ao salvar: $e");
-      EasyLoading.dismiss();
+      EasyLoading.showError("Erro ao salvar: $e");
     }
   }
+}
 
-  // --------------------------
-  // TÍTULO DA SESSÃO
-  // --------------------------
-  Widget _sectionHeader({required IconData icon, required String title}) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, bottom: 6, top: 16),
-      child: Row(
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Widget child;
+  final Color primary;
+
+  const _SectionCard(
+      {required this.title, required this.icon, required this.child, required this.primary});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4))
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 20, color: Colors.grey.shade700),
-          const SizedBox(width: 6),
-          Text(
-            title,
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
-            ),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 18, color: primary),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(title,
+                    style: GoogleFonts.poppins(
+                        fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
+              ),
+            ],
           ),
+          const SizedBox(height: 14),
+          child,
         ],
       ),
     );
   }
+}
 
-  // --------------------------
-  // CARD MODERNO
-  // --------------------------
-  Widget _cardContainer({required Widget child}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+class _CompactField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final bool readOnly;
+  final TextInputType? keyboardType;
+  final int? maxLength;
+  final String? Function(String?)? validator;
+
+  const _CompactField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.readOnly = false,
+    this.keyboardType,
+    this.maxLength,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      readOnly: readOnly,
+      keyboardType: keyboardType,
+      maxLength: maxLength,
+      validator: validator,
+      style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+        prefixIcon: Icon(icon, size: 18),
+        isDense: true,
+        counterText: "", // Esconde o contador do maxLength
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey.shade200)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Theme.of(context).primaryColor)),
+        errorStyle: const TextStyle(fontSize: 10, height: 0.9),
+        filled: true,
+        fillColor: readOnly ? Colors.grey.shade100 : Colors.grey.shade50,
       ),
-      child: child,
     );
   }
 }

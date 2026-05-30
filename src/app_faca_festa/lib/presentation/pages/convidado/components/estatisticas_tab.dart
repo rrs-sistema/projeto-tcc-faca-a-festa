@@ -24,20 +24,11 @@ class _EstatisticasTabState extends State<EstatisticasTab> with SingleTickerProv
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 700),
-    );
-
-    _fadeAnimation = CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeOutCubic,
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.96, end: 1).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
-    );
-
+    _animationController =
+        AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
+    _fadeAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic);
+    _scaleAnimation = Tween<double>(begin: 0.96, end: 1)
+        .animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack));
     _animationController.forward();
   }
 
@@ -50,12 +41,10 @@ class _EstatisticasTabState extends State<EstatisticasTab> with SingleTickerProv
       backgroundColor: const Color(0xFFF8FAFC),
       body: Obx(() {
         final primary = eventTheme?.primaryColor.value ?? const Color(0xFF0F766E);
-
         final total = convidadoController.totalConvidados;
         final confirmados = convidadoController.totalConfirmados;
         final pendentes = convidadoController.totalPendentes;
         final recusados = convidadoController.totalRecusados;
-
         final totalAdultos = convidadoController.totalAdultos;
         final totalCriancas = convidadoController.totalCriancas;
         final totalBebes = _totalBebesEstimado();
@@ -70,57 +59,51 @@ class _EstatisticasTabState extends State<EstatisticasTab> with SingleTickerProv
             scale: _scaleAnimation,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 18, 16, 140),
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 100), // Mais compacto
               children: [
                 _StatsHeroCard(
-                  primary: primary,
-                  total: total,
-                  confirmados: confirmados,
-                  pendentes: pendentes,
-                  recusados: recusados,
-                  percentConfirmados: percentConfirmados,
-                ),
-                const SizedBox(height: 16),
+                    primary: primary,
+                    total: total,
+                    confirmados: confirmados,
+                    pendentes: pendentes,
+                    recusados: recusados,
+                    percentConfirmados: percentConfirmados),
+                const SizedBox(height: 12),
                 _StatsOverviewGrid(
-                  primary: primary,
-                  total: total,
-                  confirmados: confirmados,
-                  pendentes: pendentes,
-                  recusados: recusados,
-                ),
-                const SizedBox(height: 22),
+                    primary: primary,
+                    total: total,
+                    confirmados: confirmados,
+                    pendentes: pendentes,
+                    recusados: recusados),
+                const SizedBox(height: 16),
                 if (total == 0) ...[
                   _EmptyStatsCard(primary: primary),
-                  const SizedBox(height: 20),
                 ] else ...[
                   _ProgressSection(
-                    primary: primary,
-                    percentConfirmados: percentConfirmados,
-                    percentPendentes: percentPendentes,
-                    percentRecusados: percentRecusados,
-                    confirmados: confirmados,
-                    pendentes: pendentes,
-                    recusados: recusados,
-                    total: total,
-                  ),
-                  const SizedBox(height: 20),
+                      primary: primary,
+                      percentConfirmados: percentConfirmados,
+                      percentPendentes: percentPendentes,
+                      percentRecusados: percentRecusados,
+                      confirmados: confirmados,
+                      pendentes: pendentes,
+                      recusados: recusados,
+                      total: total),
+                  const SizedBox(height: 16),
                   _ChartsSection(
-                    primary: primary,
-                    totalAdultos: totalAdultos,
-                    totalCriancas: totalCriancas,
-                    totalBebes: totalBebes,
-                    confirmados: confirmados,
-                    pendentes: pendentes,
-                    recusados: recusados,
-                  ),
-                  const SizedBox(height: 20),
+                      primary: primary,
+                      totalAdultos: totalAdultos,
+                      totalCriancas: totalCriancas,
+                      totalBebes: totalBebes,
+                      confirmados: confirmados,
+                      pendentes: pendentes,
+                      recusados: recusados),
+                  const SizedBox(height: 16),
                   _InsightsCard(
-                    primary: primary,
-                    total: total,
-                    confirmados: confirmados,
-                    pendentes: pendentes,
-                    recusados: recusados,
-                  ),
+                      primary: primary,
+                      total: total,
+                      confirmados: confirmados,
+                      pendentes: pendentes,
+                      recusados: recusados),
                 ],
                 _FooterInfo(primary: primary),
               ],
@@ -131,16 +114,11 @@ class _EstatisticasTabState extends State<EstatisticasTab> with SingleTickerProv
     );
   }
 
-  int _totalBebesEstimado() {
-    return convidadoController.convidados
-            .where(
-              (convidado) =>
-                  convidado.adulto == false && convidado.status == StatusConvidado.confirmado,
-            )
-            .length ~/
-        3;
-  }
-
+  int _totalBebesEstimado() =>
+      convidadoController.convidados
+          .where((c) => c.adulto == false && c.status == StatusConvidado.confirmado)
+          .length ~/
+      3;
   @override
   void dispose() {
     _animationController.dispose();
@@ -155,122 +133,67 @@ class _StatsHeroCard extends StatelessWidget {
   final int pendentes;
   final int recusados;
   final double percentConfirmados;
-
-  const _StatsHeroCard({
-    required this.primary,
-    required this.total,
-    required this.confirmados,
-    required this.pendentes,
-    required this.recusados,
-    required this.percentConfirmados,
-  });
+  const _StatsHeroCard(
+      {required this.primary,
+      required this.total,
+      required this.confirmados,
+      required this.pendentes,
+      required this.recusados,
+      required this.percentConfirmados});
 
   @override
   Widget build(BuildContext context) {
     final progress = percentConfirmados.clamp(0.0, 1.0).toDouble();
-
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            primary.withValues(alpha: 0.98),
-            primary.withValues(alpha: 0.76),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(28),
-        boxShadow: [
-          BoxShadow(
-            color: primary.withValues(alpha: 0.26),
-            blurRadius: 22,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
+          gradient: LinearGradient(
+              colors: [primary.withValues(alpha: 0.98), primary.withValues(alpha: 0.76)]),
+          borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.18),
-                  borderRadius: BorderRadius.circular(19),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
-                ),
-                child: const Icon(
-                  Icons.query_stats_rounded,
-                  color: Colors.white,
-                  size: 30,
-                ),
-              ),
-              const SizedBox(width: 14),
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(14)),
+                  child: const Icon(Icons.query_stats_rounded, color: Colors.white, size: 24)),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Text('Painel de confirmações',
+                        style: GoogleFonts.poppins(
+                            color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
                     Text(
-                      'Painel de confirmações',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      total == 0
-                          ? 'Cadastre convidados para acompanhar respostas, pendências e recusas.'
-                          : '$confirmados de $total convidados confirmaram presença.',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white.withValues(alpha: 0.88),
-                        fontSize: 12.5,
-                        height: 1.45,
-                      ),
-                    ),
+                        total == 0 ? 'Cadastre convidados.' : '$confirmados de $total confirmados.',
+                        style: GoogleFonts.poppins(
+                            color: Colors.white.withValues(alpha: 0.88), fontSize: 11)),
                   ],
                 ),
               ),
-              _PercentRing(
-                percent: progress,
-                label: '${(progress * 100).toStringAsFixed(0)}%',
-              ),
+              _PercentRing(percent: progress, label: '${(progress * 100).toStringAsFixed(0)}%'),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 8,
-              color: Colors.white,
-              backgroundColor: Colors.white.withValues(alpha: 0.18),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _HeroChip(
-                icon: Icons.verified_rounded,
-                label: '$confirmados confirmados',
-              ),
-              _HeroChip(
-                icon: Icons.schedule_rounded,
-                label: '$pendentes pendentes',
-              ),
-              _HeroChip(
-                icon: Icons.cancel_rounded,
-                label: '$recusados recusados',
-              ),
-            ],
-          ),
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                  value: progress,
+                  minHeight: 6,
+                  color: Colors.white,
+                  backgroundColor: Colors.white.withValues(alpha: 0.18))),
+          const SizedBox(height: 8),
+          Wrap(spacing: 6, runSpacing: 6, children: [
+            _HeroChip(icon: Icons.verified_rounded, label: '$confirmados conf.'),
+            _HeroChip(icon: Icons.schedule_rounded, label: '$pendentes pend.'),
+            _HeroChip(icon: Icons.cancel_rounded, label: '$recusados rec.')
+          ]),
         ],
       ),
     );
@@ -280,74 +203,42 @@ class _StatsHeroCard extends StatelessWidget {
 class _PercentRing extends StatelessWidget {
   final double percent;
   final String label;
-
-  const _PercentRing({
-    required this.percent,
-    required this.label,
-  });
-
+  const _PercentRing({required this.percent, required this.label});
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 62,
-      height: 62,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
+        width: 48,
+        height: 48,
+        child: Stack(alignment: Alignment.center, children: [
           CircularProgressIndicator(
-            value: percent,
-            strokeWidth: 6,
-            color: Colors.white,
-            backgroundColor: Colors.white.withValues(alpha: 0.18),
-          ),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
+              value: percent,
+              strokeWidth: 4,
               color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
-    );
+              backgroundColor: Colors.white.withValues(alpha: 0.18)),
+          Text(label,
+              style: GoogleFonts.poppins(
+                  color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800))
+        ]));
   }
 }
 
 class _HeroChip extends StatelessWidget {
   final IconData icon;
   final String label;
-
-  const _HeroChip({
-    required this.icon,
-    required this.label,
-  });
-
+  const _HeroChip({required this.icon, required this.label});
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.white, size: 15),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(999)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, color: Colors.white, size: 12),
+          const SizedBox(width: 4),
+          Text(label,
+              style: GoogleFonts.poppins(
+                  color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700))
+        ]));
   }
 }
 
@@ -357,125 +248,77 @@ class _StatsOverviewGrid extends StatelessWidget {
   final int confirmados;
   final int pendentes;
   final int recusados;
-
-  const _StatsOverviewGrid({
-    required this.primary,
-    required this.total,
-    required this.confirmados,
-    required this.pendentes,
-    required this.recusados,
-  });
+  const _StatsOverviewGrid(
+      {required this.primary,
+      required this.total,
+      required this.confirmados,
+      required this.pendentes,
+      required this.recusados});
 
   @override
   Widget build(BuildContext context) {
     final cards = [
       _StatMetricData(
-        icon: Icons.groups_rounded,
-        label: 'Convidados',
-        value: total.toString(),
-        color: primary,
-      ),
+          icon: Icons.groups_rounded, label: 'Convidados', value: total.toString(), color: primary),
       _StatMetricData(
-        icon: Icons.verified_rounded,
-        label: 'Confirmados',
-        value: confirmados.toString(),
-        color: const Color(0xFF059669),
-      ),
+          icon: Icons.verified_rounded,
+          label: 'Confirm.',
+          value: confirmados.toString(),
+          color: const Color(0xFF059669)),
       _StatMetricData(
-        icon: Icons.schedule_rounded,
-        label: 'Pendentes',
-        value: pendentes.toString(),
-        color: const Color(0xFFF59E0B),
-      ),
+          icon: Icons.schedule_rounded,
+          label: 'Pendent.',
+          value: pendentes.toString(),
+          color: const Color(0xFFF59E0B)),
       _StatMetricData(
-        icon: Icons.cancel_rounded,
-        label: 'Recusados',
-        value: recusados.toString(),
-        color: const Color(0xFFDC2626),
-      ),
+          icon: Icons.cancel_rounded,
+          label: 'Recusados',
+          value: recusados.toString(),
+          color: const Color(0xFFDC2626)),
     ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final itemWidth = constraints.maxWidth >= 680
-            ? (constraints.maxWidth - 36) / 4
-            : (constraints.maxWidth - 12) / 2;
-
-        return Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: cards
-              .map(
-                (card) => SizedBox(
-                  width: itemWidth,
-                  child: _MetricCard(data: card),
-                ),
-              )
-              .toList(),
-        );
-      },
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      final itemWidth = (constraints.maxWidth - 8) / 2;
+      return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children:
+              cards.map((c) => SizedBox(width: itemWidth, child: _MetricCard(data: c))).toList());
+    });
   }
 }
 
 class _MetricCard extends StatelessWidget {
   final _StatMetricData data;
-
   const _MetricCard({required this.data});
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: data.color.withValues(alpha: 0.12)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.045),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: data.color.withValues(alpha: 0.12))),
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: data.color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Icon(data.icon, color: data.color, size: 22),
-          ),
-          const SizedBox(width: 10),
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                  color: data.color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(10)),
+              child: Icon(data.icon, color: data.color, size: 18)),
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  data.value,
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF111827),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  data.label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF64748B),
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(data.value,
+                style: GoogleFonts.poppins(
+                    color: const Color(0xFF111827), fontSize: 15, fontWeight: FontWeight.w800)),
+            Text(data.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                    color: const Color(0xFF64748B), fontSize: 10, fontWeight: FontWeight.w600))
+          ])),
         ],
       ),
     );
@@ -484,58 +327,30 @@ class _MetricCard extends StatelessWidget {
 
 class _EmptyStatsCard extends StatelessWidget {
   final Color primary;
-
   const _EmptyStatsCard({required this.primary});
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: primary.withValues(alpha: 0.10)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.045),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: primary.withValues(alpha: 0.10))),
+        child: Column(children: [
           Container(
-            width: 68,
-            height: 68,
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Icon(Icons.insights_rounded, color: primary, size: 34),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'Sem dados para analisar ainda',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF111827),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Cadastre convidados e acompanhe automaticamente confirmações, pendências, recusas e perfil do público.',
-            style: GoogleFonts.poppins(
-              color: const Color(0xFF64748B),
-              fontSize: 13,
-              height: 1.45,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(16)),
+              child: Icon(Icons.insights_rounded, color: primary, size: 26)),
+          const SizedBox(height: 10),
+          Text('Sem dados.',
+              style: GoogleFonts.poppins(
+                  fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
+          Text('Cadastre convidados.',
+              style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 11),
+              textAlign: TextAlign.center)
+        ]));
   }
 }
 
@@ -548,56 +363,50 @@ class _ProgressSection extends StatelessWidget {
   final int pendentes;
   final int recusados;
   final int total;
-
-  const _ProgressSection({
-    required this.primary,
-    required this.percentConfirmados,
-    required this.percentPendentes,
-    required this.percentRecusados,
-    required this.confirmados,
-    required this.pendentes,
-    required this.recusados,
-    required this.total,
-  });
+  const _ProgressSection(
+      {required this.primary,
+      required this.percentConfirmados,
+      required this.percentPendentes,
+      required this.percentRecusados,
+      required this.confirmados,
+      required this.pendentes,
+      required this.recusados,
+      required this.total});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: _cardDecoration(primary),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(
-            icon: Icons.timeline_rounded,
-            title: 'Andamento das respostas',
-            subtitle: 'Acompanhe o retorno dos convidados em tempo real.',
-            color: primary,
-          ),
-          const SizedBox(height: 16),
+              icon: Icons.timeline_rounded,
+              title: 'Respostas',
+              subtitle: 'Acompanhamento em tempo real.',
+              color: primary),
+          const SizedBox(height: 10),
           _ProgressLine(
-            icon: Icons.verified_rounded,
-            title: 'Confirmados',
-            value: percentConfirmados,
-            color: const Color(0xFF059669),
-            subtitle: '$confirmados de $total convidados confirmaram presença',
-          ),
-          const SizedBox(height: 12),
+              icon: Icons.verified_rounded,
+              title: 'Confirmados',
+              value: percentConfirmados,
+              color: const Color(0xFF059669),
+              subtitle: '$confirmados conf.'),
+          const SizedBox(height: 8),
           _ProgressLine(
-            icon: Icons.schedule_rounded,
-            title: 'Pendentes',
-            value: percentPendentes,
-            color: const Color(0xFFF59E0B),
-            subtitle: '$pendentes convidados ainda não responderam',
-          ),
-          const SizedBox(height: 12),
+              icon: Icons.schedule_rounded,
+              title: 'Pendentes',
+              value: percentPendentes,
+              color: const Color(0xFFF59E0B),
+              subtitle: '$pendentes pend.'),
+          const SizedBox(height: 8),
           _ProgressLine(
-            icon: Icons.cancel_rounded,
-            title: 'Recusados',
-            value: percentRecusados,
-            color: const Color(0xFFDC2626),
-            subtitle: '$recusados convidados recusaram o convite',
-          ),
+              icon: Icons.cancel_rounded,
+              title: 'Recusados',
+              value: percentRecusados,
+              color: const Color(0xFFDC2626),
+              subtitle: '$recusados rec.'),
         ],
       ),
     );
@@ -610,83 +419,54 @@ class _ProgressLine extends StatelessWidget {
   final double value;
   final String subtitle;
   final Color color;
-
-  const _ProgressLine({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.subtitle,
-    required this.color,
-  });
-
+  const _ProgressLine(
+      {required this.icon,
+      required this.title,
+      required this.value,
+      required this.subtitle,
+      required this.color});
   @override
   Widget build(BuildContext context) {
-    final safeValue = value.clamp(0.0, 1.0).toDouble();
-
     return Container(
-      padding: const EdgeInsets.all(13),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.10)),
-      ),
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: color.withValues(alpha: 0.10))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(icon, color: color, size: 19),
-              ),
-              const SizedBox(width: 10),
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon, color: color, size: 16)),
+              const SizedBox(width: 8),
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF111827),
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11.5,
-                        color: const Color(0xFF64748B),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                '${(safeValue * 100).toStringAsFixed(0)}%',
-                style: GoogleFonts.poppins(
-                  color: color,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 13,
-                ),
-              ),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(title,
+                    style: GoogleFonts.poppins(
+                        fontSize: 12, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
+                Text(subtitle,
+                    style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF64748B)))
+              ])),
+              Text('${(value * 100).toStringAsFixed(0)}%',
+                  style:
+                      GoogleFonts.poppins(color: color, fontWeight: FontWeight.w800, fontSize: 11)),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: safeValue,
-              minHeight: 8,
-              color: color,
-              backgroundColor: color.withValues(alpha: 0.10),
-            ),
-          ),
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                  value: value,
+                  minHeight: 6,
+                  color: color,
+                  backgroundColor: color.withValues(alpha: 0.10))),
         ],
       ),
     );
@@ -701,79 +481,48 @@ class _ChartsSection extends StatelessWidget {
   final int confirmados;
   final int pendentes;
   final int recusados;
-
-  const _ChartsSection({
-    required this.primary,
-    required this.totalAdultos,
-    required this.totalCriancas,
-    required this.totalBebes,
-    required this.confirmados,
-    required this.pendentes,
-    required this.recusados,
-  });
+  const _ChartsSection(
+      {required this.primary,
+      required this.totalAdultos,
+      required this.totalCriancas,
+      required this.totalBebes,
+      required this.confirmados,
+      required this.pendentes,
+      required this.recusados});
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 760;
-
-        final children = [
-          _ChartCard(
+    return Column(
+      children: [
+        _ChartCard(
             primary: primary,
             icon: Icons.diversity_3_rounded,
-            title: 'Perfil dos convidados',
-            subtitle: 'Distribuição por faixa etária cadastrada.',
+            title: 'Perfil',
+            subtitle: 'Faixa etária.',
             chart: _AgePieChart(
-              primary: primary,
-              adultos: totalAdultos,
-              criancas: totalCriancas,
-              bebes: totalBebes,
-            ),
+                primary: primary,
+                adultos: totalAdultos,
+                criancas: totalCriancas,
+                bebes: totalBebes),
             legend: [
               _LegendItem(label: 'Adultos', value: totalAdultos, color: primary),
               _LegendItem(label: 'Crianças', value: totalCriancas, color: const Color(0xFFF59E0B)),
-              _LegendItem(
-                  label: 'Bebês estimados', value: totalBebes, color: const Color(0xFF7C3AED)),
-            ],
-          ),
-          _ChartCard(
+              _LegendItem(label: 'Bebês', value: totalBebes, color: const Color(0xFF7C3AED))
+            ]),
+        const SizedBox(height: 12),
+        _ChartCard(
             primary: primary,
             icon: Icons.mark_email_read_rounded,
-            title: 'Status dos convites',
-            subtitle: 'Distribuição das respostas recebidas.',
+            title: 'Status',
+            subtitle: 'Respostas.',
             chart: _StatusPieChart(
-              confirmados: confirmados,
-              pendentes: pendentes,
-              recusados: recusados,
-            ),
-            legend: [
-              const _LegendItem(label: 'Confirmados', value: null, color: Color(0xFF059669)),
-              const _LegendItem(label: 'Pendentes', value: null, color: Color(0xFFF59E0B)),
-              const _LegendItem(label: 'Recusados', value: null, color: Color(0xFFDC2626)),
-            ],
-          ),
-        ];
-
-        if (isWide) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: children[0]),
-              const SizedBox(width: 14),
-              Expanded(child: children[1]),
-            ],
-          );
-        }
-
-        return Column(
-          children: [
-            children[0],
-            const SizedBox(height: 18),
-            children[1],
-          ],
-        );
-      },
+                confirmados: confirmados, pendentes: pendentes, recusados: recusados),
+            legend: const [
+              _LegendItem(label: 'Conf.', value: null, color: Color(0xFF059669)),
+              _LegendItem(label: 'Pend.', value: null, color: Color(0xFFF59E0B)),
+              _LegendItem(label: 'Rec.', value: null, color: Color(0xFFDC2626))
+            ]),
+      ],
     );
   }
 }
@@ -785,40 +534,25 @@ class _ChartCard extends StatelessWidget {
   final String subtitle;
   final Widget chart;
   final List<_LegendItem> legend;
-
-  const _ChartCard({
-    required this.primary,
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.chart,
-    required this.legend,
-  });
-
+  const _ChartCard(
+      {required this.primary,
+      required this.icon,
+      required this.title,
+      required this.subtitle,
+      required this.chart,
+      required this.legend});
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: _cardDecoration(primary),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionHeader(
-            icon: icon,
-            title: title,
-            subtitle: subtitle,
-            color: primary,
-          ),
-          const SizedBox(height: 16),
-          SizedBox(height: 230, child: chart),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: legend,
-          ),
-        ],
-      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        _SectionHeader(icon: icon, title: title, subtitle: subtitle, color: primary),
+        const SizedBox(height: 12),
+        SizedBox(height: 180, child: chart),
+        const SizedBox(height: 12),
+        Wrap(spacing: 8, runSpacing: 8, children: legend)
+      ]),
     );
   }
 }
@@ -828,43 +562,21 @@ class _AgePieChart extends StatelessWidget {
   final int adultos;
   final int criancas;
   final int bebes;
-
-  const _AgePieChart({
-    required this.primary,
-    required this.adultos,
-    required this.criancas,
-    required this.bebes,
-  });
-
+  const _AgePieChart(
+      {required this.primary, required this.adultos, required this.criancas, required this.bebes});
   @override
   Widget build(BuildContext context) {
     final total = adultos + criancas + bebes;
-
-    if (total == 0) {
-      return _EmptyChart(primary: primary);
-    }
-
+    if (total == 0) return _EmptyChart(primary: primary);
     return PieChart(
-      PieChartData(
-        sectionsSpace: 3,
-        centerSpaceRadius: 58,
-        startDegreeOffset: -90,
-        sections: [
-          if (adultos > 0)
-            _section(value: adultos.toDouble(), total: total.toDouble(), color: primary),
-          if (criancas > 0)
-            _section(
-                value: criancas.toDouble(),
-                total: total.toDouble(),
-                color: const Color(0xFFF59E0B)),
-          if (bebes > 0)
-            _section(
-                value: bebes.toDouble(), total: total.toDouble(), color: const Color(0xFF7C3AED)),
-        ],
-      ),
-      duration: const Duration(milliseconds: 700),
-      curve: Curves.easeOutCubic,
-    );
+        PieChartData(sectionsSpace: 2, centerSpaceRadius: 40, startDegreeOffset: -90, sections: [
+      if (adultos > 0) _section(value: adultos.toDouble(), total: total.toDouble(), color: primary),
+      if (criancas > 0)
+        _section(
+            value: criancas.toDouble(), total: total.toDouble(), color: const Color(0xFFF59E0B)),
+      if (bebes > 0)
+        _section(value: bebes.toDouble(), total: total.toDouble(), color: const Color(0xFF7C3AED))
+    ]));
   }
 }
 
@@ -872,72 +584,40 @@ class _StatusPieChart extends StatelessWidget {
   final int confirmados;
   final int pendentes;
   final int recusados;
-
-  const _StatusPieChart({
-    required this.confirmados,
-    required this.pendentes,
-    required this.recusados,
-  });
-
+  const _StatusPieChart(
+      {required this.confirmados, required this.pendentes, required this.recusados});
   @override
   Widget build(BuildContext context) {
     final total = confirmados + pendentes + recusados;
-
-    if (total == 0) {
-      return const _EmptyChart(primary: Color(0xFF0F766E));
-    }
-
+    if (total == 0) return const _EmptyChart(primary: Color(0xFF0F766E));
     return PieChart(
-      PieChartData(
-        sectionsSpace: 3,
-        centerSpaceRadius: 58,
-        startDegreeOffset: -90,
-        sections: [
-          if (confirmados > 0)
-            _section(
-              value: confirmados.toDouble(),
-              total: total.toDouble(),
-              color: const Color(0xFF059669),
-            ),
-          if (pendentes > 0)
-            _section(
-              value: pendentes.toDouble(),
-              total: total.toDouble(),
-              color: const Color(0xFFF59E0B),
-            ),
-          if (recusados > 0)
-            _section(
-              value: recusados.toDouble(),
-              total: total.toDouble(),
-              color: const Color(0xFFDC2626),
-            ),
-        ],
-      ),
-      duration: const Duration(milliseconds: 700),
-      curve: Curves.easeOutCubic,
-    );
+        PieChartData(sectionsSpace: 2, centerSpaceRadius: 40, startDegreeOffset: -90, sections: [
+      if (confirmados > 0)
+        _section(
+            value: confirmados.toDouble(), total: total.toDouble(), color: const Color(0xFF059669)),
+      if (pendentes > 0)
+        _section(
+            value: pendentes.toDouble(), total: total.toDouble(), color: const Color(0xFFF59E0B)),
+      if (recusados > 0)
+        _section(
+            value: recusados.toDouble(), total: total.toDouble(), color: const Color(0xFFDC2626))
+    ]));
   }
 }
 
 class _EmptyChart extends StatelessWidget {
   final Color primary;
-
   const _EmptyChart({required this.primary});
-
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Container(
-        width: 150,
-        height: 150,
-        decoration: BoxDecoration(
-          color: primary.withValues(alpha: 0.08),
-          shape: BoxShape.circle,
-        ),
-        child:
-            Icon(Icons.pie_chart_outline_rounded, color: primary.withValues(alpha: 0.55), size: 54),
-      ),
-    );
+        child: Container(
+            width: 100,
+            height: 100,
+            decoration:
+                BoxDecoration(color: primary.withValues(alpha: 0.08), shape: BoxShape.circle),
+            child: Icon(Icons.pie_chart_outline_rounded,
+                color: primary.withValues(alpha: 0.55), size: 36)));
   }
 }
 
@@ -945,37 +625,19 @@ class _LegendItem extends StatelessWidget {
   final String label;
   final int? value;
   final Color color;
-
-  const _LegendItem({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
+  const _LegendItem({required this.label, required this.value, required this.color});
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.09),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.circle, color: color, size: 10),
-          const SizedBox(width: 6),
-          Text(
-            value == null ? label : '$label · $value',
-            style: GoogleFonts.poppins(
-              color: color,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.09), borderRadius: BorderRadius.circular(999)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(Icons.circle, color: color, size: 8),
+          const SizedBox(width: 4),
+          Text(value == null ? label : '$label · $value',
+              style: GoogleFonts.poppins(color: color, fontSize: 10, fontWeight: FontWeight.w700))
+        ]));
   }
 }
 
@@ -985,123 +647,62 @@ class _InsightsCard extends StatelessWidget {
   final int confirmados;
   final int pendentes;
   final int recusados;
-
-  const _InsightsCard({
-    required this.primary,
-    required this.total,
-    required this.confirmados,
-    required this.pendentes,
-    required this.recusados,
-  });
-
+  const _InsightsCard(
+      {required this.primary,
+      required this.total,
+      required this.confirmados,
+      required this.pendentes,
+      required this.recusados});
   @override
   Widget build(BuildContext context) {
-    final confirmacao = total == 0 ? 0.0 : confirmados / total;
-    final message = _buildMessage(confirmacao, pendentes, recusados);
-
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: _cardDecoration(primary),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(Icons.tips_and_updates_rounded, color: primary, size: 23),
-          ),
-          const SizedBox(width: 12),
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(12)),
+              child: Icon(Icons.tips_and_updates_rounded, color: primary, size: 18)),
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Leitura rápida',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  message,
-                  style: GoogleFonts.poppins(
-                    color: const Color(0xFF64748B),
-                    fontSize: 12.5,
-                    height: 1.45,
-                  ),
-                ),
-              ],
-            ),
-          ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Leitura rápida',
+                style: GoogleFonts.poppins(
+                    fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
+            Text(total == 0 ? 'Sem dados.' : 'Acompanhe as estatísticas.',
+                style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 10))
+          ])),
         ],
       ),
     );
-  }
-
-  String _buildMessage(double confirmacao, int pendentes, int recusados) {
-    if (total == 0) {
-      return 'Cadastre convidados para liberar uma análise automática do evento.';
-    }
-
-    if (pendentes > confirmados) {
-      return 'Ainda existem muitos convites pendentes. Uma boa ação agora é reenviar lembretes para aumentar a taxa de resposta.';
-    }
-
-    if (confirmacao >= 0.75) {
-      return 'Ótimo andamento! A maior parte dos convidados já confirmou presença. Você já pode usar esses números para ajustar cardápio e orçamento.';
-    }
-
-    if (recusados > 0 && pendentes == 0) {
-      return 'Todos responderam ao convite. Use o total confirmado para fechar fornecedores, mesas e quantidade de itens.';
-    }
-
-    return 'As confirmações estão avançando. Continue acompanhando os pendentes para evitar surpresas perto da data do evento.';
   }
 }
 
 class _FooterInfo extends StatelessWidget {
   final Color primary;
-
   const _FooterInfo({required this.primary});
-
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 22),
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          decoration: BoxDecoration(
-            color: primary.withValues(alpha: 0.07),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.sync_rounded, color: primary, size: 15),
-              const SizedBox(width: 7),
-              Flexible(
-                child: Text(
-                  'Estatísticas atualizadas automaticamente conforme as confirmações.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.5,
-                    color: primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+        padding: const EdgeInsets.only(top: 16),
+        child: Center(
+            child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                    color: primary.withValues(alpha: 0.07),
+                    borderRadius: BorderRadius.circular(999)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  Icon(Icons.sync_rounded, color: primary, size: 12),
+                  const SizedBox(width: 4),
+                  Flexible(
+                      child: Text('Estatísticas em tempo real.',
+                          style: GoogleFonts.poppins(
+                              fontSize: 10, color: primary, fontWeight: FontWeight.w600)))
+                ]))));
   }
 }
 
@@ -1110,52 +711,26 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color color;
-
-  const _SectionHeader({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-  });
-
+  const _SectionHeader(
+      {required this.icon, required this.title, required this.subtitle, required this.color});
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.10),
-            borderRadius: BorderRadius.circular(15),
-          ),
-          child: Icon(icon, color: color, size: 22),
-        ),
-        const SizedBox(width: 12),
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10)),
+            child: Icon(icon, color: color, size: 18)),
+        const SizedBox(width: 8),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  color: const Color(0xFF111827),
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subtitle,
-                style: GoogleFonts.poppins(
-                  color: const Color(0xFF64748B),
-                  fontSize: 12,
-                  height: 1.35,
-                ),
-              ),
-            ],
-          ),
-        ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title,
+              style: GoogleFonts.poppins(
+                  color: const Color(0xFF111827), fontSize: 14, fontWeight: FontWeight.w800)),
+          Text(subtitle, style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 10))
+        ])),
       ],
     );
   }
@@ -1166,46 +741,20 @@ class _StatMetricData {
   final String label;
   final String value;
   final Color color;
-
-  const _StatMetricData({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  const _StatMetricData(
+      {required this.icon, required this.label, required this.value, required this.color});
 }
 
-PieChartSectionData _section({
-  required double value,
-  required double total,
-  required Color color,
-}) {
-  final percent = total == 0 ? 0 : (value / total) * 100;
-
-  return PieChartSectionData(
-    color: color,
-    value: value,
-    radius: 68,
-    title: '${percent.toStringAsFixed(0)}%',
-    titleStyle: GoogleFonts.poppins(
-      fontSize: 14,
-      fontWeight: FontWeight.w800,
-      color: Colors.white,
-    ),
-  );
-}
-
-BoxDecoration _cardDecoration(Color color) {
-  return BoxDecoration(
+PieChartSectionData _section(
+        {required double value, required double total, required Color color}) =>
+    PieChartSectionData(
+        color: color,
+        value: value,
+        radius: 50,
+        title: '${((value / total) * 100).toStringAsFixed(0)}%',
+        titleStyle:
+            GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white));
+BoxDecoration _cardDecoration(Color color) => BoxDecoration(
     color: Colors.white,
-    borderRadius: BorderRadius.circular(24),
-    border: Border.all(color: color.withValues(alpha: 0.10)),
-    boxShadow: [
-      BoxShadow(
-        color: Colors.black.withValues(alpha: 0.045),
-        blurRadius: 18,
-        offset: const Offset(0, 8),
-      ),
-    ],
-  );
-}
+    borderRadius: BorderRadius.circular(18),
+    border: Border.all(color: color.withValues(alpha: 0.10)));

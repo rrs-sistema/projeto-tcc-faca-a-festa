@@ -5,7 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
 import './../../../../controllers/tema/event_theme_controller.dart';
-import './../../../../controllers/fornecedor_controller.dart';
+import '../../../../controllers/fornecedor/fornecedor_controller.dart';
 import './../../../../controllers/app_controller.dart';
 import './../../../../core/utils/biblioteca.dart';
 import './../../../widgets/festa_app_bar.dart';
@@ -23,7 +23,7 @@ class FornecedorMensagensPage extends StatelessWidget {
     final fornecedorId = appCtrl.usuarioLogado.value!.idUsuario;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: FestaAppBar(
         titulo: 'Mensagens',
         automaticamenteImplyLeading: true,
@@ -35,7 +35,12 @@ class FornecedorMensagensPage extends StatelessWidget {
             .snapshots(),
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator());
+            return Center(
+              child: CircularProgressIndicator(
+                color: theme.primaryColor.value,
+                strokeWidth: 2.5,
+              ),
+            );
           }
 
           final fornecedorDocs = snapshot.data!.docs;
@@ -45,7 +50,7 @@ class FornecedorMensagensPage extends StatelessWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16), // 🔹 Margens limpas
             itemCount: fornecedorDocs.length,
             itemBuilder: (_, i) {
               final fornecedorDoc = fornecedorDocs[i];
@@ -75,38 +80,46 @@ class FornecedorMensagensPage extends StatelessWidget {
   Widget _emptyState() {
     return Center(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 26),
-        margin: const EdgeInsets.symmetric(horizontal: 35),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24), // 🔹 Menor padding
+        margin: const EdgeInsets.symmetric(horizontal: 24),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 3),
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.chat_bubble_outline_rounded, color: Colors.grey.shade500, size: 46),
-            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.chat_bubble_outline_rounded, color: Colors.grey.shade500, size: 36),
+            ),
+            const SizedBox(height: 14),
             Text(
               "Nenhuma conversa iniciada",
               style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w700,
+                fontSize: 14,
+                color: const Color(0xFF1F2937),
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
             Text(
-              "Os organizadores podem enviar mensagens assim que você receber uma cotação.",
+              "Os organizadores enviarão mensagens por aqui assim que você receber uma cotação.",
               style: GoogleFonts.poppins(
-                fontSize: 12.5,
+                fontSize: 11.5,
                 color: Colors.grey.shade600,
                 height: 1.4,
               ),
@@ -148,147 +161,153 @@ class _CotacaoMensagemTile extends StatelessWidget {
           .snapshots(),
       builder: (context, snap) {
         final msgs = snap.data?.docs ?? [];
-
         final naoLidas = msgs.where((m) => !(m['lido'] ?? false)).length;
 
         // Última mensagem
         final ultimaMsg = msgs.isNotEmpty ? (msgs.first.data() as Map<String, dynamic>) : null;
-
         final ultimaMsgTexto = ultimaMsg?["mensagem"] ?? "Conversa iniciada";
         final ultimaMsgHora = ultimaMsg?["enviado_em"] != null
             ? DateFormat("dd/MM • HH:mm").format((ultimaMsg!["enviado_em"] as Timestamp).toDate())
             : "";
 
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          margin: const EdgeInsets.only(bottom: 16),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 10), // 🔹 Margem inferior mais limpa
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16),
             color: Colors.white,
+            border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withValues(alpha: 0.025),
                 blurRadius: 8,
                 offset: const Offset(0, 3),
               ),
             ],
           ),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            onTap: () async {
-              // 🔥 1) Buscar a cotação
-              final cotacaoDoc =
-                  await FirebaseFirestore.instance.collection("cotacao").doc(idCotacao).get();
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () async {
+                // Busca os dados da cotação para passar ao chat
+                final cotacaoDoc =
+                    await FirebaseFirestore.instance.collection("cotacao").doc(idCotacao).get();
 
-              if (!cotacaoDoc.exists) {
-                Get.snackbar("Erro", "Cotação não encontrada");
-                return;
-              }
+                if (!cotacaoDoc.exists) {
+                  Get.snackbar("Erro", "Cotação não encontrada",
+                      backgroundColor: Colors.redAccent, colorText: Colors.white);
+                  return;
+                }
 
-              final cotacao = cotacaoDoc.data()!;
-              final nomeUsuarioSolicitante = cotacao["nome_usuario_solicitante"] ?? "Organizador";
-              final dataEnvio = cotacao['data_envio'] is Timestamp
-                  ? (cotacao['data_envio'] as Timestamp).toDate()
-                  : DateTime.now();
+                final cotacao = cotacaoDoc.data()!;
+                final nomeUsuarioSolicitante = cotacao["nome_usuario_solicitante"] ?? "Organizador";
+                final dataEnvio = cotacao['data_envio'] is Timestamp
+                    ? (cotacao['data_envio'] as Timestamp).toDate()
+                    : DateTime.now();
 
-              // 🔥 2) Abrir a tela com o nome correto
-              Get.to(() => ChatMensagensPage(
-                    idCotacao: idCotacao,
-                    idFornecedor: idFornecedor,
-                    nomeFornecedor: nomeUsuarioSolicitante,
-                    dataSolicitacao: dataEnvio,
-                  ));
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              child: Row(
-                children: [
-                  // 🎨 Avatar do serviço/categoria
-                  CircleAvatar(
-                    radius: 26,
-                    backgroundColor: corCategoria.withValues(alpha: 0.18),
-                    child: Icon(icone, color: corCategoria, size: 26),
-                  ),
-
-                  const SizedBox(width: 14),
-
-                  // 📝 Texto principal
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 🔹 Título: cotação + categoria
-                        Text(
-                          "Cotação #$idCotacao",
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13.5,
-                          ),
-                        ),
-
-                        const SizedBox(height: 2),
-
-                        Text(
-                          categoria,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        // 🔹 Última mensagem
-                        Text(
-                          ultimaMsgTexto,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 12.5,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(width: 10),
-
-                  // 🔔 Informação à direita
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      // 📅 Data da última mensagem
-                      Text(
-                        ultimaMsgHora,
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: Colors.grey.shade500,
-                        ),
+                Get.to(() => ChatMensagensPage(
+                      idCotacao: idCotacao,
+                      idFornecedor: idFornecedor,
+                      nomeFornecedor: nomeUsuarioSolicitante,
+                      dataSolicitacao: dataEnvio,
+                    ));
+              },
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12), // 🔹 Ultra compacto
+                child: Row(
+                  children: [
+                    // 🎨 Avatar do serviço/categoria
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: corCategoria.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
+                      child: Icon(icone, color: corCategoria, size: 20),
+                    ),
+                    const SizedBox(width: 12),
 
-                      const SizedBox(height: 8),
-
-                      naoLidas > 0
-                          ? Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.teal.shade700,
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                              child: Text(
-                                naoLidas.toString(),
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.bold,
+                    // 📝 Texto principal
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  "Cotação #$idCotacao",
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                    color: const Color(0xFF1F2937),
+                                  ),
                                 ),
                               ),
-                            )
-                          : const SizedBox.shrink(),
-                    ],
-                  ),
-                ],
+                              if (ultimaMsgHora.isNotEmpty)
+                                Text(
+                                  ultimaMsgHora,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            categoria,
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              color: corCategoria,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  ultimaMsgTexto,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11.5,
+                                    color: naoLidas > 0 ? Colors.black87 : Colors.grey.shade600,
+                                    fontWeight: naoLidas > 0 ? FontWeight.w600 : FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+                              if (naoLidas > 0) ...[
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: Colors.teal.shade600,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    naoLidas.toString(),
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -8,7 +8,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
-import './../data/models/evento/inspiracao_model.dart';
+import '../../data/models/evento/inspiracao_model.dart';
 
 class InspiracaoController extends GetxController {
   static const String _colecaoInspiracoes = 'inspiracoes';
@@ -38,6 +38,10 @@ class InspiracaoController extends GetxController {
   StreamSubscription? _subOrcamento;
 
   String? _tipoEventoAtual;
+  String? _tipoEventoIdAtual;
+  String? _tipoEventoSlugAtual;
+  Set<String> _tipoEventoTokensAtuais = <String>{};
+
   String? _eventoIdAtual;
   String? _userIdAtual;
 
@@ -47,6 +51,8 @@ class InspiracaoController extends GetxController {
 
   Future<void> carregarInspiracoes(
     String tipoEvento, {
+    String? tipoEventoId,
+    String? tipoEventoSlug,
     String? eventoId,
     String? userId,
   }) async {
@@ -56,6 +62,15 @@ class InspiracaoController extends GetxController {
       await _subInspiracoes?.cancel();
 
       _tipoEventoAtual = _normalizeTipoEvento(tipoEvento);
+      _tipoEventoIdAtual = tipoEventoId?.trim();
+      _tipoEventoSlugAtual = tipoEventoSlug?.trim().isNotEmpty == true
+          ? _normalizeTipoEvento(tipoEventoSlug!)
+          : _tipoEventoAtual;
+      _tipoEventoTokensAtuais = _montarTokensTipoEventoAtual(
+        nome: tipoEvento,
+        id: tipoEventoId,
+        slug: tipoEventoSlug,
+      );
 
       if (eventoId != null && eventoId.trim().isNotEmpty) {
         _eventoIdAtual = eventoId.trim();
@@ -72,6 +87,9 @@ class InspiracaoController extends GetxController {
       if (kDebugMode) {
         print('🔍 Buscando inspirações...');
         print('🎉 Tipo de evento atual: $_tipoEventoAtual');
+        print('🆔 ID do tipo de evento atual: $_tipoEventoIdAtual');
+        print('🏷️ Slug do tipo de evento atual: $_tipoEventoSlugAtual');
+        print('🔎 Tokens do tipo atual: $_tipoEventoTokensAtuais');
         print('📌 Evento atual: $_eventoIdAtual');
         print('👤 Usuário atual: $_userIdAtual');
       }
@@ -84,8 +102,11 @@ class InspiracaoController extends GetxController {
           }
 
           final lista = snapshot.docs
+              .where((doc) {
+                final data = doc.data();
+                return _documentoInspiracaoVisivel(data) && _pertenceAoTipoEventoAtualData(data);
+              })
               .map((doc) => InspiracaoModel.fromFirestore(doc))
-              .where(_pertenceAoTipoEventoAtual)
               .map(
                 (insp) => insp.copyWith(
                   favorito: favoritasIds.contains(insp.id) || insp.favorito,
@@ -403,7 +424,9 @@ class InspiracaoController extends GetxController {
       final ativo = item['ativo'] != false;
       final deletado = item['deletado'] == true || item['deleted'] == true;
 
-      return itemInspiracaoId == id && origem == 'inspiracao' && ativo && !deletado;
+      final origemValida = origem.isEmpty || origem.contains('inspiracao');
+
+      return itemInspiracaoId == id && origemValida && ativo && !deletado;
     });
   }
 
@@ -423,7 +446,9 @@ class InspiracaoController extends GetxController {
       final ativo = data['ativo'] != false;
       final deletado = data['deletado'] == true || data['deleted'] == true;
 
-      return origem == 'inspiracao' && ativo && !deletado;
+      final origemValida = origem.isEmpty || origem.contains('inspiracao');
+
+      return origemValida && ativo && !deletado;
     });
   }
 
@@ -918,7 +943,7 @@ class InspiracaoController extends GetxController {
           return {'id': doc.id, ...data};
         }).where((tarefa) {
           final ativo = tarefa['ativo'] != false;
-          final deletado = tarefa['deletado'] == true;
+          final deletado = tarefa['deletado'] == true || tarefa['deleted'] == true;
           final eventoId = (tarefa['eventoId'] ?? tarefa['idEvento'] ?? '').toString();
           final userId = (tarefa['userId'] ?? tarefa['idUsuario'] ?? '').toString();
 
@@ -958,7 +983,7 @@ class InspiracaoController extends GetxController {
           return {'id': doc.id, ...data};
         }).where((item) {
           final ativo = item['ativo'] != false;
-          final deletado = item['deletado'] == true;
+          final deletado = item['deletado'] == true || item['deleted'] == true;
           final eventoId = (item['eventoId'] ?? item['idEvento'] ?? '').toString();
           final userId = (item['userId'] ?? item['idUsuario'] ?? '').toString();
 
@@ -991,32 +1016,117 @@ class InspiracaoController extends GetxController {
     todasInspiracoes.assignAll(atualizadas);
   }
 
-  bool _pertenceAoTipoEventoAtual(InspiracaoModel inspiracao) {
-    if (!inspiracao.ativo) return false;
+  bool _documentoInspiracaoVisivel(Map<String, dynamic> data) {
+    final ativo = data['ativo'];
+    final publicado = data['publicado'];
+    final deletado = data['deletado'] == true || data['deleted'] == true;
 
-    final tipoAtual = _tipoEventoAtual ?? '';
-    if (tipoAtual.isEmpty) return true;
+    return ativo != false && publicado != false && !deletado;
+  }
 
-    final tipoEvento = _normalizeTipoEvento(inspiracao.tipoEvento);
-    final tipoEventoId = _normalizeTipoEvento(inspiracao.tipoEventoId);
-    final tipoEventoNormalizado = _normalizeTipoEvento(inspiracao.tipoEventoNormalizado);
+  bool _pertenceAoTipoEventoAtualData(Map<String, dynamic> data) {
+    final tokensAtuais = _tipoEventoTokensAtuais;
 
-    final documentoAntigoSemTipo =
-        tipoEvento.isEmpty && tipoEventoId.isEmpty && tipoEventoNormalizado.isEmpty;
-
-    if (documentoAntigoSemTipo) {
+    if (tokensAtuais.isEmpty) {
       return true;
     }
 
-    return tipoEvento == tipoAtual ||
-        tipoEventoId == tipoAtual ||
-        tipoEventoNormalizado == tipoAtual ||
-        tipoEvento == 'todos' ||
-        tipoEventoId == 'todos' ||
-        tipoEventoNormalizado == 'todos' ||
-        tipoEventoId == 'geral' ||
-        tipoEvento == 'geral' ||
-        tipoEventoNormalizado == 'geral';
+    final tokensDocumento = <String>{
+      ..._normalizarValoresTipoEvento(_readStringList(data, 'tipoEventoIds')),
+      ..._normalizarValoresTipoEvento(_readStringList(data, 'tipoEventoSlugs')),
+      ..._normalizarValoresTipoEvento(_readStringList(data, 'tipoEventoNomes')),
+      ..._normalizarValoresTipoEvento([
+        data['tipoEvento'],
+        data['tipoEventoId'],
+        data['tipoEventoNormalizado'],
+        data['tipoEventoSlug'],
+        data['tipoEventoNome'],
+      ]),
+    }..removeWhere((value) => value.trim().isEmpty);
+
+    final semClassificacaoDeTipo = tokensDocumento.isEmpty;
+
+    // Compatibilidade com documentos antigos que ainda não possuíam
+    // nenhum campo de tipo de evento. Antes eles apareciam para todos.
+    if (semClassificacaoDeTipo) {
+      return true;
+    }
+
+    if (tokensDocumento.any(_isTipoEventoGeral)) {
+      return true;
+    }
+
+    return tokensDocumento.any(tokensAtuais.contains);
+  }
+
+  Set<String> _montarTokensTipoEventoAtual({
+    required String nome,
+    String? id,
+    String? slug,
+  }) {
+    final tokens = <String>{};
+
+    void add(dynamic value) {
+      final raw = value?.toString().trim() ?? '';
+      if (raw.isEmpty) return;
+
+      tokens.add(raw.toLowerCase());
+      tokens.add(_normalizeTipoEvento(raw));
+    }
+
+    add(nome);
+    add(id);
+    add(slug);
+
+    return tokens..removeWhere((value) => value.trim().isEmpty);
+  }
+
+  Set<String> _normalizarValoresTipoEvento(Iterable<dynamic> values) {
+    final tokens = <String>{};
+
+    for (final value in values) {
+      final raw = value?.toString().trim() ?? '';
+      if (raw.isEmpty) continue;
+
+      tokens.add(raw.toLowerCase());
+      tokens.add(_normalizeTipoEvento(raw));
+    }
+
+    return tokens..removeWhere((value) => value.trim().isEmpty);
+  }
+
+  List<String> _readStringList(Map<String, dynamic> data, String field) {
+    final value = data[field];
+
+    if (value == null) return <String>[];
+
+    if (value is Iterable) {
+      return value
+          .map((item) => item?.toString().trim() ?? '')
+          .where((item) => item.isNotEmpty)
+          .toList();
+    }
+
+    final text = value.toString().trim();
+    if (text.isEmpty) return <String>[];
+
+    return text
+        .split(RegExp(r'[,;|]'))
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
+  }
+
+  bool _isTipoEventoGeral(String value) {
+    final normalized = _normalizeTipoEvento(value);
+
+    return normalized == 'todos' ||
+        normalized == 'todo' ||
+        normalized == 'todos_os_eventos' ||
+        normalized == 'geral' ||
+        normalized == 'global' ||
+        normalized == 'multiplos' ||
+        normalized == 'multi_eventos';
   }
 
   bool get _temContextoEvento {

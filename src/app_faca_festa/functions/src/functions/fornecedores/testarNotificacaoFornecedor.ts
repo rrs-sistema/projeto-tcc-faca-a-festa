@@ -1,5 +1,5 @@
 import { onRequest } from "firebase-functions/v1/https";
-import { admin } from "../shared/firebaseAdmin";
+import { admin } from "../../shared/firebaseAdmin";
 
 // 🔥 Teste manual de envio de notificação
 export const testarNotificacaoFornecedor = onRequest(async (req, res) => {

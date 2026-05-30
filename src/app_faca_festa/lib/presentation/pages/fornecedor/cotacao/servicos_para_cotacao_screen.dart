@@ -4,10 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:ui';
 
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import './../../../../controllers/fornecedor_localizacao_controller.dart';
+import '../../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import '../components/abrir_nova_cotacao_bottom_sheet.dart';
 import './../../../../controllers/app_controller.dart';
@@ -40,201 +39,181 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
   Widget build(BuildContext context) {
     final gradient = themeController.gradient.value;
     final primary = themeController.primaryColor.value;
-    final isCelular = MediaQuery.of(context).size.width < 650;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      backgroundColor: Colors.grey.shade100,
-      appBar: AppBar(
-        elevation: 0,
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        title: Column(
-          children: [
-            Text('Cotação de Serviços',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                  fontSize: 17,
-                )),
-            Text(widget.nomeCategoria,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  color: Colors.white70,
-                )),
-          ],
-        ),
-        flexibleSpace: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-            child: Container(decoration: BoxDecoration(gradient: gradient)),
+      backgroundColor: const Color(0xFFF8FAFC),
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(60),
+        child: AppBar(
+          elevation: 0,
+          centerTitle: true,
+          automaticallyImplyLeading: false,
+          flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
+          title: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+                onPressed: () => Get.back(),
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text('Cotação de Serviços',
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w800, color: Colors.white, fontSize: 15)),
+                    Text(widget.nomeCategoria,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                            fontSize: 11, color: Colors.white.withValues(alpha: 0.85))),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
-      body: SafeArea(
-        child: Obx(() {
-          final servicos = fornecedorController.servicosFornecedor;
-          if (servicos.isEmpty) return _mensagemVazia();
 
-          return Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(bottom: 100, top: 10),
-                child: GridView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-                  itemCount: servicos.length,
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: isCelular ? 1 : 2,
-                    mainAxisSpacing: 20,
-                    crossAxisSpacing: 20,
-                    childAspectRatio: isCelular ? 2.4 : 1.1,
-                  ),
-                  itemBuilder: (_, i) {
-                    final s = servicos[i];
-                    return Obx(() {
-                      final chave = '${s.id}_${s.idFornecedor}';
-                      final selecionado = selecionados.contains(chave);
-
-                      return Dismissible(
-                        key: ValueKey('${s.id}_${s.idFornecedor}'),
-                        direction: DismissDirection.horizontal,
-                        background: Container(
-                          alignment: Alignment.centerRight,
-                          padding: const EdgeInsets.only(right: 24),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Colors.redAccent.shade700, Colors.redAccent.shade200],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(Icons.delete_forever_rounded,
-                              color: Colors.white, size: 30),
-                        ),
-
-                        // 🧠 Confirma antes de apagar
-                        confirmDismiss: (_) async {
-                          HapticFeedback.selectionClick();
-                          var result = await Biblioteca.showConfirmDialog(
-                            context,
-                            title: 'Remover serviço!',
-                            message: 'Deseja realmente remover "${s.nomeServico}" da lista?',
-                            confirmLabel: 'Remover',
-                            color: primary,
-                            onConfirm: () async {
-                              return await Future.value(true);
-                            },
-                          );
-                          return result;
-                        },
-
-                        onDismissed: (_) async {
-                          final itemRemovido = s;
-                          final indexRemovido = i;
-
-                          // ⚠️ PRIMEIRO: remova imediatamente da UI
-                          setState(() {
-                            fornecedorController.servicosFornecedor.removeAt(indexRemovido);
-                            selecionados.remove(itemRemovido.id);
-                          });
-
-                          // ⚠️ Garanta que o frame termine ANTES de mostrar snackbar
-                          await Future.delayed(Duration(milliseconds: 50));
-
-                          HapticFeedback.mediumImpact();
-
-                          // 🎀 Snackbar elegante com “Desfazer”
-                          Get.snackbar(
-                            'Serviço removido',
-                            '${itemRemovido.nomeServico ?? "Item"} foi removido.',
-                            snackPosition: SnackPosition.BOTTOM,
-                            backgroundColor: Colors.white,
-                            colorText: Colors.black87,
-                            margin: const EdgeInsets.all(14),
-                            borderRadius: 16,
-                            duration: Duration(seconds: 3),
-                            mainButton: TextButton(
-                              onPressed: () {
-                                // Retorna o item
-                                setState(() {
-                                  fornecedorController.servicosFornecedor
-                                      .insert(indexRemovido, itemRemovido);
-                                  selecionados.add(itemRemovido.id);
-                                });
-
-                                HapticFeedback.lightImpact();
-                              },
-                              child: Text(
-                                'Desfazer',
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.blueAccent.shade700,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-
-                        child: _cardServico(s, selecionado, primary, gradient, isCelular)
-                            .animate()
-                            .fadeIn(duration: 350.ms, delay: (i * 80).ms)
-                            .slideY(begin: 0.05, end: 0),
-                      );
-                    });
-                  },
-                ),
-              ),
-              // 🔹 Floating Action Modern Button
-              Obx(() => AnimatedPositioned(
-                    duration: 400.ms,
-                    curve: Curves.easeOut,
-                    bottom: selecionados.isNotEmpty ? 40 : -80,
-                    left: 20,
-                    right: 20,
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.request_quote_rounded, color: Colors.white),
-                      label: Text(
-                        'Solicitar Cotação (${selecionados.length}) - '
-                        'R\$ ${Biblioteca.formatarValorDecimal(
-                          valorSolicitado.fold(0.0, (a, b) => a! + b),
-                        )}',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        elevation: 12,
-                        shadowColor: primary.withValues(alpha: 0.35),
-                      ),
-                      onPressed: () => _abrirBottomSheet(servicos, primary),
-                    ),
-                  )),
+      // 🔹 Barra Inferior Inteligente
+      bottomNavigationBar: Obx(() {
+        if (selecionados.isEmpty) return const SizedBox.shrink();
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 300),
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 12,
+            bottom: MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom
+                : 12,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, -4))
             ],
-          );
-        }),
-      ),
+          ),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primary,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              elevation: 0,
+            ),
+            onPressed: () => _abrirBottomSheet(fornecedorController.servicosFornecedor, primary),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.request_quote_rounded, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  'Cotar ${selecionados.length} item(ns) • R\$ ${Biblioteca.formatarValorDecimal(valorSolicitado.fold(0.0, (a, b) => a! + b))}',
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        );
+      }),
+
+      body: Obx(() {
+        final servicos = fornecedorController.servicosFornecedor;
+        if (servicos.isEmpty) return _mensagemVazia();
+
+        return ListView.separated(
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          itemCount: servicos.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 12),
+          itemBuilder: (_, i) {
+            final s = servicos[i];
+            return Obx(() {
+              final chave = '${s.id}_${s.idFornecedor}';
+              final selecionado = selecionados.contains(chave);
+
+              return Dismissible(
+                key: ValueKey(chave),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 26),
+                ),
+                confirmDismiss: (_) async {
+                  HapticFeedback.selectionClick();
+                  return await Biblioteca.showConfirmDialog(
+                    context,
+                    title: 'Remover serviço?',
+                    message: 'Deseja remover "${s.nomeServico}" da visualização?',
+                    confirmLabel: 'Remover',
+                    color: Colors.red,
+                    onConfirm: () async => Future.value(true),
+                  );
+                },
+                onDismissed: (_) async {
+                  final itemRemovido = s;
+                  final indexRemovido = i;
+
+                  setState(() {
+                    fornecedorController.servicosFornecedor.removeAt(indexRemovido);
+                    selecionados.remove(chave);
+                    valorSolicitado.remove(s.preco);
+                  });
+
+                  await Future.delayed(const Duration(milliseconds: 50));
+                  HapticFeedback.lightImpact();
+
+                  Get.snackbar(
+                    'Serviço ocultado',
+                    '${itemRemovido.nomeServico ?? "Item"} removido.',
+                    snackPosition: SnackPosition.BOTTOM,
+                    backgroundColor: const Color(0xFF1F2937),
+                    colorText: Colors.white,
+                    margin: const EdgeInsets.all(12),
+                    borderRadius: 12,
+                    duration: const Duration(seconds: 3),
+                    mainButton: TextButton(
+                      onPressed: () {
+                        setState(() {
+                          fornecedorController.servicosFornecedor
+                              .insert(indexRemovido, itemRemovido);
+                        });
+                      },
+                      child: Text('Desfazer',
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w700, color: Colors.blueAccent.shade100)),
+                    ),
+                  );
+                },
+                // 🔹 Layout de Lista (Horizontal)
+                child: _cardServicoLista(s, selecionado, primary)
+                    .animate()
+                    .fadeIn(duration: 300.ms, delay: (i * 50).ms)
+                    .slideX(begin: 0.05, end: 0),
+              );
+            });
+          },
+        );
+      }),
     );
   }
 
-  Widget _cardServico(
-    FornecedorServicoDetalhadoDto s,
-    bool selecionado,
-    Color primary,
-    LinearGradient gradient,
-    bool isCelular,
-  ) {
+  // 🔹 Design em Lista (Perfeito para celular e escaneabilidade)
+  Widget _cardServicoLista(FornecedorServicoDetalhadoDto s, bool selecionado, Color primary) {
     final fotoUrl = s.imagemUrl?.isNotEmpty == true
         ? s.imagemUrl!
         : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media';
@@ -252,215 +231,123 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
         HapticFeedback.selectionClick();
       },
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOutCubic,
+        duration: const Duration(milliseconds: 250),
+        padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(22),
-          gradient: selecionado
-              ? gradient
-              : const LinearGradient(
-                  colors: [Colors.white, Color(0xFFF8F8F8)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-          border: Border.all(
-            color: selecionado ? primary.withValues(alpha: 0.8) : Colors.transparent,
-            width: 2,
-          ),
-          boxShadow: [
-            BoxShadow(
+            color: selecionado ? primary.withValues(alpha: 0.04) : Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
               color: selecionado
-                  ? primary.withValues(alpha: 0.4)
-                  : Colors.black.withValues(alpha: 0.08),
-              blurRadius: selecionado ? 16 : 8,
-              offset: const Offset(0, 6),
+                  ? primary.withValues(alpha: 0.5)
+                  : Colors.black.withValues(alpha: 0.05),
+              width: selecionado ? 1.5 : 1,
             ),
-          ],
-        ),
-        child: Stack(
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 8,
+                offset: const Offset(0, 4),
+              )
+            ]),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 📸 Imagem lateral
-                ClipRRect(
-                  borderRadius: const BorderRadius.horizontal(left: Radius.circular(22)),
-                  child: Stack(
+            // 📸 Imagem
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                width: 90,
+                height: 90,
+                child: CachedNetworkImage(
+                  imageUrl: fotoUrl,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // 🧾 Informações
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      CachedNetworkImage(
-                        imageUrl: fotoUrl,
-                        width: isCelular ? 120 : 150,
-                        height: double.infinity,
-                        fit: BoxFit.cover,
-                      ),
-                      // Overlay degradê sutil
-                      Positioned.fill(
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.black.withValues(alpha: 0.15),
-                                Colors.transparent,
-                                Colors.black.withValues(alpha: 0.1),
-                              ],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            ),
-                          ),
+                      Expanded(
+                        child: Text(
+                          s.nomeServico ?? 'Serviço sem nome',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: const Color(0xFF1F2937)),
                         ),
+                      ),
+                      Icon(
+                        selecionado ? Icons.check_circle_rounded : Icons.circle_outlined,
+                        color: selecionado ? primary : Colors.grey.shade400,
+                        size: 20,
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 2),
+                  Text(
+                    s.descricaoServico ?? 'Sem descrição.',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style:
+                        GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600, height: 1.3),
+                  ),
+                  const SizedBox(height: 6),
 
-                // 🧾 Detalhes do serviço
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 🔹 Nome do serviço
-                        Text(
-                          s.nomeServico ?? 'Serviço sem nome',
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 14,
-                            color: selecionado ? Colors.white : Colors.black87,
-                            letterSpacing: 0.2,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-
-                        // ✨ Descrição
-                        Text(
-                          s.descricaoServico ?? 'Sem descrição disponível',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: selecionado ? Colors.white70 : Colors.grey.shade700,
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-
-                        // 👤 Nome do fornecedor
-                        Row(
+                  // 💸 Preço e Fornecedor
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Expanded(
+                        child: Row(
                           children: [
-                            CircleAvatar(
-                              radius: 11,
-                              backgroundColor: primary.withValues(alpha: 0.2),
-                              child: const Icon(Icons.storefront_rounded, size: 14),
-                            ),
-                            const SizedBox(width: 6),
+                            Icon(Icons.storefront_rounded, size: 12, color: primary),
+                            const SizedBox(width: 4),
                             Expanded(
                               child: Text(
-                                s.nomeFornecedor ?? 'Fornecedor não informado',
+                                s.nomeFornecedor ?? 'Fornecedor',
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                  color: selecionado ? Colors.white70 : Colors.grey.shade600,
-                                ),
+                                    fontSize: 10, fontWeight: FontWeight.w600, color: primary),
                               ),
                             ),
                           ],
                         ),
-
-                        const Spacer(),
-
-                        // 💸 Preço + categoria
-                        Row(
-                          children: [
-                            // 💰 Preço destacado
-                            Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  s.precoPromocao != null && s.precoPromocao! > 0
-                                      ? "R\$ ${Biblioteca.formatarValorDecimal(s.precoPromocao)}"
-                                      : "R\$ ${Biblioteca.formatarValorDecimal(s.preco)}",
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w700,
-                                    color: selecionado ? Colors.white : primary,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                                if (s.precoPromocao != null && s.precoPromocao! > 0)
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 8),
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.orangeAccent.withValues(alpha: 0.9),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Text(
-                                      'Promoção',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 10,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                              ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          if (s.precoPromocao != null && s.precoPromocao! > 0)
+                            Text(
+                              "R\$ ${Biblioteca.formatarValorDecimal(s.preco)}",
+                              style: GoogleFonts.poppins(
+                                  fontSize: 9,
+                                  color: Colors.grey.shade500,
+                                  decoration: TextDecoration.lineThrough),
                             ),
-
-                            const SizedBox(width: 10),
-
-                            // 🏷️ Subcategoria (trunca se for longa)
-                            if (s.nomeSubcategoria?.isNotEmpty ?? false)
-                              Expanded(
-                                child: Text(
-                                  s.nomeSubcategoria!,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  textAlign: TextAlign.end,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 11,
-                                    color: selecionado ? Colors.white70 : Colors.grey.shade500,
-                                    fontStyle: FontStyle.italic,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            // ✅ Ícone de seleção animado
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 250),
-              top: 10,
-              right: 10,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 250),
-                opacity: selecionado ? 1 : 0,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: primary.withValues(alpha: 0.4),
-                        blurRadius: 8,
+                          Text(
+                            s.precoPromocao != null && s.precoPromocao! > 0
+                                ? "R\$ ${Biblioteca.formatarValorDecimal(s.precoPromocao)}"
+                                : "R\$ ${Biblioteca.formatarValorDecimal(s.preco)}",
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF1F2937),
+                                fontSize: 14),
+                          ),
+                        ],
                       ),
                     ],
-                  ),
-                  padding: const EdgeInsets.all(5),
-                  child: Icon(
-                    Icons.check_circle_rounded,
-                    color: primary,
-                    size: 24,
-                  ),
-                ),
+                  )
+                ],
               ),
             ),
           ],
@@ -476,6 +363,7 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
     }).toList();
 
     if (selecionadosServicos.isEmpty) return;
+
     final idsFornecedoresSelecionados =
         selecionadosServicos.map((s) => s.idFornecedor).whereType<String>().toSet().toList();
 
@@ -500,16 +388,14 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.design_services_rounded, size: 90, color: Colors.grey.shade400),
-            const SizedBox(height: 20),
-            Text(
-              'Nenhum serviço disponível',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
-            ),
-            Text(
-              'Tente outra categoria ou fornecedor',
-              style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 13),
-            ),
+            Icon(Icons.design_services_rounded, size: 50, color: Colors.grey.shade300),
+            const SizedBox(height: 16),
+            Text('Nenhum serviço disponível',
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700, fontSize: 15, color: const Color(0xFF1F2937))),
+            const SizedBox(height: 4),
+            Text('Tente buscar outra categoria.',
+                style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 12)),
           ],
         ),
       );

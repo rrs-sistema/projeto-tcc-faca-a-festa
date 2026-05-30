@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../controllers/evento_controller.dart';
-import '../../../../../controllers/fornecedor_localizacao_controller.dart';
+import '../../../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
 import '../../../../../data/models/DTO/servico_cotado_dto.dart';
 import '../../components/abrir_nova_cotacao_bottom_sheet.dart';
 import './../../../../../controllers/app_controller.dart';
@@ -34,32 +34,38 @@ class ServicoCardPrincipal extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 350),
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 10,
-              offset: const Offset(0, 4)),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           imagensCarousel(),
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(servico.nome,
-                    style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700)),
+                Text(
+                  servico.nome,
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade900,
+                  ),
+                ),
                 const SizedBox(height: 6),
-                Text(servico.descricao ?? 'Sem descrição disponível.',
-                    style: GoogleFonts.poppins(
-                        fontSize: 13.5, color: Colors.black87.withValues(alpha: 0.7), height: 1.5)),
+                Text(
+                  servico.descricao ?? 'Sem descrição disponível.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    color: Colors.grey.shade600,
+                    height: 1.4,
+                  ),
+                ),
                 const SizedBox(height: 16),
                 _botaoOrcamento('Solicitar orçamento'),
               ],
@@ -73,19 +79,19 @@ class ServicoCardPrincipal extends StatelessWidget {
   Widget imagensCarousel() {
     if (urls == null || urls!.isEmpty) {
       return Container(
-        height: 200,
+        height: 180,
         width: double.infinity,
         decoration: BoxDecoration(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-          color: Colors.grey.shade200,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+          color: Colors.grey.shade50,
         ),
         alignment: Alignment.center,
-        child: const Icon(Icons.image_not_supported_outlined, size: 60, color: Colors.grey),
+        child: Icon(Icons.image_not_supported_outlined, size: 40, color: Colors.grey.shade300),
       );
     }
 
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
       child: Stack(
         children: [
           CarouselSlider.builder(
@@ -101,14 +107,14 @@ class ServicoCardPrincipal extends StatelessWidget {
                 placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
                 imageBuilder: (context, imageProvider) => Image(
                   image: imageProvider,
-                  height: 200,
+                  height: 180,
                   width: double.infinity,
                   fit: BoxFit.cover,
                 ),
               );
             },
             options: CarouselOptions(
-              height: 200,
+              height: 180,
               autoPlay: urls!.length > 1,
               viewportFraction: 1.0,
               enableInfiniteScroll: urls!.length > 1,
@@ -117,21 +123,21 @@ class ServicoCardPrincipal extends StatelessWidget {
             ),
           ),
 
-          // 🔹 Gradiente sutil sobre as imagens
+          // Gradiente sutil inferior para destacar indicadores
           Container(
-            height: 200,
+            height: 180,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.black.withValues(alpha: 0.25), Colors.transparent],
+                colors: [Colors.black.withValues(alpha: 0.3), Colors.transparent],
                 begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
+                end: Alignment.center,
               ),
             ),
           ),
 
-          // 🔹 Indicadores de posição (bolinhas)
+          // Indicadores de posição (bolinhas) compactos
           Positioned(
-            bottom: 10,
+            bottom: 8,
             left: 0,
             right: 0,
             child: Row(
@@ -139,12 +145,12 @@ class ServicoCardPrincipal extends StatelessWidget {
               children: List.generate(
                 urls!.length,
                 (i) => Container(
-                  width: 8,
-                  height: 8,
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: 6,
+                  height: 6,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.8),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ),
@@ -155,61 +161,77 @@ class ServicoCardPrincipal extends StatelessWidget {
     );
   }
 
-  Widget _botaoOrcamento(String label) => ElevatedButton.icon(
-      icon: const Icon(Icons.request_quote_rounded, color: Colors.white, size: 18),
-      label: Text(label,
-          style:
-              GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        backgroundColor: primary,
-        shadowColor: primary.withValues(alpha: 0.3),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-      onPressed: () {
-        final fornecedorLocalizacaoController = Get.find<FornecedorLocalizacaoController>();
-        final eventoController = Get.find<EventoController>();
-        final appController = Get.find<AppController>();
-        final servicoCotado = ServicoCotadoDto(idProduto: servico.id, nomeProduto: servico.nome);
+  Widget _botaoOrcamento(String label) => SizedBox(
+        width: double.infinity,
+        height: 42,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primary,
+            elevation: 0, // Design Flat
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+          onPressed: () {
+            final fornecedorLocalizacaoController = Get.find<FornecedorLocalizacaoController>();
+            final eventoController = Get.find<EventoController>();
+            final appController = Get.find<AppController>();
+            final servicoCotado =
+                ServicoCotadoDto(idProduto: servico.id, nomeProduto: servico.nome);
 
-        if (appController.isServicoSelecionado(servico.id)) {
-          appController.removerServico(servico.id);
-          Get.snackbar('Removido', 'Serviço removido da lista de cotação.',
-              backgroundColor: Colors.orange, colorText: Colors.white);
-        } else {
-          final servico = fornecedorLocalizacaoController.servicosFornecedor
-              .where((s) => s.idFornecedor == fornecedorId)
-              .first;
+            if (appController.isServicoSelecionado(servico.id)) {
+              appController.removerServico(servico.id);
+              Get.snackbar('Removido', 'Serviço removido da lista de cotação.',
+                  backgroundColor: Colors.grey.shade900, colorText: Colors.white);
+            } else {
+              final servico = fornecedorLocalizacaoController.servicosFornecedor
+                  .where((s) => s.idFornecedor == fornecedorId)
+                  .first;
 
-          appController.adicionarServico(servicoCotado);
-          Get.bottomSheet(
-            CotacaoNovaBottomSheet(
-              tipoEventoNome: eventoController.tipoEventoAtual.value?.nome ?? '',
-              fornecedoresSelecionados: [fornecedorId],
-              servicosSelecionados: [
-                FornecedorServicoDetalhadoDto(
-                    id: fornecedorId,
-                    idFornecedor: fornecedorId,
-                    idProdutoServico: servico.idProdutoServico,
-                    preco: servico.preco,
-                    nomeServico: servico.nomeServico,
-                    descricaoServico: servico.descricaoServico,
-                    idSubcategoria: servico.idSubcategoria,
-                    imagemUrl: servico.imagemUrl,
-                    nomeCategoria: servico.nomeCategoria,
-                    nomeSubcategoria: servico.nomeSubcategoria,
-                    precoPromocao: servico.precoPromocao,
-                    ativo: servico.ativo,
-                    quantidade: 1)
-              ],
-              primary: primary,
-              onCotacaoFinalizada: () {
-                appController.limparServicosSelecionados();
-              },
-            ),
-            isScrollControlled: true,
-            backgroundColor: Colors.transparent,
-          );
-        }
-      });
+              appController.adicionarServico(servicoCotado);
+              Get.bottomSheet(
+                CotacaoNovaBottomSheet(
+                  tipoEventoNome: eventoController.tipoEventoAtual.value?.nome ?? '',
+                  fornecedoresSelecionados: [fornecedorId],
+                  servicosSelecionados: [
+                    FornecedorServicoDetalhadoDto(
+                        id: fornecedorId,
+                        idFornecedor: fornecedorId,
+                        idProdutoServico: servico.idProdutoServico,
+                        preco: servico.preco,
+                        nomeServico: servico.nomeServico,
+                        descricaoServico: servico.descricaoServico,
+                        idSubcategoria: servico.idSubcategoria,
+                        imagemUrl: servico.imagemUrl,
+                        nomeCategoria: servico.nomeCategoria,
+                        nomeSubcategoria: servico.nomeSubcategoria,
+                        precoPromocao: servico.precoPromocao,
+                        ativo: servico.ativo,
+                        quantidade: 1)
+                  ],
+                  primary: primary,
+                  onCotacaoFinalizada: () {
+                    appController.limparServicosSelecionados();
+                  },
+                ),
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+              );
+            }
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.request_quote_rounded, color: Colors.white, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 }

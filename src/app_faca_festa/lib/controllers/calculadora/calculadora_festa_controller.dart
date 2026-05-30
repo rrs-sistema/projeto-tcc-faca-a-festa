@@ -2,21 +2,21 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../core/services/calculadora_festa_ai_service.dart';
-import '../core/services/calculadora_festa_service.dart';
-import '../data/models/calculadora/calculadora_evento_item_model.dart';
-import '../data/models/cardapio/cardapio_item_model.dart';
-import '../data/models/cardapio/cardapio_model.dart';
-import '../data/models/evento/analise_calculadora_ia_model.dart';
-import '../data/models/evento/calculadora_festa_item_model.dart';
-import '../data/models/evento/calculadora_festa_model.dart';
-import '../data/models/evento/convidados_equivalentes_model.dart';
-import '../data/models/evento/estimativa_financeira_model.dart';
-import '../data/models/evento/perfil_festa_model.dart';
-import '../data/repositories/calculadora/calculadora_itens_base_repository.dart';
-import '../data/repositories/calculadora_festa_repository.dart';
-import '../data/repositories/i_calculadora_festa_ai_service.dart';
-import './../data/models/model.dart';
+import '../../core/services/calculadora_festa_ai_service.dart';
+import '../../core/services/calculadora_festa_service.dart';
+import '../../data/models/calculadora/calculadora_evento_item_model.dart';
+import '../../data/models/cardapio/cardapio_item_model.dart';
+import '../../data/models/cardapio/cardapio_model.dart';
+import '../../data/models/evento/analise_calculadora_ia_model.dart';
+import '../../data/models/evento/calculadora_festa_item_model.dart';
+import '../../data/models/evento/calculadora_festa_model.dart';
+import '../../data/models/evento/convidados_equivalentes_model.dart';
+import '../../data/models/evento/estimativa_financeira_model.dart';
+import '../../data/models/evento/perfil_festa_model.dart';
+import '../../data/repositories/calculadora/calculadora_itens_base_repository.dart';
+import '../../data/repositories/calculadora_festa_repository.dart';
+import '../../data/repositories/i_calculadora_festa_ai_service.dart';
+import '../../data/models/model.dart';
 
 enum OrigemItensCalculadora {
   firestore,
@@ -265,6 +265,46 @@ class CalculadoraFestaController extends GetxController {
 
     if (calcularAutomaticamente) calcular();
     await carregarSimulacoesSalvas();
+  }
+
+  void iniciarNovoCalculo({
+    bool limparQuantidades = true,
+    bool limparOrcamento = true,
+    bool manterPerfil = true,
+    bool manterDuracao = true,
+  }) {
+    calculoAtual.value = null;
+    estimativaAtual.value = null;
+    analiseIA.value = null;
+    analisandoIA.value = false;
+
+    itensCalculados.clear();
+
+    if (limparOrcamento) {
+      orcamentoDisponivel.value = null;
+    }
+
+    if (!manterPerfil) {
+      perfilSelecionado.value = PerfilFestaModel.padrao();
+      margemPersonalizada.value = null;
+    }
+
+    if (!manterDuracao) {
+      duracaoHoras.value = 4;
+    }
+
+    if (limparQuantidades) {
+      baseCalculo.value = BaseCalculoFesta.manual;
+      totalAdultos.value = 0;
+      totalCriancas.value = 0;
+      totalBebes.value = 0;
+    }
+
+    debugPrint(
+      '[CalculadoraFestaController] Novo cálculo iniciado. '
+      'Itens base mantidos: ${itensEstimativa.length}. '
+      'Origem: ${origemItensCalculadora.value.label}.',
+    );
   }
 
   Future<void> carregarItensBasePorTipoEvento({

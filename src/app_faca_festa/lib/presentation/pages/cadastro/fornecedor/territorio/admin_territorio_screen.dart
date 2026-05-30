@@ -7,7 +7,7 @@ import 'package:get/get.dart';
 import '../../../../../core/utils/biblioteca.dart';
 import './../../../../../controllers/admin/admin_territorio_controller.dart';
 import './../../../../../controllers/tema/event_theme_controller.dart';
-import '../../../../../controllers/fornecedor_controller.dart';
+import '../../../../../controllers/fornecedor/fornecedor_controller.dart';
 import '../../../../../data/models/model.dart';
 
 class AdminTerritorioScreen extends StatelessWidget {

@@ -9,7 +9,7 @@ import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
 import '../../controllers/tema/event_theme_controller.dart';
-import './../../controllers/fornecedor_controller.dart';
+import '../../controllers/fornecedor/fornecedor_controller.dart';
 import './../../data/models/model.dart';
 
 Future<void> showNovoOrcamentoBottomSheet({

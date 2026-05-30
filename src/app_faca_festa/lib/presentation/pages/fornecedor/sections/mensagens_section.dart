@@ -9,7 +9,6 @@ class MensagensSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 🔹 Simulação de conversas recentes (mock)
     final conversas = [
       _ConversaModel(
         id: '1',
@@ -27,120 +26,134 @@ class MensagensSection extends StatelessWidget {
         dataHora: DateTime.now().subtract(const Duration(hours: 2)),
         naoLida: false,
       ),
-      _ConversaModel(
-        id: '3',
-        cliente: 'Beatriz Lima',
-        evento: 'Chá Revelação',
-        ultimaMensagem: 'Enviado o contrato por e-mail 😊',
-        dataHora: DateTime.now().subtract(const Duration(days: 1, hours: 3)),
-        naoLida: false,
-      ),
     ];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // =======================================
-        // 🔹 CABEÇALHO PRINCIPAL
-        // =======================================
-        Text(
-          "💬 Mensagens e Orçamentos",
-          style: GoogleFonts.poppins(
-            fontSize: 20,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey.shade800,
-          ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(Icons.forum_outlined, size: 20, color: Colors.grey.shade800),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                "Central de Comunicações",
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade900,
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
 
-        // =======================================
         // 🔹 CONVERSAS RECENTES
-        // =======================================
-        Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 3,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  "📨 Conversas Recentes",
+        Container(
+          decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                child: Text(
+                  "Interações Recentes no Chat",
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600,
-                    fontSize: 16,
-                    color: Colors.teal.shade800,
+                    fontSize: 14,
+                    color: Colors.grey.shade800,
                   ),
                 ),
-                const SizedBox(height: 8),
-                ListView.separated(
-                  itemCount: conversas.length,
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.6),
-                  itemBuilder: (context, index) {
-                    final c = conversas[index];
-                    return _ConversaTile(conversa: c);
-                  },
-                ),
-                const SizedBox(height: 12),
-                Align(
+              ),
+              ListView.separated(
+                itemCount: conversas.length,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                separatorBuilder: (_, __) =>
+                    Divider(height: 1, thickness: 0.5, color: Colors.grey.shade100),
+                itemBuilder: (context, index) {
+                  return _ConversaTile(conversa: conversas[index]);
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Align(
                   alignment: Alignment.centerRight,
-                  child: TextButton.icon(
+                  child: TextButton(
                     onPressed: () => Get.snackbar(
-                      "Mensagens",
-                      "Abrindo caixa de entrada completa...",
-                      backgroundColor: const Color(0xFF2E7D32),
+                      "Chat",
+                      "Abrindo central de mensagens...",
+                      backgroundColor: Colors.grey.shade900,
                       colorText: Colors.white,
                     ),
-                    icon: const Icon(Icons.chat_bubble_outline, color: Color(0xFF2E7D32)),
-                    label: Text(
-                      "Ver todas as conversas",
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF2E7D32),
-                        fontWeight: FontWeight.w600,
-                      ),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.grey.shade700,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                    child: Text(
+                      "Ver Histórico Completo",
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 13),
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
 
         const SizedBox(height: 24),
 
-        // =======================================
-        // 💰 ORÇAMENTOS RECEBIDOS
-        // =======================================
-        Card(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          elevation: 3,
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 🔹 Subcomponente dinâmico
-                OrcamentosSection(),
-
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: () => Get.toNamed('/orcamentos'),
-                    icon: const Icon(Icons.request_quote_rounded, color: Color(0xFF2E7D32)),
-                    label: Text(
-                      "Ver todos os orçamentos",
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF2E7D32),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+        // 🔹 ORÇAMENTOS (Subseção embutida de forma elegante)
+        Container(
+          decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.02),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ]),
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              OrcamentosSection(),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () => Get.toNamed('/orcamentos'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey.shade700,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  ),
+                  child: Text(
+                    "Painel Completo de Orçamentos",
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 13),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ],
@@ -162,68 +175,94 @@ class _ConversaTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = conversa.naoLida ? Colors.teal.shade700 : Colors.grey.shade600;
+    final TextStyle messageStyle = conversa.naoLida
+        ? GoogleFonts.poppins(
+            color: Colors.grey.shade900, fontSize: 13, fontWeight: FontWeight.w600)
+        : GoogleFonts.poppins(
+            color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w400);
 
-    return ListTile(
-      leading: Stack(
-        children: [
-          CircleAvatar(
-            radius: 26,
-            backgroundColor: Colors.teal.shade100,
-            child: Icon(Icons.person, color: Colors.teal.shade700),
-          ),
-          if (conversa.naoLida)
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                width: 10,
-                height: 10,
-                decoration: const BoxDecoration(
-                  color: Colors.redAccent,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-        ],
-      ),
-      title: Text(
-        conversa.evento,
-        style: GoogleFonts.poppins(
-          fontWeight: FontWeight.w600,
-          fontSize: 15,
-          color: Colors.grey.shade800,
-        ),
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Text(
-          conversa.ultimaMensagem,
-          style: GoogleFonts.poppins(
-            color: cor,
-            fontSize: 13.5,
-            height: 1.4,
-          ),
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ),
-      trailing: Text(
-        _tempoRelativo(conversa.dataHora),
-        style: GoogleFonts.poppins(
-          fontSize: 12,
-          color: Colors.grey.shade500,
-        ),
-      ),
+    return InkWell(
       onTap: () {
         Get.snackbar(
           "Chat",
-          "Abrindo conversa com ${conversa.cliente}...",
-          backgroundColor: Colors.teal.shade700,
+          "Abrindo chat seguro com ${conversa.cliente}...",
+          backgroundColor: Colors.grey.shade900,
           colorText: Colors.white,
           duration: const Duration(seconds: 2),
         );
       },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Stack(
+              children: [
+                CircleAvatar(
+                  radius: 20,
+                  backgroundColor: Colors.grey.shade100,
+                  child: Icon(Icons.person_outline_rounded, color: Colors.grey.shade500, size: 20),
+                ),
+                if (conversa.naoLida)
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade600,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          conversa.evento,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: Colors.grey.shade900,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _tempoRelativo(conversa.dataHora),
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    conversa.ultimaMensagem,
+                    style: messageStyle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

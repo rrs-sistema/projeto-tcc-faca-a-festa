@@ -44,7 +44,7 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7FB),
       appBar: AppBar(
-        toolbarHeight: 88,
+        toolbarHeight: 54, // Bem mais fino
         elevation: 0,
         centerTitle: true,
         automaticallyImplyLeading: false,
@@ -56,22 +56,18 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
             Text(
               'Lista de convidados',
               style: GoogleFonts.playfairDisplay(
-                fontSize: 21,
+                fontSize: 16, // Fonte reduzida
                 fontWeight: FontWeight.w800,
                 color: Colors.white,
                 shadows: [
-                  Shadow(
-                    blurRadius: 14,
-                    color: Colors.black.withValues(alpha: 0.25),
-                  ),
+                  Shadow(blurRadius: 10, color: Colors.black.withValues(alpha: 0.25)),
                 ],
               ),
             ),
-            const SizedBox(height: 3),
             Text(
-              'Confirmações, contatos e grupos',
+              'Confirmações e contatos',
               style: GoogleFonts.poppins(
-                fontSize: 11.5,
+                fontSize: 10,
                 fontWeight: FontWeight.w500,
                 color: Colors.white.withValues(alpha: 0.88),
               ),
@@ -80,13 +76,13 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
         ),
         leading: IconButton(
           tooltip: 'Voltar',
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
           onPressed: () => Get.back(),
         ),
         actions: [
           IconButton(
             tooltip: 'Enviar convites',
-            icon: const Icon(Icons.mark_email_read_rounded, color: Colors.white),
+            icon: const Icon(Icons.mark_email_read_rounded, color: Colors.white, size: 20),
             onPressed: () => Get.to(() => const EnviarConvitesScreen()),
           ),
         ],
@@ -98,13 +94,14 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: primary,
         foregroundColor: Colors.white,
-        elevation: 8,
+        elevation: 4,
+        // height: 48, // Botão de ação mais compacto
         onPressed: () => abrirDialogAdicionarConvidado(context, primary),
         label: Text(
-          'Novo convidado',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+          'Novo',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 12),
         ),
-        icon: const Icon(Icons.person_add_alt_1_rounded),
+        icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
       ),
     );
   }
@@ -144,13 +141,11 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
               )
             else
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(14, 4, 14, 110),
+                padding: const EdgeInsets.fromLTRB(8, 0, 8, 80), // Margens ainda menores
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
-                      if (index.isOdd) {
-                        return const SizedBox(height: 10);
-                      }
+                      if (index.isOdd) return const SizedBox(height: 6); // Menos espaço entre cards
 
                       final itemIndex = index ~/ 2;
                       final convidado = lista[itemIndex];
@@ -163,18 +158,9 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
                           primary,
                           convidado: convidado,
                         ),
-                        onConfirm: () => _atualizarStatus(
-                          convidado,
-                          StatusConvidado.confirmado,
-                        ),
-                        onPending: () => _atualizarStatus(
-                          convidado,
-                          StatusConvidado.pendente,
-                        ),
-                        onRefuse: () => _atualizarStatus(
-                          convidado,
-                          StatusConvidado.recusado,
-                        ),
+                        onConfirm: () => _atualizarStatus(convidado, StatusConvidado.confirmado),
+                        onPending: () => _atualizarStatus(convidado, StatusConvidado.pendente),
+                        onRefuse: () => _atualizarStatus(convidado, StatusConvidado.recusado),
                         onDelete: () => _confirmarExclusao(convidado),
                       );
                     },
@@ -189,9 +175,7 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
   }
 
   List<ConvidadoModel> _filtrarLista(List<ConvidadoModel> listaBase) {
-    if (_filtroStatus.value == 'todos') {
-      return listaBase;
-    }
+    if (_filtroStatus.value == 'todos') return listaBase;
 
     return listaBase.where((convidado) {
       switch (_filtroStatus.value) {
@@ -209,35 +193,35 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
 
   Widget _buildSearchAndFilter(ConvidadoController controller, Color primary) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6), // Muito compacto
       child: Column(
         children: [
           Container(
+            height: 40, // Altura reduzida para barra de pesquisa
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 14,
-                  offset: const Offset(0, 8),
-                ),
+                    color: Colors.black.withValues(alpha: 0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2))
               ],
             ),
             child: TextField(
               controller: _searchController,
               onChanged: (value) => controller.termoBusca.value = value,
               textInputAction: TextInputAction.search,
+              style: const TextStyle(fontSize: 12),
               decoration: InputDecoration(
-                hintText: 'Buscar por nome, e-mail ou contato...',
-                hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
-                prefixIcon: Icon(Icons.search_rounded, color: primary),
+                hintText: 'Buscar por nome ou contato...',
+                hintStyle: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade500),
+                prefixIcon: Icon(Icons.search_rounded, color: primary, size: 18),
                 suffixIcon: Obx(() {
                   final termo = controller.termoBusca.value.trim();
                   if (termo.isEmpty) return const SizedBox.shrink();
                   return IconButton(
-                    tooltip: 'Limpar busca',
-                    icon: const Icon(Icons.close_rounded),
+                    icon: const Icon(Icons.close_rounded, size: 16),
                     onPressed: () {
                       _searchController.clear();
                       controller.termoBusca.value = '';
@@ -246,49 +230,43 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
                 }),
                 filled: true,
                 fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(vertical: 14, horizontal: 14),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide.none,
-                ),
+                    borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           SizedBox(
-            height: 40,
+            height: 30, // Botões de filtro extremamente finos
             child: Obx(() {
               return ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
                   _FilterChipButton(
-                    label: 'Todos',
-                    icon: Icons.people_alt_rounded,
-                    selected: _filtroStatus.value == 'todos',
-                    color: primary,
-                    onTap: () => _filtroStatus.value = 'todos',
-                  ),
+                      label: 'Todos',
+                      icon: Icons.people_alt_rounded,
+                      selected: _filtroStatus.value == 'todos',
+                      color: primary,
+                      onTap: () => _filtroStatus.value = 'todos'),
                   _FilterChipButton(
-                    label: 'Confirmados',
-                    icon: Icons.check_circle_rounded,
-                    selected: _filtroStatus.value == 'confirmados',
-                    color: Colors.green.shade700,
-                    onTap: () => _filtroStatus.value = 'confirmados',
-                  ),
+                      label: 'Confirmados',
+                      icon: Icons.check_circle_rounded,
+                      selected: _filtroStatus.value == 'confirmados',
+                      color: Colors.green.shade700,
+                      onTap: () => _filtroStatus.value = 'confirmados'),
                   _FilterChipButton(
-                    label: 'Pendentes',
-                    icon: Icons.pending_actions_rounded,
-                    selected: _filtroStatus.value == 'pendentes',
-                    color: Colors.orange.shade700,
-                    onTap: () => _filtroStatus.value = 'pendentes',
-                  ),
+                      label: 'Pendentes',
+                      icon: Icons.pending_actions_rounded,
+                      selected: _filtroStatus.value == 'pendentes',
+                      color: Colors.orange.shade700,
+                      onTap: () => _filtroStatus.value = 'pendentes'),
                   _FilterChipButton(
-                    label: 'Recusados',
-                    icon: Icons.cancel_rounded,
-                    selected: _filtroStatus.value == 'recusados',
-                    color: Colors.red.shade600,
-                    onTap: () => _filtroStatus.value = 'recusados',
-                  ),
+                      label: 'Recusados',
+                      icon: Icons.cancel_rounded,
+                      selected: _filtroStatus.value == 'recusados',
+                      color: Colors.red.shade600,
+                      onTap: () => _filtroStatus.value = 'recusados'),
                 ],
               );
             }),
@@ -308,18 +286,17 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
 
       return Container(
         width: double.infinity,
-        margin: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.fromLTRB(8, 8, 8, 0), // Margens super curtas
+        padding: const EdgeInsets.all(10), // Padding otimizado
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 18,
-              offset: const Offset(0, 10),
-            ),
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2))
           ],
         ),
         child: Column(
@@ -328,73 +305,59 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
             Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 30,
+                  height: 30,
                   decoration: BoxDecoration(
-                    color: primary.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Icon(Icons.fact_check_rounded, color: primary, size: 24),
+                      color: primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(8)),
+                  child: Icon(Icons.fact_check_rounded, color: primary, size: 16),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Painel de confirmações',
-                        style: GoogleFonts.poppins(
-                          fontSize: 15.5,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF111827),
-                        ),
-                      ),
-                      Text(
-                        '${(progresso * 100).toStringAsFixed(0)}% da lista confirmada',
-                        style: GoogleFonts.poppins(
-                          fontSize: 12.3,
-                          color: const Color(0xFF6B7280),
-                        ),
-                      ),
+                      Text('Painel de confirmações',
+                          style: GoogleFonts.poppins(
+                              fontSize: 12, // Fonte reduzida
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF111827))),
+                      Text('${(progresso * 100).toStringAsFixed(0)}% da lista confirmada',
+                          style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF6B7280))),
                     ],
                   ),
                 ),
-                Text(
-                  '$confirmados/$total',
-                  style: GoogleFonts.poppins(
-                    color: primary,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 15,
-                  ),
-                ),
+                Text('$confirmados/$total',
+                    style: GoogleFonts.poppins(
+                        color: primary, fontWeight: FontWeight.w800, fontSize: 13)),
               ],
             ),
-            const SizedBox(height: 13),
+            const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(999),
               child: LinearProgressIndicator(
-                minHeight: 8,
+                minHeight: 4, // Barra super fina
                 value: progresso.clamp(0.0, 1.0),
                 backgroundColor: primary.withValues(alpha: 0.10),
                 valueColor: AlwaysStoppedAnimation<Color>(primary),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             Row(
               children: [
                 Expanded(child: _ResumoMiniCard('Total', total, Icons.people_alt_rounded, primary)),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Expanded(
-                    child: _ResumoMiniCard('Confirmados', confirmados, Icons.check_circle_rounded,
+                    child: _ResumoMiniCard('Confirm.', confirmados, Icons.check_circle_rounded,
                         Colors.green.shade700)),
-                const SizedBox(width: 8),
-                Expanded(
-                    child: _ResumoMiniCard('Pendentes', pendentes, Icons.pending_actions_rounded,
-                        Colors.orange.shade700)),
-                const SizedBox(width: 8),
+                const SizedBox(width: 4),
                 Expanded(
                     child: _ResumoMiniCard(
-                        'Recusados', recusados, Icons.cancel_rounded, Colors.red.shade600)),
+                        'Pend.', pendentes, Icons.pending_actions_rounded, Colors.orange.shade700)),
+                const SizedBox(width: 4),
+                Expanded(
+                    child: _ResumoMiniCard(
+                        'Recus.', recusados, Icons.cancel_rounded, Colors.red.shade600)),
               ],
             ),
           ],
@@ -405,48 +368,38 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
 
   Future<void> _atualizarStatus(ConvidadoModel convidado, StatusConvidado status) async {
     await convidadoController.atualizarStatus(convidado.idConvidado, status);
-
     final titulo = switch (status) {
       StatusConvidado.confirmado => 'Presença confirmada',
       StatusConvidado.pendente => 'Convidado pendente',
       StatusConvidado.recusado => 'Convite recusado',
     };
-
     final cor = switch (status) {
       StatusConvidado.confirmado => Colors.green.shade700,
       StatusConvidado.pendente => Colors.orange.shade700,
       StatusConvidado.recusado => Colors.red.shade600,
     };
-
     _mostrarSnack(titulo, convidado.nome, cor);
   }
 
   Future<void> _confirmarExclusao(ConvidadoModel convidado) async {
     final confirmar = await Get.dialog<bool>(
       AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-        title: Text(
-          'Excluir convidado?',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w800),
-        ),
-        content: Text(
-          'Deseja remover ${convidado.nome} da lista de convidados?',
-          style: GoogleFonts.poppins(height: 1.35),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('Excluir convidado?',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 15)),
+        content: Text('Deseja remover ${convidado.nome} da lista?',
+            style: GoogleFonts.poppins(fontSize: 12)),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(result: false),
-            child: const Text('Cancelar'),
-          ),
+          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancelar')),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red.shade600,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () => Get.back(result: true),
-            icon: const Icon(Icons.delete_outline_rounded, size: 18),
-            label: const Text('Excluir'),
+            icon: const Icon(Icons.delete_outline_rounded, size: 14),
+            label: const Text('Excluir', style: TextStyle(fontSize: 12)),
           ),
         ],
       ),
@@ -460,22 +413,11 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
 
   void _carregarConvidadosDoEventoAtual({bool mostrarSnack = false}) {
     final idEvento = eventoController.eventoAtual.value?.idEvento;
-    if (idEvento == null || idEvento.trim().isEmpty) {
-      return;
-    }
-
+    if (idEvento == null || idEvento.trim().isEmpty) return;
     convidadoController.escutarConvidados(idEvento);
-
     if (mostrarSnack) {
-      Get.snackbar(
-        'Lista atualizada',
-        'Convidados sincronizados com sucesso.',
-        backgroundColor: themeController.primaryColor.value,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(16),
-        borderRadius: 14,
-      );
+      _mostrarSnack('Lista atualizada', 'Convidados sincronizados com sucesso.',
+          themeController.primaryColor.value);
     }
   }
 
@@ -486,8 +428,8 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
       backgroundColor: cor,
       colorText: Colors.white,
       snackPosition: SnackPosition.BOTTOM,
-      margin: const EdgeInsets.all(16),
-      borderRadius: 14,
+      margin: const EdgeInsets.all(10),
+      borderRadius: 10,
       duration: const Duration(seconds: 2),
     );
   }
@@ -496,11 +438,7 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
 class _GuestCard extends StatelessWidget {
   final ConvidadoModel convidado;
   final Color primary;
-  final VoidCallback onEdit;
-  final VoidCallback onConfirm;
-  final VoidCallback onPending;
-  final VoidCallback onRefuse;
-  final VoidCallback onDelete;
+  final VoidCallback onEdit, onConfirm, onPending, onRefuse, onDelete;
 
   const _GuestCard({
     required this.convidado,
@@ -522,53 +460,39 @@ class _GuestCard extends StatelessWidget {
     final contato = _asText(convidado.contato).trim().isNotEmpty
         ? _asText(convidado.contato).trim()
         : 'Sem contato';
-    final grupo = convidado.nomeGrupo?.trim().isNotEmpty == true
-        ? convidado.nomeGrupo!.trim()
-        : 'Sem grupo definido';
+    final grupo =
+        convidado.nomeGrupo?.trim().isNotEmpty == true ? convidado.nomeGrupo!.trim() : 'Sem grupo';
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 9),
-          ),
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2))
         ],
       ),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(12),
           onTap: onEdit,
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(10), // Ultra compacto
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(2.5),
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: statusColor.withValues(alpha: 0.40), width: 2),
-                  ),
-                  child: CircleAvatar(
-                    radius: 24,
-                    backgroundColor: statusColor.withValues(alpha: 0.12),
-                    child: Text(
-                      initial,
+                CircleAvatar(
+                  radius: 16, // Menor
+                  backgroundColor: statusColor.withValues(alpha: 0.12),
+                  child: Text(initial,
                       style: GoogleFonts.poppins(
-                        color: statusColor,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 17,
-                      ),
-                    ),
-                  ),
+                          color: statusColor, fontWeight: FontWeight.w900, fontSize: 13)),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -581,32 +505,30 @@ class _GuestCard extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 15.2,
-                                color: const Color(0xFF111827),
-                              ),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                  color: const Color(0xFF111827)),
                             ),
                           ),
-                          const SizedBox(width: 8),
                           _StatusChip(
                               label: statusLabel,
                               color: statusColor,
                               icon: _getStatusIcon(convidado.status)),
                         ],
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       _InfoLine(icon: Icons.email_outlined, text: email),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 2),
                       _InfoLine(icon: Icons.phone_rounded, text: contato),
-                      const SizedBox(height: 9),
+                      const SizedBox(height: 6),
                       Wrap(
-                        spacing: 8,
-                        runSpacing: 6,
+                        spacing: 4,
+                        runSpacing: 4,
                         children: [
                           _StatusChip(label: grupo, color: primary, icon: Icons.group_outlined),
                           if (convidado.status == StatusConvidado.confirmado)
                             _StatusChip(
-                                label: 'Presença garantida',
+                                label: 'Confirmado',
                                 color: Colors.green.shade700,
                                 icon: Icons.verified_rounded),
                         ],
@@ -614,69 +536,62 @@ class _GuestCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                PopupMenuButton<String>(
-                  color: Colors.white,
-                  elevation: 10,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade600),
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'editar':
-                        onEdit();
-                        break;
-                      case 'confirmar':
-                        onConfirm();
-                        break;
-                      case 'pendente':
-                        onPending();
-                        break;
-                      case 'recusar':
-                        onRefuse();
-                        break;
-                      case 'excluir':
-                        onDelete();
-                        break;
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'editar',
-                      child: _MenuItem(
-                          icon: Icons.edit_outlined,
-                          label: 'Editar convidado',
-                          color: Colors.blue.shade700),
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem(
-                      value: 'confirmar',
-                      child: _MenuItem(
-                          icon: Icons.check_circle_outline,
-                          label: 'Confirmar presença',
-                          color: Colors.green.shade700),
-                    ),
-                    PopupMenuItem(
-                      value: 'pendente',
-                      child: _MenuItem(
-                          icon: Icons.hourglass_bottom_rounded,
-                          label: 'Marcar como pendente',
-                          color: Colors.orange.shade700),
-                    ),
-                    PopupMenuItem(
-                      value: 'recusar',
-                      child: _MenuItem(
-                          icon: Icons.cancel_outlined,
-                          label: 'Recusar convite',
-                          color: Colors.red.shade700),
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem(
-                      value: 'excluir',
-                      child: _MenuItem(
-                          icon: Icons.delete_outline_rounded,
-                          label: 'Excluir convidado',
-                          color: Colors.red.shade600),
-                    ),
-                  ],
+                SizedBox(
+                  height: 24, // Limita altura da área do popup para alinhar perfeitamente
+                  width: 24,
+                  child: PopupMenuButton<String>(
+                    padding: EdgeInsets.zero,
+                    color: Colors.white,
+                    elevation: 6,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade600, size: 18),
+                    onSelected: (value) {
+                      if (value == 'editar') onEdit();
+                      if (value == 'confirmar') onConfirm();
+                      if (value == 'pendente') onPending();
+                      if (value == 'recusar') onRefuse();
+                      if (value == 'excluir') onDelete();
+                    },
+                    itemBuilder: (context) => [
+                      PopupMenuItem(
+                          height: 36,
+                          value: 'editar',
+                          child: _MenuItem(
+                              icon: Icons.edit_outlined,
+                              label: 'Editar',
+                              color: Colors.blue.shade700)),
+                      const PopupMenuDivider(height: 1),
+                      PopupMenuItem(
+                          height: 36,
+                          value: 'confirmar',
+                          child: _MenuItem(
+                              icon: Icons.check_circle_outline,
+                              label: 'Confirmar',
+                              color: Colors.green.shade700)),
+                      PopupMenuItem(
+                          height: 36,
+                          value: 'pendente',
+                          child: _MenuItem(
+                              icon: Icons.hourglass_bottom_rounded,
+                              label: 'Pendente',
+                              color: Colors.orange.shade700)),
+                      PopupMenuItem(
+                          height: 36,
+                          value: 'recusar',
+                          child: _MenuItem(
+                              icon: Icons.cancel_outlined,
+                              label: 'Recusar',
+                              color: Colors.red.shade700)),
+                      const PopupMenuDivider(height: 1),
+                      PopupMenuItem(
+                          height: 36,
+                          value: 'excluir',
+                          child: _MenuItem(
+                              icon: Icons.delete_outline_rounded,
+                              label: 'Excluir',
+                              color: Colors.red.shade600)),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -690,26 +605,19 @@ class _GuestCard extends StatelessWidget {
 class _InfoLine extends StatelessWidget {
   final IconData icon;
   final String text;
-
   const _InfoLine({required this.icon, required this.text});
-
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 15, color: const Color(0xFF9CA3AF)),
-        const SizedBox(width: 6),
+        Icon(icon, size: 12, color: const Color(0xFF9CA3AF)), // Ícone menor
+        const SizedBox(width: 4),
         Expanded(
-          child: Text(
-            text,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              fontSize: 12.4,
-              color: const Color(0xFF6B7280),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          child: Text(text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                  fontSize: 11, color: const Color(0xFF6B7280), fontWeight: FontWeight.w500)),
         ),
       ],
     );
@@ -720,39 +628,24 @@ class _StatusChip extends StatelessWidget {
   final String label;
   final Color color;
   final IconData icon;
-
-  const _StatusChip({
-    required this.label,
-    required this.color,
-    required this.icon,
-  });
-
+  const _StatusChip({required this.label, required this.color, required this.icon});
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2), // Chip mais justo
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.09),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.12)),
-      ),
+          color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(6)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 4),
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 2),
           Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                color: color,
-                fontSize: 10.8,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
+              child: Text(label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      GoogleFonts.poppins(color: color, fontSize: 9, fontWeight: FontWeight.w700))),
         ],
       ),
     );
@@ -764,40 +657,26 @@ class _ResumoMiniCard extends StatelessWidget {
   final int value;
   final IconData icon;
   final Color color;
-
   const _ResumoMiniCard(this.label, this.value, this.icon, this.color);
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.10)),
-      ),
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.1))),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 5),
-          Text(
-            '$value',
-            style: GoogleFonts.poppins(
-              color: color,
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              color: const Color(0xFF4B5563),
-              fontSize: 9.7,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Icon(icon, color: color, size: 14),
+          const SizedBox(height: 2),
+          Text('$value',
+              style: GoogleFonts.poppins(color: color, fontSize: 12, fontWeight: FontWeight.w900)),
+          Text(label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                  color: const Color(0xFF4B5563), fontSize: 8, fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -810,51 +689,37 @@ class _FilterChipButton extends StatelessWidget {
   final bool selected;
   final Color color;
   final VoidCallback onTap;
-
-  const _FilterChipButton({
-    required this.label,
-    required this.icon,
-    required this.selected,
-    required this.color,
-    required this.onTap,
-  });
-
+  const _FilterChipButton(
+      {required this.label,
+      required this.icon,
+      required this.selected,
+      required this.color,
+      required this.onTap});
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(right: 6),
       child: InkWell(
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(10),
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             color: selected ? color : Colors.white,
-            borderRadius: BorderRadius.circular(999),
+            borderRadius: BorderRadius.circular(10),
             border: Border.all(color: selected ? color : Colors.black.withValues(alpha: 0.08)),
-            boxShadow: [
-              if (selected)
-                BoxShadow(
-                  color: color.withValues(alpha: 0.20),
-                  blurRadius: 12,
-                  offset: const Offset(0, 6),
-                ),
-            ],
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16, color: selected ? Colors.white : color),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: GoogleFonts.poppins(
-                  color: selected ? Colors.white : const Color(0xFF374151),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              Icon(icon, size: 12, color: selected ? Colors.white : color),
+              const SizedBox(width: 4),
+              Text(label,
+                  style: GoogleFonts.poppins(
+                      color: selected ? Colors.white : const Color(0xFF374151),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700)),
             ],
           ),
         ),
@@ -867,16 +732,14 @@ class _MenuItem extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-
   const _MenuItem({required this.icon, required this.label, required this.color});
-
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 9),
-        Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 6),
+        Text(label, style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12)),
       ],
     );
   }
@@ -885,65 +748,43 @@ class _MenuItem extends StatelessWidget {
 class _EmptyGuestsState extends StatelessWidget {
   final Color primary;
   final VoidCallback onAdd;
-
   const _EmptyGuestsState({required this.primary, required this.onAdd});
-
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(16),
         child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(26),
-            border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-          ),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.10),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.person_add_alt_1_rounded, color: primary, size: 36),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Nenhum convidado encontrado',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF111827),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Adicione convidados ou ajuste os filtros para visualizar a lista do evento.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 12.8,
-                  height: 1.45,
-                  color: const Color(0xFF6B7280),
-                ),
-              ),
-              const SizedBox(height: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration:
+                      BoxDecoration(color: primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                  child: Icon(Icons.person_add_alt_1_rounded, color: primary, size: 24)),
+              const SizedBox(height: 10),
+              Text('Nenhum convidado',
+                  style: GoogleFonts.poppins(
+                      fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
+              const SizedBox(height: 4),
+              Text('Adicione convidados para visualizar a lista.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF6B7280))),
+              const SizedBox(height: 12),
               ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: primary,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
+                    backgroundColor: primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
                 onPressed: onAdd,
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('Adicionar convidado'),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Adicionar', style: TextStyle(fontSize: 12)),
               ),
             ],
           ),

@@ -20,12 +20,33 @@ class GiftLocalDatasource {
   }
 
   Future<void> saveGift(GiftLocalsCompanion gift) async {
-    await db.into(db.giftLocals).insertOnConflictUpdate(gift);
+    final table = db.giftLocals;
+
+    await db.into(table).insert(
+          gift,
+          onConflict: DoUpdate(
+            (_) => gift,
+            target: [table.giftId],
+          ),
+        );
   }
 
   Future<void> saveAll(List<GiftLocalsCompanion> gifts) async {
+    if (gifts.isEmpty) return;
+
+    final table = db.giftLocals;
+
     await db.batch((batch) {
-      batch.insertAllOnConflictUpdate(db.giftLocals, gifts);
+      for (final gift in gifts) {
+        batch.insert(
+          table,
+          gift,
+          onConflict: DoUpdate(
+            (_) => gift,
+            target: [table.giftId],
+          ),
+        );
+      }
     });
   }
 
@@ -98,17 +119,25 @@ class GiftLocalDatasource {
     String giftId,
     GiftContribution contribution,
   ) async {
-    await db.into(db.giftContributionLocals).insertOnConflictUpdate(
-          GiftContributionLocalsCompanion(
-            contributionId: Value(contribution.id),
-            eventoId: Value(eventoId),
-            giftId: Value(giftId),
-            nome: Value(contribution.nome),
-            uid: Value(contribution.uid),
-            valor: Value(contribution.valor),
-            mensagem: Value(contribution.mensagem),
-            createdAt: Value(contribution.data),
-            synced: const Value(false),
+    final table = db.giftContributionLocals;
+
+    final row = GiftContributionLocalsCompanion(
+      contributionId: Value(contribution.id),
+      eventoId: Value(eventoId),
+      giftId: Value(giftId),
+      nome: Value(contribution.nome),
+      uid: Value(contribution.uid),
+      valor: Value(contribution.valor),
+      mensagem: Value(contribution.mensagem),
+      createdAt: Value(contribution.data),
+      synced: const Value(false),
+    );
+
+    await db.into(table).insert(
+          row,
+          onConflict: DoUpdate(
+            (_) => row,
+            target: [table.contributionId],
           ),
         );
   }

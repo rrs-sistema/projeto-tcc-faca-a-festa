@@ -1,5 +1,5 @@
 import { HttpsError } from "firebase-functions/v2/https";
-import { CalculadoraIARequest, AnaliseCalculadoraIAResponse } from "./types";
+import { CalculadoraIARequest, AnaliseCalculadoraIAResponse } from "./types/calculadoraIA.types";
 import {
   PROMPT_CALCULADORA_IA_NAME,
   PROMPT_CALCULADORA_IA_VERSION,

@@ -6,9 +6,9 @@ import 'package:get/get.dart';
 
 import './../../../../controllers/avaliacao/avaliacao_servico_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
-import './../../../../controllers/servico_produto_controller.dart';
+import '../../../../controllers/servico/servico_produto_controller.dart';
 import './../../cadastro/servico/servico_produto_list_screen.dart';
-import './../../../../controllers/fornecedor_controller.dart';
+import '../../../../controllers/fornecedor/fornecedor_controller.dart';
 import './../chat/fornecedor_mensagens_page.dart';
 import './components/build_cotacao_card.dart';
 
@@ -18,31 +18,27 @@ class ResumoSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<FornecedorController>();
-    final themeController = Get.find<EventThemeController>();
     final avaliacaoController = Get.find<AvaliacaoServicoController>();
     final servicoController = Get.find<ServicoProdutoController>();
-
-    final gradient = themeController.gradient.value;
 
     return Obx(() {
       final stats = [
         _ResumoCardData(
-          title: "🗂️ Cotações",
+          title: "Cotações Ativas",
           icon: Icons.receipt_long_outlined,
-          color1: const Color(0xFF81C784),
-          color2: const Color(0xFF388E3C),
+          color: const Color(0xFF1E88E5),
           value: controller.solicitacoesPendentes.value,
-          description: "pendentes",
+          description: "Pendentes de resposta",
           onTap: () async {
             final fornecedorController = Get.find<FornecedorController>();
             final solicitacoes = await fornecedorController.buscarSolicitacoesPendentesDetalhadas();
 
             if (solicitacoes.isEmpty) {
               Get.snackbar(
-                "Sem solicitações",
+                "Métricas",
                 "Você não possui solicitações pendentes no momento.",
-                backgroundColor: Colors.orange.shade100,
-                colorText: Colors.black87,
+                backgroundColor: Colors.grey.shade900,
+                colorText: Colors.white,
               );
               return;
             }
@@ -51,31 +47,32 @@ class ResumoSection extends StatelessWidget {
               Container(
                 decoration: const BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(24),
                 child: SafeArea(
                   top: false,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 50,
+                        width: 48,
                         height: 5,
-                        margin: const EdgeInsets.only(bottom: 12),
+                        margin: const EdgeInsets.only(bottom: 20),
                         decoration: BoxDecoration(
                           color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(4),
+                          borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                       Text(
                         "Cotações Pendentes",
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
-                          fontSize: 16,
+                          fontSize: 18,
+                          color: Colors.grey.shade900,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 16),
                       Flexible(
                         child: ListView.builder(
                           shrinkWrap: true,
@@ -86,7 +83,6 @@ class ResumoSection extends StatelessWidget {
                                 ? DateFormat("dd/MM/yyyy")
                                     .format((servicoMap['dataEnvio'] as Timestamp).toDate())
                                 : '';
-
                             final dataLimite = servicoMap['dataLimite'] is Timestamp
                                 ? DateFormat("dd/MM/yyyy")
                                     .format((servicoMap['dataLimite'] as Timestamp).toDate())
@@ -105,75 +101,60 @@ class ResumoSection extends StatelessWidget {
           },
         ),
         _ResumoCardData(
-          title: "🛠️ Serviços Ativos",
+          title: "Catálogo",
           icon: Icons.home_repair_service_outlined,
-          color1: const Color(0xFFA5D6A7),
-          color2: const Color(0xFF43A047),
+          color: const Color(0xFF43A047),
           value: servicoController.servicosFornecedor.length,
-          description: "publicados",
+          description: "Serviços publicados",
           onTap: () async {
             final fornecedor = controller.fornecedor.value;
             if (fornecedor != null) {
               controller.carregando.value = true;
               await controller.escutarServicosFornecedor(fornecedor.idFornecedor);
               controller.carregando.value = false;
-              //await servicoController.buscarServicosPorFornecedor(fornecedor.idFornecedor);
               Get.to(() => ServicoProdutoListScreen(fornecedorId: fornecedor.idFornecedor));
-            } else {
-              Get.snackbar(
-                "Atenção",
-                "Nenhum fornecedor logado encontrado.",
-                backgroundColor: Colors.orange.shade100,
-                colorText: Colors.black87,
-              );
             }
           },
         ),
         _ResumoCardData(
-          title: "📩 Mensagens",
+          title: "Comunicações",
           icon: Icons.chat_bubble_outline_rounded,
-          color1: const Color(0xFFB2DFDB),
-          color2: const Color(0xFF00796B),
+          color: const Color(0xFF00796B),
           value: controller.mensagensNaoLidas.value,
-          description: "não lidas",
+          description: "Mensagens não lidas",
           onTap: () => Get.to(() => FornecedorMensagensPage()),
         ),
         _ResumoCardData(
-          title: "🏆 Avaliação Média",
+          title: "Reputação",
           icon: Icons.star_border_rounded,
-          color1: const Color(0xFFC5E1A5),
-          color2: const Color(0xFF558B2F),
+          color: const Color(0xFFF8A800),
           value: avaliacaoController.mediaFornecedor.value.isNaN
               ? 0
               : avaliacaoController.mediaFornecedor.value.toInt(),
-          description: "estrelas",
+          description: "Estrelas consolidadas",
         ),
       ];
 
-      final crossAxisCount = MediaQuery.of(context).size.width > 900
-          ? 4
-          : MediaQuery.of(context).size.width > 650
-              ? 3
-              : 2;
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          // Breakpoints exatos: Desktop > Tablet > Mobile
+          final crossAxisCount = width >= 1024 ? 4 : (width >= 600 ? 3 : 2);
+          final aspectRatio = width >= 1024 ? 1.4 : (width >= 600 ? 1.2 : 1.1);
 
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: stats.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: 1.1,
-          ),
-          itemBuilder: (_, i) => _ResumoCard(data: stats[i]),
-        ),
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: stats.length,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 16,
+              mainAxisSpacing: 16,
+              childAspectRatio: aspectRatio,
+            ),
+            itemBuilder: (_, i) => _ResumoCard(data: stats[i]),
+          );
+        },
       );
     });
   }
@@ -183,8 +164,7 @@ class _ResumoCardData {
   final String title;
   final String description;
   final IconData icon;
-  final Color color1;
-  final Color color2;
+  final Color color;
   final int value;
   final VoidCallback? onTap;
 
@@ -192,8 +172,7 @@ class _ResumoCardData {
     required this.title,
     required this.description,
     required this.icon,
-    required this.color1,
-    required this.color2,
+    required this.color,
     required this.value,
     this.onTap,
   });
@@ -218,64 +197,85 @@ class _ResumoCardState extends State<_ResumoCard> {
       onEnter: (_) => setState(() => hovered = true),
       onExit: (_) => setState(() => hovered = false),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
+        duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              d.color1,
-              d.color2.withValues(alpha: hovered ? 1.0 : 0.8),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border:
+              Border.all(color: hovered ? d.color.withValues(alpha: 0.4) : Colors.grey.shade200),
           boxShadow: [
-            BoxShadow(
-              color: d.color2.withValues(alpha: 0.4),
-              blurRadius: hovered ? 12 : 6,
-              offset: const Offset(0, 4),
-            ),
+            if (hovered)
+              BoxShadow(
+                color: d.color.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
           ],
         ),
         child: InkWell(
           onTap: d.onTap,
-          borderRadius: BorderRadius.circular(20),
-          splashColor: Colors.white.withValues(alpha: 0.2),
-          highlightColor: Colors.white.withValues(alpha: 0.1),
-          child: Center(
+          borderRadius: BorderRadius.circular(16),
+          hoverColor: Colors.transparent,
+          splashColor: d.color.withValues(alpha: 0.05),
+          highlightColor: Colors.transparent,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                AnimatedScale(
-                  scale: hovered ? 1.1 : 1.0,
-                  duration: const Duration(milliseconds: 200),
-                  child: Icon(d.icon, color: Colors.white, size: 40),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: d.color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(d.icon, color: d.color, size: 20),
+                    ),
+                    Flexible(
+                      child: Text(
+                        d.value.toString(),
+                        style: GoogleFonts.poppins(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.grey.shade900,
+                          letterSpacing: -0.5,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.right,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  d.value.toString(),
-                  style: GoogleFonts.poppins(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                Text(
-                  d.description,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white70,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  d.title,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                  ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      d.title,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade900,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      d.description,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade500,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
               ],
             ),

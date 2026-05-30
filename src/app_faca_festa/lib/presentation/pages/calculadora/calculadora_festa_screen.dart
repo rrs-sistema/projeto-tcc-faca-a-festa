@@ -5,13 +5,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../controllers/calculadora/calculadora_festa_controller.dart';
+import '../../../controllers/tests/fornecedor_migracao_admin_controller.dart';
 import '../../../data/models/evento/analise_calculadora_ia_model.dart';
 import '../../../data/models/evento/calculadora_festa_item_model.dart';
 import '../../../controllers/convidado/cardapio_controller.dart';
 import '../../../data/models/evento/calculadora_festa_model.dart';
-import '../../../controllers/calculadora_festa_controller.dart';
 import '../../../controllers/evento_controller.dart';
+import '../../../data/models/evento/perfil_festa_model.dart';
 import 'minhas_simulacoes_calculadora_bottom_sheet.dart';
+import 'calculadora_item_icon_helper.dart';
 
 // ============================================================================
 // 🔹 Tela da Calculadora Inteligente de Festa (Versão Ultracompacta)
@@ -43,6 +46,7 @@ class CalculadoraFestaScreen extends StatefulWidget {
 
 class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
   late final CalculadoraFestaController calculadoraController;
+  late final FornecedorMigracaoAdminController controllerTest;
   late final EventoController eventoController;
   late final CardapioController cardapioController;
 
@@ -68,6 +72,10 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
     cardapioController = Get.isRegistered<CardapioController>()
         ? Get.find<CardapioController>()
         : Get.put(CardapioController());
+
+    controllerTest = Get.isRegistered<FornecedorMigracaoAdminController>()
+        ? Get.find<FornecedorMigracaoAdminController>()
+        : Get.put(FornecedorMigracaoAdminController());
 
     _cardapiosWorker = ever(
       cardapioController.cardapios,
@@ -218,6 +226,14 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
 
   Future<void> _abrirMinhasSimulacoes() async {
     await calculadoraController.carregarSimulacoesSalvas();
+    /*
+    controllerTest.migrarTiposEventoFornecedores(
+      dryRun: false,
+      aplicar: true,
+      sobrescrever: false,
+      limite: 500,
+    );
+    */
 
     final aplicouSimulacao = await MinhasSimulacoesCalculadoraBottomSheet.show(
       context: context,
@@ -241,7 +257,7 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
         foregroundColor: const Color(0xFF111827),
         toolbarHeight: 48, // AppBar mais fina
         title: Text(
-          'Calculadora',
+          'Calculadora Inteligente',
           style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 16),
         ),
         actions: [
@@ -260,13 +276,15 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
         return RefreshIndicator(
           onRefresh: _prepararCalculadora,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 80), // Margens laterais reduzidas
+            padding: const EdgeInsets.fromLTRB(6, 10, 6, 80), // Margens laterais reduzidas
             children: [
               _buildHero(primary),
               const SizedBox(height: 10), // Espaçamentos gerais reduzidos
               _buildSimulacoesCard(primary),
               const SizedBox(height: 10),
               _buildBaseCalculoCard(primary),
+              const SizedBox(height: 10),
+              _buildPerfilFestaCard(primary),
               const SizedBox(height: 10),
               _buildTotaisCard(primary),
               const SizedBox(height: 10),
@@ -395,29 +413,205 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
     return _SectionCard(
       title: 'Base de cálculo',
       icon: Icons.tune_rounded,
-      child: Wrap(
-        spacing: 6,
-        runSpacing: 0, // Removido espaçamento vertical para manter na mesma linha
-        children: BaseCalculoFesta.values.map((base) {
-          final selected = calculadoraController.baseCalculo.value == base;
-          return ChoiceChip(
-            label: Text(base.label),
-            selected: selected,
-            selectedColor: primary.withValues(alpha: 0.18),
-            padding: EdgeInsets.zero,
-            labelStyle: GoogleFonts.poppins(
-              fontWeight: FontWeight.w700,
-              fontSize: 11.5,
-              color: selected ? primary : Colors.grey.shade700,
-            ),
-            onSelected: (_) {
-              calculadoraController.alterarBaseCalculo(base);
-              _sincronizarCamposManuais();
-            },
-          );
-        }).toList(),
+      child: Center(
+        child: Wrap(
+          alignment: WrapAlignment.center,
+          runAlignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6,
+          runSpacing: 6,
+          children: BaseCalculoFesta.values.map((base) {
+            final selected = calculadoraController.baseCalculo.value == base;
+
+            return ChoiceChip(
+              label: Text(base.label),
+              selected: selected,
+              selectedColor: primary.withValues(alpha: 0.18),
+              padding: EdgeInsets.zero,
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+              labelStyle: GoogleFonts.poppins(
+                fontWeight: FontWeight.w700,
+                fontSize: 11.5,
+                color: selected ? primary : Colors.grey.shade700,
+              ),
+              onSelected: (_) {
+                calculadoraController.alterarBaseCalculo(base);
+                _sincronizarCamposManuais();
+              },
+            );
+          }).toList(),
+        ),
       ),
     );
+  }
+
+  Widget _buildPerfilFestaCard(Color primary) {
+    return Obx(() {
+      final perfilAtual = calculadoraController.perfilSelecionado.value;
+      final margemPercentual = (calculadoraController.margemEmUso * 100).round();
+
+      return _SectionCard(
+        title: 'Perfil da festa',
+        icon: Icons.auto_graph_rounded,
+        trailing: Text(
+          '$margemPercentual% margem',
+          style: GoogleFonts.poppins(
+            color: primary,
+            fontWeight: FontWeight.w800,
+            fontSize: 11,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: TipoPerfilFesta.values.map((tipo) {
+                final perfilTipo = PerfilFestaModel.fromTipo(tipo);
+                final selected =
+                    _normalizarTexto(perfilAtual.nome) == _normalizarTexto(perfilTipo.nome);
+
+                return _buildPerfilFestaChip(
+                  primary: primary,
+                  tipo: tipo,
+                  selected: selected,
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 13,
+                  color: Colors.grey.shade500,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'Ajusta as regras dos itens e a margem da estimativa.',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey.shade600,
+                      fontSize: 10.2,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildPerfilFestaChip({
+    required Color primary,
+    required TipoPerfilFesta tipo,
+    required bool selected,
+  }) {
+    final borderRadius = BorderRadius.circular(12);
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: borderRadius,
+        onTap: () => calculadoraController.selecionarPerfil(tipo),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOut,
+          height: 34,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: selected ? primary.withValues(alpha: 0.12) : Colors.white,
+            borderRadius: borderRadius,
+            border: Border.all(
+              color:
+                  selected ? primary.withValues(alpha: 0.45) : Colors.black.withValues(alpha: 0.12),
+              width: selected ? 1.2 : 1,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.08),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : const [],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: selected ? primary.withValues(alpha: 0.14) : Colors.grey.shade100,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Icon(
+                  selected ? Icons.check_rounded : _iconePerfilFesta(tipo),
+                  size: selected ? 14 : 13,
+                  color: selected ? primary : Colors.grey.shade600,
+                ),
+              ),
+              const SizedBox(width: 7),
+              Text(
+                _labelPerfilFesta(tipo),
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                  color: selected ? primary : Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _labelPerfilFesta(TipoPerfilFesta tipo) {
+    final nome = PerfilFestaModel.fromTipo(tipo).nome.trim();
+
+    if (nome.isNotEmpty) {
+      return nome;
+    }
+
+    final key = _enumKey(tipo);
+
+    if (key.contains('econom')) return 'Econômico';
+    if (key.contains('premium')) return 'Premium';
+    return 'Padrão';
+  }
+
+  IconData _iconePerfilFesta(TipoPerfilFesta tipo) {
+    final key = _enumKey(tipo);
+
+    if (key.contains('econom')) {
+      return Icons.savings_rounded;
+    }
+
+    if (key.contains('premium')) {
+      return Icons.workspace_premium_rounded;
+    }
+
+    return Icons.verified_rounded;
+  }
+
+  String _enumKey(Object value) {
+    return value.toString().split('.').last.trim().toLowerCase();
+  }
+
+  String _normalizarTexto(String value) {
+    return value.trim().toLowerCase();
   }
 
   Widget _buildTotaisCard(Color primary) {
@@ -943,57 +1137,15 @@ class _AnaliseIACompacta extends StatelessWidget {
   }
 
   static IconData _iconeSugestao(SugestaoCalculadoraIAModel sugestao) {
-    final text = _normalizarTextoSugestao(
-      '${sugestao.titulo} ${sugestao.descricao}',
+    return CalculadoraItemIconHelper.resolverIcone(
+      nome: '${sugestao.titulo} ${sugestao.descricao}',
+      tipoItem: sugestao.tipo.toString(),
+      fallback: _iconeSugestaoPorTipo(sugestao.tipo),
     );
+  }
 
-    if (text.contains('bolo')) {
-      return Icons.cake_rounded;
-    }
-
-    if (text.contains('docinho') || text.contains('doce') || text.contains('sobremesa')) {
-      return Icons.bakery_dining_rounded;
-    }
-
-    if (text.contains('salgadinho') ||
-        text.contains('buffet') ||
-        text.contains('comida') ||
-        text.contains('cardapio')) {
-      return Icons.restaurant_menu_rounded;
-    }
-
-    if (text.contains('bebida') || text.contains('refrigerante') || text.contains('suco')) {
-      return Icons.local_drink_rounded;
-    }
-
-    if (text.contains('agua')) {
-      return Icons.water_drop_rounded;
-    }
-
-    if (text.contains('descart')) {
-      return Icons.inventory_2_rounded;
-    }
-
-    if (text.contains('lembrancinha') || text.contains('brinde')) {
-      return Icons.card_giftcard_rounded;
-    }
-
-    if (text.contains('convidado') || text.contains('presenca')) {
-      return Icons.groups_rounded;
-    }
-
-    if (text.contains('orcamento') ||
-        text.contains('custo') ||
-        text.contains('valor') ||
-        text.contains('econom')) {
-      return Icons.savings_rounded;
-    }
-
-    if (text.contains('prazo') || text.contains('planejamento') || text.contains('organizar')) {
-      return Icons.event_note_rounded;
-    }
-
-    switch (sugestao.tipo) {
+  static IconData _iconeSugestaoPorTipo(TipoSugestaoCalculadoraIA tipo) {
+    switch (tipo) {
       case TipoSugestaoCalculadoraIA.economia:
         return Icons.savings_rounded;
       case TipoSugestaoCalculadoraIA.alerta:
@@ -1007,42 +1159,6 @@ class _AnaliseIACompacta extends StatelessWidget {
       case TipoSugestaoCalculadoraIA.planejamento:
         return Icons.event_note_rounded;
     }
-  }
-
-  static String _normalizarTextoSugestao(String value) {
-    var text = value.toLowerCase().trim();
-
-    const replacements = {
-      'á': 'a',
-      'à': 'a',
-      'ã': 'a',
-      'â': 'a',
-      'ä': 'a',
-      'é': 'e',
-      'è': 'e',
-      'ê': 'e',
-      'ë': 'e',
-      'í': 'i',
-      'ì': 'i',
-      'î': 'i',
-      'ï': 'i',
-      'ó': 'o',
-      'ò': 'o',
-      'õ': 'o',
-      'ô': 'o',
-      'ö': 'o',
-      'ú': 'u',
-      'ù': 'u',
-      'û': 'u',
-      'ü': 'u',
-      'ç': 'c',
-    };
-
-    replacements.forEach((accented, plain) {
-      text = text.replaceAll(accented, plain);
-    });
-
-    return text;
   }
 }
 
@@ -1368,7 +1484,7 @@ class _ResultadoItemTile extends StatelessWidget {
               color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(_iconeItem(item), color: color, size: 16),
+            child: Icon(_resolverIconeItem(item), color: color, size: 16),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1406,156 +1522,13 @@ class _ResultadoItemTile extends StatelessWidget {
     );
   }
 
-  IconData _iconeItem(CalculadoraFestaItemModel item) {
-    final text = _normalizarTexto(
-      '${item.tipoItem} ${item.nome} ${item.regraAplicada}',
+  IconData _resolverIconeItem(CalculadoraFestaItemModel item) {
+    return CalculadoraItemIconHelper.resolverIcone(
+      tipoItem: item.tipoItem,
+      nome: item.nome,
+      categoria: item.regraAplicada,
+      fallback: Icons.restaurant_menu_rounded,
     );
-
-    if (text.contains('bolo')) {
-      return Icons.cake_rounded;
-    }
-
-    if (text.contains('bem casado') || text.contains('bem_casado')) {
-      return Icons.favorite_rounded;
-    }
-
-    if (text.contains('docinho') || text.contains('doce')) {
-      return Icons.bakery_dining_rounded;
-    }
-
-    if (text.contains('salgadinho')) {
-      return Icons.lunch_dining_rounded;
-    }
-
-    if (text.contains('buffet')) {
-      return Icons.dinner_dining_rounded;
-    }
-
-    if (text.contains('refrigerante') || text.contains('suco')) {
-      return Icons.local_drink_rounded;
-    }
-
-    if (text.contains('agua')) {
-      return Icons.water_drop_rounded;
-    }
-
-    if (text.contains('descart')) {
-      return Icons.inventory_2_rounded;
-    }
-
-    if (text.contains('lembrancinha')) {
-      return Icons.redeem_rounded;
-    }
-
-    if (text.contains('brinde')) {
-      return Icons.card_giftcard_rounded;
-    }
-
-    if (text.contains('decoracao')) {
-      return Icons.celebration_rounded;
-    }
-
-    if (text.contains('painel')) {
-      return Icons.photo_library_rounded;
-    }
-
-    if (text.contains('foto')) {
-      return Icons.photo_camera_rounded;
-    }
-
-    if (text.contains('cerimonial')) {
-      return Icons.event_available_rounded;
-    }
-
-    if (text.contains('musica') || text.contains('dj') || text.contains('banda')) {
-      return Icons.music_note_rounded;
-    }
-
-    if (text.contains('recreacao')) {
-      return Icons.sports_esports_rounded;
-    }
-
-    if (text.contains('brinquedo')) {
-      return Icons.toys_rounded;
-    }
-
-    if (text.contains('pipoca')) {
-      return Icons.fastfood_rounded;
-    }
-
-    if (text.contains('algodao')) {
-      return Icons.icecream_rounded;
-    }
-
-    if (text.contains('coffee') || text.contains('cafe')) {
-      return Icons.coffee_rounded;
-    }
-
-    if (text.contains('material grafico')) {
-      return Icons.article_rounded;
-    }
-
-    if (text.contains('credenciamento')) {
-      return Icons.how_to_reg_rounded;
-    }
-
-    if (text.contains('equipamento')) {
-      return Icons.settings_input_component_rounded;
-    }
-
-    if (text.contains('convite')) {
-      return Icons.mail_rounded;
-    }
-
-    if (text.contains('bebida')) {
-      return Icons.local_drink_rounded;
-    }
-
-    if (text.contains('sobremesa')) {
-      return Icons.bakery_dining_rounded;
-    }
-
-    if (text.contains('comida')) {
-      return Icons.restaurant_rounded;
-    }
-
-    return Icons.restaurant_menu_rounded;
-  }
-
-  String _normalizarTexto(String value) {
-    var text = value.toLowerCase().trim();
-
-    const replacements = {
-      'á': 'a',
-      'à': 'a',
-      'ã': 'a',
-      'â': 'a',
-      'ä': 'a',
-      'é': 'e',
-      'è': 'e',
-      'ê': 'e',
-      'ë': 'e',
-      'í': 'i',
-      'ì': 'i',
-      'î': 'i',
-      'ï': 'i',
-      'ó': 'o',
-      'ò': 'o',
-      'õ': 'o',
-      'ô': 'o',
-      'ö': 'o',
-      'ú': 'u',
-      'ù': 'u',
-      'û': 'u',
-      'ü': 'u',
-      'ç': 'c',
-    };
-
-    replacements.forEach((accented, plain) {
-      text = text.replaceAll(accented, plain);
-    });
-
-    return text;
   }
 }
 

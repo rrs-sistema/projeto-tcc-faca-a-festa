@@ -4,12 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/inspiracao_controller.dart';
+import '../../controllers/inspiracao/inspiracao_controller.dart';
 import '../../controllers/usuario/usuario_controller.dart';
-import '../../data/models/model.dart';
 import '../pages/calculadora/calculadora_itens_admin_page.dart';
 import '../pages/inspiracao/inspiracao_admin_page.dart';
-import '../pages/inspiracao/inspiracao_screen.dart';
 import '../pages/inspiracao/minhas_referencias_evento_screen.dart';
 import './../pages/usuario/cadastro_evento_bottom_sheet.dart';
 import './../../controllers/tema/event_theme_controller.dart';
@@ -519,11 +517,13 @@ class MenuDrawerFacaFesta extends StatelessWidget {
     }
   }
 
+
+
   Future<void> _abrirCalculadoraItensAdmin() async {
-    Get.back();
-    await Future.delayed(const Duration(milliseconds: 120));
     Get.to(
       () => CalculadoraItensAdminPage(),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 260),
     );
   }
 
@@ -574,30 +574,6 @@ class MenuDrawerFacaFesta extends StatelessWidget {
         'idUsuario': usuarioId,
       },
     );
-  }
-
-  Future<TipoEventoModel?> _resolverTipoEventoAtual() async {
-    final evento = eventoController.eventoAtual.value;
-
-    var tipoEvento = eventoController.tipoEventoAtual.value;
-
-    if (tipoEvento != null && tipoEvento.nome.trim().isNotEmpty) {
-      return tipoEvento;
-    }
-
-    if (evento == null || evento.idTipoEvento.trim().isEmpty) {
-      return null;
-    }
-
-    await eventoController.buscarTipoEvento(evento.idTipoEvento);
-
-    tipoEvento = eventoController.tipoEventoAtual.value;
-
-    if (tipoEvento != null && tipoEvento.nome.trim().isNotEmpty) {
-      return tipoEvento;
-    }
-
-    return null;
   }
 
   String _resolverUsuarioIdAtual() {

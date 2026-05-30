@@ -1,5 +1,3 @@
-import 'package:app_faca_festa/presentation/widgets/button/botao_cancelar.dart';
-import 'package:app_faca_festa/presentation/widgets/button/botao_salvar.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
@@ -38,6 +36,13 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
   double nota = 0;
   final comentarioCtrl = TextEditingController();
   final controller = Get.find<AvaliacaoServicoController>();
+  final RxBool salvando = false.obs;
+
+  @override
+  void dispose() {
+    comentarioCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,9 +50,13 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
     final primary = theme.primaryColor.value;
     final gradient = theme.gradient.value;
 
-    // 🔹 Textos dinâmicos
+    // Cores exatas do padrão premium
+    const background = Color(0xFFF8FAFC);
+    const textDark = Color(0xFF1F2937);
+    const textMuted = Color(0xFF64748B);
+
     final titulo =
-        widget.tipo == TipoAvaliacao.fornecedor ? "Avaliando o Fornecedor" : "Avaliando o Serviço";
+        widget.tipo == TipoAvaliacao.fornecedor ? "Avaliando Fornecedor" : "Avaliando Serviço";
 
     final mensagemTopo = widget.tipo == TipoAvaliacao.fornecedor
         ? "Conte como foi sua experiência com este fornecedor."
@@ -61,150 +70,297 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
         ? "Escolha uma nota para avaliar o fornecedor."
         : "Escolha uma nota para avaliar o serviço.";
 
+    Future<void> enviarAvaliacao() async {
+      if (salvando.value) return;
+
+      if (nota == 0) {
+        Get.snackbar(
+          "Avaliação necessária",
+          mensagemErroNota,
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+          icon: const Icon(Icons.error_outline_rounded, color: Colors.white),
+        );
+        return;
+      }
+
+      try {
+        salvando.value = true;
+        EasyLoading.show(status: 'Processando...');
+
+        if (widget.tipo == TipoAvaliacao.fornecedor) {
+          await controller.adicionarAvaliacaoFornecedor(
+            idFornecedor: widget.idFornecedor,
+            idCliente: widget.idCliente,
+            nomeCliente: widget.nomeCliente,
+            nota: nota,
+            comentario: comentarioCtrl.text.trim(),
+            idEvento: widget.idEvento,
+            nomeEvento: widget.nomeEventoAtual,
+          );
+        } else {
+          await controller.adicionarAvaliacaoServico(
+            idFornecedor: widget.idFornecedor,
+            idServico: widget.idServico!,
+            idCliente: widget.idCliente,
+            nomeCliente: widget.nomeCliente,
+            nota: nota,
+            comentario: comentarioCtrl.text.trim(),
+            idEvento: widget.idEvento,
+            nomeEvento: widget.nomeEventoAtual,
+          );
+        }
+
+        Get.back();
+
+        Get.snackbar(
+          'Avaliação enviada',
+          'Sua avaliação foi registrada com sucesso!',
+          backgroundColor: primary,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+          icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white),
+        );
+      } catch (_) {
+        Get.snackbar(
+          'Erro',
+          'Não foi possível enviar a avaliação.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+        );
+      } finally {
+        salvando.value = false;
+        EasyLoading.dismiss();
+      }
+    }
+
     return Dialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 26, vertical: 20),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      backgroundColor: Colors.white,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.75,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        width: double.infinity,
+        clipBehavior: Clip.antiAlias,
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.2),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            )
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // === HEADER COM GRADIENTE ===
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: gradient,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.18),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.white.withValues(alpha: 0.30)),
+                    ),
+                    child: const Icon(Icons.star_rounded, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          titulo,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 17,
+                            height: 1.1,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          mensagemTopo,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white.withValues(alpha: 0.88),
+                            fontSize: 11,
+                            height: 1.35,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.all(22),
+
+            // === CONTEÚDO (Scrollable) ===
+            Flexible(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Ícone
-                    Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        gradient: gradient,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.star_rounded,
-                        color: Colors.white,
-                        size: 36,
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    Text(
-                      titulo,
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: primary,
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    Text(
-                      mensagemTopo,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 13.5,
-                        color: Colors.black54,
+                    // === ESTRELAS ===
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      child: Column(
+                        children: [
+                          Text(
+                            "Sua Nota",
+                            style: GoogleFonts.poppins(
+                              color: textDark,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          StarRatingWidget(
+                            rating: nota,
+                            onChanged: (v) => setState(() => nota = v),
+                            size: 44,
+                          ),
+                        ],
                       ),
                     ),
 
                     const SizedBox(height: 20),
 
-                    StarRatingWidget(
-                      rating: nota,
-                      onChanged: (v) => setState(() => nota = v),
-                      size: 40,
-                    ),
-
-                    const SizedBox(height: 22),
-
-                    // Comentário
+                    // === CAMPO DE COMENTÁRIO ===
                     Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.black12),
                         color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
                       ),
                       child: TextField(
                         controller: comentarioCtrl,
                         maxLines: 4,
-                        style: GoogleFonts.poppins(fontSize: 14),
+                        textCapitalization: TextCapitalization.sentences,
+                        style: GoogleFonts.poppins(
+                            color: textDark, fontSize: 13, fontWeight: FontWeight.w500),
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.all(14),
                           hintText: hintComentario,
-                          hintStyle: GoogleFonts.poppins(color: Colors.black38),
-                          border: InputBorder.none,
+                          hintStyle: GoogleFonts.poppins(
+                              color: textMuted.withValues(alpha: 0.7), fontSize: 12),
+                          prefixIcon: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(top: 16.0),
+                                child: Icon(Icons.chat_bubble_outline_rounded,
+                                    color: primary, size: 20),
+                              ),
+                            ],
+                          ),
+                          filled: true,
+                          fillColor: Colors.white,
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(color: Colors.grey.shade200),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(color: primary, width: 1.2),
+                          ),
                         ),
                       ),
                     ),
 
-                    const SizedBox(height: 26),
+                    const SizedBox(height: 28),
 
-                    BotaoSalvar(
-                      texto: 'Enviar Avaliação',
-                      onPressed: () async {
-                        if (nota == 0) {
-                          Get.snackbar(
-                            "Avaliação necessária",
-                            mensagemErroNota,
-                            snackPosition: SnackPosition.BOTTOM,
-                          );
-                          return;
-                        }
+                    // === BOTÕES ===
+                    Obx(() {
+                      final isSaving = salvando.value;
+                      return SizedBox(
+                        width: double.infinity,
+                        height: 44,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: primary,
+                            disabledBackgroundColor: primary.withValues(alpha: 0.45),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          onPressed: isSaving ? null : enviarAvaliacao,
+                          icon: isSaving
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2, color: Colors.white),
+                                )
+                              : const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                          label: Text(
+                            isSaving ? 'Enviando...' : 'Enviar Avaliação',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
 
-                        try {
-                          EasyLoading.show(status: 'Processando...');
-                          if (widget.tipo == TipoAvaliacao.fornecedor) {
-                            await controller.adicionarAvaliacaoFornecedor(
-                              idFornecedor: widget.idFornecedor,
-                              idCliente: widget.idCliente,
-                              nomeCliente: widget.nomeCliente,
-                              nota: nota,
-                              comentario: comentarioCtrl.text.trim(),
-                              idEvento: widget.idEvento,
-                              nomeEvento: widget.nomeEventoAtual,
-                            );
-                          } else {
-                            await controller.adicionarAvaliacaoServico(
-                              idFornecedor: widget.idFornecedor,
-                              idServico: widget.idServico!,
-                              idCliente: widget.idCliente,
-                              nomeCliente: widget.nomeCliente,
-                              nota: nota,
-                              comentario: comentarioCtrl.text.trim(),
-                              idEvento: widget.idEvento,
-                              nomeEvento: widget.nomeEventoAtual,
-                            );
-                          }
-                        } catch (_) {
-                        } finally {
-                          EasyLoading.dismiss();
-                        }
+                    const SizedBox(height: 8),
 
-                        Get.back();
-                      },
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    BotaoCancelar(
-                      texto: 'Cancelar',
-                      corBackground: Colors.grey.shade400,
-                      onPressed: () => Navigator.pop(context),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 44,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          FocusManager.instance.primaryFocus?.unfocus();
+                          Navigator.of(context).pop();
+                        },
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        label: Text(
+                          'Cancelar',
+                          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: textMuted,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }

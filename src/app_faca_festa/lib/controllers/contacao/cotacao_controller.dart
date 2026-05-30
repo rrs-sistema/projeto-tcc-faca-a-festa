@@ -9,7 +9,7 @@ import 'dart:async';
 import '../../core/services/whatsGw/whatsapp_service.dart';
 import '../../data/models/orcamento/orcamento_gasto_model.dart';
 import '../../presentation/whatsapp/whatsapp_templates.dart';
-import '../fornecedor_controller.dart';
+import '../fornecedor/fornecedor_controller.dart';
 import '../orcamento_controller.dart';
 import './../../data/models/model.dart';
 import './../app_controller.dart';

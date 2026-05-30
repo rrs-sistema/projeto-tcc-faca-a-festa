@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/fornecedor_controller.dart';
+import '../../../../controllers/fornecedor/fornecedor_controller.dart';
 
 class InsightsSection extends StatefulWidget {
   const InsightsSection({super.key});
@@ -43,77 +43,97 @@ class _InsightsSectionState extends State<InsightsSection> {
   Widget build(BuildContext context) {
     final controller = Get.find<FornecedorController>();
     final insights = _gerarInsights(controller);
-
-    final saudacao = _gerarSaudacao(controller.fornecedor.value!.razaoSocial);
-
-    // Mensagem inicial da LIA
+    final saudacao = _gerarSaudacao(controller.fornecedor.value?.razaoSocial ?? "Parceiro");
     final mensagemFalada = "${saudacao['titulo']} ${saudacao['mensagem']}";
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ]),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // === Avatar da LIA ===
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.indigo.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child:
+                    Icon(Icons.lightbulb_outline_rounded, size: 20, color: Colors.indigo.shade700),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  "Inteligência LIA",
+                  style: GoogleFonts.poppins(
+                      fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey.shade900),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
           if (controller.fornecedor.value?.aptoParaOperar ?? false)
             Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(
-                  width: 90,
-                  height: 90,
+                  width: 80,
+                  height: 80,
                   child: Lottie.asset(
-                    _falando ? 'assets/lottie/lia_talking.json' : 'assets/lottie/lia_idle.json',
-                  ),
+                      _falando ? 'assets/lottie/lia_talking.json' : 'assets/lottie/lia_idle.json'),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(saudacao['titulo']!,
                           style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                          )),
-                      const SizedBox(height: 6),
-                      Text(
-                        saudacao['mensagem']!,
-                        style: GoogleFonts.poppins(
-                          color: Colors.grey.shade700,
-                          fontSize: 13.5,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.indigo.shade600,
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                        onPressed: () => _falar(mensagemFalada),
-                        icon: const Icon(Icons.volume_up_rounded, size: 18),
-                        label: const Text("Ouvir a LIA"),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade900)),
+                      const SizedBox(height: 4),
+                      Text(saudacao['mensagem']!,
+                          style: GoogleFonts.poppins(
+                              color: Colors.grey.shade600, fontSize: 13, height: 1.4)),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        children: [
+                          OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              side: BorderSide(color: Colors.grey.shade300),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            ),
+                            onPressed: () => _falar(mensagemFalada),
+                            icon: Icon(Icons.volume_up_rounded,
+                                size: 16, color: Colors.grey.shade800),
+                            label: Text("Ouvir Relatório Analítico",
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade800,
+                                    fontWeight: FontWeight.w600)),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-
-          const SizedBox(height: 22),
-
-          // === Insights Inteligentes ===
-          Text(
-            "💡 Dicas da LIA",
-            style: GoogleFonts.poppins(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: Colors.grey.shade800,
-            ),
-          ),
-          const SizedBox(height: 12),
-
+          const Divider(height: 40, color: Color(0xFFEEEEEE)),
           ...insights.map((i) => _InsightCard(insight: i)),
         ],
       ),
@@ -122,18 +142,15 @@ class _InsightsSectionState extends State<InsightsSection> {
 
   Map<String, String> _gerarSaudacao(String nome) {
     final hora = DateTime.now().hour;
-    String cumprimento;
-    if (hora < 12) {
-      cumprimento = "Bom dia, $nome! ☀️";
-    } else if (hora < 18) {
-      cumprimento = "Boa tarde, $nome! 🌤️";
-    } else {
-      cumprimento = "Boa noite, $nome! 🌙";
-    }
+    String cumprimento = (hora < 12)
+        ? "Bom dia, $nome"
+        : (hora < 18)
+            ? "Boa tarde, $nome"
+            : "Boa noite, $nome";
     return {
       'titulo': cumprimento,
       'mensagem':
-          "Eu analisei suas métricas e preparei sugestões personalizadas para o seu sucesso. 🎯"
+          "Analisei suas métricas das últimas semanas e preparei sugestões focadas na maximização da sua performance operacional."
     };
   }
 
@@ -141,29 +158,22 @@ class _InsightsSectionState extends State<InsightsSection> {
     return [
       _InsightModel(
         icone: Icons.flash_on_rounded,
-        titulo: "Agilidade impressionante ⚡",
-        descricao: "Você responde orçamentos em menos de ${c.tempoMedioResposta.value} minutos!",
+        titulo: "Agilidade Comercial",
+        descricao: "Tempo médio de resposta atual: menos de ${c.tempoMedioResposta.value} minutos.",
         progresso: 0.95,
         cor: Colors.green.shade700,
-        fraseIa: "LIA diz: sua rapidez aumenta em até 40% suas chances de fechar novos contratos!",
+        fraseIa:
+            "Manter essa velocidade pode aumentar seus fechamentos em até 40% frente aos concorrentes da mesma categoria.",
       ),
       _InsightModel(
         icone: Icons.star_rate_rounded,
-        titulo: "Reputação excelente 🌟",
-        descricao: "Sua média é ${c.avaliacaoMedia.value.toStringAsFixed(1)}⭐ — impressionante!",
-        progresso: 0.9,
-        cor: Colors.teal.shade700,
-        fraseIa: "LIA diz: continue pedindo avaliações, você está entre os melhores do app. 💚",
-      ),
-      _InsightModel(
-        icone: Icons.photo_camera_rounded,
-        titulo: "Mais imagens, mais clientes 📸",
+        titulo: "Reputação no Marketplace",
         descricao:
-            "Você tem ${c.totalFotos.value} fotos publicadas. Perfis com 5+ fotos têm o dobro de visualizações.",
-        progresso: 0.6,
+            "Sua avaliação média consolidada é de ${c.avaliacaoMedia.value.toStringAsFixed(1)} estrelas.",
+        progresso: 0.9,
         cor: Colors.blue.shade700,
         fraseIa:
-            "LIA diz: adicione fotos dos bastidores, elas criam conexão emocional com os organizadores. 💡",
+            "Notas consistentes acima de 4.5 garantem rankeamento preferencial no algoritmo de buscas orgânicas.",
       ),
     ];
   }
@@ -175,62 +185,53 @@ class _InsightCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: insight.cor.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: insight.cor.withValues(alpha: 0.25)),
-      ),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(insight.icone, color: insight.cor, size: 26),
-              const SizedBox(width: 8),
+              Icon(insight.icone, color: insight.cor, size: 18),
+              const SizedBox(width: 10),
               Expanded(
-                child: Text(insight.titulo,
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700, fontSize: 15.5, color: insight.cor)),
-              ),
+                  child: Text(insight.titulo,
+                      style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600, fontSize: 14, color: Colors.grey.shade900))),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(insight.descricao,
-              style: GoogleFonts.poppins(fontSize: 13.5, color: Colors.grey.shade700, height: 1.4)),
-          const SizedBox(height: 10),
+              style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700)),
+          const SizedBox(height: 12),
           LinearPercentIndicator(
             percent: insight.progresso,
             lineHeight: 6,
-            barRadius: const Radius.circular(10),
+            barRadius: const Radius.circular(4),
             progressColor: insight.cor,
-            backgroundColor: Colors.grey.shade200,
+            backgroundColor: Colors.grey.shade100,
+            padding: EdgeInsets.zero,
             animation: true,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: insight.cor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200)),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.psychology_alt_rounded, size: 18, color: Colors.black54),
-                const SizedBox(width: 6),
+                Icon(Icons.auto_awesome_rounded, size: 16, color: Colors.grey.shade500),
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    insight.fraseIa,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12.5,
-                      color: Colors.black87,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
+                    child: Text(insight.fraseIa,
+                        style: GoogleFonts.poppins(
+                            fontSize: 12.5,
+                            color: Colors.grey.shade700,
+                            fontStyle: FontStyle.italic,
+                            height: 1.4))),
               ],
             ),
           ),
@@ -248,12 +249,11 @@ class _InsightModel {
   final Color cor;
   final String fraseIa;
 
-  _InsightModel({
-    required this.icone,
-    required this.titulo,
-    required this.descricao,
-    required this.progresso,
-    required this.cor,
-    required this.fraseIa,
-  });
+  _InsightModel(
+      {required this.icone,
+      required this.titulo,
+      required this.descricao,
+      required this.progresso,
+      required this.cor,
+      required this.fraseIa});
 }

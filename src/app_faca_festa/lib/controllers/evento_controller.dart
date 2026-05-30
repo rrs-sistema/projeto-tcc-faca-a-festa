@@ -8,7 +8,7 @@ import './convidado/convidado_controller.dart';
 import './convidado/cardapio_controller.dart';
 import './../data/models/model.dart';
 import './orcamento_controller.dart';
-import 'inspiracao_controller.dart';
+import 'inspiracao/inspiracao_controller.dart';
 import 'tarefa_controller.dart';
 import 'tema/event_theme_controller.dart';
 import 'usuario/usuario_controller.dart';

@@ -1,5 +1,5 @@
-import { admin } from "./shared/firebaseAdmin";
-import { CalculadoraIARequest, AnaliseCalculadoraIAResponse } from "./types";
+import { admin } from "../../shared/firebaseAdmin";
+import { CalculadoraIARequest, AnaliseCalculadoraIAResponse } from "../../types/calculadoraIA.types";
 
 const COLLECTION_CALCULADORA = "calculadora_festa";
 const SUBCOLLECTION_ANALISES = "analises_ia";

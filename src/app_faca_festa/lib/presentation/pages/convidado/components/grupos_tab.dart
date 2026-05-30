@@ -18,62 +18,46 @@ class GruposTab extends StatelessWidget {
 
     return Obx(() {
       final primary = themeController.primaryColor.value;
-
       if (grupoController.carregando.value) {
-        return Center(
-          child: CircularProgressIndicator(color: primary),
-        );
+        return Center(child: CircularProgressIndicator(color: primary));
       }
 
       final grupos = grupoController.grupos.toList();
 
       return Container(
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFDF4F8), Color(0xFFFFFFFF)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-        ),
+            gradient: LinearGradient(
+                colors: [Color(0xFFFDF4F8), Color(0xFFFFFFFF)],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter)),
         child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 120),
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 80), // Mais compacto
           children: [
             _buildHeader(primary),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             _ResumoGrupos(
-              totalGrupos: grupoController.totalGrupos,
-              gruposComConvidados: grupoController.gruposComConvidados,
-              totalConvidados: grupoController.totalConvidados,
-              gruposVazios: grupoController.gruposVazios,
-              primary: primary,
-            ),
-            const SizedBox(height: 18),
+                totalGrupos: grupoController.totalGrupos,
+                gruposComConvidados: grupoController.gruposComConvidados,
+                totalConvidados: grupoController.totalConvidados,
+                gruposVazios: grupoController.gruposVazios,
+                primary: primary),
+            const SizedBox(height: 14),
             if (grupos.isEmpty)
               _EmptyGroupsState(primary: primary)
             else ...[
               _SectionTitle(
-                icon: Icons.folder_shared_rounded,
-                title: 'Grupos organizados',
-                subtitle: 'Toque em um grupo para visualizar os convidados.',
-                color: primary,
-              ),
-              const SizedBox(height: 12),
-              ...grupos.map((grupo) {
-                final convidados = grupoController.convidadosDoGrupo(grupo.idGrupo);
-
-                return _GrupoCard(
+                  icon: Icons.folder_shared_rounded,
+                  title: 'Grupos',
+                  subtitle: 'Convidados.',
+                  color: primary),
+              const SizedBox(height: 8),
+              ...grupos.map((grupo) => _GrupoCard(
                   grupo: grupo,
                   color: fromHex(grupo.corHex ?? '#FF7BAC'),
                   icon: _iconFromKey(grupo.icone),
-                  convidados: convidados,
-                );
-              }),
-              const SizedBox(height: 8),
-              _GraficoGrupos(
-                grupos: grupos,
-                controller: grupoController,
-                primary: primary,
-              ),
+                  convidados: grupoController.convidadosDoGrupo(grupo.idGrupo))),
+              const SizedBox(height: 6),
+              _GraficoGrupos(grupos: grupos, controller: grupoController, primary: primary),
             ],
           ],
         ),
@@ -83,55 +67,28 @@ class GruposTab extends StatelessWidget {
 
   Widget _buildHeader(Color primary) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(Icons.groups_2_rounded, color: primary, size: 28),
-          ),
-          const SizedBox(width: 12),
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(12)),
+              child: Icon(Icons.groups_2_rounded, color: primary, size: 20)),
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Grupos de convidados',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'Organize famílias, amigos e convidados especiais para facilitar convites e confirmações.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.5,
-                    height: 1.35,
-                    color: const Color(0xFF6B7280),
-                  ),
-                ),
-              ],
-            ),
-          ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Grupos de convidados',
+                style: GoogleFonts.poppins(
+                    fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
+            Text('Organize por famílias ou amigos.',
+                style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF6B7280)))
+          ])),
         ],
       ),
     );
@@ -144,44 +101,30 @@ class _ResumoGrupos extends StatelessWidget {
   final int totalConvidados;
   final int gruposVazios;
   final Color primary;
-
-  const _ResumoGrupos({
-    required this.totalGrupos,
-    required this.gruposComConvidados,
-    required this.totalConvidados,
-    required this.gruposVazios,
-    required this.primary,
-  });
-
+  const _ResumoGrupos(
+      {required this.totalGrupos,
+      required this.gruposComConvidados,
+      required this.totalConvidados,
+      required this.gruposVazios,
+      required this.primary});
   @override
   Widget build(BuildContext context) {
     final resumo = [
       _ResumoItem('Grupos', totalGrupos, Icons.folder_shared_rounded, primary),
       _ResumoItem(
-          'Com convidados', gruposComConvidados, Icons.people_alt_rounded, Colors.green.shade700),
+          'Com convid.', gruposComConvidados, Icons.people_alt_rounded, Colors.green.shade700),
       _ResumoItem('Convidados', totalConvidados, Icons.person_pin_rounded, Colors.pink.shade600),
-      _ResumoItem('Vazios', gruposVazios, Icons.folder_off_rounded, Colors.orange.shade700),
+      _ResumoItem('Vazios', gruposVazios, Icons.folder_off_rounded, Colors.orange.shade700)
     ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isCompact = constraints.maxWidth < 430;
-        final spacing = isCompact ? 10.0 : 12.0;
-        final columns = isCompact ? 2 : 4;
-        final width = (constraints.maxWidth - (spacing * (columns - 1))) / columns;
-
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: resumo.map((item) {
-            return SizedBox(
-              width: width,
-              child: _ResumoCard(item: item),
-            );
-          }).toList(),
-        );
-      },
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      final width = (constraints.maxWidth - 24) / 4;
+      return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: resumo
+              .map((item) => SizedBox(width: width, child: _ResumoCard(item: item)))
+              .toList());
+    });
   }
 }
 
@@ -190,63 +133,39 @@ class _ResumoItem {
   final int value;
   final IconData icon;
   final Color color;
-
   const _ResumoItem(this.label, this.value, this.icon, this.color);
 }
 
 class _ResumoCard extends StatelessWidget {
   final _ResumoItem item;
-
   const _ResumoCard({required this.item});
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(13),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: item.color.withValues(alpha: 0.10)),
-        boxShadow: [
-          BoxShadow(
-            color: item.color.withValues(alpha: 0.08),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: item.color.withValues(alpha: 0.10))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: item.color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(item.icon, color: item.color, size: 19),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            item.value.toString(),
-            style: GoogleFonts.poppins(
-              color: const Color(0xFF111827),
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            item.label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              color: const Color(0xFF6B7280),
-              fontSize: 11.6,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                  color: item.color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(8)),
+              child: Icon(item.icon, color: item.color, size: 14)),
+          const SizedBox(height: 6),
+          Text(item.value.toString(),
+              style: GoogleFonts.poppins(
+                  color: const Color(0xFF111827), fontSize: 16, fontWeight: FontWeight.w800)),
+          Text(item.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                  color: const Color(0xFF6B7280), fontSize: 9, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -258,42 +177,21 @@ class _SectionTitle extends StatelessWidget {
   final String title;
   final String subtitle;
   final Color color;
-
-  const _SectionTitle({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-  });
-
+  const _SectionTitle(
+      {required this.icon, required this.title, required this.subtitle, required this.color});
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, color: color, size: 22),
-        const SizedBox(width: 8),
+        Icon(icon, color: color, size: 18),
+        const SizedBox(width: 6),
         Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: GoogleFonts.poppins(
-                  fontSize: 15.5,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF111827),
-                ),
-              ),
-              Text(
-                subtitle,
-                style: GoogleFonts.poppins(
-                  fontSize: 11.8,
-                  color: const Color(0xFF6B7280),
-                ),
-              ),
-            ],
-          ),
-        ),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title,
+              style: GoogleFonts.poppins(
+                  fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
+          Text(subtitle, style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF6B7280)))
+        ]))
       ],
     );
   }
@@ -303,112 +201,72 @@ class _GraficoGrupos extends StatelessWidget {
   final List<GrupoConvidadoModel> grupos;
   final GrupoConvidadoController controller;
   final Color primary;
-
-  const _GraficoGrupos({
-    required this.grupos,
-    required this.controller,
-    required this.primary,
-  });
+  const _GraficoGrupos({required this.grupos, required this.controller, required this.primary});
 
   @override
   Widget build(BuildContext context) {
     final gruposComQuantidade = grupos
-        .map((g) {
-          final quantidade = controller.convidadosDoGrupo(g.idGrupo).length;
-          return _GrupoQuantidade(grupo: g, quantidade: quantidade);
-        })
-        .where((item) => item.quantidade > 0)
+        .map((g) =>
+            _GrupoQuantidade(grupo: g, quantidade: controller.convidadosDoGrupo(g.idGrupo).length))
+        .where((i) => i.quantidade > 0)
         .toList();
-
     final total = gruposComQuantidade.fold<int>(0, (soma, item) => soma + item.quantidade);
-
-    if (total == 0) {
-      return const SizedBox.shrink();
-    }
+    if (total == 0) return const SizedBox.shrink();
 
     return Container(
-      margin: const EdgeInsets.only(top: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(top: 8, bottom: 40),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionTitle(
-            icon: Icons.donut_large_rounded,
-            title: 'Distribuição por grupo',
-            subtitle: 'Veja onde seus convidados estão concentrados.',
-            color: primary,
-          ),
-          const SizedBox(height: 18),
+              icon: Icons.donut_large_rounded,
+              title: 'Distribuição',
+              subtitle: 'Concentração.',
+              color: primary),
+          const SizedBox(height: 12),
           SizedBox(
-            height: 220,
-            child: PieChart(
-              PieChartData(
-                sectionsSpace: 3,
-                centerSpaceRadius: 50,
-                sections: gruposComQuantidade.map((item) {
-                  final index = gruposComQuantidade.indexOf(item);
-                  final color = Colors.primaries[index % Colors.primaries.length];
-                  final percent = item.quantidade / total;
-
-                  return PieChartSectionData(
-                    color: color,
-                    value: item.quantidade.toDouble(),
-                    title: '${(percent * 100).toStringAsFixed(0)}%',
-                    radius: 66,
-                    titleStyle: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
+              height: 180,
+              child: PieChart(PieChartData(
+                  sectionsSpace: 2,
+                  centerSpaceRadius: 36,
+                  sections: gruposComQuantidade.map((item) {
+                    final color = Colors
+                        .primaries[gruposComQuantidade.indexOf(item) % Colors.primaries.length];
+                    return PieChartSectionData(
+                        color: color,
+                        value: item.quantidade.toDouble(),
+                        title: '${((item.quantidade / total) * 100).toStringAsFixed(0)}%',
+                        radius: 50,
+                        titleStyle: GoogleFonts.poppins(
+                            color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800));
+                  }).toList()))),
           const SizedBox(height: 8),
           Wrap(
-            spacing: 10,
-            runSpacing: 8,
-            children: gruposComQuantidade.map((item) {
-              final index = gruposComQuantidade.indexOf(item);
-              final color = Colors.primaries[index % Colors.primaries.length];
-
-              return Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.circle, color: color, size: 10),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${item.grupo.nome} (${item.quantidade})',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF374151),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
+              spacing: 8,
+              runSpacing: 6,
+              children: gruposComQuantidade.map((item) {
+                final color =
+                    Colors.primaries[gruposComQuantidade.indexOf(item) % Colors.primaries.length];
+                return Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(999)),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.circle, color: color, size: 8),
+                      const SizedBox(width: 4),
+                      Text('${item.grupo.nome} (${item.quantidade})',
+                          style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF374151)))
+                    ]));
+              }).toList()),
         ],
       ),
     );
@@ -418,11 +276,7 @@ class _GraficoGrupos extends StatelessWidget {
 class _GrupoQuantidade {
   final GrupoConvidadoModel grupo;
   final int quantidade;
-
-  const _GrupoQuantidade({
-    required this.grupo,
-    required this.quantidade,
-  });
+  const _GrupoQuantidade({required this.grupo, required this.quantidade});
 }
 
 class _GrupoCard extends StatelessWidget {
@@ -430,87 +284,52 @@ class _GrupoCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final List<ConvidadoModel> convidados;
-
-  const _GrupoCard({
-    required this.grupo,
-    required this.icon,
-    required this.color,
-    required this.convidados,
-  });
-
+  const _GrupoCard(
+      {required this.grupo, required this.icon, required this.color, required this.convidados});
   @override
   Widget build(BuildContext context) {
     final total = convidados.length;
     final confirmados = convidados.where((c) => c.status == StatusConvidado.confirmado).length;
     final pendentes = convidados.where((c) => c.status == StatusConvidado.pendente).length;
-    final temConvidados = convidados.isNotEmpty;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: color.withValues(alpha: 0.10)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.12),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.10))),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-          collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+          tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
           leading: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          title: Text(
-            grupo.nome,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w800,
-              fontSize: 15.5,
-              color: const Color(0xFF111827),
-            ),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Wrap(
-              spacing: 7,
-              runSpacing: 7,
-              children: [
-                _SmallStatusChip(
-                    label: '$total convidados', icon: Icons.people_alt_rounded, color: color),
-                if (confirmados > 0)
-                  _SmallStatusChip(
-                      label: '$confirmados confirmados',
-                      icon: Icons.check_circle_rounded,
-                      color: Colors.green.shade700),
-                if (pendentes > 0)
-                  _SmallStatusChip(
-                      label: '$pendentes pendentes',
-                      icon: Icons.pending_actions_rounded,
-                      color: Colors.orange.shade700),
-              ],
-            ),
-          ),
-          children: temConvidados
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+              child: Icon(icon, color: color, size: 18)),
+          title: Text(grupo.nome,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w800, fontSize: 13, color: const Color(0xFF111827))),
+          subtitle: Wrap(spacing: 4, runSpacing: 4, children: [
+            _SmallStatusChip(label: '$total', icon: Icons.people_alt_rounded, color: color),
+            if (confirmados > 0)
+              _SmallStatusChip(
+                  label: '$confirmados conf.',
+                  icon: Icons.check_circle_rounded,
+                  color: Colors.green.shade700),
+            if (pendentes > 0)
+              _SmallStatusChip(
+                  label: '$pendentes pend.',
+                  icon: Icons.pending_actions_rounded,
+                  color: Colors.orange.shade700)
+          ]),
+          children: convidados.isNotEmpty
               ? convidados.map((c) => _ConvidadoItem(convidado: c)).toList()
-              : [
-                  _EmptyGroupMessage(color: color),
-                ],
+              : [_EmptyGroupMessage(color: color)],
         ),
       ),
     );
@@ -519,72 +338,43 @@ class _GrupoCard extends StatelessWidget {
 
 class _ConvidadoItem extends StatelessWidget {
   final ConvidadoModel convidado;
-
   const _ConvidadoItem({required this.convidado});
-
   @override
   Widget build(BuildContext context) {
     final color = _getStatusColor(convidado.status);
-    final statusLabel = _getStatusLabel(convidado.status);
-    final initial = convidado.nome.trim().isEmpty ? '?' : convidado.nome.trim()[0].toUpperCase();
-
     return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(10),
+      margin: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
-      ),
+          color: const Color(0xFFF9FAFB),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.black.withValues(alpha: 0.04))),
       child: Row(
         children: [
           CircleAvatar(
-            radius: 18,
-            backgroundColor: color.withValues(alpha: 0.12),
-            child: Text(
-              initial,
-              style: GoogleFonts.poppins(
-                color: color,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  convidado.nome,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+              radius: 14,
+              backgroundColor: color.withValues(alpha: 0.12),
+              child: Text(
+                  convidado.nome.trim().isEmpty ? '?' : convidado.nome.trim()[0].toUpperCase(),
                   style: GoogleFonts.poppins(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  convidado.email?.trim().isNotEmpty == true
-                      ? convidado.email!.trim()
-                      : 'Sem e-mail informado',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.8,
-                    color: const Color(0xFF6B7280),
-                  ),
-                ),
-              ],
-            ),
-          ),
+                      color: color, fontWeight: FontWeight.w800, fontSize: 11))),
           const SizedBox(width: 8),
+          Expanded(
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(convidado.nome,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                    fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF111827))),
+            Text(convidado.email?.trim().isNotEmpty == true ? convidado.email!.trim() : '-',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF6B7280)))
+          ])),
           _SmallStatusChip(
-            label: statusLabel,
-            icon: _getStatusIcon(convidado.status),
-            color: color,
-          ),
+              label: _getStatusLabel(convidado.status),
+              icon: _getStatusIcon(convidado.status),
+              color: color),
         ],
       ),
     );
@@ -595,175 +385,92 @@ class _SmallStatusChip extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
-
-  const _SmallStatusChip({
-    required this.label,
-    required this.icon,
-    required this.color,
-  });
-
+  const _SmallStatusChip({required this.label, required this.icon, required this.color});
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.09),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color),
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.09), borderRadius: BorderRadius.circular(999)),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 10, color: color),
           const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              color: color,
-              fontSize: 10.8,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
+          Text(label,
+              style: GoogleFonts.poppins(color: color, fontSize: 9, fontWeight: FontWeight.w700))
+        ]));
   }
 }
 
 class _EmptyGroupMessage extends StatelessWidget {
   final Color color;
-
   const _EmptyGroupMessage({required this.color});
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.info_outline_rounded, color: color, size: 20),
-          const SizedBox(width: 8),
+        width: double.infinity,
+        margin: const EdgeInsets.only(top: 6),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(12)),
+        child: Row(children: [
+          Icon(Icons.info_outline_rounded, color: color, size: 16),
+          const SizedBox(width: 6),
           Expanded(
-            child: Text(
-              'Este grupo ainda não possui convidados. Adicione pessoas para organizar melhor o envio dos convites.',
-              style: GoogleFonts.poppins(
-                fontSize: 12.2,
-                height: 1.35,
-                color: const Color(0xFF4B5563),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+              child: Text('Vazio.',
+                  style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF4B5563))))
+        ]));
   }
 }
 
 class _EmptyGroupsState extends StatelessWidget {
   final Color primary;
-
   const _EmptyGroupsState({required this.primary});
-
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(top: 4),
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
-      ),
-      child: Column(
-        children: [
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
+        child: Column(children: [
           Container(
-            width: 66,
-            height: 66,
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.10),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(Icons.group_add_rounded, color: primary, size: 34),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'Nenhum grupo criado ainda',
-            style: GoogleFonts.poppins(
-              fontSize: 16,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF111827),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Crie grupos como “Família”, “Amigos” ou “Trabalho” para organizar melhor a lista de convidados.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontSize: 12.8,
-              height: 1.45,
-              color: const Color(0xFF6B7280),
-            ),
-          ),
-        ],
-      ),
-    );
+              width: 50,
+              height: 50,
+              decoration:
+                  BoxDecoration(color: primary.withValues(alpha: 0.10), shape: BoxShape.circle),
+              child: Icon(Icons.group_add_rounded, color: primary, size: 26)),
+          const SizedBox(height: 10),
+          Text('Nenhum grupo',
+              style: GoogleFonts.poppins(
+                  fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF111827)))
+        ]));
   }
 }
 
 Color fromHex(String hex) {
   var value = hex.replaceAll('#', '').trim();
-
-  if (value.length == 6) {
-    value = 'FF$value';
-  }
-
-  if (value.length != 8) {
-    return const Color(0xFFFF7BAC);
-  }
-
-  return Color(int.parse(value, radix: 16));
+  if (value.length == 6) value = 'FF$value';
+  return value.length != 8 ? const Color(0xFFFF7BAC) : Color(int.parse(value, radix: 16));
 }
 
-IconData _iconFromKey(String? key) {
-  return mapaIcones[key] ?? Icons.group_rounded;
-}
-
+IconData _iconFromKey(String? key) => mapaIcones[key] ?? Icons.group_rounded;
 Color _getStatusColor(StatusConvidado status) {
-  switch (status) {
-    case StatusConvidado.confirmado:
-      return Colors.green.shade700;
-    case StatusConvidado.pendente:
-      return Colors.orange.shade700;
-    case StatusConvidado.recusado:
-      return Colors.red.shade600;
-  }
+  if (status == StatusConvidado.confirmado) return Colors.green.shade700;
+  if (status == StatusConvidado.pendente) return Colors.orange.shade700;
+  return Colors.red.shade600;
 }
 
 String _getStatusLabel(StatusConvidado status) {
-  switch (status) {
-    case StatusConvidado.confirmado:
-      return 'Confirmado';
-    case StatusConvidado.pendente:
-      return 'Pendente';
-    case StatusConvidado.recusado:
-      return 'Recusou';
-  }
+  if (status == StatusConvidado.confirmado) return 'Conf.';
+  if (status == StatusConvidado.pendente) return 'Pend.';
+  return 'Rec.';
 }
 
 IconData _getStatusIcon(StatusConvidado status) {
-  switch (status) {
-    case StatusConvidado.confirmado:
-      return Icons.check_circle_rounded;
-    case StatusConvidado.pendente:
-      return Icons.pending_actions_rounded;
-    case StatusConvidado.recusado:
-      return Icons.cancel_rounded;
-  }
+  if (status == StatusConvidado.confirmado) return Icons.check_circle_rounded;
+  if (status == StatusConvidado.pendente) return Icons.pending_actions_rounded;
+  return Icons.cancel_rounded;
 }
 
 final mapaIcones = {
@@ -779,5 +486,5 @@ final mapaIcones = {
   'sports': Icons.sports_soccer_rounded,
   'emoji': Icons.emoji_people_rounded,
   'school': Icons.school_rounded,
-  'travel': Icons.flight_takeoff_rounded,
+  'travel': Icons.flight_takeoff_rounded
 };

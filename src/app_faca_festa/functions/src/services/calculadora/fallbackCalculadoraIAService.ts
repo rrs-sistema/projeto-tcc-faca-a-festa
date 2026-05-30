@@ -5,16 +5,15 @@ import {
   SugestaoBaseIA,
   TipoSugestao,
   PrioridadeSugestao,
-} from "./types";
+} from "../../types/calculadoraIA.types";
 
-import { ANALISE_CALCULADORA_IA_SCHEMA_VERSION } from "./schema";
 
-import { clamp } from "./validators";
+import { clamp } from "../../validators";
 
 import {
   PROMPT_CALCULADORA_IA_NAME,
   PROMPT_CALCULADORA_IA_VERSION,
-} from "./ia/calculadora/prompt";
+} from "../../ia/calculadora/prompt";
 
 export function buildFallbackAnalysis(
   request: CalculadoraIARequest,
@@ -148,7 +147,7 @@ export function buildFallbackAnalysis(
     fonte: "fallback_local",
 
     // Versionamento do schema
-    versao_schema: ANALISE_CALCULADORA_IA_SCHEMA_VERSION,
+    versao_schema: PROMPT_CALCULADORA_IA_VERSION,
 
     // Versionamento do prompt
     nome_prompt: PROMPT_CALCULADORA_IA_NAME,

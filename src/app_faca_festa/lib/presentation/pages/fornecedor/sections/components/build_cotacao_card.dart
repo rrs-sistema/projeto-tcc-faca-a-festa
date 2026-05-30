@@ -15,7 +15,6 @@ Widget buildCotacaoCard(
   final theme = Get.find<EventThemeController>();
 
   final primary = theme.primaryColor.value;
-  final secondary = theme.secondaryColor.value;
   final temaIcone = theme.icon.value;
 
   final bool isNova = servicoMap['nova'] == true;
@@ -23,40 +22,31 @@ Widget buildCotacaoCard(
   return Hero(
     tag: servicoMap['idCotacao'],
     child: TweenAnimationBuilder(
-      tween: Tween<double>(begin: 0.96, end: 1),
+      tween: Tween<double>(begin: 0.98, end: 1), // Animação sutil e elegante
       duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOutBack,
+      curve: Curves.easeOutCubic,
       builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Margem compacta
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              secondary.withValues(alpha: 0.35),
-              secondary.withValues(alpha: 0.15),
-            ],
-          ),
-          border: Border.all(
-            color: primary.withValues(alpha: 0.25),
-            width: 1.6,
-          ),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: primary.withValues(alpha: 0.20),
-              blurRadius: 18,
-              offset: const Offset(0, 6),
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
           ],
         ),
         child: Material(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(12),
           child: InkWell(
-            borderRadius: BorderRadius.circular(26),
-            splashColor: primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
+            splashColor: primary.withValues(alpha: 0.05),
+            highlightColor: Colors.transparent,
             onTap: () {
               Get.back();
               showResponderCotacaoBottomSheet(
@@ -70,58 +60,36 @@ Widget buildCotacaoCard(
               );
             },
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              padding: const EdgeInsets.all(16), // Espaçamento interno mais compacto
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  // 🔵 Ícone do tema do evento (dinâmico)
+                  // 🔹 Ícone do tema do evento (dinâmico e clean)
                   Container(
-                    width: 56,
-                    height: 56,
+                    width: 42,
+                    height: 42,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        colors: [
-                          primary.withValues(alpha: 0.30),
-                          primary.withValues(alpha: 0.12),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      border: Border.all(
-                        color: primary.withValues(alpha: 0.28),
-                        width: 1.6,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primary.withValues(alpha: 0.35),
-                          blurRadius: 14,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      color: primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: primary.withValues(alpha: 0.15)),
                     ),
-                    child: Icon(
-                      temaIcone, // Ícone dinâmico do tema!
-                      color: primary,
-                      size: 30,
-                    ),
+                    child: Icon(temaIcone, color: primary, size: 20),
                   ),
+                  const SizedBox(width: 14),
 
-                  const SizedBox(width: 18),
-
-                  // TEXTOS
+                  // 🔹 TEXTOS
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // 🎯 Título + Tag "Nova"
+                        // Título + Tag "Nova"
                         Row(
                           children: [
                             Expanded(
                               child: Text(
                                 servicoMap['categoriaNome'] ?? '',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 17,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: Colors.grey.shade900,
                                 ),
@@ -131,72 +99,53 @@ Widget buildCotacaoCard(
                             ),
                             if (isNova)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(14),
-                                  gradient: LinearGradient(
-                                    colors: [
-                                      primary.withValues(alpha: 0.90),
-                                      primary.withValues(alpha: 0.65),
-                                    ],
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: primary.withValues(alpha: 0.50),
-                                      blurRadius: 12,
-                                      offset: const Offset(0, 3),
-                                    ),
-                                  ],
+                                  color: primary,
+                                  borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  "Nova",
+                                  "NOVA",
                                   style: GoogleFonts.poppins(
                                     color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    letterSpacing: 0.5,
                                   ),
                                 ),
                               ),
                           ],
                         ),
+                        const SizedBox(height: 2),
 
-                        const SizedBox(height: 6),
-
-                        // 📅 Data
+                        // Data
                         Text(
-                          "Enviada em • $dataEnvio",
+                          "Enviada em $dataEnvio",
                           style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: Colors.grey.shade600,
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
                           ),
                         ),
 
-                        const SizedBox(height: 4),
-
                         if (servicoMap['descricao'] != null &&
-                            servicoMap['descricao'].trim().isNotEmpty)
+                            servicoMap['descricao'].trim().isNotEmpty) ...[
+                          const SizedBox(height: 6),
                           Text(
                             servicoMap['descricao'],
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.poppins(
-                              fontSize: 13.2,
-                              height: 1.34,
+                              fontSize: 12.5,
+                              height: 1.4,
                               color: Colors.grey.shade700,
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ),
-
-                  const SizedBox(width: 10),
-
-                  // ➡️ Seta
-                  Icon(
-                    Icons.arrow_forward_ios_rounded,
-                    size: 18,
-                    color: primary.withValues(alpha: 0.45),
-                  ),
+                  const SizedBox(width: 12),
+                  Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey.shade400),
                 ],
               ),
             ),

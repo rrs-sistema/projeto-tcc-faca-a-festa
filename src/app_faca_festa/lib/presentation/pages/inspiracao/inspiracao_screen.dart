@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/inspiracao_controller.dart';
+import '../../../controllers/inspiracao/inspiracao_controller.dart';
 import './../../widgets/confetti_background.dart';
 import './../../../data/models/model.dart';
 import './inspiracao_detalhe_screen.dart';
@@ -39,6 +39,7 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
     super.initState();
     controller.carregarInspiracoes(
       widget.tipoEvento.nome,
+      tipoEventoId: widget.tipoEvento.idTipoEvento,
       eventoId: widget.eventoId,
       userId: widget.userId,
     );
@@ -50,30 +51,28 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
     final primary = themeController.primaryColor.value;
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC), // Fundo mais limpo
       body: Obx(() {
         if (controller.loading.value) {
-          return const Center(child: CircularProgressIndicator());
+          return Center(child: CircularProgressIndicator(color: primary));
         }
 
         final inspiracoes = controller.inspiracoesFiltradas;
         return CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
             SliverAppBar(
-              expandedHeight: 220,
+              expandedHeight: 170, // 🔹 Altura reduzida e mais compacta[cite: 30]
               floating: true,
               pinned: true,
               backgroundColor: themeController.primaryColor.value,
               foregroundColor: Colors.white,
-              iconTheme: const IconThemeData(
-                color: Colors.white,
-              ),
-              actionsIconTheme: const IconThemeData(
-                color: Colors.white,
-              ),
+              iconTheme: const IconThemeData(color: Colors.white),
+              actionsIconTheme: const IconThemeData(color: Colors.white),
               systemOverlayStyle: SystemUiOverlayStyle.light,
               flexibleSpace: LayoutBuilder(
                 builder: (context, constraints) {
-                  final percent = (constraints.maxHeight - kToolbarHeight) / (220 - kToolbarHeight);
+                  final percent = (constraints.maxHeight - kToolbarHeight) / (170 - kToolbarHeight);
                   final progress = percent.clamp(0.0, 1.0);
 
                   return FlexibleSpaceBar(
@@ -86,6 +85,7 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
+                          fontSize: 18,
                         ),
                       ),
                     ),
@@ -104,8 +104,7 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Color(0xCC000000),
-                                Color(0x66000000),
+                                Color(0x99000000),
                                 Colors.transparent,
                               ],
                               begin: Alignment.topCenter,
@@ -119,13 +118,13 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                             alignment: Alignment.center,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
-                              "✨ Inspire-se com eventos de ${widget.tipoEvento.nome}\nTransforme sonhos em realidade.",
+                              "Inspirações: ${widget.tipoEvento.nome}\nTransforme ideias em realidade",
                               textAlign: TextAlign.center,
                               style: GoogleFonts.playfairDisplay(
                                 color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                height: 1.4,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                                height: 1.3,
                                 shadows: const [
                                   Shadow(
                                     color: Colors.black54,
@@ -143,11 +142,13 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                 },
               ),
             ),
-            // === Categorias ===
+
+            // === Filtros Categoria ===
             SliverToBoxAdapter(
               child: _filtrosCategoria(primary),
             ),
 
+            // === Minhas Referências ===
             SliverToBoxAdapter(
               child: _atalhoMinhasReferencias(primary),
             ),
@@ -155,36 +156,31 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
             // === Carrossel de Destaques ===
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.only(bottom: 16),
                 child: _carrosselDestaque(inspiracoes),
               ),
             ),
 
             // === Grid de Inspirações ===
             SliverToBoxAdapter(
-              child: _tituloSessao('Ideias e Tendências'),
+              child: _tituloSessao('Ideias e Tendências', Icons.auto_awesome_rounded, primary),
             ),
             SliverToBoxAdapter(
               child: _gridInspiracoes(inspiracoes, primary),
             ),
 
-            // === Sessão de galeria pessoal ===
+            // === Galeria e Fornecedores ===
             SliverToBoxAdapter(
-              child: _tituloSessao('Monte sua Galeria'),
+              child: const SizedBox(height: 16),
             ),
             SliverToBoxAdapter(
               child: _botaoGaleria(primary),
-            ),
-
-            // === Sessão de fornecedores ===
-            SliverToBoxAdapter(
-              child: _tituloSessao('Encontre Quem Faz'),
             ),
             SliverToBoxAdapter(
               child: _fornecedoresSugeridos(primary),
             ),
 
-            const SliverToBoxAdapter(child: SizedBox(height: 150)),
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
           ],
         );
       }),
@@ -197,34 +193,39 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
 
       return SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Row(
           children: categorias.map((c) {
             final selected = controller.categoriaSelecionada.value == c;
             return GestureDetector(
               onTap: () => controller.aplicarFiltro(c),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 250),
                 margin: const EdgeInsets.only(right: 8),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 6), // 🔹 Compacto[cite: 30]
                 decoration: BoxDecoration(
-                  color: selected ? primary : Colors.grey.shade200,
-                  borderRadius: BorderRadius.circular(24),
+                  color: selected ? primary : Colors.white,
+                  border: Border.all(
+                    color: selected ? primary : Colors.grey.shade300,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
                   boxShadow: selected
                       ? [
                           BoxShadow(
-                            color: primary.withValues(alpha: 0.3),
-                            blurRadius: 6,
-                            offset: const Offset(0, 3),
-                          )
+                              color: primary.withValues(alpha: 0.25),
+                              blurRadius: 6,
+                              offset: const Offset(0, 3))
                         ]
                       : [],
                 ),
                 child: Text(
                   c,
                   style: GoogleFonts.poppins(
-                    color: selected ? Colors.white : Colors.grey.shade800,
-                    fontWeight: FontWeight.w600,
+                    color: selected ? Colors.white : Colors.grey.shade700,
+                    fontSize: 12,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
               ),
@@ -238,68 +239,63 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
   Widget _atalhoMinhasReferencias(Color primary) {
     return Obx(() {
       final total = controller.referenciasEvento.length;
-
-      if (!controller.possuiContextoEvento) {
-        return const SizedBox.shrink();
-      }
+      if (!controller.possuiContextoEvento) return const SizedBox.shrink();
 
       return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 6, 16, 10),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: primary.withValues(alpha: 0.15)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 14,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: ListTile(
-            leading: Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.10),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(Icons.collections_bookmark_outlined, color: primary),
+        padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+        child: InkWell(
+          onTap: () {
+            final eventoId = widget.eventoId ?? controller.eventoIdAtual;
+            final userId = widget.userId ?? controller.userIdAtual;
+            if (eventoId == null || eventoId.isEmpty || userId == null || userId.isEmpty) {
+              Get.snackbar('Evento não identificado', 'Abra um evento antes.',
+                  snackPosition: SnackPosition.BOTTOM);
+              return;
+            }
+            Get.to(() => MinhasReferenciasEventoScreen(eventoId: eventoId, userId: userId));
+          },
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            padding: const EdgeInsets.all(12), // 🔹 Mais fino[cite: 30]
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: primary.withValues(alpha: 0.15)),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4))
+              ],
             ),
-            title: Text(
-              'Minhas Referências do Evento',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF172033),
-              ),
-            ),
-            subtitle: Text(
-              total == 0 ? 'Nenhuma referência salva ainda' : '$total referência(s) salva(s)',
-              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
-            ),
-            trailing: Icon(Icons.chevron_right_rounded, color: primary),
-            onTap: () {
-              final eventoId = widget.eventoId ?? controller.eventoIdAtual;
-              final userId = widget.userId ?? controller.userIdAtual;
-
-              if (eventoId == null || eventoId.isEmpty || userId == null || userId.isEmpty) {
-                Get.snackbar(
-                  'Evento não identificado',
-                  'Abra um evento antes de acessar suas referências.',
-                  snackPosition: SnackPosition.BOTTOM,
-                );
-                return;
-              }
-
-              Get.to(
-                () => MinhasReferenciasEventoScreen(
-                  eventoId: eventoId,
-                  userId: userId,
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12)),
+                  child: Icon(Icons.collections_bookmark_rounded, color: primary, size: 20),
                 ),
-              );
-            },
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Minhas Referências',
+                          style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                              color: const Color(0xFF172033))),
+                      Text(total == 0 ? 'Nenhuma salva' : '$total salva(s)',
+                          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600)),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: primary, size: 20),
+              ],
+            ),
           ),
         ),
       );
@@ -308,6 +304,7 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
 
   Widget _carrosselDestaque(List<InspiracaoModel> items) {
     final imagens = items.take(5).toList();
+    if (imagens.isEmpty) return const SizedBox.shrink();
 
     return CarouselSlider.builder(
       itemCount: imagens.length,
@@ -315,64 +312,42 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
         final item = imagens[index];
         final url = item.imagemUrl;
 
-        // Função segura para imagem
-        Widget buildImagem(String? url) {
-          if (url == null || url.isEmpty) {
-            return Container(
-              color: Colors.grey.shade200,
-              alignment: Alignment.center,
-              child: const Icon(Icons.image_not_supported_rounded, color: Colors.grey, size: 48),
-            );
-          }
-
-          return Image.network(
-            url,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              color: Colors.grey.shade100,
-              alignment: Alignment.center,
-              child: const Icon(Icons.broken_image_rounded, color: Colors.grey, size: 40),
-            ),
-          );
-        }
-
         return ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
           child: Stack(
             fit: StackFit.expand,
             children: [
-              buildImagem(url),
+              url.isEmpty
+                  ? Container(
+                      color: Colors.grey.shade200,
+                      child: const Icon(Icons.image_not_supported, color: Colors.grey))
+                  : Image.network(url,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.broken_image, color: Colors.grey))),
               Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Colors.transparent, Colors.black54],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                ),
-              ),
+                  decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                          colors: [Colors.transparent, Colors.black87],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter))),
               Positioned(
                 left: 12,
-                bottom: 16,
+                bottom: 12,
                 right: 12,
-                child: Text(
-                  item.titulo,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    shadows: [Shadow(color: Colors.black45, blurRadius: 6)],
-                  ),
-                ),
+                child: Text(item.titulo,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                        color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
               ),
             ],
           ),
         );
       },
       options: CarouselOptions(
-        height: 220,
+        height: 160, // 🔹 Carrossel mais compacto[cite: 30]
         autoPlay: true,
         enlargeCenterPage: true,
         viewportFraction: 0.85,
@@ -380,15 +355,52 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
     );
   }
 
-  Widget _tituloSessao(String titulo) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Text(titulo,
-            style: GoogleFonts.playfairDisplay(fontSize: 20, fontWeight: FontWeight.w700)),
+  Widget _tituloSessao(String titulo, IconData icon, Color primary) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: primary),
+            const SizedBox(width: 8),
+            Text(titulo,
+                style: GoogleFonts.poppins(
+                    fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
+          ],
+        ),
       );
 
-  Widget _gridInspiracoes(List<InspiracaoModel> list, Color primary) {
+  Widget _emptyInspiracoes(Color primary) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
+      padding: const EdgeInsets.all(16),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: primary.withValues(alpha: 0.1))),
+        child: Column(
+          children: [
+            Icon(Icons.lightbulb_outline_rounded, color: primary, size: 36),
+            const SizedBox(height: 10),
+            Text('Nenhuma inspiração encontrada',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w800, color: const Color(0xFF172033), fontSize: 14)),
+            const SizedBox(height: 4),
+            Text('Mude a categoria ou adicione novas imagens.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _gridInspiracoes(List<InspiracaoModel> list, Color primary) {
+    if (list.isEmpty) return _emptyInspiracoes(primary);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       child: MasonryGridView.count(
         physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,
@@ -400,61 +412,30 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
           final insp = list[i];
           final url = insp.imagemUrl;
 
-          Widget buildImagem(String? url) {
-            if (url == null || url.isEmpty) {
-              return Container(
-                height: 180,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Center(
-                  child: Icon(
-                    Icons.image_not_supported_rounded,
-                    color: Colors.grey,
-                    size: 48,
-                  ),
-                ),
-              );
-            }
-
-            return Image.network(
-              url,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                height: 180,
-                color: Colors.grey.shade200,
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.broken_image_rounded,
-                  color: Colors.grey,
-                  size: 40,
-                ),
-              ),
-            );
-          }
-
           return GestureDetector(
-            onTap: () {
-              Get.to(() => InspiracaoDetalheScreen(inspiracao: insp));
-            },
+            onTap: () => Get.to(() => InspiracaoDetalheScreen(inspiracao: insp)),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Stack(
                 children: [
-                  buildImagem(url),
+                  url.isEmpty
+                      ? Container(
+                          height: 160,
+                          color: Colors.grey.shade200,
+                          child: const Center(child: Icon(Icons.image, color: Colors.grey)))
+                      : Image.network(url,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                              height: 160,
+                              color: Colors.grey.shade200,
+                              child: const Center(child: Icon(Icons.broken_image)))),
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withValues(alpha: 0.50),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
+                          gradient: LinearGradient(
+                              colors: [Colors.transparent, Colors.black.withValues(alpha: 0.6)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter)),
                     ),
                   ),
                   Positioned(
@@ -463,16 +444,11 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                     child: InkWell(
                       onTap: () => controller.alternarFavorito(insp.id),
                       child: Container(
-                        decoration: const BoxDecoration(
-                          color: Colors.black45,
-                          shape: BoxShape.circle,
-                        ),
                         padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          insp.favorito ? Icons.star_rounded : Icons.star_border_rounded,
-                          color: insp.favorito ? Colors.amber : Colors.white,
-                          size: 24,
-                        ),
+                        decoration:
+                            const BoxDecoration(color: Colors.black45, shape: BoxShape.circle),
+                        child: Icon(insp.favorito ? Icons.star_rounded : Icons.star_border_rounded,
+                            color: insp.favorito ? Colors.amber : Colors.white, size: 20),
                       ),
                     ),
                   ),
@@ -497,114 +473,90 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
       final checklist = controller.checklistJaCriado(inspiracao.id);
       final orcamento = controller.orcamentoJaCriado(inspiracao.id);
 
-      if (!salva && !checklist && !orcamento) {
-        return const SizedBox.shrink();
-      }
+      if (!salva && !checklist && !orcamento) return const SizedBox.shrink();
 
       return Wrap(
-        spacing: 6,
-        runSpacing: 6,
+        spacing: 4,
+        runSpacing: 4,
         children: [
-          if (salva)
-            _planejamentoBadge(
-              label: 'Salva',
-              icon: Icons.bookmark_added_rounded,
-              color: primary,
-            ),
+          if (salva) _planejamentoBadge(icon: Icons.bookmark_added_rounded, color: primary),
           if (checklist)
-            _planejamentoBadge(
-              label: 'Checklist',
-              icon: Icons.checklist_rounded,
-              color: Colors.green.shade700,
-            ),
+            _planejamentoBadge(icon: Icons.checklist_rounded, color: Colors.green.shade700),
           if (orcamento)
             _planejamentoBadge(
-              label: 'Orçamento',
-              icon: Icons.account_balance_wallet_rounded,
-              color: Colors.orange.shade800,
-            ),
+                icon: Icons.account_balance_wallet_rounded, color: Colors.orange.shade800),
         ],
       );
     });
   }
 
-  Widget _planejamentoBadge({
-    required String label,
-    required IconData icon,
-    required Color color,
-  }) {
+  Widget _planejamentoBadge({required IconData icon, required Color color}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.16),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 12, color: Colors.white),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(4), // 🔹 Muito menor[cite: 30]
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.9), shape: BoxShape.circle),
+      child: Icon(icon, size: 12, color: Colors.white),
     );
   }
 
   Widget _botaoGaleria(Color primary) {
-    return Center(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ElevatedButton.icon(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+          backgroundColor: Colors.white,
+          foregroundColor: primary,
+          side: BorderSide(color: primary.withValues(alpha: 0.3)),
+          minimumSize: const Size(double.infinity, 44),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          elevation: 0,
         ),
-        icon: const Icon(Icons.add_a_photo_rounded, color: Colors.white),
-        label: Text(
-          "Adicionar minhas referências",
-          style: GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w600),
-        ),
-        onPressed: () {
-          controller.adicionarReferenciaPessoal();
-        },
+        icon: const Icon(Icons.add_photo_alternate_rounded, size: 18),
+        label: Text("Adicionar minhas referências",
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13)),
+        onPressed: () => controller.adicionarReferenciaPessoal(),
       ),
     );
   }
 
   Widget _fornecedoresSugeridos(Color primary) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          color: primary.withValues(alpha: 0.05),
-          border: Border.all(color: primary.withValues(alpha: 0.2)),
-        ),
-        child: ListTile(
-          leading: Icon(Icons.storefront_rounded, color: primary, size: 32),
-          title: Text("Veja fornecedores que realizam essas ideias",
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-          subtitle: Text(
-            "Descubra profissionais para transformar sua inspiração em realidade.",
-            style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade700),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: InkWell(
+        onTap: () => Get.toNamed('/fornecedores'),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: primary.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: primary.withValues(alpha: 0.2)),
           ),
-          trailing: Icon(Icons.chevron_right_rounded, color: primary),
-          onTap: () {
-            Get.toNamed('/fornecedores');
-          },
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration:
+                    BoxDecoration(color: primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                child: Icon(Icons.storefront_rounded, color: primary, size: 22),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Encontre quem faz",
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 13,
+                            color: const Color(0xFF1F2937))),
+                    Text("Fornecedores que realizam essas ideias.",
+                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade700)),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: primary, size: 20),
+            ],
+          ),
         ),
       ),
     );

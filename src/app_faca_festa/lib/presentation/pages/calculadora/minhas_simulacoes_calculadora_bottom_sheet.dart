@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../controllers/calculadora_festa_controller.dart';
+import '../../../controllers/calculadora/calculadora_festa_controller.dart';
 import '../../../data/models/evento/analise_calculadora_ia_model.dart';
 import '../../../data/models/evento/calculadora_festa_item_model.dart';
 import '../../../data/models/evento/calculadora_festa_model.dart';
@@ -538,6 +538,7 @@ class _AcoesSimulacao extends StatelessWidget {
     );
     if (confirmar == true) await controller.excluirSimulacao(simulacao.idCalculo);
   }
+  
 }
 
 class _ResumoItem extends StatelessWidget {

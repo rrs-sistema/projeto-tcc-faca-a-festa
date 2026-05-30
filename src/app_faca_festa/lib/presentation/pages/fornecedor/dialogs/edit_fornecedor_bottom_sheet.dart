@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 import 'dart:io' show File;
 import 'dart:typed_data';
 
-import './../../../../controllers/fornecedor_controller.dart';
+import '../../../../controllers/fornecedor/fornecedor_controller.dart';
 import './../../../widgets/custom_input_field.dart';
 import './../../../../data/models/model.dart';
 

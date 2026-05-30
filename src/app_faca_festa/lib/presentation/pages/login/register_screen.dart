@@ -7,9 +7,9 @@ import 'package:get/get.dart';
 import 'dart:io';
 import 'dart:ui';
 
-import './../../../controllers/servico_produto_controller.dart';
+import '../../../controllers/servico/servico_produto_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/fornecedor_controller.dart';
+import '../../../controllers/fornecedor/fornecedor_controller.dart';
 import './../../../controllers/register_controller.dart';
 import './components/build_header_organizador.dart';
 import './components/build_header_fornecedor.dart';

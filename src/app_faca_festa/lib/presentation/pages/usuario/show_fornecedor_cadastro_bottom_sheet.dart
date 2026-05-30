@@ -2,8 +2,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../widgets/custom_input_field.dart';
-
 Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
   final empresaController = TextEditingController(text: '');
   final categoriaController = TextEditingController(text: '');
@@ -14,147 +12,228 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
   final formKey = GlobalKey<FormState>();
 
   bool confirmado = false;
+  final primaryColor = Colors.green.shade600;
 
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     builder: (context) {
+      final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
       return FractionallySizedBox(
-        heightFactor: 0.8,
+        heightFactor: 0.88,
         child: Container(
-          padding: EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 24,
-            bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-          ),
           decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Color(0xFFDFFFD6), Color(0xFFE8F5E9)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+            color: Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
-          child: Form(
-            key: formKey,
-            child: SingleChildScrollView(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom + 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12),
-                  Text(
-                    "🧑‍🔧 Cadastro de Fornecedor",
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.green.shade700,
-                    ),
+          child: Column(
+            children: [
+              // 🔹 HANDLE DE ARRASTE
+              Center(
+                child: Container(
+                  margin: const EdgeInsets.only(top: 10, bottom: 6),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  const SizedBox(height: 24),
-                  CustomInputField(
-                    label: "Nome do Responsável",
-                    icon: Icons.person,
-                    controller: empresaController,
-                    color: Colors.green,
-                    validator: (v) => v!.isEmpty ? "Informe o nome" : null,
-                  ),
-                  CustomInputField(
-                    label: "Nome da Empresa",
-                    icon: Icons.business,
-                    controller: categoriaController,
-                    color: Colors.green,
-                    validator: (v) => v!.isEmpty ? "Informe o nome da empresa" : null,
-                  ),
-                  CustomInputField(
-                    label: "Categoria",
-                    icon: Icons.category,
-                    controller: categoriaController,
-                    color: Colors.green,
-                    validator: (v) => v!.isEmpty ? "Informe a categoria" : null,
-                  ),
-                  CustomInputField(
-                    label: "E-mail",
-                    icon: Icons.email_outlined,
-                    controller: emailController,
-                    color: Colors.green,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (v) => v!.isEmpty ? "Informe o e-mail" : null,
-                  ),
-                  CustomInputField(
-                    label: "Telefone",
-                    icon: Icons.phone_android,
-                    controller: telefoneController,
-                    color: Colors.green,
-                    keyboardType: TextInputType.phone,
-                    validator: (v) => v!.isEmpty ? "Informe o telefone" : null,
-                  ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: CustomInputField(
-                          label: "Cidade",
-                          icon: Icons.location_city,
-                          controller: cidadeController,
-                          color: Colors.green,
-                          validator: (v) => v!.isEmpty ? "Informe a cidade" : null,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      SizedBox(
-                        width: 90,
-                        child: CustomInputField(
-                          label: "UF",
-                          icon: Icons.map,
-                          controller: ufController,
-                          color: Colors.green,
-                          maxLength: 2,
-                          validator: (v) => v!.length != 2 ? "UF" : null,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Center(
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
-                      ),
-                      onPressed: () {
-                        if (formKey.currentState!.validate()) {
-                          confirmado = true;
-                          Navigator.pop(context);
-                        } else {
-                          Get.snackbar(
-                            "Campos obrigatórios",
-                            "Preencha todos os campos corretamente.",
-                            backgroundColor: Colors.green.shade400,
-                            colorText: Colors.white,
-                            snackPosition: SnackPosition.TOP,
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.check_circle_outline, color: Colors.white),
-                      label: Text(
-                        "Continuar",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                ],
+                ),
               ),
-            ),
+
+              // 🔹 HEADER COMPACTO
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.storefront_rounded, color: primaryColor, size: 22),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Novo Fornecedor",
+                        style: GoogleFonts.poppins(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF111827),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      icon: const Icon(Icons.close_rounded, size: 22),
+                      onPressed: () => Get.back(),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 🔹 CONTEÚDO (SCROLL)
+              Expanded(
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(6, 4, 6, bottomInset + 16),
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      children: [
+                        _SectionCard(
+                          title: 'Dados da Empresa',
+                          icon: Icons.business_rounded,
+                          primary: primaryColor,
+                          child: Column(
+                            children: [
+                              _CompactField(
+                                label: "Nome do Responsável",
+                                icon: Icons.person_rounded,
+                                controller: empresaController,
+                                validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: _CompactField(
+                                      label: "Empresa",
+                                      icon: Icons.store_rounded,
+                                      controller:
+                                          categoriaController, // Ideal usar uma controller separada
+                                      validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    flex: 2,
+                                    child: _CompactField(
+                                      label: "Categoria",
+                                      icon: Icons.category_rounded,
+                                      controller: categoriaController,
+                                      validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _CompactField(
+                                      label: "Telefone",
+                                      icon: Icons.phone_rounded,
+                                      controller: telefoneController,
+                                      keyboardType: TextInputType.phone,
+                                      validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: _CompactField(
+                                      label: "E-mail",
+                                      icon: Icons.email_rounded,
+                                      controller: emailController,
+                                      keyboardType: TextInputType.emailAddress,
+                                      validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    flex: 3,
+                                    child: _CompactField(
+                                      label: "Cidade",
+                                      icon: Icons.location_city_rounded,
+                                      controller: cidadeController,
+                                      validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    flex: 1,
+                                    child: _CompactField(
+                                      label: "UF",
+                                      icon: Icons.map_rounded,
+                                      controller: ufController,
+                                      maxLength: 2,
+                                      validator: (v) => v!.length != 2 ? "Erro" : null,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+
+                        // 🔹 AÇÕES
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: SizedBox(
+                                  height: 44,
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: primaryColor,
+                                      side: BorderSide(color: primaryColor.withValues(alpha: 0.55)),
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10)),
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                    onPressed: () => Get.back(),
+                                    icon: const Icon(Icons.close_rounded, size: 18),
+                                    label: Text('Cancelar',
+                                        style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.w800, fontSize: 12)),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: SizedBox(
+                                  height: 44,
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: primaryColor,
+                                      foregroundColor: Colors.white,
+                                      shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(10)),
+                                      padding: EdgeInsets.zero,
+                                    ),
+                                    onPressed: () {
+                                      if (formKey.currentState!.validate()) {
+                                        confirmado = true;
+                                        Navigator.pop(context);
+                                      } else {
+                                        Get.snackbar(
+                                          "Atenção",
+                                          "Preencha todos os campos.",
+                                          backgroundColor: Colors.redAccent,
+                                          colorText: Colors.white,
+                                        );
+                                      }
+                                    },
+                                    icon: const Icon(Icons.check_circle_rounded, size: 18),
+                                    label: Text('Cadastrar',
+                                        style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.w800, fontSize: 12)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       );
@@ -162,4 +241,114 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
   );
 
   return confirmado;
+}
+
+// =========================================================================
+// WIDGETS AUXILIARES DO SEU NOVO SISTEMA DE DESIGN
+// =========================================================================
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Widget child;
+  final Color primary;
+
+  const _SectionCard(
+      {required this.title, required this.icon, required this.child, required this.primary});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                      fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF111827)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _CompactField extends StatelessWidget {
+  final TextEditingController controller;
+  final String label;
+  final IconData icon;
+  final bool readOnly;
+  final TextInputType? keyboardType;
+  final int? maxLength;
+  final String? Function(String?)? validator;
+  final VoidCallback? onTap;
+  final Function(String)? onChanged;
+
+  const _CompactField({
+    required this.controller,
+    required this.label,
+    required this.icon,
+    this.readOnly = false,
+    this.keyboardType,
+    this.maxLength,
+    this.validator,
+    this.onTap,
+    this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44, // Altura restrita do padrão
+      child: TextFormField(
+        controller: controller,
+        readOnly: readOnly,
+        keyboardType: keyboardType,
+        maxLength: maxLength,
+        onTap: onTap,
+        onChanged: onChanged,
+        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.poppins(fontSize: 11),
+          prefixIcon: Icon(icon, size: 16),
+          isDense: true,
+          counterText: "",
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Colors.grey.shade200)),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(10),
+              borderSide: BorderSide(color: Theme.of(context).primaryColor)),
+          filled: true,
+          fillColor: readOnly ? Colors.grey.shade100 : Colors.grey.shade50,
+        ),
+        validator: validator,
+      ),
+    );
+  }
 }

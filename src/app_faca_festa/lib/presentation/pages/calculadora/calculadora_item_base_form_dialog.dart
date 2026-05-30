@@ -6,8 +6,6 @@ import '../../../data/models/calculadora/calculadora_item_base_model.dart';
 
 class CalculadoraItemBaseFormDialog {
   static Future<void> show({CalculadoraItemBaseModel? item}) async {
-    // 🔹 Substituído Get.bottomSheet por showModalBottomSheet para espelhar
-    // perfeitamente o comportamento do seu modal de eventos e evitar o duplo padding.
     await showModalBottomSheet<void>(
       context: Get.context!,
       isScrollControlled: true,
@@ -86,18 +84,14 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    // =========================================================================
-    // 🔹 ESTRUTURA COPIADA DO CADASTRO_EVENTO_BOTTOM_SHEET.DART
-    // =========================================================================
     return FractionallySizedBox(
-      heightFactor: 0.92,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeOutCubic,
+      heightFactor: 0.88, // 🔹 Mais compacto
+      child: Container(
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: SafeArea(
           top: false,
@@ -105,8 +99,7 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
             padding: EdgeInsets.only(
               left: 14,
               right: 14,
-              // O padding dinâmico que sobe a tela junto com o teclado
-              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              bottom: bottomInset + 12, // 🔹 Padding dinâmico e menor
             ),
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -114,36 +107,32 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
                 key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 12),
                     Center(
                       child: Container(
-                        width: 60,
-                        height: 5,
+                        width: 50,
+                        height: 4,
                         decoration: BoxDecoration(
                           color: Colors.grey.shade300,
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // =========================================================
-                    // 🔹 CONTEÚDOS DO CALCULADORA_ITEM_BASE
-                    // =========================================================
+                    const SizedBox(height: 14),
                     _Header(
                       title: isEditing ? 'Editar item base' : 'Novo item base',
                       subtitle: isEditing
-                          ? 'Atualize o catálogo global da calculadora'
-                          : 'Cadastre um item genérico para reutilizar nas regras por tipo de evento.',
+                          ? 'Atualize o catálogo global'
+                          : 'Cadastre um item genérico reutilizável',
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Divider(
                       height: 1,
                       color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
                     ),
-                    const SizedBox(height: 16),
-
+                    const SizedBox(height: 12),
                     _InfoIdPreview(
                       isEditing: isEditing,
                       id: widget.item?.id,
@@ -153,7 +142,6 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
                       ),
                     ),
                     const SizedBox(height: 12),
-
                     _ResponsiveFields(
                       children: [
                         _textField(
@@ -194,7 +182,8 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
                               .map(
                                 (value) => DropdownMenuItem(
                                   value: value,
-                                  child: Text(_labelPublico(value)),
+                                  child: Text(_labelPublico(value),
+                                      style: const TextStyle(fontSize: 13)),
                                 ),
                               )
                               .toList(),
@@ -217,30 +206,26 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-
+                    const SizedBox(height: 10),
                     _textField(
                       controller: _descricaoController,
                       label: 'Descrição',
                       icon: Icons.description_outlined,
-                      maxLines: 3,
+                      maxLines: 2, // 🔹 Reduzido
                     ),
-                    const SizedBox(height: 12),
-
+                    const SizedBox(height: 10),
                     _textField(
                       controller: _tagsController,
                       label: 'Tags',
                       hint: 'Separe por vírgula: bolo, recepção, comida',
                       icon: Icons.tag_outlined,
                     ),
-                    const SizedBox(height: 12),
-
+                    const SizedBox(height: 10),
                     _ActiveSwitchCard(
                       value: _ativo,
                       onChanged: (value) => setState(() => _ativo = value),
                     ),
-                    const SizedBox(height: 32),
-
+                    const SizedBox(height: 20),
                     _FooterActions(
                       controller: controller,
                       onSubmit: _submit,
@@ -308,6 +293,7 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
       maxLines: maxLines,
       keyboardType: keyboardType,
       onChanged: onChanged,
+      style: const TextStyle(fontSize: 13), // 🔹 Fonte menor
       textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
       decoration: _decoration(label: label, icon: icon, hint: hint),
       validator: requiredField
@@ -329,25 +315,21 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      prefixIcon: icon == null
-          ? null
-          : Icon(
-              icon,
-              size: 18,
-            ),
+      labelStyle: const TextStyle(fontSize: 13), // 🔹 Fonte menor
+      prefixIcon: icon == null ? null : Icon(icon, size: 18),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(12),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(13),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(
           color: Theme.of(context).colorScheme.outlineVariant,
         ),
       ),
       isDense: true,
       contentPadding: const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 12,
+        horizontal: 10,
+        vertical: 10, // 🔹 Espaçamento compacto
       ),
     );
   }
@@ -400,16 +382,16 @@ class _Header extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 38,
-          height: 38,
+          width: 36,
+          height: 36,
           decoration: BoxDecoration(
             color: theme.colorScheme.primary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(13),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
             Icons.calculate_outlined,
             color: theme.colorScheme.primary,
-            size: 21,
+            size: 20,
           ),
         ),
         const SizedBox(width: 10),
@@ -424,15 +406,16 @@ class _Header extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w800,
+                  fontSize: 15,
                 ),
               ),
-              const SizedBox(height: 1),
               Text(
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
+                  fontSize: 11,
                 ),
               ),
             ],
@@ -441,7 +424,7 @@ class _Header extends StatelessWidget {
         IconButton(
           visualDensity: VisualDensity.compact,
           onPressed: () => Get.back<void>(),
-          icon: const Icon(Icons.close),
+          icon: const Icon(Icons.close, size: 20),
         ),
       ],
     );
@@ -466,10 +449,10 @@ class _InfoIdPreview extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         isEditing
@@ -480,6 +463,7 @@ class _InfoIdPreview extends StatelessWidget {
         style: theme.textTheme.bodySmall?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           fontWeight: FontWeight.w600,
+          fontSize: 11,
         ),
       ),
     );
@@ -496,11 +480,11 @@ class _ResponsiveFields extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 620;
-        final itemWidth = isWide ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth;
+        final itemWidth = isWide ? (constraints.maxWidth - 10) / 2 : constraints.maxWidth;
 
         return Wrap(
-          spacing: 12,
-          runSpacing: 12,
+          spacing: 10,
+          runSpacing: 10,
           children: children
               .map(
                 (child) => SizedBox(
@@ -529,9 +513,9 @@ class _ActiveSwitchCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+      padding: const EdgeInsets.fromLTRB(12, 6, 6, 6),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: theme.colorScheme.outlineVariant,
         ),
@@ -547,15 +531,16 @@ class _ActiveSwitchCard extends StatelessWidget {
                   'Item ativo',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.w700,
+                    fontSize: 13,
                   ),
                 ),
-                const SizedBox(height: 2),
                 Text(
-                  'Itens inativos não aparecem nas configurações da calculadora.',
+                  'Itens inativos não aparecem na calculadora.',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 11,
                   ),
                 ),
               ],
@@ -588,8 +573,9 @@ class _FooterActions extends StatelessWidget {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: controller.saving.value ? null : () => Get.back<void>(),
-              icon: const Icon(Icons.close, size: 18),
-              label: const Text('Cancelar'),
+              icon: const Icon(Icons.close, size: 16),
+              label: const Text('Cancelar', style: TextStyle(fontSize: 13)),
+              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
             ),
           ),
           const SizedBox(width: 10),
@@ -598,14 +584,16 @@ class _FooterActions extends StatelessWidget {
               onPressed: controller.saving.value ? null : onSubmit,
               icon: controller.saving.value
                   ? const SizedBox(
-                      width: 18,
-                      height: 18,
+                      width: 16,
+                      height: 16,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                  : const Icon(Icons.save_outlined, size: 18),
+                  : const Icon(Icons.save_outlined, size: 16),
               label: Text(
                 controller.saving.value ? 'Salvando...' : 'Salvar',
+                style: const TextStyle(fontSize: 13),
               ),
+              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
             ),
           ),
         ],

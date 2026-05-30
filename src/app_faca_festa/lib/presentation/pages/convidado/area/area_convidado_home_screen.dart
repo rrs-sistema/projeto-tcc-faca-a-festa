@@ -45,12 +45,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
   Widget build(BuildContext context) {
     final gradient = theme.gradient.value;
     final icon = theme.icon.value;
-    
-
     final evento = widget.evento;
     final convidado = convidadoController.convidadoAtual.value;
-
-
     final titulo = evento.nomeEvento;
 
     final List<Widget> pages = [
@@ -63,21 +59,21 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(110),
+        preferredSize: const Size.fromHeight(80), // 🔹 Altura reduzida (era 110)
         child: Container(
           decoration: BoxDecoration(
             gradient: gradient,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.25),
-                blurRadius: 12,
-                offset: const Offset(0, 3),
+                color: Colors.black.withValues(alpha: 0.15), // 🔹 Sombra mais leve
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), // 🔹 Compacto
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -88,8 +84,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                         color: Colors.white.withValues(alpha: 0.15),
                         shape: BoxShape.circle,
                       ),
-                      padding: const EdgeInsets.all(8),
-                      child: Icon(icon, color: Colors.white, size: 28),
+                      padding: const EdgeInsets.all(6), // 🔹 Ícone menor
+                      child: Icon(icon, color: Colors.white, size: 22),
                     ),
                   ),
                   Expanded(
@@ -98,15 +94,15 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                         duration: const Duration(milliseconds: 500),
                         curve: Curves.easeInOut,
                         style: GoogleFonts.poppins(
-                          fontSize: 18,
+                          fontSize: 15, // 🔹 Fonte menor
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
-                          letterSpacing: 0.8,
+                          letterSpacing: 0.4,
                           shadows: [
                             Shadow(
-                              color: Colors.black.withValues(alpha: 0.25),
-                              blurRadius: 6,
-                              offset: const Offset(0, 2),
+                              color: Colors.black.withValues(alpha: 0.20),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
                             ),
                           ],
                         ),
@@ -123,15 +119,15 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                   Tooltip(
                     message: 'Sair',
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(20),
                       onTap: () => Get.find<AppController>().logout(),
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
                           shape: BoxShape.circle,
                         ),
-                        padding: const EdgeInsets.all(8),
-                        child: const Icon(Icons.logout, color: Colors.white),
+                        padding: const EdgeInsets.all(6), // 🔹 Botão menor
+                        child: const Icon(Icons.logout, color: Colors.white, size: 20),
                       ),
                     ),
                   ),
@@ -141,10 +137,6 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
           ),
         ),
       ),
-
-      // ===========================================================
-      // 💫 Corpo principal com boas-vindas + efeito de slide
-      // ===========================================================
       body: Container(
         decoration: BoxDecoration(gradient: gradient),
         child: Obx(() {
@@ -157,7 +149,6 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
 
           return Stack(
             children: [
-              // 🔹 Fundo com gradiente translúcido
               Positioned.fill(
                 child: AnimatedOpacity(
                   opacity: 1,
@@ -176,22 +167,21 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                   ),
                 ),
               ),
-
-              // 🔹 Conteúdo principal com efeito slide-up
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 500),
                 switchInCurve: Curves.easeOutBack,
                 switchOutCurve: Curves.easeIn,
                 child: Container(
                   key: ValueKey(_selectedIndex),
-                  margin: const EdgeInsets.only(top: 140),
+                  margin: const EdgeInsets.only(top: 100), // 🔹 Subiu a tela (era 140)
                   decoration: BoxDecoration(
                     color: theme.secondaryColor.value.withValues(alpha: 0.95),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(36)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(24)), // 🔹 Raio menor
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 15,
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
                         offset: const Offset(0, -2),
                       ),
                     ],
@@ -199,51 +189,51 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                   child: Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(20, 14, 20, 8),
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 6), // 🔹 Compacto
                         child: Column(
                           children: [
                             Text(
                               mensagemBoasVindas,
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
-                                fontSize: 16,
+                                fontSize: 14, // 🔹 Fonte menor
                                 fontWeight: FontWeight.w700,
                                 color: theme.primaryColor.value,
                               ),
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 4),
                             Text(
                               'Você foi convidado(a) para um momento especial!',
                               textAlign: TextAlign.center,
                               style: GoogleFonts.poppins(
-                                fontSize: 14,
+                                fontSize: 12, // 🔹 Fonte menor
                                 color: Colors.grey.shade700,
-                                height: 1.4,
+                                height: 1.3,
                               ),
                             ),
                           ],
                         ),
                       ),
-                      const Divider(thickness: 0.8, indent: 20, endIndent: 20),
+                      const Divider(thickness: 0.5, indent: 16, endIndent: 16),
                       Expanded(child: pages[_selectedIndex]),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 10),
+                        padding: const EdgeInsets.only(bottom: 6), // 🔹 Compacto
                         child: Column(
                           children: [
                             Text(
                               'Organizado com 💕 pelo aplicativo',
                               style: GoogleFonts.poppins(
-                                fontSize: 12,
+                                fontSize: 10, // 🔹 Fonte menor
                                 color: Colors.grey.shade600,
                                 fontWeight: FontWeight.w400,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 2),
                             Text(
                               '🎉 Faça a Festa',
                               style: GoogleFonts.poppins(
-                                fontSize: 16,
+                                fontSize: 13, // 🔹 Fonte menor
                                 fontWeight: FontWeight.w700,
                                 color: theme.primaryColor.value,
                               ),
@@ -260,15 +250,11 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
           );
         }),
       ),
-
-      // ===========================================================
-      // 🎨 BottomBar flutuante moderna
-      // ===========================================================
       bottomNavigationBar: Padding(
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewPadding.bottom > 0
               ? MediaQuery.of(context).viewPadding.bottom
-              : 8,
+              : 0, // 🔹 Sem padding desnecessário em Androids com barra nativa fina
         ),
         child: _buildAnimatedBottomBar(theme.primaryColor.value),
       ),
@@ -283,31 +269,31 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     );
 
     final itens = [
-      {'icon': Icons.info_outline, 'label': 'Informações'},
+      {'icon': Icons.info_outline, 'label': 'Infos'}, // 🔹 Texto encurtado
       {'icon': Icons.card_giftcard, 'label': 'Presentes'},
       {'icon': Icons.event_available, 'label': 'Confirmação'},
-      {'icon': Icons.task_alt_rounded, 'label': 'Tarefas'}, // 👈 nova aba
+      {'icon': Icons.task_alt_rounded, 'label': 'Tarefas'},
     ];
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 500),
-      height: 68,
+      height: 56, // 🔹 Extremamente fina (era 68)
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.65),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        color: Colors.white.withValues(alpha: 0.85),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
-            color: cor.withValues(alpha: 0.25),
-            blurRadius: 20,
-            offset: const Offset(0, -4),
+            color: cor.withValues(alpha: 0.15),
+            blurRadius: 10,
+            offset: const Offset(0, -2),
           ),
         ],
         backgroundBlendMode: BlendMode.overlay,
       ),
       child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(itens.length, (i) {
@@ -319,20 +305,11 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 350),
                   curve: Curves.easeInOutCubic,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // 🔹 Compacto
                   decoration: BoxDecoration(
                     gradient: selected ? gradientActive : null,
                     color: selected ? cor.withValues(alpha: 0.08) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(22),
-                    boxShadow: selected
-                        ? [
-                            BoxShadow(
-                              color: cor.withValues(alpha: 0.35),
-                              blurRadius: 16,
-                              offset: const Offset(0, 6),
-                            ),
-                          ]
-                        : [],
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -341,29 +318,19 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                         duration: const Duration(milliseconds: 300),
                         child: Icon(
                           item['icon'] as IconData,
-                          size: selected ? 30 : 25,
+                          size: selected ? 22 : 20, // 🔹 Ícones menores
                           color:
                               selected ? Colors.white : Colors.grey.shade600.withValues(alpha: 0.9),
-                          shadows: selected
-                              ? [
-                                  Shadow(
-                                    color: cor.withValues(alpha: 0.4),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 3),
-                                  )
-                                ]
-                              : [],
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       AnimatedDefaultTextStyle(
                         duration: const Duration(milliseconds: 300),
                         style: GoogleFonts.poppins(
-                          fontSize: selected ? 13.0 : 11,
-                          fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                          fontSize: selected ? 10.0 : 9.0, // 🔹 Fonte menor
+                          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                           color:
                               selected ? Colors.white : Colors.grey.shade700.withValues(alpha: 0.9),
-                          letterSpacing: selected ? 0.6 : 0.1,
                         ),
                         child: Text(item['label'] as String),
                       ),
@@ -378,16 +345,11 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     );
   }
 
-  // ============================================================
-  // 🏠 Informações do Evento — layout moderno com animação
-  // ============================================================
   Widget _buildInformacoesPage(EventoModel evento) {
     return StreamBuilder<DocumentSnapshot>(
       stream: FirebaseFirestore.instance.collection('evento').doc(evento.idEvento).snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
         final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
         final tipo = eventoController.tipoEventoAtual.value?.nome ?? '';
@@ -395,14 +357,14 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
 
         return SingleChildScrollView(
           key: const ValueKey('info'),
-          padding: const EdgeInsets.fromLTRB(24, 5, 24, 24),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16), // 🔹 Compacto
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               RichText(
                 textAlign: TextAlign.center,
                 text: TextSpan(
-                  style: GoogleFonts.poppins(fontSize: 22, color: Colors.black87),
+                  style: GoogleFonts.poppins(fontSize: 16, color: Colors.black87), // 🔹 Menor
                   children: [
                     if (tipo.isNotEmpty)
                       TextSpan(
@@ -410,17 +372,17 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: theme.primaryColor.value,
-                          fontSize: 16,
+                          fontSize: 14,
                         ),
                       ),
                     TextSpan(
                       text: nomeEvento,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               _infoTileDataHora(
                 data['data'] is Timestamp ? (data['data'] as Timestamp).toDate() : null,
                 data['hora'],
@@ -432,7 +394,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                     ? evento.localEvento
                     : (evento.logradouro?.isNotEmpty == true
                         ? '${evento.logradouro}, ${evento.numero ?? ''}'
-                        : 'local ainda não informado'),
+                        : 'Local a definir'),
                 onTap: () => _abrirNoMapa(evento),
               ),
               _infoTile(Icons.message, 'Mensagem',
@@ -444,19 +406,14 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     );
   }
 
-  // ============================================================
-  // ✅ Página de Confirmação com layout elegante
-  // ============================================================
   Widget _buildConfirmacaoPage(ConvidadoModel? convidado) {
-    if (convidado == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
+    if (convidado == null) return const Center(child: CircularProgressIndicator());
 
     final confirmado = convidado.status == StatusConvidado.confirmado;
     final naoVai = convidado.status == StatusConvidado.recusado;
 
     return Padding(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 16), // 🔹 Compacto
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -466,66 +423,62 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 : naoVai
                     ? Icons.cancel_outlined
                     : Icons.event_available,
-            size: 90,
+            size: 60, // 🔹 Ícone menor (era 90)
             color: theme.primaryColor.value,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
           Text(
             confirmado
-                ? '🎉 Presença Confirmada'
+                ? '🎉 Confirmado'
                 : naoVai
-                    ? '😢 Você não poderá comparecer'
-                    : 'Confirme sua presença!',
-            style: GoogleFonts.poppins(fontSize: 20, fontWeight: FontWeight.w700),
+                    ? '😢 Não comparecerá'
+                    : 'Sua Presença',
+            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 6),
           Text(
             confirmado
                 ? 'Aguardamos você com alegria! 💖'
                 : naoVai
                     ? 'Sentiremos sua falta.'
-                    : 'Por favor, confirme se você poderá participar.',
-            style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54),
+                    : 'Por favor, confirme se poderá participar.',
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 30),
+          const SizedBox(height: 20),
           if (!confirmado && !naoVai)
             Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.stretch, // 👈 faz os filhos usarem toda a largura
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+                    icon: const Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
                     label: const Text('Confirmar Presença'),
                     onPressed: () => convidadoController.atualizarStatusPresenca(
                         convidado, StatusConvidado.confirmado),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: theme.primaryColor.value,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-                      elevation: 3,
-                      textStyle: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12), // 🔹 Botão mais fino
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 2,
+                      textStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 SizedBox(
                   width: double.infinity,
                   child: TextButton.icon(
-                    icon: const Icon(Icons.cancel_outlined),
+                    icon: const Icon(Icons.cancel_outlined, size: 18),
                     label: const Text('Não Poderei Ir'),
                     onPressed: () => convidadoController.atualizarStatusPresenca(
                         convidado, StatusConvidado.recusado),
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.grey.shade800,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      textStyle: GoogleFonts.poppins(fontSize: 15),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      textStyle: GoogleFonts.poppins(fontSize: 13),
                     ),
                   ),
                 ),
@@ -536,9 +489,6 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     );
   }
 
-// ============================================================
-// 🧾 Lista de Tarefas do Convidado
-// ============================================================
   Widget _buildTarefasPage(EventoModel evento, ConvidadoModel convidado) {
     final primary = theme.primaryColor.value;
 
@@ -549,15 +499,13 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
           .where('id_responsavel', isEqualTo: convidado.idConvidado)
           .snapshots(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator());
-        }
+        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
 
         final docs = snapshot.data!.docs;
         if (docs.isEmpty) {
           return _emptyState(
             icon: Icons.task_alt_rounded,
-            message: 'Nenhuma tarefa atribuída 📋',
+            message: 'Nenhuma tarefa 📋',
             subtitle: 'O organizador pode atribuir tarefas para você futuramente.',
           );
         }
@@ -566,12 +514,9 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
             docs.map((d) => TarefaModel.fromMap(d.data() as Map<String, dynamic>)).toList();
 
         return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 40),
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 80), // 🔹 Compacto
           itemCount: tarefas.length,
-          itemBuilder: (context, i) {
-            final tarefa = tarefas[i];
-            return _tarefaCard(tarefa, primary);
-          },
+          itemBuilder: (context, i) => _tarefaCard(tarefas[i], primary),
         );
       },
     );
@@ -583,7 +528,6 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
       StatusTarefa.emAndamento => Colors.blue.shade400,
       StatusTarefa.concluida => Colors.green.shade600,
     };
-
     final iconeStatus = switch (tarefa.status) {
       StatusTarefa.aFazer => Icons.pending_actions_rounded,
       StatusTarefa.emAndamento => Icons.hourglass_bottom_rounded,
@@ -591,43 +535,36 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     };
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 10), // 🔹 Margem reduzida
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Colors.white70.withValues(alpha: 0.03),
-            primary.withValues(alpha: 0.15),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16), // 🔹 Raio menor
+        border: Border.all(color: primary.withValues(alpha: 0.1)),
         boxShadow: [
           BoxShadow(
-            color: primary.withValues(alpha: 0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12), // 🔹 Padding reduzido
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 🔹 Cabeçalho com ícone e status
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   decoration: BoxDecoration(
                     color: corStatus.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  padding: const EdgeInsets.all(10),
-                  child: Icon(iconeStatus, color: corStatus, size: 26),
+                  padding: const EdgeInsets.all(8),
+                  child: Icon(iconeStatus, color: corStatus, size: 20), // 🔹 Ícone menor
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -635,16 +572,15 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                       Text(
                         tarefa.titulo,
                         style: GoogleFonts.poppins(
-                          fontSize: 16,
+                          fontSize: 14, // 🔹 Fonte menor
                           fontWeight: FontWeight.w700,
                           color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 4),
                       Text(
                         tarefa.status.label,
                         style: GoogleFonts.poppins(
-                          fontSize: 13,
+                          fontSize: 11, // 🔹 Fonte menor
                           fontWeight: FontWeight.w600,
                           color: corStatus,
                         ),
@@ -655,74 +591,39 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 PopupMenuButton<String>(
                   tooltip: 'Alterar status',
                   onSelected: (value) => _atualizarStatusTarefa(tarefa, value),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  elevation: 3,
                   color: Colors.white,
                   itemBuilder: (context) => [
-                    PopupMenuItem(
-                      value: 'a_fazer',
-                      child: Row(
-                        children: const [
-                          Icon(Icons.pending_actions_rounded, color: Colors.orange, size: 20),
-                          SizedBox(width: 12),
-                          Text('A Fazer', style: TextStyle(fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'em_andamento',
-                      child: Row(
-                        children: const [
-                          Icon(Icons.loop_rounded, color: Colors.blueAccent, size: 20),
-                          SizedBox(width: 12),
-                          Text('Em Andamento', style: TextStyle(fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'concluida',
-                      child: Row(
-                        children: const [
-                          Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
-                          SizedBox(width: 12),
-                          Text('Concluída', style: TextStyle(fontWeight: FontWeight.w500)),
-                        ],
-                      ),
-                    ),
+                    const PopupMenuItem(
+                        value: 'a_fazer', child: Text('A Fazer', style: TextStyle(fontSize: 13))),
+                    const PopupMenuItem(
+                        value: 'em_andamento',
+                        child: Text('Em Andamento', style: TextStyle(fontSize: 13))),
+                    const PopupMenuItem(
+                        value: 'concluida',
+                        child: Text('Concluída', style: TextStyle(fontSize: 13))),
                   ],
-                  icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade800),
+                  icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade600, size: 20),
                 )
               ],
             ),
-
-            const SizedBox(height: 10),
-
-            // 📝 Descrição
-            if (tarefa.descricao?.isNotEmpty ?? false)
+            if (tarefa.descricao?.isNotEmpty ?? false) ...[
+              const SizedBox(height: 8),
               Text(
                 tarefa.descricao!,
-                style: GoogleFonts.poppins(
-                  fontSize: 13.5,
-                  color: Colors.grey.shade700,
-                  height: 1.4,
-                ),
+                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700, height: 1.3),
               ),
-
-            // 📅 Data prevista
+            ],
             if (tarefa.dataPrevista != null) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.calendar_today_rounded, size: 15, color: Colors.grey),
-                  const SizedBox(width: 6),
+                  const Icon(Icons.calendar_today_rounded, size: 13, color: Colors.grey),
+                  const SizedBox(width: 4),
                   Text(
                     'Prazo: ${DateFormat('dd/MM/yyyy').format(tarefa.dataPrevista!)}',
-                    style: GoogleFonts.poppins(
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -740,113 +641,77 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
           .collection('tarefa')
           .doc(tarefa.idTarefa)
           .update({'status': status.firestoreValue});
-
-      Get.snackbar(
-        'Tarefa atualizada!',
-        'Status definido como: ${status.label}',
-        backgroundColor: Colors.green.withValues(alpha: 0.9),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-      );
     } catch (e) {
-      Get.snackbar(
-        'Erro',
-        'Não foi possível atualizar a tarefa.',
-        backgroundColor: Colors.redAccent.withValues(alpha: 0.85),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-      );
+      Get.snackbar('Erro', 'Não foi possível atualizar a tarefa.',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
-  // ============================================================
-  // 🔹 Auxiliares visuais
-  // ============================================================
   Widget _infoTile(IconData icon, String title, String value) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 1.5,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10), // 🔹 Compacto
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+      ),
       child: ListTile(
-        leading: Icon(icon, color: theme.primaryColor.value),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+        dense: true,
+        leading: Icon(icon, color: theme.primaryColor.value, size: 20),
         title: Text(title,
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.black87)),
+            style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87)),
         subtitle:
-            Text(value, style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade800)),
+            Text(value, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
       ),
     );
   }
 
   Widget _infoTileDataHora(DateTime? data, String? hora) {
     final color = theme.primaryColor.value;
-    final dateFormat = DateFormat('dd/MM/yyyy');
-
-    final dataFormatada = data != null ? dateFormat.format(data) : '--/--/----';
+    final dataFormatada = data != null ? DateFormat('dd/MM/yyyy').format(data) : '--/--/----';
     final horaFormatada = (hora != null && hora.isNotEmpty) ? hora : 'a definir';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 14),
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      shadowColor: color.withValues(alpha: 0.15),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10), // 🔹 Compacto
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // 📅 Ícone à esquerda
             Container(
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.all(10),
-              child: Icon(Icons.event_rounded, color: color, size: 28),
+                  color: color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10)),
+              padding: const EdgeInsets.all(8),
+              child: Icon(Icons.event_rounded, color: color, size: 20),
             ),
-            const SizedBox(width: 14),
-
-            // 🧾 Conteúdo
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Data e Hora do Evento',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                      letterSpacing: 0.6,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  // 🔹 Data e hora lado a lado
+                  Text('Data e Hora',
+                      style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600, fontSize: 11, color: Colors.grey.shade600)),
+                  const SizedBox(height: 2),
                   Row(
                     children: [
                       Icon(Icons.calendar_today_rounded,
-                          size: 16, color: color.withValues(alpha: 0.8)),
-                      const SizedBox(width: 6),
-                      Text(
-                        dataFormatada,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
+                          size: 14, color: color.withValues(alpha: 0.8)),
+                      const SizedBox(width: 4),
+                      Text(dataFormatada,
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                      const SizedBox(width: 12),
                       Icon(Icons.access_time_rounded,
-                          size: 16, color: color.withValues(alpha: 0.8)),
-                      const SizedBox(width: 6),
-                      Text(
-                        horaFormatada,
-                        style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.black87,
-                        ),
-                      ),
+                          size: 14, color: color.withValues(alpha: 0.8)),
+                      const SizedBox(width: 4),
+                      Text(horaFormatada,
+                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ],
@@ -861,22 +726,21 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
   Widget _emptyState({required IconData icon, required String message, String? subtitle}) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 80, color: theme.primaryColor.value.withValues(alpha: 0.8)),
-            const SizedBox(height: 20),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
+            Icon(icon,
+                size: 48, color: theme.primaryColor.value.withValues(alpha: 0.6)), // 🔹 Menor
+            const SizedBox(height: 12),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
             if (subtitle != null) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 6),
               Text(subtitle,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: 14, color: Colors.black54)),
+                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54)),
             ],
           ],
         ),
@@ -888,114 +752,61 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     final endereco = [evento.logradouro, evento.numero, evento.bairro, evento.nomeCidade, evento.uf]
         .where((e) => e != null && e.toString().trim().isNotEmpty)
         .join(', ');
-
     final destino = endereco.isNotEmpty
         ? endereco
         : (evento.localEvento.isNotEmpty ? evento.localEvento : 'Local do evento');
-
     final url = Uri.encodeFull('https://www.google.com/maps/search/?api=1&query=$destino');
 
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } else {
-      Get.snackbar(
-        'Erro ao abrir mapa',
-        'Não foi possível abrir o aplicativo de mapas.',
-        backgroundColor: Colors.red.shade400,
-        colorText: Colors.white,
-      );
     }
   }
 
-  Widget _infoTileComAcao(
-    IconData icon,
-    String titulo,
-    String valor, {
-    VoidCallback? onTap,
-  }) {
+  Widget _infoTileComAcao(IconData icon, String titulo, String valor, {VoidCallback? onTap}) {
     final color = theme.primaryColor.value;
-    final gradient = theme.gradient.value;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
-      margin: const EdgeInsets.only(bottom: 14),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10), // 🔹 Compacto
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
-        color: Colors.white.withValues(alpha: 0.65),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.12),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(14),
+        color: Colors.white,
+        border: Border.all(color: Colors.black.withValues(alpha: 0.05)),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        splashColor: color.withValues(alpha: 0.1),
-        highlightColor: Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           child: Row(
             children: [
-              // 🎨 Ícone com fundo translúcido
               Container(
-                width: 46,
-                height: 46,
+                width: 36, height: 36, // 🔹 Ícone menor
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      gradient.colors.first.withValues(alpha: 0.12),
-                      gradient.colors.last.withValues(alpha: 0.06),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Icon(icon, color: color, size: 26),
+                    color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                child: Icon(icon, color: color, size: 20),
               ),
-              const SizedBox(width: 16),
-
-              // 🧾 Texto principal
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      titulo.toUpperCase(),
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                        letterSpacing: 0.6,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      valor,
-                      style: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                        height: 1.3,
-                      ),
-                    ),
+                    Text(titulo.toUpperCase(),
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 10,
+                            color: Colors.grey.shade600)),
+                    const SizedBox(height: 2),
+                    Text(valor,
+                        style: GoogleFonts.poppins(
+                            fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
                   ],
                 ),
               ),
-
-              // 🎯 Botão de ação
               if (onTap != null)
                 Container(
                   decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                      color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.all(6),
-                  child: Icon(Icons.navigation_rounded, color: color, size: 20),
+                  child: Icon(Icons.navigation_rounded, color: color, size: 16),
                 ),
             ],
           ),

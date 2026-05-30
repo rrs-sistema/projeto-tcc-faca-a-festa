@@ -1,8 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../controllers/tema/event_theme_controller.dart';
 import '../../../../data/models/cardapio/cardapio_model.dart';
@@ -11,10 +9,6 @@ import './../../../../data/models/cardapio/cardapio_item_model.dart';
 
 class AddItemCardapioBottomSheet extends StatefulWidget {
   final String idCardapio;
-
-  /// Opcional para não quebrar as chamadas atuais.
-  /// Se não for informado, o bottom sheet tenta encontrar o idEvento
-  /// pelo CardapioController usando o idCardapio.
   final String? idEvento;
 
   const AddItemCardapioBottomSheet({
@@ -28,306 +22,292 @@ class AddItemCardapioBottomSheet extends StatefulWidget {
 }
 
 class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet> {
-  final nomeCtrl = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nomeCtrl;
+  TipoItemCardapio _tipo = TipoItemCardapio.comida;
+  bool _salvando = false;
 
-  /// Agora o tipo não é mais String.
-  /// O novo CardapioItemModel espera TipoItemCardapio.
-  final Rx<TipoItemCardapio> tipo = TipoItemCardapio.comida.obs;
+  @override
+  void initState() {
+    super.initState();
+    _nomeCtrl = TextEditingController();
+  }
 
   @override
   void dispose() {
-    nomeCtrl.dispose();
+    _nomeCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<CardapioController>();
-    final theme = Get.find<EventThemeController>();
+    final theme = Theme.of(context);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final primaryColor = Get.find<EventThemeController>().primaryColor.value;
 
     return FractionallySizedBox(
-      heightFactor: 0.80,
+      heightFactor: 0.88,
       child: Container(
         decoration: BoxDecoration(
-          gradient: theme.gradient.value,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-
-            // ─────────────────────────────────────────────
-            // HEADER ELEGANTE
-            // ─────────────────────────────────────────────
-            Row(
-              children: [
-                const SizedBox(width: 12),
-                Icon(
-                  Icons.add_circle_rounded,
-                  size: 40,
-                  color: theme.secondaryColor.value,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Novo Item do Cardápio',
-                    style: GoogleFonts.poppins(
-                      color: theme.secondaryColor.value,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 20,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(
-                    Icons.close_rounded,
-                    size: 28,
-                    color: Colors.white,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                const SizedBox(width: 4),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            // ─────────────────────────────────────────────
-            // SCROLL DO CONTEÚDO
-            // ─────────────────────────────────────────────
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.only(left: 16, right: 16, bottom: bottomInset + 16),
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Form(
+                key: _formKey,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.20),
-                        borderRadius: BorderRadius.circular(18),
-                        border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.40),
-                          width: 1.4,
-                        ),
-                      ),
-                      child: TextField(
-                        controller: nomeCtrl,
-                        style: const TextStyle(color: Colors.white),
-                        decoration: InputDecoration(
-                          labelText: 'Nome do item',
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          prefixIcon: Icon(
-                            Icons.fastfood_rounded,
-                            color: Colors.white.withValues(alpha: 0.8),
-                          ),
-                          border: InputBorder.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-                    Text(
-                      'Tipo de Item',
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
                     const SizedBox(height: 12),
-                    Obx(
-                      () => Wrap(
-                        spacing: 16,
-                        runSpacing: 10,
-                        children: [
-                          _tipoChip(
-                            label: 'Comida',
-                            valor: TipoItemCardapio.comida,
-                            tipoSelecionado: tipo,
-                            theme: theme,
-                          ),
-                          _tipoChip(
-                            label: 'Bebida',
-                            valor: TipoItemCardapio.bebida,
-                            tipoSelecionado: tipo,
-                            theme: theme,
-                          ),
-                          _tipoChip(
-                            label: 'Sobremesa',
-                            valor: TipoItemCardapio.sobremesa,
-                            tipoSelecionado: tipo,
-                            theme: theme,
-                          ),
-                          _tipoChip(
-                            label: 'Bolo',
-                            valor: TipoItemCardapio.bolo,
-                            tipoSelecionado: tipo,
-                            theme: theme,
-                          ),
-                          _tipoChip(
-                            label: 'Descartável',
-                            valor: TipoItemCardapio.descartavel,
-                            tipoSelecionado: tipo,
-                            theme: theme,
-                          ),
-                        ],
+                    Center(
+                      child: Container(
+                        width: 50,
+                        height: 4,
+                        decoration: BoxDecoration(
+                            color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 14),
+                    _Header(
+                      title: 'Novo Item',
+                      subtitle: 'Adicione comida, bebida ou outro item',
+                      icon: Icons.add_circle_outline_rounded,
+                      color: primaryColor,
+                    ),
+                    const SizedBox(height: 10),
+                    Divider(
+                        height: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                    const SizedBox(height: 16),
+                    _textField(
+                      controller: _nomeCtrl,
+                      label: 'Nome do item',
+                      icon: Icons.fastfood_rounded,
+                      requiredField: true,
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Tipo do Item',
+                        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _tipoChip('Comida', TipoItemCardapio.comida, primaryColor),
+                        _tipoChip('Bebida', TipoItemCardapio.bebida, primaryColor),
+                        _tipoChip('Sobremesa', TipoItemCardapio.sobremesa, primaryColor),
+                        _tipoChip('Bolo', TipoItemCardapio.bolo, primaryColor),
+                        _tipoChip('Descartável', TipoItemCardapio.descartavel, primaryColor),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    _FooterActions(
+                      isSaving: _salvando,
+                      onSubmit: _salvar,
+                      primaryColor: primaryColor,
+                    ),
                   ],
                 ),
               ),
             ),
-
-            // ─────────────────────────────────────────────
-            // BOTÃO FIXO PARA SALVAR
-            // ─────────────────────────────────────────────
-            SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                child: Obx(() {
-                  return ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.primaryColor.value,
-                      minimumSize: const Size(double.infinity, 55),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                    ),
-                    onPressed: () async {
-                      await _salvarItem(
-                        context: context,
-                        controller: controller,
-                        primaryColor: theme.primaryColor.value,
-                      );
-                    },
-                    child: Text(
-                      'Adicionar Item',
-                      style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  );
-                }),
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Future<void> _salvarItem({
-    required BuildContext context,
-    required CardapioController controller,
-    required Color primaryColor,
-  }) async {
-    final nome = nomeCtrl.text.trim();
-
-    if (nome.isEmpty) {
-      Get.snackbar(
-        'Atenção',
-        'Informe o nome do item',
-        backgroundColor: Colors.orangeAccent,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    final idEvento = _resolverIdEvento(controller);
-
-    if (idEvento.isEmpty) {
-      Get.snackbar(
-        'Atenção',
-        'Não foi possível identificar o evento deste cardápio.',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-      );
-      return;
-    }
-
-    final novoItem = CardapioItemModel(
-      idItem: '',
-      idEvento: idEvento,
-      idCardapio: widget.idCardapio,
-      nome: nome,
-      tipo: tipo.value,
-      publicoAlvo: PublicoAlvoCardapio.todos,
-      quantidadeSugerida: 0,
-      quantidadeFinal: 0,
-      unidade: 'un',
-      confirmado: false,
-      geradoPelaCalculadora: false,
+  Widget _tipoChip(String label, TipoItemCardapio valor, Color primaryColor) {
+    final selected = _tipo == valor;
+    return ChoiceChip(
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      selected: selected,
+      onSelected: (_) => setState(() => _tipo = valor),
+      selectedColor: primaryColor.withValues(alpha: 0.2),
+      labelStyle:
+          TextStyle(fontWeight: FontWeight.w600, color: selected ? primaryColor : Colors.black87),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: selected ? primaryColor : Colors.grey.shade300),
+      ),
     );
+  }
 
-    await controller.addItem(widget.idCardapio, novoItem);
-
-    Navigator.pop(context);
-
-    Get.snackbar(
-      'Item adicionado',
-      nome,
-      backgroundColor: primaryColor,
-      colorText: Colors.white,
+  Widget _textField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool requiredField = false,
+  }) {
+    return TextFormField(
+      controller: controller,
+      style: const TextStyle(fontSize: 13),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 13),
+        prefixIcon: Icon(icon, size: 18),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      ),
+      validator: requiredField
+          ? (value) => (value == null || value.trim().isEmpty) ? 'Campo obrigatório' : null
+          : null,
     );
+  }
+
+  Future<void> _salvar() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _salvando = true);
+
+    try {
+      final controller = Get.find<CardapioController>();
+      final idEvento = _resolverIdEvento(controller);
+
+      if (idEvento.isEmpty) {
+        Get.snackbar(
+          'Atenção',
+          'Não foi possível identificar o evento deste cardápio.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      final novoItem = CardapioItemModel(
+        idItem: '',
+        idEvento: idEvento,
+        idCardapio: widget.idCardapio,
+        nome: _nomeCtrl.text.trim(),
+        tipo: _tipo,
+        publicoAlvo: PublicoAlvoCardapio.todos,
+        quantidadeSugerida: 0,
+        quantidadeFinal: 0,
+        unidade: 'un',
+        confirmado: false,
+        geradoPelaCalculadora: false,
+      );
+
+      await controller.addItem(widget.idCardapio, novoItem);
+      Get.back();
+    } finally {
+      if (mounted) setState(() => _salvando = false);
+    }
   }
 
   String _resolverIdEvento(CardapioController controller) {
     final idEventoInformado = widget.idEvento?.trim() ?? '';
-
-    if (idEventoInformado.isNotEmpty) {
-      return idEventoInformado;
-    }
+    if (idEventoInformado.isNotEmpty) return idEventoInformado;
 
     for (final cardapio in controller.cardapios) {
       if (cardapio.idCardapio == widget.idCardapio) {
         return cardapio.idEvento;
       }
     }
-
     return '';
   }
+}
 
-  // ──────────────────────────────────────────────────────────
-  // CHIP ESTILIZADO PREMIUM
-  // ──────────────────────────────────────────────────────────
-  Widget _tipoChip({
-    required String label,
-    required TipoItemCardapio valor,
-    required Rx<TipoItemCardapio> tipoSelecionado,
-    required EventThemeController theme,
-  }) {
-    final bool selected = tipoSelecionado.value == valor;
-    final primary = theme.primaryColor.value;
+class _Header extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
 
-    return ChoiceChip(
-      label: Text(
-        label,
-        style: GoogleFonts.poppins(
-          color: selected ? Colors.white : Colors.grey.withValues(alpha: 0.85),
-          fontWeight: FontWeight.w600,
-          fontSize: 13.5,
+  const _Header({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+          child: Icon(icon, color: color, size: 22),
         ),
-      ),
-      checkmarkColor: selected ? Colors.white : Colors.grey.withValues(alpha: 0.85),
-      selected: selected,
-      onSelected: (_) => tipoSelecionado.value = valor,
-      selectedColor: primary.withValues(alpha: 0.85),
-      backgroundColor: Colors.white.withValues(alpha: 0.15),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: selected ? Colors.white : Colors.white.withValues(alpha: 0.25),
-          width: 1.2,
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w800, fontSize: 16)),
+              Text(subtitle,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
+            ],
+          ),
         ),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      pressElevation: 0,
-      visualDensity: VisualDensity.compact,
-      shadowColor: Colors.transparent,
+        IconButton(
+          visualDensity: VisualDensity.compact,
+          onPressed: () => Get.back<void>(),
+          icon: const Icon(Icons.close, size: 22),
+        ),
+      ],
+    );
+  }
+}
+
+class _FooterActions extends StatelessWidget {
+  final bool isSaving;
+  final VoidCallback onSubmit;
+  final Color primaryColor;
+
+  const _FooterActions({
+    required this.isSaving,
+    required this.onSubmit,
+    required this.primaryColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: isSaving ? null : () => Get.back<void>(),
+            icon: const Icon(Icons.close, size: 16),
+            label: const Text('Cancelar', style: TextStyle(fontSize: 13)),
+            style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: isSaving ? null : onSubmit,
+            icon: isSaving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.save_outlined, size: 16),
+            label: Text(isSaving ? 'Salvando...' : 'Salvar', style: const TextStyle(fontSize: 13)),
+            style: FilledButton.styleFrom(
+                backgroundColor: primaryColor,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          ),
+        ),
+      ],
     );
   }
 }

@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 import './../../../../controllers/servico/servico_foto_controller.dart';
 import './../../../../core/utils/no_sqflite_cache_manager.dart';
 import '../../../../controllers/tema/event_theme_controller.dart';
-import './../../../../controllers/fornecedor_controller.dart';
+import '../../../../controllers/fornecedor/fornecedor_controller.dart';
 import './../fornecedor/fornecedor_servico_bottom_sheet.dart';
 import './../../../../data/models/model.dart';
 

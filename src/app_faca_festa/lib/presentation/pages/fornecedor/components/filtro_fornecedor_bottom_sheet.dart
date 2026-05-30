@@ -2,7 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/fornecedor_localizacao_controller.dart';
+import '../../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
 import '../../../../controllers/tema/event_theme_controller.dart';
 
 class FiltroFornecedorBottomSheet extends StatelessWidget {

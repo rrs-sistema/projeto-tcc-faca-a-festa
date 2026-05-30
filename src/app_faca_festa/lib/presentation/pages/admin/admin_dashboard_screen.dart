@@ -9,7 +9,7 @@ import './../cadastro/fornecedor/territorio/admin_territorio_screen.dart';
 import './../cadastro/fornecedor/fornecedores_admin_list_screen.dart';
 import './../cadastro/categoria/categoria_servico_list_screen.dart';
 import './../cadastro/servico/servico_produto_list_screen.dart';
-import './../../../controllers/servico_produto_controller.dart';
+import '../../../controllers/servico/servico_produto_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/app_controller.dart';
 import './../../widgets/confetti_background.dart';
@@ -53,57 +53,59 @@ class AdminDashboardScreen extends StatelessWidget {
     return Scaffold(
       extendBodyBehindAppBar: true,
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: accent,
-        icon: const Icon(Icons.add_location_alt_rounded, color: Colors.white),
+        backgroundColor: Colors.grey.shade900,
+        icon: const Icon(Icons.add_location_alt_rounded, color: Colors.white, size: 20),
         label: Text("Novo Território",
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, color: Colors.white)),
+            style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w600, color: Colors.white, fontSize: 13)),
         onPressed: () => Get.to(() => AdminTerritorioScreen()),
       ),
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(120),
+        preferredSize: const Size.fromHeight(110),
         child: Obx(() => AppBar(
               elevation: 0,
               backgroundColor: Colors.transparent,
               flexibleSpace: Container(
                 decoration: BoxDecoration(gradient: theme.adminGradient),
                 child: SafeArea(
-                  bottom: false, // impede o padding extra abaixo
+                  bottom: false,
                   child: Center(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 6, bottom: 6), // 🔹 evita overflow
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             'Painel Administrativo',
                             style: GoogleFonts.poppins(
-                              fontSize: 22,
+                              fontSize: 14,
                               color: Colors.white70,
-                              fontWeight: FontWeight.w400,
+                              fontWeight: FontWeight.w500,
+                              letterSpacing: 1.0,
                             ),
                           ),
                           Text(
                             'Faça a Festa',
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.bold,
-                              fontSize: 26,
+                              fontSize: 24,
                               color: Colors.white,
+                              letterSpacing: -0.5,
                             ),
                           ),
                           Flexible(
-                            // 🔹 evita forçar altura fixa
                             child: Text(
-                              'Gerencie categorias, fornecedores e territórios com estilo 🎉',
+                              'Gestão de categorias, fornecedores e territórios',
                               textAlign: TextAlign.center,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
-                                fontSize: 16,
+                                fontSize: 13,
                                 color: Colors.white70,
                               ),
                             ),
                           ),
                         ],
-                      ).animate().fadeIn(duration: 800.ms).slideY(begin: -0.2),
+                      ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.1),
                     ),
                   ),
                 ),
@@ -112,7 +114,7 @@ class AdminDashboardScreen extends StatelessWidget {
               actions: [
                 IconButton(
                     tooltip: 'Trocar Tema',
-                    icon: const Icon(Icons.palette_rounded, color: Colors.white),
+                    icon: const Icon(Icons.palette_outlined, color: Colors.white),
                     onPressed: () => theme.mostrarSeletorDeTema(context)),
                 IconButton(
                     tooltip: 'Sair',
@@ -128,51 +130,46 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
           Container(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.white, accent.withValues(alpha: 0.08)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
+              color: Colors.grey.shade50,
             ),
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 🔹 Header fixo
                     _HeaderStats(accent: accent),
-                    const SizedBox(height: 25),
-
-                    // 🔹 Área rolável
+                    const SizedBox(height: 24),
                     Expanded(
                       child: SingleChildScrollView(
                         physics: const BouncingScrollPhysics(),
                         child: LayoutBuilder(
                           builder: (context, constraints) {
                             final width = constraints.maxWidth;
-                            final crossAxisCount = width < 500
+                            final crossAxisCount = width < 600
                                 ? 2
-                                : width < 900
+                                : width < 1000
                                     ? 3
                                     : 4;
+                            final aspectRatio = width < 600 ? 1.2 : 1.3;
+
                             return GridView.builder(
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               itemCount: items.length,
                               gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: crossAxisCount,
-                                crossAxisSpacing: 20,
-                                mainAxisSpacing: 20,
-                                childAspectRatio: 1,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                childAspectRatio: aspectRatio,
                               ),
-                              itemBuilder: (context, i) => _GlassCard(
+                              itemBuilder: (context, i) => _AdminCard(
                                 item: items[i],
                                 accent: accent,
                               )
-                                  .animate(delay: (i * 80).ms)
-                                  .fadeIn(duration: 600.ms)
-                                  .slideY(begin: 0.3),
+                                  .animate(delay: (i * 40).ms)
+                                  .fadeIn(duration: 400.ms)
+                                  .slideY(begin: 0.1),
                             );
                           },
                         ),
@@ -189,7 +186,6 @@ class AdminDashboardScreen extends StatelessWidget {
   }
 }
 
-/// HEADER DE ESTATÍSTICAS
 class _HeaderStats extends StatelessWidget {
   final Color accent;
   const _HeaderStats({required this.accent});
@@ -197,25 +193,25 @@ class _HeaderStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stats = [
-      _StatCardData('Eventos Ativos', Icons.event_note_rounded, 24, Colors.teal),
-      _StatCardData('Fornecedores', Icons.store_mall_directory_rounded, 134, Colors.purple),
-      _StatCardData('Usuários', Icons.people_alt_rounded, 580, Colors.orange),
-      _StatCardData('Orçamentos', Icons.request_quote_rounded, 48, Colors.blue),
+      _StatCardData('Eventos Ativos', Icons.event_note_rounded, 24, const Color(0xFF1976D2)),
+      _StatCardData(
+          'Fornecedores', Icons.store_mall_directory_rounded, 134, const Color(0xFF388E3C)),
+      _StatCardData('Usuários', Icons.people_alt_rounded, 580, const Color(0xFFF57C00)),
+      _StatCardData('Orçamentos', Icons.request_quote_rounded, 48, const Color(0xFF6A1B9A)),
     ];
 
     return SizedBox(
-      height: 110,
+      height: 90,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: stats.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, i) => _StatCard(stat: stats[i]),
       ),
     );
   }
 }
 
-/// CARD DE ESTATÍSTICA INDIVIDUAL
 class _StatCard extends StatelessWidget {
   final _StatCardData stat;
   const _StatCard({required this.stat});
@@ -223,56 +219,76 @@ class _StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 160,
+      width: 170,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        gradient: LinearGradient(
-          colors: [stat.color.withValues(alpha: 0.9), stat.color.withValues(alpha: 0.6)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-              color: stat.color.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(2, 3))
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          )
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(stat.icon, color: Colors.white, size: 26),
-            Text(stat.title,
-                style: GoogleFonts.poppins(
-                    fontSize: 13, color: Colors.white, fontWeight: FontWeight.w500)),
-            TweenAnimationBuilder<int>(
-              tween: IntTween(begin: 0, end: stat.value),
-              duration: NumDurationExtensions(1).seconds,
-              builder: (context, val, _) => Text(
-                "$val",
-                style: GoogleFonts.poppins(
-                    fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: stat.color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(stat.icon, color: stat.color, size: 18),
               ),
+              TweenAnimationBuilder<int>(
+                tween: IntTween(begin: 0, end: stat.value),
+                duration: NumDurationExtensions(1).seconds,
+                builder: (context, val, _) => Text(
+                  "$val",
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade900,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            stat.title,
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              color: Colors.grey.shade600,
+              fontWeight: FontWeight.w500,
             ),
-          ],
-        ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
       ),
     );
   }
 }
 
-/// CARD PRINCIPAL (GRID)
-class _GlassCard extends StatefulWidget {
+class _AdminCard extends StatefulWidget {
   final _AdminItem item;
   final Color accent;
-  const _GlassCard({required this.item, required this.accent});
+  const _AdminCard({required this.item, required this.accent});
 
   @override
-  State<_GlassCard> createState() => _GlassCardState();
+  State<_AdminCard> createState() => _AdminCardState();
 }
 
-class _GlassCardState extends State<_GlassCard> {
+class _AdminCardState extends State<_AdminCard> {
   bool hovered = false;
 
   @override
@@ -280,81 +296,79 @@ class _GlassCardState extends State<_GlassCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => hovered = true),
       onExit: (_) => setState(() => hovered = false),
-      child: GestureDetector(
+      child: InkWell(
         onTap: widget.item.onTap,
-        child: AnimatedScale(
+        borderRadius: BorderRadius.circular(16),
+        child: AnimatedContainer(
           duration: 200.ms,
-          scale: hovered ? 1.05 : 1.0,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Stack(
-              children: [
-                BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-                  child: AnimatedContainer(
-                    duration: 300.ms,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+                color: hovered ? widget.accent.withValues(alpha: 0.5) : Colors.grey.shade200),
+            boxShadow: [
+              if (hovered)
+                BoxShadow(
+                  color: widget.accent.withValues(alpha: 0.08),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+            ],
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.white.withValues(alpha: hovered ? 0.8 : 0.7),
-                          Colors.white.withValues(alpha: hovered ? 0.5 : 0.4),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                      color: widget.accent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(widget.item.icon, size: 24, color: widget.accent),
+                  ),
+                  if (widget.item.count != null)
+                    Text(
+                      "${widget.item.count}",
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade900,
                       ),
-                      boxShadow: [
-                        if (hovered)
-                          BoxShadow(
-                            color: widget.accent.withValues(alpha: 0.3),
-                            blurRadius: 12,
-                            offset: const Offset(2, 4),
-                          ),
-                      ],
+                    ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.item.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade900,
                     ),
                   ),
-                ),
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ShaderMask(
-                        shaderCallback: (bounds) => LinearGradient(
-                          colors: [widget.accent, widget.accent.withValues(alpha: 0.6)],
-                        ).createShader(bounds),
-                        child: Icon(widget.item.icon, size: 52, color: Colors.white),
+                  const SizedBox(height: 2),
+                  if (widget.item.subtitle != null)
+                    Text(
+                      widget.item.subtitle!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        color: Colors.grey.shade500,
                       ),
-                      const SizedBox(height: 10),
-                      Text(widget.item.title,
-                          textAlign: TextAlign.center,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                              fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87)),
-                      if (widget.item.subtitle != null)
-                        Text(widget.item.subtitle!,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade700)),
-                      const SizedBox(height: 8),
-                      if (widget.item.count != null)
-                        Text("${widget.item.count}",
-                            style: GoogleFonts.poppins(
-                                fontSize: 18, fontWeight: FontWeight.bold, color: widget.accent)),
-                      Container(
-                        margin: const EdgeInsets.only(top: 6),
-                        height: 3,
-                        width: 40,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(2),
-                          gradient: LinearGradient(
-                              colors: [widget.accent.withValues(alpha: 0.7), widget.accent]),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+                    ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -362,7 +376,6 @@ class _GlassCardState extends State<_GlassCard> {
   }
 }
 
-/// MODELOS DE DADOS
 class _StatCardData {
   final String title;
   final IconData icon;

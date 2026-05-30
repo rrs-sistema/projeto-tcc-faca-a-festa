@@ -38,7 +38,11 @@ class CustomInputField extends StatefulWidget {
   final TextInputType? keyboardType;
   final int? maxLength;
   final int? maxLines;
+
+  // Validação
   final String? Function(String?)? validator;
+  final bool isRequired; // <-- Adicionado: Flag para tornar campo obrigatório de forma simplificada
+
   final bool obscureText;
   final double borderRadius;
   final EdgeInsets margin;
@@ -64,6 +68,7 @@ class CustomInputField extends StatefulWidget {
     this.maxLength,
     this.maxLines,
     this.validator,
+    this.isRequired = false, // <-- Adicionado: Padrão é falso (opcional)
     this.obscureText = false,
     this.borderRadius = 14,
     this.margin = const EdgeInsets.only(bottom: 2),
@@ -111,29 +116,23 @@ class _CustomInputFieldState extends State<CustomInputField> {
       case InputType.password:
         finalKeyboardType = TextInputType.visiblePassword;
         break;
-
       case InputType.phone:
         finalKeyboardType = TextInputType.phone;
         maskFormatter = MaskTextInputFormatter(mask: '(##) #####-####');
         break;
-
       case InputType.number:
         finalKeyboardType = TextInputType.number;
         break;
-
       case InputType.cpfCnpj:
         finalKeyboardType = TextInputType.number;
         maskFormatter = MaskTextInputFormatter(mask: '###.###.###-##');
         break;
-
       case InputType.money:
         finalKeyboardType = TextInputType.number;
         break;
-
       case InputType.multiline:
         finalKeyboardType = TextInputType.multiline;
         break;
-
       default:
         finalKeyboardType = widget.keyboardType ?? TextInputType.text;
         break;
@@ -162,7 +161,8 @@ class _CustomInputFieldState extends State<CustomInputField> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.label,
+            // Adiciona o asterisco dinamicamente no título se for obrigatório
+            widget.isRequired ? '${widget.label} *' : widget.label,
             style: GoogleFonts.poppins(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -173,7 +173,21 @@ class _CustomInputFieldState extends State<CustomInputField> {
             onFocusChange: (f) => setState(() => isFocused = f),
             child: TextFormField(
               controller: widget.controller,
-              validator: widget.validator,
+
+              // Lógica de validação inteligente:
+              // 1. Usa o validator customizado se houver.
+              // 2. Se não houver e for isRequired, usa validação padrão.
+              // 3. Se não houver e não for isRequired, retorna nulo (sem validação).
+              validator: widget.validator ??
+                  (widget.isRequired
+                      ? (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Campo obrigatório';
+                          }
+                          return null;
+                        }
+                      : null),
+
               readOnly: widget.readOnly,
               enabled: widget.enabled,
               focusNode: widget.focusNode,
@@ -187,14 +201,12 @@ class _CustomInputFieldState extends State<CustomInputField> {
               inputFormatters: [
                 if (maskFormatter != null) maskFormatter!,
                 if (widget.type == InputType.money)
-                  CurrencyTextInputFormatter(
-                    NumberFormat.currency(
-                      locale: 'pt_BR',
-                      symbol: 'R\$',
-                      decimalDigits: 2,
-                    ),
+                  CurrencyTextInputFormatter.currency(
+                    // Atualização sutil para a sintaxe mais recente do pacote, caso aplicável
+                    locale: 'pt_BR',
+                    symbol: 'R\$',
+                    decimalDigits: 2,
                     enableNegative: false,
-                    inputDirection: InputDirection.right,
                   ),
               ],
               style: GoogleFonts.poppins(
@@ -207,7 +219,6 @@ class _CustomInputFieldState extends State<CustomInputField> {
                   padding: const EdgeInsets.all(8),
                   child: widget.icon != null ? Icon(widget.icon, size: 22, color: iconColor) : null,
                 ),
-
                 suffixIcon: widget.type == InputType.password
                     ? IconButton(
                         icon: Icon(
@@ -217,24 +228,19 @@ class _CustomInputFieldState extends State<CustomInputField> {
                         onPressed: () => setState(() => showPassword = !showPassword),
                       )
                     : widget.suffixIcon,
-
                 filled: true,
                 fillColor: bgColor,
-
-                // Correção do label subindo demais
                 floatingLabelBehavior: FloatingLabelBehavior.never,
-
                 hintText: widget.hintlabel ?? "Digite o(a) ${widget.label.toLowerCase()}...",
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 14,
-                  color: textColor,
+                  color: textColor.withValues(
+                      alpha: 0.6), // Leve ajuste de opacidade no hint para contraste mais limpo
                 ),
-
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: 10,
                   horizontal: 14,
                 ),
-
                 enabledBorder: border,
                 focusedBorder: border.copyWith(
                   borderSide: BorderSide(color: iconColor, width: 1.5),

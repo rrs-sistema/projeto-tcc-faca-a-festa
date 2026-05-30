@@ -1,6 +1,6 @@
-import { PROMPT_CALCULADORA_IA_NAME, PROMPT_CALCULADORA_IA_VERSION } from "../ia/calculadora/prompt";
-import { ANALISE_CALCULADORA_IA_SCHEMA_VERSION } from "../ia/calculadora/schema";
-import { AnaliseCalculadoraIAResponse, FonteAnaliseCalculadoraIA, SugestaoBaseIA } from "../types";
+import { PROMPT_CALCULADORA_IA_NAME, PROMPT_CALCULADORA_IA_VERSION } from "../../ia/calculadora/prompt";
+import { ANALISE_CALCULADORA_IA_SCHEMA_VERSION } from "../../ia/calculadora/schema";
+import { AnaliseCalculadoraIAResponse, FonteAnaliseCalculadoraIA, SugestaoBaseIA } from "../../types/calculadoraIA.types";
 
 export interface RastreabilidadeCalculadoraIAParams {
   sugestoesBase: SugestaoBaseIA[];

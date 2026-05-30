@@ -28,12 +28,13 @@ class EventosAdminListScreen extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            fontSize: 16,
           ),
         ),
         centerTitle: true,
         flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
       ),
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.grey.shade50,
       body: Obx(() {
         if (controller.carregando.value) {
           return const Center(child: CircularProgressIndicator());
@@ -43,7 +44,7 @@ class EventosAdminListScreen extends StatelessWidget {
           return Center(
             child: Text(
               controller.erro.value,
-              style: const TextStyle(color: Colors.red),
+              style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 14),
             ),
           );
         }
@@ -52,17 +53,18 @@ class EventosAdminListScreen extends StatelessWidget {
           return Center(
             child: Text(
               'Nenhum evento cadastrado ainda.',
-              style: GoogleFonts.poppins(fontSize: 16, color: Colors.grey.shade600),
+              style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade500),
             ),
           );
         }
 
         return RefreshIndicator(
           onRefresh: controller.carregarEventosComTipo,
-          child: ListView.builder(
+          child: ListView.separated(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             itemCount: controller.eventos.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemBuilder: (_, i) {
               final e = controller.eventos[i];
               return _buildEventoCard(context, e, controller);
@@ -75,46 +77,125 @@ class EventosAdminListScreen extends StatelessWidget {
 
   Widget _buildEventoCard(
     BuildContext context,
-    EventoComTipoModel e, // ⬅️ Troque o tipo aqui
+    EventoComTipoModel e,
     EventosAdminController controller,
   ) {
     final aprovado = e.aprovado;
     final dataFormatada =
-        e.data != null ? '${e.data!.day}/${e.data!.month}/${e.data!.year}' : 'Data indefinida';
+        e.data != null ? '${e.data!.day}/${e.data!.month}/${e.data!.year}' : 'Indefinida';
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        leading: CircleAvatar(
-          backgroundColor: aprovado ? Colors.blue.shade100 : Colors.grey.shade300,
-          child: Icon(
-            aprovado ? Icons.verified_rounded : Icons.pending_outlined,
-            color: aprovado ? Colors.blue.shade700 : Colors.grey.shade600,
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-        ),
-        title: Text(
-          e.nome,
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 15),
-        ),
-        subtitle: Column(
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${e.tipoNome} — ${e.cidade}', style: GoogleFonts.poppins(fontSize: 13)),
-            Text('Organizador: ${e.organizador}', style: GoogleFonts.poppins(fontSize: 12)),
-            Text('Data: $dataFormatada', style: GoogleFonts.poppins(fontSize: 12)),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: aprovado ? Colors.green.shade50 : Colors.orange.shade50,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                aprovado ? Icons.verified_rounded : Icons.pending_actions_rounded,
+                color: aprovado ? Colors.green.shade600 : Colors.orange.shade600,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          e.nome,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 15,
+                            color: Colors.grey.shade900,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      PopupMenuButton<String>(
+                        icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500, size: 20),
+                        padding: EdgeInsets.zero,
+                        onSelected: (v) => controller.acaoEvento(v, e),
+                        itemBuilder: (_) => [
+                          if (!aprovado)
+                            PopupMenuItem(
+                                value: 'aprovar',
+                                child: Text('Aprovar', style: GoogleFonts.poppins(fontSize: 13))),
+                          PopupMenuItem(
+                              value: 'editar',
+                              child: Text('Editar', style: GoogleFonts.poppins(fontSize: 13))),
+                          PopupMenuItem(
+                              value: 'excluir',
+                              child: Text('Excluir',
+                                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.red))),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+
+                  // 🔹 Uso do WRAP protege o layout contra o RenderFlex Overflow
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      _buildInfoChip(Icons.category_outlined, e.tipoNome),
+                      _buildInfoChip(
+                          Icons.location_on_outlined, e.cidade ?? 'Cidade não cadastrada'),
+                      _buildInfoChip(Icons.person_outline, e.organizador),
+                      _buildInfoChip(Icons.calendar_month_outlined, dataFormatada),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
-        trailing: PopupMenuButton<String>(
-          onSelected: (v) => controller.acaoEvento(v, e),
-          itemBuilder: (_) => [
-            if (!aprovado) const PopupMenuItem(value: 'aprovar', child: Text('Aprovar')),
-            const PopupMenuItem(value: 'editar', child: Text('Editar')),
-            const PopupMenuItem(value: 'excluir', child: Text('Excluir')),
-          ],
-        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoChip(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: Colors.grey.shade600),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: GoogleFonts.poppins(
+                fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+          ),
+        ],
       ),
     );
   }

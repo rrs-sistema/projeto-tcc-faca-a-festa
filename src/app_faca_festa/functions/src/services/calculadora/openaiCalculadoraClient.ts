@@ -5,15 +5,19 @@ import {
   CalculadoraIARequest,
   AnaliseCalculadoraIAResponse,
   SugestaoBaseIA,
-} from "./types";
+} from "../../types/calculadoraIA.types";
 
 import {
   analiseCalculadoraIASchema,
-  ANALISE_CALCULADORA_IA_SCHEMA_VERSION,
-} from "./schema";
+} from "../../ia/calculadora/schema";
 
-import { buildInstructions, buildInput } from "./prompt";
-import { normalizeAIResponse } from "./validators";
+
+import {
+  PROMPT_CALCULADORA_IA_VERSION,
+} from "../../ia/calculadora/prompt";
+
+import { buildInstructions, buildInput } from "../../ia/calculadora/prompt";
+import { normalizeAIResponse } from "../../validators";
 
 export const openaiApiKey = defineSecret("OPENAI_API_KEY");
 
@@ -50,7 +54,7 @@ export async function runOpenAIAnalysis(
   const parsed = JSON.parse(outputText) as Partial<AnaliseCalculadoraIAResponse>;
 
   parsed.fonte = "ia_generativa";
-  parsed.versao_schema = ANALISE_CALCULADORA_IA_SCHEMA_VERSION;
+  parsed.versao_schema = PROMPT_CALCULADORA_IA_VERSION;
 
   return normalizeAIResponse(parsed, request, "ia_generativa");
 }

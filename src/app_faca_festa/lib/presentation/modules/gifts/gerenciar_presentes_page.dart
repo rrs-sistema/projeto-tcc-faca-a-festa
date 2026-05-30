@@ -1,6 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:google_fonts/google_fonts.dart';
-import 'package:animate_do/animate_do.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -16,83 +15,72 @@ class GerenciarPresentesPage extends GetView<GiftController> {
   @override
   Widget build(BuildContext context) {
     final themeController = Get.find<EventThemeController>();
-    final gradient = themeController.gradient.value;
     final primary = themeController.primaryColor.value;
 
     return Scaffold(
-      extendBodyBehindAppBar: true,
+      backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
         title: Text("Lista de Presentes",
-            style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white)),
-        backgroundColor: Colors.transparent,
+            style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w800, fontSize: 16, color: const Color(0xFF1F2937))),
+        backgroundColor: Colors.white,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Color(0xFF1F2937), size: 18),
           onPressed: () => Get.back(),
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.white,
-        foregroundColor: primary,
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
         elevation: 4,
-        label: Text("Novo Presente", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        icon: const Icon(Icons.add_shopping_cart),
+        label: Text("Novo Presente",
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 12)),
+        icon: const Icon(Icons.add_rounded, size: 18),
         onPressed: () => abrirDialogCadastrarPresente(context),
       ),
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: BoxDecoration(gradient: gradient),
-        child: SafeArea(
-          bottom: false,
-          child: Obx(() {
-            if (controller.gifts.isEmpty) return _buildEmptyState();
+      body: Obx(() {
+        if (controller.gifts.isEmpty) return _buildEmptyState(primary);
 
-            return ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-              itemCount: controller.gifts.length,
-              physics: const BouncingScrollPhysics(),
-              itemBuilder: (context, index) {
-                final gift = controller.gifts[index];
-                return _GiftTile(
-                  gift: gift,
-                  primary: primary,
-                  onEdit: () => abrirDialogCadastrarPresente(context, presente: gift.toModel()),
-                  onDelete: () => _confirmarExclusao(context, gift),
-                );
-              },
+        return ListView.separated(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+          itemCount: controller.gifts.length,
+          physics: const BouncingScrollPhysics(),
+          separatorBuilder: (_, __) => const SizedBox(height: 10),
+          itemBuilder: (context, index) {
+            final gift = controller.gifts[index];
+            return _GiftTile(
+              gift: gift,
+              primary: primary,
+              onEdit: () => abrirDialogCadastrarPresente(context, presente: gift.toModel()),
+              onDelete: () => _confirmarExclusao(context, gift),
             );
-          }),
-        ),
-      ),
+          },
+        );
+      }),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(Color primary) {
     return Center(
-      child: FadeInUp(
-        // Se tiver biblioteca de animação, senão use Column pura
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.redeem, size: 64, color: Colors.white54),
-            ),
-            const SizedBox(height: 24),
-            Text("Sua lista está vazia",
-                style: GoogleFonts.poppins(
-                    color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            const Text("Toque no botão abaixo para começar",
-                style: TextStyle(color: Colors.white70, fontSize: 14)),
-          ],
-        ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration:
+                BoxDecoration(color: primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+            child: Icon(Icons.redeem_rounded, size: 40, color: primary),
+          ),
+          const SizedBox(height: 16),
+          Text("Sua lista está vazia",
+              style: GoogleFonts.poppins(
+                  color: const Color(0xFF1F2937), fontSize: 16, fontWeight: FontWeight.w800)),
+          const SizedBox(height: 4),
+          Text("Toque no botão abaixo para começar.",
+              style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 12)),
+        ],
       ),
     );
   }
@@ -100,21 +88,24 @@ class GerenciarPresentesPage extends GetView<GiftController> {
   void _confirmarExclusao(BuildContext context, Gift gift) {
     Get.dialog(
       AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text("Remover Presente", style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
-        content: Text("Deseja realmente remover '${gift.nome}'?"),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text("Remover Presente",
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
+        content: Text("Deseja realmente remover '${gift.nome}'?",
+            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
         actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text("Cancelar")),
+          TextButton(
+              onPressed: () => Get.back(),
+              child: Text("Cancelar", style: GoogleFonts.poppins(fontSize: 12))),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            ),
+                backgroundColor: Colors.redAccent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
             onPressed: () {
               controller.excluirPresente(gift.id);
               Get.back();
             },
-            child: const Text("Excluir", style: TextStyle(color: Colors.white)),
+            child: Text("Excluir", style: GoogleFonts.poppins(color: Colors.white, fontSize: 12)),
           ),
         ],
       ),
@@ -128,226 +119,143 @@ class _GiftTile extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
-  const _GiftTile({
-    required this.gift,
-    required this.primary,
-    required this.onEdit,
-    required this.onDelete,
-  });
+  const _GiftTile(
+      {required this.gift, required this.primary, required this.onEdit, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
     final isColetivo = gift.tipo == GiftType.coletivo;
     final isFisico = gift.tipo == GiftType.fisico;
-    // Verifica se existe link de imagem válido
     final temFoto = gift.imagem != null && gift.imagem!.trim().isNotEmpty;
+    final reservado = gift.status == GiftStatus.reservado;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 15,
-              offset: const Offset(0, 5))
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 6,
+              offset: const Offset(0, 2))
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onEdit,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Imagem ou Ícone
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.grey.shade100)),
+            child: (isFisico && temFoto)
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(9),
+                    child: Image.network(gift.imagem!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                            Icon(Icons.image_not_supported, color: primary, size: 20)))
+                : Icon(
+                    isColetivo
+                        ? Icons.groups_rounded
+                        : (gift.tipo == GiftType.pix
+                            ? Icons.pix_rounded
+                            : Icons.inventory_2_rounded),
+                    color: primary,
+                    size: 20),
+          ),
+          const SizedBox(width: 12),
+
+          // Info Central
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                        child: Text(gift.nome,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w700,
+                                fontSize: 13,
+                                color: const Color(0xFF1F2937)))),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                          color: reservado
+                              ? Colors.orange.withValues(alpha: 0.1)
+                              : Colors.green.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(6)),
+                      child: Text(reservado ? "Reservado" : "Disponível",
+                          style: GoogleFonts.poppins(
+                              color: reservado ? Colors.orange.shade800 : Colors.green.shade800,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700)),
+                    )
+                  ],
+                ),
+                Text(gift.tipo.name.capitalizeFirst!,
+                    style: GoogleFonts.poppins(
+                        color: Colors.grey.shade500, fontSize: 10, fontWeight: FontWeight.w600)),
+                const SizedBox(height: 6),
+
+                // Valores
+                if (isColetivo) ...[
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      // Prioriza a imagem se for físico e houver link, senão ícone
-                      (isFisico && temFoto) ? _buildProductImage() : _buildIconContainer(),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(gift.nome,
-                                style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                    color: Colors.black87)),
-                            _buildSubtitleRow(),
-                          ],
-                        ),
-                      ),
-                      _buildStatusBadge(),
+                      Text(
+                          "R\$ ${gift.valorArrecadado.toStringAsFixed(2)} / R\$ ${gift.metaValor?.toStringAsFixed(2)}",
+                          style: GoogleFonts.poppins(
+                              fontSize: 10, fontWeight: FontWeight.w600, color: primary)),
                     ],
                   ),
-                  const SizedBox(height: 16),
-
-                  // Lógica de valores conforme solicitado
-                  if (isColetivo) _buildProgressSection() else if (!isFisico) _buildSimplePrice(),
-
-                  const Divider(height: 24),
-                  _buildFooterActions(),
+                  const SizedBox(height: 4),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: LinearProgressIndicator(
+                      value: (gift.metaValor ?? 0) > 0
+                          ? (gift.valorArrecadado / gift.metaValor!).clamp(0.0, 1.0)
+                          : 0,
+                      backgroundColor: Colors.grey.shade200,
+                      color: primary,
+                      minHeight: 4,
+                    ),
+                  ),
+                ] else if (!isFisico) ...[
+                  Text("Valor Sugerido: R\$ ${gift.valor?.toStringAsFixed(2) ?? '0.00'}",
+                      style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600, fontSize: 11, color: primary)),
                 ],
-              ),
+              ],
             ),
           ),
-        ),
+
+          // Ações (Edição/Exclusão) super discretas
+          Column(
+            children: [
+              IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  icon: const Icon(Icons.edit_rounded, size: 16, color: Colors.blueGrey),
+                  onPressed: onEdit),
+              IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                  icon: const Icon(Icons.delete_outline_rounded, size: 16, color: Colors.redAccent),
+                  onPressed: onDelete),
+            ],
+          )
+        ],
       ),
-    );
-  }
-
-  // Widget para renderizar a imagem do produto com tratamento de erro
-  Widget _buildProductImage() {
-    return Container(
-      width: 50,
-      height: 50,
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.1)),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(11),
-        child: Image.network(
-          gift.imagem!,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => _buildIconContainer(isError: true),
-          loadingBuilder: (context, child, loadingProgress) {
-            if (loadingProgress == null) return child;
-            return Center(
-              child: SizedBox(
-                  width: 15,
-                  height: 15,
-                  child: CircularProgressIndicator(
-                      strokeWidth: 2, color: primary.withValues(alpha: 0.5))),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSubtitleRow() {
-    final temLinkLoja = gift.link != null && gift.link!.isNotEmpty;
-    return Row(
-      children: [
-        Text(gift.tipo.name.capitalizeFirst!,
-            style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-        if (temLinkLoja) ...[
-          const SizedBox(width: 6),
-          Icon(Icons.link, size: 12, color: primary.withValues(alpha: 0.6)),
-        ]
-      ],
-    );
-  }
-
-  Widget _buildIconContainer({bool isError = false}) {
-    IconData icon;
-    if (isError) {
-      icon = Icons.image_not_supported_outlined;
-    } else {
-      switch (gift.tipo) {
-        case GiftType.pix:
-          icon = Icons.pix;
-          break;
-        case GiftType.coletivo:
-          icon = Icons.groups_outlined;
-          break;
-        default:
-          icon = Icons.inventory_2_outlined;
-      }
-    }
-    return Container(
-      width: 50,
-      height: 50,
-      decoration: BoxDecoration(
-          color: primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
-      child: Icon(icon, color: isError ? Colors.grey : primary, size: 24),
-    );
-  }
-
-  Widget _buildStatusBadge() {
-    final bool reservado = gift.status == GiftStatus.reservado;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color:
-            reservado ? Colors.orange.withValues(alpha: 0.1) : Colors.green.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        reservado ? "Reservado" : "Disponível",
-        style: TextStyle(
-            color: reservado ? Colors.orange[800] : Colors.green[800],
-            fontSize: 10,
-            fontWeight: FontWeight.bold),
-      ),
-    );
-  }
-
-  Widget _buildProgressSection() {
-    final percent = (gift.metaValor ?? 0) > 0 ? (gift.valorArrecadado / gift.metaValor!) : 0.0;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text("Progresso da Meta", style: TextStyle(fontSize: 12, color: Colors.grey[600])),
-            Text("${(percent * 100).toStringAsFixed(0)}%",
-                style: TextStyle(fontWeight: FontWeight.bold, color: primary)),
-          ],
-        ),
-        const SizedBox(height: 6),
-        LinearProgressIndicator(
-          value: percent.clamp(0.0, 1.0),
-          backgroundColor: Colors.grey[200],
-          color: primary,
-          minHeight: 8,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        const SizedBox(height: 4),
-        Text("R\$ ${gift.valorArrecadado.toStringAsFixed(2)} arrecadados",
-            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w500)),
-      ],
-    );
-  }
-
-  Widget _buildSimplePrice() {
-    return Row(
-      children: [
-        Text("Valor Sugerido: ", style: TextStyle(color: Colors.grey[600], fontSize: 13)),
-        Text("R\$ ${gift.valor?.toStringAsFixed(2) ?? '0.00'}",
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-      ],
-    );
-  }
-
-  Widget _buildFooterActions() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text("Criado em ${gift.createdAt.day}/${gift.createdAt.month}",
-            style: TextStyle(color: Colors.grey[400], fontSize: 11)),
-        Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.edit_outlined, size: 20, color: Colors.blueGrey),
-              onPressed: onEdit,
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, size: 20, color: Colors.redAccent),
-              onPressed: onDelete,
-            ),
-          ],
-        )
-      ],
     );
   }
 }

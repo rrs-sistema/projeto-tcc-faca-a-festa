@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 
 import './../../../../controllers/categoria/subcategoria_servico_controller.dart';
 import './../../../../controllers/categoria/categoria_servico_controller.dart';
-import './../../../../controllers/servico_produto_controller.dart';
+import '../../../../controllers/servico/servico_produto_controller.dart';
 import './../../../../controllers/register_controller.dart';
 
 class CategoriaSubcategoriaServicoSection extends StatelessWidget {

@@ -8,7 +8,6 @@ import './../../../controllers/gift/gift_controller.dart';
 import './../../../data/models/gift/gift_model.dart';
 import './../../../app/bindings/gift_binding.dart';
 import './../../../domain/entities/gift/gift.dart';
-import './../../widgets/custom_input_field.dart';
 
 void abrirDialogCadastrarPresente(
   BuildContext context, {
@@ -22,7 +21,6 @@ void abrirDialogCadastrarPresente(
   final uuid = const Uuid();
   final bool editando = presente != null;
 
-  // CONTROLADORES
   final nomeCtrl = TextEditingController(text: presente?.nome ?? '');
   final descricaoCtrl = TextEditingController(text: presente?.descricao ?? '');
   final valorCtrl = TextEditingController(text: presente?.valor?.toString() ?? '');
@@ -30,24 +28,44 @@ void abrirDialogCadastrarPresente(
   final linkCtrl = TextEditingController(text: presente?.link ?? '');
   final pixCtrl = TextEditingController(text: presente?.pix ?? '');
   final metaCtrl = TextEditingController(text: presente?.metaValor?.toString() ?? '');
-  // 🔹 Novo controlador para imagem
   final imagemCtrl = TextEditingController(text: presente?.imagem ?? '');
 
   final Rx<GiftType> tipoSelecionado = (presente?.tipo ?? GiftType.fisico).obs;
   final RxBool salvando = false.obs;
-  // 🔹 Rx para atualizar o preview da imagem em tempo real
   final RxString urlPreview = (presente?.imagem ?? '').obs;
 
-  final gradient = themeController.gradient.value;
   final primary = themeController.primaryColor.value;
+  final gradient = themeController.gradient.value;
 
-  // Listener para o preview
+  const background = Color(0xFFF8FAFC);
+  const textDark = Color(0xFF1F2937);
+  const textMuted = Color(0xFF64748B);
+
   imagemCtrl.addListener(() => urlPreview.value = imagemCtrl.text.trim());
 
-  Future<void> salvar() async {
+  void showSnack({required String title, required String message, required Color color}) {
+    Get.snackbar(
+      title,
+      message,
+      backgroundColor: color,
+      colorText: Colors.white,
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(12),
+      borderRadius: 12,
+      icon: Icon(
+        color == Colors.redAccent
+            ? Icons.error_outline_rounded
+            : Icons.check_circle_outline_rounded,
+        color: Colors.white,
+      ),
+    );
+  }
+
+  Future<void> salvar(BuildContext modalContext) async {
+    if (salvando.value) return;
+
     if (nomeCtrl.text.trim().isEmpty) {
-      Get.snackbar("Erro", "Nome é obrigatório",
-          backgroundColor: Colors.redAccent, colorText: Colors.white);
+      showSnack(title: "Erro", message: "Nome é obrigatório", color: Colors.redAccent);
       return;
     }
 
@@ -68,7 +86,7 @@ void abrirDialogCadastrarPresente(
         link: linkCtrl.text.trim(),
         pix: pixCtrl.text.trim(),
         metaValor: meta,
-        imagem: imagemCtrl.text.trim(), // 🔹 Salvando o campo imagem separado
+        imagem: imagemCtrl.text.trim(),
         categoria: presente?.categoria ?? "geral",
         status: presente?.status ?? GiftStatus.disponivel,
         createdAt: presente?.createdAt ?? DateTime.now(),
@@ -76,293 +94,346 @@ void abrirDialogCadastrarPresente(
 
       editando ? await controller.atualizarPresente(model) : await controller.criarPresente(model);
 
-      Get.back();
-      Get.snackbar("Sucesso", editando ? "Atualizado!" : "Adicionado!",
-          backgroundColor: primary, colorText: Colors.white);
+      FocusManager.instance.primaryFocus?.unfocus();
+      if (modalContext.mounted) {
+        Navigator.of(modalContext).pop();
+      }
+
+      showSnack(
+          title: "Sucesso", message: editando ? "Atualizado!" : "Adicionado!", color: primary);
+    } catch (e, s) {
+      debugPrint('❌ Erro ao salvar presente: $e');
+      debugPrintStack(stackTrace: s);
+
+      showSnack(
+        title: "Erro",
+        message: "Erro ao salvar presente. Verifique o console.",
+        color: Colors.redAccent,
+      );
     } finally {
       salvando.value = false;
     }
   }
 
+  Widget buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    String? hint,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2))
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        maxLines: maxLines,
+        style: GoogleFonts.poppins(color: textDark, fontSize: 12, fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          labelStyle:
+              GoogleFonts.poppins(color: textMuted, fontSize: 11, fontWeight: FontWeight.w500),
+          prefixIcon: Column(
+            mainAxisAlignment: maxLines > 1 ? MainAxisAlignment.start : MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                  padding: EdgeInsets.only(top: maxLines > 1 ? 12.0 : 0),
+                  child: Icon(icon, color: primary, size: 18)),
+            ],
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey.shade200)),
+          focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: primary, width: 1.2)),
+        ),
+      ),
+    );
+  }
+
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    enableDrag: false,
     backgroundColor: Colors.transparent,
-    builder: (context) {
-      return Container(
-        height: MediaQuery.of(context).size.height * 0.9,
-        decoration: BoxDecoration(
-            gradient: gradient,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24))),
-        child: SafeArea(
-          child: Padding(
-            padding: EdgeInsets.only(
-                left: 24,
-                right: 24,
-                top: 28,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24),
+    builder: (modalContext) {
+      return DraggableScrollableSheet(
+        initialChildSize: 0.85,
+        minChildSize: 0.60,
+        maxChildSize: 0.95,
+        expand: false,
+        builder: (_, controllerScroll) {
+          return Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: const BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
             child: Column(
               children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHeader(editando),
-                        const SizedBox(height: 24),
-
-                        // PREVIEW DA IMAGEM (Sênior Touch)
-                        _buildImagePreview(urlPreview, primary),
-
-                        const SizedBox(height: 24),
-                        _buildTypeChips(tipoSelecionado, primary),
-                        const SizedBox(height: 24),
-
-                        CustomInputField(
-                            label: "Nome do presente",
-                            icon: Icons.redeem,
-                            controller: nomeCtrl,
-                            color: Colors.white),
-
-                        Obx(() => AnimatedSize(
-                              duration: const Duration(milliseconds: 300),
-                              child: Column(
-                                children: [
-                                  // Campo de Imagem sempre visível para presente físico
-                                  if (tipoSelecionado.value == GiftType.fisico)
-                                    CustomInputField(
-                                      label: "URL da Foto do Produto",
-                                      icon: Icons.image_search,
-                                      controller: imagemCtrl,
-                                      color: Colors.white,
-                                      // hint: "Cole o link da imagem aqui"
-                                    ),
-
-                                  if (tipoSelecionado.value != GiftType.fisico)
-                                    CustomInputField(
-                                        label: "Valor sugerido (R\$)",
-                                        icon: Icons.attach_money,
-                                        controller: valorCtrl,
-                                        color: Colors.white),
-
-                                  if (tipoSelecionado.value == GiftType.fisico) ...[
-                                    CustomInputField(
-                                        label: "Nome da Loja (Ex: Amazon)",
-                                        icon: Icons.storefront,
-                                        controller: lojaCtrl,
-                                        color: Colors.white),
-                                    CustomInputField(
-                                        label: "Link para Compra (Opcional)",
-                                        icon: Icons.shopping_cart_checkout,
-                                        controller: linkCtrl,
-                                        color: Colors.white),
-                                  ],
-
-                                  if (tipoSelecionado.value != GiftType.fisico)
-                                    CustomInputField(
-                                        label: "Chave PIX",
-                                        icon: Icons.key,
-                                        controller: pixCtrl,
-                                        color: Colors.white),
-
-                                  if (tipoSelecionado.value == GiftType.coletivo)
-                                    CustomInputField(
-                                        label: "Meta de arrecadação (R\$)",
-                                        icon: Icons.flag_outlined,
-                                        controller: metaCtrl,
-                                        color: Colors.white),
-                                ],
-                              ),
-                            )),
-                      ],
-                    ),
+                // === HEADER COMPACTO ===
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                  decoration: BoxDecoration(gradient: gradient),
+                  child: Column(
+                    children: [
+                      Center(
+                          child: Container(
+                              width: 36,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(10)))),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.2),
+                                borderRadius: BorderRadius.circular(12)),
+                            child: Icon(
+                                editando
+                                    ? Icons.edit_note_rounded
+                                    : Icons.add_shopping_cart_rounded,
+                                color: Colors.white,
+                                size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(editando ? 'Editar Presente' : 'Novo Presente',
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w800)),
+                                Text('Preencha os detalhes para a lista.',
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.white.withValues(alpha: 0.9), fontSize: 11)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-                _buildButtons(salvando, salvar, primary),
+
+                // === CORPO ===
+                Expanded(
+                  child: ListView(
+                    controller: controllerScroll,
+                    padding: EdgeInsets.fromLTRB(
+                        16, 16, 16, MediaQuery.of(modalContext).viewInsets.bottom + 16),
+                    children: [
+                      // Preview Imagem
+                      Obx(() {
+                        final hasUrl = urlPreview.value.isNotEmpty;
+                        return Center(
+                          child: Container(
+                            width: 80,
+                            height: 80,
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: Colors.grey.shade200),
+                              boxShadow: [
+                                BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.03),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2))
+                              ],
+                            ),
+                            child: hasUrl
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(15),
+                                    child: Image.network(urlPreview.value,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            Icon(Icons.broken_image, color: Colors.grey.shade400)))
+                                : Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+                                    Icon(Icons.add_a_photo_outlined,
+                                        color: Colors.grey.shade400, size: 24),
+                                    const SizedBox(height: 4),
+                                    Text("Sem Foto",
+                                        style: GoogleFonts.poppins(
+                                            color: Colors.grey.shade500, fontSize: 9))
+                                  ]),
+                          ),
+                        );
+                      }),
+
+                      // Chips Tipo
+                      Text("Formato do presente",
+                          style: GoogleFonts.poppins(
+                              color: textDark, fontWeight: FontWeight.w700, fontSize: 12)),
+                      const SizedBox(height: 8),
+                      Obx(() => Row(
+                            children: GiftType.values.map((tipo) {
+                              final isSelected = tipoSelecionado.value == tipo;
+                              IconData icone = tipo == GiftType.fisico
+                                  ? Icons.inventory_2_outlined
+                                  : (tipo == GiftType.pix ? Icons.pix : Icons.groups_outlined);
+                              return Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 6),
+                                  child: InkWell(
+                                    onTap: () => tipoSelecionado.value = tipo,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      decoration: BoxDecoration(
+                                        color: isSelected ? primary : Colors.white,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                            color: isSelected ? primary : Colors.grey.shade300),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Icon(icone,
+                                              size: 14,
+                                              color: isSelected ? Colors.white : textMuted),
+                                          const SizedBox(width: 4),
+                                          Text(tipo.name.capitalizeFirst!,
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 11,
+                                                  color: isSelected ? Colors.white : textDark,
+                                                  fontWeight: isSelected
+                                                      ? FontWeight.w700
+                                                      : FontWeight.w500)),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          )),
+
+                      const SizedBox(height: 16),
+
+                      buildTextField(
+                          label: "Nome do presente",
+                          icon: Icons.redeem_rounded,
+                          controller: nomeCtrl),
+                      buildTextField(
+                          label: "Descrição curta",
+                          icon: Icons.short_text_rounded,
+                          controller: descricaoCtrl,
+                          maxLines: 2),
+
+                      Obx(() => Column(
+                            children: [
+                              if (tipoSelecionado.value == GiftType.fisico)
+                                buildTextField(
+                                    label: "URL da Foto do Produto",
+                                    icon: Icons.image_search_rounded,
+                                    controller: imagemCtrl),
+                              if (tipoSelecionado.value != GiftType.fisico)
+                                buildTextField(
+                                    label: "Valor sugerido (R\$)",
+                                    icon: Icons.attach_money_rounded,
+                                    controller: valorCtrl,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(decimal: true)),
+                              if (tipoSelecionado.value == GiftType.fisico) ...[
+                                buildTextField(
+                                    label: "Nome da Loja",
+                                    icon: Icons.storefront_rounded,
+                                    controller: lojaCtrl),
+                                buildTextField(
+                                    label: "Link para Compra",
+                                    icon: Icons.shopping_cart_checkout_rounded,
+                                    controller: linkCtrl),
+                              ],
+                              if (tipoSelecionado.value != GiftType.fisico)
+                                buildTextField(
+                                    label: "Chave PIX",
+                                    icon: Icons.key_rounded,
+                                    controller: pixCtrl),
+                              if (tipoSelecionado.value == GiftType.coletivo)
+                                buildTextField(
+                                    label: "Meta (R\$)",
+                                    icon: Icons.flag_outlined,
+                                    controller: metaCtrl,
+                                    keyboardType:
+                                        const TextInputType.numberWithOptions(decimal: true)),
+                            ],
+                          )),
+
+                      const SizedBox(height: 20),
+
+                      // Botões
+                      Obx(() {
+                        final isSaving = salvando.value;
+                        return SizedBox(
+                          height: 42,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12))),
+                            onPressed: isSaving ? null : () => salvar(modalContext),
+                            icon: isSaving
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white))
+                                : const Icon(Icons.check_rounded, color: Colors.white, size: 18),
+                            label: Text(isSaving ? "Salvando..." : "Confirmar",
+                                style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700)),
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 42,
+                        child: TextButton(
+                          onPressed: () {
+                            FocusManager.instance.primaryFocus?.unfocus();
+                            Navigator.of(modalContext).pop();
+                          },
+                          style: TextButton.styleFrom(
+                              shape:
+                                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          child: Text("Cancelar",
+                              style: GoogleFonts.poppins(
+                                  color: textMuted, fontSize: 12, fontWeight: FontWeight.w600)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-          ),
-        ),
+          );
+        },
       );
     },
   );
-}
-
-// 🔹 HEADER DO DIÁLOGO
-Widget _buildHeader(bool editando) {
-  return Column(
-    children: [
-      Center(
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.2),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            editando ? Icons.edit_note : Icons.add_shopping_cart,
-            size: 36,
-            color: Colors.white,
-          ),
-        ),
-      ),
-      const SizedBox(height: 12),
-      Center(
-        child: Text(
-          editando ? "Editar Presente" : "Cadastrar Presente",
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    ],
-  );
-}
-
-// 🔹 SELEÇÃO DE TIPOS (CHIPS)
-Widget _buildTypeChips(Rx<GiftType> tipoSelecionado, Color primary) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        "Formato do presente",
-        style: GoogleFonts.poppins(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-          fontSize: 14,
-        ),
-      ),
-      const SizedBox(height: 12),
-      Obx(() => SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: GiftType.values.map((tipo) {
-                final bool isSelected = tipoSelecionado.value == tipo;
-                IconData icone;
-                switch (tipo) {
-                  case GiftType.fisico:
-                    icone = Icons.inventory_2_outlined;
-                    break;
-                  case GiftType.pix:
-                    icone = Icons.pix;
-                    break;
-                  case GiftType.coletivo:
-                    icone = Icons.groups_outlined;
-                    break;
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    visualDensity: VisualDensity.compact,
-                    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    label: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(icone, size: 16, color: isSelected ? primary : Colors.white),
-                        const SizedBox(width: 6),
-                        Text(
-                          tipo.name.capitalizeFirst ?? tipo.name,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: isSelected ? primary : Colors.white,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    ),
-                    selected: isSelected,
-                    onSelected: (_) => tipoSelecionado.value = tipo,
-                    selectedColor: Colors.white,
-                         backgroundColor: isSelected ? Colors.white : Colors.grey
-                      ..withValues(alpha: 0.15),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                        color: isSelected ? Colors.white : Colors.white.withValues(alpha: 0.3),
-                      ),
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          )),
-    ],
-  );
-}
-
-// 🔹 BOTÕES DE AÇÃO (SALVAR E CANCELAR)
-Widget _buildButtons(RxBool salvando, Future<void> Function() onSalvar, Color primary) {
-  return Column(
-    children: [
-      const SizedBox(height: 16),
-      Obx(() => SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: salvando.value ? null : onSalvar,
-              label: Text(
-                salvando.value ? "Salvando..." : "Confirmar",
-                style: GoogleFonts.poppins(fontWeight: FontWeight.bold),
-              ),
-              icon: salvando.value
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Icon(Icons.check),
-            ),
-          )),
-      const SizedBox(height: 12),
-      SizedBox(
-        width: double.infinity,
-        child: OutlinedButton(
-          onPressed: () => Get.back(),
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: Colors.white54),
-          ),
-          child: const Text("Cancelar", style: TextStyle(color: Colors.white)),
-        ),
-      ),
-    ],
-  );
-}
-
-// 🔹 WIDGET DE PREVIEW DINÂMICO
-Widget _buildImagePreview(RxString url, Color primary) {
-  return Obx(() {
-    final hasUrl = url.value.isNotEmpty;
-    return Center(
-      child: Container(
-        width: 120,
-        height: 120,
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
-        ),
-        child: hasUrl
-            ? ClipRRect(
-                borderRadius: BorderRadius.circular(19),
-                child: Image.network(
-                  url.value,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.broken_image, color: Colors.white54, size: 40),
-                ),
-              )
-            : const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.add_a_photo_outlined, color: Colors.white54, size: 32),
-                  SizedBox(height: 8),
-                  Text("Sem Foto", style: TextStyle(color: Colors.white54, fontSize: 10)),
-                ],
-              ),
-      ),
-    );
-  });
 }

@@ -13,9 +13,6 @@ import './../../../controllers/orcamento_controller.dart';
 import './../../../controllers/evento_controller.dart';
 import './../../dialogs/enviar_avaliacao_dialog.dart';
 import './../../../controllers/app_controller.dart';
-import './../../widgets/button/botao_cancelar.dart';
-import './../../widgets/button/botao_salvar.dart';
-import './../../widgets/custom_input_field.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../widgets/festa_app_bar.dart';
 import './../../../data/models/model.dart';
@@ -25,7 +22,7 @@ class OrcamentoScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.dark,
       statusBarBrightness: Brightness.light,
@@ -48,16 +45,13 @@ class OrcamentoScreen extends StatelessWidget {
       final gradient = themeController.gradient.value;
       final orcamentos = orcamentoController.orcamentos;
 
-      // ⚠️ Removido cálculo errado: gastoController.totalGasto
-      // Agora o resumo só mostrará o total real somando os gastos de cada categoria individualmente.
-
       return Scaffold(
         backgroundColor: Colors.grey.shade100,
         appBar: FestaAppBar(
           titulo: 'Meu Orçamento',
           acoes: [
             IconButton(
-              icon: const Icon(Icons.add_circle_outline, color: Colors.white),
+              icon: const Icon(Icons.add_circle_outline, color: Colors.white, size: 24),
               tooltip: 'Adicionar gasto',
               onPressed: () => showAddOrcamentoBottomSheet(context, idEvento),
             ),
@@ -71,26 +65,29 @@ class OrcamentoScreen extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.receipt_long_rounded,
-                    size: 50,
+                    size: 40,
                     color: Colors.tealAccent.shade700.withValues(alpha: 0.8),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 10),
                   Text(
                     'Nenhum orçamento encontrado',
                     style: GoogleFonts.poppins(
-                      fontSize: 17,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: Colors.grey.shade700,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    'Crie seu primeiro orçamento e acompanhe seus fornecedores com facilidade!',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      color: Colors.grey.shade500,
-                      height: 1.4,
+                  const SizedBox(height: 4),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      'Crie seu primeiro orçamento e acompanhe seus fornecedores com facilidade!',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                        height: 1.3,
+                      ),
                     ),
                   ),
                 ],
@@ -99,29 +96,24 @@ class OrcamentoScreen extends StatelessWidget {
           }
 
           return Scrollbar(
-            radius: const Radius.circular(10),
+            radius: const Radius.circular(8),
             thumbVisibility: true,
             interactive: true,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
               physics: const BouncingScrollPhysics(),
               child: Column(
                 children: [
-                  // Resumo corrigido — será recalculado no final do build
                   resumoCard(
                     gradient,
                     custoEstimado: eventoController.eventoAtual.value?.custoEstimado ?? 0,
                     custoFinal: orcamentoController.totalPagoGeral.value,
                   ),
-                  const SizedBox(height: 20),
-
+                  const SizedBox(height: 12),
                   ...orcamentos.map((orcamento) {
                     final temFornecedor = orcamento.idServicoFornecido != null &&
                         orcamento.idServicoFornecido!.isNotEmpty;
 
-                    // =====================================================================
-                    // 🔥 Para ORÇAMENTOS SEM FORNECEDOR → criar CONTROLLER POR TAG
-                    // =====================================================================
                     if (!temFornecedor) {
                       final gastoC = Get.put(
                         OrcamentoGastoController(),
@@ -137,11 +129,11 @@ class OrcamentoScreen extends StatelessWidget {
                         final gastosWidgets = gastos.isEmpty
                             ? [
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 8),
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
                                   child: Text(
                                     'Nenhum gasto registrado.',
                                     style: GoogleFonts.poppins(
-                                      fontSize: 12,
+                                      fontSize: 11,
                                       color: Colors.black54,
                                       fontStyle: FontStyle.italic,
                                     ),
@@ -171,9 +163,6 @@ class OrcamentoScreen extends StatelessWidget {
                       });
                     }
 
-                    // =====================================================================
-                    // 🔥 SE TEM FORNECEDOR → orçamento resumido fixo
-                    // =====================================================================
                     return _categoriaCard(
                       context,
                       orcamento,
@@ -188,17 +177,6 @@ class OrcamentoScreen extends StatelessWidget {
                           nome: orcamento.status.label,
                           custo: orcamento.custoEstimado ?? 0,
                           pago: orcamento.custoEstimado ?? 0,
-                          /*
-                          context,
-                          orcamento.idOrcamento,
-                          orcamento.idFornecedor ?? '',
-                          null,
-                          orcamento.status.label,
-                          orcamento.custoEstimado ?? 0,
-                          orcamento.status == StatusOrcamento.fechado
-                              ? (orcamento.custoEstimado ?? 0)
-                              : 0,
-                              */
                         ),
                       ],
                       false,
@@ -227,7 +205,6 @@ class OrcamentoScreen extends StatelessWidget {
         Get.find<OrcamentoController>().totalPagoDoOrcamento(orcamento.idOrcamento);
     final bool servicoContratado = !mostrarBotaoAddGasto;
 
-// 🔥 REGRA FINAL PARA PERMITIR AVALIAÇÃO:
     final bool podeAvaliar = servicoContratado &&
         orcamento.status == StatusOrcamento.fechado &&
         totalPago >= custo &&
@@ -235,31 +212,31 @@ class OrcamentoScreen extends StatelessWidget {
         orcamento.idServicoFornecido!.isNotEmpty;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
           colors: [
-            Colors.white.withValues(alpha: 0.90),
-            Colors.white.withValues(alpha: 0.60),
+            Colors.white.withValues(alpha: 0.95),
+            Colors.white.withValues(alpha: 0.75),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         border: Border.all(
-          color: primary.withValues(alpha: 0.12),
-          width: 1.2,
+          color: primary.withValues(alpha: 0.1),
+          width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         child: Theme(
           data: ThemeData(dividerColor: Colors.transparent),
           child: ExpansionTile(
@@ -267,20 +244,12 @@ class OrcamentoScreen extends StatelessWidget {
             collapsedBackgroundColor: Colors.transparent,
             iconColor: primary.withValues(alpha: 0.9),
             collapsedIconColor: Colors.grey.shade500,
-            tilePadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-            childrenPadding: const EdgeInsets.symmetric(
-              horizontal: 20,
-              vertical: 10,
-            ),
-
-            // --------------------------------------------------
-            // TITLE (mais elegante)
-            // --------------------------------------------------
+            tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+            childrenPadding: const EdgeInsets.only(left: 14, right: 14, bottom: 10),
             title: Row(
               children: [
-                // Ícone premium
                 Container(
-                  padding: const EdgeInsets.all(5),
+                  padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: LinearGradient(
@@ -293,193 +262,147 @@ class OrcamentoScreen extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: primary.withValues(alpha: 0.35),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
+                        color: primary.withValues(alpha: 0.25),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       )
                     ],
                   ),
-                  child: const Icon(
-                    Icons.folder_special_rounded,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  child: const Icon(Icons.folder_special_rounded, color: Colors.white, size: 16),
                 ),
-
-                const SizedBox(width: 14),
-
-                // Título categoria
+                const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    orcamento.anotacoes ?? 'Sem nome',
-                    style: GoogleFonts.poppins(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black87,
-                    ),
-                    overflow: TextOverflow.ellipsis,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        orcamento.anotacoes ?? 'Sem nome',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        "Previsto: $totalPrevisto",
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-
-            // --------------------------------------------------
-            // SUBTÍTULO
-            // --------------------------------------------------s
-            subtitle: Padding(
-              padding: const EdgeInsets.only(left: 34, top: 6),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.grey.shade100,
-                      Colors.grey.shade200.withValues(alpha: 0.4),
-                    ],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.account_balance_wallet_rounded,
-                        size: 14, color: Colors.grey.shade700),
-                    const SizedBox(width: 6),
-                    Text(
-                      "Total previsto: $totalPrevisto",
-                      style: GoogleFonts.poppins(
-                        fontSize: 12.8,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade800,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            // --------------------------------------------------
-            // CHILDREN (conteúdo expandido)
-            // --------------------------------------------------
             children: [
               ...gastos,
-
-              const SizedBox(height: 5),
-
-              // Botão ADD GASTO
-              if (mostrarBotaoAddGasto)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      elevation: 0,
-                      backgroundColor: primary.withValues(alpha: 0.12),
-                      foregroundColor: primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  if (mostrarBotaoAddGasto)
+                    ElevatedButton.icon(
+                      style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: primary.withValues(alpha: 0.1),
+                        foregroundColor: primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        minimumSize: const Size(0, 32),
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      onPressed: () => _showAddGastoDialog(
+                        context,
+                        idOrcamento: orcamento.idOrcamento,
+                        categoria: orcamento.anotacoes ?? '',
+                      ),
+                      icon: const Icon(Icons.add_circle_outline, size: 16),
+                      label: Text(
+                        'Adicionar',
+                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12),
+                      ),
                     ),
-                    onPressed: () => _showAddGastoDialog(
-                      context,
-                      idOrcamento: orcamento.idOrcamento,
-                      categoria: orcamento.anotacoes ?? '',
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      minimumSize: const Size(0, 32),
                     ),
-                    icon: const Icon(Icons.add_circle_outline, size: 18),
+                    onPressed: () async {
+                      final confirm = await Get.dialog<bool>(
+                        AlertDialog(
+                          title: Text(
+                            'Excluir orçamento',
+                            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
+                          ),
+                          content: Text(
+                            'Deseja realmente excluir "${orcamento.anotacoes}"?',
+                            style: GoogleFonts.poppins(fontSize: 13),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Get.back(result: false),
+                              child: const Text('Cancelar'),
+                            ),
+                            ElevatedButton(
+                              onPressed: () => Get.back(result: true),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                              child: const Text('Excluir'),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirm == true) {
+                        final c = Get.find<OrcamentoController>();
+                        await c.excluirOrcamento(orcamento.idOrcamento);
+
+                        Get.snackbar(
+                          'Orçamento removido',
+                          'O orçamento "${orcamento.anotacoes}" foi excluído.',
+                          backgroundColor: Colors.redAccent,
+                          colorText: Colors.white,
+                          snackPosition: SnackPosition.BOTTOM,
+                          duration: const Duration(seconds: 2),
+                        );
+                      }
+                    },
+                    icon: Icon(Icons.delete_outline_rounded,
+                        size: 16, color: Colors.redAccent.shade700),
                     label: Text(
-                      'Adicionar Gasto',
+                      'Excluir',
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.w600,
-                        fontSize: 13.5,
+                        fontSize: 12,
+                        color: Colors.redAccent.shade700,
                       ),
                     ),
                   ),
-                ),
-
+                ],
+              ),
               if (!podeAvaliar && servicoContratado)
                 Padding(
-                  padding: const EdgeInsets.only(top: 8),
+                  padding: const EdgeInsets.only(top: 4),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Icon(Icons.info_outline_rounded, size: 18, color: Colors.grey.shade600),
-                      const SizedBox(width: 6),
+                      Icon(Icons.info_outline_rounded, size: 14, color: Colors.grey.shade500),
+                      const SizedBox(width: 4),
                       Text(
                         _mensagemMotivoNaoAvaliar(orcamento, totalPago),
                         style: GoogleFonts.poppins(
-                          color: Colors.grey.shade600,
-                          fontSize: 12.8,
+                          color: Colors.grey.shade500,
+                          fontSize: 11,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-
-              const SizedBox(height: 6),
-
-              // Botão Excluir — versão elegante
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: () async {
-                    final confirm = await Get.dialog<bool>(
-                      AlertDialog(
-                        title: Text(
-                          'Excluir orçamento',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        content: Text(
-                          'Deseja realmente excluir "${orcamento.anotacoes}"?',
-                          style: GoogleFonts.poppins(fontSize: 14),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Get.back(result: false),
-                            child: const Text('Cancelar'),
-                          ),
-                          ElevatedButton(
-                            onPressed: () => Get.back(result: true),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.redAccent,
-                            ),
-                            child: const Text('Excluir'),
-                          ),
-                        ],
-                      ),
-                    );
-
-                    if (confirm == true) {
-                      final c = Get.find<OrcamentoController>();
-                      await c.excluirOrcamento(orcamento.idOrcamento);
-
-                      Get.snackbar(
-                        'Orçamento removido',
-                        'O orçamento "${orcamento.anotacoes}" foi excluído.',
-                        backgroundColor: Colors.redAccent,
-                        colorText: Colors.white,
-                        snackPosition: SnackPosition.BOTTOM,
-                        duration: const Duration(seconds: 2),
-                      );
-                    }
-                  },
-                  icon: Icon(
-                    Icons.delete_outline_rounded,
-                    size: 19,
-                    color: Colors.redAccent.shade700,
-                  ),
-                  label: Text(
-                    'Excluir',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13.5,
-                      color: Colors.redAccent.shade700,
-                    ),
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -504,66 +427,38 @@ class OrcamentoScreen extends StatelessWidget {
     final podeAvaliar = restante == 0 && idGasto != null && idOrcamento != null;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(12),
         gradient: LinearGradient(
           colors: [
-            Colors.white.withValues(alpha: 0.92),
-            Colors.white.withValues(alpha: 0.72),
+            Colors.white.withValues(alpha: 0.95),
+            Colors.white.withValues(alpha: 0.8),
           ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
         ),
         border: Border.all(color: Colors.grey.shade200, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // --------------------------------------------------------------
-          // NOME DO ITEM + AÇÕES
-          // --------------------------------------------------------------
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.only(left: 2, right: 2),
-                decoration: BoxDecoration(
-                  color: Colors.teal.withValues(alpha: 0.12),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.receipt_long_rounded,
-                  size: 16,
-                  color: Colors.teal.shade700,
-                ),
-              ),
-              const SizedBox(width: 10),
+              Icon(Icons.receipt_long_rounded, size: 16, color: Colors.teal.shade700),
+              const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   nome,
                   style: GoogleFonts.poppins(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Colors.grey.shade800,
                   ),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Botão de Pagar
-              if (restante > 0 && idOrcamento != null && idGasto != null)
+              if (restante == 0)
+                Icon(Icons.check_circle_rounded, color: Colors.green.shade600, size: 18)
+              else if (idOrcamento != null && idGasto != null)
                 InkWell(
                   onTap: () async {
                     Biblioteca.showConfirmDialog(
@@ -593,97 +488,72 @@ class OrcamentoScreen extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(8),
                       border: Border.all(color: Colors.green.shade300),
                     ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.check_circle_outline, color: Colors.green.shade700, size: 18),
-                        const SizedBox(width: 6),
-                        Text(
-                          "Pagar",
-                          style: GoogleFonts.poppins(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.green.shade800,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      "Pagar",
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.green.shade800,
+                      ),
                     ),
                   ),
                 ),
-
-              if (restante == 0)
-                Icon(Icons.check_circle_rounded, color: Colors.green.shade600, size: 22),
-
-              const SizedBox(width: 6),
-
               if (idOrcamento != null && idGasto != null)
                 InkWell(
-                  borderRadius: BorderRadius.circular(20),
                   onTap: () => _confirmarExcluirGasto(context, idOrcamento, idGasto),
                   child: Padding(
-                    padding: const EdgeInsets.all(8),
-                    child: Icon(
-                      Icons.delete_outline_rounded,
-                      color: Colors.redAccent.shade200,
-                      size: 32,
-                    ),
+                    padding: const EdgeInsets.only(left: 8),
+                    child: Icon(Icons.delete_outline_rounded,
+                        color: Colors.redAccent.shade200, size: 18),
                   ),
                 ),
             ],
           ),
-
-          const SizedBox(height: 12),
-
+          const SizedBox(height: 8),
           ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: percentPago,
-              minHeight: 7,
+              minHeight: 4,
               backgroundColor: Colors.grey.shade300,
               valueColor: AlwaysStoppedAnimation(
                 percentPago >= 1 ? Colors.green.shade500 : Colors.teal.shade400,
               ),
             ),
           ),
-
-          const SizedBox(height: 12),
-
+          const SizedBox(height: 6),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Pago: R\$ ${pago.toStringAsFixed(2)}',
                 style: GoogleFonts.poppins(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.teal.shade800,
-                ),
+                    fontSize: 11, fontWeight: FontWeight.w500, color: Colors.teal.shade800),
               ),
               Text(
                 'Restante: R\$ ${restante.toStringAsFixed(2)}',
                 style: GoogleFonts.poppins(
-                  fontSize: 12.5,
+                  fontSize: 11,
                   fontWeight: FontWeight.w600,
                   color: restante > 0 ? Colors.orange.shade700 : Colors.green.shade700,
                 ),
               ),
             ],
           ),
-
-          const SizedBox(height: 10),
-
-          // --------------------------------------------------------------
-          // ⭐ BOTÃO AVALIAR SERVIÇO — DISCRETO E ELEGANTE
-          // --------------------------------------------------------------
           if (podeAvaliar)
             Align(
               alignment: Alignment.centerRight,
               child: TextButton.icon(
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(0, 24),
+                  padding: EdgeInsets.zero,
+                ),
                 onPressed: () {
                   _abrirDialogAvaliacaoServico(
                     idServico: idServico ?? '',
@@ -692,14 +562,11 @@ class OrcamentoScreen extends StatelessWidget {
                     nomeServico: nome,
                   );
                 },
-                icon: const Icon(Icons.star_rate_rounded, color: Colors.amber, size: 20),
+                icon: const Icon(Icons.star_rate_rounded, color: Colors.amber, size: 16),
                 label: Text(
-                  "Avaliar serviço",
+                  "Avaliar",
                   style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    color: Colors.amber.shade700,
-                  ),
+                      fontWeight: FontWeight.w600, fontSize: 11, color: Colors.amber.shade700),
                 ),
               ),
             ),
@@ -731,197 +598,409 @@ Future<void> _showAddGastoDialog(
   required String idOrcamento,
   required String categoria,
 }) async {
-  final theme = Get.find<EventThemeController>();
+  final themeController = Get.find<EventThemeController>();
   final gastoController = Get.put(OrcamentoGastoController(), tag: idOrcamento);
-
-  final corPrincipal = theme.primaryColor.value;
-  final corSecundaria = theme.secondaryColor.value.withValues(alpha: 0.03);
 
   final nomeCtrl = TextEditingController();
   final custoCtrl = TextEditingController();
   final pagoCtrl = TextEditingController();
+  final RxBool salvando = false.obs;
 
-  // === ABRE O BOTTOM SHEET ===
-  await showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: theme.primaryColor.value.withValues(alpha: 0.03),
-    builder: (context) {
-      return FractionallySizedBox(
-        heightFactor: 0.9,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                corSecundaria.withValues(alpha: 0.9),
-                Colors.white,
-                corPrincipal.withValues(alpha: 0.05),
-              ],
-              stops: const [0.0, 0.6, 0.9],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 14,
-                right: 14,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+  final primary = themeController.primaryColor.value;
+  final gradient = themeController.gradient.value;
+
+  // Cores exatas do padrão
+  const background = Color(0xFFF8FAFC);
+  const textDark = Color(0xFF1F2937);
+  const textMuted = Color(0xFF64748B);
+
+  Future<void> salvarGasto(BuildContext modalContext) async {
+    if (salvando.value) return;
+
+    final descricao = nomeCtrl.text.trim();
+
+    if (descricao.isEmpty) {
+      Get.snackbar(
+        'Campo obrigatório',
+        'Descreva onde o valor foi destinado.',
+        backgroundColor: Colors.redAccent.shade200,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+      );
+      return;
+    }
+
+    try {
+      salvando.value = true;
+      EasyLoading.show(status: 'Processando...');
+
+      final result = await gastoController.adicionarGasto(
+        idOrcamento: idOrcamento,
+        nome: descricao,
+        custo: Biblioteca.toDouble(custoCtrl.text),
+        pago: Biblioteca.toDouble(pagoCtrl.text),
+      );
+
+      EasyLoading.dismiss();
+
+      if (!result.ok) {
+        Get.snackbar(
+          result.mensagem ?? 'Erro ao adicionar gasto',
+          result.excedente != null
+              ? 'Excedeu o limite em R\$ ${result.excedente!.toStringAsFixed(2)}\n'
+                  'Limite permitido: R\$ ${result.limite!.toStringAsFixed(2)}'
+              : '',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+        );
+        salvando.value = false;
+        return;
+      }
+
+      FocusManager.instance.primaryFocus?.unfocus();
+
+      if (modalContext.mounted) {
+        Navigator.of(modalContext).pop();
+      }
+
+      Get.snackbar(
+        'Gasto adicionado',
+        descricao,
+        backgroundColor: primary,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+        icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white),
+      );
+    } catch (e) {
+      EasyLoading.dismiss();
+      Get.snackbar(
+        'Erro',
+        'Não foi possível salvar o gasto.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+      );
+    } finally {
+      salvando.value = false;
+    }
+  }
+
+  Widget buildDragHandle() {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    );
+  }
+
+  Widget buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildDragHandle(),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.30)),
+                ),
+                child: const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 24),
               ),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
+              const SizedBox(width: 12),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 16),
-                    Center(
-                      child: Container(
-                        width: 60,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
+                    Text(
+                      'Registrar gasto',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 18,
+                        height: 1.1,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 20),
-
-                    // === TÍTULO E ÍCONE ===
-                    Center(
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: corPrincipal.withValues(alpha: 0.15),
-                            ),
-                            child: Icon(
-                              Icons.receipt_long_rounded,
-                              color: corPrincipal,
-                              size: 42,
-                            ),
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            categoria,
-                            style: GoogleFonts.poppins(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                              color: corPrincipal,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 4),
+                    Text(
+                      categoria.isNotEmpty ? categoria : 'Preencha os valores do serviço',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withValues(alpha: 0.88),
+                        fontSize: 11,
+                        height: 1.35,
+                        fontWeight: FontWeight.w500,
                       ),
-                    ),
-
-                    const SizedBox(height: 28),
-
-                    // === FORMULÁRIO ===
-                    CustomInputField(
-                      label: "Descrição do gasto",
-                      icon: Icons.edit_note_rounded,
-                      controller: nomeCtrl,
-                      color: corPrincipal,
-                      hintlabel: 'Informe onde valor será destinado',
-                      titleColor: corPrincipal,
-                      maxLines: 2,
-                    ),
-                    CustomInputField(
-                      label: "Custo total (R\$)",
-                      icon: Icons.attach_money_rounded,
-                      controller: custoCtrl,
-                      type: InputType.money,
-                      color: corPrincipal,
-                      hintlabel: 'Informe o custo total',
-                      titleColor: corPrincipal,
-                    ),
-                    CustomInputField(
-                      label: "Valor pago (R\$)",
-                      icon: Icons.payments_rounded,
-                      controller: pagoCtrl,
-                      type: InputType.money,
-                      color: corPrincipal,
-                      hintlabel: 'Informe o valor pago',
-                      titleColor: corPrincipal,
-                    ),
-
-                    const SizedBox(height: 32),
-
-                    // === BOTÃO SALVAR ===
-                    BotaoSalvar(
-                      texto: 'Salvar gasto',
-                      onPressed: () async {
-                        if (nomeCtrl.text.isEmpty) {
-                          Get.snackbar(
-                            'Campo obrigatório',
-                            'Descreva onde o valor foi destinado.',
-                            backgroundColor: Colors.redAccent.shade200,
-                            colorText: Colors.white,
-                          );
-                          return;
-                        }
-
-                        EasyLoading.show(status: 'Processando...');
-
-                        final result = await gastoController.adicionarGasto(
-                          idOrcamento: idOrcamento,
-                          nome: nomeCtrl.text,
-                          custo: Biblioteca.toDouble(custoCtrl.text),
-                          pago: Biblioteca.toDouble(pagoCtrl.text),
-                        );
-
-                        EasyLoading.dismiss();
-
-                        if (!result.ok) {
-                          // ⚠️ Mostra erro de limite excedido
-                          Get.snackbar(
-                            result.mensagem ?? 'Erro ao adicionar gasto',
-                            result.excedente != null
-                                ? 'Excedeu o limite em R\$ ${result.excedente!.toStringAsFixed(2)}\n'
-                                    'Limite permitido: R\$ ${result.limite!.toStringAsFixed(2)}'
-                                : '',
-                            backgroundColor: Colors.redAccent,
-                            colorText: Colors.white,
-                            duration: const Duration(seconds: 4),
-                          );
-                          return; // 🔥 Impede salvar o gasto
-                        }
-
-                        // ✔ Se deu tudo certo
-                        Get.snackbar(
-                          'Gasto adicionado',
-                          nomeCtrl.text,
-                          backgroundColor: corPrincipal,
-                          colorText: Colors.white,
-                        );
-
-                        Navigator.pop(context);
-                      },
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // === BOTÃO CANCELAR ===
-                    BotaoCancelar(
-                      texto: 'Cancelar',
-                      corBackground: Colors.grey[400],
-                      onPressed: () => Navigator.pop(context),
                     ),
                   ],
                 ),
               ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildSectionTitle({required IconData icon, required String title}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: primary, size: 16),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    color: textDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    String? hint,
+    TextInputType? keyboardType,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    TextInputAction textInputAction = TextInputAction.next,
+    int maxLines = 1,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        textCapitalization: textCapitalization,
+        textInputAction: textInputAction,
+        maxLines: maxLines,
+        style: GoogleFonts.poppins(color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          labelStyle:
+              GoogleFonts.poppins(color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
+          hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
+          prefixIcon: Column(
+            mainAxisAlignment: maxLines > 1 ? MainAxisAlignment.start : MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: maxLines > 1 ? 16.0 : 0),
+                child: Icon(icon, color: primary, size: 20),
+              ),
+            ],
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: primary, width: 1.2),
+          ),
         ),
-      );
-    },
-  );
+      ),
+    );
+  }
+
+  try {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.60,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (_, controllerScroll) {
+            return Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: const BoxDecoration(
+                color: background,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  buildHeader(),
+                  Expanded(
+                    child: ListView(
+                      controller: controllerScroll,
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        16,
+                        16,
+                        MediaQuery.of(modalContext).viewInsets.bottom + 16,
+                      ),
+                      children: [
+                        buildSectionTitle(
+                          icon: Icons.edit_note_rounded,
+                          title: 'Detalhes do Pagamento',
+                        ),
+                        buildTextField(
+                          controller: nomeCtrl,
+                          label: 'Descrição do gasto',
+                          hint: 'Onde o valor será destinado',
+                          icon: Icons.edit_note_rounded,
+                          textCapitalization: TextCapitalization.sentences,
+                          maxLines: 2,
+                        ),
+                        buildTextField(
+                          controller: custoCtrl,
+                          label: 'Custo total (R\$)',
+                          hint: '0,00',
+                          icon: Icons.attach_money_rounded,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        ),
+                        buildTextField(
+                          controller: pagoCtrl,
+                          label: 'Valor pago (R\$)',
+                          hint: '0,00',
+                          icon: Icons.payments_rounded,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          textInputAction: TextInputAction.done,
+                        ),
+                        const SizedBox(height: 20),
+                        Obx(() {
+                          final isSaving = salvando.value;
+                          return SizedBox(
+                            width: double.infinity,
+                            height: 44,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                disabledBackgroundColor: primary.withValues(alpha: 0.45),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              onPressed: isSaving ? null : () => salvarGasto(modalContext),
+                              icon: isSaving
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : const Icon(Icons.check_circle_outline_rounded,
+                                      color: Colors.white, size: 18),
+                              label: Text(
+                                isSaving ? 'Salvando...' : 'Salvar gasto',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 6),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: TextButton.icon(
+                            onPressed: () {
+                              FocusManager.instance.primaryFocus?.unfocus();
+                              Navigator.of(modalContext).pop();
+                            },
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            label: Text(
+                              'Cancelar',
+                              style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13),
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: textMuted,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 35),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  } finally {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await Future<void>.delayed(Duration.zero);
+    nomeCtrl.dispose();
+    custoCtrl.dispose();
+    pagoCtrl.dispose();
+  }
 }
 
 Widget resumoCard(
@@ -932,109 +1011,55 @@ Widget resumoCard(
   final percent = (custoEstimado > 0) ? (custoFinal / custoEstimado).clamp(0.0, 1.0) : 0.0;
 
   return Container(
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     decoration: BoxDecoration(
       gradient: gradient,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(18),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.12),
-          blurRadius: 12,
-          offset: const Offset(0, 6),
-        ),
+            color: Colors.black.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 4)),
       ],
     ),
     child: Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        // === Indicador Circular ===
         CircularPercentIndicator(
-          radius: 42,
-          lineWidth: 6,
+          radius: 34,
+          lineWidth: 5,
           percent: percent,
           animation: true,
           circularStrokeCap: CircularStrokeCap.round,
           linearGradient: LinearGradient(
-            colors: [
-              gradient.colors.first,
-              gradient.colors.last,
-            ],
-            begin: Alignment.bottomLeft,
-            end: Alignment.centerRight,
+            colors: [gradient.colors.first, gradient.colors.last],
           ),
-          backgroundColor: Colors.white.withValues(alpha: 0.4),
+          backgroundColor: Colors.white.withValues(alpha: 0.3),
           center: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
                 '${(percent * 100).toStringAsFixed(0)}%',
                 style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: 22,
-                ),
-              ),
-              Text(
-                'Gasto',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
+                    fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
               ),
             ],
           ),
         ),
-
-        // === Dados Resumo ===
+        const SizedBox(width: 16),
         Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(left: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Resumo Financeiro',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    letterSpacing: 0.3,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                _infoBoxResumo(
-                  'Custo Estimado',
-                  'R\$ ${Biblioteca.formatarValorDecimal(custoEstimado)}',
-                  Icons.savings_rounded,
-                  Colors.white,
-                ),
-                const SizedBox(height: 6),
-                _infoBoxResumo(
-                  'Custo Final',
-                  'R\$ ${Biblioteca.formatarValorDecimal(custoFinal)}',
-                  Icons.stacked_bar_chart_rounded,
-                  Colors.white,
-                ),
-                const SizedBox(height: 10),
-                if (percent >= 1)
-                  Row(
-                    children: [
-                      const Icon(Icons.warning_amber_rounded, color: Colors.yellowAccent, size: 18),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Orçamento atingido!',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.yellowAccent,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Resumo Financeiro',
+                style: GoogleFonts.poppins(
+                    color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+              const SizedBox(height: 6),
+              _infoBoxResumo('Estimado:', 'R\$ ${Biblioteca.formatarValorDecimal(custoEstimado)}',
+                  Icons.savings_rounded, Colors.white),
+              const SizedBox(height: 4),
+              _infoBoxResumo('Final:', 'R\$ ${Biblioteca.formatarValorDecimal(custoFinal)}',
+                  Icons.stacked_bar_chart_rounded, Colors.white),
+            ],
           ),
         ),
       ],
@@ -1045,25 +1070,17 @@ Widget resumoCard(
 Widget _infoBoxResumo(String label, String value, IconData icon, Color color) {
   return Row(
     children: [
-      Icon(icon, color: color.withValues(alpha: 0.85), size: 18),
-      const SizedBox(width: 6),
-      Expanded(
-        child: Text(
-          label,
-          style: GoogleFonts.poppins(
-            fontSize: 10,
-            color: color.withValues(alpha: 0.85),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
+      Icon(icon, color: color.withValues(alpha: 0.8), size: 14),
+      const SizedBox(width: 4),
+      Text(
+        label,
+        style: GoogleFonts.poppins(
+            fontSize: 11, color: color.withValues(alpha: 0.8), fontWeight: FontWeight.w500),
       ),
+      const Spacer(),
       Text(
         value,
-        style: GoogleFonts.poppins(
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-          fontSize: 12.5,
-        ),
+        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
       ),
     ],
   );
@@ -1073,186 +1090,419 @@ Future<void> showAddOrcamentoBottomSheet(
   BuildContext context,
   String idEvento,
 ) async {
-  final theme = Get.find<EventThemeController>();
+  final themeController = Get.find<EventThemeController>();
   final orcamentoController = Get.find<OrcamentoController>();
-
-  final corPrincipal = theme.primaryColor.value;
-  final corSecundaria = theme.secondaryColor.value.withValues(alpha: 0.03);
 
   final nomeCtrl = TextEditingController();
   final custoEstimadoCtrl = TextEditingController();
-  final formKey = GlobalKey<FormState>();
+  final RxBool salvando = false.obs;
 
-  await showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: theme.primaryColor.value.withValues(alpha: 0.03),
-    builder: (context) {
-      return FractionallySizedBox(
-        heightFactor: 0.9,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                corSecundaria.withValues(alpha: 0.9),
-                Colors.white,
-                corPrincipal.withValues(alpha: 0.05),
-              ],
-              stops: const [0.0, 0.6, 1.0],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 14,
-                right: 14,
-                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+  final primary = themeController.primaryColor.value;
+  final gradient = themeController.gradient.value;
+
+  // Cores exatas do padrão
+  const background = Color(0xFFF8FAFC);
+  const textDark = Color(0xFF1F2937);
+  const textMuted = Color(0xFF64748B);
+
+  Future<void> salvarOrcamento(BuildContext modalContext) async {
+    if (salvando.value) return;
+
+    final descricao = nomeCtrl.text.trim();
+    final custoTexto = custoEstimadoCtrl.text.trim();
+
+    if (descricao.isEmpty) {
+      Get.snackbar(
+        'Atenção',
+        'Informe a descrição do gasto.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+      );
+      return;
+    }
+
+    if (custoTexto.isEmpty) {
+      Get.snackbar(
+        'Atenção',
+        'Informe o custo estimado.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+      );
+      return;
+    }
+
+    try {
+      salvando.value = true;
+      final double custo = Biblioteca.toDouble(custoTexto);
+
+      final resultado = await orcamentoController.validarCriacaoOrcamento(custo);
+
+      if (!resultado.$1) {
+        Get.snackbar(
+          resultado.$2 ?? 'Erro ao criar orçamento',
+          'Excedente: R\$ ${Biblioteca.formatarValorDecimal(resultado.$3)}\n'
+          'Limite: R\$ ${Biblioteca.formatarValorDecimal(resultado.$4)}',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 4),
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+        );
+        salvando.value = false;
+        return;
+      }
+
+      EasyLoading.show(status: 'Salvando...');
+
+      final novo = OrcamentoModel(
+        idOrcamento: DateTime.now().millisecondsSinceEpoch.toString(),
+        idEvento: idEvento,
+        idServicoFornecido: null,
+        custoEstimado: custo,
+        anotacoes: descricao,
+        status: StatusOrcamento.pendente,
+      );
+
+      await orcamentoController.criarOrcamento(novo);
+
+      FocusManager.instance.primaryFocus?.unfocus();
+      EasyLoading.dismiss();
+
+      if (modalContext.mounted) {
+        Navigator.of(modalContext).pop();
+      }
+
+      Get.snackbar(
+        'Orçamento adicionado',
+        descricao,
+        backgroundColor: primary,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+        icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white),
+      );
+    } catch (e) {
+      EasyLoading.dismiss();
+      Get.snackbar(
+        'Erro',
+        'Não foi possível salvar o orçamento.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+      );
+    } finally {
+      salvando.value = false;
+    }
+  }
+
+  Widget buildDragHandle() {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    );
+  }
+
+  Widget buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildDragHandle(),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.30)),
+                ),
+                child: const Icon(Icons.attach_money_rounded, color: Colors.white, size: 24),
               ),
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 16),
-                      Center(
-                        child: Container(
-                          width: 60,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade300,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Adicionar ao orçamento',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 18,
+                        height: 1.1,
+                        fontWeight: FontWeight.w800,
                       ),
-                      const SizedBox(height: 24),
-
-                      // === ÍCONE E TÍTULO ===
-                      Center(
-                        child: Column(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: corPrincipal.withValues(alpha: 0.15),
-                              ),
-                              child: Icon(
-                                Icons.attach_money_rounded,
-                                color: corPrincipal,
-                                size: 44,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              "Adicionar ao orçamento",
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                color: corPrincipal,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 20,
-                              ),
-                            ),
-                          ],
-                        ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Descreva o gasto e o custo estimado.',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withValues(alpha: 0.88),
+                        fontSize: 11,
+                        height: 1.35,
+                        fontWeight: FontWeight.w500,
                       ),
-
-                      const SizedBox(height: 28),
-
-                      // === CAMPOS ===
-                      CustomInputField(
-                        label: "Descrição do gasto",
-                        hintlabel: 'Descreva aqui onde será usado o recurso',
-                        icon: Icons.category_outlined,
-                        controller: nomeCtrl,
-                        color: corPrincipal,
-                        titleColor: corPrincipal,
-                        maxLines: 3,
-                        validator: (v) =>
-                            v == null || v.trim().isEmpty ? "Informe a descrição do gasto" : null,
-                      ),
-                      CustomInputField(
-                        label: "Custo estimado (R\$)",
-                        hintlabel: 'Informe o custo estimado',
-                        icon: Icons.savings_outlined,
-                        controller: custoEstimadoCtrl,
-                        type: InputType.money,
-                        color: corPrincipal,
-                        titleColor: corPrincipal,
-                        validator: (v) {
-                          if (v == null || v.isEmpty) return "Informe o custo estimado";
-                          return null;
-                        },
-                      ),
-
-                      const SizedBox(height: 36),
-
-                      // === BOTÃO SALVAR ===
-                      BotaoSalvar(
-                        texto: 'Salvar orçamento',
-                        onPressed: () async {
-                          if (!formKey.currentState!.validate()) return;
-
-                          final double custo = Biblioteca.toDouble(custoEstimadoCtrl.text);
-
-                          final resultado =
-                              await orcamentoController.validarCriacaoOrcamento(custo);
-
-                          if (!resultado.$1) {
-                            // ❌ Mostra alerta bonitão
-                            Get.snackbar(
-                              resultado.$2 ?? 'Erro ao criar orçamento',
-                              'Excedente: R\$ ${Biblioteca.formatarValorDecimal(resultado.$3)}\n'
-                              'Limite do evento: R\$ ${Biblioteca.formatarValorDecimal(resultado.$4)}',
-                              backgroundColor: Colors.redAccent,
-                              colorText: Colors.white,
-                              duration: const Duration(seconds: 4),
-                            );
-                            return;
-                          }
-
-                          EasyLoading.show(status: 'Salvando...');
-
-                          final novo = OrcamentoModel(
-                            idOrcamento: DateTime.now().millisecondsSinceEpoch.toString(),
-                            idEvento: idEvento,
-                            idServicoFornecido: null,
-                            custoEstimado: custo,
-                            anotacoes: nomeCtrl.text,
-                            status: StatusOrcamento.pendente,
-                          );
-
-                          await orcamentoController.criarOrcamento(novo);
-
-                          EasyLoading.dismiss();
-                          Navigator.pop(context);
-                        },
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // === BOTÃO CANCELAR ===
-                      BotaoCancelar(
-                        texto: 'Cancelar',
-                        onPressed: () => Navigator.pop(context),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildSectionTitle({required IconData icon, required String title}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: primary, size: 16),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    color: textDark,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    String? hint,
+    TextInputType? keyboardType,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    TextInputAction textInputAction = TextInputAction.next,
+    int maxLines = 1,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: keyboardType,
+        textCapitalization: textCapitalization,
+        textInputAction: textInputAction,
+        maxLines: maxLines,
+        style: GoogleFonts.poppins(color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          labelStyle:
+              GoogleFonts.poppins(color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
+          hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
+          prefixIcon: Column(
+            mainAxisAlignment: maxLines > 1 ? MainAxisAlignment.start : MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: maxLines > 1 ? 16.0 : 0),
+                child: Icon(icon, color: primary, size: 20),
+              ),
+            ],
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: primary, width: 1.2),
+          ),
         ),
-      );
-    },
-  );
+      ),
+    );
+  }
+
+  try {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.85,
+          minChildSize: 0.60,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (_, controllerScroll) {
+            return Container(
+              clipBehavior: Clip.antiAlias,
+              decoration: const BoxDecoration(
+                color: background,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  buildHeader(),
+                  Expanded(
+                    child: ListView(
+                      controller: controllerScroll,
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        16,
+                        16,
+                        MediaQuery.of(modalContext).viewInsets.bottom + 16,
+                      ),
+                      children: [
+                        buildSectionTitle(
+                          icon: Icons.edit_note_rounded,
+                          title: 'Detalhes do Orçamento',
+                        ),
+                        buildTextField(
+                          controller: nomeCtrl,
+                          label: 'Descrição do gasto',
+                          hint: 'Ex: Decoração, DJ, Bebidas...',
+                          icon: Icons.category_outlined,
+                          textCapitalization: TextCapitalization.sentences,
+                          maxLines: 2,
+                        ),
+                        buildTextField(
+                          controller: custoEstimadoCtrl,
+                          label: 'Custo estimado (R\$)',
+                          hint: '0,00',
+                          icon: Icons.savings_outlined,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          textInputAction: TextInputAction.done,
+                        ),
+                        const SizedBox(height: 20),
+                        Obx(() {
+                          final isSaving = salvando.value;
+                          return SizedBox(
+                            width: double.infinity,
+                            height: 44,
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                disabledBackgroundColor: primary.withValues(alpha: 0.45),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                              onPressed: isSaving ? null : () => salvarOrcamento(modalContext),
+                              icon: isSaving
+                                  ? const SizedBox(
+                                      width: 16,
+                                      height: 16,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2, color: Colors.white),
+                                    )
+                                  : const Icon(Icons.check_circle_outline_rounded,
+                                      color: Colors.white, size: 18),
+                              label: Text(
+                                isSaving ? 'Salvando...' : 'Salvar orçamento',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 6),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: TextButton.icon(
+                            onPressed: () {
+                              FocusManager.instance.primaryFocus?.unfocus();
+                              Navigator.of(modalContext).pop();
+                            },
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            label: Text(
+                              'Cancelar',
+                              style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13),
+                            ),
+                            style: TextButton.styleFrom(
+                              foregroundColor: textMuted,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 35),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  } finally {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await Future<void>.delayed(Duration.zero);
+    nomeCtrl.dispose();
+    custoEstimadoCtrl.dispose();
+  }
 }
 
 void _abrirDialogAvaliacaoServico({
@@ -1281,7 +1531,7 @@ String _mensagemMotivoNaoAvaliar(OrcamentoModel o, double totalPago) {
   final custo = o.custoEstimado ?? 0;
 
   if (o.status != StatusOrcamento.fechado) {
-    return "Avaliação liberada após fechar o orçamento.";
+    return "Avaliação liberada após fechar.";
   }
 
   if (totalPago < custo) {
@@ -1289,5 +1539,5 @@ String _mensagemMotivoNaoAvaliar(OrcamentoModel o, double totalPago) {
     return "Pague o restante (R\$ ${falta.toStringAsFixed(2)}) para avaliar.";
   }
 
-  return "Avaliação ainda não disponível.";
+  return "Avaliação não disponível.";
 }

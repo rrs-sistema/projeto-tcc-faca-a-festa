@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/utils/biblioteca.dart';
-import './../../../../../controllers/fornecedor_localizacao_controller.dart';
-import './../../../../../controllers/servico_produto_controller.dart';
+import '../../../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
+import '../../../../../controllers/servico/servico_produto_controller.dart';
 import './../../../../../core/utils/no_sqflite_cache_manager.dart';
-import './../../../../../controllers/fornecedor_controller.dart';
+import '../../../../../controllers/fornecedor/fornecedor_controller.dart';
 import './../../servico/servico_produto_list_screen.dart';
 import './../../../../../data/models/model.dart';
 import './territorio_atendimento_screen.dart';

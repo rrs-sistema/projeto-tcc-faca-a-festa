@@ -1,31 +1,51 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:ui';
 
 import './../../../../controllers/convidado/grupo_convidado_controller.dart';
 import './../../../../data/models/convidado/grupo_convidado_model.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
-import './../../../widgets/custom_input_field.dart';
 
 Future<void> abrirAdicionarGrupoBottomSheet({
   required BuildContext context,
   required String idEvento,
   required GrupoConvidadoController controller,
 }) {
-  final themeController = Get.find<EventThemeController>();
-  final primary = themeController.primaryColor.value;
-  final gradient = themeController.gradient.value;
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (context) => _AdicionarGrupoFormContent(
+      idEvento: idEvento,
+      controller: controller,
+    ),
+  );
+}
 
-  final nomeCtrl = TextEditingController();
-  final numeroMesaCtrl = TextEditingController();
-  final descCtrl = TextEditingController();
+class _AdicionarGrupoFormContent extends StatefulWidget {
+  final String idEvento;
+  final GrupoConvidadoController controller;
 
-  final RxString corSelecionada = primary.toHex().obs;
-  final RxString iconeSelecionado = 'group'.obs;
+  const _AdicionarGrupoFormContent({
+    required this.idEvento,
+    required this.controller,
+  });
+
+  @override
+  State<_AdicionarGrupoFormContent> createState() => _AdicionarGrupoFormContentState();
+}
+
+class _AdicionarGrupoFormContentState extends State<_AdicionarGrupoFormContent> {
+  final _formKey = GlobalKey<FormState>();
+  late final TextEditingController _nomeCtrl;
+  late final TextEditingController _numeroMesaCtrl;
+  late final TextEditingController _descCtrl;
+
+  late String _corSelecionada;
+  late String _iconeSelecionado;
+  bool _salvando = false;
 
   final cores = [
-    primary.toHex(),
+    '#0F766E',
     '#FF7BAC',
     '#FF6F91',
     '#FFD36E',
@@ -46,328 +66,324 @@ Future<void> abrirAdicionarGrupoBottomSheet({
     'cake': Icons.cake_rounded,
     'music': Icons.music_note_rounded,
     'work': Icons.work_rounded,
-    'pets': Icons.pets_rounded,
-    'sports': Icons.sports_soccer_rounded,
-    'emoji': Icons.emoji_people_rounded,
-    'school': Icons.school_rounded,
-    'travel': Icons.flight_takeoff_rounded,
   };
 
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) {
-      return Container(
+  @override
+  void initState() {
+    super.initState();
+    final theme = Get.find<EventThemeController>();
+    _nomeCtrl = TextEditingController();
+    _numeroMesaCtrl = TextEditingController();
+    _descCtrl = TextEditingController();
+    _corSelecionada = theme.primaryColor.value.toHex();
+    if (!cores.contains(_corSelecionada)) cores[0] = _corSelecionada;
+    _iconeSelecionado = 'group';
+  }
+
+  @override
+  void dispose() {
+    _nomeCtrl.dispose();
+    _numeroMesaCtrl.dispose();
+    _descCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final primaryColor = Get.find<EventThemeController>().primaryColor.value;
+
+    return FractionallySizedBox(
+      heightFactor: 0.88,
+      child: Container(
         decoration: BoxDecoration(
-          gradient: gradient,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          color: theme.colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 28),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(32),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: EdgeInsets.only(left: 16, right: 16, bottom: bottomInset + 16),
             child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // ===========================================================
-                  // 🎀 Cabeçalho Premium
-                  // ===========================================================
-                  Center(
-                    child: Column(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Colors.white.withValues(alpha: 0.25),
-                          ),
-                          child: Icon(
-                            Icons.group_add_rounded,
-                            size: 46,
-                            color: primary,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          "Criar Grupo",
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 26,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          "Organize seus convidados em grupos personalizados",
-                          style: GoogleFonts.poppins(
-                            color: Colors.white.withValues(alpha: 0.9),
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ===========================================================
-                  // 📝 NOME DO GRUPO
-                  // ===========================================================
-
-                  const SizedBox(height: 6),
-                  CustomInputField(
-                    controller: nomeCtrl,
-                    icon: Icons.badge_rounded,
-                    label: 'Nome do grupo',
-                    color: Colors.white,
-                  ),
-
-                  const SizedBox(height: 6),
-                  CustomInputField(
-                    controller: numeroMesaCtrl,
-                    icon: Icons.table_bar_outlined,
-                    label: 'Número de mesas',
-                    color: Colors.white,
-                    keyboardType: TextInputType.numberWithOptions(decimal: false),
-                  ),
-
-                  // ===========================================================
-                  // ✏️ DESCRIÇÃO
-                  // ===========================================================
-                  const SizedBox(height: 6),
-                  CustomInputField(
-                    controller: descCtrl,
-                    maxLines: 3,
-                    icon: Icons.notes_rounded,
-                    label: 'Descrição',
-                    color: Colors.white,
-                  ),
-                  const SizedBox(height: 26),
-
-                  // ===========================================================
-                  // 🎨 Seleção de Cor
-                  // ===========================================================
-                  Text(
-                    "Cor do grupo",
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  Obx(() {
-                    return Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: cores.map((hex) {
-                        final color = Color(int.parse(hex.replaceAll('#', '0xff')));
-                        final selected = corSelecionada.value == hex;
-                        return GestureDetector(
-                          onTap: () => corSelecionada.value = hex,
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            width: selected ? 42 : 36,
-                            height: selected ? 42 : 36,
-                            decoration: BoxDecoration(
-                              color: color,
-                              shape: BoxShape.circle,
-                              border: Border.all(
-                                color: selected ? Colors.white : Colors.white54,
-                                width: selected ? 3 : 1.5,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  }),
-
-                  const SizedBox(height: 24),
-
-                  // ===========================================================
-                  // 🧩 Ícone
-                  // ===========================================================
-                  Text(
-                    "Ícone",
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 15,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  Obx(() {
-                    final entries = icones.entries.toList();
-
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: List.generate(
-                        (entries.length / 3).ceil(),
-                        (rowIndex) {
-                          final rowItems = entries.skip(rowIndex * 3).take(3).toList();
-
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 12),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: rowItems.map((entry) {
-                                final selected = iconeSelecionado.value == entry.key;
-
-                                return Expanded(
-                                  child: GestureDetector(
-                                    onTap: () => iconeSelecionado.value = entry.key,
-                                    child: AnimatedContainer(
-                                      duration: const Duration(milliseconds: 200),
-                                      margin: const EdgeInsets.symmetric(horizontal: 6),
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
-                                      decoration: BoxDecoration(
-                                        color: selected
-                                            ? Colors.white.withValues(alpha: 0.25)
-                                            : Colors.white.withValues(alpha: 0.12),
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(
-                                          color: selected ? Colors.white : Colors.white24,
-                                          width: selected ? 2 : 1,
-                                        ),
-                                      ),
-                                      child: Icon(
-                                        entry.value,
-                                        size: 28,
-                                        color: selected ? Colors.white : Colors.white70,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          );
-                        },
-                      ),
-                    );
-                  }),
-
-                  const SizedBox(height: 36),
-
-                  // ===========================================================
-                  // 💾 Botão Salvar
-                  // ===========================================================
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final nome = nomeCtrl.text.trim();
-                        final descricao = descCtrl.text.trim();
-
-                        if (nome.isEmpty) {
-                          Get.snackbar(
-                            "Atenção",
-                            "Informe o nome do grupo",
-                            backgroundColor: Colors.orangeAccent,
-                            colorText: Colors.white,
-                          );
-                          return;
-                        }
-
-                        final agora = DateTime.now();
-
-                        final novo = GrupoConvidadoModel(
-                          idGrupo: DateTime.now().millisecondsSinceEpoch.toString(),
-                          idEvento: idEvento,
-                          nome: nome,
-                          descricao: descricao.isEmpty ? null : descricao,
-                          icone: iconeSelecionado.value,
-                          corHex: corSelecionada.value,
-
-                          // Totais começam zerados porque os convidados
-                          // agora ficam separados do grupo.
-                          totalConvidados: 0,
-                          totalAdultos: 0,
-                          totalCriancas: 0,
-                          totalBebes: 0,
-                          totalConfirmados: 0,
-
-                          dataCadastro: agora,
-                          dataAtualizacao: agora,
-                        );
-
-                        await controller.adicionarGrupo(novo);
-                        Get.back();
-
-                        Get.snackbar(
-                          "Sucesso!",
-                          "Grupo criado com sucesso 🎉",
-                          backgroundColor: primary,
-                          colorText: Colors.white,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: Text(
-                        "Salvar Grupo",
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w600,
-                        ),
+              physics: const BouncingScrollPhysics(),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 12),
+                    Center(
+                      child: Container(
+                        width: 50,
+                        height: 4,
+                        decoration: BoxDecoration(
+                            color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: () => Navigator.pop(context),
-                      icon: Icon(Icons.close, color: Colors.white),
-                      label: Text(
-                        'Cancelar',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: Colors.grey.shade300),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
+                    const SizedBox(height: 14),
+                    _Header(
+                      title: 'Novo Grupo',
+                      subtitle: 'Organize seus convidados',
+                      icon: Icons.group_add_rounded,
+                      color: primaryColor,
                     ),
-                  ),
-                  const SizedBox(height: 25),
-                ],
+                    const SizedBox(height: 10),
+                    Divider(
+                        height: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                    const SizedBox(height: 16),
+                    _textField(
+                      controller: _nomeCtrl,
+                      label: 'Nome do grupo',
+                      icon: Icons.badge_outlined,
+                      requiredField: true,
+                    ),
+                    const SizedBox(height: 12),
+                    _textField(
+                      controller: _numeroMesaCtrl,
+                      label: 'Número da mesa (Opcional)',
+                      icon: Icons.table_bar_outlined,
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 12),
+                    _textField(
+                      controller: _descCtrl,
+                      label: 'Descrição',
+                      icon: Icons.notes_rounded,
+                      maxLines: 2,
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Cor do grupo',
+                        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: cores.map((hex) => _buildColorOption(hex)).toList(),
+                    ),
+                    const SizedBox(height: 16),
+                    Text('Ícone',
+                        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: icones.entries
+                          .map((entry) => _buildIconOption(entry.key, entry.value, primaryColor))
+                          .toList(),
+                    ),
+                    const SizedBox(height: 24),
+                    _FooterActions(
+                      isSaving: _salvando,
+                      onSubmit: _salvar,
+                      primaryColor: primaryColor,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildColorOption(String hex) {
+    final color = Color(int.parse(hex.replaceAll('#', '0xff')));
+    final selected = _corSelecionada == hex;
+    return GestureDetector(
+      onTap: () => setState(() => _corSelecionada = hex),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 34,
+        height: 34,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(
+              color: selected ? Colors.black54 : Colors.transparent, width: selected ? 2 : 0),
+        ),
+        child: selected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+      ),
+    );
+  }
+
+  Widget _buildIconOption(String key, IconData icon, Color primaryColor) {
+    final selected = _iconeSelecionado == key;
+    return GestureDetector(
+      onTap: () => setState(() => _iconeSelecionado = key),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: selected ? primaryColor.withValues(alpha: 0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: selected ? primaryColor : Colors.grey.shade300),
+        ),
+        child: Icon(icon, color: selected ? primaryColor : Colors.black54, size: 22),
+      ),
+    );
+  }
+
+  Widget _textField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool requiredField = false,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      style: const TextStyle(fontSize: 13),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(fontSize: 13),
+        prefixIcon: Icon(icon, size: 18),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+        ),
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+      ),
+      validator: requiredField
+          ? (value) => (value == null || value.trim().isEmpty) ? 'Campo obrigatório' : null
+          : null,
+    );
+  }
+
+  Future<void> _salvar() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _salvando = true);
+
+    try {
+      final agora = DateTime.now();
+      final novo = GrupoConvidadoModel(
+        idGrupo: DateTime.now().millisecondsSinceEpoch.toString(),
+        idEvento: widget.idEvento,
+        nome: _nomeCtrl.text.trim(),
+        descricao: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+        icone: _iconeSelecionado,
+        corHex: _corSelecionada,
+        totalConvidados: 0,
+        totalAdultos: 0,
+        totalCriancas: 0,
+        totalBebes: 0,
+        totalConfirmados: 0,
+        dataCadastro: agora,
+        dataAtualizacao: agora,
       );
-    },
-  );
+      await widget.controller.adicionarGrupo(novo);
+      Get.back();
+    } finally {
+      if (mounted) setState(() => _salvando = false);
+    }
+  }
+}
+
+// =========================================================================
+// WIDGETS COMPARTILHADOS (Você pode mover para um arquivo separado se quiser)
+// =========================================================================
+
+class _Header extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+  const _Header(
+      {required this.title, required this.subtitle, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+          child: Icon(icon, color: color, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title,
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w800, fontSize: 16)),
+              Text(subtitle,
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
+            ],
+          ),
+        ),
+        IconButton(
+          visualDensity: VisualDensity.compact,
+          onPressed: () => Get.back<void>(),
+          icon: const Icon(Icons.close, size: 22),
+        ),
+      ],
+    );
+  }
+}
+
+class _FooterActions extends StatelessWidget {
+  final bool isSaving;
+  final VoidCallback onSubmit;
+  final Color primaryColor;
+  const _FooterActions(
+      {required this.isSaving, required this.onSubmit, required this.primaryColor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: isSaving ? null : () => Get.back<void>(),
+            icon: const Icon(Icons.close, size: 16),
+            label: const Text('Cancelar', style: TextStyle(fontSize: 13)),
+            style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: FilledButton.icon(
+            onPressed: isSaving ? null : onSubmit,
+            icon: isSaving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : const Icon(Icons.save_outlined, size: 16),
+            label: Text(isSaving ? 'Salvando...' : 'Salvar', style: const TextStyle(fontSize: 13)),
+            style: FilledButton.styleFrom(
+                backgroundColor: primaryColor,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 extension ColorToHex on Color {
   String toHex({bool leadingHashSign = true}) {
     final buffer = StringBuffer();
-
     if (leadingHashSign) buffer.write('#');
-
     buffer.write((r.toInt()).toRadixString(16).padLeft(2, '0'));
     buffer.write((g.toInt()).toRadixString(16).padLeft(2, '0'));
     buffer.write((b.toInt()).toRadixString(16).padLeft(2, '0'));
-
     return buffer.toString().toUpperCase();
   }
 }

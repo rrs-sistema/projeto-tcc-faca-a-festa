@@ -1,28 +1,26 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:smooth_page_indicator/smooth_page_indicator.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
-import './../../../controllers/fornecedor_localizacao_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
-import './../../../core/utils/biblioteca.dart';
-import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import './../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import './../../../data/models/model.dart';
-import './../../widgets/festa_app_bar.dart';
+import '../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
+import './../../../controllers/fornecedor/fornecedor_recomendacao_controller.dart';
+import './../../../controllers/evento_controller.dart';
+import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
 import './cotacao/servico_detalhe_screen.dart';
+import './../../../core/utils/biblioteca.dart';
+import './../../widgets/festa_app_bar.dart';
 import './fornecedor_detalhe_screen.dart';
 
 class FornecedorLocalizacaoScreen extends StatefulWidget {
   final bool? showLeading;
-
-  const FornecedorLocalizacaoScreen({
-    super.key,
-    required this.showLeading,
-  });
+  const FornecedorLocalizacaoScreen({super.key, required this.showLeading});
 
   @override
   State<FornecedorLocalizacaoScreen> createState() => _FornecedorLocalizacaoScreenState();
@@ -32,9 +30,15 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   final EventThemeController themeController = Get.find<EventThemeController>();
   final FornecedorLocalizacaoController controllerLocalizacao =
       Get.put(FornecedorLocalizacaoController());
+  final EventoController eventoController = Get.find<EventoController>();
+  final FornecedorRecomendacaoController recomendacaoController =
+      Get.isRegistered<FornecedorRecomendacaoController>()
+          ? Get.find<FornecedorRecomendacaoController>()
+          : Get.put(FornecedorRecomendacaoController(), permanent: true);
 
   final TextEditingController _searchController = TextEditingController();
-  final PageController _servicosPageController = PageController(viewportFraction: 0.82);
+  final PageController _servicosPageController =
+      PageController(viewportFraction: 0.88); // Mais justinho
 
   CategoriaServicoModel? categoriaSelecionada;
   String termoBusca = '';
@@ -48,6 +52,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
       } else {
         await controllerLocalizacao.buscarFornecedoresSemCategoria();
       }
+      await _carregarRecomendacoesIA();
     });
   }
 
@@ -60,13 +65,10 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-      ),
-    );
+        statusBarBrightness: Brightness.light));
 
     return Obx(() {
       final gradient = themeController.gradient.value;
@@ -80,16 +82,16 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
       final recomendados = _recomendados(fornecedoresFiltrados, fornecedoresDestaque);
 
       return Scaffold(
-        backgroundColor: const Color(0xFFF8F6F8),
+        backgroundColor: const Color(0xFFF8FAFC),
         appBar: FestaAppBar(
           titulo: 'Fornecedores',
           automaticamenteImplyLeading: automaticallyImplyLeading,
           acoes: [
             IconButton(
-              tooltip: 'Limpar filtros',
-              icon: const Icon(Icons.tune_rounded, color: Colors.white),
-              onPressed: _abrirFiltrosRapidos,
-            ),
+              tooltip: 'Filtros',
+              icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 20),
+              onPressed: () => Get.back(), // Pode adicionar a lógica do filtro
+            )
           ],
         ),
         body: RefreshIndicator(
@@ -109,8 +111,12 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                   primary: primary,
                   gradient: gradient,
                   totalFornecedores: fornecedoresFiltrados.length,
-                  totalProximos: fornecedoresProximos.length,
-                  totalDestaques: fornecedoresDestaque.length,
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: _buildIACompactaFornecedores(
+                  primary: primary,
+                  gradient: gradient,
                 ),
               ),
               SliverPersistentHeader(
@@ -121,7 +127,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(bottom: 116),
+                  padding: const EdgeInsets.only(bottom: 100),
                   child: controllerLocalizacao.carregando.value
                       ? _loadingState(primary)
                       : _buildConteudo(
@@ -141,106 +147,434 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     });
   }
 
+  Map<String, String> _dadosEventoParaIA() {
+    final eventoAtual = eventoController.eventoAtual.value;
+    final tipoEventoAtual = eventoController.tipoEventoAtual.value;
+    final usuarioFirebase = FirebaseAuth.instance.currentUser;
+
+    return {
+      'idUsuario': usuarioFirebase?.uid ?? '',
+      'idEvento': _resolverCampoTexto(eventoAtual, const [
+        'idEvento',
+        'id',
+        'id_evento',
+        'documentId',
+      ]),
+      'tipoEventoId': _resolverCampoTexto(tipoEventoAtual, const [
+        'idTipoEvento',
+        'id',
+        'id_tipo_evento',
+      ]),
+      'tipoEventoNome': _resolverCampoTexto(tipoEventoAtual, const [
+        'nome',
+        'nomeTipoEvento',
+        'tipoEventoNome',
+      ]),
+      'cidade': _resolverCampoTexto(eventoAtual, const [
+        'cidade',
+        'cidadeEvento',
+        'nomeCidade',
+      ]),
+    };
+  }
+
+  Future<void> _carregarRecomendacoesIA({bool forcar = false}) async {
+    final dados = _dadosEventoParaIA();
+    final idEvento = dados['idEvento'] ?? '';
+    final idUsuario = dados['idUsuario'] ?? '';
+
+    debugPrint(
+      '🧠 [FornecedorLocalizacaoScreen] Dados IA | '
+      'idEvento=$idEvento | '
+      'idUsuario=$idUsuario | '
+      'tipoEventoId=${dados['tipoEventoId']} | '
+      'tipoEventoNome=${dados['tipoEventoNome']} | '
+      'cidade=${dados['cidade']}',
+    );
+
+    if (idEvento.trim().isEmpty || idUsuario.trim().isEmpty) {
+      debugPrint(
+        '⚠️ [FornecedorLocalizacaoScreen] IA não chamada: evento ou usuário vazio.',
+      );
+      return;
+    }
+
+    if (!forcar) {
+      await recomendacaoController.carregarRecomendacoesSalvas(
+        idEvento: idEvento,
+        idUsuario: idUsuario,
+        limite: 5,
+      );
+    }
+
+    if (forcar || recomendacaoController.recomendacoes.isEmpty) {
+      await recomendacaoController.atualizarRecomendacoes(
+        idEvento: idEvento,
+        idUsuario: idUsuario,
+        limite: 5,
+        modoDemo: true,
+      );
+    }
+  }
+
+  Widget _buildIACompactaFornecedores({
+    required Color primary,
+    required LinearGradient gradient,
+  }) {
+    final dados = _dadosEventoParaIA();
+    final idEvento = dados['idEvento'] ?? '';
+    final idUsuario = dados['idUsuario'] ?? '';
+
+    if (idEvento.trim().isEmpty || idUsuario.trim().isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Obx(() {
+      final loading =
+          recomendacaoController.carregando.value || recomendacaoController.gerando.value;
+      final recomendacoes = recomendacaoController.recomendacoes.take(5).toList();
+
+      return Container(
+        margin: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: primary.withValues(alpha: 0.10)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        primary.withValues(alpha: 0.95),
+                        gradient.colors.last.withValues(alpha: 0.85),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Fornecedores ideais para seu evento',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: const Color(0xFF1F2937),
+                        ),
+                      ),
+                      Text(
+                        recomendacoes.isEmpty
+                            ? 'A IA analisa perfil, localização e avaliações.'
+                            : '${recomendacoes.length} sugestão${recomendacoes.length == 1 ? '' : 'ões'} personalizada${recomendacoes.length == 1 ? '' : 's'}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 10.5,
+                          color: Colors.grey.shade600,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 6),
+                SizedBox(
+                  height: 32,
+                  child: TextButton.icon(
+                    onPressed: loading ? null : () => _carregarRecomendacoesIA(forcar: true),
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      foregroundColor: primary,
+                    ),
+                    icon: loading
+                        ? SizedBox(
+                            width: 13,
+                            height: 13,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: primary,
+                            ),
+                          )
+                        : const Icon(Icons.refresh_rounded, size: 15),
+                    label: Text(
+                      loading ? 'IA' : 'Atualizar',
+                      style: GoogleFonts.poppins(
+                        fontSize: 10.5,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            if (loading && recomendacoes.isEmpty) ...[
+              const SizedBox(height: 12),
+              LinearProgressIndicator(
+                minHeight: 4,
+                color: primary,
+                backgroundColor: primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Analisando fornecedores compatíveis...',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ] else if (recomendacoes.isEmpty) ...[
+              const SizedBox(height: 10),
+              InkWell(
+                onTap: () => _carregarRecomendacoesIA(forcar: true),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: primary.withValues(alpha: 0.06),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.psychology_alt_rounded, color: primary, size: 18),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Gerar recomendações inteligentes agora',
+                          style: GoogleFonts.poppins(
+                            fontSize: 11.5,
+                            color: primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Icon(Icons.arrow_forward_ios_rounded, color: primary, size: 12),
+                    ],
+                  ),
+                ),
+              ),
+            ] else ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 88,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: recomendacoes.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (_, index) => _IACardFornecedorCompacto(
+                    recomendacao: recomendacoes[index],
+                    primary: primary,
+                    onTap: () => _abrirFornecedorRecomendadoIA(recomendacoes[index]),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    });
+  }
+
+  Future<void> _abrirFornecedorRecomendadoIA(
+    FornecedorRecomendacaoModel recomendacao,
+  ) async {
+    final dados = _dadosEventoParaIA();
+
+    await recomendacaoController.visualizarFornecedor(
+      idEvento: dados['idEvento'] ?? '',
+      idFornecedor: recomendacao.idFornecedor,
+      tipoEventoId: dados['tipoEventoId'],
+      tipoEventoNome: dados['tipoEventoNome'],
+      cidade: dados['cidade'],
+    );
+
+    final fornecedor = _buscarFornecedorDetalhadoPorId(recomendacao.idFornecedor);
+
+    if (fornecedor == null) {
+      Get.snackbar(
+        'Fornecedor recomendado',
+        'A recomendação foi gerada, mas o fornecedor ainda não foi carregado na vitrine. Atualize a tela e tente novamente.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange.shade700,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    _abrirDetalheFornecedor(fornecedor);
+  }
+
+  FornecedorDetalhadoDto? _buscarFornecedorDetalhadoPorId(String idFornecedor) {
+    final id = idFornecedor.trim();
+    if (id.isEmpty) return null;
+
+    final listas = <FornecedorDetalhadoDto>[
+      ...controllerLocalizacao.fornecedoresFiltrados,
+      ...controllerLocalizacao.fornecedoresProximos,
+      ...controllerLocalizacao.fornecedoresDestaque,
+      ...controllerLocalizacao.fornecedores,
+    ];
+
+    for (final item in listas) {
+      if (item.fornecedor.idFornecedor.trim() == id) {
+        return item;
+      }
+    }
+
+    return null;
+  }
+
+  String _resolverCampoTexto(dynamic objeto, List<String> campos) {
+    if (objeto == null) return '';
+
+    for (final campo in campos) {
+      try {
+        dynamic valor;
+
+        switch (campo) {
+          case 'idEvento':
+            valor = objeto.idEvento;
+            break;
+          case 'id':
+            valor = objeto.id;
+            break;
+          case 'id_evento':
+            valor = objeto.id_evento;
+            break;
+          case 'documentId':
+            valor = objeto.documentId;
+            break;
+          case 'idTipoEvento':
+            valor = objeto.idTipoEvento;
+            break;
+          case 'id_tipo_evento':
+            valor = objeto.id_tipo_evento;
+            break;
+          case 'nome':
+            valor = objeto.nome;
+            break;
+          case 'nomeTipoEvento':
+            valor = objeto.nomeTipoEvento;
+            break;
+          case 'tipoEventoNome':
+            valor = objeto.tipoEventoNome;
+            break;
+          case 'cidade':
+            valor = objeto.cidade;
+            break;
+          case 'cidadeEvento':
+            valor = objeto.cidadeEvento;
+            break;
+          case 'nomeCidade':
+            valor = objeto.nomeCidade;
+            break;
+        }
+
+        final texto = valor?.toString().trim() ?? '';
+        if (texto.isNotEmpty) return texto;
+      } catch (_) {
+        continue;
+      }
+    }
+
+    return '';
+  }
+
   List<FornecedorDetalhadoDto> _baseFornecedores() {
     final filtrados = controllerLocalizacao.fornecedoresFiltrados.toList();
     if (filtrados.isNotEmpty) return filtrados;
-
     final proximos = controllerLocalizacao.fornecedoresProximos.toList();
     if (proximos.isNotEmpty) return proximos;
-
     return controllerLocalizacao.fornecedores.toList();
   }
 
   List<FornecedorDetalhadoDto> _aplicarFiltros(List<FornecedorDetalhadoDto> lista) {
     final termo = termoBusca.trim().toLowerCase();
-
     var resultado = lista;
-
     if (categoriaSelecionada != null) {
       final idCategoria = categoriaSelecionada!.id;
       final nomeCategoria = categoriaSelecionada!.nome.trim().toLowerCase();
-
-      resultado = resultado.where((f) {
-        final categoriaNome = f.categoriaNome.toLowerCase();
-        return f.categoriaId == idCategoria || categoriaNome.contains(nomeCategoria);
-      }).toList();
+      resultado = resultado
+          .where((f) =>
+              f.categoriaId == idCategoria || f.categoriaNome.toLowerCase().contains(nomeCategoria))
+          .toList();
     }
-
     if (termo.isNotEmpty) {
       resultado = resultado.where((f) {
         final fornecedor = f.fornecedor;
         final nome = fornecedor.razaoSocial.toLowerCase();
         final descricao = (fornecedor.descricao ?? '').toLowerCase();
         final categoria = f.categoriaNome.toLowerCase();
-        final tags = fornecedor.categorias
-            .map((c) => (c['nomeSubcategoria'] ?? '').toString().toLowerCase())
-            .join(' ');
-
-        return nome.contains(termo) ||
-            descricao.contains(termo) ||
-            categoria.contains(termo) ||
-            tags.contains(termo);
+        return nome.contains(termo) || descricao.contains(termo) || categoria.contains(termo);
       }).toList();
     }
-
     resultado.sort((a, b) {
-      final notaA = controllerLocalizacao.mediasAvaliacoes[a.fornecedor.idFornecedor] ?? 0.0;
-      final notaB = controllerLocalizacao.mediasAvaliacoes[b.fornecedor.idFornecedor] ?? 0.0;
-      final cmpNota = notaB.compareTo(notaA);
+      final cmpNota = (controllerLocalizacao.mediasAvaliacoes[b.fornecedor.idFornecedor] ?? 0.0)
+          .compareTo(controllerLocalizacao.mediasAvaliacoes[a.fornecedor.idFornecedor] ?? 0.0);
       if (cmpNota != 0) return cmpNota;
-
-      final distA = a.distanciaKm ?? 999999;
-      final distB = b.distanciaKm ?? 999999;
-      return distA.compareTo(distB);
+      return (a.distanciaKm ?? 999999).compareTo(b.distanciaKm ?? 999999);
     });
-
     return resultado;
   }
 
   List<FornecedorDetalhadoDto> _recomendados(
-    List<FornecedorDetalhadoDto> todos,
-    List<FornecedorDetalhadoDto> destaques,
-  ) {
+      List<FornecedorDetalhadoDto> todos, List<FornecedorDetalhadoDto> destaques) {
     final mapa = <String, FornecedorDetalhadoDto>{};
-
     for (final f in destaques) {
       mapa[f.fornecedor.idFornecedor] = f;
     }
-
     for (final f in todos) {
       mapa.putIfAbsent(f.fornecedor.idFornecedor, () => f);
       if (mapa.length >= 8) break;
     }
-
     return mapa.values.take(8).toList();
   }
 
-  Widget _buildHeroSection({
-    required Color primary,
-    required LinearGradient gradient,
-    required int totalFornecedores,
-    required int totalProximos,
-    required int totalDestaques,
-  }) {
+  Widget _buildHeroSection(
+      {required Color primary, required LinearGradient gradient, required int totalFornecedores}) {
     return Container(
-      margin: const EdgeInsets.fromLTRB(14, 10, 14, 8),
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+      margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            primary.withValues(alpha: 0.98),
-            gradient.colors.last.withValues(alpha: 0.92),
-          ],
+          colors: [primary.withValues(alpha: 0.95), primary.withValues(alpha: 0.75)],
         ),
         boxShadow: [
           BoxShadow(
-            color: primary.withValues(alpha: 0.18),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
+              color: primary.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 3)),
         ],
       ),
       child: Column(
@@ -249,119 +583,35 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
           Row(
             children: [
               Container(
-                width: 38,
-                height: 38,
+                padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.20),
-                  ),
+                  color: Colors.white.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
-                  Icons.handshake_rounded,
-                  color: Colors.white,
-                  size: 22,
-                ),
+                child: const Icon(Icons.handshake_rounded, color: Colors.white, size: 18),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Monte o time da sua festa',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      'Encontre fornecedores',
                       style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 16.5,
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
-                      ),
+                          color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
                     ),
-                    const SizedBox(height: 2),
                     Text(
-                      'Compare e peça orçamentos aos melhores fornecedores.',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                      'Tudo para a sua festa.',
                       style: GoogleFonts.poppins(
-                        color: Colors.white.withValues(alpha: 0.84),
-                        fontSize: 11.2,
-                        height: 1.25,
-                      ),
+                          color: Colors.white.withValues(alpha: 0.8), fontSize: 10),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           _buildSearchBox(primary),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _MetricPill(
-                  value: '$totalFornecedores',
-                  label: 'opções',
-                  icon: Icons.storefront_rounded,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: _MetricPill(
-                  value: '$totalProximos',
-                  label: 'próximos',
-                  icon: Icons.location_on_rounded,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Expanded(
-                child: _MetricPill(
-                  value: '$totalDestaques',
-                  label: 'destaques',
-                  icon: Icons.star_rounded,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            height: 40,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                HapticFeedback.mediumImpact();
-                _abrirFiltrosRapidos();
-              },
-              icon: const Icon(
-                Icons.auto_awesome_rounded,
-                size: 16,
-              ),
-              label: const Text(
-                'Encontrar fornecedor ideal',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: primary,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                minimumSize: const Size.fromHeight(40),
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                visualDensity: VisualDensity.compact,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                textStyle: GoogleFonts.poppins(
-                  fontSize: 12.6,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ),
-          ),
         ],
       ),
     );
@@ -369,36 +619,38 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
   Widget _buildSearchBox(Color primary) {
     return Container(
+      height: 38, // Bem compacto
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 6,
+              offset: const Offset(0, 2)),
         ],
       ),
       child: TextField(
         controller: _searchController,
         onChanged: (value) => setState(() => termoBusca = value),
         textInputAction: TextInputAction.search,
+        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
-          hintText: 'Buscar buffet, decoração, fotografia...',
-          hintStyle: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13),
-          prefixIcon: Icon(Icons.search_rounded, color: primary),
+          hintText: 'Buscar buffet, decoração...',
+          hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
+          prefixIcon: Icon(Icons.search_rounded, color: primary.withValues(alpha: 0.8), size: 16),
           suffixIcon: termoBusca.trim().isEmpty
               ? null
               : IconButton(
-                  icon: const Icon(Icons.close_rounded),
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.close_rounded, size: 14),
                   onPressed: () {
                     _searchController.clear();
                     setState(() => termoBusca = '');
                   },
                 ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
         ),
       ),
     );
@@ -407,61 +659,41 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   Widget _menuCategorias(Color primary, LinearGradient gradient) {
     return Obx(() {
       final categorias = controllerLocalizacao.categorias;
-
-      if (categorias.isEmpty) {
-        return Container(
-          color: const Color(0xFFF8F6F8),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          alignment: Alignment.centerLeft,
-          child: Text(
-            'Carregando categorias...',
-            style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 13),
-          ),
-        );
-      }
+      if (categorias.isEmpty) return const SizedBox.shrink();
 
       return Container(
-        color: const Color(0xFFF8F6F8).withValues(alpha: 0.96),
+        height: 48, // Menu super compacto
+        color: const Color(0xFFF8FAFC).withValues(alpha: 0.98),
         child: ListView.separated(
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          separatorBuilder: (_, __) => const SizedBox(width: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          separatorBuilder: (_, __) => const SizedBox(width: 6),
           itemCount: categorias.length + 1,
           itemBuilder: (context, index) {
             if (index == 0) {
-              final selected = categoriaSelecionada == null;
               return _NeedChip(
                 label: 'Todos',
-                caption: 'explorar',
                 icon: Icons.grid_view_rounded,
-                selected: selected,
+                selected: categoriaSelecionada == null,
                 primary: primary,
-                gradient: gradient,
                 onTap: () async {
-                  HapticFeedback.selectionClick();
                   setState(() => categoriaSelecionada = null);
                   await controllerLocalizacao.buscarFornecedoresSemCategoria();
                 },
               );
             }
-
             final c = categorias[index - 1];
-            final selected = categoriaSelecionada?.id == c.id;
-
             return _NeedChip(
               label: c.nome,
-              caption: selected ? 'selecionado' : 'contratar',
               icon: Biblioteca.iconePorCategoria(c.nome),
-              selected: selected,
+              selected: categoriaSelecionada?.id == c.id,
               primary: primary,
-              gradient: gradient,
               iconColor: Biblioteca.corPorCategoria(c.nome),
               onTap: () async {
-                HapticFeedback.selectionClick();
-                setState(() => categoriaSelecionada = selected ? null : c);
-
-                if (!selected) {
+                setState(
+                    () => categoriaSelecionada = (categoriaSelecionada?.id == c.id) ? null : c);
+                if (categoriaSelecionada != null) {
                   await controllerLocalizacao.buscarServicosPorCategoria(c.id);
                 } else {
                   await controllerLocalizacao.buscarFornecedoresSemCategoria();
@@ -492,67 +724,27 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (categoriaSelecionada != null) _categoriaSelecionadaBanner(primary),
-        if (recomendados.isNotEmpty) ...[
-          _SectionHeader(
-            title: 'Recomendados para seu evento',
-            subtitle: 'Opções com melhor combinação de avaliação e proximidade.',
-            icon: Icons.auto_awesome_rounded,
-            color: primary,
-          ),
-          const SizedBox(height: 12),
-          _horizontalFornecedores(recomendados, primary, gradient),
-          const SizedBox(height: 22),
-        ],
         if (categoriaSelecionada != null) ...[
           _carrosselServicos(primary),
-          const SizedBox(height: 20),
         ],
         if (fornecedoresProximos.isNotEmpty) ...[
-          _SectionHeader(
-            title: 'Perto de você',
-            subtitle: 'Fornecedores que atendem sua região.',
-            icon: Icons.near_me_rounded,
-            color: primary,
-          ),
-          const SizedBox(height: 12),
+          _SectionHeader(title: 'Perto de você', icon: Icons.near_me_rounded, color: primary),
           _horizontalFornecedores(fornecedoresProximos.take(8).toList(), primary, gradient),
-          const SizedBox(height: 22),
-        ],
-        if (fornecedoresDestaque.isNotEmpty) ...[
-          _SectionHeader(
-            title: 'Mais bem avaliados',
-            subtitle: 'Fornecedores com excelente reputação no Faça a Festa.',
-            icon: Icons.star_rounded,
-            color: Colors.amber.shade700,
-          ),
-          const SizedBox(height: 12),
-          _horizontalFornecedores(fornecedoresDestaque.take(8).toList(), primary, gradient),
-          const SizedBox(height: 22),
         ],
         _SectionHeader(
-          title: 'Todos os fornecedores',
-          subtitle: '${fornecedoresFiltrados.length} opção(ões) encontrada(s)',
-          icon: Icons.storefront_rounded,
-          color: primary,
-        ),
-        const SizedBox(height: 12),
+            title: 'Todos os fornecedores', icon: Icons.storefront_rounded, color: primary),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Column(
             children: fornecedoresFiltrados
-                .map(
-                  (f) => Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: _FornecedorListCard(
+                .map((f) => _FornecedorListCard(
                       fornecedorDetalhado: f,
                       media:
                           controllerLocalizacao.mediasAvaliacoes[f.fornecedor.idFornecedor] ?? 0.0,
                       primary: primary,
                       categoriaSelecionada: categoriaSelecionada,
                       onTap: () => _abrirDetalheFornecedor(f),
-                    ),
-                  ),
-                )
+                    ))
                 .toList(),
           ),
         ),
@@ -561,91 +753,57 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   }
 
   Widget _horizontalFornecedores(
-    List<FornecedorDetalhadoDto> fornecedores,
-    Color primary,
-    LinearGradient gradient,
-  ) {
+      List<FornecedorDetalhadoDto> fornecedores, Color primary, LinearGradient gradient) {
     return SizedBox(
-      height: 308,
+      height: 185, // Reduzido
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         itemCount: fornecedores.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 14),
-        itemBuilder: (context, index) {
-          final f = fornecedores[index];
-          final media = controllerLocalizacao.mediasAvaliacoes[f.fornecedor.idFornecedor] ?? 0.0;
-
-          return SizedBox(
-            width: Biblioteca.isCelular(context) ? 292 : 340,
-            child: _FornecedorPremiumCard(
-              fornecedorDetalhado: f,
-              media: media,
-              primary: primary,
-              gradient: gradient,
-              categoriaSelecionada: categoriaSelecionada,
-              onTap: () => _abrirDetalheFornecedor(f),
-            ),
-          );
-        },
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
+        itemBuilder: (context, index) => SizedBox(
+          width: 175, // Cards mais estreitos
+          child: _FornecedorPremiumCard(
+            fornecedorDetalhado: fornecedores[index],
+            media: controllerLocalizacao
+                    .mediasAvaliacoes[fornecedores[index].fornecedor.idFornecedor] ??
+                0.0,
+            primary: primary,
+            categoriaSelecionada: categoriaSelecionada,
+            onTap: () => _abrirDetalheFornecedor(fornecedores[index]),
+          ),
+        ),
       ),
     );
   }
 
   Widget _categoriaSelecionadaBanner(Color primary) {
-    final categoria = categoriaSelecionada!;
-
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 4, 16, 18),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.fromLTRB(12, 4, 12, 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: primary.withValues(alpha: 0.14)),
+        color: primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: primary.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(Biblioteca.iconePorCategoria(categoria.nome), color: primary),
-          ),
-          const SizedBox(width: 12),
+          Icon(Biblioteca.iconePorCategoria(categoriaSelecionada!.nome), color: primary, size: 16),
+          const SizedBox(width: 6),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  categoria.nome,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF1F2937),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'Veja serviços e fornecedores dessa necessidade.',
-                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700),
-                ),
-              ],
+            child: Text(
+              categoriaSelecionada!.nome,
+              style: GoogleFonts.poppins(
+                  fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
             ),
           ),
-          IconButton(
-            tooltip: 'Remover categoria',
-            icon: const Icon(Icons.close_rounded),
-            color: primary,
-            onPressed: () async {
+          InkWell(
+            onTap: () async {
               setState(() => categoriaSelecionada = null);
               await controllerLocalizacao.buscarFornecedoresSemCategoria();
             },
+            child: Icon(Icons.close_rounded, size: 16, color: primary),
           ),
         ],
       ),
@@ -654,54 +812,26 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
   Widget _carrosselServicos(Color primary) {
     return Obx(() {
-      if (controllerLocalizacao.carregandoServicosFornecedor.value) {
-        return _loadingState(primary, compact: true);
-      }
-
       final lista = controllerLocalizacao.servicosPorCategoria.toList();
       if (lista.isEmpty) return const SizedBox.shrink();
-
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(
-            title: 'Serviços disponíveis',
-            subtitle: 'Produtos e serviços prontos para cotação.',
-            icon: Icons.room_service_rounded,
-            color: primary,
-          ),
-          const SizedBox(height: 12),
+              title: 'Serviços disponíveis', icon: Icons.room_service_rounded, color: primary),
           SizedBox(
-            height: 278,
+            height: 140, // Reduzido de 180 para 140
             child: PageView.builder(
               controller: _servicosPageController,
               physics: const BouncingScrollPhysics(),
               itemCount: lista.length,
-              itemBuilder: (_, index) {
-                final s = lista[index];
-                return AnimatedPadding(
-                  duration: const Duration(milliseconds: 250),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  child: _cardServicoCarrossel(s, primary),
-                );
-              },
-            ),
-          ),
-          if (lista.length > 1) ...[
-            const SizedBox(height: 10),
-            Center(
-              child: SmoothPageIndicator(
-                controller: _servicosPageController,
-                count: lista.length,
-                effect: ExpandingDotsEffect(
-                  activeDotColor: primary,
-                  dotHeight: 8,
-                  dotWidth: 8,
-                  spacing: 5,
-                ),
+              itemBuilder: (_, index) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: _cardServicoCarrossel(lista[index], primary),
               ),
             ),
-          ],
+          ),
+          const SizedBox(height: 10),
         ],
       );
     });
@@ -710,111 +840,79 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   Widget _cardServicoCarrossel(FornecedorServicoDetalhadoDto s, Color primary) {
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.14),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 3)),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(26),
+        borderRadius: BorderRadius.circular(14),
         child: Stack(
           children: [
             Positioned.fill(child: _servicoImagem(s, primary)),
             Positioned.fill(
-              child: DecoratedBox(
+              child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.08),
-                      Colors.black.withValues(alpha: 0.12),
-                      Colors.black.withValues(alpha: 0.78),
-                    ],
-                    stops: const [0.0, 0.42, 1.0],
+                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.85)],
                   ),
                 ),
               ),
             ),
             Positioned(
-              top: 14,
-              left: 14,
+              top: 8,
+              left: 8,
               child: _GlassBadge(
-                icon: Icons.category_rounded,
-                label: s.nomeSubcategoria ?? s.nomeCategoria ?? 'Serviço',
-              ),
+                  icon: Icons.category_rounded,
+                  label: s.nomeSubcategoria ?? s.nomeCategoria ?? 'Serviço'),
             ),
             Positioned(
-              left: 16,
-              right: 16,
-              bottom: 16,
+              left: 10,
+              right: 10,
+              bottom: 10,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    s.nomeServico ?? 'Serviço sem nome',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 17,
-                      height: 1.15,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    s.nomeFornecedor ?? 'Fornecedor não informado',
+                    s.nomeServico ?? 'Serviço',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
-                      color: Colors.white.withValues(alpha: 0.86),
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                    ),
+                        color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
                   ),
-                  const SizedBox(height: 10),
+                  Text(
+                    s.nomeFornecedor ?? 'Fornecedor',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 10),
+                  ),
+                  const SizedBox(height: 4),
                   Row(
                     children: [
                       Expanded(child: _precoServico(s)),
-                      const SizedBox(width: 10),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          final serviceComplet = controllerLocalizacao.allService.firstWhereOrNull(
-                            (srv) =>
-                                srv.idProdutoServico == s.idProdutoServico &&
-                                srv.idFornecedor == s.idFornecedor &&
-                                srv.idSubcategoria == s.idSubcategoria,
-                          );
-
-                          if (serviceComplet == null) {
-                            Get.snackbar(
-                              'Serviço indisponível',
-                              'Não foi possível abrir os detalhes deste serviço agora.',
-                              snackPosition: SnackPosition.BOTTOM,
-                            );
-                            return;
-                          }
-
-                          Get.to(() => ServicoDetalheScreen(servico: serviceComplet));
-                        },
-                        icon: const Icon(Icons.visibility_rounded, size: 16),
-                        label: const Text('Ver'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          foregroundColor: primary,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          textStyle: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
+                      SizedBox(
+                        height: 26, // Botão compacto
+                        child: ElevatedButton(
+                          onPressed: () {
+                            final srv = controllerLocalizacao.allService
+                                .firstWhereOrNull((x) => x.idProdutoServico == s.idProdutoServico);
+                            if (srv != null) Get.to(() => ServicoDetalheScreen(servico: srv));
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: primary,
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           ),
+                          child: const Text('Ver',
+                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
                         ),
                       ),
                     ],
@@ -829,335 +927,136 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   }
 
   Widget _servicoImagem(FornecedorServicoDetalhadoDto s, Color primary) {
-    if (s.imagemUrl != null && s.imagemUrl!.trim().isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: s.imagemUrl!,
-        fit: BoxFit.cover,
-        placeholder: (_, __) => _bannerPlaceholder(primary),
-        errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
-      );
+    if (s.imagemUrl != null && s.imagemUrl!.isNotEmpty) {
+      return CachedNetworkImage(imageUrl: s.imagemUrl!, fit: BoxFit.cover);
     }
-
-    return _bannerPlaceholder(primary);
+    return Container(
+        color: primary.withValues(alpha: 0.1),
+        child: const Icon(Icons.image, color: Colors.white, size: 24));
   }
 
   Widget _precoServico(FornecedorServicoDetalhadoDto s) {
-    final precoPromocao = s.precoPromocao ?? 0.0;
-    final preco = s.preco;
-    final valorPrincipal = precoPromocao > 0 ? precoPromocao : preco;
+    final v = (s.precoPromocao ?? 0.0) > 0 ? s.precoPromocao! : s.preco;
+    if (v <= 0) {
+      return Text('Sob consulta',
+          style:
+              GoogleFonts.poppins(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700));
+    }
+    return Text('R\$ ${Biblioteca.formatarValorDecimal(v)}',
+        style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700));
+  }
 
-    if (valorPrincipal <= 0) {
-      return Text(
-        'Solicite orçamento',
-        style: GoogleFonts.poppins(
-          color: Colors.white,
-          fontSize: 13,
-          fontWeight: FontWeight.w800,
+  Widget _loadingState(Color primary) =>
+      const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()));
+
+  Widget _mensagemVazia(Color primary) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(40),
+          child: Text("Nenhum fornecedor",
+              style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500)),
         ),
       );
-    }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'A partir de',
-          style: GoogleFonts.poppins(
-            color: Colors.white.withValues(alpha: 0.72),
-            fontSize: 11,
-          ),
-        ),
-        Text(
-          'R\$ ${Biblioteca.formatarValorDecimal(valorPrincipal)}',
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontSize: 15,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _bannerPlaceholder(Color primary) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            primary.withValues(alpha: 0.38),
-            primary.withValues(alpha: 0.12),
-          ],
-        ),
-      ),
-      alignment: Alignment.center,
-      child: Icon(Icons.image_rounded, color: Colors.white.withValues(alpha: 0.72), size: 42),
-    );
-  }
-
-  Widget _loadingState(Color primary, {bool compact = false}) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: compact ? 24 : 90),
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: primary, strokeWidth: 2.6),
-            const SizedBox(height: 14),
-            Text(
-              'Buscando fornecedores para sua festa...',
-              style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _mensagemVazia(Color primary) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 80, 24, 24),
-      child: Center(
-        child: Container(
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(26),
-            border: Border.all(color: Colors.grey.shade200),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 62,
-                height: 62,
-                decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(22),
-                ),
-                child: Icon(Icons.search_off_rounded, size: 34, color: primary),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Nenhum fornecedor encontrado',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF1F2937),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Tente remover a categoria, aumentar o raio ou buscar outro tipo de serviço.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600, height: 1.45),
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: () async {
-                  _searchController.clear();
-                  setState(() {
-                    termoBusca = '';
-                    categoriaSelecionada = null;
-                  });
-                  await controllerLocalizacao.buscarFornecedoresSemCategoria();
-                },
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Limpar filtros'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: primary,
-                  side: BorderSide(color: primary.withValues(alpha: 0.35)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Future<void> _abrirFiltrosRapidos() async {
-    final primary = themeController.primaryColor.value;
-    final categorias = controllerLocalizacao.categorias.toList();
-
-    await Get.bottomSheet(
-      SafeArea(
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(18, 10, 18, 20),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 42,
-                  height: 5,
-                  margin: const EdgeInsets.only(bottom: 18),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                ),
-              ),
-              Text(
-                'O que você precisa contratar?',
-                style: GoogleFonts.poppins(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF111827),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Escolha uma necessidade da festa para o app priorizar os melhores fornecedores.',
-                style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade600, height: 1.4),
-              ),
-              const SizedBox(height: 16),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  _FilterChoice(
-                    label: 'Todos',
-                    selected: categoriaSelecionada == null,
-                    primary: primary,
-                    onTap: () async {
-                      Get.back();
-                      setState(() => categoriaSelecionada = null);
-                      await controllerLocalizacao.buscarFornecedoresSemCategoria();
-                    },
-                  ),
-                  ...categorias.map((c) {
-                    return _FilterChoice(
-                      label: c.nome,
-                      selected: categoriaSelecionada?.id == c.id,
-                      primary: primary,
-                      onTap: () async {
-                        Get.back();
-                        setState(() => categoriaSelecionada = c);
-                        await controllerLocalizacao.buscarServicosPorCategoria(c.id);
-                      },
-                    );
-                  }),
-                ],
-              ),
-              const SizedBox(height: 18),
-              SizedBox(
-                width: double.infinity,
-                child: TextButton.icon(
-                  onPressed: () async {
-                    Get.back();
-                    _searchController.clear();
-                    setState(() {
-                      termoBusca = '';
-                      categoriaSelecionada = null;
-                    });
-                    await controllerLocalizacao.buscarFornecedoresSemCategoria();
-                  },
-                  icon: const Icon(Icons.cleaning_services_rounded),
-                  label: const Text('Limpar busca e categoria'),
-                  style: TextButton.styleFrom(foregroundColor: primary),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-    );
-  }
-
-  void _abrirDetalheFornecedor(FornecedorDetalhadoDto fornecedorDetalhado) {
-    var dto = fornecedorDetalhado;
-
-    if (categoriaSelecionada != null) {
-      dto = fornecedorDetalhado.copyWith(
-        categoriaId: categoriaSelecionada!.id,
-        categoriaNome: categoriaSelecionada!.nome,
-      );
-    }
-
-    Get.to(
-      () => FornecedorDetalheScreen(
-        fornecedorDetalhado: dto,
-        selecionouCategoria: categoriaSelecionada != null,
-      ),
-    );
+  void _abrirDetalheFornecedor(FornecedorDetalhadoDto f) {
+    Get.to(() => FornecedorDetalheScreen(
+        fornecedorDetalhado: categoriaSelecionada != null
+            ? f.copyWith(
+                categoriaId: categoriaSelecionada!.id, categoriaNome: categoriaSelecionada!.nome)
+            : f,
+        selecionouCategoria: categoriaSelecionada != null));
   }
 }
 
-class _MetricPill extends StatelessWidget {
-  final String value;
-  final String label;
-  final IconData icon;
+// -----------------------------------------------------
+// COMPONENTES AUXILIARES
+// -----------------------------------------------------
 
-  const _MetricPill({
-    required this.value,
-    required this.label,
-    required this.icon,
+class _IACardFornecedorCompacto extends StatelessWidget {
+  final FornecedorRecomendacaoModel recomendacao;
+  final Color primary;
+  final VoidCallback onTap;
+
+  const _IACardFornecedorCompacto({
+    required this.recomendacao,
+    required this.primary,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: Colors.white, size: 17),
-          const SizedBox(width: 7),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    final score = recomendacao.score.clamp(0, 100).toStringAsFixed(0);
+    final motivo =
+        recomendacao.motivos.isNotEmpty ? recomendacao.motivos.first : 'Compatível com seu evento';
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
+      child: Container(
+        width: 218,
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: primary.withValues(alpha: 0.10)),
+        ),
+        child: Row(
+          children: [
+            Stack(
+              alignment: Alignment.center,
               children: [
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w900,
-                    height: 1,
+                SizedBox(
+                  width: 46,
+                  height: 46,
+                  child: CircularProgressIndicator(
+                    value: recomendacao.score.clamp(0, 100) / 100,
+                    strokeWidth: 4,
+                    color: primary,
+                    backgroundColor: primary.withValues(alpha: 0.12),
                   ),
                 ),
-                const SizedBox(height: 2),
                 Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  '$score%',
                   style: GoogleFonts.poppins(
-                    color: Colors.white.withValues(alpha: 0.78),
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    height: 1,
+                    fontSize: 10,
+                    color: primary,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    recomendacao.nomeFornecedor,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 11.5,
+                      color: const Color(0xFF1F2937),
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    motivo,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      fontSize: 9.5,
+                      height: 1.15,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1165,98 +1064,49 @@ class _MetricPill extends StatelessWidget {
 
 class _NeedChip extends StatelessWidget {
   final String label;
-  final String caption;
   final IconData icon;
   final bool selected;
   final Color primary;
   final Color? iconColor;
-  final LinearGradient gradient;
   final VoidCallback onTap;
 
-  const _NeedChip({
-    required this.label,
-    required this.caption,
-    required this.icon,
-    required this.selected,
-    required this.primary,
-    required this.gradient,
-    required this.onTap,
-    this.iconColor,
-  });
+  const _NeedChip(
+      {required this.label,
+      required this.icon,
+      required this.selected,
+      required this.primary,
+      this.iconColor,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final foreground = selected ? Colors.white : const Color(0xFF1F2937);
-
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 220),
-        curve: Curves.easeOutCubic,
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // Menor
         decoration: BoxDecoration(
-          gradient: selected ? gradient : null,
-          color: selected ? null : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? Colors.transparent : Colors.grey.withValues(alpha: 0.16),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: selected
-                  ? primary.withValues(alpha: 0.20)
-                  : Colors.black.withValues(alpha: 0.045),
-              blurRadius: selected ? 14 : 10,
-              offset: const Offset(0, 6),
-            ),
-          ],
+          color: selected ? primary : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: selected ? primary : Colors.grey.shade200),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                      color: primary.withValues(alpha: 0.2),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2))
+                ]
+              : null,
         ),
         child: Row(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 34,
-              height: 34,
-              decoration: BoxDecoration(
-                color: selected
-                    ? Colors.white.withValues(alpha: 0.18)
-                    : primary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Icon(icon, color: selected ? Colors.white : iconColor ?? primary, size: 19),
-            ),
-            const SizedBox(width: 9),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 142),
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                      color: foreground,
-                      fontSize: 12.8,
-                      fontWeight: FontWeight.w800,
-                      height: 1.05,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  caption,
-                  style: GoogleFonts.poppins(
-                    color: selected ? Colors.white.withValues(alpha: 0.78) : Colors.grey.shade500,
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w600,
-                    height: 1.05,
-                  ),
-                ),
-              ],
-            ),
+            Icon(icon, color: selected ? Colors.white : iconColor ?? primary, size: 12),
+            const SizedBox(width: 4),
+            Text(label,
+                style: GoogleFonts.poppins(
+                    color: selected ? Colors.white : Colors.black87,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -1266,63 +1116,21 @@ class _NeedChip extends StatelessWidget {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
-  final String subtitle;
   final IconData icon;
   final Color color;
-
-  const _SectionHeader({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.color,
-  });
+  const _SectionHeader({required this.title, required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 8),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(icon, color: color, size: 21),
-          ),
-          const SizedBox(width: 11),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16.5,
-                    fontWeight: FontWeight.w900,
-                    color: const Color(0xFF111827),
-                    height: 1.08,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  subtitle,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.7,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.grey.shade600,
-                    height: 1.2,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 6),
+          Text(title,
+              style: GoogleFonts.poppins(
+                  fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937))),
         ],
       ),
     );
@@ -1331,196 +1139,121 @@ class _SectionHeader extends StatelessWidget {
 
 class _FornecedorPremiumCard extends StatelessWidget {
   final FornecedorDetalhadoDto fornecedorDetalhado;
-  final CategoriaServicoModel? categoriaSelecionada;
   final double media;
   final Color primary;
-  final LinearGradient gradient;
+  final CategoriaServicoModel? categoriaSelecionada;
   final VoidCallback onTap;
 
-  const _FornecedorPremiumCard({
-    required this.fornecedorDetalhado,
-    required this.media,
-    required this.primary,
-    required this.gradient,
-    required this.onTap,
-    this.categoriaSelecionada,
-  });
+  const _FornecedorPremiumCard(
+      {required this.fornecedorDetalhado,
+      required this.media,
+      required this.primary,
+      this.categoriaSelecionada,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final fornecedor = fornecedorDetalhado.fornecedor;
-    final distancia = fornecedorDetalhado.distanciaKm;
-    final categorias = fornecedor.categorias.take(2).toList();
-
+    final f = fornecedorDetalhado.fornecedor;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(26),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(26),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: Colors.grey.shade200),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.075),
-              blurRadius: 22,
-              offset: const Offset(0, 12),
-            ),
+              color: Colors.black.withValues(alpha: 0.03),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            )
           ],
         ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(26),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Stack(
-                children: [
-                  SizedBox(
-                    height: 124,
-                    width: double.infinity,
-                    child: _FornecedorImage(fornecedor: fornecedor, primary: primary),
-                  ),
-                  Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.black.withValues(alpha: 0.08),
-                            Colors.black.withValues(alpha: 0.36),
-                          ],
-                        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              height: 85, // Imagem mantida mais fina
+              width: double.infinity,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: CachedNetworkImage(
+                        imageUrl: f.bannerUrl ?? '',
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => Container(
+                            color: Colors.grey.shade100,
+                            child: const Icon(Icons.store, color: Colors.grey)),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    top: 10,
-                    left: 10,
-                    child: _GlassBadge(
-                      icon: Icons.verified_rounded,
-                      label: fornecedor.aptoParaOperar ? 'Verificado' : 'Em análise',
-                    ),
-                  ),
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: _RatingBadge(media: media),
-                  ),
-                  Positioned(
-                    left: 12,
-                    right: 12,
-                    bottom: 10,
-                    child: Text(
-                      fornecedor.razaoSocial,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w900,
-                        shadows: const [Shadow(color: Colors.black38, blurRadius: 8)],
+                    Positioned.fill(child: Container(color: Colors.black.withValues(alpha: 0.25))),
+                    Positioned(top: 6, right: 6, child: _RatingBadge(media: media)),
+                    Positioned(
+                      bottom: 6,
+                      left: 8,
+                      right: 8,
+                      child: Text(
+                        f.razaoSocial,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                            color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(13, 11, 13, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.category_rounded, color: primary, size: 15),
-                          const SizedBox(width: 5),
-                          Expanded(
-                            child: Text(
-                              categoriaSelecionada?.nome ?? fornecedorDetalhado.categoriaNome,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                color: Colors.grey.shade700,
-                                fontSize: 11.8,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 7),
-                      Text(
-                        _descricaoFornecedor(fornecedor),
+            ),
+
+            // 🔥 SOLUÇÃO AQUI: O Expanded garante que o texto não "vaze" o limite do Card
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(8),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      categoriaSelecionada?.nome ?? fornecedorDetalhado.categoriaNome,
+                      style: GoogleFonts.poppins(
+                          color: primary, fontSize: 9, fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 2),
+
+                    // O Flexible ajuda a cortar a descrição suavemente se a altura estiver muito apertada
+                    Flexible(
+                      child: Text(
+                        f.descricao ?? 'Fornecedor parceiro.',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
-                          fontSize: 12.2,
-                          color: Colors.grey.shade700,
-                          height: 1.32,
-                        ),
+                            fontSize: 10, color: Colors.grey.shade600, height: 1.2),
                       ),
-                      const Spacer(),
-                      if (categorias.isNotEmpty)
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: categorias.map((c) {
-                            return _MiniTag(
-                                label: (c['nomeSubcategoria'] ?? '').toString(), color: primary);
-                          }).toList(),
-                        ),
-                      const SizedBox(height: 10),
+                    ),
+
+                    const Spacer(), // Empurra a distância para a parte inferior do card
+
+                    if (fornecedorDetalhado.distanciaKm != null)
                       Row(
                         children: [
-                          if (distancia != null)
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Icon(Icons.place_rounded, size: 15, color: Colors.grey.shade500),
-                                  const SizedBox(width: 4),
-                                  Expanded(
-                                    child: Text(
-                                      distancia == 0.0
-                                          ? 'Atende sua região'
-                                          : '${distancia.toStringAsFixed(1)} km',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11.5,
-                                        color: Colors.grey.shade600,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          else
-                            const Spacer(),
-                          const SizedBox(width: 8),
-                          ElevatedButton(
-                            onPressed: onTap,
-                            style: ElevatedButton.styleFrom(
-                              elevation: 0,
-                              backgroundColor: primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                              shape:
-                                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
-                              textStyle:
-                                  GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w800),
-                            ),
-                            child: const Text('Ver perfil'),
+                          Icon(Icons.place, size: 10, color: Colors.grey.shade400),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${fornecedorDetalhado.distanciaKm!.toStringAsFixed(1)} km',
+                            style: GoogleFonts.poppins(
+                                fontSize: 9,
+                                color: Colors.grey.shade500,
+                                fontWeight: FontWeight.w500),
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -1529,210 +1262,89 @@ class _FornecedorPremiumCard extends StatelessWidget {
 
 class _FornecedorListCard extends StatelessWidget {
   final FornecedorDetalhadoDto fornecedorDetalhado;
-  final CategoriaServicoModel? categoriaSelecionada;
   final double media;
   final Color primary;
+  final CategoriaServicoModel? categoriaSelecionada;
   final VoidCallback onTap;
 
-  const _FornecedorListCard({
-    required this.fornecedorDetalhado,
-    required this.media,
-    required this.primary,
-    required this.onTap,
-    this.categoriaSelecionada,
-  });
+  const _FornecedorListCard(
+      {required this.fornecedorDetalhado,
+      required this.media,
+      required this.primary,
+      this.categoriaSelecionada,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final fornecedor = fornecedorDetalhado.fornecedor;
-    final distancia = fornecedorDetalhado.distanciaKm;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.045),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
+    final f = fornecedorDetalhado.fornecedor;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.grey.shade100),
+        boxShadow: [
+          BoxShadow(
+              color: Colors.black.withValues(alpha: 0.02),
+              blurRadius: 4,
+              offset: const Offset(0, 2))
+        ],
+      ),
+      child: InkWell(
+        onTap: onTap,
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: SizedBox(
-                width: 86,
-                height: 86,
-                child: _FornecedorImage(fornecedor: fornecedor, primary: primary),
+              borderRadius: BorderRadius.circular(10),
+              child: CachedNetworkImage(
+                imageUrl: f.bannerUrl ?? '',
+                width: 54, // Mais compacto (era 70)
+                height: 54,
+                fit: BoxFit.cover,
+                errorWidget: (_, __, ___) => Container(
+                    width: 54,
+                    height: 54,
+                    color: Colors.grey.shade100,
+                    child: const Icon(Icons.store, size: 20, color: Colors.grey)),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          fornecedor.razaoSocial,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(
-                            fontSize: 14.5,
-                            fontWeight: FontWeight.w900,
-                            color: const Color(0xFF111827),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      _RatingBadge(media: media, dark: false),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
                   Text(
-                    categoriaSelecionada?.nome ?? fornecedorDetalhado.categoriaNome,
+                    f.razaoSocial,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
-                      fontSize: 11.8,
-                      fontWeight: FontWeight.w700,
-                      color: primary,
-                    ),
+                        fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
                   ),
-                  const SizedBox(height: 4),
                   Text(
-                    _descricaoFornecedor(fornecedor),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                    categoriaSelecionada?.nome ?? fornecedorDetalhado.categoriaNome,
                     style: GoogleFonts.poppins(
-                        fontSize: 12, height: 1.25, color: Colors.grey.shade700),
+                        fontSize: 9, color: primary, fontWeight: FontWeight.w600),
                   ),
-                  const SizedBox(height: 8),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final compact = constraints.maxWidth < 205;
-
-                      return Row(
-                        children: [
-                          if (distancia != null)
-                            Expanded(
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.place_rounded,
-                                    color: Colors.grey.shade500,
-                                    size: 15,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Flexible(
-                                    child: Text(
-                                      distancia == 0.0
-                                          ? 'Atende sua região'
-                                          : '${distancia.toStringAsFixed(1)} km',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11.5,
-                                        color: Colors.grey.shade600,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          else
-                            const Expanded(child: SizedBox.shrink()),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                if (!compact)
-                                  Flexible(
-                                    child: Text(
-                                      'Ver serviços',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12,
-                                        color: primary,
-                                        fontWeight: FontWeight.w800,
-                                      ),
-                                    ),
-                                  ),
-                                Icon(
-                                  Icons.chevron_right_rounded,
-                                  color: primary,
-                                  size: 20,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
+                  const SizedBox(height: 2),
+                  if (fornecedorDetalhado.distanciaKm != null)
+                    Row(
+                      children: [
+                        Icon(Icons.place, size: 10, color: Colors.grey.shade400),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${fornecedorDetalhado.distanciaKm!.toStringAsFixed(1)} km',
+                          style: GoogleFonts.poppins(fontSize: 9, color: Colors.grey.shade500),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
+            _RatingBadge(media: media, dark: false),
           ],
         ),
       ),
-    );
-  }
-}
-
-class _FornecedorImage extends StatelessWidget {
-  final FornecedorModel fornecedor;
-  final Color primary;
-
-  const _FornecedorImage({
-    required this.fornecedor,
-    required this.primary,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final banner = fornecedor.bannerUrl;
-
-    if (banner != null && banner.trim().isNotEmpty) {
-      return CachedNetworkImage(
-        imageUrl: banner,
-        fit: BoxFit.cover,
-        placeholder: (_, __) => _placeholder(),
-        errorWidget: (_, __, ___) => _placeholder(),
-      );
-    }
-
-    return _placeholder();
-  }
-
-  Widget _placeholder() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            primary.withValues(alpha: 0.32),
-            primary.withValues(alpha: 0.10),
-          ],
-        ),
-      ),
-      alignment: Alignment.center,
-      child: Icon(Icons.storefront_rounded, color: Colors.white.withValues(alpha: 0.78), size: 34),
     );
   }
 }
@@ -1740,39 +1352,29 @@ class _FornecedorImage extends StatelessWidget {
 class _RatingBadge extends StatelessWidget {
   final double media;
   final bool dark;
-
-  const _RatingBadge({
-    required this.media,
-    this.dark = true,
-  });
+  const _RatingBadge({required this.media, this.dark = true});
 
   @override
   Widget build(BuildContext context) {
-    final hasRating = media > 0;
-    final label = hasRating ? media.toStringAsFixed(1) : 'Novo';
-
+    final h = media > 0;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: dark ? Colors.black.withValues(alpha: 0.62) : Colors.amber.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(999),
+        color: dark ? Colors.black54 : Colors.amber.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            hasRating ? Icons.star_rounded : Icons.fiber_new_rounded,
-            size: 14,
-            color: hasRating ? Colors.amber.shade300 : Colors.amber.shade700,
-          ),
-          const SizedBox(width: 3),
+          Icon(h ? Icons.star_rounded : Icons.fiber_new,
+              size: 10, color: h ? Colors.amber.shade400 : Colors.amber.shade700),
+          const SizedBox(width: 2),
           Text(
-            label,
+            h ? media.toStringAsFixed(1) : 'Novo',
             style: GoogleFonts.poppins(
-              color: dark ? Colors.white : Colors.amber.shade900,
-              fontSize: 11,
-              fontWeight: FontWeight.w900,
-            ),
+                color: dark ? Colors.white : Colors.amber.shade900,
+                fontSize: 9,
+                fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -1783,145 +1385,41 @@ class _RatingBadge extends StatelessWidget {
 class _GlassBadge extends StatelessWidget {
   final IconData icon;
   final String label;
-
-  const _GlassBadge({
-    required this.icon,
-    required this.label,
-  });
+  const _GlassBadge({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.46),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+        color: Colors.black45,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: Colors.white24),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.white),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(
-              color: Colors.white,
-              fontSize: 10.8,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
+          Icon(icon, size: 9, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(label,
+              style: GoogleFonts.poppins(
+                  color: Colors.white, fontSize: 8, fontWeight: FontWeight.w600)),
         ],
       ),
     );
   }
 }
 
-class _MiniTag extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _MiniTag({
-    required this.label,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (label.trim().isEmpty) return const SizedBox.shrink();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.12)),
-      ),
-      child: Text(
-        label,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: GoogleFonts.poppins(
-          fontSize: 10.5,
-          color: color,
-          fontWeight: FontWeight.w800,
-        ),
-      ),
-    );
-  }
-}
-
-class _FilterChoice extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final Color primary;
-  final VoidCallback onTap;
-
-  const _FilterChoice({
-    required this.label,
-    required this.selected,
-    required this.primary,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ChoiceChip(
-      selected: selected,
-      label: Text(label),
-      onSelected: (_) => onTap(),
-      selectedColor: primary.withValues(alpha: 0.16),
-      backgroundColor: Colors.grey.shade100,
-      side: BorderSide(color: selected ? primary.withValues(alpha: 0.30) : Colors.grey.shade200),
-      labelStyle: GoogleFonts.poppins(
-        color: selected ? primary : Colors.grey.shade700,
-        fontSize: 12.5,
-        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-    );
-  }
-}
-
 class _CategoriasHeaderDelegateBuilder extends SliverPersistentHeaderDelegate {
   final WidgetBuilder builder;
-
   _CategoriasHeaderDelegateBuilder({required this.builder});
 
   @override
-  double get minExtent => 74;
-
+  double get minExtent => 48; // Compactado
   @override
-  double get maxExtent => 74;
-
+  double get maxExtent => 48;
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8F6F8).withValues(alpha: 0.96),
-        boxShadow: shrinkOffset > 2 || overlapsContent
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.06),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-              ]
-            : [],
-      ),
-      child: builder(context),
-    );
-  }
-
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => builder(context);
   @override
   bool shouldRebuild(covariant _CategoriasHeaderDelegateBuilder oldDelegate) => true;
-}
-
-String _descricaoFornecedor(FornecedorModel fornecedor) {
-  final descricao = fornecedor.descricao?.trim();
-  if (descricao != null && descricao.isNotEmpty) return descricao;
-
-  return 'Fornecedor parceiro do Faça a Festa, pronto para ajudar a transformar seu evento em uma experiência especial.';
 }

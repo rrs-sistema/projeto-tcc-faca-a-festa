@@ -11,14 +11,14 @@ import 'package:get/get.dart';
 import 'dart:async';
 import 'dart:io';
 
-import './../data/models/servico_produto/subcategoria_servico_model.dart';
-import './../data/models/servico_produto/fornecedor_categoria_model.dart';
-import './../presentation/dialogs/show_novo_orcamento_bottom_sheet.dart';
-import './../data/models/servico_produto/categoria_servico_model.dart';
-import './../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import '../data/models/servico_produto/servico_foto_model.dart';
-import './../data/models/model.dart';
-import './app_controller.dart';
+import '../../data/models/servico_produto/subcategoria_servico_model.dart';
+import '../../data/models/servico_produto/fornecedor_categoria_model.dart';
+import '../../presentation/dialogs/show_novo_orcamento_bottom_sheet.dart';
+import '../../data/models/servico_produto/categoria_servico_model.dart';
+import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
+import '../../data/models/servico_produto/servico_foto_model.dart';
+import '../../data/models/model.dart';
+import '../app_controller.dart';
 
 class FornecedorController extends GetxController {
   final _db = FirebaseFirestore.instance;

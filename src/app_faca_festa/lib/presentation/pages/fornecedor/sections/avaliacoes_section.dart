@@ -15,97 +15,160 @@ class AvaliacoesSection extends StatelessWidget {
     return Obx(() {
       final avaliacoes = c.avaliacoesFornecedor;
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "⭐ Avaliações Recebidas",
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.grey.shade800,
+      return Container(
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ]),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.yellow.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.star_rounded, size: 20, color: Colors.yellow.shade800),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "Avaliações dos Clientes",
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade900,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
+            const SizedBox(height: 16),
 
-          // 🔹 Painel atualizado
-          _buildResumo(c),
-          const SizedBox(height: 16),
+            // 🔹 Painel com Wrap para responsividade total
+            _buildResumo(c),
+            const SizedBox(height: 24),
 
-          Text(
-            "Últimos feedbacks",
-            style: GoogleFonts.poppins(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade800,
+            Text(
+              "Últimos Feedbacks",
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
             ),
-          ),
-          const SizedBox(height: 12),
+            const SizedBox(height: 12),
 
-          if (avaliacoes.isEmpty)
-            _buildMensagemVazia()
-          else
-            ListView.separated(
-              itemCount: avaliacoes.length,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.5),
-              itemBuilder: (_, i) => _AvaliacaoTile(avaliacao: avaliacoes[i]),
-            ),
-        ],
+            if (avaliacoes.isEmpty)
+              _buildMensagemVazia()
+            else
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: ListView.separated(
+                  itemCount: avaliacoes.length,
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  separatorBuilder: (_, __) =>
+                      Divider(height: 1, thickness: 0.5, color: Colors.grey.shade200),
+                  itemBuilder: (_, i) => _AvaliacaoTile(avaliacao: avaliacoes[i]),
+                ),
+              ),
+          ],
+        ),
       );
     });
   }
 
-  // ===============================================================
-  // 🔸 NOVO painel de resumo (sem distribuição)
-  // ===============================================================
   Widget _buildResumo(AvaliacaoServicoController c) {
     return Obx(() {
       final media = c.mediaFornecedor.value.isNaN ? 0.0 : c.mediaFornecedor.value;
 
       return Container(
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
         ),
-        padding: const EdgeInsets.all(20),
-        child: Row(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Wrap(
+          alignment: WrapAlignment.spaceBetween,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          runSpacing: 16,
           children: [
-            // 🔹 Média geral
             Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  media.toStringAsFixed(1),
+                  "Média de Satisfação",
                   style: GoogleFonts.poppins(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.teal.shade700,
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.baseline,
+                  textBaseline: TextBaseline.alphabetic,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      media.toStringAsFixed(1),
+                      style: GoogleFonts.poppins(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.grey.shade900,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      "/ 5.0",
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        color: Colors.grey.shade500,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
                   children: List.generate(
                     5,
                     (i) => Icon(
                       i < media.round() ? Icons.star_rounded : Icons.star_border_rounded,
-                      color: Colors.amber,
-                      size: 22,
+                      color: const Color(0xFFFFB300),
+                      size: 20,
                     ),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  "${c.avaliacoesFornecedor.length} avaliações",
+                  "${c.avaliacoesFornecedor.length} avaliações validadas",
                   style: GoogleFonts.poppins(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: Colors.grey.shade600,
                   ),
                 ),
@@ -117,34 +180,26 @@ class AvaliacoesSection extends StatelessWidget {
     });
   }
 
-  // ===============================================================
-  // 🔸 Mensagem de vazio (igual ao padrão moderno que você usa)
-  // ===============================================================
   Widget _buildMensagemVazia() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 20),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 20),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.reviews_outlined, size: 56, color: Colors.teal.shade300),
+            Icon(Icons.reviews_outlined, size: 40, color: Colors.grey.shade300),
             const SizedBox(height: 12),
             Text(
-              "Ainda não há avaliações 😄",
+              "Sua vitrine ainda não possui avaliações.",
               style: GoogleFonts.poppins(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              "Quando os organizadores avaliarem você,\nas notas aparecerão aqui.",
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: 13.5,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
                 color: Colors.grey.shade600,
-                height: 1.4,
               ),
             ),
           ],
@@ -159,75 +214,79 @@ class _AvaliacaoTile extends StatelessWidget {
   const _AvaliacaoTile({required this.avaliacao});
 
   String _tempoRelativo(DateTime data) {
-    final hoje = DateTime.now();
-    final hojeLimpo = DateTime(hoje.year, hoje.month, hoje.day);
-    final dataLimpa = DateTime(data.year, data.month, data.day);
-    final diff = hojeLimpo.difference(dataLimpa).inDays;
-
-    if (diff <= 0) return 'Hoje';
-    if (diff == 1) return 'Ontem';
-    if (diff == 2) return 'Antes de ontem';
-    if (diff < 7) return 'Há $diff dias';
-    if (diff < 30) return 'Há ${(diff / 7).floor()} semanas';
-    if (diff < 365) return 'Há ${(diff / 30).floor()} meses';
-    return 'Há ${(diff / 365).floor()} anos';
+    final diff = DateTime.now().difference(data);
+    if (diff.inDays <= 0) return 'Hoje';
+    if (diff.inDays == 1) return 'Ontem';
+    if (diff.inDays < 30) return 'Há ${diff.inDays} dias';
+    return 'Há ${(diff.inDays / 30).floor()} meses';
   }
 
   @override
   Widget build(BuildContext context) {
     final data = (avaliacao['data'] as Timestamp).toDate();
 
-    return ListTile(
-      leading: CircleAvatar(
-        radius: 26,
-        backgroundColor: Colors.teal.shade100,
-        child: const Icon(Icons.person, color: Colors.teal),
-      ),
-      title: Row(
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              avaliacao['nome_cliente'] ?? 'Cliente',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600,
-                fontSize: 15,
-                color: Colors.grey.shade800,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
+          CircleAvatar(
+            radius: 20,
+            backgroundColor: Colors.grey.shade100,
+            child: Icon(Icons.person_outline_rounded, color: Colors.grey.shade500, size: 20),
           ),
-          const SizedBox(width: 6),
-          Row(
-            children: buildStarRating(
-              (avaliacao['nota'] ?? 0).toDouble(),
-              size: 16,
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        avaliacao['nome_cliente'] ?? 'Cliente Anônimo',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: Colors.grey.shade900,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: buildStarRating(
+                        (avaliacao['nota'] ?? 0).toDouble(),
+                        size: 14,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _tempoRelativo(data),
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  avaliacao['comentario'] ?? '',
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey.shade700,
+                    fontSize: 13,
+                    height: 1.4,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
-      ),
-      subtitle: Padding(
-        padding: const EdgeInsets.only(top: 6),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              avaliacao['comentario'] ?? '',
-              style: GoogleFonts.poppins(
-                color: Colors.grey.shade700,
-                fontSize: 13.5,
-                height: 1.4,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              _tempoRelativo(data),
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                color: Colors.grey.shade500,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -235,16 +294,12 @@ class _AvaliacaoTile extends StatelessWidget {
   List<Widget> buildStarRating(double nota, {double size = 16}) {
     return List.generate(5, (i) {
       final index = i + 1;
-
       if (nota >= index) {
-        // ⭐ estrela cheia
-        return Icon(Icons.star_rounded, color: Colors.amber, size: size);
+        return Icon(Icons.star_rounded, color: const Color(0xFFFFB300), size: size);
       } else if (nota > index - 1 && nota < index) {
-        // ⭐ meia estrela
-        return Icon(Icons.star_half_rounded, color: Colors.amber, size: size);
+        return Icon(Icons.star_half_rounded, color: const Color(0xFFFFB300), size: size);
       } else {
-        // ☆ estrela vazia
-        return Icon(Icons.star_border_rounded, color: Colors.amber, size: size);
+        return Icon(Icons.star_border_rounded, color: Colors.grey.shade300, size: size);
       }
     });
   }

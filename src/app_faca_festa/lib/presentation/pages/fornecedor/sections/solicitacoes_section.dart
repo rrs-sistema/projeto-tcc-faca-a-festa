@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../../controllers/contacao/solicitacoes_controller.dart';
-import './../../../../controllers/fornecedor_controller.dart';
+import '../../../../controllers/fornecedor/fornecedor_controller.dart';
 import 'solicitacao/solicitacao_fornecedor_card.dart';
 
 class SolicitacoesSection extends StatelessWidget {
@@ -14,7 +14,6 @@ class SolicitacoesSection extends StatelessWidget {
     final fornecedorController = Get.find<FornecedorController>();
     final solicitacoesController = Get.put(SolicitacoesController(), permanent: false);
 
-    // 🔹 Inicializa o listener uma única vez (fora do Obx)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final fornecedor = fornecedorController.fornecedor.value;
       if (fornecedor != null) {
@@ -25,59 +24,83 @@ class SolicitacoesSection extends StatelessWidget {
     return Obx(() {
       final fornecedor = fornecedorController.fornecedor.value;
 
-      if (fornecedor == null) {
-        return const Center(child: CircularProgressIndicator(strokeWidth: 2));
-      }
-
-      if (solicitacoesController.carregando.value) {
-        return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+      if (fornecedor == null || solicitacoesController.carregando.value) {
+        return const SizedBox(
+            height: 100, child: Center(child: CircularProgressIndicator(strokeWidth: 2)));
       }
 
       if (solicitacoesController.erro.isNotEmpty) {
-        return Center(
-          child: Text(
-            solicitacoesController.erro.value,
-            style: GoogleFonts.poppins(color: Colors.red.shade600),
-          ),
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Text(solicitacoesController.erro.value,
+              style: GoogleFonts.poppins(color: Colors.red.shade600, fontSize: 14)),
         );
       }
 
       final lista = solicitacoesController.solicitacoes;
 
       if (lista.isEmpty) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24),
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.grey.shade200)),
           child: Center(
-            child: Text(
-              "Nenhuma solicitação recente.",
-              style: GoogleFonts.poppins(color: Colors.grey.shade600),
-            ),
-          ),
+              child: Text("Sua esteira de solicitações está vazia no momento.",
+                  style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 14))),
         );
       }
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "🗂️ Cotações Recentes",
-            style: GoogleFonts.poppins(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.grey.shade800,
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.grey.shade200),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(Icons.inbox_rounded, size: 20, color: Colors.grey.shade800),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    "Cotações Recebidas e Pendentes",
+                    style: GoogleFonts.poppins(
+                        fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey.shade900),
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 12),
-          ListView.separated(
-            itemCount: lista.length,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              return SolicitacaoFornecedorCard(solicitacao: lista[index]);
-            },
-          ),
-        ],
+            const SizedBox(height: 20),
+            ListView.separated(
+              itemCount: lista.length,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                return SolicitacaoFornecedorCard(solicitacao: lista[index]);
+              },
+            ),
+          ],
+        ),
       );
     });
   }

@@ -1,4 +1,4 @@
-import { admin } from "../shared/firebaseAdmin";
+import { admin } from "../../shared/firebaseAdmin";
 
 export type SugestaoBaseSeed = {
   id: string;

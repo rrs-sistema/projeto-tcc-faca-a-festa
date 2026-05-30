@@ -32,6 +32,11 @@ class RegisterController extends GetxController {
   final RxList<SubcategoriaServicoModel> subcategoriasSelecionadas =
       <SubcategoriaServicoModel>[].obs;
 
+  // 🧠 IA de recomendação: tipos de evento que este fornecedor atende
+  final RxList<String> tipoEventoIds = <String>[].obs;
+  final RxList<String> tipoEventoSlugs = <String>[].obs;
+  final RxList<String> tipoEventoNomes = <String>[].obs;
+
   var nome = ''.obs;
   var razaoSocial = ''.obs;
   var email = ''.obs;
@@ -95,6 +100,9 @@ class RegisterController extends GetxController {
           cnpj: cnpj.value,
           descricao: '',
           dataCadastro: DateTime.now(),
+          tipoEventoIds: tipoEventoIds.toList(growable: false),
+          tipoEventoSlugs: tipoEventoSlugs.toList(growable: false),
+          tipoEventoNomes: tipoEventoNomes.toList(growable: false),
         );
 
         await _db.collection('fornecedor').doc(uid).set(novoFornecedor.toMap());
@@ -174,6 +182,73 @@ class RegisterController extends GetxController {
       servicosSelecionados.remove(servico);
     }
     servicosSelecionados.refresh();
+  }
+
+  /// 🧠 Define todos os tipos de evento atendidos pelo fornecedor.
+  /// Útil quando a tela trabalha com seleção múltipla e envia as listas completas.
+  void definirTiposEventoAtendidos({
+    required List<String> ids,
+    required List<String> slugs,
+    required List<String> nomes,
+  }) {
+    tipoEventoIds.assignAll(_normalizarLista(ids));
+    tipoEventoSlugs.assignAll(_normalizarLista(slugs));
+    tipoEventoNomes.assignAll(_normalizarLista(nomes));
+  }
+
+  /// 🧠 Alterna um tipo de evento atendido pelo fornecedor.
+  /// Útil para ChoiceChip/FilterChip com seleção individual.
+  void alternarTipoEventoAtendido({
+    required String id,
+    required String slug,
+    required String nome,
+    required bool selecionado,
+  }) {
+    final idLimpo = id.trim();
+    final slugLimpo = slug.trim();
+    final nomeLimpo = nome.trim();
+
+    if (idLimpo.isEmpty) return;
+
+    if (selecionado) {
+      if (!tipoEventoIds.contains(idLimpo)) {
+        tipoEventoIds.add(idLimpo);
+      }
+
+      if (slugLimpo.isNotEmpty && !tipoEventoSlugs.contains(slugLimpo)) {
+        tipoEventoSlugs.add(slugLimpo);
+      }
+
+      if (nomeLimpo.isNotEmpty && !tipoEventoNomes.contains(nomeLimpo)) {
+        tipoEventoNomes.add(nomeLimpo);
+      }
+    } else {
+      tipoEventoIds.remove(idLimpo);
+      tipoEventoSlugs.remove(slugLimpo);
+      tipoEventoNomes.remove(nomeLimpo);
+    }
+
+    tipoEventoIds.refresh();
+    tipoEventoSlugs.refresh();
+    tipoEventoNomes.refresh();
+  }
+
+  bool isTipoEventoAtendidoSelecionado(String id) {
+    return tipoEventoIds.contains(id.trim());
+  }
+
+  void limparTiposEventoAtendidos() {
+    tipoEventoIds.clear();
+    tipoEventoSlugs.clear();
+    tipoEventoNomes.clear();
+  }
+
+  List<String> _normalizarLista(List<String> valores) {
+    return valores
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toSet()
+        .toList(growable: false);
   }
 
 // 🔹 Carrega todas as subcategorias de uma categoria
@@ -259,6 +334,11 @@ class RegisterController extends GetxController {
 
       if (servicosSelecionados.isEmpty) {
         _showError('Selecione pelo menos um serviço oferecido');
+        return false;
+      }
+
+      if (tipoEventoIds.isEmpty) {
+        _showError('Selecione pelo menos um tipo de evento atendido');
         return false;
       }
     }

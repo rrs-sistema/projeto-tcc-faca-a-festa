@@ -15,16 +15,14 @@ class OrcamentosSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Exemplo de ID de fornecedor — use o real no app
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "📩 Orçamentos Recebidos",
+          "Orçamentos em Negociação",
           style: GoogleFonts.poppins(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
             color: Colors.grey.shade800,
           ),
         ),
@@ -34,10 +32,10 @@ class OrcamentosSection extends StatelessWidget {
           if (lista.isEmpty) {
             return Container(
               alignment: Alignment.center,
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(vertical: 24),
               child: Text(
-                "Nenhum orçamento recebido.",
-                style: GoogleFonts.poppins(color: Colors.grey.shade600),
+                "Não existem orçamentos em aberto.",
+                style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13),
               ),
             );
           }
@@ -62,22 +60,22 @@ class _OrcamentoCard extends StatelessWidget {
   Color get corStatus {
     switch (orcamento.status) {
       case StatusOrcamento.pendente:
-        return Colors.orange.shade600;
+        return Colors.orange.shade700;
       case StatusOrcamento.emNegociacao:
-        return Colors.blue.shade600;
+        return Colors.blue.shade700;
       case StatusOrcamento.fechado:
         return Colors.green.shade700;
       default:
-        return Colors.grey;
+        return Colors.grey.shade600;
     }
   }
 
   IconData get iconeStatus {
     switch (orcamento.status) {
       case StatusOrcamento.pendente:
-        return Icons.hourglass_bottom_rounded;
+        return Icons.access_time_rounded;
       case StatusOrcamento.emNegociacao:
-        return Icons.forum_outlined;
+        return Icons.handshake_outlined;
       case StatusOrcamento.fechado:
         return Icons.check_circle_outline;
       default:
@@ -88,103 +86,107 @@ class _OrcamentoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: Colors.grey.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔹 Cabeçalho (nome do serviço)
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(iconeStatus, color: corStatus, size: 22),
-              const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  orcamento.nomeSolicitante!.toUpperCase(),
-                  style: GoogleFonts.poppins(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.grey.shade800,
-                  ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(iconeStatus, color: corStatus, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        orcamento.nomeSolicitante?.toUpperCase() ?? 'SOLICITANTE',
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade900,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                orcamento.custoEstimado != null
+                    ? "R\$ ${orcamento.custoEstimado!.toStringAsFixed(2)}"
+                    : "Em Análise",
+                style: GoogleFonts.poppins(
+                  color: Colors.grey.shade900,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 6),
 
-          // 🔹 Descrição / Observação
-          if (orcamento.anotacoes != null && orcamento.anotacoes!.isNotEmpty)
+          if (orcamento.anotacoes != null && orcamento.anotacoes!.isNotEmpty) ...[
+            const SizedBox(height: 8),
             Text(
               orcamento.anotacoes!,
               style: GoogleFonts.poppins(
-                fontSize: 13.5,
-                color: Colors.grey.shade700,
+                fontSize: 13,
+                color: Colors.grey.shade600,
                 height: 1.4,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
+          ],
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
 
-          // 🔹 Rodapé (valor + status + botão)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // 🔹 WRAP NO FOOTER PARA PREVENIR OVERFLOW
+          Wrap(
+            alignment: WrapAlignment.spaceBetween,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            runSpacing: 8,
             children: [
-              // Valor
-              Text(
-                orcamento.custoEstimado != null
-                    ? "R\$ ${orcamento.custoEstimado!.toStringAsFixed(2)}"
-                    : "Sem valor",
-                style: GoogleFonts.poppins(
-                  color: Colors.teal.shade800,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13.5,
-                ),
-              ),
-
-              // Status
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: corStatus.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+                  color: corStatus.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
                   orcamento.status.label,
                   style: GoogleFonts.poppins(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
                     color: corStatus,
                   ),
                 ),
               ),
-            ],
-          ),
-
-          const SizedBox(height: 8),
-          const Divider(thickness: 0.6),
-          const SizedBox(height: 6),
-
-          // 🔹 Botão de resposta
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton.icon(
-              onPressed: () => showResponderOrcamentoDialog(context, orcamento: orcamento),
-              icon: const Icon(Icons.reply_rounded, size: 16, color: Colors.teal),
-              label: const Text("Responder"),
-              style: TextButton.styleFrom(
-                foregroundColor: Colors.teal.shade700,
+              SizedBox(
+                height: 32,
+                child: OutlinedButton.icon(
+                  onPressed: () => showResponderOrcamentoDialog(context, orcamento: orcamento),
+                  icon: const Icon(Icons.reply_rounded, size: 16),
+                  label: Text("Responder",
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.grey.shade900,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    side: BorderSide(color: Colors.grey.shade300),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

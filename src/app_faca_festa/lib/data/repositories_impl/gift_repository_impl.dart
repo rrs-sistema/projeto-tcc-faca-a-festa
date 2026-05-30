@@ -49,13 +49,13 @@ class GiftRepositoryImpl implements GiftRepository {
   @override
   Future<void> updateGift(String eventoId, Gift gift) async {
     final model = gift as GiftModel;
+
     final existing = await local.getGift(model.id);
-    if (existing == null) return;
 
     final updated = model.toCompanion(
       eventoId: eventoId,
       synced: false,
-      deleted: existing.deleted,
+      deleted: existing?.deleted ?? false,
       updatedAtOverride: DateTime.now(),
     );
 

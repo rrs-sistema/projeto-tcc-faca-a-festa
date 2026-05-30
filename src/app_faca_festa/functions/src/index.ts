@@ -1,3 +1,11 @@
-export { novaAvaliacaoProcessar } from "./functions/novaAvaliacaoProcessar";
-export { testarNotificacaoFornecedor } from "./functions/testarNotificacaoFornecedor";
-export { analisarCalculadoraFestaIA } from "./functions/analisarCalculadoraFestaIA";
+export { novaAvaliacaoProcessar } from "./functions/fornecedores/novaAvaliacaoProcessar";
+export { testarNotificacaoFornecedor } from "./functions/fornecedores/testarNotificacaoFornecedor";
+export { analisarCalculadoraFestaIA } from "./functions/calculadora/analisarCalculadoraFestaIA";
+
+
+export {
+    recomendarFornecedoresParaEvento,
+    registrarInteracaoFornecedor,
+    migrarFornecedoresTiposEvento,
+    atualizarFornecedoresTiposEventoManual,
+} from "./functions/fornecedores/recomendacao";

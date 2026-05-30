@@ -12,11 +12,11 @@ extension BaseCalculoFestaExtension on BaseCalculoFesta {
   String get label {
     switch (this) {
       case BaseCalculoFesta.todosConvidados:
-        return 'Todos os convidados';
+        return 'Todos';
       case BaseCalculoFesta.apenasConfirmados:
-        return 'Apenas confirmados';
+        return 'Confirmados';
       case BaseCalculoFesta.manual:
-        return 'Quantidade manual';
+        return 'Manual';
     }
   }
 

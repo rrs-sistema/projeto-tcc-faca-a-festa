@@ -65,15 +65,15 @@ class TarefasScreen extends StatelessWidget {
           children: [
             // ===== Indicador de progresso =====
             Container(
-              margin: const EdgeInsets.fromLTRB(16, 20, 16, 10),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              margin: const EdgeInsets.fromLTRB(14, 14, 14, 8), // 🔹 Margens compactas
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(18),
+                borderRadius: BorderRadius.circular(16), // Raio menor
                 boxShadow: [
                   BoxShadow(
-                    color: primary.withValues(alpha: 0.15),
-                    blurRadius: 8,
+                    color: primary.withValues(alpha: 0.12),
+                    blurRadius: 6,
                     offset: const Offset(0, 3),
                   ),
                 ],
@@ -85,26 +85,27 @@ class TarefasScreen extends StatelessWidget {
                     '${tarefaController.concluidas} de ${tarefaController.tarefas.length} tarefas concluídas',
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
+                      fontSize: 13, // Fonte menor
                       color: primary,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 8),
                   // 🔹 Barra de progresso verde estilizada
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     child: Container(
-                      height: 12,
+                      height: 10, // Barra mais fina
                       width: double.infinity,
-                      color: Colors.grey.shade200, // fundo neutro
+                      color: Colors.grey.shade200,
                       child: FractionallySizedBox(
                         alignment: Alignment.centerLeft,
-                        widthFactor: tarefaController.progresso, // valor de 0.0 a 1.0
+                        widthFactor: tarefaController.progresso,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 600),
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                primary.withValues(alpha: 1.6),
+                                primary.withValues(alpha: 1.0), // Ajustado de 1.6
                                 primary.withValues(alpha: 0.9),
                               ],
                               begin: Alignment.centerLeft,
@@ -119,7 +120,8 @@ class TarefasScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 6), // 🔹 Margens compactas
               child: resumoTarefasCardElegante(
                 gradient,
                 totalTarefas: tarefaController.tarefas.length,
@@ -129,14 +131,13 @@ class TarefasScreen extends StatelessWidget {
             // ===== Lista de tarefas =====
             Expanded(
               child: Obx(() {
-                // Verifica se quando essa lista está vazia gera erro ao chamar o modal de adicionar tarefa
                 if (tarefas.isEmpty) {
                   return _buildEmptyState(gradient, primary);
                 }
 
                 return ListView.builder(
                   itemCount: tarefas.length,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(14), // Espaçamento da lista menor
                   itemBuilder: (context, index) {
                     final tarefa = tarefas[index];
                     final responsavel = convidadoController.convidados
@@ -174,15 +175,15 @@ class TarefasScreen extends StatelessWidget {
         children: [
           ShaderMask(
             shaderCallback: (rect) => gradient.createShader(rect),
-            child: const Icon(Icons.fact_check_outlined, size: 70, color: Colors.white),
+            child: const Icon(Icons.fact_check_outlined, size: 60, color: Colors.white), // Menor
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           Text(
             'Nenhuma tarefa cadastrada ainda',
             style: TextStyle(
               color: primary,
               fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontSize: 15,
             ),
           ),
           const SizedBox(height: 6),
@@ -192,17 +193,17 @@ class TarefasScreen extends StatelessWidget {
               Text(
                 'Toque no ícone ',
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                   color: Colors.grey.shade700,
                 ),
               ),
-              Icon(Icons.add_task_outlined, color: Colors.grey.shade700, size: 22),
+              Icon(Icons.add_task_outlined, color: Colors.grey.shade700, size: 18),
               Text(
-                ' acima para criar sua tarefa! ✨',
+                ' acima para criar!',
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
                   color: Colors.grey.shade700,
                 ),
               ),
@@ -238,12 +239,12 @@ class _TarefaCard extends StatelessWidget {
     final concluida = status == StatusTarefa.concluida;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: 12), // 🔹 Espaçamento compacto (era 16)
       child: Slidable(
         key: ValueKey(tarefa.idTarefa),
         startActionPane: ActionPane(
           motion: const StretchMotion(),
-          extentRatio: 0.4,
+          extentRatio: 0.35, // Menor swipe area
           children: [
             SlidableAction(
               onPressed: (_) async {
@@ -294,28 +295,30 @@ class _TarefaCard extends StatelessWidget {
         // === Card principal ===
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(14), // 🔹 Compacto (era 16)
           decoration: BoxDecoration(
             gradient: concluida
                 ? LinearGradient(colors: [
-                    primaryColor.withValues(alpha: 0.07),
+                    primaryColor.withValues(alpha: 0.05),
                     Colors.white,
                   ])
                 : const LinearGradient(
-                    colors: [Colors.white, Color(0xFFF9FAFB)],
+                    colors: [Colors.white, Color(0xFFFCFDFD)], // Mais claro
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(16), // Raio menor
             border: Border.all(
-              color: concluida ? primaryColor.withValues(alpha: 0.5) : Colors.grey.shade300,
-              width: 1.2,
+              color: concluida
+                  ? primaryColor.withValues(alpha: 0.4)
+                  : Colors.grey.shade200, // Borda mais suave
+              width: 1.0,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withValues(alpha: 0.05),
-                blurRadius: 5,
-                offset: const Offset(0, 3),
+                color: Colors.grey.withValues(alpha: 0.04), // Sombra sutil
+                blurRadius: 4,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -334,18 +337,18 @@ class _TarefaCard extends StatelessWidget {
                         Text(
                           tarefa.titulo,
                           style: TextStyle(
-                            fontSize: 14,
+                            fontSize: 13, // Menor
                             fontWeight: FontWeight.bold,
                             color: concluida ? primaryColor : Colors.grey.shade900,
                             decoration: concluida ? TextDecoration.lineThrough : null,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           tarefa.responsavel?.nome ?? 'Sem responsável',
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
-                          style: const TextStyle(fontSize: 13, color: Colors.grey),
+                          style: const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ],
                     ),
@@ -365,27 +368,27 @@ class _TarefaCard extends StatelessWidget {
                           ScaleTransition(scale: anim, child: child),
                       child: concluida
                           ? Icon(Icons.check_circle_rounded,
-                              key: const ValueKey(1), color: primaryColor, size: 30)
+                              key: const ValueKey(1), color: primaryColor, size: 26) // Menor
                           : Icon(Icons.radio_button_unchecked,
-                              key: const ValueKey(0), color: Colors.grey.shade400, size: 30),
+                              key: const ValueKey(0), color: Colors.grey.shade300, size: 26),
                     ),
                   ),
                 ],
               ),
 
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
 
               // ===== Descrição =====
               if (tarefa.descricao?.isNotEmpty ?? false)
                 Container(
                   width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: 10),
                   child: Text(
                     tarefa.descricao!,
                     style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontSize: 14,
-                      height: 1.4,
+                      color: Colors.grey.shade600,
+                      fontSize: 13, // Menor
+                      height: 1.3,
                     ),
                   ),
                 ),
@@ -393,13 +396,13 @@ class _TarefaCard extends StatelessWidget {
               // ===== Linha inferior: data + status =====
               Row(
                 children: [
-                  const Icon(Icons.calendar_today_outlined, size: 16, color: Colors.grey),
-                  const SizedBox(width: 6),
+                  const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
+                  const SizedBox(width: 4),
                   Text(
                     tarefa.dataPrevista != null
                         ? DateFormat('dd/MM/yyyy').format(tarefa.dataPrevista!)
                         : '--/--/----',
-                    style: const TextStyle(fontSize: 13, color: Colors.grey),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey), // Menor
                   ),
                   const Spacer(),
                   _StatusChip(status: status, primaryColor: primaryColor),
@@ -435,7 +438,7 @@ class _StatusChip extends StatelessWidget {
       case StatusTarefa.emAndamento:
         bg = Colors.blue.shade50;
         text = Colors.blue.shade700;
-        label = 'Em Andamento';
+        label = 'Andamento'; // Compactado
         break;
       case StatusTarefa.concluida:
         bg = primaryColor.withValues(alpha: 0.1);
@@ -445,16 +448,16 @@ class _StatusChip extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Mais fino
       decoration: BoxDecoration(
         color: bg,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: text,
-          fontSize: 12,
+          fontSize: 11, // Fonte menor
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -471,15 +474,15 @@ Widget resumoTarefasCardElegante(
   final pendentes = totalTarefas - concluidas;
 
   return Container(
-    padding: const EdgeInsets.all(16),
+    padding: const EdgeInsets.all(14), // 🔹 Compacto (era 16)
     decoration: BoxDecoration(
       gradient: gradient,
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(20), // Raio menor
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: 0.12),
-          blurRadius: 12,
-          offset: const Offset(0, 6),
+          color: Colors.black.withValues(alpha: 0.10), // Sombra sutil
+          blurRadius: 10,
+          offset: const Offset(0, 4),
         ),
       ],
     ),
@@ -489,8 +492,8 @@ Widget resumoTarefasCardElegante(
       children: [
         // === Indicador Circular ===
         CircularPercentIndicator(
-          radius: 42,
-          lineWidth: 6,
+          radius: 36, // 🔹 Circulo Menor (era 42)
+          lineWidth: 5, // Linha mais fina
           percent: percent,
           animation: true,
           circularStrokeCap: CircularStrokeCap.round,
@@ -502,7 +505,7 @@ Widget resumoTarefasCardElegante(
             begin: Alignment.bottomLeft,
             end: Alignment.centerRight,
           ),
-          backgroundColor: Colors.white.withValues(alpha: 0.3),
+          backgroundColor: Colors.white.withValues(alpha: 0.25),
           center: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -511,13 +514,13 @@ Widget resumoTarefasCardElegante(
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
-                  fontSize: 22,
+                  fontSize: 18, // Fonte menor
                 ),
               ),
               Text(
                 'Feito',
                 style: GoogleFonts.poppins(
-                  fontSize: 12,
+                  fontSize: 10, // Fonte menor
                   fontWeight: FontWeight.w600,
                   color: Colors.white70,
                 ),
@@ -529,7 +532,7 @@ Widget resumoTarefasCardElegante(
         // === Dados Resumo ===
         Expanded(
           child: Padding(
-            padding: const EdgeInsets.only(left: 20),
+            padding: const EdgeInsets.only(left: 16), // Menos espaço interno
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -538,36 +541,36 @@ Widget resumoTarefasCardElegante(
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
-                    fontSize: 15,
-                    letterSpacing: 0.3,
+                    fontSize: 14, // Fonte menor
+                    letterSpacing: 0.2,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
                 _infoBoxResumoTarefa(
-                  'Tarefas Concluídas',
+                  'Concluídas', // Título encurtado
                   '$concluidas de $totalTarefas',
                   Icons.task_alt_rounded,
                   Colors.white,
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
                 _infoBoxResumoTarefa(
                   'Pendentes',
                   '$pendentes tarefas',
                   Icons.pending_actions_rounded,
                   Colors.white70,
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 6),
                 if (percent >= 1)
                   Row(
                     children: [
-                      const Icon(Icons.emoji_events_rounded, color: Colors.yellowAccent, size: 18),
-                      const SizedBox(width: 6),
+                      const Icon(Icons.emoji_events_rounded, color: Colors.yellowAccent, size: 16),
+                      const SizedBox(width: 4),
                       Text(
                         'Todas concluídas! 🥳',
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
                           color: Colors.yellowAccent,
-                          fontSize: 13,
+                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -590,14 +593,14 @@ Widget _infoBoxResumoTarefa(
 ) {
   return Row(
     children: [
-      Icon(icone, color: cor, size: 18),
-      const SizedBox(width: 8),
+      Icon(icone, color: cor, size: 16), // Ícone menor
+      const SizedBox(width: 6),
       Expanded(
         child: Text(
           titulo,
           style: GoogleFonts.poppins(
             color: cor.withValues(alpha: 0.9),
-            fontSize: 13,
+            fontSize: 12, // Fonte menor
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -607,7 +610,7 @@ Widget _infoBoxResumoTarefa(
         style: GoogleFonts.poppins(
           color: cor,
           fontWeight: FontWeight.w700,
-          fontSize: 13,
+          fontSize: 12, // Fonte menor
         ),
       ),
     ],

@@ -1,12 +1,10 @@
 import 'dart:collection';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
 
 import '../../../controllers/inspiracao/inspiracao_admin_controller.dart';
 import './../../../data/models/model.dart';
@@ -62,10 +60,6 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   bool _destaque = false;
   bool _tentouSalvar = false;
 
-  XFile? _imagemSelecionada;
-  Uint8List? _imagemSelecionadaBytes;
-  String? _nomeImagemSelecionada;
-
   final Set<String> _tipoEventoIdsSelecionados = <String>{};
 
   static const Color _primary = Color(0xFFE94B8A);
@@ -109,6 +103,56 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       nome: '💼 Evento Corporativo',
       slug: 'evento_corporativo',
     ),
+  ];
+
+  static const List<String> _categoriasTarefaSugerida = <String>[
+    'Decoração',
+    'Doces',
+    'Buffet',
+    'Papelaria',
+    'DIY',
+    'Bolo',
+    'Lembrancinhas',
+    'Fotografia',
+    'Música',
+    'Local',
+    'Convidados',
+    'Geral',
+  ];
+
+  static const List<String> _prioridadesTarefaSugerida = <String>[
+    'baixa',
+    'media',
+    'alta',
+  ];
+
+  static const List<String> _categoriasOrcamentoSugerido = <String>[
+    'Decoração',
+    'Doces',
+    'Buffet',
+    'Papelaria',
+    'DIY',
+    'Bolo',
+    'Lembrancinhas',
+    'Fotografia',
+    'Música',
+    'Local',
+    'Bebidas',
+    'Brindes',
+    'Serviços',
+    'Geral',
+  ];
+
+  static const List<String> _unidadesOrcamentoSugerido = <String>[
+    'unidade',
+    'pessoa',
+    'kg',
+    'cento',
+    'pacote',
+    'metro',
+    'hora',
+    'diária',
+    'serviço',
   ];
 
   bool get _isEdicao => _inspiracaoInicial?.id.trim().isNotEmpty == true;
@@ -155,6 +199,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     _itensOrcamentoSugeridosController = TextEditingController();
     _categoriasFornecedorSugeridasController = TextEditingController();
     _fornecedoresRelacionadosController = TextEditingController();
+
+    _imagemUrlController.addListener(_sincronizarImagemPrincipalUrl);
+    _galeriaUrlsController.addListener(_sincronizarGaleriaFormulario);
   }
 
   void _popularCampos() {
@@ -216,7 +263,11 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     _tipoEventoNomesController.text = _readStringList(data, 'tipoEventoNomes').join(', ');
 
     _tarefasSugeridasController.text = _formatarTarefas(_readMapList(data, 'tarefasSugeridas'));
+    controller.prepararTarefasSugeridasFormulario(_readMapList(data, 'tarefasSugeridas'));
     _itensOrcamentoSugeridosController.text = _formatarItensOrcamento(
+      _readMapList(data, 'itensOrcamentoSugeridos'),
+    );
+    controller.prepararItensOrcamentoSugeridosFormulario(
       _readMapList(data, 'itensOrcamentoSugeridos'),
     );
     _categoriasFornecedorSugeridasController.text = _readStringList(
@@ -249,10 +300,19 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     if (_tipoEventoIdsSelecionados.isNotEmpty) {
       _sincronizarCamposTipos(preferirCamposAtuais: true);
     }
+
+    controller.prepararImagensFormulario(
+      imagemUrl: _imagemUrlController.text,
+      galeriaUrls: _parseStringList(_galeriaUrlsController.text),
+      limparPendentes: true,
+    );
   }
 
   @override
   void dispose() {
+    _imagemUrlController.removeListener(_sincronizarImagemPrincipalUrl);
+    _galeriaUrlsController.removeListener(_sincronizarGaleriaFormulario);
+
     _tituloController.dispose();
     _descricaoController.dispose();
     _categoriaController.dispose();
@@ -278,6 +338,17 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     _categoriasFornecedorSugeridasController.dispose();
     _fornecedoresRelacionadosController.dispose();
     super.dispose();
+  }
+
+  void _sincronizarImagemPrincipalUrl() {
+    controller.atualizarImagemPrincipalUrlFormulario(_imagemUrlController.text);
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _sincronizarGaleriaFormulario() {
+    controller.atualizarGaleriaUrlsFormulario(_parseStringList(_galeriaUrlsController.text));
   }
 
   @override
@@ -407,12 +478,15 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                               const SizedBox(height: 12),
                               _buildTextField(
                                 controller: _galeriaUrlsController,
-                                label: 'Galeria de imagens',
-                                hint: 'Uma URL por linha',
+                                label: 'URLs adicionais da galeria',
+                                hint:
+                                    'Uma URL por linha. Você também pode adicionar imagens pelo botão abaixo.',
                                 icon: Icons.collections_outlined,
                                 minLines: 3,
                                 maxLines: 6,
                               ),
+                              const SizedBox(height: 12),
+                              _buildGaleriaPanel(),
                             ],
                           ),
                         ),
@@ -532,23 +606,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                               'Itens que podem gerar checklist, orçamento e fornecedores sugeridos.',
                           child: Column(
                             children: [
-                              _buildTextField(
-                                controller: _tarefasSugeridasController,
-                                label: 'Tarefas sugeridas',
-                                hint: 'Uma por linha: título | categoria | descrição',
-                                icon: Icons.checklist_rounded,
-                                minLines: 4,
-                                maxLines: 8,
-                              ),
+                              _buildTarefasSugeridasEditor(),
                               const SizedBox(height: 12),
-                              _buildTextField(
-                                controller: _itensOrcamentoSugeridosController,
-                                label: 'Itens de orçamento sugeridos',
-                                hint: 'Uma por linha: categoria | item | valor estimado',
-                                icon: Icons.receipt_long_outlined,
-                                minLines: 4,
-                                maxLines: 8,
-                              ),
+                              _buildItensOrcamentoSugeridosEditor(),
                               const SizedBox(height: 12),
                               _responsiveFields(
                                 isWide: isWide,
@@ -826,120 +886,1389 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     );
   }
 
-  Widget _buildImagePanel() {
-    final imagemUrl = _imagemUrlController.text.trim();
-    final hasCurrentImage = imagemUrl.isNotEmpty;
-    final hasSelectedImage = _imagemSelecionadaBytes != null;
-    final missingImage = !hasCurrentImage && !hasSelectedImage;
+  Widget _buildTarefasSugeridasEditor() {
+    return Obx(() {
+      final tarefas = controller.tarefasSugeridasFormulario;
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: missingImage ? _warning.withValues(alpha: 0.08) : _info.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: missingImage ? _warning.withValues(alpha: 0.26) : _info.withValues(alpha: 0.16),
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _primary.withValues(alpha: 0.045),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: _primary.withValues(alpha: 0.12)),
         ),
-      ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 620;
-          final preview = _buildImagePreview();
-          final actions = Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Imagem principal',
-                style: GoogleFonts.poppins(
-                  color: _dark,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Você pode informar uma URL ou selecionar uma imagem para upload. A imagem melhora a experiência visual na área pública.',
-                style: GoogleFonts.poppins(
-                  color: _muted,
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12,
-                  height: 1.35,
-                ),
-              ),
-              if (missingImage) ...[
-                const SizedBox(height: 10),
-                _buildInlineWarning(
-                  widget.imagemObrigatoria
-                      ? 'Imagem principal obrigatória para salvar.'
-                      : 'Imagem principal ainda não informada. Você pode salvar, mas o card ficará menos atrativo.',
-                  color: widget.imagemObrigatoria ? _danger : _warning,
-                  icon: widget.imagemObrigatoria
-                      ? Icons.error_outline_rounded
-                      : Icons.info_outline_rounded,
-                ),
-              ],
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  FilledButton.icon(
-                    onPressed: _selecionarImagemPrincipal,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: _primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    ),
-                    icon: const Icon(Icons.upload_rounded, size: 18),
-                    label: const Text('Selecionar imagem'),
-                  ),
-                  if (hasSelectedImage || hasCurrentImage)
-                    OutlinedButton.icon(
-                      onPressed: _limparImagemPrincipal,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: _danger,
-                        side: BorderSide(color: _danger.withValues(alpha: 0.28)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      label: const Text('Remover'),
-                    ),
-                ],
-              ),
-            ],
-          );
-
-          if (compact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
               children: [
-                preview,
-                const SizedBox(height: 12),
-                actions,
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.checklist_rounded, color: _primary, size: 21),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tarefas sugeridas',
+                        style: GoogleFonts.poppins(
+                          color: _dark,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        '${tarefas.length} tarefa(s) cadastrada(s) para gerar checklist',
+                        style: GoogleFonts.poppins(
+                          color: _muted,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: () => _abrirTarefaSugeridaDialog(),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Adicionar'),
+                ),
               ],
-            );
-          }
+            ),
+            const SizedBox(height: 12),
+            if (tarefas.isEmpty)
+              _buildTarefasEmptyState()
+            else
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                itemCount: tarefas.length,
+                onReorder: controller.reordenarTarefaSugerida,
+                itemBuilder: (context, index) {
+                  final tarefa = tarefas[index];
+                  final key = ValueKey('tarefa_${index}_${tarefa['titulo']}_${tarefa['ordem']}');
 
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(width: 220, child: preview),
-              const SizedBox(width: 14),
-              Expanded(child: actions),
+                  return _buildTarefaSugeridaTile(
+                    key: key,
+                    index: index,
+                    tarefa: tarefa,
+                  );
+                },
+              ),
+            if (_tentouSalvar && controller.validarTarefasSugeridasFormulario() != null) ...[
+              const SizedBox(height: 10),
+              _buildInlineWarning(
+                controller.validarTarefasSugeridasFormulario()!,
+                color: _danger,
+                icon: Icons.error_outline_rounded,
+              ),
             ],
-          );
-        },
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildTarefasEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _dark.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: _warning.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.info_outline_rounded, color: _warning, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Nenhuma tarefa sugerida cadastrada. Isso é permitido, mas cadastrar tarefas melhora a geração automática do checklist do organizador.',
+              style: GoogleFonts.poppins(
+                color: _muted,
+                fontSize: 12,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  Widget _buildTarefaSugeridaTile({
+    required Key key,
+    required int index,
+    required Map<String, dynamic> tarefa,
+  }) {
+    final titulo = _readString(tarefa, 'titulo', fallback: _readString(tarefa, 'nome'));
+    final descricao = _readString(tarefa, 'descricao');
+    final categoria = _readString(tarefa, 'categoria', fallback: 'Geral');
+    final prioridade = _readString(tarefa, 'prioridade', fallback: 'media');
+    final diasAntesEvento = _readInt(tarefa, 'diasAntesEvento', fallback: 30);
+    final obrigatoria = _readBool(tarefa, 'obrigatoria', fallback: false);
+
+    final prioridadeColor = prioridade == 'alta'
+        ? _danger
+        : prioridade == 'baixa'
+            ? _success
+            : _warning;
+
+    return Container(
+      key: key,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _dark.withValues(alpha: 0.07)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ReorderableDragStartListener(
+            index: index,
+            child: Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: _surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.drag_indicator_rounded, color: _muted, size: 20),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        titulo.isEmpty ? 'Tarefa sem título' : titulo,
+                        style: GoogleFonts.poppins(
+                          color: titulo.isEmpty ? _danger : _dark,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                          height: 1.2,
+                        ),
+                      ),
+                    ),
+                    if (obrigatoria)
+                      _MiniBadge(
+                        text: 'Obrigatória',
+                        color: _primary,
+                      ),
+                  ],
+                ),
+                if (descricao.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    descricao,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      color: _muted,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 11.5,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    _MiniBadge(text: categoria, color: _info),
+                    _MiniBadge(text: '$diasAntesEvento dias antes', color: _secondary),
+                    _MiniBadge(text: 'Prioridade $prioridade', color: prioridadeColor),
+                    _MiniBadge(text: 'Ordem ${index + 1}', color: _muted),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          PopupMenuButton<String>(
+            tooltip: 'Ações da tarefa',
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            onSelected: (value) {
+              if (value == 'editar') {
+                _abrirTarefaSugeridaDialog(index: index, tarefa: tarefa);
+              } else if (value == 'remover') {
+                controller.removerTarefaSugerida(index);
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem<String>(
+                value: 'editar',
+                child: Row(
+                  children: [
+                    Icon(Icons.edit_outlined, size: 18),
+                    SizedBox(width: 8),
+                    Text('Editar'),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'remover',
+                child: Row(
+                  children: [
+                    const Icon(Icons.delete_outline_rounded, size: 18, color: _danger),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Remover',
+                      style: GoogleFonts.poppins(
+                        color: _danger,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItensOrcamentoSugeridosEditor() {
+    return Obx(() {
+      final itens = controller.itensOrcamentoSugeridosFormulario;
+      final totalEstimado = controller.totalEstimadoItensOrcamentoSugeridos;
+
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: _secondary.withValues(alpha: 0.055),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: _secondary.withValues(alpha: 0.14)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(Icons.receipt_long_rounded, color: _secondary, size: 21),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Itens de orçamento sugeridos',
+                        style: GoogleFonts.poppins(
+                          color: _dark,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        '${itens.length} item(ns) • Total estimado ${_formatarMoeda(totalEstimado)}',
+                        style: GoogleFonts.poppins(
+                          color: _muted,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: () => _abrirItemOrcamentoSugeridoDialog(),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _secondary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Adicionar'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (itens.isEmpty)
+              _buildItensOrcamentoEmptyState()
+            else
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                itemCount: itens.length,
+                onReorder: controller.reordenarItemOrcamentoSugerido,
+                itemBuilder: (context, index) {
+                  final item = itens[index];
+                  final key = ValueKey('item_orcamento_${index}_${item['item']}_${item['ordem']}');
+
+                  return _buildItemOrcamentoSugeridoTile(
+                    key: key,
+                    index: index,
+                    item: item,
+                  );
+                },
+              ),
+            if (_tentouSalvar && controller.validarItensOrcamentoSugeridosFormulario() != null) ...[
+              const SizedBox(height: 10),
+              _buildInlineWarning(
+                controller.validarItensOrcamentoSugeridosFormulario()!,
+                color: _danger,
+                icon: Icons.error_outline_rounded,
+              ),
+            ],
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildItensOrcamentoEmptyState() {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _dark.withValues(alpha: 0.08)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: _info.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Icon(Icons.info_outline_rounded, color: _info, size: 20),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Nenhum item de orçamento sugerido cadastrado. Isso é permitido, mas cadastrar itens ajuda o organizador a montar o orçamento automaticamente.',
+              style: GoogleFonts.poppins(
+                color: _muted,
+                fontSize: 12,
+                height: 1.35,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildItemOrcamentoSugeridoTile({
+    required Key key,
+    required int index,
+    required Map<String, dynamic> item,
+  }) {
+    final categoria = _readString(item, 'categoria', fallback: 'Geral');
+    final nomeItem = _readString(item, 'item', fallback: _readString(item, 'nome'));
+    final descricao = _readString(item, 'descricao');
+    final custoEstimado = _readDouble(item, 'custoEstimado');
+    final custoMinimo = _readDouble(item, 'custoMinimo');
+    final custoMaximo = _readDouble(item, 'custoMaximo');
+    final unidade = _readString(item, 'unidade', fallback: 'unidade');
+    final quantidadeBase = _readDouble(item, 'quantidadeBase', fallback: 1.0);
+    final custoPorConvidado = _readDouble(item, 'custoPorConvidado');
+    final obrigatorio = _readBool(item, 'obrigatorio', fallback: false);
+
+    return Container(
+      key: key,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: _dark.withValues(alpha: 0.07)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ReorderableDragStartListener(
+            index: index,
+            child: Container(
+              width: 34,
+              height: 34,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: _surface,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.drag_indicator_rounded, color: _muted, size: 20),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        nomeItem.isEmpty ? 'Item sem nome' : nomeItem,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          color: _dark,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ),
+                    if (obrigatorio)
+                      _MiniBadge(
+                        text: 'Obrigatório',
+                        color: _primary,
+                        icon: Icons.verified_rounded,
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
+                  children: [
+                    _MiniBadge(text: categoria, color: _secondary, icon: Icons.category_outlined),
+                    _MiniBadge(
+                        text: _formatarMoeda(custoEstimado),
+                        color: _success,
+                        icon: Icons.payments_outlined),
+                    _MiniBadge(
+                        text: '$quantidadeBase $unidade',
+                        color: _info,
+                        icon: Icons.inventory_2_outlined),
+                    if (custoPorConvidado > 0)
+                      _MiniBadge(
+                        text: '${_formatarMoeda(custoPorConvidado)}/convidado',
+                        color: _warning,
+                        icon: Icons.groups_rounded,
+                      ),
+                    if (custoMinimo > 0 || custoMaximo > 0)
+                      _MiniBadge(
+                        text: '${_formatarMoeda(custoMinimo)} - ${_formatarMoeda(custoMaximo)}',
+                        color: _muted,
+                        icon: Icons.price_change_outlined,
+                      ),
+                  ],
+                ),
+                if (descricao.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    descricao,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                      color: _muted,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 11.5,
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          PopupMenuButton<String>(
+            tooltip: 'Ações do item',
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            onSelected: (value) {
+              if (value == 'editar') {
+                _abrirItemOrcamentoSugeridoDialog(index: index, item: item);
+              } else if (value == 'remover') {
+                controller.removerItemOrcamentoSugerido(index);
+              }
+            },
+            itemBuilder: (_) => [
+              PopupMenuItem<String>(
+                value: 'editar',
+                child: Row(
+                  children: [
+                    const Icon(Icons.edit_outlined, size: 18),
+                    const SizedBox(width: 8),
+                    Text('Editar', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ),
+              PopupMenuItem<String>(
+                value: 'remover',
+                child: Row(
+                  children: [
+                    const Icon(Icons.delete_outline_rounded, size: 18, color: _danger),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Remover',
+                      style: GoogleFonts.poppins(color: _danger, fontWeight: FontWeight.w600),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _abrirTarefaSugeridaDialog({
+    int? index,
+    Map<String, dynamic>? tarefa,
+  }) async {
+    final formKey = GlobalKey<FormState>();
+    final tituloController = TextEditingController(
+      text: _readString(tarefa ?? const <String, dynamic>{}, 'titulo',
+          fallback: _readString(tarefa ?? const <String, dynamic>{}, 'nome')),
+    );
+    final descricaoController = TextEditingController(
+      text: _readString(tarefa ?? const <String, dynamic>{}, 'descricao'),
+    );
+    final diasController = TextEditingController(
+      text:
+          _readInt(tarefa ?? const <String, dynamic>{}, 'diasAntesEvento', fallback: 30).toString(),
+    );
+    final ordemController = TextEditingController(
+      text: _readInt(tarefa ?? const <String, dynamic>{}, 'ordem',
+              fallback: (index ?? controller.tarefasSugeridasFormulario.length) + 1)
+          .toString(),
+    );
+
+    var categoria = _readString(tarefa ?? const <String, dynamic>{}, 'categoria',
+        fallback: _categoriaController.text.trim());
+    if (!_categoriasTarefaSugerida.contains(categoria)) {
+      categoria = categoria.isEmpty ? 'Geral' : categoria;
+    }
+
+    var prioridade =
+        _readString(tarefa ?? const <String, dynamic>{}, 'prioridade', fallback: 'media')
+            .toLowerCase();
+    if (!_prioridadesTarefaSugerida.contains(prioridade)) {
+      prioridade = 'media';
+    }
+
+    var obrigatoria =
+        _readBool(tarefa ?? const <String, dynamic>{}, 'obrigatoria', fallback: false);
+
+    try {
+      await Get.dialog<void>(
+        StatefulBuilder(
+          builder: (context, setDialogState) {
+            final width = MediaQuery.sizeOf(context).width;
+            final compact = width < 620;
+
+            return Dialog(
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: compact ? 12 : 24,
+                vertical: 18,
+              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 720),
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.all(18),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(colors: [_primary, _secondary]),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Icon(Icons.checklist_rounded, color: Colors.white),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      index == null
+                                          ? 'Adicionar tarefa sugerida'
+                                          : 'Editar tarefa sugerida',
+                                      style: GoogleFonts.poppins(
+                                        color: _dark,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 17,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Essa tarefa poderá ser usada para gerar checklist automaticamente.',
+                                      style: GoogleFonts.poppins(
+                                        color: _muted,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 11.5,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _buildTextField(
+                            controller: tituloController,
+                            label: 'Título da tarefa',
+                            hint: 'Ex.: Solicitar orçamento da decoração',
+                            icon: Icons.task_alt_rounded,
+                            requiredField: true,
+                            validator: _requiredValidator('Informe o título da tarefa.'),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildTextField(
+                            controller: descricaoController,
+                            label: 'Descrição',
+                            hint: 'Ex.: Enviar a referência visual para fornecedores.',
+                            icon: Icons.description_outlined,
+                            minLines: 3,
+                            maxLines: 5,
+                          ),
+                          const SizedBox(height: 12),
+                          _responsiveFields(
+                            isWide: !compact,
+                            children: [
+                              DropdownButtonFormField<String>(
+                                value: _categoriasTarefaSugerida.contains(categoria)
+                                    ? categoria
+                                    : 'Geral',
+                                decoration: _dropdownDecoration(
+                                  label: 'Categoria',
+                                  icon: Icons.category_outlined,
+                                ),
+                                items: _categoriasTarefaSugerida
+                                    .map(
+                                      (item) => DropdownMenuItem<String>(
+                                        value: item,
+                                        child: Text(item),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  setDialogState(() => categoria = value ?? 'Geral');
+                                },
+                              ),
+                              DropdownButtonFormField<String>(
+                                value: prioridade,
+                                decoration: _dropdownDecoration(
+                                  label: 'Prioridade',
+                                  icon: Icons.flag_outlined,
+                                ),
+                                items: _prioridadesTarefaSugerida
+                                    .map(
+                                      (item) => DropdownMenuItem<String>(
+                                        value: item,
+                                        child: Text(_labelPrioridade(item)),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  setDialogState(() => prioridade = value ?? 'media');
+                                },
+                              ),
+                              _buildTextField(
+                                controller: diasController,
+                                label: 'Dias antes do evento',
+                                hint: 'Ex.: 45',
+                                icon: Icons.event_available_outlined,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                validator: (value) {
+                                  final text = (value ?? '').trim();
+                                  if (text.isEmpty) return 'Informe os dias.';
+                                  if (int.tryParse(text) == null) return 'Use número inteiro.';
+                                  return null;
+                                },
+                              ),
+                              _buildTextField(
+                                controller: ordemController,
+                                label: 'Ordem',
+                                hint: 'Ex.: 1',
+                                icon: Icons.sort_rounded,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                validator: (value) {
+                                  final text = (value ?? '').trim();
+                                  if (text.isEmpty) return 'Informe a ordem.';
+                                  if (int.tryParse(text) == null) return 'Use número inteiro.';
+                                  return null;
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _SwitchStatusCard(
+                            title: 'Tarefa obrigatória',
+                            subtitle:
+                                'Marque quando esta tarefa for essencial para usar a inspiração.',
+                            icon: Icons.verified_rounded,
+                            color: _primary,
+                            value: obrigatoria,
+                            onChanged: (value) => setDialogState(() => obrigatoria = value),
+                          ),
+                          const SizedBox(height: 18),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => Get.back(),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: _dark,
+                                    side: BorderSide(color: _dark.withValues(alpha: 0.16)),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16)),
+                                    padding: const EdgeInsets.symmetric(vertical: 13),
+                                  ),
+                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  label: const Text('Cancelar'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: FilledButton.icon(
+                                  onPressed: () {
+                                    if (!(formKey.currentState?.validate() ?? false)) {
+                                      return;
+                                    }
+
+                                    final dados = <String, dynamic>{
+                                      'titulo': tituloController.text.trim(),
+                                      'descricao': descricaoController.text.trim(),
+                                      'categoria': categoria,
+                                      'diasAntesEvento':
+                                          int.tryParse(diasController.text.trim()) ?? 30,
+                                      'prioridade': prioridade,
+                                      'obrigatoria': obrigatoria,
+                                      'ordem': int.tryParse(ordemController.text.trim()) ??
+                                          ((index ?? controller.tarefasSugeridasFormulario.length) +
+                                              1),
+                                    };
+
+                                    if (index == null) {
+                                      controller.adicionarTarefaSugerida(dados);
+                                    } else {
+                                      controller.editarTarefaSugerida(index, dados);
+                                    }
+
+                                    Get.back();
+                                  },
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: _primary,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16)),
+                                    padding: const EdgeInsets.symmetric(vertical: 13),
+                                  ),
+                                  icon: const Icon(Icons.save_rounded, size: 18),
+                                  label: const Text('Salvar'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        barrierDismissible: false,
+      );
+    } finally {
+      tituloController.dispose();
+      descricaoController.dispose();
+      diasController.dispose();
+      ordemController.dispose();
+    }
+  }
+
+  Future<void> _abrirItemOrcamentoSugeridoDialog({
+    int? index,
+    Map<String, dynamic>? item,
+  }) async {
+    final formKey = GlobalKey<FormState>();
+    final dados = item ?? const <String, dynamic>{};
+
+    final itemController = TextEditingController(
+      text: _readString(dados, 'item', fallback: _readString(dados, 'nome')),
+    );
+    final descricaoController = TextEditingController(
+      text: _readString(dados, 'descricao'),
+    );
+    final custoEstimadoController = TextEditingController(
+      text: _formatarNumeroParaCampo(_readDouble(dados, 'custoEstimado')),
+    );
+    final custoMinimoController = TextEditingController(
+      text: _formatarNumeroParaCampo(_readDouble(dados, 'custoMinimo')),
+    );
+    final custoMaximoController = TextEditingController(
+      text: _formatarNumeroParaCampo(_readDouble(dados, 'custoMaximo')),
+    );
+    final quantidadeBaseController = TextEditingController(
+      text: _formatarNumeroParaCampo(_readDouble(dados, 'quantidadeBase', fallback: 1.0)),
+    );
+    final custoPorConvidadoController = TextEditingController(
+      text: _formatarNumeroParaCampo(_readDouble(dados, 'custoPorConvidado')),
+    );
+    final ordemController = TextEditingController(
+      text: _readInt(
+        dados,
+        'ordem',
+        fallback: (index ?? controller.itensOrcamentoSugeridosFormulario.length) + 1,
+      ).toString(),
+    );
+
+    var categoria = _readString(dados, 'categoria', fallback: _categoriaController.text.trim());
+    if (!_categoriasOrcamentoSugerido.contains(categoria)) {
+      categoria = categoria.isEmpty ? 'Geral' : categoria;
+      if (!_categoriasOrcamentoSugerido.contains(categoria)) {
+        categoria = 'Geral';
+      }
+    }
+
+    var unidade = _readString(dados, 'unidade', fallback: 'unidade');
+    if (!_unidadesOrcamentoSugerido.contains(unidade)) {
+      unidade = 'unidade';
+    }
+
+    var obrigatorio = _readBool(dados, 'obrigatorio', fallback: false);
+
+    try {
+      await Get.dialog<void>(
+        StatefulBuilder(
+          builder: (context, setDialogState) {
+            final width = MediaQuery.sizeOf(context).width;
+            final compact = width < 620;
+
+            return Dialog(
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: compact ? 12 : 24,
+                vertical: 18,
+              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 780),
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                  child: SingleChildScrollView(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    padding: const EdgeInsets.all(18),
+                    child: Form(
+                      key: formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(colors: [_secondary, _primary]),
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: const Icon(Icons.receipt_long_rounded, color: Colors.white),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      index == null
+                                          ? 'Adicionar item de orçamento'
+                                          : 'Editar item de orçamento',
+                                      style: GoogleFonts.poppins(
+                                        color: _dark,
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 17,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Esse item poderá ser usado para gerar orçamento automaticamente.',
+                                      style: GoogleFonts.poppins(
+                                        color: _muted,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 11.5,
+                                        height: 1.3,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          _responsiveFields(
+                            isWide: !compact,
+                            children: [
+                              DropdownButtonFormField<String>(
+                                value: categoria,
+                                decoration: _dropdownDecoration(
+                                  label: 'Categoria *',
+                                  icon: Icons.category_outlined,
+                                ),
+                                items: _categoriasOrcamentoSugerido
+                                    .map(
+                                      (categoria) => DropdownMenuItem<String>(
+                                        value: categoria,
+                                        child: Text(categoria),
+                                      ),
+                                    )
+                                    .toList(),
+                                validator: (value) {
+                                  if ((value ?? '').trim().isEmpty) {
+                                    return 'Informe a categoria.';
+                                  }
+                                  return null;
+                                },
+                                onChanged: (value) {
+                                  setDialogState(() => categoria = value ?? 'Geral');
+                                },
+                              ),
+                              _buildTextField(
+                                controller: itemController,
+                                label: 'Item',
+                                hint: 'Ex.: Painel temático',
+                                icon: Icons.shopping_bag_outlined,
+                                requiredField: true,
+                                validator: _requiredValidator('Informe o item.'),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _buildTextField(
+                            controller: descricaoController,
+                            label: 'Descrição',
+                            hint: 'Ex.: Painel principal inspirado na referência visual.',
+                            icon: Icons.description_outlined,
+                            minLines: 3,
+                            maxLines: 5,
+                          ),
+                          const SizedBox(height: 12),
+                          _responsiveFields(
+                            isWide: !compact,
+                            children: [
+                              _buildTextField(
+                                controller: custoEstimadoController,
+                                label: 'Custo estimado',
+                                hint: 'Ex.: 350,00',
+                                icon: Icons.payments_outlined,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [_decimalInputFormatter()],
+                                validator: _moneyValidator('Custo estimado'),
+                              ),
+                              _buildTextField(
+                                controller: custoMinimoController,
+                                label: 'Custo mínimo',
+                                hint: 'Ex.: 200,00',
+                                icon: Icons.trending_down_rounded,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [_decimalInputFormatter()],
+                                validator: _moneyValidator('Custo mínimo'),
+                              ),
+                              _buildTextField(
+                                controller: custoMaximoController,
+                                label: 'Custo máximo',
+                                hint: 'Ex.: 800,00',
+                                icon: Icons.trending_up_rounded,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [_decimalInputFormatter()],
+                                validator: _moneyValidator('Custo máximo'),
+                              ),
+                              _buildTextField(
+                                controller: custoPorConvidadoController,
+                                label: 'Custo por convidado',
+                                hint: 'Ex.: 0,00',
+                                icon: Icons.groups_rounded,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [_decimalInputFormatter()],
+                                validator: _moneyValidator('Custo por convidado'),
+                              ),
+                              DropdownButtonFormField<String>(
+                                value: unidade,
+                                decoration: _dropdownDecoration(
+                                  label: 'Unidade',
+                                  icon: Icons.straighten_rounded,
+                                ),
+                                items: _unidadesOrcamentoSugerido
+                                    .map(
+                                      (unidade) => DropdownMenuItem<String>(
+                                        value: unidade,
+                                        child: Text(unidade),
+                                      ),
+                                    )
+                                    .toList(),
+                                onChanged: (value) {
+                                  setDialogState(() => unidade = value ?? 'unidade');
+                                },
+                              ),
+                              _buildTextField(
+                                controller: quantidadeBaseController,
+                                label: 'Quantidade base',
+                                hint: 'Ex.: 1',
+                                icon: Icons.numbers_rounded,
+                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                inputFormatters: [_decimalInputFormatter()],
+                                validator: _decimalValidator('Quantidade base'),
+                              ),
+                              _buildTextField(
+                                controller: ordemController,
+                                label: 'Ordem',
+                                hint: 'Ex.: 1',
+                                icon: Icons.sort_rounded,
+                                keyboardType: TextInputType.number,
+                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                validator: (value) {
+                                  final text = (value ?? '').trim();
+                                  if (text.isEmpty) return 'Informe a ordem.';
+                                  if (int.tryParse(text) == null) return 'Use número inteiro.';
+                                  return null;
+                                },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          _SwitchStatusCard(
+                            title: 'Item obrigatório',
+                            subtitle:
+                                'Marque quando este custo for essencial para aplicar a inspiração.',
+                            icon: Icons.verified_rounded,
+                            color: _secondary,
+                            value: obrigatorio,
+                            onChanged: (value) => setDialogState(() => obrigatorio = value),
+                          ),
+                          const SizedBox(height: 18),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton.icon(
+                                  onPressed: () => Get.back(),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: _dark,
+                                    side: BorderSide(color: _dark.withValues(alpha: 0.16)),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16)),
+                                    padding: const EdgeInsets.symmetric(vertical: 13),
+                                  ),
+                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  label: const Text('Cancelar'),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: FilledButton.icon(
+                                  onPressed: () {
+                                    if (!(formKey.currentState?.validate() ?? false)) {
+                                      return;
+                                    }
+
+                                    final dados = <String, dynamic>{
+                                      'categoria': categoria,
+                                      'item': itemController.text.trim(),
+                                      'descricao': descricaoController.text.trim(),
+                                      'custoEstimado': _parseDoubleBr(custoEstimadoController.text),
+                                      'custoMinimo': _parseDoubleBr(custoMinimoController.text),
+                                      'custoMaximo': _parseDoubleBr(custoMaximoController.text),
+                                      'unidade': unidade,
+                                      'quantidadeBase':
+                                          _parseDoubleBr(quantidadeBaseController.text),
+                                      'custoPorConvidado':
+                                          _parseDoubleBr(custoPorConvidadoController.text),
+                                      'obrigatorio': obrigatorio,
+                                      'ordem': int.tryParse(ordemController.text.trim()) ??
+                                          ((index ??
+                                                  controller
+                                                      .itensOrcamentoSugeridosFormulario.length) +
+                                              1),
+                                    };
+
+                                    if (index == null) {
+                                      controller.adicionarItemOrcamentoSugerido(dados);
+                                    } else {
+                                      controller.editarItemOrcamentoSugerido(index, dados);
+                                    }
+
+                                    Get.back();
+                                  },
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: _secondary,
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16)),
+                                    padding: const EdgeInsets.symmetric(vertical: 13),
+                                  ),
+                                  icon: const Icon(Icons.save_rounded, size: 18),
+                                  label: const Text('Salvar'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+        barrierDismissible: false,
+      );
+    } finally {
+      itemController.dispose();
+      descricaoController.dispose();
+      custoEstimadoController.dispose();
+      custoMinimoController.dispose();
+      custoMaximoController.dispose();
+      quantidadeBaseController.dispose();
+      custoPorConvidadoController.dispose();
+      ordemController.dispose();
+    }
+  }
+
+  InputDecoration _dropdownDecoration({
+    required String label,
+    required IconData icon,
+  }) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, size: 20),
+      filled: true,
+      fillColor: Colors.white,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      labelStyle: GoogleFonts.poppins(
+        color: _muted,
+        fontWeight: FontWeight.w600,
+        fontSize: 12.5,
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide(color: _dark.withValues(alpha: 0.10)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: BorderSide(color: _dark.withValues(alpha: 0.10)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(18),
+        borderSide: const BorderSide(color: _primary, width: 1.4),
+      ),
+    );
+  }
+
+  String _labelPrioridade(String value) {
+    switch (value) {
+      case 'alta':
+        return 'Alta';
+      case 'baixa':
+        return 'Baixa';
+      case 'media':
+      default:
+        return 'Média';
+    }
+  }
+
+  Widget _buildImagePanel() {
+    return Obx(() {
+      final imagemUrl = controller.imagemPrincipalUrlAtual.value.trim();
+      final hasCurrentImage = imagemUrl.isNotEmpty;
+      final hasSelectedImage = controller.imagemPrincipalSelecionadaBytes.value != null;
+      final missingImage = !hasCurrentImage && !hasSelectedImage;
+      final uploading =
+          controller.uploadImagemPrincipalLoading.value || controller.selecionandoImagem.value;
+
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: missingImage ? _warning.withValues(alpha: 0.08) : _info.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: missingImage ? _warning.withValues(alpha: 0.26) : _info.withValues(alpha: 0.16),
+          ),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 620;
+            final preview = Stack(
+              children: [
+                _buildImagePreview(),
+                if (uploading)
+                  Positioned.fill(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.28),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      alignment: Alignment.center,
+                      child: const SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CircularProgressIndicator(strokeWidth: 2.6, color: Colors.white),
+                      ),
+                    ),
+                  ),
+              ],
+            );
+
+            final actions = Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Imagem principal',
+                  style: GoogleFonts.poppins(
+                    color: _dark,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'A imagem selecionada aparece em preview antes do upload. Ao salvar, ela será enviada para Storage em inspiracoes/{id}/capa.jpg.',
+                  style: GoogleFonts.poppins(
+                    color: _muted,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                    height: 1.35,
+                  ),
+                ),
+                if (hasSelectedImage) ...[
+                  const SizedBox(height: 10),
+                  _buildInlineWarning(
+                    'Imagem pronta para upload. Ela substituirá a capa atual ao salvar.',
+                    color: _info,
+                    icon: Icons.cloud_upload_outlined,
+                  ),
+                ],
+                if (missingImage) ...[
+                  const SizedBox(height: 10),
+                  _buildInlineWarning(
+                    widget.imagemObrigatoria
+                        ? 'Imagem principal obrigatória para salvar.'
+                        : 'Imagem principal ainda não informada. Você pode salvar, mas o card ficará menos atrativo.',
+                    color: widget.imagemObrigatoria ? _danger : _warning,
+                    icon: widget.imagemObrigatoria
+                        ? Icons.error_outline_rounded
+                        : Icons.info_outline_rounded,
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: uploading ? null : _selecionarImagemPrincipal,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _primary,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      icon: const Icon(Icons.upload_rounded, size: 18),
+                      label: Text(hasCurrentImage || hasSelectedImage
+                          ? 'Substituir imagem'
+                          : 'Selecionar imagem'),
+                    ),
+                    if (hasSelectedImage || hasCurrentImage)
+                      OutlinedButton.icon(
+                        onPressed: uploading ? null : _limparImagemPrincipal,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: _danger,
+                          side: BorderSide(color: _danger.withValues(alpha: 0.28)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        label: const Text('Remover'),
+                      ),
+                  ],
+                ),
+              ],
+            );
+
+            if (compact) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  preview,
+                  const SizedBox(height: 12),
+                  actions,
+                ],
+              );
+            }
+
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(width: 220, child: preview),
+                const SizedBox(width: 14),
+                Expanded(child: actions),
+              ],
+            );
+          },
+        ),
+      );
+    });
+  }
+
   Widget _buildImagePreview() {
-    final imagemUrl = _imagemUrlController.text.trim();
+    final selectedBytes = controller.imagemPrincipalSelecionadaBytes.value;
+    final imagemUrl = controller.imagemPrincipalUrlAtual.value.trim();
 
     Widget child;
-    if (_imagemSelecionadaBytes != null) {
+    if (selectedBytes != null) {
       child = Image.memory(
-        _imagemSelecionadaBytes!,
+        selectedBytes,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
@@ -969,6 +2298,230 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
         child: ColoredBox(
           color: Colors.white,
           child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildGaleriaPanel() {
+    return Obx(() {
+      final urls = controller.galeriaUrlsFormulario.toList();
+      final pendentes = controller.imagensGaleriaPendentes.toList();
+      final uploading =
+          controller.uploadGaleriaLoading.value || controller.selecionandoImagem.value;
+      final total = urls.length + pendentes.length;
+
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: _dark.withValues(alpha: 0.08)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: _primary.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Icon(Icons.photo_library_outlined, color: _primary, size: 20),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Galeria da inspiração',
+                        style: GoogleFonts.poppins(
+                          color: _dark,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                      Text(
+                        total == 0
+                            ? 'Adicione imagens extras para enriquecer a inspiração.'
+                            : '$total imagem(ns) vinculada(s) ou pendente(s).',
+                        style: GoogleFonts.poppins(
+                          color: _muted,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 11.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: uploading ? null : _adicionarImagemGaleria,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _primary,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  icon: uploading
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.add_photo_alternate_outlined, size: 18),
+                  label: const Text('Adicionar'),
+                ),
+              ],
+            ),
+            if (total == 0) ...[
+              const SizedBox(height: 12),
+              _buildInlineWarning(
+                'Nenhuma imagem extra adicionada. A galeria é opcional.',
+                color: _muted,
+                icon: Icons.info_outline_rounded,
+              ),
+            ],
+            if (pendentes.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Pendentes de upload',
+                style: GoogleFonts.poppins(
+                  color: _dark,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final item in pendentes) _buildGaleriaPendenteTile(item),
+                ],
+              ),
+            ],
+            if (urls.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Text(
+                'Imagens vinculadas',
+                style: GoogleFonts.poppins(
+                  color: _dark,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                children: [
+                  for (final url in urls) _buildGaleriaUrlTile(url),
+                ],
+              ),
+            ],
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _buildGaleriaPendenteTile(ImagemGaleriaUploadPendente item) {
+    return SizedBox(
+      width: 128,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: Image.memory(
+                item.bytes,
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          Positioned(
+            top: 6,
+            right: 6,
+            child: _buildRemoveImageButton(
+              onTap: () => controller.removerImagemGaleriaPendente(item.localId),
+            ),
+          ),
+          Positioned(
+            left: 6,
+            bottom: 6,
+            right: 6,
+            child: _buildSmallImageBadge('Pendente'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGaleriaUrlTile(String url) {
+    return SizedBox(
+      width: 128,
+      child: Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: AspectRatio(
+              aspectRatio: 1,
+              child: Image.network(
+                url,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _buildImagePlaceholder(
+                  icon: Icons.broken_image_outlined,
+                  text: 'Erro',
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            top: 6,
+            right: 6,
+            child: _buildRemoveImageButton(
+              onTap: () => _removerGaleriaUrl(url),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRemoveImageButton({required VoidCallback onTap}) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.55),
+      shape: const CircleBorder(),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: const Padding(
+          padding: EdgeInsets.all(5),
+          child: Icon(Icons.close_rounded, color: Colors.white, size: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallImageBadge(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        text,
+        overflow: TextOverflow.ellipsis,
+        style: GoogleFonts.poppins(
+          color: Colors.white,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -1114,24 +2667,58 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   }
 
   Future<void> _selecionarImagemPrincipal() async {
-    final imagem = await controller.escolherImagem(source: ImageSource.gallery);
+    final imagem = await controller.selecionarImagemPrincipal();
     if (imagem == null) return;
 
-    final bytes = await imagem.readAsBytes();
-    setState(() {
-      _imagemSelecionada = imagem;
-      _imagemSelecionadaBytes = bytes;
-      _nomeImagemSelecionada = imagem.name;
-    });
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _adicionarImagemGaleria() async {
+    final imagem = await controller.adicionarImagemGaleria();
+    if (imagem == null) return;
+
+    _sincronizarGaleriaFormulario();
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _removerGaleriaUrl(String url) async {
+    final cleanUrl = url.trim();
+    if (cleanUrl.isEmpty) return;
+
+    if (_isEdicao) {
+      final sucesso = await controller.removerImagemGaleria(
+        inspiracaoId: _inspiracaoId,
+        imagemUrl: cleanUrl,
+        usuarioId: widget.usuarioId,
+      );
+
+      if (!sucesso) return;
+    } else {
+      controller.galeriaUrlsFormulario.remove(cleanUrl);
+    }
+
+    final atuais = _parseStringList(_galeriaUrlsController.text)
+      ..removeWhere((item) => item.trim() == cleanUrl);
+    _galeriaUrlsController.text = atuais.join('\n');
+    _sincronizarGaleriaFormulario();
+
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _limparImagemPrincipal() {
-    setState(() {
-      _imagemSelecionada = null;
-      _imagemSelecionadaBytes = null;
-      _nomeImagemSelecionada = null;
-      _imagemUrlController.clear();
-    });
+    controller.limparImagemPrincipalSelecionada();
+    controller.atualizarImagemPrincipalUrlFormulario('');
+    _imagemUrlController.clear();
+
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   Future<void> _salvar() async {
@@ -1148,19 +2735,34 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       return;
     }
 
+    final erroTarefas = controller.validarTarefasSugeridasFormulario();
+    if (erroTarefas != null) {
+      EasyLoading.showInfo(erroTarefas);
+      return;
+    }
+
+    final erroItensOrcamento = controller.validarItensOrcamentoSugeridosFormulario();
+    if (erroItensOrcamento != null) {
+      EasyLoading.showInfo(erroItensOrcamento);
+      return;
+    }
+
     if (widget.imagemObrigatoria && !_possuiImagemPrincipal()) {
       EasyLoading.showInfo('Informe ou selecione a imagem principal.');
       return;
     }
+
+    controller.prepararImagensFormulario(
+      imagemUrl: _imagemUrlController.text,
+      galeriaUrls: _parseStringList(_galeriaUrlsController.text),
+      limparPendentes: false,
+    );
 
     final dados = _montarPayloadFormulario();
 
     final id = await controller.salvarInspiracao(
       id: _isEdicao ? _inspiracaoId : null,
       dados: dados,
-      imagemPrincipal: _imagemSelecionada,
-      imagemPrincipalBytes: _imagemSelecionadaBytes,
-      nomeImagemPrincipal: _nomeImagemSelecionada,
       usuarioId: widget.usuarioId,
     );
 
@@ -1243,7 +2845,7 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       'categoriaId': _categoriaIdController.text.trim().isNotEmpty
           ? _categoriaIdController.text.trim()
           : _normalizeKey(_categoriaController.text),
-      'imagemUrl': _imagemUrlController.text.trim(),
+      'imagemUrl': controller.imagemPrincipalUrlAtual.value.trim(),
       'galeriaUrls': _parseStringList(_galeriaUrlsController.text),
       'tags': _parseStringList(_tagsController.text),
       'paletaCores': _parseStringList(_paletaCoresController.text),
@@ -1257,10 +2859,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       'tipoEventoIds': tipos.tipoEventoIds,
       'tipoEventoSlugs': tipos.tipoEventoSlugs,
       'tipoEventoNomes': tipos.tipoEventoNomes,
-      'tarefasSugeridas': _parseTarefasSugeridas(_tarefasSugeridasController.text),
-      'itensOrcamentoSugeridos': _parseItensOrcamentoSugeridos(
-        _itensOrcamentoSugeridosController.text,
-      ),
+      'tarefasSugeridas': controller.tarefasSugeridasParaFirestore(),
+      'itensOrcamentoSugeridos': controller.itensOrcamentoSugeridosParaFirestore(),
       'categoriasFornecedorSugeridas': _parseStringList(
         _categoriasFornecedorSugeridasController.text,
       ),
@@ -1277,9 +2877,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
         .where((option) => _tipoEventoIdsSelecionados.contains(option.id))
         .toList();
 
-    final ids = LinkedHashSet<String>();
-    final slugs = LinkedHashSet<String>();
-    final nomes = LinkedHashSet<String>();
+    final LinkedHashSet<String> ids = LinkedHashSet<String>();
+    final LinkedHashSet<String> slugs = LinkedHashSet<String>();
+    final LinkedHashSet<String> nomes = LinkedHashSet<String>();
 
     for (final option in selectedOptions) {
       ids.add(option.id);
@@ -1361,7 +2961,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   }
 
   bool _possuiImagemPrincipal() {
-    return _imagemSelecionadaBytes != null || _imagemUrlController.text.trim().isNotEmpty;
+    return controller.possuiImagemPrincipalFormulario ||
+        _imagemUrlController.text.trim().isNotEmpty;
   }
 
   String? Function(String?) _requiredValidator(String message) {
@@ -1382,50 +2983,89 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
         .toList();
   }
 
-  List<Map<String, dynamic>> _parseTarefasSugeridas(String value) {
-    final linhas = value.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-
-    return linhas.map((linha) {
-      final partes = linha.split('|').map((e) => e.trim()).toList();
-      final titulo = partes.isNotEmpty ? partes[0] : linha;
-      final categoria =
-          partes.length > 1 && partes[1].isNotEmpty ? partes[1] : _categoriaController.text.trim();
-      final descricao = partes.length > 2 ? partes.sublist(2).join(' | ').trim() : '';
-
-      return <String, dynamic>{
-        'titulo': titulo,
-        'categoria': categoria,
-        'descricao': descricao,
-        'status': 'pendente',
-        'origem': 'inspiracao_admin',
-      };
-    }).toList();
+  TextInputFormatter _decimalInputFormatter() {
+    return FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'));
   }
 
-  List<Map<String, dynamic>> _parseItensOrcamentoSugeridos(String value) {
-    final linhas = value.split('\n').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
+  String? Function(String?) _moneyValidator(String label) {
+    return (value) {
+      final text = (value ?? '').trim();
+      if (text.isEmpty) return null;
 
-    return linhas.map((linha) {
-      final partes = linha.split('|').map((e) => e.trim()).toList();
-      final categoria =
-          partes.isNotEmpty && partes[0].isNotEmpty ? partes[0] : _categoriaController.text.trim();
-      final item = partes.length > 1 && partes[1].isNotEmpty ? partes[1] : linha;
-      final valor = partes.length > 2 ? _parseDoubleBr(partes[2]) : 0.0;
+      final parsed = _tryParseDoubleBr(text);
+      if (parsed == null) return '$label precisa ser um valor válido.';
+      if (parsed < 0) return '$label não pode ser negativo.';
 
-      return <String, dynamic>{
-        'categoria': categoria,
-        'item': item,
-        'custoEstimado': valor,
-        'custoReal': 0.0,
-        'statusPagamento': 'pendente',
-        'origem': 'inspiracao_admin',
-      };
-    }).toList();
+      return null;
+    };
+  }
+
+  String? Function(String?) _decimalValidator(String label) {
+    return (value) {
+      final text = (value ?? '').trim();
+      if (text.isEmpty) return null;
+
+      final parsed = _tryParseDoubleBr(text);
+      if (parsed == null) return '$label precisa ser um número válido.';
+      if (parsed < 0) return '$label não pode ser negativo.';
+
+      return null;
+    };
+  }
+
+  double? _tryParseDoubleBr(String value) {
+    var text = value.replaceAll('R\$', '').replaceAll(RegExp(r'\s+'), '').trim();
+
+    if (text.isEmpty) {
+      return 0.0;
+    }
+
+    if (text.contains(',')) {
+      text = text.replaceAll('.', '').replaceAll(',', '.');
+    }
+
+    return double.tryParse(text);
   }
 
   double _parseDoubleBr(String value) {
-    final normalized = value.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim();
-    return double.tryParse(normalized) ?? 0.0;
+    return _tryParseDoubleBr(value) ?? 0.0;
+  }
+
+  double _readDouble(
+    Map<String, dynamic> data,
+    String key, {
+    double fallback = 0.0,
+  }) {
+    final value = data[key];
+    if (value == null) return fallback;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is num) return value.toDouble();
+    return _tryParseDoubleBr(value.toString()) ?? fallback;
+  }
+
+  String _formatarMoeda(double value) {
+    final fixed = value.toStringAsFixed(2);
+    final parts = fixed.split('.');
+    final reais = parts.first;
+    final centavos = parts.length > 1 ? parts.last : '00';
+
+    final buffer = StringBuffer();
+    for (var i = 0; i < reais.length; i++) {
+      final posicaoRestante = reais.length - i;
+      buffer.write(reais[i]);
+      if (posicaoRestante > 1 && posicaoRestante % 3 == 1) {
+        buffer.write('.');
+      }
+    }
+
+    return 'R\$ ${buffer.toString()},$centavos';
+  }
+
+  String _formatarNumeroParaCampo(double value) {
+    if (value == 0) return '0';
+    final text = value.toStringAsFixed(2).replaceAll('.', ',');
+    return text.endsWith(',00') ? text.substring(0, text.length - 3) : text;
   }
 
   String _formatarTarefas(List<Map<String, dynamic>> tarefas) {
@@ -1557,6 +3197,55 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     if (text.startsWith('_')) text = text.substring(1);
     if (text.endsWith('_')) text = text.substring(0, text.length - 1);
     return text;
+  }
+}
+
+class _MiniBadge extends StatelessWidget {
+  final String text;
+  final Color color;
+  final IconData? icon;
+
+  const _MiniBadge({
+    required this.text,
+    required this.color,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (icon != null) ...[
+            Icon(
+              icon,
+              size: 12,
+              color: color,
+            ),
+            const SizedBox(width: 4),
+          ],
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                color: color,
+                fontWeight: FontWeight.w800,
+                fontSize: 10.5,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

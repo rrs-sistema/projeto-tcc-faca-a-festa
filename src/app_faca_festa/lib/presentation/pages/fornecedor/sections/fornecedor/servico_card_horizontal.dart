@@ -30,35 +30,41 @@ class ServicoCardHorizontal extends StatelessWidget {
     return Container(
       width: 175,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
         color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 3)),
-        ],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _imagem(),
           Padding(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(servico.nome,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 11.5)),
-                const SizedBox(height: 4),
-                Text(servico.descricao ?? 'Sem descrição',
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                        color: Colors.black87.withValues(alpha: 0.65), fontSize: 12.5)),
-                const SizedBox(height: 10),
+                Text(
+                  servico.nome,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                    color: Colors.grey.shade900,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  servico.descricao ?? 'Sem descrição',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    color: Colors.grey.shade500,
+                    fontSize: 11,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 12),
                 _botaoOrcar(),
               ],
             ),
@@ -69,44 +75,70 @@ class ServicoCardHorizontal extends StatelessWidget {
   }
 
   Widget _imagem() => ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
         child: CachedNetworkImage(
           imageUrl: fotoUrl ?? '',
-          height: 100,
+          height: 90,
           width: double.infinity,
           fadeInDuration: const Duration(milliseconds: 400),
           fit: BoxFit.cover,
-          placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
+          placeholder: (_, __) => Container(
+            color: Colors.grey.shade50,
+            alignment: Alignment.center,
+            child: const SizedBox(
+              height: 20,
+              width: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+          ),
           errorWidget: (_, __, ___) => Container(
-            height: 100,
-            color: Colors.grey.shade300,
-            child: const Icon(Icons.image_not_supported_outlined, size: 40, color: Colors.grey),
+            height: 90,
+            color: Colors.grey.shade50,
+            child: Icon(Icons.image_not_supported_outlined, size: 24, color: Colors.grey.shade300),
           ),
         ),
       );
 
-  Widget _botaoOrcar() => ElevatedButton.icon(
-      icon: const Icon(Icons.request_quote_rounded, size: 16, color: Colors.white),
-      label: Text('Orçar Serviço',
-          style:
-              GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white)),
-      style: ElevatedButton.styleFrom(
-        backgroundColor: primary,
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-      onPressed: () {
-        final appController = Get.find<AppController>();
-        final servicoCotado = ServicoCotadoDto(idProduto: servico.id, nomeProduto: servico.nome);
+  Widget _botaoOrcar() => SizedBox(
+        width: double.infinity,
+        height: 32,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: primary,
+            padding: EdgeInsets.zero,
+            elevation: 0,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+          ),
+          onPressed: () {
+            final appController = Get.find<AppController>();
+            final servicoCotado =
+                ServicoCotadoDto(idProduto: servico.id, nomeProduto: servico.nome);
 
-        if (appController.isServicoSelecionado(servico.id)) {
-          appController.removerServico(servico.id);
-          Get.snackbar('Removido', 'Serviço removido da lista de cotação.',
-              backgroundColor: Colors.orange, colorText: Colors.white);
-        } else {
-          appController.adicionarServico(servicoCotado);
-          Get.snackbar('Adicionado', 'Serviço adicionado à lista de cotação.',
-              backgroundColor: Colors.green, colorText: Colors.white);
-        }
-      });
+            if (appController.isServicoSelecionado(servico.id)) {
+              appController.removerServico(servico.id);
+              Get.snackbar('Removido', 'Serviço removido da lista de cotação.',
+                  backgroundColor: Colors.grey.shade900, colorText: Colors.white);
+            } else {
+              appController.adicionarServico(servicoCotado);
+              Get.snackbar('Adicionado', 'Serviço adicionado à lista de cotação.',
+                  backgroundColor: primary, colorText: Colors.white);
+            }
+          },
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.add_shopping_cart_rounded, size: 14, color: Colors.white),
+              const SizedBox(width: 6),
+              Text(
+                'Orçar',
+                style: GoogleFonts.poppins(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
 }

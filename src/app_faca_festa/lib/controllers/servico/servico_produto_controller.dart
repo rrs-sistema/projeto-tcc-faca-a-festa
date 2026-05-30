@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import './../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import './../data/models/model.dart';
+import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
+import '../../data/models/model.dart';
 
 class ServicoProdutoController extends GetxController {
   final _db = FirebaseFirestore.instance;

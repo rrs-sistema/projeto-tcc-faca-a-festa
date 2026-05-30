@@ -2,11 +2,11 @@ import { defineSecret } from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
 import { onCall } from "firebase-functions/v2/https";
 
-import { admin } from "../shared/firebaseAdmin";
-import { buildInput, buildInstructions } from "../ia/calculadora/prompt";
-import { buscarSugestoesBaseCalculadora } from "../services/sugestoesBaseIAService";
-import { aplicarRastreabilidadeAnalise } from "../services/rastreabilidadeCalculadoraIAService";
-import { AnaliseCalculadoraIAResponse, CalculadoraIARequest } from "../types";
+import { admin } from "../../shared/firebaseAdmin";
+import { buildInput, buildInstructions } from "../../ia/calculadora/prompt";
+import { buscarSugestoesBaseCalculadora } from "../../services/calculadora/sugestoesBaseIAService";
+import { aplicarRastreabilidadeAnalise } from "../../services/calculadora/rastreabilidadeCalculadoraIAService";
+import { AnaliseCalculadoraIAResponse, CalculadoraIARequest } from "../../types/calculadoraIA.types";
 
 const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
 const DEFAULT_REGION = "southamerica-east1";

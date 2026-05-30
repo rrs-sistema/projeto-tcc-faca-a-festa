@@ -8,8 +8,7 @@ import '../endereco/endereco_section.dart';
 import '../endereco/endereco_section_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../data/models/model.dart';
-
-import '../../widgets/custom_input_field.dart'; // seu componente de input elegante
+import '../../widgets/custom_input_field.dart';
 
 class UsuariosAdminListScreen extends StatelessWidget {
   const UsuariosAdminListScreen({super.key});
@@ -30,54 +29,53 @@ class UsuariosAdminListScreen extends StatelessWidget {
           onPressed: () => Get.back(),
         ),
         title: Text(
-          'Usuários e Administradores',
+          'Contas e Acessos',
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.bold,
             color: Colors.white,
+            fontSize: 16,
           ),
         ),
         centerTitle: true,
         flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
       ),
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: Colors.grey.shade50,
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: primary,
-        icon: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white),
+        backgroundColor: Colors.grey.shade900,
+        elevation: 2,
+        icon: const Icon(Icons.person_add_alt_1_rounded, color: Colors.white, size: 20),
         label: Text(
-          'Novo Usuário',
+          'Novo Cadastro',
           style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             color: Colors.white,
+            fontSize: 13,
           ),
         ),
         onPressed: () => _abrirCadastroUsuarioBottomSheet(context, controller, primary),
       ),
       body: Column(
         children: [
-          // 🔍 Campo de busca com estilo moderno
+          // 🔍 Campo de busca Moderno
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
+            padding: const EdgeInsets.all(16),
             child: Container(
+              height: 48,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
               ),
               child: TextField(
                 controller: controller.buscaCtrl,
                 onChanged: controller.filtrarUsuarios,
+                style: GoogleFonts.poppins(fontSize: 14),
                 decoration: InputDecoration(
                   hintText: 'Buscar por nome ou e-mail...',
-                  hintStyle: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade500),
-                  prefixIcon: Icon(Icons.search_rounded, color: primary),
+                  hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+                  prefixIcon: Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
             ),
@@ -96,78 +94,68 @@ class UsuariosAdminListScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.person_search_rounded, size: 60, color: Colors.grey),
-                      const SizedBox(height: 10),
+                      Icon(Icons.person_search_rounded, size: 48, color: Colors.grey.shade300),
+                      const SizedBox(height: 12),
                       Text(
-                        'Nenhum usuário encontrado',
-                        style: GoogleFonts.poppins(fontSize: 15, color: Colors.grey.shade600),
+                        'Nenhum usuário localizado.',
+                        style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade500),
                       ),
                     ],
                   ),
                 );
               }
 
-              return ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 110),
+              return ListView.separated(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 110),
                 itemCount: lista.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 12),
                 itemBuilder: (_, i) {
                   final user = lista[i];
                   final isAdmin = user.tipo == 'A';
                   final ativo = user.ativo;
 
-                  return AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
-                    margin: const EdgeInsets.only(bottom: 14),
+                  return Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.08),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade200),
                     ),
                     child: InkWell(
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(12),
                       onTap: () => _abrirCadastroUsuarioBottomSheet(
                         context,
                         controller,
-                        Colors.teal,
-                        usuario: user, // ⬅️ passa o usuário selecionado
+                        primary,
+                        usuario: user,
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.all(16),
                         child: Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Avatar elegante
                             CircleAvatar(
-                              radius: 28,
-                              backgroundColor:
-                                  isAdmin ? Colors.teal.shade100 : Colors.grey.shade200,
+                              radius: 24,
+                              backgroundColor: isAdmin ? Colors.blue.shade50 : Colors.grey.shade100,
                               backgroundImage: user.fotoPerfilUrl != null
                                   ? NetworkImage(user.fotoPerfilUrl!)
                                   : null,
                               child: user.fotoPerfilUrl == null
                                   ? Icon(
                                       isAdmin
-                                          ? Icons.verified_user_rounded
+                                          ? Icons.admin_panel_settings_rounded
                                           : Icons.person_outline_rounded,
-                                      color: isAdmin ? Colors.teal : Colors.grey.shade600,
-                                      size: 28,
+                                      color: isAdmin ? Colors.blue.shade600 : Colors.grey.shade400,
+                                      size: 24,
                                     )
                                   : null,
                             ),
                             const SizedBox(width: 16),
 
-                            // Informações principais
+                            // Informações 100% Flexíveis
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // Nome + Tipo
                                   Row(
                                     children: [
                                       Expanded(
@@ -175,64 +163,52 @@ class UsuariosAdminListScreen extends StatelessWidget {
                                           user.nome,
                                           style: GoogleFonts.poppins(
                                             fontWeight: FontWeight.w600,
-                                            fontSize: 16,
-                                            color: ativo
-                                                ? Colors.black.withValues(alpha: 0.9)
-                                                : Colors.grey.shade500,
+                                            fontSize: 15,
+                                            color:
+                                                ativo ? Colors.grey.shade900 : Colors.grey.shade400,
                                           ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
                                       ),
+                                      const SizedBox(width: 8),
                                       if (user.tipo != null)
                                         Container(
                                           padding: const EdgeInsets.symmetric(
-                                              horizontal: 10, vertical: 4),
+                                              horizontal: 8, vertical: 2),
                                           decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius: BorderRadius.circular(6),
                                             color: _getTipoColor(user.tipo!)['bg'],
-                                            border: Border.all(
-                                                color: _getTipoColor(user.tipo!)['border']),
                                           ),
                                           child: Text(
                                             _getTipoColor(user.tipo!)['label'],
                                             style: GoogleFonts.poppins(
-                                              fontSize: 11.5,
+                                              fontSize: 10,
                                               fontWeight: FontWeight.w600,
                                               color: _getTipoColor(user.tipo!)['text'],
+                                              letterSpacing: 0.5,
                                             ),
                                           ),
                                         ),
                                     ],
                                   ),
-
-                                  const SizedBox(height: 6),
-
-                                  // Email
+                                  const SizedBox(height: 4),
                                   Text(
                                     user.email,
                                     style: GoogleFonts.poppins(
-                                      fontSize: 13.5,
-                                      color: Colors.grey.shade700,
+                                      fontSize: 13,
+                                      color: Colors.grey.shade600,
                                     ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-
-                                  if (user.cidade != null) ...[
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      '${user.cidade ?? ''} - ${user.uf ?? ''}',
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 12.5,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
-
                                   if (user.dataCadastro != null) ...[
-                                    const SizedBox(height: 2),
+                                    const SizedBox(height: 6),
                                     Text(
-                                      'Cadastrado em ${DateFormat("dd/MM/yyyy").format(user.dataCadastro!)}',
+                                      'Registro: ${DateFormat("dd/MM/yyyy").format(user.dataCadastro!)}',
                                       style: GoogleFonts.poppins(
-                                        fontSize: 11.5,
-                                        color: Colors.grey.shade500,
+                                        fontSize: 11,
+                                        color: Colors.grey.shade400,
                                       ),
                                     ),
                                   ],
@@ -244,33 +220,32 @@ class UsuariosAdminListScreen extends StatelessWidget {
                             const SizedBox(width: 8),
                             Column(
                               children: [
-                                Tooltip(
-                                  message: ativo ? 'Desativar usuário' : 'Reativar usuário',
-                                  child: IconButton(
-                                    icon: Icon(
-                                      ativo ? Icons.lock_open_rounded : Icons.lock_rounded,
-                                      color: ativo ? Colors.green.shade600 : Colors.redAccent,
-                                      size: 22,
-                                    ),
-                                    onPressed: () => controller.toggleAtivo(user.idUsuario, !ativo),
+                                IconButton(
+                                  tooltip: ativo ? 'Suspender Acesso' : 'Liberar Acesso',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: Icon(
+                                    ativo ? Icons.lock_open_rounded : Icons.lock_rounded,
+                                    color: ativo ? Colors.grey.shade300 : Colors.red.shade400,
+                                    size: 20,
                                   ),
+                                  onPressed: () => controller.toggleAtivo(user.idUsuario, !ativo),
                                 ),
-                                Tooltip(
-                                  message: isAdmin
-                                      ? 'Remover privilégio de administrador'
-                                      : 'Tornar administrador',
-                                  child: IconButton(
-                                    icon: Icon(
-                                      isAdmin
-                                          ? Icons.remove_moderator_rounded
-                                          : Icons.add_moderator_rounded,
-                                      color: isAdmin ? Colors.redAccent : Colors.teal.shade600,
-                                      size: 22,
-                                    ),
-                                    onPressed: () => isAdmin
-                                        ? controller.removerAdmin(user.idUsuario)
-                                        : controller.tornarAdmin(user.idUsuario),
+                                const SizedBox(height: 16),
+                                IconButton(
+                                  tooltip: isAdmin ? 'Remover Admin' : 'Tornar Admin',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(),
+                                  icon: Icon(
+                                    isAdmin
+                                        ? Icons.remove_moderator_rounded
+                                        : Icons.add_moderator_rounded,
+                                    color: isAdmin ? Colors.red.shade400 : Colors.grey.shade400,
+                                    size: 20,
                                   ),
+                                  onPressed: () => isAdmin
+                                      ? controller.removerAdmin(user.idUsuario)
+                                      : controller.tornarAdmin(user.idUsuario),
                                 ),
                               ],
                             ),
@@ -292,7 +267,7 @@ class UsuariosAdminListScreen extends StatelessWidget {
     BuildContext context,
     UsuarioController controller,
     Color primary, {
-    UsuarioModel? usuario, // ⬅️ novo parâmetro opcional
+    UsuarioModel? usuario,
   }) async {
     final bool modoEdicao = usuario != null;
 
@@ -302,7 +277,6 @@ class UsuariosAdminListScreen extends StatelessWidget {
     final senhaCtrl = TextEditingController();
     final tipoSelecionado = (usuario?.tipo ?? 'O').obs;
 
-    // Controlador de endereço
     final enderecoController = EnderecoSectionController();
     controller.enderecoController.value = enderecoController;
 
@@ -310,271 +284,179 @@ class UsuariosAdminListScreen extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-      ),
       builder: (_) {
         return DraggableScrollableSheet(
           expand: false,
           maxChildSize: 0.95,
-          initialChildSize: 0.9,
+          initialChildSize: 0.85,
           builder: (context, scrollController) {
             return Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: const Offset(0, -3),
-                  ),
-                ],
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
               ),
               child: Column(
                 children: [
-                  // 🔹 Cabeçalho
                   Container(
-                    width: 60,
-                    height: 6,
-                    margin: const EdgeInsets.symmetric(vertical: 12),
+                    width: 48,
+                    height: 5,
+                    margin: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
                       color: Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-                    child: Row(
-                      children: [
-                        Icon(
-                          modoEdicao ? Icons.person_search_rounded : Icons.person_add_alt_1_rounded,
-                          color: primary,
-                          size: 26,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          modoEdicao ? 'Detalhes do Usuário' : 'Cadastrar Novo Usuário',
-                          style: GoogleFonts.poppins(
-                            fontSize: 17,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ],
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: Text(
+                      modoEdicao ? 'Ficha do Usuário' : 'Novo Colaborador / Usuário',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade900,
+                      ),
                     ),
                   ),
-                  const Divider(height: 1),
-
-                  // 🔹 Conteúdo rolável
+                  const Divider(height: 1, color: Color(0xFFEEEEEE)),
                   Expanded(
                     child: SingleChildScrollView(
                       controller: scrollController,
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 120),
+                      padding: const EdgeInsets.all(24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           CustomInputField(
-                            label: 'Nome',
+                            label: 'Nome Completo',
                             controller: nomeCtrl,
                             icon: Icons.person_outline,
-                            color: primary,
-                            readOnly: modoEdicao, // ⬅️ somente leitura
-                          ),
-                          const SizedBox(height: 12),
-                          CustomInputField(
-                            label: 'E-mail',
-                            controller: emailCtrl,
-                            icon: Icons.email_outlined,
-                            color: primary,
+                            color: Colors.grey.shade600,
                             readOnly: modoEdicao,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
                           CustomInputField(
-                            label: 'CPF',
+                            label: 'E-mail Institucional ou Pessoal',
+                            controller: emailCtrl,
+                            icon: Icons.email_outlined,
+                            color: Colors.grey.shade600,
+                            readOnly: modoEdicao,
+                          ),
+                          const SizedBox(height: 16),
+                          CustomInputField(
+                            label: 'Documento (CPF)',
                             controller: cpfCtrl,
                             icon: Icons.badge_outlined,
                             keyboardType: TextInputType.number,
-                            color: primary,
+                            color: Colors.grey.shade600,
                             readOnly: modoEdicao,
                           ),
-                          const SizedBox(height: 12),
-
+                          const SizedBox(height: 16),
                           if (!modoEdicao)
                             Obx(() {
                               final senhaVisivel = controller.senhaVisivel.value;
                               return CustomInputField(
-                                label: 'Senha',
+                                label: 'Senha de Acesso Temporária',
                                 controller: senhaCtrl,
                                 icon: Icons.lock_outline_rounded,
                                 obscureText: !senhaVisivel,
-                                color: primary,
+                                color: Colors.grey.shade600,
                                 suffixIcon: IconButton(
                                   icon: Icon(
                                     senhaVisivel
                                         ? Icons.visibility_off_rounded
                                         : Icons.visibility_rounded,
-                                    color: primary,
+                                    color: Colors.grey.shade500,
                                   ),
                                   onPressed: () => controller.senhaVisivel.value =
                                       !controller.senhaVisivel.value,
                                 ),
                               );
                             }),
-
-                          const SizedBox(height: 16),
-
-                          // 🧑‍💼 Tipo de usuário
+                          const SizedBox(height: 24),
                           Obx(() {
                             final tipo = tipoSelecionado.value;
                             return IgnorePointer(
-                              ignoring: modoEdicao, // ⬅️ bloqueia interação se modo detalhe
+                              ignoring: modoEdicao,
                               child: Opacity(
-                                opacity: modoEdicao ? 0.7 : 1,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(color: primary.withValues(alpha: 0.2)),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withValues(alpha: 0.05),
-                                        blurRadius: 6,
-                                        offset: const Offset(0, 2),
+                                opacity: modoEdicao ? 0.6 : 1,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Nível de Acesso (Privilégios)',
+                                      style: GoogleFonts.poppins(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.grey.shade600,
                                       ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Icon(Icons.verified_user_rounded, color: primary),
-                                          const SizedBox(width: 8),
-                                          Text(
-                                            'Tipo de usuário',
-                                            style: GoogleFonts.poppins(
-                                              fontSize: 15,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.black87,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 10),
-                                      Wrap(
-                                        spacing: 8,
-                                        children: [
-                                          ChoiceChip(
-                                            label: const Text('Organizador'),
-                                            labelStyle: GoogleFonts.poppins(fontSize: 13),
-                                            selected: tipo == 'O',
-                                            selectedColor: Colors.teal.shade100,
-                                            onSelected: (_) => tipoSelecionado.value = 'O',
-                                          ),
-                                          ChoiceChip(
-                                            label: const Text('Fornecedor'),
-                                            labelStyle: GoogleFonts.poppins(fontSize: 13),
-                                            selected: tipo == 'F',
-                                            selectedColor: Colors.orange.shade100,
-                                            onSelected: (_) => tipoSelecionado.value = 'F',
-                                          ),
-                                          ChoiceChip(
-                                            label: const Text('Convidado'),
-                                            labelStyle: GoogleFonts.poppins(fontSize: 13),
-                                            selected: tipo == 'C',
-                                            selectedColor: Colors.purple.shade100,
-                                            onSelected: (_) => tipoSelecionado.value = 'C',
-                                          ),
-                                          ChoiceChip(
-                                            label: const Text('Administrador'),
-                                            labelStyle: GoogleFonts.poppins(fontSize: 13),
-                                            selected: tipo == 'A',
-                                            selectedColor: Colors.green.shade100,
-                                            onSelected: (_) => tipoSelecionado.value = 'A',
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    // 🔹 WRAP NO CHIP GARANTE ENCAIXE NO CELULAR
+                                    Wrap(
+                                      spacing: 10,
+                                      runSpacing: 10,
+                                      children: [
+                                        _buildChip('Organizador', 'O', tipo, tipoSelecionado),
+                                        _buildChip('Fornecedor', 'F', tipo, tipoSelecionado),
+                                        _buildChip('Convidado', 'C', tipo, tipoSelecionado),
+                                        _buildChip('Admin Root', 'A', tipo, tipoSelecionado),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               ),
                             );
                           }),
-
-                          const SizedBox(height: 16),
-
-                          // 📍 Endereço
+                          const SizedBox(height: 32),
                           EnderecoSection(
-                            cor: primary,
+                            cor: Colors.grey.shade800,
                             controller: enderecoController,
-                            titulo: 'Endereço do usuário',
+                            titulo: 'Localidade de Atuação',
                           ),
+                          const SizedBox(height: 40),
                         ],
                       ),
                     ),
                   ),
-
-                  // 🔹 Barra de ações
                   Container(
-                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 90),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [primary.withValues(alpha: 0.15), Colors.white],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                      borderRadius: const BorderRadius.vertical(bottom: Radius.circular(30)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 6,
-                          offset: const Offset(0, -2),
-                        ),
-                      ],
+                      color: Colors.white,
+                      border: Border(top: BorderSide(color: Colors.grey.shade200)),
                     ),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        ElevatedButton.icon(
-                          icon: const Icon(Icons.close_rounded, color: Colors.white),
-                          label: Text(
-                            'Fechar',
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: Text(
+                            'Cancelar',
                             style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey.shade600,
-                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
-                          onPressed: () => Navigator.pop(context),
                         ),
-                        if (!modoEdicao)
+                        if (!modoEdicao) ...[
+                          const SizedBox(width: 16),
                           ElevatedButton.icon(
-                            icon: const Icon(Icons.save_rounded, color: Colors.white),
+                            icon: const Icon(Icons.check_rounded, color: Colors.white, size: 18),
                             label: Text(
-                              'Salvar',
+                              'Concluir',
                               style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
+                                  fontWeight: FontWeight.w600, color: Colors.white),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: primary,
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                              shape:
-                                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                              backgroundColor: Colors.grey.shade900,
+                              elevation: 0,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                             onPressed: () async {
                               if (nomeCtrl.text.isEmpty || emailCtrl.text.isEmpty) {
                                 Get.snackbar(
-                                  'Aviso',
-                                  'Preencha os campos obrigatórios!',
-                                  backgroundColor: Colors.orange.shade400,
+                                  'Campos Obrigatórios',
+                                  'Preencha nome e e-mail para prosseguir.',
+                                  backgroundColor: Colors.grey.shade900,
                                   colorText: Colors.white,
                                 );
                                 return;
@@ -595,6 +477,7 @@ class UsuariosAdminListScreen extends StatelessWidget {
                               Get.back();
                             },
                           ),
+                        ],
                       ],
                     ),
                   ),
@@ -607,43 +490,40 @@ class UsuariosAdminListScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildChip(String label, String valor, String selecionado, RxString controller) {
+    final isSelected = valor == selecionado;
+    return ChoiceChip(
+      label: Text(label),
+      labelStyle: GoogleFonts.poppins(
+        fontSize: 12,
+        color: isSelected ? Colors.white : Colors.grey.shade700,
+        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+      ),
+      selected: isSelected,
+      showCheckmark: false,
+      selectedColor: Colors.grey.shade900,
+      backgroundColor: Colors.grey.shade100,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(6),
+        side: BorderSide(color: isSelected ? Colors.grey.shade900 : Colors.transparent),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      onSelected: (_) => controller.value = valor,
+    );
+  }
+
   Map<String, dynamic> _getTipoColor(String tipo) {
     switch (tipo) {
-      case 'A': // 🛡️ Administrador
-        return {
-          'label': 'ADMIN',
-          'bg': Colors.teal.shade50,
-          'border': Colors.teal.shade300,
-          'text': Colors.teal.shade700,
-        };
-      case 'O': // 🎉 Organizador
-        return {
-          'label': 'ORG',
-          'bg': Colors.blue.shade50,
-          'border': Colors.blue.shade300,
-          'text': Colors.blue.shade700,
-        };
-      case 'F': // 🏪 Fornecedor
-        return {
-          'label': 'FORN',
-          'bg': Colors.orange.shade50,
-          'border': Colors.orange.shade300,
-          'text': Colors.orange.shade800,
-        };
-      case 'C': // 👥 Convidado
-        return {
-          'label': 'CONV',
-          'bg': Colors.purple.shade50,
-          'border': Colors.purple.shade300,
-          'text': Colors.purple.shade700,
-        };
-      default: // valor indefinido
-        return {
-          'label': 'N/D',
-          'bg': Colors.grey.shade100,
-          'border': Colors.grey.shade300,
-          'text': Colors.grey.shade600,
-        };
+      case 'A':
+        return {'label': 'ADMIN', 'bg': Colors.blue.shade50, 'text': Colors.blue.shade700};
+      case 'O':
+        return {'label': 'ORG', 'bg': Colors.green.shade50, 'text': Colors.green.shade700};
+      case 'F':
+        return {'label': 'FORN', 'bg': Colors.orange.shade50, 'text': Colors.orange.shade800};
+      case 'C':
+        return {'label': 'CONV', 'bg': Colors.purple.shade50, 'text': Colors.purple.shade700};
+      default:
+        return {'label': 'N/D', 'bg': Colors.grey.shade100, 'text': Colors.grey.shade600};
     }
   }
 }

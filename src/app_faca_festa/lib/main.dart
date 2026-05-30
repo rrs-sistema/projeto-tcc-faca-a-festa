@@ -25,8 +25,8 @@ import './presentation/pages/admin/admin_dashboard_screen.dart';
 import './presentation/pages/login/guest_register_screen.dart';
 import './controllers/admin/admin_territorio_controller.dart';
 import 'controllers/calculadora/calculadora_itens_admin_controller.dart';
-import 'controllers/calculadora_festa_controller.dart';
-import 'controllers/inspiracao_controller.dart';
+import 'controllers/calculadora/calculadora_festa_controller.dart';
+import 'controllers/inspiracao/inspiracao_controller.dart';
 import 'controllers/sugestao_base_festa_controller.dart';
 import 'controllers/usuario/endereco_usuario_controller.dart';
 import './controllers/admin/orcamentos_admin_controller.dart';
@@ -54,7 +54,7 @@ import 'core/database/database.dart';
 
 import './data/services/gift/gift_sync_service.dart';
 import './presentation/pages/home_event_screen.dart';
-import './controllers/fornecedor_controller.dart';
+import 'controllers/fornecedor/fornecedor_controller.dart';
 import './controllers/orcamento_controller.dart';
 import './data/services/gift/sync_manager.dart';
 import './controllers/evento_controller.dart';
@@ -69,7 +69,6 @@ import 'data/repositories/calculadora/calculadora_itens_base_repository.dart';
 import 'data/repositories/evento/calculadora_festa_remote_ai_service.dart';
 import 'data/repositories/i_calculadora_festa_ai_service.dart';
 import 'data/repositories/sugestao_base_festa_repository.dart';
-import 'data/services/calculadora/calculadora_itens_seed.dart';
 
 // =============================================================
 //  MAIN
@@ -82,8 +81,67 @@ Future<void> main() async {
   );
 
   await FirebaseAppCheck.instance.activate(
-    providerAndroid: AndroidDebugProvider(),
-    providerApple: AppleDebugProvider(),
+    providerWeb: kDebugMode ? WebDebugProvider() : ReCaptchaV3Provider('SUA_SITE_KEY_RECAPTCHA_V3'),
+    providerAndroid: kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+    providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+  );
+
+  await GetStorage.init();
+
+  final remoteDatasource = GiftRemoteDatasource(FirebaseFirestore.instance);
+  Get.put<GiftRemoteDatasource>(remoteDatasource, permanent: true);
+
+  try {
+    final db = await constructDb();
+    Get.put<AppDatabase>(db, permanent: true);
+
+    final localDatasource = GiftLocalDatasource(db);
+    Get.put<GiftLocalDatasource>(localDatasource, permanent: true);
+
+    final giftSyncService = GiftSyncService(
+      local: localDatasource,
+      remote: remoteDatasource,
+    );
+    Get.put<GiftSyncService>(giftSyncService, permanent: true);
+
+    final syncManager = SyncManager(giftSyncService);
+    Get.put<SyncManager>(syncManager, permanent: true);
+    await syncManager.start();
+
+    debugPrint(
+      kIsWeb
+          ? '🌐 [WEB] Offline-First com Drift/Wasm ativado!'
+          : '📱/🖥️ Offline-First com Drift ativado!',
+    );
+  } catch (e) {
+    debugPrint('⚠️ Falha ao iniciar banco local: $e');
+  }
+
+  await initializeDateFormatting('pt_BR', null);
+
+  if (!kIsWeb) {
+    await initLocalNotifications();
+    await setupNotificationChannel();
+    await initPushNotifications();
+  }
+
+  configLoading();
+  _registerControllers();
+
+  runApp(const FacaFestaApp());
+}
+
+Future<void> main001() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
+  await FirebaseAppCheck.instance.activate(
+    providerWeb: kDebugMode ? WebDebugProvider() : ReCaptchaV3Provider('SUA_SITE_KEY_RECAPTCHA_V3'),
+    providerAndroid: kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+    providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
   );
   /*
   await CalculadoraItensSeedService().popularSeeds(

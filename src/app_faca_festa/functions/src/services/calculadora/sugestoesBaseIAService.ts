@@ -1,5 +1,5 @@
-import { admin } from "../shared/firebaseAdmin";
-import { SugestaoBaseIA } from "../types";
+import { admin } from "../../shared/firebaseAdmin";
+import { SugestaoBaseIA } from "../../types/calculadoraIA.types";
 
 const COLLECTION_IA_SUGESTOES_BASE = "ia_sugestoes_base";
 const MODULO_CALCULADORA = "calculadora";

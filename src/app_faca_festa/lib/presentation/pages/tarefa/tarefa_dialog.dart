@@ -3,7 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
-import 'dart:ui';
 
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/app_controller.dart';
@@ -30,226 +29,232 @@ Future<void> showTarefaDialog({
   DateTime dataSelecionada = dataInicial ?? DateTime.now();
   ConvidadoModel? responsavelSelecionado = responsavelInicial;
 
-  await showDialog(
+  // 🔹 Trocado para showModalBottomSheet para seguir o padrão das outras telas
+  await showModalBottomSheet<void>(
     context: context,
-    barrierDismissible: false,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
     builder: (context) {
       return Obx(() {
         final gradient = themeController.gradient.value;
         final primary = themeController.primaryColor.value;
 
-        return Dialog(
-          elevation: 0,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-          backgroundColor: Colors.transparent,
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(22),
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-              child: StatefulBuilder(
-                builder: (context, setState) {
-                  return Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.95),
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primary.withValues(alpha: 0.2),
-                          blurRadius: 15,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                      border: Border.all(
-                        color: primary.withValues(alpha: 0.2),
-                        width: 1.2,
-                      ),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+            return FractionallySizedBox(
+              heightFactor: 0.90, // Altura padronizada
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white, // Fundo sólido (sem blur para o bottom sheet)
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.15),
+                      blurRadius: 20,
+                      offset: const Offset(0, -5),
                     ),
-
-                    // 🔥🔥🔥 AQUI É A CORREÇÃO DO OVERFLOW 🔥🔥🔥
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxHeight: MediaQuery.of(context).size.height * 0.80, // evita overflow
-                      ),
-                      child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(24),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // === Cabeçalho ===
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    gradient: isEdit
-                                        ? LinearGradient(
-                                            colors: [
-                                              Colors.orange.shade400,
-                                              Colors.deepOrangeAccent
-                                            ],
-                                            begin: Alignment.topLeft,
-                                            end: Alignment.bottomRight,
-                                          )
-                                        : gradient,
-                                  ),
-                                  padding: const EdgeInsets.all(12),
-                                  child: Icon(
-                                    isEdit ? Icons.edit_note_rounded : Icons.task_alt,
-                                    color: Colors.white,
-                                    size: 26,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    isEdit ? 'Editar Tarefa' : 'Nova Tarefa',
-                                    style: const TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.black87,
-                                      letterSpacing: 0.3,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // === Campos de formulário ===
-                            _buildInput(
-                              context,
-                              controller: tituloController,
-                              label: 'Título da Tarefa',
-                              icon: Icons.title_outlined,
-                              color: primary,
-                            ),
-                            const SizedBox(height: 14),
-                            _buildInput(
-                              context,
-                              controller: descricaoController,
-                              label: 'Descrição da Tarefa',
-                              icon: Icons.notes_outlined,
-                              color: primary,
-                              maxLines: 3,
-                            ),
-                            const SizedBox(height: 14),
-
-                            // === Data Prevista ===
-                            GestureDetector(
-                              onTap: () async {
-                                final novaData = await showDatePicker(
-                                  context: context,
-                                  initialDate: dataSelecionada,
-                                  firstDate: DateTime(2000),
-                                  lastDate: DateTime(2100),
-                                  locale: const Locale('pt', 'BR'),
-                                  helpText: 'Selecionar Data Prevista',
-                                );
-                                if (novaData != null) {
-                                  setState(() {
-                                    dataSelecionada = novaData;
-                                    dataController.text = DateFormat('dd/MM/yyyy').format(novaData);
-                                  });
-                                }
-                              },
-                              child: AbsorbPointer(
-                                child: _buildInput(
-                                  context,
-                                  controller: dataController,
-                                  label: 'Data Prevista',
-                                  icon: Icons.calendar_today_outlined,
-                                  color: primary,
-                                  readOnly: true,
-                                ),
+                  ],
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Padding(
+                    padding: EdgeInsets.only(
+                      left: 16,
+                      right: 16,
+                      bottom: bottomInset + 16, // Padding automático do teclado
+                    ),
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(height: 12),
+                          // 🔹 Drag Handle (Tracinho superior)
+                          Center(
+                            child: Container(
+                              width: 50,
+                              height: 4,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
+                          ),
+                          const SizedBox(height: 16),
 
-                            const SizedBox(height: 18),
-
-                            // === Responsável ===
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                'Responsável pela Tarefa',
-                                style: TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.grey.shade800,
+                          // === Cabeçalho ===
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: isEdit
+                                      ? LinearGradient(
+                                          colors: [Colors.orange.shade400, Colors.deepOrangeAccent],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        )
+                                      : gradient,
+                                ),
+                                padding: const EdgeInsets.all(10), // Reduzido
+                                child: Icon(
+                                  isEdit ? Icons.edit_note_rounded : Icons.task_alt,
+                                  color: Colors.white,
+                                  size: 22, // Reduzido
                                 ),
                               ),
-                            ),
-                            const SizedBox(height: 10),
-
-                            // === Lista de usuários atualizada ===
-                            usuarios.isEmpty
-                                ? Column(
-                                    children: [
-                                      const Icon(Icons.group_outlined,
-                                          size: 42, color: Colors.grey),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'Nenhum usuário disponível 😅',
-                                        style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
-                                      )
-                                    ],
-                                  )
-                                : SizedBox(
-                                    height: 120,
-                                    child: ListView.separated(
-                                      scrollDirection: Axis.horizontal,
-                                      padding: const EdgeInsets.symmetric(horizontal: 6),
-                                      itemCount: usuarios.length,
-                                      separatorBuilder: (_, __) => const SizedBox(width: 14),
-                                      itemBuilder: (_, index) {
-                                        final usuario = usuarios[index];
-                                        final selecionado = responsavelSelecionado?.idConvidado ==
-                                            usuario.idConvidado;
-
-                                        final isOrganizador = usuario.idConvidado ==
-                                            app.usuarioLogado.value?.idUsuario;
-
-                                        return GestureDetector(
-                                          onTap: () =>
-                                              setState(() => responsavelSelecionado = usuario),
-                                          child: _buildUserCard(
-                                            usuario,
-                                            selecionado,
-                                            isOrganizador,
-                                            gradient,
-                                            primary,
-                                          ),
-                                        );
-                                      },
-                                    ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  isEdit ? 'Editar Tarefa' : 'Nova Tarefa',
+                                  style: const TextStyle(
+                                    fontSize: 18, // Reduzido
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                    letterSpacing: 0.2,
                                   ),
+                                ),
+                              ),
+                            ],
+                          ),
 
-                            const SizedBox(height: 24),
-                            const Divider(height: 1, color: Colors.grey),
+                          const SizedBox(height: 16), // Espaçamento menor
 
-                            // === Botões ===
-                            Padding(
-                                padding: const EdgeInsets.only(top: 22),
-                                child: _buildMobileButtons(
-                                  context,
-                                  tituloController,
-                                  descricaoController,
-                                  primary,
-                                  isEdit,
-                                  responsavelSelecionado,
-                                  dataSelecionada,
-                                  onSave,
-                                )),
-                          ],
-                        ),
+                          // === Campos de formulário ===
+                          _buildInput(
+                            context,
+                            controller: tituloController,
+                            label: 'Título da Tarefa',
+                            icon: Icons.title_outlined,
+                            color: primary,
+                          ),
+                          const SizedBox(height: 10),
+                          _buildInput(
+                            context,
+                            controller: descricaoController,
+                            label: 'Descrição da Tarefa',
+                            icon: Icons.notes_outlined,
+                            color: primary,
+                            maxLines: 2, // Reduzido de 3 para 2
+                          ),
+                          const SizedBox(height: 10),
+
+                          // === Data Prevista ===
+                          GestureDetector(
+                            onTap: () async {
+                              final novaData = await showDatePicker(
+                                context: context,
+                                initialDate: dataSelecionada,
+                                firstDate: DateTime(2000),
+                                lastDate: DateTime(2100),
+                                locale: const Locale('pt', 'BR'),
+                                helpText: 'Selecionar Data Prevista',
+                              );
+                              if (novaData != null) {
+                                setState(() {
+                                  dataSelecionada = novaData;
+                                  dataController.text = DateFormat('dd/MM/yyyy').format(novaData);
+                                });
+                              }
+                            },
+                            child: AbsorbPointer(
+                              child: _buildInput(
+                                context,
+                                controller: dataController,
+                                label: 'Data Prevista',
+                                icon: Icons.calendar_today_outlined,
+                                color: primary,
+                                readOnly: true,
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // === Responsável ===
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'Responsável pela Tarefa',
+                              style: TextStyle(
+                                fontSize: 13, // Reduzido
+                                fontWeight: FontWeight.w600,
+                                color: Colors.grey.shade800,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+
+                          // === Lista de usuários atualizada ===
+                          usuarios.isEmpty
+                              ? Column(
+                                  children: [
+                                    const Icon(Icons.group_outlined, size: 32, color: Colors.grey),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'Nenhum usuário disponível 😅',
+                                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                                    )
+                                  ],
+                                )
+                              : SizedBox(
+                                  height: 96, // 🔹 Bem mais compacto (era 120)
+                                  child: ListView.separated(
+                                    scrollDirection: Axis.horizontal,
+                                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                                    itemCount: usuarios.length,
+                                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                                    itemBuilder: (_, index) {
+                                      final usuario = usuarios[index];
+                                      final selecionado = responsavelSelecionado?.idConvidado ==
+                                          usuario.idConvidado;
+
+                                      final isOrganizador =
+                                          usuario.idConvidado == app.usuarioLogado.value?.idUsuario;
+
+                                      return GestureDetector(
+                                        onTap: () =>
+                                            setState(() => responsavelSelecionado = usuario),
+                                        child: _buildUserCard(
+                                          usuario,
+                                          selecionado,
+                                          isOrganizador,
+                                          gradient,
+                                          primary,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+
+                          const SizedBox(height: 18),
+                          const Divider(height: 1, color: Colors.black12),
+
+                          // === Botões ===
+                          Padding(
+                            padding: const EdgeInsets.only(top: 14),
+                            child: _buildMobileButtons(
+                              context,
+                              tituloController,
+                              descricaoController,
+                              primary,
+                              isEdit,
+                              responsavelSelecionado,
+                              dataSelecionada,
+                              onSave,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  );
-                },
+                  ),
+                ),
               ),
-            ),
-          ),
+            );
+          },
         );
       });
     },
@@ -266,9 +271,9 @@ Widget _buildUserCard(
   return AnimatedContainer(
     duration: const Duration(milliseconds: 250),
     curve: Curves.easeOutCubic,
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6), // Mais compacto
     decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(16),
       gradient: selecionado
           ? gradient
           : LinearGradient(
@@ -285,9 +290,9 @@ Widget _buildUserCard(
       ),
       boxShadow: [
         BoxShadow(
-          color: Colors.black.withValues(alpha: selecionado ? 0.22 : 0.06),
-          blurRadius: selecionado ? 12 : 6,
-          offset: const Offset(0, 4),
+          color: Colors.black.withValues(alpha: selecionado ? 0.20 : 0.04),
+          blurRadius: selecionado ? 8 : 4,
+          offset: const Offset(0, 3),
         ),
       ],
     ),
@@ -297,30 +302,30 @@ Widget _buildUserCard(
       children: [
         // === Avatar com borda animada ===
         Container(
-          padding: const EdgeInsets.all(3),
+          padding: const EdgeInsets.all(2), // Menor
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: selecionado ? Colors.white : primary.withValues(alpha: 0.4),
-              width: selecionado ? 3 : 2,
+              color: selecionado ? Colors.white : primary.withValues(alpha: 0.3),
+              width: selecionado ? 2 : 1.5,
             ),
           ),
           child: CircleAvatar(
-            radius: 26,
+            radius: 18, // 🔹 Era 26, reduzido para ficar compacto
             backgroundImage: NetworkImage(
               'https://ui-avatars.com/api/?name=${Uri.encodeComponent(usuario.nome)}&background=0D8ABC&color=fff',
             ),
           ),
         ),
 
-        const SizedBox(height: 6),
+        const SizedBox(height: 4),
 
         // === Nome ===
         Text(
           usuario.nome.split(' ')[0],
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 11, // Reduzido
             fontWeight: FontWeight.w600,
             color: selecionado ? Colors.white : Colors.grey.shade800,
           ),
@@ -331,16 +336,16 @@ Widget _buildUserCard(
           Expanded(
             child: Container(
               margin: const EdgeInsets.only(top: 2),
-              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
               decoration: BoxDecoration(
                 color: selecionado ? Colors.white.withValues(alpha: 0.20) : Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                "Organizador",
+                "Org.", // Abreviado para poupar espaço
                 style: TextStyle(
                   fontSize: 9,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                   color: selecionado ? Colors.white : Colors.grey.shade700,
                 ),
               ),
@@ -370,9 +375,7 @@ Widget _buildMobileButtons(
           if (tituloController.text.trim().isEmpty || responsavelSelecionado == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text(
-                  'Preencha o título e selecione um responsável.',
-                ),
+                content: Text('Preencha o título e selecione um responsável.'),
                 backgroundColor: Colors.redAccent,
               ),
             );
@@ -401,46 +404,46 @@ Widget _buildMobileButtons(
         icon: Icon(
           isEdit ? Icons.save_rounded : Icons.add_task_rounded,
           color: Colors.white,
-          size: 22,
+          size: 18, // Reduzido
         ),
         label: Text(
           isEdit ? 'Salvar Alterações' : 'Adicionar Tarefa',
           style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
-            letterSpacing: 0.3,
+            fontSize: 14, // Reduzido
+            letterSpacing: 0.2,
           ),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
-          elevation: 4,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          elevation: 2, // Reduzido
+          padding: const EdgeInsets.symmetric(vertical: 12), // Mais fino
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12), // Menos curvo
           ),
         ),
       ),
 
-      const SizedBox(height: 14),
+      const SizedBox(height: 10),
 
       // === BOTÃO CANCELAR ===
       OutlinedButton.icon(
         onPressed: () => Navigator.pop(context),
-        icon: const Icon(Icons.close, color: Colors.grey),
+        icon: const Icon(Icons.close, color: Colors.grey, size: 18), // Reduzido
         label: const Text(
           'Cancelar',
           style: TextStyle(
             color: Colors.grey,
-            fontWeight: FontWeight.w500,
-            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            fontSize: 14, // Reduzido
           ),
         ),
         style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: 12), // Mais fino
           side: BorderSide(color: Colors.grey.shade300, width: 1.2),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
       ),
@@ -448,38 +451,43 @@ Widget _buildMobileButtons(
   );
 }
 
-/// === Campo de entrada genérico ===
-Widget _buildInput(BuildContext context,
-    {required String label,
-    required IconData icon,
-    required Color color,
-    TextEditingController? controller,
-    int maxLines = 1,
-    String? hintText,
-    bool readOnly = false}) {
+/// === Campo de entrada genérico (Compactado) ===
+Widget _buildInput(
+  BuildContext context, {
+  required String label,
+  required IconData icon,
+  required Color color,
+  TextEditingController? controller,
+  int maxLines = 1,
+  String? hintText,
+  bool readOnly = false,
+}) {
   return TextField(
     controller: controller,
     maxLines: maxLines,
     readOnly: readOnly,
+    style: const TextStyle(fontSize: 14), // Fonte interna menor
     decoration: InputDecoration(
       labelText: label,
       hintText: hintText,
-      prefixIcon: Icon(icon, color: color),
+      prefixIcon: Icon(icon, color: color, size: 20), // Ícone menor
       labelStyle: TextStyle(
         color: color.withValues(alpha: 0.8),
         fontWeight: FontWeight.w500,
+        fontSize: 13, // Fonte label menor
       ),
       filled: true,
       fillColor: Colors.grey.shade50,
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: color, width: 1.6),
+        borderRadius: BorderRadius.circular(12), // Reduzido
+        borderSide: BorderSide(color: color, width: 1.4),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      // 🔹 Aqui o segredo do campo fino: diminuir o padding interno
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
     ),
   );
 }

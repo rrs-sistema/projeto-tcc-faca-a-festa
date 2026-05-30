@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../controllers/calculadora/calculadora_itens_admin_controller.dart';
 import '../../../data/models/calculadora/calculadora_evento_item_model.dart';
@@ -17,43 +18,53 @@ class CalculadoraItensAdminPage extends GetView<CalculadoraItensAdminController>
       child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.surface,
         appBar: AppBar(
-          title: const Text('Itens da Calculadora'),
+          toolbarHeight: 54, // Compactado
+          title: Text(
+            'Itens da Calculadora',
+            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w800),
+          ),
           centerTitle: false,
           actions: [
             IconButton(
               tooltip: 'Atualizar',
               onPressed: controller.carregarTudo,
-              icon: const Icon(Icons.refresh_outlined),
+              icon: const Icon(Icons.refresh_outlined, size: 20),
             ),
             PopupMenuButton<String>(
               tooltip: 'Mais opções',
+              icon: const Icon(Icons.more_vert_rounded, size: 20),
               onSelected: (value) {
                 if (value == 'limpar_filtros') {
                   controller.limparFiltros();
                 }
               },
-              itemBuilder: (context) => const [
+              itemBuilder: (context) => [
                 PopupMenuItem(
                   value: 'limpar_filtros',
+                  height: 40,
                   child: Row(
                     children: [
-                      Icon(Icons.filter_alt_off_outlined),
-                      SizedBox(width: 8),
-                      Text('Limpar filtros'),
+                      const Icon(Icons.filter_alt_off_outlined, size: 18),
+                      const SizedBox(width: 8),
+                      Text('Limpar filtros', style: GoogleFonts.poppins(fontSize: 13)),
                     ],
                   ),
                 ),
               ],
             ),
           ],
-          bottom: const TabBar(
-            tabs: [
+          bottom: TabBar(
+            labelStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
+            unselectedLabelStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+            tabs: const [
               Tab(
-                icon: Icon(Icons.inventory_2_outlined),
+                iconMargin: EdgeInsets.only(bottom: 4),
+                icon: Icon(Icons.inventory_2_outlined, size: 18),
                 text: 'Itens base',
               ),
               Tab(
-                icon: Icon(Icons.rule_folder_outlined),
+                iconMargin: EdgeInsets.only(bottom: 4),
+                icon: Icon(Icons.rule_folder_outlined, size: 18),
                 text: 'Por evento',
               ),
             ],
@@ -101,8 +112,7 @@ class _ItensBaseTab extends GetView<CalculadoraItensAdminController> {
                     return _EmptyState(
                       icon: Icons.inventory_2_outlined,
                       title: 'Nenhum item base encontrado',
-                      subtitle:
-                          'Ajuste os filtros ou cadastre um novo item para o catálogo global.',
+                      subtitle: 'Ajuste os filtros ou cadastre um novo item global.',
                       actionLabel: 'Novo item base',
                       onAction: () => CalculadoraItemBaseFormDialog.show(),
                     );
@@ -115,9 +125,9 @@ class _ItensBaseTab extends GetView<CalculadoraItensAdminController> {
                   return RefreshIndicator(
                     onRefresh: controller.carregarTudo,
                     child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 80),
                       itemCount: itens.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      separatorBuilder: (_, __) => const SizedBox(height: 6),
                       itemBuilder: (context, index) {
                         return _ItemBaseCard(item: itens[index]);
                       },
@@ -154,8 +164,7 @@ class _ItensEventoTab extends GetView<CalculadoraItensAdminController> {
                     return _EmptyState(
                       icon: Icons.rule_folder_outlined,
                       title: 'Nenhuma regra encontrada',
-                      subtitle:
-                          'Cadastre uma configuração para tipo de evento ou ajuste os filtros.',
+                      subtitle: 'Cadastre uma configuração para tipo de evento.',
                       actionLabel: 'Nova regra',
                       onAction: () => CalculadoraEventoItemFormDialog.show(),
                     );
@@ -168,9 +177,9 @@ class _ItensEventoTab extends GetView<CalculadoraItensAdminController> {
                   return RefreshIndicator(
                     onRefresh: controller.carregarTudo,
                     child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 96),
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 80),
                       itemCount: itens.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      separatorBuilder: (_, __) => const SizedBox(height: 6),
                       itemBuilder: (context, index) {
                         return _ItemEventoCard(item: itens[index]);
                       },
@@ -197,34 +206,29 @@ class _ItensBaseHeader extends GetView<CalculadoraItensAdminController> {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(12, isDesktop ? 14 : 10, 12, 8),
+      padding: EdgeInsets.fromLTRB(12, isDesktop ? 10 : 8, 12, 8), // Reduzido
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor.withValues(alpha: 0.4),
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          //await showCadastroEventoBottomSheet(context);
           _SummaryRow(
             title: 'Catálogo global',
-            subtitle: 'Itens genéricos reutilizados nas regras por tipo de evento.',
+            subtitle: 'Itens genéricos reutilizados nas regras.',
             totalLabel: 'itens',
             total: controller.itensBase.length,
             active: controller.itensBase.where((item) => item.ativo).length,
             onAdd: () => CalculadoraItemBaseFormDialog.show(),
-            addLabel: 'Novo item base',
+            addLabel: 'Novo',
           ),
           const SizedBox(height: 8),
           Obx(
             () => _FilterPanel(
               children: [
                 _SearchField(
-                  hint: 'Buscar por nome, tipo ou tag',
+                  hint: 'Buscar item...',
                   value: controller.buscaBase.value,
                   onChanged: (value) => controller.buscaBase.value = value,
                 ),
@@ -261,33 +265,29 @@ class _ItensEventoHeader extends GetView<CalculadoraItensAdminController> {
 
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.fromLTRB(12, isDesktop ? 14 : 10, 12, 8),
+      padding: EdgeInsets.fromLTRB(12, isDesktop ? 10 : 8, 12, 8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        border: Border(
-          bottom: BorderSide(
-            color: theme.dividerColor.withValues(alpha: 0.4),
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SummaryRow(
             title: 'Regras por tipo de evento',
-            subtitle: 'Controle quais itens aparecem na calculadora e suas regras iniciais.',
+            subtitle: 'Controle itens e regras iniciais da calculadora.',
             totalLabel: 'regras',
             total: controller.itensEvento.length,
             active: controller.itensEvento.where((item) => item.ativo).length,
             onAdd: () => CalculadoraEventoItemFormDialog.show(),
-            addLabel: 'Nova regra',
+            addLabel: 'Nova Regra',
           ),
           const SizedBox(height: 8),
           Obx(
             () => _FilterPanel(
               children: [
                 _SearchField(
-                  hint: 'Buscar por nome, item base ou observação',
+                  hint: 'Buscar regra...',
                   value: controller.buscaEvento.value,
                   onChanged: (value) => controller.buscaEvento.value = value,
                 ),
@@ -338,13 +338,15 @@ class _ItensBaseTable extends StatelessWidget {
 
     return Scrollbar(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 24),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
-            headingRowHeight: 44,
-            dataRowMinHeight: 48,
-            dataRowMaxHeight: 58,
+            headingRowHeight: 36, // Muito mais compacto
+            dataRowMinHeight: 38,
+            dataRowMaxHeight: 44,
+            headingTextStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
+            dataTextStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.black87),
             columns: const [
               DataColumn(label: Text('Ordem')),
               DataColumn(label: Text('Nome')),
@@ -361,11 +363,10 @@ class _ItensBaseTable extends StatelessWidget {
                       DataCell(Text('${item.ordem}')),
                       DataCell(
                         SizedBox(
-                          width: 220,
-                          child: Text(
-                            item.nome,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          width: 200,
+                          child: Text(item.nome,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.w600)),
                         ),
                       ),
                       DataCell(Text(item.categoriaPadrao)),
@@ -378,12 +379,18 @@ class _ItensBaseTable extends StatelessWidget {
                           children: [
                             IconButton(
                               tooltip: 'Editar',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                               onPressed: () => CalculadoraItemBaseFormDialog.show(item: item),
-                              icon: const Icon(Icons.edit_outlined),
+                              icon: const Icon(Icons.edit_outlined, size: 16),
                             ),
-                            Switch.adaptive(
-                              value: item.ativo,
-                              onChanged: (value) => controller.ativarDesativarItemBase(item, value),
+                            Transform.scale(
+                              scale: 0.75, // Não deforma a altura da linha
+                              child: Switch.adaptive(
+                                value: item.ativo,
+                                onChanged: (value) =>
+                                    controller.ativarDesativarItemBase(item, value),
+                              ),
                             ),
                           ],
                         ),
@@ -410,16 +417,18 @@ class _ItensEventoTable extends StatelessWidget {
 
     return Scrollbar(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(12, 10, 12, 24),
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 24),
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
-            headingRowHeight: 44,
-            dataRowMinHeight: 48,
-            dataRowMaxHeight: 58,
+            headingRowHeight: 36, // Compacto
+            dataRowMinHeight: 38,
+            dataRowMaxHeight: 44,
+            headingTextStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
+            dataTextStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.black87),
             columns: const [
               DataColumn(label: Text('Evento')),
-              DataColumn(label: Text('Ordem')),
+              DataColumn(label: Text('Ord.')),
               DataColumn(label: Text('Item')),
               DataColumn(label: Text('Categoria')),
               DataColumn(label: Text('Qtd.')),
@@ -436,17 +445,22 @@ class _ItensEventoTable extends StatelessWidget {
                       DataCell(Text('${item.ordem}')),
                       DataCell(
                         SizedBox(
-                          width: 180,
-                          child: Text(
-                            item.nome,
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                          width: 160,
+                          child: Text(item.nome,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.w600)),
                         ),
                       ),
                       DataCell(Text(item.categoria)),
                       DataCell(Text(_formatDouble(item.quantidadePorConvidadoEquivalente))),
                       DataCell(Text('R\$ ${_formatMoney(item.valorUnitarioMedio)}')),
-                      DataCell(Text(item.perfisFesta.map(_labelPerfil).join(', '))),
+                      DataCell(
+                        SizedBox(
+                          width: 120,
+                          child: Text(item.perfisFesta.map(_labelPerfil).join(', '),
+                              overflow: TextOverflow.ellipsis),
+                        ),
+                      ),
                       DataCell(_StatusChip(active: item.ativo)),
                       DataCell(
                         Row(
@@ -454,18 +468,25 @@ class _ItensEventoTable extends StatelessWidget {
                           children: [
                             IconButton(
                               tooltip: 'Editar',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                               onPressed: () => CalculadoraEventoItemFormDialog.show(item: item),
-                              icon: const Icon(Icons.edit_outlined),
+                              icon: const Icon(Icons.edit_outlined, size: 16),
                             ),
                             IconButton(
                               tooltip: 'Duplicar',
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
                               onPressed: () => _DuplicarEventoItemSheet.show(item),
-                              icon: const Icon(Icons.copy_outlined),
+                              icon: const Icon(Icons.copy_outlined, size: 16),
                             ),
-                            Switch.adaptive(
-                              value: item.ativo,
-                              onChanged: (value) =>
-                                  controller.ativarDesativarItemEvento(item, value),
+                            Transform.scale(
+                              scale: 0.75,
+                              child: Switch.adaptive(
+                                value: item.ativo,
+                                onChanged: (value) =>
+                                    controller.ativarDesativarItemEvento(item, value),
+                              ),
                             ),
                           ],
                         ),
@@ -493,22 +514,17 @@ class _ItemBaseCard extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      clipBehavior: Clip.antiAlias,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(
-          color: theme.dividerColor.withValues(alpha: 0.35),
-        ),
+        borderRadius: BorderRadius.circular(12), // Mais quadrado e compacto
+        side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.35)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+        padding: const EdgeInsets.all(10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _AvatarIcon(
-              icon: Icons.inventory_2_outlined,
-              active: item.ativo,
-            ),
+            _AvatarIcon(icon: Icons.inventory_2_outlined, active: item.ativo),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -519,52 +535,45 @@ class _ItemBaseCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           item.nome,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700),
                         ),
                       ),
                       _StatusChip(active: item.ativo),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     '${item.categoriaPadrao} • ${item.unidadePadrao} • ${_labelPublico(item.publicoAlvo)}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    style: GoogleFonts.poppins(
+                        fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
                   ),
                   if (item.tags.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Wrap(
                       spacing: 4,
                       runSpacing: 4,
-                      children: item.tags.take(4).map((tag) {
-                        return _TinyChip(label: tag);
-                      }).toList(),
+                      children: item.tags.take(4).map((tag) => _TinyChip(label: tag)).toList(),
                     ),
                   ],
                 ],
               ),
             ),
             PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded, size: 18),
               onSelected: (value) {
-                if (value == 'editar') {
-                  CalculadoraItemBaseFormDialog.show(item: item);
-                }
-                if (value == 'status') {
-                  controller.ativarDesativarItemBase(item, !item.ativo);
-                }
+                if (value == 'editar') CalculadoraItemBaseFormDialog.show(item: item);
+                if (value == 'status') controller.ativarDesativarItemBase(item, !item.ativo);
               },
               itemBuilder: (context) => [
                 const PopupMenuItem(
-                  value: 'editar',
-                  child: Text('Editar'),
-                ),
+                    value: 'editar',
+                    height: 36,
+                    child: Text('Editar', style: TextStyle(fontSize: 13))),
                 PopupMenuItem(
-                  value: 'status',
-                  child: Text(item.ativo ? 'Desativar' : 'Ativar'),
-                ),
+                    value: 'status',
+                    height: 36,
+                    child: Text(item.ativo ? 'Desativar' : 'Ativar',
+                        style: const TextStyle(fontSize: 13))),
               ],
             ),
           ],
@@ -586,22 +595,17 @@ class _ItemEventoCard extends StatelessWidget {
 
     return Card(
       elevation: 0,
-      clipBehavior: Clip.antiAlias,
+      margin: EdgeInsets.zero,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(
-          color: theme.dividerColor.withValues(alpha: 0.35),
-        ),
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: theme.dividerColor.withValues(alpha: 0.35)),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+        padding: const EdgeInsets.all(10),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _AvatarIcon(
-              icon: Icons.rule_folder_outlined,
-              active: item.ativo,
-            ),
+            _AvatarIcon(icon: Icons.rule_folder_outlined, active: item.ativo),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
@@ -612,68 +616,56 @@ class _ItemEventoCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           item.nome,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700),
                         ),
                       ),
                       _StatusChip(active: item.ativo),
                     ],
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
-                    '${controller.labelTipoEvento(item.tipoEvento)} • ${item.categoria} • ordem ${item.ordem}',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
+                    '${controller.labelTipoEvento(item.tipoEvento)} • ${item.categoria} • ord. ${item.ordem}',
+                    style: GoogleFonts.poppins(
+                        fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 6),
                   Wrap(
-                    spacing: 6,
+                    spacing: 4,
                     runSpacing: 4,
                     children: [
                       _TinyChip(
-                        label:
-                            '${_formatDouble(item.quantidadePorConvidadoEquivalente)} ${item.unidade}/conv.',
-                      ),
-                      _TinyChip(
-                        label: 'R\$ ${_formatMoney(item.valorUnitarioMedio)}',
-                      ),
+                          label:
+                              '${_formatDouble(item.quantidadePorConvidadoEquivalente)} ${item.unidade}/conv.'),
+                      _TinyChip(label: 'R\$ ${_formatMoney(item.valorUnitarioMedio)}'),
                       if (item.obrigatorio) const _TinyChip(label: 'Obrigatório'),
                       if (item.selecionadoPadrao) const _TinyChip(label: 'Selecionado'),
-                      ...item.perfisFesta.map(
-                        (perfil) => _TinyChip(label: _labelPerfil(perfil)),
-                      ),
+                      ...item.perfisFesta.map((perfil) => _TinyChip(label: _labelPerfil(perfil))),
                     ],
                   ),
                 ],
               ),
             ),
             PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded, size: 18),
               onSelected: (value) {
-                if (value == 'editar') {
-                  CalculadoraEventoItemFormDialog.show(item: item);
-                }
-                if (value == 'duplicar') {
-                  _DuplicarEventoItemSheet.show(item);
-                }
-                if (value == 'status') {
-                  controller.ativarDesativarItemEvento(item, !item.ativo);
-                }
+                if (value == 'editar') CalculadoraEventoItemFormDialog.show(item: item);
+                if (value == 'duplicar') _DuplicarEventoItemSheet.show(item);
+                if (value == 'status') controller.ativarDesativarItemEvento(item, !item.ativo);
               },
               itemBuilder: (context) => [
                 const PopupMenuItem(
-                  value: 'editar',
-                  child: Text('Editar'),
-                ),
+                    value: 'editar',
+                    height: 36,
+                    child: Text('Editar', style: TextStyle(fontSize: 13))),
                 const PopupMenuItem(
-                  value: 'duplicar',
-                  child: Text('Duplicar'),
-                ),
+                    value: 'duplicar',
+                    height: 36,
+                    child: Text('Duplicar', style: TextStyle(fontSize: 13))),
                 PopupMenuItem(
-                  value: 'status',
-                  child: Text(item.ativo ? 'Desativar' : 'Ativar'),
-                ),
+                    value: 'status',
+                    height: 36,
+                    child: Text(item.ativo ? 'Desativar' : 'Ativar',
+                        style: const TextStyle(fontSize: 13))),
               ],
             ),
           ],
@@ -715,20 +707,15 @@ class _SummaryRow extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w800),
               ),
-              const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                style: GoogleFonts.poppins(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Wrap(
-                spacing: 6,
+                spacing: 4,
                 children: [
                   _TinyChip(label: '$total $totalLabel'),
                   _TinyChip(label: '$active ativos'),
@@ -738,10 +725,18 @@ class _SummaryRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        FilledButton.icon(
-          onPressed: onAdd,
-          icon: const Icon(Icons.add, size: 18),
-          label: Text(addLabel),
+        SizedBox(
+          height: 36, // Botão compacto
+          child: FilledButton.icon(
+            onPressed: onAdd,
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            ),
+            icon: const Icon(Icons.add, size: 16),
+            label: Text(addLabel,
+                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+          ),
         ),
       ],
     );
@@ -759,20 +754,20 @@ class _FilterPanel extends StatelessWidget {
       initiallyExpanded: MediaQuery.of(context).size.width >= 900,
       tilePadding: EdgeInsets.zero,
       childrenPadding: EdgeInsets.zero,
-      title: const Text('Filtros'),
-      leading: const Icon(Icons.filter_alt_outlined),
+      title: Text('Filtros', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700)),
+      leading: const Icon(Icons.filter_alt_outlined, size: 18),
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
             final width = constraints.maxWidth;
             final itemWidth = width >= 1000
-                ? (width - 48) / 5
+                ? (width - 32) / 5
                 : width >= 700
-                    ? (width - 24) / 3
+                    ? (width - 16) / 3
                     : width;
 
             return Wrap(
-              spacing: 12,
+              spacing: 8,
               runSpacing: 8,
               children: children
                   .map(
@@ -785,6 +780,7 @@ class _FilterPanel extends StatelessWidget {
             );
           },
         ),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -803,16 +799,20 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      initialValue: value,
-      onChanged: onChanged,
-      decoration: InputDecoration(
-        hintText: hint,
-        prefixIcon: const Icon(Icons.search, size: 20),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+    return SizedBox(
+      height: 38, // Altura densa para desktop
+      child: TextFormField(
+        initialValue: value,
+        onChanged: onChanged,
+        style: GoogleFonts.poppins(fontSize: 12),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey),
+          prefixIcon: const Icon(Icons.search, size: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          isDense: true,
         ),
-        isDense: true,
       ),
     );
   }
@@ -836,10 +836,7 @@ class _DropdownFilter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dropdownItems = <DropdownMenuItem<String>>[
-      DropdownMenuItem(
-        value: '',
-        child: Text('Todos - $label'),
-      ),
+      DropdownMenuItem(value: '', child: Text('Todos - $label')),
       ...items.map(
         (item) => DropdownMenuItem(
           value: item,
@@ -850,17 +847,22 @@ class _DropdownFilter extends StatelessWidget {
 
     final selectedValue = dropdownItems.any((item) => item.value == value) ? value : '';
 
-    return DropdownButtonFormField<String>(
-      value: selectedValue,
-      decoration: InputDecoration(
-        labelText: label,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
+    return SizedBox(
+      height: 38, // Altura densa
+      child: DropdownButtonFormField<String>(
+        value: selectedValue,
+        icon: const Icon(Icons.expand_more, size: 16),
+        style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.black87),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: GoogleFonts.poppins(fontSize: 11.5),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          isDense: true,
         ),
-        isDense: true,
+        items: dropdownItems,
+        onChanged: onChanged,
       ),
-      items: dropdownItems,
-      onChanged: onChanged,
     );
   }
 }
@@ -902,47 +904,48 @@ class _DuplicarEventoItemSheetState extends State<_DuplicarEventoItemSheet> {
       child: Align(
         alignment: Alignment.bottomCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 520),
+          constraints: const BoxConstraints(maxWidth: 480),
           child: Material(
             color: theme.colorScheme.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
             child: Padding(
-              padding: const EdgeInsets.all(18),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.copy_outlined),
+                      const Icon(Icons.copy_outlined, size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'Duplicar configuração',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w800,
-                          ),
+                          style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800),
                         ),
                       ),
                       IconButton(
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                         onPressed: () => Get.back<void>(),
-                        icon: const Icon(Icons.close),
+                        icon: const Icon(Icons.close, size: 20),
                       ),
                     ],
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Item: ${widget.item.nome}',
-                    style: theme.textTheme.bodyMedium,
+                    style: GoogleFonts.poppins(fontSize: 13),
                   ),
                   const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
                     value: _tipoDestino.isEmpty ? null : _tipoDestino,
+                    style: GoogleFonts.poppins(fontSize: 13, color: Colors.black87),
                     decoration: InputDecoration(
                       labelText: 'Tipo de evento de destino',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                      labelStyle: GoogleFonts.poppins(fontSize: 12),
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                     items: CalculadoraItensAdminController.tiposEvento
                         .where((tipo) => tipo != widget.item.tipoEvento)
@@ -958,34 +961,50 @@ class _DuplicarEventoItemSheetState extends State<_DuplicarEventoItemSheet> {
                       setState(() => _tipoDestino = value);
                     },
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 16),
                   Obx(
                     () => Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton.icon(
-                            onPressed: controller.saving.value ? null : () => Get.back<void>(),
-                            icon: const Icon(Icons.close),
-                            label: const Text('Cancelar'),
+                          child: SizedBox(
+                            height: 40,
+                            child: OutlinedButton.icon(
+                              onPressed: controller.saving.value ? null : () => Get.back<void>(),
+                              style: OutlinedButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10))),
+                              icon: const Icon(Icons.close, size: 16),
+                              label: Text('Cancelar',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 12, fontWeight: FontWeight.w600)),
+                            ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
-                          child: FilledButton.icon(
-                            onPressed: controller.saving.value || _tipoDestino.isEmpty
-                                ? null
-                                : () => controller.duplicarItemEvento(
-                                      item: widget.item,
-                                      novoTipoEvento: _tipoDestino,
-                                    ),
-                            icon: controller.saving.value
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  )
-                                : const Icon(Icons.copy_outlined),
-                            label: const Text('Duplicar'),
+                          child: SizedBox(
+                            height: 40,
+                            child: FilledButton.icon(
+                              onPressed: controller.saving.value || _tipoDestino.isEmpty
+                                  ? null
+                                  : () => controller.duplicarItemEvento(
+                                        item: widget.item,
+                                        novoTipoEvento: _tipoDestino,
+                                      ),
+                              style: FilledButton.styleFrom(
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10))),
+                              icon: controller.saving.value
+                                  ? const SizedBox(
+                                      width: 14,
+                                      height: 14,
+                                      child: CircularProgressIndicator(
+                                          strokeWidth: 2, color: Colors.white))
+                                  : const Icon(Icons.copy_outlined, size: 16),
+                              label: Text('Duplicar',
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 12, fontWeight: FontWeight.w600)),
+                            ),
                           ),
                         ),
                       ],
@@ -1012,17 +1031,14 @@ class _StatusChip extends StatelessWidget {
     final color = active ? Colors.green : theme.colorScheme.outline;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         active ? 'Ativo' : 'Inativo',
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w800,
-        ),
+        style: GoogleFonts.poppins(fontSize: 9, color: color, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -1038,17 +1054,15 @@ class _TinyChip extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
-        style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-          fontWeight: FontWeight.w700,
-        ),
+        style: GoogleFonts.poppins(
+            fontSize: 9, color: theme.colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -1069,13 +1083,13 @@ class _AvatarIcon extends StatelessWidget {
     final color = active ? theme.colorScheme.primary : theme.colorScheme.outline;
 
     return Container(
-      width: 38,
-      height: 38,
+      width: 32, // Menor
+      height: 32,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(10),
       ),
-      child: Icon(icon, color: color, size: 20),
+      child: Icon(icon, color: color, size: 16),
     );
   }
 }
@@ -1103,40 +1117,42 @@ class _EmptyState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
+          constraints: const BoxConstraints(maxWidth: 380),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                width: 58,
-                height: 58,
+                width: 48,
+                height: 48,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(icon, color: theme.colorScheme.primary),
+                child: Icon(icon, color: theme.colorScheme.primary, size: 24),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                ),
+                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w800),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+                style: GoogleFonts.poppins(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: onAction,
-                icon: const Icon(Icons.add),
-                label: Text(actionLabel),
+              SizedBox(
+                height: 36,
+                child: FilledButton.icon(
+                  onPressed: onAction,
+                  style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                  icon: const Icon(Icons.add, size: 16),
+                  label: Text(actionLabel,
+                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                ),
               ),
             ],
           ),
