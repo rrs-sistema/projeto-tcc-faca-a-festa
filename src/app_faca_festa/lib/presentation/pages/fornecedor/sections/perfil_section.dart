@@ -1,10 +1,9 @@
-import 'package:app_faca_festa/core/utils/biblioteca.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../dialogs/edit_fornecedor_bottom_sheet.dart';
 import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'fornecedor_premium_layout.dart';
 
 class PerfilSection extends StatelessWidget {
   const PerfilSection({super.key});
@@ -14,349 +13,334 @@ class PerfilSection extends StatelessWidget {
     final controller = Get.find<FornecedorController>();
 
     return Obx(() {
-      final fornecedor = controller.fornecedor.value;
+      final servicos = controller.servicosDetalhado.where((s) => s.ativo).toList();
+      final servicosBasicos = controller.servicosFornecedor.where((s) => s.ativo).length;
+      final totalAtivos = servicos.isNotEmpty ? servicos.length : servicosBasicos;
+      final semFoto = servicos.where((s) => (s.imagemUrl ?? '').trim().isEmpty).length;
+      final comPreco = servicos.where((s) => s.preco > 0 || (s.precoPromocao ?? 0) > 0).length;
+      final semDescricao = servicos.where((s) => (s.descricaoServico ?? '').trim().isEmpty).length;
 
-      if (controller.carregando.value && fornecedor == null) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
-      final servicosAtivos = controller.servicosFornecedor.where((s) => s.ativo).length;
-      final completude = _calcularCompletude(
-        temLogo: (fornecedor?.bannerUrl ?? '').trim().isNotEmpty,
-        temDescricao: (fornecedor?.descricao ?? '').trim().isNotEmpty,
-        temTelefone: (fornecedor?.telefone ?? '').trim().isNotEmpty,
-        temEmail: (fornecedor?.email ?? '').trim().isNotEmpty,
-        temCategorias: fornecedor?.categorias.isNotEmpty ?? false,
-        temServicos: servicosAtivos > 0 || controller.servicosDetalhado.isNotEmpty,
-        temEventos: fornecedor?.tipoEventoNomes.isNotEmpty ?? false,
-        temPreco: fornecedor?.precoMinimo != null || fornecedor?.precoMedio != null,
+      final catalogoInsight = controller.insightsFornecedor.firstWhereOrNull(
+        (i) => i.tipo == 'catalogo',
       );
+      final sugestoes = catalogoInsight?.acoesSugeridas ?? const <String>[];
+      final pendencias = controller.alertasPerfil
+          .where((a) => a.tipo.contains('catalogo') || a.tipo.contains('perfil'))
+          .expand((a) => a.acoesSugeridas)
+          .toSet()
+          .toList();
+      final score = _calcularScorePerfil(controller);
 
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
+      final cards = [
+        _CatalogMetric(
+          'Serviços ativos',
+          totalAtivos.toString(),
+          'visíveis para o cliente',
+          Icons.inventory_2_rounded,
+          FornecedorPremiumPalette.primary,
         ),
+        _CatalogMetric(
+          'Sem foto',
+          semFoto.toString(),
+          'precisam de imagem',
+          Icons.image_not_supported_outlined,
+          FornecedorPremiumPalette.rose,
+        ),
+        _CatalogMetric(
+          'Com preço',
+          comPreco.toString(),
+          'facilitam decisão',
+          Icons.sell_rounded,
+          FornecedorPremiumPalette.emerald,
+        ),
+        _CatalogMetric(
+          'Sem descrição',
+          semDescricao.toString(),
+          'podem vender menos',
+          Icons.notes_rounded,
+          FornecedorPremiumPalette.amber,
+        ),
+      ];
+
+      return PremiumSectionShell(
+        title: 'Catálogo inteligente',
+        subtitle: 'Serviços, fotos, preços e ajustes que melhoram conversão.',
+        icon: Icons.inventory_2_rounded,
+        color: FornecedorPremiumPalette.purple,
+        trailing: _ScoreBadge(score: score),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final compact = constraints.maxWidth < 560;
-                final title = Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(9),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: const Icon(Icons.business_rounded, size: 19, color: Color(0xFF111827)),
+            ResponsiveWrapGrid(
+              minTileWidth: 205,
+              maxColumns: 4,
+              children: cards
+                  .map(
+                    (data) => PremiumMetricTile(
+                      label: data.label,
+                      value: data.value,
+                      subtitle: data.subtitle,
+                      icon: data.icon,
+                      color: data.color,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Perfil público',
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: const Color(0xFF111827),
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Dados que fortalecem a vitrine do fornecedor no marketplace.',
-                            style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6B7280)),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-
-                final actions = Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    Tooltip(
-                      message: 'Visualizar como cliente',
-                      child: IconButton(
-                        onPressed: () => Get.snackbar(
-                          'Perfil público',
-                          'Abrindo visualização pública...',
-                          backgroundColor: const Color(0xFF111827),
-                          colorText: Colors.white,
-                        ),
-                        icon: const Icon(Icons.remove_red_eye_outlined, size: 20, color: Color(0xFF6B7280)),
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: fornecedor == null
-                          ? null
-                          : () => showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (context) {
-                                  return DraggableScrollableSheet(
-                                    expand: false,
-                                    initialChildSize: 0.85,
-                                    minChildSize: 0.5,
-                                    maxChildSize: 0.95,
-                                    builder: (context, scrollController) {
-                                      return Container(
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                                        ),
-                                        child: SingleChildScrollView(
-                                          controller: scrollController,
-                                          child: EditFornecedorBottomSheet(fornecedor: fornecedor!),
-                                        ),
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                      icon: const Icon(Icons.edit_outlined, size: 16),
-                      label: Text(
-                        'Editar',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 12),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF111827),
-                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                        side: const BorderSide(color: Color(0xFFD1D5DB)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                  ],
-                );
-
-                if (compact) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [title, const SizedBox(height: 12), actions],
-                  );
-                }
-
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [Expanded(child: title), const SizedBox(width: 12), actions],
-                );
-              },
+                  )
+                  .toList(),
             ),
-            const SizedBox(height: 18),
-            _CompletudeCard(percentual: completude),
-            const SizedBox(height: 18),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final twoColumns = constraints.maxWidth >= 760;
-                final left = Column(
-                  children: [
-                    _InfoRow(
-                      icon: Icons.store_mall_directory_outlined,
-                      label: 'Razão social',
-                      value: fornecedor?.razaoSocial ?? 'Não informado',
-                    ),
-                    if ((fornecedor?.cnpj ?? '').trim().isNotEmpty) ...[
-                      const SizedBox(height: 14),
-                      _InfoRow(
-                        icon: Icons.badge_outlined,
-                        label: 'CNPJ',
-                        value: Biblioteca.formatarCnpj(fornecedor?.cnpj),
-                      ),
-                    ],
-                    const SizedBox(height: 14),
-                    _InfoRow(
-                      icon: Icons.phone_outlined,
-                      label: 'Telefone comercial',
-                      value: Biblioteca.formatarCelular(fornecedor?.telefone),
-                    ),
-                    const SizedBox(height: 14),
-                    _InfoRow(
-                      icon: Icons.email_outlined,
-                      label: 'E-mail de contato',
-                      value: fornecedor?.email ?? 'Não informado',
-                    ),
-                  ],
-                );
-
-                final right = Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Resumo institucional',
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF111827),
-                        fontSize: 13.5,
-                      ),
-                    ),
-                    const SizedBox(height: 7),
-                    Text(
-                      fornecedor?.descricao ?? 'Nenhuma descrição informada pelo fornecedor.',
-                      style: GoogleFonts.poppins(
-                        color: const Color(0xFF6B7280),
-                        fontSize: 12.5,
-                        height: 1.5,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    _ChipGroup(
-                      title: 'Tipos de evento',
-                      empty: 'Não configurado',
-                      values: fornecedor?.tipoEventoNomes ?? const [],
-                      icon: Icons.celebration_outlined,
-                    ),
-                    const SizedBox(height: 14),
-                    _ChipGroup(
-                      title: 'Categorias',
-                      empty: 'Não configurado',
-                      values: _nomesCategorias(fornecedor?.categorias),
-                      icon: Icons.category_outlined,
-                    ),
-                    const SizedBox(height: 14),
-                    _InfoRow(
-                      icon: Icons.map_outlined,
-                      label: 'Território de atendimento',
-                      value: 'Configure cidade, raio ou regiões para melhorar as recomendações.',
-                    ),
-                  ],
-                );
-
-                if (!twoColumns) {
-                  return Column(
-                    children: [left, const Divider(height: 28), right],
-                  );
-                }
-
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(child: left),
-                    const SizedBox(width: 28),
-                    Expanded(child: right),
-                  ],
-                );
-              },
-            ),
+            const SizedBox(height: 12),
+            if (sugestoes.isNotEmpty || pendencias.isNotEmpty)
+              _SugestoesCatalogo(sugestoes: sugestoes, pendencias: pendencias)
+            else
+              const PremiumEmptyState(
+                icon: Icons.task_alt_rounded,
+                title: 'Catálogo sem pendências críticas',
+                message:
+                    'Mantenha fotos, preços e descrições atualizados para aumentar a confiança do organizador.',
+                color: FornecedorPremiumPalette.emerald,
+              ),
+            if (servicos.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              _ServicosCompactos(servicos: servicos),
+            ],
           ],
         ),
       );
     });
   }
 
-  int _calcularCompletude({
-    required bool temLogo,
-    required bool temDescricao,
-    required bool temTelefone,
-    required bool temEmail,
-    required bool temCategorias,
-    required bool temServicos,
-    required bool temEventos,
-    required bool temPreco,
-  }) {
-    final checks = [temLogo, temDescricao, temTelefone, temEmail, temCategorias, temServicos, temEventos, temPreco];
-    final feitos = checks.where((e) => e).length;
-    return ((feitos / checks.length) * 100).round();
-  }
+  static double _calcularScorePerfil(FornecedorController controller) {
+    final fornecedor = controller.fornecedor.value;
+    if (fornecedor == null) return 0;
 
-  List<String> _nomesCategorias(List<Map<String, dynamic>>? categorias) {
-    if (categorias == null) return const [];
-    return categorias
-        .map((item) => (item['nome_categoria'] ??
-                item['nomeCategoria'] ??
-                item['categoria_nome'] ??
-                item['categoriaNome'] ??
-                item['nome'])
-            ?.toString()
-            .trim())
-        .whereType<String>()
-        .where((nome) => nome.isNotEmpty)
-        .toSet()
-        .toList();
+    final servicosAtivos = controller.servicosDetalhado.any((s) => s.ativo) ||
+        controller.servicosFornecedor.any((s) => s.ativo);
+
+    final servicoComFoto = controller.servicosDetalhado.any(
+      (s) => s.ativo && (s.imagemUrl ?? '').trim().isNotEmpty,
+    );
+
+    final servicoComPreco = controller.servicosDetalhado.any(
+      (s) => s.ativo && (s.preco > 0 || (s.precoPromocao ?? 0) > 0),
+    );
+
+    final checks = <bool>[
+      fornecedor.ativo,
+      fornecedor.aptoParaOperar,
+      fornecedor.razaoSocial.trim().isNotEmpty,
+      (fornecedor.email ?? '').trim().isNotEmpty || (fornecedor.telefone ?? '').trim().isNotEmpty,
+      (fornecedor.descricao ?? '').trim().isNotEmpty,
+      (fornecedor.bannerUrl ?? '').trim().isNotEmpty,
+      fornecedor.categorias.isNotEmpty,
+      fornecedor.tipoEventoIds.isNotEmpty ||
+          fornecedor.tipoEventoSlugs.isNotEmpty ||
+          fornecedor.tipoEventoNomes.isNotEmpty,
+      fornecedor.precoMinimo != null ||
+          fornecedor.precoMaximo != null ||
+          fornecedor.precoMedio != null,
+      servicosAtivos,
+      servicoComFoto || controller.servicosDetalhado.isEmpty,
+      servicoComPreco || controller.servicosDetalhado.isEmpty,
+    ];
+
+    final concluidos = checks.where((item) => item).length;
+    return (concluidos / checks.length) * 100;
   }
 }
 
-class _CompletudeCard extends StatelessWidget {
-  final int percentual;
+class _ScoreBadge extends StatelessWidget {
+  final double? score;
 
-  const _CompletudeCard({required this.percentual});
+  const _ScoreBadge({required this.score});
 
   @override
   Widget build(BuildContext context) {
-    final color = percentual >= 80
-        ? const Color(0xFF16A34A)
-        : percentual >= 50
-            ? const Color(0xFFF59E0B)
-            : const Color(0xFFEF4444);
+    final label = score == null ? 'IA em análise' : '${score!.toStringAsFixed(0)}% completo';
+    final color = score == null
+        ? FornecedorPremiumPalette.muted
+        : score! >= 70
+            ? FornecedorPremiumPalette.emerald
+            : score! >= 40
+                ? FornecedorPremiumPalette.amber
+                : FornecedorPremiumPalette.rose;
+
+    return PremiumPill(text: label, color: color, icon: Icons.verified_rounded);
+  }
+}
+
+class _CatalogMetric {
+  final String label;
+  final String value;
+  final String subtitle;
+  final IconData icon;
+  final Color color;
+
+  const _CatalogMetric(this.label, this.value, this.subtitle, this.icon, this.color);
+}
+
+class _SugestoesCatalogo extends StatelessWidget {
+  final List<String> sugestoes;
+  final List<String> pendencias;
+
+  const _SugestoesCatalogo({required this.sugestoes, required this.pendencias});
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [...sugestoes.take(3), ...pendencias.take(2)].toSet().toList();
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
+        color: FornecedorPremiumPalette.surfaceAlt,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: color.withValues(alpha: 0.14)),
+        border: Border.all(color: FornecedorPremiumPalette.border),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.tips_and_updates_rounded,
+                  size: 17, color: FornecedorPremiumPalette.amber),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Sugestões de melhoria',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 13.2,
+                    fontWeight: FontWeight.w800,
+                    color: FornecedorPremiumPalette.text,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: items.map((item) => _SuggestionPill(text: item)).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ServicosCompactos extends StatelessWidget {
+  final List<dynamic> servicos;
+
+  const _ServicosCompactos({required this.servicos});
+
+  @override
+  Widget build(BuildContext context) {
+    final itens = servicos.take(6).toList();
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Serviços em destaque',
+          style: GoogleFonts.poppins(
+            fontSize: 13.3,
+            fontWeight: FontWeight.w800,
+            color: FornecedorPremiumPalette.text,
+          ),
+        ),
+        const SizedBox(height: 10),
+        ResponsiveWrapGrid(
+          minTileWidth: 230,
+          maxColumns: 3,
+          children: [
+            for (final s in itens) _ServicoMiniCard(servico: s),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ServicoMiniCard extends StatelessWidget {
+  final dynamic servico;
+
+  const _ServicoMiniCard({required this.servico});
+
+  @override
+  Widget build(BuildContext context) {
+    final nome = (servico.nomeServico ?? 'Serviço').toString();
+    final categoria =
+        (servico.nomeCategoria ?? servico.nomeSubcategoria ?? 'Sem categoria').toString();
+    final preco = (servico.preco as num?)?.toDouble() ?? 0.0;
+    final promocao = (servico.precoPromocao as num?)?.toDouble() ?? 0.0;
+    final valor = promocao > 0 ? promocao : preco;
+    final imagem = (servico.imagemUrl ?? '').toString().trim();
+    final possuiFoto = imagem.isNotEmpty;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: FornecedorPremiumPalette.border),
       ),
       child: Row(
         children: [
           Container(
             height: 44,
             width: 44,
-            alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: possuiFoto
+                  ? FornecedorPremiumPalette.primary.withValues(alpha: 0.08)
+                  : FornecedorPremiumPalette.rose.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Text(
-              '$percentual%',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w900,
-                color: color,
-              ),
+            child: Icon(
+              possuiFoto ? Icons.image_rounded : Icons.image_not_supported_outlined,
+              color: possuiFoto ? FornecedorPremiumPalette.primary : FornecedorPremiumPalette.rose,
+              size: 20,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Completude do perfil',
+                  nome,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
-                    fontSize: 13.5,
+                    fontSize: 12.6,
                     fontWeight: FontWeight.w800,
-                    color: const Color(0xFF111827),
+                    color: FornecedorPremiumPalette.text,
                   ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  categoria,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(fontSize: 10.8, color: FornecedorPremiumPalette.muted),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  'Quanto mais completo, melhor a confiança e a recomendação para organizadores.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 11.8,
-                    color: const Color(0xFF6B7280),
-                    height: 1.35,
-                  ),
-                  maxLines: 2,
+                  valor > 0
+                      ? 'R\$ ${valor.toStringAsFixed(2).replaceAll('.', ',')}'
+                      : 'Preço não informado',
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    color: valor > 0
+                        ? FornecedorPremiumPalette.emerald
+                        : FornecedorPremiumPalette.amber,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),
@@ -367,112 +351,40 @@ class _CompletudeCard extends StatelessWidget {
   }
 }
 
-class _InfoRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
+class _SuggestionPill extends StatelessWidget {
+  final String text;
 
-  const _InfoRow({required this.icon, required this.label, required this.value});
+  const _SuggestionPill({required this.text});
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, color: const Color(0xFF9CA3AF), size: 18),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF6B7280))),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: GoogleFonts.poppins(
-                  fontSize: 13.5,
-                  color: const Color(0xFF111827),
-                  fontWeight: FontWeight.w600,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ChipGroup extends StatelessWidget {
-  final String title;
-  final String empty;
-  final List<String> values;
-  final IconData icon;
-
-  const _ChipGroup({
-    required this.title,
-    required this.empty,
-    required this.values,
-    required this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final chips = values.where((v) => v.trim().isNotEmpty).take(6).toList();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 16, color: const Color(0xFF6B7280)),
-            const SizedBox(width: 7),
-            Text(
-              title,
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 260),
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: FornecedorPremiumPalette.border),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.check_circle_rounded, size: 13, color: FornecedorPremiumPalette.emerald),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
-                fontSize: 11,
-                color: const Color(0xFF6B7280),
+                fontSize: 10.8,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF475569),
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        if (chips.isEmpty)
-          Text(
-            empty,
-            style: GoogleFonts.poppins(
-              fontSize: 13,
-              color: const Color(0xFF111827),
-              fontWeight: FontWeight.w600,
-            ),
-          )
-        else
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: chips
-                .map(
-                  (value) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF3F4F6),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      value,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: const Color(0xFF374151),
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                )
-                .toList(),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

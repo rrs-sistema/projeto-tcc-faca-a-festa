@@ -11,12 +11,19 @@ import 'package:get/get.dart';
 import 'dart:async';
 import 'dart:io';
 
+import '../../data/models/fornecedor_intelligence/resumo_reputacao_fornecedor_model.dart';
+import '../../data/models/fornecedor_intelligence/score_cotacao_fornecedor_model.dart';
+import '../../data/models/fornecedor_intelligence/proxima_acao_fornecedor_model.dart';
+import '../../data/models/fornecedor_intelligence/insight_fornecedor_model.dart';
 import '../../data/models/servico_produto/subcategoria_servico_model.dart';
 import '../../data/models/servico_produto/fornecedor_categoria_model.dart';
 import '../../presentation/dialogs/show_novo_orcamento_bottom_sheet.dart';
 import '../../data/models/servico_produto/categoria_servico_model.dart';
+import '../../data/models/fornecedor/fornecedor_interacao_model.dart';
 import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../../data/models/servico_produto/servico_foto_model.dart';
+import '../../data/models/fornecedor/avaliacao_servico_model.dart';
+import '../../data/services/fornecedor_ai_service.dart';
 import '../../data/models/model.dart';
 import '../app_controller.dart';
 
@@ -90,6 +97,35 @@ class FornecedorController extends GetxController {
   final categoriasFornecedor = <FornecedorCategoriaModel>[].obs;
   final List<StreamSubscription> _mensagemListeners = [];
 
+  // ============================================================
+  // 🔹 IA LOCAL DO FORNECEDOR (sem API externa / sem Firestore)
+  // ============================================================
+  final FornecedorAiService _fornecedorAiService = FornecedorAiService();
+
+  final Rxn<ProximaAcaoFornecedorModel> proximaAcaoFornecedor = Rxn<ProximaAcaoFornecedorModel>();
+
+  final RxList<InsightFornecedorModel> insightsFornecedor = <InsightFornecedorModel>[].obs;
+
+  /// Score calculado por cotação. Chave: idCotacao.
+  final RxMap<String, ScoreCotacaoFornecedorModel> scoresCotacoes =
+      <String, ScoreCotacaoFornecedorModel>{}.obs;
+
+  final Rxn<ResumoReputacaoFornecedorModel> resumoReputacao = Rxn<ResumoReputacaoFornecedorModel>();
+
+  final RxList<InsightFornecedorModel> alertasPerfil = <InsightFornecedorModel>[].obs;
+
+  final RxBool isLoadingAi = false.obs;
+
+  bool _aiInicializada = false;
+  String? _ultimaChaveCacheAi;
+  DateTime? _ultimaAtualizacaoAi;
+  bool _carregandoAiInterno = false;
+
+  /// Reservado para futuras streams específicas da IA.
+  /// Hoje a IA é local, mas mantemos a lista para evitar vazamento
+  /// se futuramente algum insight passar a ser escutado em tempo real.
+  final List<StreamSubscription<dynamic>> _aiSubscriptions = [];
+
   Future<void> logoutFornecedor() async {
     fornecedores.clear();
     servicosFornecedor.clear();
@@ -111,6 +147,7 @@ class FornecedorController extends GetxController {
     _mensagemListeners.clear();
     _mensagensNaoLidasPorCotacao.clear();
     mensagensNaoLidas.value = 0;
+    _limparDadosAi();
     fornecedor.value = null;
   }
 
@@ -209,6 +246,7 @@ class FornecedorController extends GetxController {
         final data = snapshot.docs.first.data();
         fornecedor.value = FornecedorModel.fromMap(data);
         print('✅ Fornecedor atualizado: ${fornecedor.value!.razaoSocial}');
+        carregarAiFornecedorComDadosAtuais();
       } else {
         print('⚠️ Nenhum fornecedor ativo encontrado.');
         fornecedor.value = null;
@@ -224,6 +262,7 @@ class FornecedorController extends GetxController {
     await _fornecedorSubscription?.cancel();
     _fornecedorSubscription = null;
     fornecedor.value = null;
+    _limparDadosAi();
   }
 
   Future<List<ServicoProdutoModel>> buscarServicosFornecedorPorCategorias(
@@ -736,6 +775,7 @@ class FornecedorController extends GetxController {
       }
 
       servicosDetalhado.assignAll(lista);
+      await carregarAiFornecedorComDadosAtuais();
     } catch (e, s) {
       erro.value = 'Erro ao carregar serviços: $e';
       debugPrint('❌ Erro ao listar serviços: $e\n$s');
@@ -1064,6 +1104,494 @@ class FornecedorController extends GetxController {
   }
 
   // =============================================================
+  // 🔸 IA LOCAL DO FORNECEDOR
+  // =============================================================
+
+  /// Carrega/recalcula os dados de IA usando apenas os dados já disponíveis
+  /// em memória ou recebidos por parâmetro.
+  ///
+  /// Não consulta Firestore, não grava dados e não envia mensagens.
+  Future<void> carregarAiFornecedorComDadosAtuais({
+    List<AvaliacaoServicoModel> avaliacoes = const [],
+    List<FornecedorAiCotacaoInput> cotacoes = const [],
+    List<EventoModel> eventos = const [],
+    List<FornecedorInteracaoModel> interacoes = const [],
+    bool forceRefresh = false,
+  }) async {
+    final f = fornecedor.value;
+
+    if (f == null) {
+      _limparDadosAi();
+      return;
+    }
+
+    if (_carregandoAiInterno) return;
+
+    final chaveAtual = _gerarChaveCacheAi(
+      fornecedor: f,
+      servicos: servicosDetalhado,
+      avaliacoes: avaliacoes,
+      cotacoes: cotacoes,
+      eventos: eventos,
+      interacoes: interacoes,
+    );
+
+    if (!forceRefresh && _podeUsarCacheAi(chaveAtual)) {
+      return;
+    }
+
+    try {
+      _carregandoAiInterno = true;
+      isLoadingAi.value = true;
+
+      final analiseFornecedor = _fornecedorAiService.gerarAnaliseFornecedor(
+        fornecedor: f,
+        servicos: servicosDetalhado,
+        avaliacoes: avaliacoes,
+      );
+
+      resumoReputacao.value = analiseFornecedor.resumoReputacao;
+      alertasPerfil.assignAll(analiseFornecedor.alertasPerfilIncompleto);
+
+      final novosInsights = <InsightFornecedorModel>[
+        ...analiseFornecedor.alertasPerfilIncompleto,
+        _catalogoParaInsight(
+          f.idFornecedor,
+          analiseFornecedor.sugestaoCatalogo,
+        ),
+        _reputacaoParaInsight(
+          f.idFornecedor,
+          analiseFornecedor.resumoReputacao,
+        ),
+      ];
+
+      final novosScores = <String, ScoreCotacaoFornecedorModel>{};
+      ProximaAcaoFornecedorModel? melhorAcao;
+
+      for (final cotacao in cotacoes) {
+        final evento = _buscarEventoDaCotacao(
+          cotacao: cotacao,
+          eventos: eventos,
+        );
+
+        final analiseCotacao = _fornecedorAiService.gerarAnaliseCotacao(
+          fornecedor: f,
+          evento: evento,
+          cotacao: cotacao,
+          servicos: servicosDetalhado,
+          interacoes: interacoes,
+          catalogo: analiseFornecedor.sugestaoCatalogo,
+          reputacao: analiseFornecedor.resumoReputacao,
+        );
+
+        novosScores[cotacao.idCotacao] = analiseCotacao.scoreCotacao;
+
+        novosInsights.add(
+          _scoreCotacaoParaInsight(
+            f.idFornecedor,
+            analiseCotacao.scoreCotacao,
+            analiseCotacao.motivosOportunidade,
+          ),
+        );
+
+        melhorAcao = _selecionarMelhorAcao(
+          atual: melhorAcao,
+          candidata: analiseCotacao.proximaAcao,
+        );
+      }
+
+      scoresCotacoes.assignAll(novosScores);
+
+      melhorAcao ??= _fornecedorAiService.gerarProximaAcaoInteligente(
+        fornecedor: f,
+        catalogo: analiseFornecedor.sugestaoCatalogo,
+        reputacao: analiseFornecedor.resumoReputacao,
+      );
+
+      proximaAcaoFornecedor.value = melhorAcao;
+      insightsFornecedor.assignAll(_ordenarInsights(novosInsights));
+
+      _ultimaChaveCacheAi = chaveAtual;
+      _ultimaAtualizacaoAi = DateTime.now();
+      _aiInicializada = true;
+    } catch (e, s) {
+      debugPrint('❌ Erro ao gerar IA local do fornecedor: $e\n$s');
+      _aplicarFallbackAi(f);
+    } finally {
+      isLoadingAi.value = false;
+      _carregandoAiInterno = false;
+    }
+  }
+
+  /// Atalho para recalcular a IA ignorando o cache local.
+  Future<void> recalcularAiFornecedor({
+    List<AvaliacaoServicoModel> avaliacoes = const [],
+    List<FornecedorAiCotacaoInput> cotacoes = const [],
+    List<EventoModel> eventos = const [],
+    List<FornecedorInteracaoModel> interacoes = const [],
+  }) async {
+    await carregarAiFornecedorComDadosAtuais(
+      avaliacoes: avaliacoes,
+      cotacoes: cotacoes,
+      eventos: eventos,
+      interacoes: interacoes,
+      forceRefresh: true,
+    );
+  }
+
+  /// Inicializa a IA somente uma vez. Útil para tela que chama o controller
+  /// no initState/onReady e não quer recalcular a cada rebuild.
+  Future<void> inicializarAiFornecedorUmaVez({
+    List<AvaliacaoServicoModel> avaliacoes = const [],
+    List<FornecedorAiCotacaoInput> cotacoes = const [],
+    List<EventoModel> eventos = const [],
+    List<FornecedorInteracaoModel> interacoes = const [],
+  }) async {
+    if (_aiInicializada) return;
+
+    await carregarAiFornecedorComDadosAtuais(
+      avaliacoes: avaliacoes,
+      cotacoes: cotacoes,
+      eventos: eventos,
+      interacoes: interacoes,
+    );
+  }
+
+  /// Opcional: aproveita o método já existente de solicitações pendentes
+  /// e transforma os mapas em DTOs de entrada para a IA.
+  ///
+  /// Use apenas quando a tela realmente precisar dos scores de cotação,
+  /// pois este método usa a busca já existente de solicitações detalhadas.
+  Future<void> carregarAiDasSolicitacoesPendentes({
+    List<AvaliacaoServicoModel> avaliacoes = const [],
+    List<EventoModel> eventos = const [],
+    List<FornecedorInteracaoModel> interacoes = const [],
+    bool forceRefresh = false,
+  }) async {
+    final f = fornecedor.value;
+    if (f == null) {
+      _limparDadosAi();
+      return;
+    }
+
+    final solicitacoes = await buscarSolicitacoesPendentesDetalhadas();
+
+    final cotacoes = solicitacoes
+        .map(_cotacaoInputFromSolicitacaoMap)
+        .whereType<FornecedorAiCotacaoInput>()
+        .toList();
+
+    await carregarAiFornecedorComDadosAtuais(
+      avaliacoes: avaliacoes,
+      cotacoes: cotacoes,
+      eventos: eventos,
+      interacoes: interacoes,
+      forceRefresh: forceRefresh,
+    );
+  }
+
+  void limparAiFornecedor() {
+    _limparDadosAi();
+  }
+
+  void _limparDadosAi() {
+    proximaAcaoFornecedor.value = null;
+    insightsFornecedor.clear();
+    scoresCotacoes.clear();
+    resumoReputacao.value = null;
+    alertasPerfil.clear();
+    isLoadingAi.value = false;
+
+    _ultimaChaveCacheAi = null;
+    _ultimaAtualizacaoAi = null;
+    _aiInicializada = false;
+    _carregandoAiInterno = false;
+  }
+
+  bool _podeUsarCacheAi(String chaveAtual) {
+    if (_ultimaChaveCacheAi == null || _ultimaAtualizacaoAi == null) {
+      return false;
+    }
+
+    if (_ultimaChaveCacheAi != chaveAtual) {
+      return false;
+    }
+
+    final diff = DateTime.now().difference(_ultimaAtualizacaoAi!);
+    return diff.inMinutes < 10;
+  }
+
+  String _gerarChaveCacheAi({
+    required FornecedorModel fornecedor,
+    required List<FornecedorServicoDetalhadoDto> servicos,
+    required List<AvaliacaoServicoModel> avaliacoes,
+    required List<FornecedorAiCotacaoInput> cotacoes,
+    required List<EventoModel> eventos,
+    required List<FornecedorInteracaoModel> interacoes,
+  }) {
+    final partes = <String>[
+      fornecedor.idFornecedor,
+      fornecedor.ativo.toString(),
+      fornecedor.aptoParaOperar.toString(),
+      fornecedor.mediaAvaliacoes.toStringAsFixed(2),
+      fornecedor.totalAvaliacoes.toString(),
+      fornecedor.totalContratacoes.toString(),
+      fornecedor.categorias.length.toString(),
+      fornecedor.tipoEventoIds.length.toString(),
+      fornecedor.tipoEventoSlugs.length.toString(),
+      fornecedor.tipoEventoNomes.length.toString(),
+      fornecedor.precoMinimo?.toStringAsFixed(2) ?? 'sem_min',
+      fornecedor.precoMaximo?.toStringAsFixed(2) ?? 'sem_max',
+      fornecedor.precoMedio?.toStringAsFixed(2) ?? 'sem_medio',
+      servicos.length.toString(),
+      avaliacoes.length.toString(),
+      cotacoes.length.toString(),
+      eventos.length.toString(),
+      interacoes.length.toString(),
+      servicos.map((s) => '${s.id}:${s.ativo}:${s.preco}:${s.precoPromocao ?? ''}').join('|'),
+      cotacoes
+          .map((c) => '${c.idCotacao}:${c.statusCotacao ?? ''}:${c.valorReferencia ?? ''}')
+          .join('|'),
+    ];
+
+    return partes.join('#');
+  }
+
+  EventoModel? _buscarEventoDaCotacao({
+    required FornecedorAiCotacaoInput cotacao,
+    required List<EventoModel> eventos,
+  }) {
+    final idEvento = cotacao.idEvento;
+
+    if (idEvento == null || idEvento.trim().isEmpty) {
+      return null;
+    }
+
+    return eventos.firstWhereOrNull((evento) => evento.idEvento == idEvento);
+  }
+
+  ProximaAcaoFornecedorModel _selecionarMelhorAcao({
+    required ProximaAcaoFornecedorModel? atual,
+    required ProximaAcaoFornecedorModel candidata,
+  }) {
+    if (atual == null) return candidata;
+
+    if (candidata.urgente && !atual.urgente) {
+      return candidata;
+    }
+
+    if (candidata.prioridade > atual.prioridade) {
+      return candidata;
+    }
+
+    final scoreAtual = atual.score ?? 0;
+    final scoreCandidata = candidata.score ?? 0;
+
+    if (candidata.prioridade == atual.prioridade && scoreCandidata > scoreAtual) {
+      return candidata;
+    }
+
+    return atual;
+  }
+
+  List<InsightFornecedorModel> _ordenarInsights(
+    List<InsightFornecedorModel> insights,
+  ) {
+    final filtrados = insights.where((item) => item.titulo.trim().isNotEmpty).toList();
+
+    filtrados.sort((a, b) {
+      final prioridadeCompare = b.prioridade.compareTo(a.prioridade);
+
+      if (prioridadeCompare != 0) {
+        return prioridadeCompare;
+      }
+
+      final scoreA = a.score ?? 0;
+      final scoreB = b.score ?? 0;
+
+      return scoreB.compareTo(scoreA);
+    });
+
+    return filtrados;
+  }
+
+  InsightFornecedorModel _catalogoParaInsight(
+    String idFornecedor,
+    dynamic catalogo,
+  ) {
+    return InsightFornecedorModel(
+      idInsight: 'insight_catalogo_$idFornecedor',
+      idFornecedor: idFornecedor,
+      tipo: 'catalogo',
+      titulo: catalogo.titulo,
+      descricao: catalogo.descricao,
+      prioridade: catalogo.scoreCatalogo < 40 ? 5 : 3,
+      score: catalogo.scoreCatalogo,
+      nivel: catalogo.nivelCatalogo,
+      motivos: List<String>.from(catalogo.pendencias),
+      acoesSugeridas: List<String>.from(catalogo.melhoriasPrioritarias),
+      origem: catalogo.origem,
+      status: 'novo',
+      versaoRegra: catalogo.versaoRegra,
+      createdAt: DateTime.now(),
+      expiresAt: catalogo.expiresAt,
+    );
+  }
+
+  InsightFornecedorModel _reputacaoParaInsight(
+    String idFornecedor,
+    ResumoReputacaoFornecedorModel reputacao,
+  ) {
+    final prioridade = reputacao.totalAvaliacoes < 5 || reputacao.mediaGeral < 4 ? 4 : 2;
+
+    return InsightFornecedorModel(
+      idInsight: 'insight_reputacao_$idFornecedor',
+      idFornecedor: idFornecedor,
+      tipo: 'reputacao',
+      titulo: 'Resumo da reputação',
+      descricao: reputacao.resumo,
+      prioridade: prioridade,
+      score: reputacao.mediaGeral,
+      nivel: reputacao.tendencia,
+      motivos: [
+        ...reputacao.pontosFortes,
+        ...reputacao.pontosAtencao,
+      ],
+      acoesSugeridas: reputacao.totalAvaliacoes < 5
+          ? ['Solicitar avaliações após eventos concluídos']
+          : ['Acompanhar avaliações recentes'],
+      origem: reputacao.origem,
+      status: 'novo',
+      versaoRegra: reputacao.versaoRegra,
+      createdAt: DateTime.now(),
+      expiresAt: reputacao.expiresAt,
+    );
+  }
+
+  InsightFornecedorModel _scoreCotacaoParaInsight(
+    String idFornecedor,
+    ScoreCotacaoFornecedorModel score,
+    List<String> motivos,
+  ) {
+    final prioridade = score.score >= 75
+        ? 5
+        : score.score >= 45
+            ? 3
+            : 2;
+
+    final titulo = score.score >= 75
+        ? 'Cotação com alta oportunidade'
+        : score.score >= 45
+            ? 'Cotação com oportunidade moderada'
+            : 'Cotação com baixa compatibilidade';
+
+    return InsightFornecedorModel(
+      idInsight: 'insight_score_${score.idCotacao}',
+      idFornecedor: idFornecedor,
+      idEvento: score.idEvento.trim().isEmpty ? null : score.idEvento,
+      idCotacao: score.idCotacao.trim().isEmpty ? null : score.idCotacao,
+      tipo: 'oportunidade_cotacao',
+      titulo: titulo,
+      descricao: 'Score de oportunidade: ${score.score.toStringAsFixed(0)}%.',
+      prioridade: prioridade,
+      score: score.score,
+      nivel: score.nivel,
+      motivos: motivos,
+      acoesSugeridas: score.score >= 45
+          ? ['Analisar cotação', 'Responder com proposta clara']
+          : ['Revisar compatibilidade antes de responder'],
+      origem: score.origem,
+      status: 'novo',
+      versaoRegra: score.versaoRegra,
+      createdAt: DateTime.now(),
+      expiresAt: score.expiresAt,
+    );
+  }
+
+  FornecedorAiCotacaoInput? _cotacaoInputFromSolicitacaoMap(
+    Map<String, dynamic> data,
+  ) {
+    final idCotacao = (data['idCotacao'] ?? data['id_cotacao'] ?? '').toString();
+
+    if (idCotacao.trim().isEmpty) return null;
+
+    return FornecedorAiCotacaoInput(
+      idCotacao: idCotacao,
+      idEvento: data['idEvento']?.toString() ?? data['id_evento']?.toString(),
+      idFornecedor: fornecedor.value?.idFornecedor,
+      idOrganizador:
+          data['idUsuarioSolicitante']?.toString() ?? data['id_usuario_solicitante']?.toString(),
+      categoriaSolicitada: data['categoriaNome']?.toString() ?? data['categoria_nome']?.toString(),
+      mensagemCliente: data['descricao']?.toString() ?? data['observacao']?.toString(),
+      statusCotacao: data['status']?.toString() ?? 'pendente',
+      valorReferencia: _toDoubleOrNull(
+        data['valorEstimadoTotal'] ?? data['valor_estimado_total'],
+      ),
+      dataSolicitacao: _toDateTimeOrNull(
+        data['dataEnvio'] ?? data['data_envio'],
+      ),
+    );
+  }
+
+  double? _toDoubleOrNull(dynamic value) {
+    if (value == null) return null;
+    if (value is num) return value.toDouble();
+    return double.tryParse(value.toString().replaceAll(',', '.'));
+  }
+
+  DateTime? _toDateTimeOrNull(dynamic value) {
+    if (value == null) return null;
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value.toString());
+  }
+
+  void _aplicarFallbackAi(FornecedorModel fornecedor) {
+    final now = DateTime.now();
+
+    proximaAcaoFornecedor.value = ProximaAcaoFornecedorModel(
+      idAcao: 'acao_fallback_${fornecedor.idFornecedor}',
+      idFornecedor: fornecedor.idFornecedor,
+      tipoAcao: 'fallback',
+      titulo: 'Não foi possível gerar a análise agora',
+      descricao:
+          'Verifique seu catálogo, mantenha seus dados atualizados e responda novas cotações rapidamente.',
+      acaoPrincipal: 'Revisar perfil',
+      prioridade: 2,
+      urgente: false,
+      origem: 'deterministic_rules',
+      versaoRegra: '1.0.0',
+      status: 'novo',
+      createdAt: now,
+      expiresAt: now.add(const Duration(minutes: 30)),
+    );
+
+    insightsFornecedor.assignAll([
+      InsightFornecedorModel(
+        idInsight: 'insight_fallback_${fornecedor.idFornecedor}',
+        idFornecedor: fornecedor.idFornecedor,
+        tipo: 'fallback',
+        titulo: 'Análise indisponível',
+        descricao:
+            'Não conseguimos calcular os insights com os dados atuais. Complete o perfil e tente novamente.',
+        prioridade: 2,
+        motivos: const [
+          'Dados insuficientes ou falha no processamento local.',
+        ],
+        acoesSugeridas: const [
+          'Completar perfil',
+          'Revisar catálogo',
+        ],
+        origem: 'deterministic_rules',
+        status: 'novo',
+        versaoRegra: '1.0.0',
+        createdAt: now,
+        expiresAt: now.add(const Duration(minutes: 30)),
+      ),
+    ]);
+  }
+
+  // =============================================================
   // 🔸 FILTROS
   // =============================================================
   void aplicarFiltros({
@@ -1094,11 +1622,19 @@ class FornecedorController extends GetxController {
     _solicitacoesSub?.cancel();
     _fornecedorCotacoesSub?.cancel();
     _servicosFornecedorSub?.cancel();
+
     for (final listener in _mensagemListeners) {
       listener.cancel();
     }
     _mensagemListeners.clear();
+
+    for (final sub in _aiSubscriptions) {
+      sub.cancel();
+    }
+    _aiSubscriptions.clear();
+
     _mensagensNaoLidasPorCotacao.clear();
+    _limparDadosAi();
     pararListenerFornecedor();
     super.onClose();
   }

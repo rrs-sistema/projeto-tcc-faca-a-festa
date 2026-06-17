@@ -1,10 +1,11 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import './../../../../controllers/orcamento_controller.dart';
-import './../dialogs/show_responder_orcamento_dialog.dart';
 import './../../../../data/models/model.dart';
+import './../dialogs/show_responder_orcamento_dialog.dart';
+import 'fornecedor_premium_layout.dart';
 
 class OrcamentosSection extends StatelessWidget {
   OrcamentosSection({super.key});
@@ -16,161 +17,41 @@ class OrcamentosSection extends StatelessWidget {
     return Obx(() {
       final lista = controller.orcamentos;
       final emNegociacao = lista
-          .where((o) => o.status == StatusOrcamento.pendente || o.status == StatusOrcamento.emNegociacao)
+          .where((o) =>
+              o.status == StatusOrcamento.pendente || o.status == StatusOrcamento.emNegociacao)
           .toList();
 
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 20,
-              offset: const Offset(0, 10),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _SectionHeader(total: emNegociacao.length),
-            const SizedBox(height: 16),
-            if (emNegociacao.isEmpty)
-              const _EmptyState()
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: emNegociacao.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (_, i) => _OrcamentoCard(orcamento: emNegociacao[i]),
+      return PremiumSectionShell(
+        title: 'Orçamentos em negociação',
+        subtitle: 'Propostas abertas, valores em análise e respostas pendentes.',
+        icon: Icons.handshake_outlined,
+        color: FornecedorPremiumPalette.amber,
+        trailing: emNegociacao.isEmpty
+            ? null
+            : PremiumPill(
+                text: '${emNegociacao.length} aberto${emNegociacao.length == 1 ? '' : 's'}',
+                color: FornecedorPremiumPalette.amber,
+                icon: Icons.pending_actions_rounded,
               ),
-          ],
-        ),
+        child: emNegociacao.isEmpty
+            ? const PremiumEmptyState(
+                icon: Icons.task_alt_rounded,
+                title: 'Nenhum orçamento em aberto',
+                message:
+                    'Quando houver uma proposta em negociação, ela aparecerá aqui para acompanhamento comercial.',
+                color: FornecedorPremiumPalette.emerald,
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (int i = 0; i < emNegociacao.length; i++) ...[
+                    _OrcamentoCard(orcamento: emNegociacao[i]),
+                    if (i != emNegociacao.length - 1) const SizedBox(height: 10),
+                  ],
+                ],
+              ),
       );
     });
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final int total;
-
-  const _SectionHeader({required this.total});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(9),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF7ED),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Icon(Icons.handshake_outlined, size: 19, color: Color(0xFFF97316)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Orçamentos em negociação',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF111827),
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                'Propostas abertas, valores em análise e respostas pendentes.',
-                style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6B7280)),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ),
-        ),
-        if (total > 0) ...[
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF7ED),
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              '$total aberto${total == 1 ? '' : 's'}',
-              style: GoogleFonts.poppins(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFFF97316),
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.task_alt_rounded, color: Color(0xFF16A34A), size: 22),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Nenhum orçamento em aberto',
-                  style: GoogleFonts.poppins(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Quando houver uma proposta em negociação, ela aparecerá aqui para acompanhamento comercial.',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.2,
-                    color: const Color(0xFF6B7280),
-                    height: 1.45,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -182,13 +63,13 @@ class _OrcamentoCard extends StatelessWidget {
   Color get corStatus {
     switch (orcamento.status) {
       case StatusOrcamento.pendente:
-        return const Color(0xFFF59E0B);
+        return FornecedorPremiumPalette.amber;
       case StatusOrcamento.emNegociacao:
         return const Color(0xFF2563EB);
       case StatusOrcamento.fechado:
-        return const Color(0xFF16A34A);
+        return FornecedorPremiumPalette.emerald;
       default:
-        return const Color(0xFF6B7280);
+        return FornecedorPremiumPalette.muted;
     }
   }
 
@@ -208,17 +89,18 @@ class _OrcamentoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final valor = orcamento.custoEstimado != null
-        ? 'R\$ ${orcamento.custoEstimado!.toStringAsFixed(2)}'
+        ? 'R\$ ${orcamento.custoEstimado!.toStringAsFixed(2).replaceAll('.', ',')}'
         : 'Em análise';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9FAFB),
+        color: FornecedorPremiumPalette.surfaceAlt,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: corStatus.withValues(alpha: 0.12)),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
@@ -235,14 +117,15 @@ class _OrcamentoCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       orcamento.nomeSolicitante ?? 'Solicitante',
                       style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF111827),
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w900,
+                        color: FornecedorPremiumPalette.text,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -251,9 +134,7 @@ class _OrcamentoCard extends StatelessWidget {
                     Text(
                       orcamento.idCategoria ?? 'Categoria não informada',
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: const Color(0xFF6B7280),
-                      ),
+                          fontSize: 11.7, color: FornecedorPremiumPalette.muted),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -266,9 +147,9 @@ class _OrcamentoCard extends StatelessWidget {
                   valor,
                   textAlign: TextAlign.end,
                   style: GoogleFonts.poppins(
-                    color: const Color(0xFF111827),
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
+                    color: FornecedorPremiumPalette.text,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -281,65 +162,47 @@ class _OrcamentoCard extends StatelessWidget {
             Text(
               orcamento.anotacoes!,
               style: GoogleFonts.poppins(
-                fontSize: 12.5,
-                color: const Color(0xFF6B7280),
+                fontSize: 12,
+                color: FornecedorPremiumPalette.muted,
                 height: 1.4,
               ),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           ],
-          const SizedBox(height: 14),
+          const SizedBox(height: 12),
           LayoutBuilder(
             builder: (context, constraints) {
-              final compact = constraints.maxWidth < 330;
-              final status = Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: corStatus.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(999),
+              final compact = constraints.maxWidth < 360;
+              final status = PremiumPill(text: orcamento.status.label, color: corStatus);
+              final button = OutlinedButton.icon(
+                onPressed: () => showResponderOrcamentoDialog(context, orcamento: orcamento),
+                icon: const Icon(Icons.reply_rounded, size: 16),
+                label: Text(
+                  'Responder',
+                  style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w800),
                 ),
-                child: Text(
-                  orcamento.status.label,
-                  style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    color: corStatus,
-                  ),
-                ),
-              );
-              final button = SizedBox(
-                height: 36,
-                child: OutlinedButton.icon(
-                  onPressed: () => showResponderOrcamentoDialog(context, orcamento: orcamento),
-                  icon: const Icon(Icons.reply_rounded, size: 16),
-                  label: Text(
-                    'Responder',
-                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF111827),
-                    padding: const EdgeInsets.symmetric(horizontal: 14),
-                    side: const BorderSide(color: Color(0xFFD1D5DB)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: FornecedorPremiumPalette.dark,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  side: const BorderSide(color: Color(0xFFD1D5DB)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
               );
 
               if (compact) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [status, const SizedBox(height: 10), button],
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    status,
+                    const SizedBox(height: 10),
+                    SizedBox(width: double.infinity, child: button)
+                  ],
                 );
               }
 
-              return Row(
-                children: [
-                  status,
-                  const Spacer(),
-                  button,
-                ],
-              );
+              return Row(children: [status, const Spacer(), button]);
             },
           ),
         ],

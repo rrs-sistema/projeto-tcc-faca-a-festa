@@ -1,67 +1,39 @@
-import 'package:percent_indicator/linear_percent_indicator.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import '../../../../data/models/fornecedor_intelligence/insight_fornecedor_model.dart';
 
-class InsightsSection extends StatefulWidget {
+class InsightsSection extends StatelessWidget {
   const InsightsSection({super.key});
-
-  @override
-  State<InsightsSection> createState() => _InsightsSectionState();
-}
-
-class _InsightsSectionState extends State<InsightsSection> {
-  final tts = FlutterTts();
-  bool _falando = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _configurarTTS();
-  }
-
-  Future<void> _configurarTTS() async {
-    await tts.setLanguage('pt-BR');
-    await tts.setSpeechRate(0.9);
-    await tts.setPitch(1.1);
-    await tts.setVolume(1.0);
-  }
-
-  Future<void> _falar(String texto) async {
-    if (!mounted) return;
-    setState(() => _falando = true);
-    await tts.speak(texto);
-    tts.setCompletionHandler(() {
-      if (!mounted) return;
-      setState(() => _falando = false);
-    });
-  }
-
-  @override
-  void dispose() {
-    tts.stop();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<FornecedorController>();
 
     return Obx(() {
-      final insights = _gerarInsights(controller);
-      final saudacao = _gerarSaudacao(controller.fornecedor.value?.razaoSocial ?? 'Parceiro');
-      final mensagemFalada = '${saudacao['titulo']} ${saudacao['mensagem']}';
+      final insights = controller.insightsFornecedor
+          .where((i) => i.status != 'resolvido' && i.status != 'ignorado')
+          .toList();
+      final alertas = controller.alertasPerfil.toList();
+      final loading = controller.isLoadingAi.value;
+
+      final merged = <InsightFornecedorModel>[
+        ...insights,
+        ...alertas.where((a) => insights.every((i) => i.idInsight != a.idInsight)),
+      ]..sort((a, b) {
+          final byPriority = b.prioridade.compareTo(a.prioridade);
+          if (byPriority != 0) return byPriority;
+          return (b.score ?? 0).compareTo(a.score ?? 0);
+        });
 
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(color: const Color(0xFFE5E7EB)),
           boxShadow: [
             BoxShadow(
@@ -74,293 +46,258 @@ class _InsightsSectionState extends State<InsightsSection> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(9),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEEF2FF),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(Icons.lightbulb_outline_rounded, size: 19, color: Color(0xFF4F46E5)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Inteligência LIA',
-                        style: GoogleFonts.poppins(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF111827),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 560;
+                final header = Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(9),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEEF2FF),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(Icons.auto_awesome_rounded,
+                          size: 19, color: Color(0xFF4F46E5)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Insights práticos',
+                              style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF111827))),
+                          const SizedBox(height: 2),
+                          Text('Recomendações, alertas e oportunidades para vender melhor.',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12, color: const Color(0xFF6B7280))),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+
+                final action = loading
+                    ? const SizedBox(
+                        width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : OutlinedButton.icon(
+                        onPressed: () => controller.recalcularAiFornecedor(),
+                        icon: const Icon(Icons.refresh_rounded, size: 16),
+                        label: Text('Recalcular',
+                            style:
+                                GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w800)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: const Color(0xFF4F46E5),
+                          side: const BorderSide(color: Color(0xFFC7D2FE)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Leitura rápida das métricas para orientar próximas melhorias.',
-                        style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6B7280)),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                      );
+
+                if (compact) {
+                  return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [header, const SizedBox(height: 12), action]);
+                }
+
+                return Row(children: [Expanded(child: header), const SizedBox(width: 12), action]);
+              },
             ),
-            const SizedBox(height: 18),
-            if (controller.fornecedor.value?.aptoParaOperar ?? false)
+            const SizedBox(height: 16),
+            if (merged.isEmpty)
+              const _EmptyInsights()
+            else
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 560;
-                  final avatar = SizedBox(
-                    width: compact ? 68 : 80,
-                    height: compact ? 68 : 80,
-                    child: Lottie.asset(
-                      _falando ? 'assets/lottie/lia_talking.json' : 'assets/lottie/lia_idle.json',
-                    ),
-                  );
-                  final text = Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  final columns = constraints.maxWidth >= 980
+                      ? 3
+                      : constraints.maxWidth >= 650
+                          ? 2
+                          : 1;
+
+                  const spacing = 10.0;
+                  final items = merged.take(6).toList();
+                  final cardWidth = (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+
+                  return Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
                     children: [
-                      Text(
-                        saudacao['titulo']!,
-                        style: GoogleFonts.poppins(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF111827),
+                      for (final insight in items)
+                        SizedBox(
+                          width: cardWidth,
+                          child: _InsightCard(insight: insight),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        saudacao['mensagem']!,
-                        style: GoogleFonts.poppins(
-                          color: const Color(0xFF6B7280),
-                          fontSize: 12.5,
-                          height: 1.4,
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-                          side: const BorderSide(color: Color(0xFFD1D5DB)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          foregroundColor: const Color(0xFF111827),
-                        ),
-                        onPressed: _falando ? null : () => _falar(mensagemFalada),
-                        icon: const Icon(Icons.volume_up_rounded, size: 16),
-                        label: Text(
-                          _falando ? 'Reproduzindo...' : 'Ouvir resumo',
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
-                        ),
-                      ),
                     ],
-                  );
-
-                  if (compact) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [avatar, const SizedBox(height: 12), text],
-                    );
-                  }
-
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [avatar, const SizedBox(width: 16), Expanded(child: text)],
                   );
                 },
               ),
-            const Divider(height: 34, color: Color(0xFFEEEEEE)),
-            ...insights.map((i) => _InsightCard(insight: i)),
           ],
         ),
       );
     });
   }
-
-  Map<String, String> _gerarSaudacao(String nome) {
-    final hora = DateTime.now().hour;
-    final cumprimento = hora < 12
-        ? 'Bom dia, $nome'
-        : hora < 18
-            ? 'Boa tarde, $nome'
-            : 'Boa noite, $nome';
-    return {
-      'titulo': cumprimento,
-      'mensagem':
-          'Separei pontos de atenção com base no atendimento, reputação e completude do catálogo.',
-    };
-  }
-
-  List<_InsightModel> _gerarInsights(FornecedorController c) {
-    final fornecedor = c.fornecedor.value;
-    final media = c.avaliacaoMedia.value > 0 ? c.avaliacaoMedia.value : (fornecedor?.mediaAvaliacoes ?? 0.0);
-    final respostaHoras = fornecedor?.tempoMedioRespostaHoras ??
-        (c.tempoMedioResposta.value > 0 ? c.tempoMedioResposta.value / 60 : null);
-    final servicosAtivos = c.servicosFornecedor.where((s) => s.ativo).length;
-    final temDescricao = (fornecedor?.descricao ?? '').trim().isNotEmpty;
-    final temEventos = fornecedor?.tipoEventoNomes.isNotEmpty ?? false;
-    final catalogoScore = ((servicosAtivos > 0 ? 0.45 : 0.0) +
-            (temDescricao ? 0.25 : 0.0) +
-            (temEventos ? 0.20 : 0.0) +
-            ((fornecedor?.bannerUrl ?? '').trim().isNotEmpty ? 0.10 : 0.0))
-        .clamp(0.0, 1.0);
-
-    return [
-      _InsightModel(
-        icone: Icons.flash_on_rounded,
-        titulo: 'Agilidade comercial',
-        descricao: respostaHoras == null || respostaHoras <= 0
-            ? 'Ainda não há histórico suficiente para calcular o tempo médio de resposta.'
-            : 'Tempo médio de resposta: ${_formatarResposta(respostaHoras)}.',
-        progresso: _scoreResposta(respostaHoras),
-        cor: const Color(0xFF16A34A),
-        fraseIa:
-            'Mantenha respostas curtas, claras e com próximos passos para reduzir dúvidas do organizador.',
-      ),
-      _InsightModel(
-        icone: Icons.star_rate_rounded,
-        titulo: 'Reputação no marketplace',
-        descricao: media <= 0
-            ? 'Ainda não há avaliações suficientes para consolidar a reputação.'
-            : 'Avaliação média consolidada: ${media.toStringAsFixed(1)} estrelas.',
-        progresso: (media / 5).clamp(0.0, 1.0),
-        cor: const Color(0xFF2563EB),
-        fraseIa:
-            'Avaliações recentes e respostas educadas fortalecem a confiança antes da contratação.',
-      ),
-      _InsightModel(
-        icone: Icons.storefront_outlined,
-        titulo: 'Força da vitrine',
-        descricao: '$servicosAtivos serviço${servicosAtivos == 1 ? '' : 's'} ativo${servicosAtivos == 1 ? '' : 's'} no catálogo.',
-        progresso: catalogoScore,
-        cor: const Color(0xFF7C3AED),
-        fraseIa:
-            'Complete fotos, descrição, categorias e tipos de evento para melhorar sua apresentação ao cliente.',
-      ),
-    ];
-  }
-
-  double _scoreResposta(double? horas) {
-    if (horas == null || horas <= 0) return 0.25;
-    if (horas <= 1) return 1.0;
-    if (horas <= 4) return 0.78;
-    if (horas <= 12) return 0.55;
-    if (horas <= 24) return 0.35;
-    return 0.20;
-  }
-
-  String _formatarResposta(double horas) {
-    if (horas < 1) return '${(horas * 60).round()} minutos';
-    if (horas < 24) return '${horas.toStringAsFixed(horas < 10 ? 1 : 0)} horas';
-    return '${(horas / 24).toStringAsFixed(1)} dias';
-  }
 }
 
 class _InsightCard extends StatelessWidget {
-  final _InsightModel insight;
+  final InsightFornecedorModel insight;
 
   const _InsightCard({required this.insight});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 22),
+    final color = _colorByInsight(insight);
+    final icon = _iconByInsight(insight.tipo);
+    final motivos = insight.motivos.take(2).toList();
+    final acoes = insight.acoesSugeridas.take(2).toList();
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.16)),
+      ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(7),
+                padding: const EdgeInsets.all(9),
                 decoration: BoxDecoration(
-                  color: insight.cor.withValues(alpha: 0.10),
-                  borderRadius: BorderRadius.circular(12),
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(insight.icone, color: insight.cor, size: 17),
+                child: Icon(icon, color: color, size: 18),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 9),
               Expanded(
-                child: Text(
-                  insight.titulo,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 14,
-                    color: const Color(0xFF111827),
-                  ),
-                ),
-              ),
-              Text(
-                '${(insight.progresso * 100).round()}%',
-                style: GoogleFonts.poppins(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: insight.cor,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(insight.titulo,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                            fontSize: 13.2,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF111827))),
+                    const SizedBox(height: 2),
+                    Text(_labelTipo(insight),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                            fontSize: 10.5, fontWeight: FontWeight.w800, color: color)),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            insight.descricao,
-            style: GoogleFonts.poppins(fontSize: 12.8, color: const Color(0xFF4B5563)),
-          ),
-          const SizedBox(height: 12),
-          LinearPercentIndicator(
-            percent: insight.progresso.clamp(0.0, 1.0),
-            lineHeight: 6,
-            barRadius: const Radius.circular(4),
-            progressColor: insight.cor,
-            backgroundColor: const Color(0xFFF3F4F6),
-            padding: EdgeInsets.zero,
-            animation: true,
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 10),
+          Text(insight.descricao,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                  fontSize: 11.8, color: const Color(0xFF64748B), height: 1.35)),
+          if (motivos.isNotEmpty || acoes.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
               children: [
-                const Icon(Icons.auto_awesome_rounded, size: 16, color: Color(0xFF6B7280)),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    insight.fraseIa,
-                    style: GoogleFonts.poppins(
-                      fontSize: 12.2,
-                      color: const Color(0xFF4B5563),
-                      height: 1.4,
-                    ),
-                  ),
-                ),
+                ...motivos.map((m) => _MiniPill(text: m, color: color)),
+                ...acoes.map((a) => _MiniPill(text: a, color: const Color(0xFF111827))),
               ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  static Color _colorByInsight(InsightFornecedorModel insight) {
+    if (insight.prioridade >= 5 || insight.nivel == 'alto') return const Color(0xFFEF4444);
+    if (insight.tipo.contains('catalogo')) return const Color(0xFF7C3AED);
+    if (insight.tipo.contains('reputacao')) return const Color(0xFFF59E0B);
+    if (insight.tipo.contains('oportunidade')) return const Color(0xFF10B981);
+    return const Color(0xFF4F46E5);
+  }
+
+  static IconData _iconByInsight(String tipo) {
+    if (tipo.contains('catalogo')) return Icons.inventory_2_rounded;
+    if (tipo.contains('reputacao')) return Icons.star_rate_rounded;
+    if (tipo.contains('perfil')) return Icons.verified_user_rounded;
+    if (tipo.contains('oportunidade')) return Icons.local_fire_department_rounded;
+    return Icons.auto_awesome_rounded;
+  }
+
+  static String _labelTipo(InsightFornecedorModel insight) {
+    final score = insight.score == null ? '' : ' • ${insight.score!.toStringAsFixed(0)}%';
+    return '${insight.tipo.replaceAll('_', ' ')}$score';
+  }
+}
+
+class _MiniPill extends StatelessWidget {
+  final String text;
+  final Color color;
+
+  const _MiniPill({required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 250),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+      ),
+      child: Text(text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.poppins(
+              fontSize: 10.2, fontWeight: FontWeight.w700, color: const Color(0xFF475569))),
+    );
+  }
+}
+
+class _EmptyInsights extends StatelessWidget {
+  const _EmptyInsights();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            child: const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF10B981)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Nenhum alerta crítico no momento. Continue mantendo catálogo, atendimento e avaliações atualizados.',
+              style:
+                  GoogleFonts.poppins(fontSize: 12.3, color: const Color(0xFF64748B), height: 1.4),
             ),
           ),
         ],
       ),
     );
   }
-}
-
-class _InsightModel {
-  final IconData icone;
-  final String titulo;
-  final String descricao;
-  final double progresso;
-  final Color cor;
-  final String fraseIa;
-
-  _InsightModel({
-    required this.icone,
-    required this.titulo,
-    required this.descricao,
-    required this.progresso,
-    required this.cor,
-    required this.fraseIa,
-  });
 }
