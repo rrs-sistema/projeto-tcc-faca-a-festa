@@ -15,6 +15,7 @@ import '../../data/models/fornecedor_intelligence/resumo_reputacao_fornecedor_mo
 import '../../data/models/fornecedor_intelligence/score_cotacao_fornecedor_model.dart';
 import '../../data/models/fornecedor_intelligence/proxima_acao_fornecedor_model.dart';
 import '../../data/models/fornecedor_intelligence/insight_fornecedor_model.dart';
+import '../../data/models/fornecedor_intelligence/sugestao_resposta_cotacao_ai_model.dart';
 import '../../data/models/servico_produto/subcategoria_servico_model.dart';
 import '../../data/models/servico_produto/fornecedor_categoria_model.dart';
 import '../../presentation/dialogs/show_novo_orcamento_bottom_sheet.dart';
@@ -24,6 +25,7 @@ import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../../data/models/servico_produto/servico_foto_model.dart';
 import '../../data/models/fornecedor/avaliacao_servico_model.dart';
 import '../../data/services/fornecedor_ai_service.dart';
+import '../../data/services/fornecedor_ai_generativa_service.dart';
 import '../../data/models/model.dart';
 import '../app_controller.dart';
 
@@ -102,6 +104,22 @@ class FornecedorController extends GetxController {
   // ============================================================
   final FornecedorAiService _fornecedorAiService = FornecedorAiService();
 
+  // ============================================================
+  // 🔹 IA GENERATIVA - resposta sugerida para cotação
+  // ============================================================
+  final FornecedorAiGenerativaService _fornecedorAiGenerativaService =
+      FornecedorAiGenerativaService();
+
+  /// Cache local em memória por cotação. Não grava no Firestore.
+  final RxMap<String, SugestaoRespostaCotacaoAiModel> sugestoesRespostaCotacaoAi =
+      <String, SugestaoRespostaCotacaoAiModel>{}.obs;
+
+  /// Loading individual por cotação. Evita bloquear todos os cards.
+  final RxMap<String, bool> carregandoRespostaCotacaoAi = <String, bool>{}.obs;
+
+  /// Loading geral para algum painel que queira observar a geração.
+  final RxBool isLoadingRespostaCotacaoAi = false.obs;
+
   final Rxn<ProximaAcaoFornecedorModel> proximaAcaoFornecedor = Rxn<ProximaAcaoFornecedorModel>();
 
   final RxList<InsightFornecedorModel> insightsFornecedor = <InsightFornecedorModel>[].obs;
@@ -146,6 +164,9 @@ class FornecedorController extends GetxController {
     }
     _mensagemListeners.clear();
     _mensagensNaoLidasPorCotacao.clear();
+    sugestoesRespostaCotacaoAi.clear();
+    carregandoRespostaCotacaoAi.clear();
+    isLoadingRespostaCotacaoAi.value = false;
     mensagensNaoLidas.value = 0;
     _limparDadosAi();
     fornecedor.value = null;
@@ -1103,6 +1124,384 @@ class FornecedorController extends GetxController {
     return resultado;
   }
 
+
+  // =============================================================
+  // 🔸 IA GENERATIVA - resposta sugerida para cotação
+  // =============================================================
+
+  bool isGerandoRespostaCotacaoAi(String idCotacao) {
+    if (idCotacao.trim().isEmpty) return false;
+    return carregandoRespostaCotacaoAi[idCotacao] == true;
+  }
+
+  SugestaoRespostaCotacaoAiModel? sugestaoRespostaAiDaCotacao(
+    String idCotacao,
+  ) {
+    if (idCotacao.trim().isEmpty) return null;
+    return sugestoesRespostaCotacaoAi[idCotacao];
+  }
+
+  /// Gera apenas uma sugestão para revisão do fornecedor.
+  ///
+  /// Não envia mensagem, não confirma contratação e não grava no Firestore.
+  Future<SugestaoRespostaCotacaoAiModel> gerarRespostaCotacaoComIa({
+    required dynamic solicitacao,
+    bool forceRefresh = false,
+  }) async {
+    final idCotacao = _readCotacaoString(
+      solicitacao,
+      const ['id', 'idCotacao', 'id_cotacao'],
+    );
+
+    if (idCotacao.isEmpty) {
+      return _fallbackRespostaCotacaoAi(
+        'Não foi possível identificar a cotação para gerar a resposta.',
+      );
+    }
+
+    final cached = sugestoesRespostaCotacaoAi[idCotacao];
+    if (!forceRefresh && cached != null && cached.respostaSugerida.trim().isNotEmpty) {
+      return cached;
+    }
+
+    final fornecedorAtual = fornecedor.value;
+    if (fornecedorAtual == null) {
+      return _fallbackRespostaCotacaoAi(
+        'Não foi possível identificar o fornecedor logado.',
+      );
+    }
+
+    if (carregandoRespostaCotacaoAi[idCotacao] == true) {
+      return cached ??
+          _fallbackRespostaCotacaoAi(
+            'A sugestão já está sendo gerada. Aguarde alguns instantes.',
+          );
+    }
+
+    try {
+      carregandoRespostaCotacaoAi[idCotacao] = true;
+      isLoadingRespostaCotacaoAi.value = true;
+
+      final input = _montarCotacaoInputParaIa(solicitacao);
+      final eventoCotacao = await _buscarEventoParaRespostaAi(input.idEvento);
+
+      final sugestao = await _fornecedorAiGenerativaService.gerarSugestaoRespostaCotacao(
+        fornecedor: fornecedorAtual,
+        evento: eventoCotacao,
+        cotacao: input,
+        servicosFornecedor: servicosDetalhado.toList(),
+      );
+
+      final resultado = sugestao.respostaSugerida.trim().isEmpty
+          ? _fallbackRespostaCotacaoAi(
+              'A resposta gerada veio vazia. Revise os dados da cotação e tente novamente.',
+            )
+          : sugestao;
+
+      sugestoesRespostaCotacaoAi[idCotacao] = resultado;
+      return resultado;
+    } catch (e, s) {
+      debugPrint('❌ Erro ao gerar resposta da cotação com IA: $e\n$s');
+
+      final fallback = _fallbackRespostaCotacaoAi(
+        'Não foi possível gerar a sugestão agora. Você ainda pode responder manualmente.',
+      );
+
+      sugestoesRespostaCotacaoAi[idCotacao] = fallback;
+      return fallback;
+    } finally {
+      carregandoRespostaCotacaoAi[idCotacao] = false;
+      isLoadingRespostaCotacaoAi.value = false;
+    }
+  }
+
+  Future<EventoModel?> _buscarEventoParaRespostaAi(String? idEvento) async {
+    final id = idEvento?.trim() ?? '';
+    if (id.isEmpty) return null;
+
+    try {
+      final doc = await _db.collection('evento').doc(id).get();
+      if (!doc.exists || doc.data() == null) return null;
+      return EventoModel.fromMap(doc.data()!);
+    } catch (e) {
+      debugPrint('⚠️ Não foi possível carregar evento para IA da cotação: $e');
+      return null;
+    }
+  }
+
+  FornecedorAiCotacaoInput _montarCotacaoInputParaIa(dynamic solicitacao) {
+    final idCotacao = _readCotacaoString(
+      solicitacao,
+      const ['id', 'idCotacao', 'id_cotacao'],
+    );
+
+    final categoria = _readCotacaoString(
+      solicitacao,
+      const ['categoriaNome', 'categoria_nome', 'categoria'],
+    );
+
+    final subcategoria = _readCotacaoString(
+      solicitacao,
+      const ['subcategoriaNome', 'subcategoria_nome', 'subcategoria'],
+    );
+
+    final descricao = _readCotacaoString(
+      solicitacao,
+      const ['descricao', 'observacao', 'mensagemCliente', 'mensagem_cliente'],
+    );
+
+    final valorReferencia = _readCotacaoDouble(
+      solicitacao,
+      const ['valorEstimadoTotal', 'valor_estimado_total', 'valorReferencia', 'valor_referencia'],
+    );
+
+    return FornecedorAiCotacaoInput(
+      idCotacao: idCotacao,
+      idEvento: _readCotacaoString(
+        solicitacao,
+        const ['idEvento', 'id_evento'],
+      ),
+      idFornecedor: fornecedor.value?.idFornecedor,
+      idOrganizador: _readCotacaoString(
+        solicitacao,
+        const ['idUsuarioSolicitante', 'id_usuario_solicitante', 'idOrganizador', 'id_organizador'],
+      ),
+      categoriaSolicitada: categoria,
+      subcategoriaSolicitada: subcategoria,
+      mensagemCliente: descricao,
+      statusCotacao: _readCotacaoStatus(solicitacao),
+      valorReferencia: valorReferencia,
+      cidadeEvento: _readCotacaoString(
+        solicitacao,
+        const ['cidadeEvento', 'cidade_evento', 'cidade'],
+      ),
+      ufEvento: _readCotacaoString(
+        solicitacao,
+        const ['ufEvento', 'uf_evento', 'uf'],
+      ),
+      dataSolicitacao: _readCotacaoDate(
+        solicitacao,
+        const [
+          'dataCadastro',
+          'data_cadastro',
+          'dataSolicitacao',
+          'data_solicitacao',
+          'dataEnvio',
+          'data_envio'
+        ],
+      ),
+      visualizadoEm: _readCotacaoDate(
+        solicitacao,
+        const ['visualizadoEm', 'visualizado_em'],
+      ),
+      dataResposta: _readCotacaoDate(
+        solicitacao,
+        const ['dataResposta', 'data_resposta'],
+      ),
+    );
+  }
+
+  SugestaoRespostaCotacaoAiModel _fallbackRespostaCotacaoAi(String motivo) {
+    return SugestaoRespostaCotacaoAiModel(
+      respostaSugerida:
+          'Olá, tudo bem? Recebi sua solicitação de orçamento. Para preparar uma proposta adequada, poderia me confirmar o serviço desejado, a data, o local do evento e a quantidade de convidados?',
+      versaoCurta:
+          'Olá! Para preparar uma proposta, poderia me confirmar o serviço desejado, data, local e quantidade de convidados?',
+      pontosParaRevisar: const [
+        'Confirmar disponibilidade antes de responder.',
+        'Conferir serviço solicitado.',
+        'Revisar preço ou faixa de preço antes de enviar.',
+      ],
+      perguntasFaltantes: const [
+        'Qual serviço você deseja para o evento?',
+        'Onde será o evento?',
+        'Para quantas pessoas será o evento?',
+      ],
+      dadosUtilizados: const [],
+      alertas: [motivo],
+      nivelConfianca: 'baixo',
+      motivoNivelConfianca:
+          'Os dados disponíveis não foram suficientes para gerar uma resposta mais precisa.',
+    );
+  }
+
+  String _readCotacaoStatus(dynamic solicitacao) {
+    try {
+      final dynamic status = _readDynamicCotacaoField(solicitacao, 'status');
+      if (status == null) return '';
+
+      try {
+        final dynamic name = status.name;
+        if (name != null && name.toString().trim().isNotEmpty) {
+          return name.toString().trim();
+        }
+      } catch (_) {}
+
+      return status.toString().trim();
+    } catch (_) {
+      return '';
+    }
+  }
+
+  String _readCotacaoString(
+    dynamic solicitacao,
+    List<String> fields,
+  ) {
+    for (final field in fields) {
+      try {
+        final value = _readDynamicCotacaoField(solicitacao, field);
+        if (value == null) continue;
+
+        final text = value.toString().trim();
+        if (text.isNotEmpty && text != 'null') {
+          return text;
+        }
+      } catch (_) {}
+    }
+
+    return '';
+  }
+
+  double? _readCotacaoDouble(
+    dynamic solicitacao,
+    List<String> fields,
+  ) {
+    for (final field in fields) {
+      try {
+        final value = _readDynamicCotacaoField(solicitacao, field);
+        if (value == null) continue;
+
+        if (value is num) return value.toDouble();
+
+        final normalized = value
+            .toString()
+            .replaceAll('R\$', '')
+            .replaceAll(' ', '')
+            .replaceAll('.', '')
+            .replaceAll(',', '.')
+            .trim();
+
+        final parsed = double.tryParse(normalized);
+        if (parsed != null) return parsed;
+      } catch (_) {}
+    }
+
+    return null;
+  }
+
+  DateTime? _readCotacaoDate(
+    dynamic solicitacao,
+    List<String> fields,
+  ) {
+    for (final field in fields) {
+      try {
+        final value = _readDynamicCotacaoField(solicitacao, field);
+        if (value == null) continue;
+
+        if (value is Timestamp) return value.toDate();
+        if (value is DateTime) return value;
+
+        final parsed = DateTime.tryParse(value.toString());
+        if (parsed != null) return parsed;
+      } catch (_) {}
+    }
+
+    return null;
+  }
+
+  dynamic _readDynamicCotacaoField(dynamic source, String field) {
+    if (source == null) return null;
+
+    if (source is Map) {
+      return source[field];
+    }
+
+    switch (field) {
+      case 'id':
+        return source.id;
+      case 'idCotacao':
+        return source.idCotacao;
+      case 'id_cotacao':
+        return source.id_cotacao;
+      case 'idEvento':
+        return source.idEvento;
+      case 'id_evento':
+        return source.id_evento;
+      case 'idUsuarioSolicitante':
+        return source.idUsuarioSolicitante;
+      case 'id_usuario_solicitante':
+        return source.id_usuario_solicitante;
+      case 'idOrganizador':
+        return source.idOrganizador;
+      case 'id_organizador':
+        return source.id_organizador;
+      case 'categoriaNome':
+        return source.categoriaNome;
+      case 'categoria_nome':
+        return source.categoria_nome;
+      case 'categoria':
+        return source.categoria;
+      case 'subcategoriaNome':
+        return source.subcategoriaNome;
+      case 'subcategoria_nome':
+        return source.subcategoria_nome;
+      case 'subcategoria':
+        return source.subcategoria;
+      case 'descricao':
+        return source.descricao;
+      case 'observacao':
+        return source.observacao;
+      case 'mensagemCliente':
+        return source.mensagemCliente;
+      case 'mensagem_cliente':
+        return source.mensagem_cliente;
+      case 'valorEstimadoTotal':
+        return source.valorEstimadoTotal;
+      case 'valor_estimado_total':
+        return source.valor_estimado_total;
+      case 'valorReferencia':
+        return source.valorReferencia;
+      case 'valor_referencia':
+        return source.valor_referencia;
+      case 'cidadeEvento':
+        return source.cidadeEvento;
+      case 'cidade_evento':
+        return source.cidade_evento;
+      case 'cidade':
+        return source.cidade;
+      case 'ufEvento':
+        return source.ufEvento;
+      case 'uf_evento':
+        return source.uf_evento;
+      case 'uf':
+        return source.uf;
+      case 'dataCadastro':
+        return source.dataCadastro;
+      case 'data_cadastro':
+        return source.data_cadastro;
+      case 'dataSolicitacao':
+        return source.dataSolicitacao;
+      case 'data_solicitacao':
+        return source.data_solicitacao;
+      case 'dataEnvio':
+        return source.dataEnvio;
+      case 'data_envio':
+        return source.data_envio;
+      case 'visualizadoEm':
+        return source.visualizadoEm;
+      case 'visualizado_em':
+        return source.visualizado_em;
+      case 'dataResposta':
+        return source.dataResposta;
+      case 'data_resposta':
+        return source.data_resposta;
+      case 'status':
+        return source.status;
+      default:
+        return null;
+    }
+  }
+
   // =============================================================
   // 🔸 IA LOCAL DO FORNECEDOR
   // =============================================================
@@ -1301,6 +1700,9 @@ class FornecedorController extends GetxController {
     resumoReputacao.value = null;
     alertasPerfil.clear();
     isLoadingAi.value = false;
+    sugestoesRespostaCotacaoAi.clear();
+    carregandoRespostaCotacaoAi.clear();
+    isLoadingRespostaCotacaoAi.value = false;
 
     _ultimaChaveCacheAi = null;
     _ultimaAtualizacaoAi = null;
@@ -1634,6 +2036,9 @@ class FornecedorController extends GetxController {
     _aiSubscriptions.clear();
 
     _mensagensNaoLidasPorCotacao.clear();
+    sugestoesRespostaCotacaoAi.clear();
+    carregandoRespostaCotacaoAi.clear();
+    isLoadingRespostaCotacaoAi.value = false;
     _limparDadosAi();
     pararListenerFornecedor();
     super.onClose();

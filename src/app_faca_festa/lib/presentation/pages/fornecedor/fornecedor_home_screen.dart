@@ -3,25 +3,46 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../controllers/contacao/cotacao_controller.dart';
 import '../../../controllers/fornecedor/fornecedor_controller.dart';
-import '../../../controllers/orcamento_controller.dart';
-import './chat/fornecedor_mensagens_page.dart';
 import './sections/avaliacoes_section.dart';
-import './sections/financeiro_section.dart';
-import './sections/fornecedor_premium_layout.dart';
 import './sections/header_section.dart';
 import './sections/insights_section.dart';
-import './sections/mensagens_section.dart';
-import './sections/orcamentos_section.dart';
 import './sections/perfil_section.dart';
 import './sections/resumo_section.dart';
 import './sections/solicitacoes_section.dart';
+import './chat/fornecedor_mensagens_page.dart';
 
-class FornecedorHomeScreen extends StatelessWidget {
-  FornecedorHomeScreen({super.key});
+class FornecedorHomeScreen extends StatefulWidget {
+  const FornecedorHomeScreen({super.key});
 
+  @override
+  State<FornecedorHomeScreen> createState() => _FornecedorHomeScreenState();
+}
+
+class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
   final FornecedorController controller = Get.find<FornecedorController>();
+  final GlobalKey _cotacoesKey = GlobalKey();
+
+  Future<void> _scrollToCotacoes() async {
+    final contextCotacoes = _cotacoesKey.currentContext;
+
+    if (contextCotacoes == null) {
+      Get.snackbar(
+        'Cotações inteligentes',
+        'Abra a seção Cotações para responder com segurança.',
+        backgroundColor: const Color(0xFF111827),
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    await Scrollable.ensureVisible(
+      contextCotacoes,
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+      alignment: 0.06,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,11 +51,11 @@ class FornecedorHomeScreen extends StatelessWidget {
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.dark,
         statusBarBrightness: Brightness.light,
-        systemNavigationBarColor: FornecedorPremiumPalette.background,
+        systemNavigationBarColor: Color(0xFFF6F7FB),
         systemNavigationBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: FornecedorPremiumPalette.background,
+        backgroundColor: const Color(0xFFF6F7FB),
         body: SafeArea(
           bottom: false,
           child: Obx(() {
@@ -54,7 +75,7 @@ class FornecedorHomeScreen extends StatelessWidget {
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final width = constraints.maxWidth;
-                  final horizontalPadding = width >= 1200
+                  final horizontalPadding = width >= 1100
                       ? 28.0
                       : width >= 720
                           ? 20.0
@@ -73,19 +94,35 @@ class FornecedorHomeScreen extends StatelessWidget {
                         sliver: SliverToBoxAdapter(
                           child: Center(
                             child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 1220),
+                              constraints: const BoxConstraints(maxWidth: 1180),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const HeaderSection(),
                                   const SizedBox(height: 12),
-                                  if (fornecedor != null && apto)
-                                    const _FornecedorDashboardContent()
-                                  else
+                                  if (fornecedor != null && apto) ...[
+                                    _ProximaAcaoInteligenteSection(
+                                      onAbrirCotacoes: _scrollToCotacoes,
+                                    ),
+                                    const SizedBox(height: 12),
+                                    const ResumoSection(),
+                                    const SizedBox(height: 12),
+                                    Container(
+                                      key: _cotacoesKey,
+                                      child: const SolicitacoesSection(),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    const PerfilSection(),
+                                    const SizedBox(height: 12),
+                                    const AvaliacoesSection(),
+                                    const SizedBox(height: 12),
+                                    const InsightsSection(),
+                                  ] else ...[
                                     _AguardandoAprovacaoCard(
                                       carregando: controller.carregando.value,
                                       temFornecedor: fornecedor != null,
                                     ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -104,99 +141,10 @@ class FornecedorHomeScreen extends StatelessWidget {
   }
 }
 
-class _FornecedorDashboardContent extends StatelessWidget {
-  const _FornecedorDashboardContent();
-
-  @override
-  Widget build(BuildContext context) {
-    final podeMostrarOrcamentos = Get.isRegistered<OrcamentoController>();
-    final podeMostrarFinanceiro =
-        Get.isRegistered<OrcamentoController>() && Get.isRegistered<CotacaoController>();
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final desktop = constraints.maxWidth >= 1040;
-        final sideWidth = constraints.maxWidth >= 1180 ? 372.0 : 344.0;
-
-        final mainColumn = Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _ProximaAcaoInteligenteSection(),
-            const SizedBox(height: 12),
-            const ResumoSection(),
-            const SizedBox(height: 12),
-            const SolicitacoesSection(),
-            if (podeMostrarOrcamentos) ...[
-              const SizedBox(height: 12),
-              OrcamentosSection(),
-            ],
-            const SizedBox(height: 12),
-            const PerfilSection(),
-            if (podeMostrarFinanceiro) ...[
-              const SizedBox(height: 12),
-              const FinanceiroSection(),
-            ],
-          ],
-        );
-
-        final sideColumn = Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
-            MensagensSection(),
-            SizedBox(height: 12),
-            AvaliacoesSection(),
-            SizedBox(height: 12),
-            InsightsSection(),
-          ],
-        );
-
-        if (!desktop) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _ProximaAcaoInteligenteSection(),
-              const SizedBox(height: 12),
-              const ResumoSection(),
-              const SizedBox(height: 12),
-              const MensagensSection(),
-              const SizedBox(height: 12),
-              const SolicitacoesSection(),
-              if (podeMostrarOrcamentos) ...[
-                const SizedBox(height: 12),
-                OrcamentosSection(),
-              ],
-              const SizedBox(height: 12),
-              const PerfilSection(),
-              const SizedBox(height: 12),
-              const AvaliacoesSection(),
-              const SizedBox(height: 12),
-              const InsightsSection(),
-              if (podeMostrarFinanceiro) ...[
-                const SizedBox(height: 12),
-                const FinanceiroSection(),
-              ],
-            ],
-          );
-        }
-
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: mainColumn),
-            const SizedBox(width: 14),
-            SizedBox(width: sideWidth, child: sideColumn),
-          ],
-        );
-      },
-    );
-  }
-}
-
 class _ProximaAcaoInteligenteSection extends StatelessWidget {
-  const _ProximaAcaoInteligenteSection();
+  final VoidCallback onAbrirCotacoes;
+
+  const _ProximaAcaoInteligenteSection({required this.onAbrirCotacoes});
 
   @override
   Widget build(BuildContext context) {
@@ -208,11 +156,11 @@ class _ProximaAcaoInteligenteSection extends StatelessWidget {
 
       if (loading && action == null) {
         return _PremiumActionShell(
-          color: FornecedorPremiumPalette.primary,
+          color: const Color(0xFF6366F1),
           icon: Icons.auto_awesome_rounded,
           eyebrow: 'Inteligência comercial',
           title: 'Analisando oportunidades...',
-          message: 'Estamos cruzando catálogo, reputação e cotações para sugerir a melhor ação.',
+          message: 'Estamos cruzando catálogo, reputação e cotações.',
           priorityLabel: 'IA local',
           actionLabel: 'Aguarde',
           onPressed: null,
@@ -241,10 +189,10 @@ class _ProximaAcaoInteligenteSection extends StatelessWidget {
   }
 
   static Color _priorityColor(int priority, bool urgent) {
-    if (urgent || priority >= 5) return FornecedorPremiumPalette.rose;
-    if (priority >= 4) return FornecedorPremiumPalette.amber;
-    if (priority >= 3) return FornecedorPremiumPalette.primary;
-    return FornecedorPremiumPalette.emerald;
+    if (urgent || priority >= 5) return const Color(0xFFEF4444);
+    if (priority >= 4) return const Color(0xFFF59E0B);
+    if (priority >= 3) return const Color(0xFF6366F1);
+    return const Color(0xFF10B981);
   }
 
   static String _priorityLabel(int priority, bool urgent) {
@@ -267,14 +215,12 @@ class _ProximaAcaoInteligenteSection extends StatelessWidget {
       case 'regularizar_operacao':
       case 'revisar_perfil':
         return Icons.verified_user_rounded;
-      case 'revisar_mensagens':
-        return Icons.mark_chat_unread_rounded;
       default:
         return Icons.auto_awesome_rounded;
     }
   }
 
-  static void _executarAcao(
+  void _executarAcao(
     BuildContext context,
     FornecedorController controller,
     String? type,
@@ -282,26 +228,21 @@ class _ProximaAcaoInteligenteSection extends StatelessWidget {
     switch (type) {
       case 'responder_cotacao':
       case 'acompanhar_cotacao':
-        Get.snackbar(
-          'Cotações inteligentes',
-          'Abra a seção Cotações para ver a oportunidade e responder com segurança.',
-          backgroundColor: FornecedorPremiumPalette.dark,
-          colorText: Colors.white,
-        );
+        onAbrirCotacoes();
         return;
       case 'melhorar_catalogo':
         Get.snackbar(
           'Catálogo',
-          'Revise fotos, preços e descrições na seção Catálogo inteligente.',
-          backgroundColor: FornecedorPremiumPalette.dark,
+          'Role até Catálogo para ver os serviços que precisam de foto, preço ou descrição.',
+          backgroundColor: const Color(0xFF111827),
           colorText: Colors.white,
         );
         return;
       case 'pedir_avaliacao':
         Get.snackbar(
           'Avaliações',
-          'Acompanhe sua reputação e pontos de melhoria na seção Avaliações.',
-          backgroundColor: FornecedorPremiumPalette.dark,
+          'Use a seção Avaliações para acompanhar sua reputação e pontos de melhoria.',
+          backgroundColor: const Color(0xFF111827),
           colorText: Colors.white,
         );
         return;
@@ -313,7 +254,7 @@ class _ProximaAcaoInteligenteSection extends StatelessWidget {
         Get.snackbar(
           'Painel inteligente',
           'Análise local atualizada. Nenhuma mensagem foi enviada automaticamente.',
-          backgroundColor: FornecedorPremiumPalette.dark,
+          backgroundColor: const Color(0xFF111827),
           colorText: Colors.white,
         );
     }
@@ -345,78 +286,75 @@ class _PremiumActionShell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(22),
         border: Border.all(color: color.withValues(alpha: 0.16)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 22,
-            offset: const Offset(0, 12),
+            color: Colors.black.withValues(alpha: 0.045),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final compact = constraints.maxWidth < 620;
-          final iconBox = Container(
-            padding: const EdgeInsets.all(11),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(17),
-            ),
-            child: Icon(icon, color: color, size: 23),
-          );
-
           final content = Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              iconBox,
-              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: color, size: 21),
+              ),
+              const SizedBox(width: 11),
               Expanded(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Wrap(
-                      spacing: 8,
-                      runSpacing: 6,
+                      spacing: 7,
+                      runSpacing: 5,
                       crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(
                           eyebrow,
                           style: GoogleFonts.poppins(
                             color: color,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w900,
+                            fontSize: 10.5,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                        PremiumPill(text: priorityLabel, color: color),
+                        _Pill(text: priorityLabel, color: color),
                       ],
-                    ),
-                    const SizedBox(height: 5),
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: compact ? 14.5 : 16,
-                        fontWeight: FontWeight.w900,
-                        color: FornecedorPremiumPalette.text,
-                        height: 1.18,
-                      ),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      message,
-                      maxLines: compact ? 3 : 2,
+                      title,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: FornecedorPremiumPalette.muted,
-                        height: 1.35,
+                        fontSize: compact ? 14.2 : 15.5,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827),
+                        height: 1.18,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      message,
+                      maxLines: compact ? 2 : 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.6,
+                        color: const Color(0xFF6B7280),
+                        height: 1.3,
                       ),
                     ),
                   ],
@@ -427,29 +365,28 @@ class _PremiumActionShell extends StatelessWidget {
 
           final button = ElevatedButton.icon(
             onPressed: onPressed,
-            icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
+            icon: const Icon(Icons.arrow_outward_outlined, color: Colors.white, size: 16),
             label: Text(
               actionLabel,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(fontSize: 11.7, fontWeight: FontWeight.w900),
+              style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w800),
             ),
             style: ElevatedButton.styleFrom(
               elevation: 0,
               backgroundColor: color,
               foregroundColor: Colors.white,
               disabledBackgroundColor: color.withValues(alpha: 0.35),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+              padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
             ),
           );
 
           if (compact) {
             return Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 content,
-                const SizedBox(height: 12),
+                const SizedBox(height: 11),
                 SizedBox(width: double.infinity, child: button),
               ],
             );
@@ -458,7 +395,7 @@ class _PremiumActionShell extends StatelessWidget {
           return Row(
             children: [
               Expanded(child: content),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 230),
                 child: button,
@@ -466,6 +403,32 @@ class _PremiumActionShell extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _Pill extends StatelessWidget {
+  final String text;
+  final Color color;
+
+  const _Pill({required this.text, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        text,
+        style: GoogleFonts.poppins(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
@@ -493,11 +456,63 @@ class _AguardandoAprovacaoCard extends StatelessWidget {
             ? 'Assim que o cadastro for aprovado, o painel será liberado com cotações, catálogo, reputação e insights.'
             : 'Entre novamente com uma conta de fornecedor ou finalize o cadastro para acessar esta área.';
 
-    return PremiumEmptyState(
-      icon: carregando ? Icons.sync_rounded : Icons.verified_user_outlined,
-      title: titulo,
-      message: mensagem,
-      color: FornecedorPremiumPalette.amber,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFFFD7A8)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF3E2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Icon(
+              carregando ? Icons.sync_rounded : Icons.verified_user_outlined,
+              color: const Color(0xFFB86500),
+              size: 26,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  titulo,
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF202124),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  mensagem,
+                  style: GoogleFonts.poppins(
+                    fontSize: 12.5,
+                    color: const Color(0xFF6B7280),
+                    height: 1.45,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

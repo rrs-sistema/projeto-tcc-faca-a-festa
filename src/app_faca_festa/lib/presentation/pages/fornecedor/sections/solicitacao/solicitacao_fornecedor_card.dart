@@ -8,7 +8,15 @@ import '../../components/show_responder_cotacao_bottom_sheet.dart';
 
 class SolicitacaoFornecedorCard extends StatelessWidget {
   final CotacaoModel solicitacao;
-  const SolicitacaoFornecedorCard({super.key, required this.solicitacao});
+  final VoidCallback? onGerarRespostaComIa;
+  final bool isGerandoRespostaIa;
+
+  const SolicitacaoFornecedorCard({
+    super.key,
+    required this.solicitacao,
+    this.onGerarRespostaComIa,
+    this.isGerandoRespostaIa = false,
+  });
 
   Color _statusColor(String status) {
     switch (status) {
@@ -277,6 +285,37 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                           );
                         },
                       ),
+
+                      if (onGerarRespostaComIa != null) ...[
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: isGerandoRespostaIa ? null : onGerarRespostaComIa,
+                            icon: isGerandoRespostaIa
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.auto_awesome_rounded, size: 18),
+                            label: Text(
+                              isGerandoRespostaIa ? 'Gerando resposta...' : 'Gerar resposta com IA',
+                              style: GoogleFonts.poppins(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF4F46E5),
+                              side: const BorderSide(color: Color(0xFFC7D2FE)),
+                              shape:
+                                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
