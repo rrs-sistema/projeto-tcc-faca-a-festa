@@ -58,6 +58,9 @@ class FornecedorController extends GetxController {
   final isLoadingFotos = false.obs;
 
   StreamSubscription? _solicitacoesSub;
+  StreamSubscription<QuerySnapshot>? _fornecedorCotacoesSub;
+  StreamSubscription<QuerySnapshot>? _servicosFornecedorSub;
+  final Map<String, int> _mensagensNaoLidasPorCotacao = {};
 
   /// 🔹 Estatísticas do painel
   final ordenacaoSelecionada = 'status'.obs; // status | nome | recentes
@@ -99,7 +102,15 @@ class FornecedorController extends GetxController {
     subCategorias.clear();
     categoriasServico.clear();
     subcategoriasServico.clear();
-    _solicitacoesSub?.cancel();
+    await _solicitacoesSub?.cancel();
+    await _fornecedorCotacoesSub?.cancel();
+    await _servicosFornecedorSub?.cancel();
+    for (final listener in _mensagemListeners) {
+      await listener.cancel();
+    }
+    _mensagemListeners.clear();
+    _mensagensNaoLidasPorCotacao.clear();
+    mensagensNaoLidas.value = 0;
     fornecedor.value = null;
   }
 
@@ -116,51 +127,66 @@ class FornecedorController extends GetxController {
   }
 
   Future<void> ouvirMensagensNaoLidas(String idFornecedor) async {
+    if (idFornecedor.trim().isEmpty) return;
+
     debugPrint('\n📡 [MSG] Iniciando listener de mensagens NÃO lidas para $idFornecedor');
 
-    // Cancelar listeners antigos
-    for (var l in _mensagemListeners) {
-      await l.cancel();
+    await _fornecedorCotacoesSub?.cancel();
+    for (final listener in _mensagemListeners) {
+      await listener.cancel();
     }
     _mensagemListeners.clear();
+    _mensagensNaoLidasPorCotacao.clear();
+    mensagensNaoLidas.value = 0;
 
-    // Buscar todas as subcoleções "fornecedores" onde id_fornecedor = idFornecedor
-    FirebaseFirestore.instance
-        .collectionGroup("fornecedores")
-        .where("id_fornecedor", isEqualTo: idFornecedor)
+    _fornecedorCotacoesSub = FirebaseFirestore.instance
+        .collectionGroup('fornecedores')
+        .where('id_fornecedor', isEqualTo: idFornecedor)
         .snapshots()
-        .listen((fornecedorSnap) {
-      debugPrint("📌 Fornecedor está em ${fornecedorSnap.docs.length} cotações.");
-
-      mensagensNaoLidas.value = 0; // reset total
+        .listen((fornecedorSnap) async {
+      final cotacoesAtuais = <String>{};
 
       for (final f in fornecedorSnap.docs) {
-        final cotacaoRef = f.reference.parent.parent!; // pega a cotação pai
-        final idCotacao = cotacaoRef.id;
+        final cotacaoRef = f.reference.parent.parent;
+        if (cotacaoRef == null) continue;
 
-        debugPrint("🔎 Listening mensagens da cotação $idCotacao");
+        final idCotacao = cotacaoRef.id;
+        cotacoesAtuais.add(idCotacao);
+
+        if (_mensagensNaoLidasPorCotacao.containsKey(idCotacao)) {
+          continue;
+        }
+
+        _mensagensNaoLidasPorCotacao[idCotacao] = 0;
 
         final sub = cotacaoRef
-            .collection("fornecedores")
+            .collection('fornecedores')
             .doc(idFornecedor)
-            .collection("mensagens")
-            .where("id_usuario", isNotEqualTo: idFornecedor) // recebidas
-            .where("lido", isEqualTo: false)
+            .collection('mensagens')
+            .where('id_usuario', isNotEqualTo: idFornecedor)
+            .where('lido', isEqualTo: false)
             .snapshots()
             .listen((msgSnap) {
-          final count = msgSnap.docs.length;
-
-          debugPrint("💬 Cotação $idCotacao → não lidas: $count");
-
-          mensagensNaoLidas.value += count;
-
-          debugPrint("📊 Total atualizado: ${mensagensNaoLidas.value}");
+          _mensagensNaoLidasPorCotacao[idCotacao] = msgSnap.docs.length;
+          mensagensNaoLidas.value =
+              _mensagensNaoLidasPorCotacao.values.fold<int>(0, (total, item) => total + item);
+        }, onError: (e) {
+          debugPrint('❌ Erro ao escutar mensagens da cotação $idCotacao: $e');
         });
 
         _mensagemListeners.add(sub);
       }
 
-      debugPrint("📌 Listeners ativos: ${_mensagemListeners.length}");
+      final removidas = _mensagensNaoLidasPorCotacao.keys
+          .where((idCotacao) => !cotacoesAtuais.contains(idCotacao))
+          .toList();
+      for (final idCotacao in removidas) {
+        _mensagensNaoLidasPorCotacao.remove(idCotacao);
+      }
+      mensagensNaoLidas.value =
+          _mensagensNaoLidasPorCotacao.values.fold<int>(0, (total, item) => total + item);
+    }, onError: (e) {
+      debugPrint('❌ Erro ao escutar cotações do fornecedor para mensagens: $e');
     });
   }
 
@@ -350,7 +376,7 @@ class FornecedorController extends GetxController {
         final idDoc = doc.id;
 
         // 🔹 Captura os dois padrões de campos (camelCase e snake_case)
-        final idFornecedor = data['id_fornecedor'] ?? data['id_fornecedor'] ?? '';
+        final idFornecedor = data['id_fornecedor'] ?? data['idFornecedor'] ?? '';
         final idProdutoServico = data['id_produto_servico'] ?? data['idProdutoServico'] ?? '';
         final idSubcategoria = data['id_subcategoria'] ?? data['idSubcategoria'];
         final preco = (data['preco'] as num?)?.toDouble() ?? 0.0;
@@ -587,22 +613,34 @@ class FornecedorController extends GetxController {
   // === 🔹 Escuta os serviços de um fornecedor específico
   // ==========================================================
   Future<void> escutarServicosFornecedor(String idFornecedor) async {
-    if (idFornecedor.isEmpty) return;
+    if (idFornecedor.trim().isEmpty) return;
 
-    _db
+    await _servicosFornecedorSub?.cancel();
+
+    _servicosFornecedorSub = _db
         .collection('fornecedor_servico')
         .where('id_fornecedor', isEqualTo: idFornecedor)
         .snapshots()
         .listen((snapshot) async {
-      final lista =
-          snapshot.docs.map((d) => FornecedorProdutoServicoModel.fromMap(d.data())).toList();
+      final lista = snapshot.docs
+          .map((d) => FornecedorProdutoServicoModel.fromMap({
+                'id': d.id,
+                ...d.data(),
+              }))
+          .toList();
 
       servicosFornecedor.assignAll(lista);
 
-      final ids = lista.map((e) => e.idProdutoServico).toList();
+      final ids =
+          lista.map((e) => e.idProdutoServico).where((id) => id.trim().isNotEmpty).toSet().toList();
+
       await carregarCatalogoServicos();
       await carregarFotosServicos(ids, idFornecedor);
       await escutarSolicitacoesPendentes(idFornecedor);
+      await ouvirMensagensNaoLidas(idFornecedor);
+    }, onError: (e, s) {
+      erro.value = 'Erro ao escutar serviços do fornecedor';
+      debugPrint('❌ Erro ao escutar serviços do fornecedor: $e\n$s');
     });
   }
 
@@ -726,21 +764,33 @@ class FornecedorController extends GetxController {
   // === 🔹 Carrega fotos dos serviços
   // ==========================================================
   Future<void> carregarFotosServicos(List<String> idsProdutoServico, String idFornecedor) async {
-    if (idsProdutoServico.isEmpty) return;
+    final idsUnicos = idsProdutoServico.where((id) => id.trim().isNotEmpty).toSet().toList();
+
+    if (idsUnicos.isEmpty || idFornecedor.trim().isEmpty) {
+      fotosServico.clear();
+      return;
+    }
 
     try {
       isLoadingFotos.value = true;
+      final List<ServicoFotoModel> fotos = [];
 
-      final snapshot = await _db
-          .collection('servico_foto')
-          .where('id_produto_servico', whereIn: idsProdutoServico)
-          .where('id_fornecedor', isEqualTo: idFornecedor)
-          .get();
+      for (var i = 0; i < idsUnicos.length; i += 30) {
+        final fim = (i + 30) > idsUnicos.length ? idsUnicos.length : i + 30;
+        final chunk = idsUnicos.sublist(i, fim);
 
-      final lista = snapshot.docs.map((d) => ServicoFotoModel.fromMap(d.data())).toList();
-      fotosServico.assignAll(lista);
-    } catch (e) {
-      if (kDebugMode) print('Erro ao carregar fotos: $e');
+        final snapshot = await _db
+            .collection('servico_foto')
+            .where('id_produto_servico', whereIn: chunk)
+            .where('id_fornecedor', isEqualTo: idFornecedor)
+            .get();
+
+        fotos.addAll(snapshot.docs.map((d) => ServicoFotoModel.fromMap(d.data())));
+      }
+
+      fotosServico.assignAll(fotos);
+    } catch (e, s) {
+      if (kDebugMode) debugPrint('Erro ao carregar fotos: $e\n$s');
     } finally {
       isLoadingFotos.value = false;
     }
@@ -1042,6 +1092,13 @@ class FornecedorController extends GetxController {
   @override
   void onClose() {
     _solicitacoesSub?.cancel();
+    _fornecedorCotacoesSub?.cancel();
+    _servicosFornecedorSub?.cancel();
+    for (final listener in _mensagemListeners) {
+      listener.cancel();
+    }
+    _mensagemListeners.clear();
+    _mensagensNaoLidasPorCotacao.clear();
     pararListenerFornecedor();
     super.onClose();
   }

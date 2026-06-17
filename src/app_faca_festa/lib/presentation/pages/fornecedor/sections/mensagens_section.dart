@@ -1,286 +1,163 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import './orcamentos_section.dart';
+import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import '../chat/fornecedor_mensagens_page.dart';
 
 class MensagensSection extends StatelessWidget {
   const MensagensSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final conversas = [
-      _ConversaModel(
-        id: '1',
-        cliente: 'Ana Souza',
-        evento: 'Casamento Ana & Pedro',
-        ultimaMensagem: 'Perfeito! Podemos fechar para sábado?',
-        dataHora: DateTime.now().subtract(const Duration(minutes: 10)),
-        naoLida: true,
-      ),
-      _ConversaModel(
-        id: '2',
-        cliente: 'Lucas Ferreira',
-        evento: 'Aniversário 30 anos',
-        ultimaMensagem: 'Pagamento confirmado, obrigado!',
-        dataHora: DateTime.now().subtract(const Duration(hours: 2)),
-        naoLida: false,
-      ),
-    ];
+    final fornecedorController = Get.find<FornecedorController>();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(Icons.forum_outlined, size: 20, color: Colors.grey.shade800),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                "Central de Comunicações",
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.grey.shade900,
-                ),
-              ),
+    return Obx(() {
+      final naoLidas = fornecedorController.mensagensNaoLidas.value;
+      final possuiPendencia = naoLidas > 0;
+
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
-        const SizedBox(height: 16),
-
-        // 🔹 CONVERSAS RECENTES
-        Container(
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ]),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                child: Text(
-                  "Interações Recentes no Chat",
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Colors.grey.shade800,
-                  ),
-                ),
-              ),
-              ListView.separated(
-                itemCount: conversas.length,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                separatorBuilder: (_, __) =>
-                    Divider(height: 1, thickness: 0.5, color: Colors.grey.shade100),
-                itemBuilder: (context, index) {
-                  return _ConversaTile(conversa: conversas[index]);
-                },
-              ),
-              Padding(
-                padding: const EdgeInsets.all(12),
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Get.snackbar(
-                      "Chat",
-                      "Abrindo central de mensagens...",
-                      backgroundColor: Colors.grey.shade900,
-                      colorText: Colors.white,
-                    ),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.grey.shade700,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
-                    child: Text(
-                      "Ver Histórico Completo",
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 13),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 24),
-
-        // 🔹 ORÇAMENTOS (Subseção embutida de forma elegante)
-        Container(
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey.shade200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.02),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ]),
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              OrcamentosSection(),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Get.toNamed('/orcamentos'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.grey.shade700,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  ),
-                  child: Text(
-                    "Painel Completo de Orçamentos",
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w500, fontSize: 13),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ConversaTile extends StatelessWidget {
-  final _ConversaModel conversa;
-  const _ConversaTile({required this.conversa});
-
-  String _tempoRelativo(DateTime data) {
-    final diff = DateTime.now().difference(data);
-    if (diff.inMinutes < 60) return '${diff.inMinutes} min atrás';
-    if (diff.inHours < 24) return '${diff.inHours}h atrás';
-    if (diff.inDays == 1) return 'Ontem';
-    return '${diff.inDays} dias atrás';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final TextStyle messageStyle = conversa.naoLida
-        ? GoogleFonts.poppins(
-            color: Colors.grey.shade900, fontSize: 13, fontWeight: FontWeight.w600)
-        : GoogleFonts.poppins(
-            color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w400);
-
-    return InkWell(
-      onTap: () {
-        Get.snackbar(
-          "Chat",
-          "Abrindo chat seguro com ${conversa.cliente}...",
-          backgroundColor: Colors.grey.shade900,
-          colorText: Colors.white,
-          duration: const Duration(seconds: 2),
-        );
-      },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Stack(
-              children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundColor: Colors.grey.shade100,
-                  child: Icon(Icons.person_outline_rounded, color: Colors.grey.shade500, size: 20),
-                ),
-                if (conversa.naoLida)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 10,
-                      height: 10,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final compact = constraints.maxWidth < 520;
+                final title = Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(9),
                       decoration: BoxDecoration(
-                        color: Colors.red.shade600,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(Icons.forum_outlined, size: 19, color: Color(0xFF2563EB)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Mensagens',
+                            style: GoogleFonts.poppins(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF111827),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Central de conversa com organizadores e negociações em andamento.',
+                            style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6B7280)),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
                       ),
                     ),
+                  ],
+                );
+                final button = OutlinedButton.icon(
+                  onPressed: () => Get.to(() => FornecedorMensagensPage()),
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: Text(
+                    'Abrir central',
+                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
                   ),
-              ],
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF111827),
+                    side: const BorderSide(color: Color(0xFFD1D5DB)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  ),
+                );
+                return compact
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [title, const SizedBox(height: 12), button],
+                      )
+                    : Row(children: [Expanded(child: title), const SizedBox(width: 12), button]);
+              },
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: LinearGradient(
+                  colors: possuiPendencia
+                      ? const [Color(0xFF1D4ED8), Color(0xFF111827)]
+                      : const [Color(0xFF111827), Color(0xFF263159)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Row(
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          conversa.evento,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                            color: Colors.grey.shade900,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _tempoRelativo(conversa.dataHora),
-                        style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          color: Colors.grey.shade500,
-                        ),
-                      ),
-                    ],
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                    child: Icon(
+                      possuiPendencia
+                          ? Icons.mark_chat_unread_outlined
+                          : Icons.mark_chat_read_outlined,
+                      color: Colors.white,
+                    ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    conversa.ultimaMensagem,
-                    style: messageStyle,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          possuiPendencia
+                              ? '$naoLidas mensagem${naoLidas == 1 ? '' : 's'} não lida${naoLidas == 1 ? '' : 's'}'
+                              : 'Nenhuma mensagem nova',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          possuiPendencia
+                              ? 'Respostas rápidas aumentam a chance de fechamento e melhoram a experiência do organizador.'
+                              : 'Sua central está em dia. Novas conversas aparecerão aqui automaticamente.',
+                          style: GoogleFonts.poppins(
+                            color: Colors.white.withValues(alpha: 0.74),
+                            fontSize: 12,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
           ],
         ),
-      ),
-    );
+      );
+    });
   }
-}
-
-class _ConversaModel {
-  final String id;
-  final String cliente;
-  final String evento;
-  final String ultimaMensagem;
-  final DateTime dataHora;
-  final bool naoLida;
-
-  _ConversaModel({
-    required this.id,
-    required this.cliente,
-    required this.evento,
-    required this.ultimaMensagem,
-    required this.dataHora,
-    required this.naoLida,
-  });
 }

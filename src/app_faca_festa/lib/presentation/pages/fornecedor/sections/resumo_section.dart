@@ -1,16 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
-import './../../../../controllers/avaliacao/avaliacao_servico_controller.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
-import '../../../../controllers/servico/servico_produto_controller.dart';
-import './../../cadastro/servico/servico_produto_list_screen.dart';
 import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import './../../cadastro/servico/servico_produto_list_screen.dart';
 import './../chat/fornecedor_mensagens_page.dart';
-import './components/build_cotacao_card.dart';
 
 class ResumoSection extends StatelessWidget {
   const ResumoSection({super.key});
@@ -18,267 +13,315 @@ class ResumoSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<FornecedorController>();
-    final avaliacaoController = Get.find<AvaliacaoServicoController>();
-    final servicoController = Get.find<ServicoProdutoController>();
 
     return Obx(() {
+      final fornecedor = controller.fornecedor.value;
+      final servicosAtivos = controller.servicosFornecedor.where((s) => s.ativo).length;
+      final servicosDetalhadosAtivos = controller.servicosDetalhado.where((s) => s.ativo).length;
+      final totalServicos = servicosAtivos > 0 ? servicosAtivos : servicosDetalhadosAtivos;
+      final media = controller.avaliacaoMedia.value > 0
+          ? controller.avaliacaoMedia.value
+          : (fornecedor?.mediaAvaliacoes ?? 0.0);
+      final totalAvaliacoes = fornecedor?.totalAvaliacoes ?? 0;
+      final contratacoes = fornecedor?.totalContratacoes ?? 0;
+      final respostaMedia = fornecedor?.tempoMedioRespostaHoras ??
+          (controller.tempoMedioResposta.value > 0
+              ? controller.tempoMedioResposta.value / 60
+              : null);
+
       final stats = [
         _ResumoCardData(
-          title: "Cotações Ativas",
+          title: 'Cotações pendentes',
           icon: Icons.receipt_long_outlined,
-          color: const Color(0xFF1E88E5),
-          value: controller.solicitacoesPendentes.value,
-          description: "Pendentes de resposta",
-          onTap: () async {
-            final fornecedorController = Get.find<FornecedorController>();
-            final solicitacoes = await fornecedorController.buscarSolicitacoesPendentesDetalhadas();
-
-            if (solicitacoes.isEmpty) {
-              Get.snackbar(
-                "Métricas",
-                "Você não possui solicitações pendentes no momento.",
-                backgroundColor: Colors.grey.shade900,
-                colorText: Colors.white,
-              );
-              return;
-            }
-
-            Get.bottomSheet(
-              Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                padding: const EdgeInsets.all(24),
-                child: SafeArea(
-                  top: false,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 5,
-                        margin: const EdgeInsets.only(bottom: 20),
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade300,
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      Text(
-                        "Cotações Pendentes",
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 18,
-                          color: Colors.grey.shade900,
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      Flexible(
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: solicitacoes.length,
-                          itemBuilder: (context, index) {
-                            final servicoMap = solicitacoes[index];
-                            final dataEnvio = servicoMap['dataEnvio'] is Timestamp
-                                ? DateFormat("dd/MM/yyyy")
-                                    .format((servicoMap['dataEnvio'] as Timestamp).toDate())
-                                : '';
-                            final dataLimite = servicoMap['dataLimite'] is Timestamp
-                                ? DateFormat("dd/MM/yyyy")
-                                    .format((servicoMap['dataLimite'] as Timestamp).toDate())
-                                : '';
-
-                            return buildCotacaoCard(context, servicoMap, dataEnvio, dataLimite);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              isScrollControlled: true,
-            );
-          },
+          color: const Color(0xFF2D7DFF),
+          value: controller.solicitacoesPendentes.value.toString(),
+          description: 'Aguardando resposta',
+          onTap: null,
         ),
         _ResumoCardData(
-          title: "Catálogo",
-          icon: Icons.home_repair_service_outlined,
-          color: const Color(0xFF43A047),
-          value: servicoController.servicosFornecedor.length,
-          description: "Serviços publicados",
-          onTap: () async {
-            final fornecedor = controller.fornecedor.value;
-            if (fornecedor != null) {
-              controller.carregando.value = true;
-              await controller.escutarServicosFornecedor(fornecedor.idFornecedor);
-              controller.carregando.value = false;
-              Get.to(() => ServicoProdutoListScreen(fornecedorId: fornecedor.idFornecedor));
-            }
-          },
-        ),
-        _ResumoCardData(
-          title: "Comunicações",
+          title: 'Mensagens',
           icon: Icons.chat_bubble_outline_rounded,
-          color: const Color(0xFF00796B),
-          value: controller.mensagensNaoLidas.value,
-          description: "Mensagens não lidas",
+          color: const Color(0xFF00A6A6),
+          value: controller.mensagensNaoLidas.value.toString(),
+          description: 'Não lidas',
           onTap: () => Get.to(() => FornecedorMensagensPage()),
         ),
         _ResumoCardData(
-          title: "Reputação",
-          icon: Icons.star_border_rounded,
-          color: const Color(0xFFF8A800),
-          value: avaliacaoController.mediaFornecedor.value.isNaN
-              ? 0
-              : avaliacaoController.mediaFornecedor.value.toInt(),
-          description: "Estrelas consolidadas",
+          title: 'Catálogo ativo',
+          icon: Icons.home_repair_service_outlined,
+          color: const Color(0xFF27AE60),
+          value: totalServicos.toString(),
+          description: 'Serviços publicados',
+          onTap: () async {
+            final atual = controller.fornecedor.value;
+            if (atual == null) return;
+            controller.carregando.value = true;
+            await controller.escutarServicosFornecedor(atual.idFornecedor);
+            controller.carregando.value = false;
+            Get.to(() => ServicoProdutoListScreen(fornecedorId: atual.idFornecedor));
+          },
+        ),
+        _ResumoCardData(
+          title: 'Reputação',
+          icon: Icons.star_rounded,
+          color: const Color(0xFFF59E0B),
+          value: media <= 0 ? '-' : media.toStringAsFixed(1),
+          description: totalAvaliacoes > 0
+              ? '$totalAvaliacoes avaliação${totalAvaliacoes == 1 ? '' : 'ões'}'
+              : 'Sem avaliações',
+        ),
+        _ResumoCardData(
+          title: 'Resposta média',
+          icon: Icons.speed_rounded,
+          color: const Color(0xFF7C3AED),
+          value: _formatarTempoResposta(respostaMedia),
+          description: 'Tempo comercial',
+        ),
+        _ResumoCardData(
+          title: 'Contratações',
+          icon: Icons.handshake_outlined,
+          color: const Color(0xFF14B8A6),
+          value: contratacoes.toString(),
+          description: 'Fechamentos consolidados',
+        ),
+        _ResumoCardData(
+          title: 'Faixa de preço',
+          icon: Icons.payments_outlined,
+          color: const Color(0xFFEF4444),
+          value: _formatarFaixaPreco(
+            fornecedor?.precoMinimo,
+            fornecedor?.precoMaximo,
+            fornecedor?.precoMedio,
+          ),
+          description: 'Referência ao cliente',
+        ),
+        _ResumoCardData(
+          title: 'Eventos atendidos',
+          icon: Icons.celebration_outlined,
+          color: const Color(0xFF6366F1),
+          value: fornecedor?.tipoEventoNomes.isNotEmpty == true
+              ? fornecedor!.tipoEventoNomes.length.toString()
+              : '-',
+          description: fornecedor?.tipoEventoNomes.isNotEmpty == true
+              ? fornecedor!.tipoEventoNomes.take(2).join(' • ')
+              : 'Não configurado',
         ),
       ];
 
-      return LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth;
-          // Breakpoints exatos: Desktop > Tablet > Mobile
-          final crossAxisCount = width >= 1024 ? 4 : (width >= 600 ? 3 : 2);
-          final aspectRatio = width >= 1024 ? 1.4 : (width >= 600 ? 1.2 : 1.1);
-
-          return GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: stats.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: crossAxisCount,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-              childAspectRatio: aspectRatio,
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(18),
+        decoration: _cardDecoration(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _SectionTitle(
+              icon: Icons.dashboard_customize_rounded,
+              title: 'Visão operacional',
+              subtitle: 'Indicadores sem repetição para acompanhar vendas, atendimento e reputação.',
             ),
-            itemBuilder: (_, i) => _ResumoCard(data: stats[i]),
-          );
-        },
+            const SizedBox(height: 16),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+                final crossAxisCount = width >= 1040
+                    ? 4
+                    : width >= 680
+                        ? 3
+                        : 2;
+                final mainExtent = width >= 680 ? 132.0 : 128.0;
+
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: stats.length,
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: crossAxisCount,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    mainAxisExtent: mainExtent,
+                  ),
+                  itemBuilder: (_, i) => _PremiumResumoMetricCard(
+                    key: ValueKey(stats[i].title),
+                    data: stats[i],
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       );
     });
+  }
+
+  static String _formatarTempoResposta(double? horas) {
+    if (horas == null || horas <= 0) return '-';
+    if (horas < 1) return '${(horas * 60).round()}min';
+    if (horas < 24) return '${horas.toStringAsFixed(horas < 10 ? 1 : 0)}h';
+    return '${(horas / 24).toStringAsFixed(1)}d';
+  }
+
+  static String _formatarFaixaPreco(double? minimo, double? maximo, double? medio) {
+    final currency = NumberFormat.compactCurrency(locale: 'pt_BR', symbol: 'R\$');
+    if (minimo != null && maximo != null && minimo > 0 && maximo > 0) {
+      return '${currency.format(minimo)} - ${currency.format(maximo)}';
+    }
+    if (medio != null && medio > 0) return currency.format(medio);
+    if (minimo != null && minimo > 0) return 'A partir de ${currency.format(minimo)}';
+    return '-';
+  }
+}
+
+BoxDecoration _cardDecoration() => BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: const Color(0xFFE5E7EB)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: 0.04),
+          blurRadius: 20,
+          offset: const Offset(0, 10),
+        ),
+      ],
+    );
+
+class _SectionTitle extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  const _SectionTitle({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(9),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(colors: [Color(0xFF7C3AED), Color(0xFF2563EB)]),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: Colors.white, size: 19),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: GoogleFonts.poppins(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF111827),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6B7280)),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
   }
 }
 
 class _ResumoCardData {
   final String title;
   final String description;
+  final String value;
   final IconData icon;
   final Color color;
-  final int value;
   final VoidCallback? onTap;
 
-  _ResumoCardData({
+  const _ResumoCardData({
     required this.title,
     required this.description,
+    required this.value,
     required this.icon,
     required this.color,
-    required this.value,
     this.onTap,
   });
 }
 
-class _ResumoCard extends StatefulWidget {
+class _PremiumResumoMetricCard extends StatelessWidget {
   final _ResumoCardData data;
-  const _ResumoCard({required this.data});
 
-  @override
-  State<_ResumoCard> createState() => _ResumoCardState();
-}
-
-class _ResumoCardState extends State<_ResumoCard> {
-  bool hovered = false;
+  const _PremiumResumoMetricCard({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
-    final d = widget.data;
-
-    return MouseRegion(
-      onEnter: (_) => setState(() => hovered = true),
-      onExit: (_) => setState(() => hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border:
-              Border.all(color: hovered ? d.color.withValues(alpha: 0.4) : Colors.grey.shade200),
-          boxShadow: [
-            if (hovered)
-              BoxShadow(
-                color: d.color.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: data.onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: data.color.withValues(alpha: 0.055),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: data.color.withValues(alpha: 0.14)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(data.icon, color: data.color, size: 19),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      data.value,
+                      textAlign: TextAlign.end,
+                      style: GoogleFonts.poppins(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827),
+                        letterSpacing: -0.6,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
               ),
-          ],
-        ),
-        child: InkWell(
-          onTap: d.onTap,
-          borderRadius: BorderRadius.circular(16),
-          hoverColor: Colors.transparent,
-          splashColor: d.color.withValues(alpha: 0.05),
-          highlightColor: Colors.transparent,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: d.color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(d.icon, color: d.color, size: 20),
-                    ),
-                    Flexible(
-                      child: Text(
-                        d.value.toString(),
-                        style: GoogleFonts.poppins(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.grey.shade900,
-                          letterSpacing: -0.5,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.right,
-                      ),
-                    ),
-                  ],
+              const Spacer(),
+              Text(
+                data.title,
+                style: GoogleFonts.poppins(
+                  color: const Color(0xFF1F2937),
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      d.title,
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey.shade900,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      d.description,
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey.shade500,
-                        fontSize: 11,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                data.description,
+                style: GoogleFonts.poppins(color: const Color(0xFF6B7280), fontSize: 10.6),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
           ),
         ),
       ),

@@ -65,6 +65,56 @@ class EventoCadastroController extends GetxController {
 
   bool get isEditando => idEvento.value.isNotEmpty;
 
+  static const String _logTag = '[EventoCadastroController]';
+  static const String _versaoDiagnostico = 'v2026-06-16-cep-convidado-logs';
+
+  /// Permite que a tela force o fluxo como convidado quando o cadastro vier
+  /// da área/convite do convidado e o UsuarioModel ainda não tiver perfil salvo.
+  ///
+  /// Exemplo na tela:
+  /// controller.configurarCadastroComoConvidado(true);
+  final cadastroConvidadoManual = false.obs;
+
+  /// Quando o usuário logado for convidado, o endereço deixa de ser obrigatório.
+  ///
+  /// A detecção considera:
+  /// 1) flag manual configurada pela tela;
+  /// 2) campos/perfil do usuário logado;
+  /// 3) argumentos da rota;
+  /// 4) nome da rota atual contendo "convidado".
+  ///
+  /// Use este getter também na tela para deixar os validators dos campos
+  /// de endereço opcionais quando o cadastro estiver sendo feito por convidado.
+  bool get cadastroComoConvidado {
+    final manual = cadastroConvidadoManual.value;
+    final porUsuario = _usuarioEhConvidado(app.usuarioLogado.value);
+    final porArgumentos = _argumentsIndicamConvidado(Get.arguments);
+    final porRota = _normalizeTexto(Get.currentRoute).contains('convidado');
+
+    final resultado = manual || porUsuario || porArgumentos || porRota;
+
+    _log(
+      'cadastroComoConvidado => $resultado | '
+      'manual=$manual | porUsuario=$porUsuario | porArgumentos=$porArgumentos | '
+      'porRota=$porRota | route=${Get.currentRoute} | args=${Get.arguments}',
+    );
+
+    return resultado;
+  }
+
+  bool get enderecoObrigatorio => !cadastroComoConvidado;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _log('onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=${Get.arguments}');
+  }
+
+  void configurarCadastroComoConvidado(bool value) {
+    cadastroConvidadoManual.value = value;
+    _log('configurarCadastroComoConvidado($value)');
+  }
+
   // ===============================
   // 🔹 CARREGAR TIPOS DE EVENTO DO FIRESTORE
   // ===============================
@@ -213,7 +263,42 @@ class EventoCadastroController extends GetxController {
   }
 
   Future<void> salvarEvento() async {
-    if (!formKey.currentState!.validate()) return;
+    _log('===== INÍCIO salvarEvento $_versaoDiagnostico =====');
+    _log('route=${Get.currentRoute} | args=${Get.arguments}');
+
+    final user = app.usuarioLogado.value;
+    _logUsuario(user);
+
+    if (user == null) {
+      Get.snackbar(
+        'Erro',
+        'Usuário não autenticado.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final cadastroConvidado = cadastroComoConvidado;
+    _log(
+        'Fluxo detectado: cadastroConvidado=$cadastroConvidado | enderecoObrigatorio=${!cadastroConvidado}');
+
+    // ✅ Para organizador, mantém a validação completa do formulário.
+    // ✅ Para convidado, evita que validators da tela bloqueiem o salvamento
+    // por causa dos campos de endereço.
+    if (!cadastroConvidado) {
+      final formValido = formKey.currentState?.validate() ?? false;
+      _log('Validação FormKey organizador => $formValido');
+      if (!formValido) {
+        _log('BLOQUEADO: FormKey inválido antes das validações de negócio.');
+        return;
+      }
+    }
+
+    if (cadastroConvidado) {
+      _log('FormKey.validate ignorado para convidado. Executando apenas save().');
+      formKey.currentState?.save();
+    }
 
     final tipoAtual = tipoEventoModel.value;
     final dataStr = dataFesta.text.trim();
@@ -267,9 +352,6 @@ class EventoCadastroController extends GetxController {
     }
 
     try {
-      final user = app.usuarioLogado.value;
-      if (user == null) throw Exception('Usuário não autenticado.');
-
       // ✅ Monta data/hora completa
       final dataSelecionada = DateFormat('dd/MM/yyyy', 'pt_BR').parse(dataStr);
       final partesHora = horaStr.split(':');
@@ -284,7 +366,26 @@ class EventoCadastroController extends GetxController {
       // ✅ Endereço
       final end = enderecoController.value;
       final endereco = end.toModel(user.idUsuario);
-      if (!_validarCamposEnderecor(endereco)) return;
+      _logEndereco(endereco, origem: 'end.toModel');
+
+      final enderecoFoiInformado = _enderecoTemAlgumCampoPreenchido(endereco);
+      final deveSalvarEndereco = !cadastroConvidado || enderecoFoiInformado;
+
+      _log(
+        'Decisão endereço: cadastroConvidado=$cadastroConvidado | '
+        'enderecoFoiInformado=$enderecoFoiInformado | deveSalvarEndereco=$deveSalvarEndereco',
+      );
+
+      // Organizador precisa informar endereço.
+      // Convidado só valida endereço se tiver preenchido algum campo real.
+      if (deveSalvarEndereco && !_validarCamposEndereco(endereco)) {
+        _log('BLOQUEADO: _validarCamposEndereco retornou false.');
+        return;
+      }
+
+      if (!deveSalvarEndereco) {
+        _log('Endereço ignorado: convidado sem endereço preenchido.');
+      }
 
       // ✅ Quantidade de convidados por tipo
       //
@@ -300,9 +401,10 @@ class EventoCadastroController extends GetxController {
       carregando.value = true;
 
       // ⚙️ Mapeamento da cidade e estado
-      final idCidade = end.ufCidadeController.idCidadeSelecionada?.toString();
-      final nomeCidade = end.nomeCidadeController.text.trim();
-      final uf = end.ufController.text.trim().isNotEmpty
+      final idCidade =
+          deveSalvarEndereco ? end.ufCidadeController.idCidadeSelecionada?.toString() : null;
+      final nomeCidade = deveSalvarEndereco ? end.nomeCidadeController.text.trim() : '';
+      final uf = deveSalvarEndereco && end.ufController.text.trim().isNotEmpty
           ? end.ufController.text.trim().toUpperCase()
           : null;
 
@@ -336,15 +438,17 @@ class EventoCadastroController extends GetxController {
         idCidade: idCidade,
         nomeCidade: nomeCidade.isNotEmpty ? nomeCidade : null,
         uf: uf,
-        cep: endereco.cep,
-        logradouro: endereco.logradouro,
-        numero: endereco.numero,
-        complemento: endereco.complemento,
-        bairro: endereco.bairro,
+        cep: deveSalvarEndereco ? endereco.cep : '',
+        logradouro: deveSalvarEndereco ? endereco.logradouro : '',
+        numero: deveSalvarEndereco ? endereco.numero : '',
+        complemento: deveSalvarEndereco ? endereco.complemento : '',
+        bairro: deveSalvarEndereco ? endereco.bairro : null,
       );
 
       // ✅ Gravação no Firestore
+      _log('Gravando evento ${evento.idEvento} no Firestore...');
       await db.collection('evento').doc(evento.idEvento).set(evento.toMap());
+      _log('Evento ${evento.idEvento} gravado com sucesso.');
 
       carregando.value = false;
       Get.back();
@@ -355,8 +459,10 @@ class EventoCadastroController extends GetxController {
       if (idEvento.value.isEmpty) {
         Get.offAllNamed('/splash', arguments: {'novoEvento': true});
       }
-    } catch (e) {
+    } catch (e, st) {
       carregando.value = false;
+      _log('ERRO salvarEvento: $e');
+      debugPrintStack(label: '$_logTag stack salvarEvento', stackTrace: st);
       Get.snackbar(
         'Erro',
         'Falha ao salvar evento: $e',
@@ -407,36 +513,175 @@ class EventoCadastroController extends GetxController {
     return int.tryParse(raw) ?? 0;
   }
 
-  bool _validarCamposEnderecor(EnderecoUsuarioModel endereco) {
+  bool _enderecoTemAlgumCampoPreenchido(EnderecoUsuarioModel endereco) {
+    // Não considera a UF sozinha, porque o controller inicia com "PR" por padrão.
+    return endereco.cep.trim().isNotEmpty ||
+        endereco.logradouro.trim().isNotEmpty ||
+        endereco.numero.trim().isNotEmpty ||
+        (endereco.complemento?.trim().isNotEmpty ?? false) ||
+        (endereco.bairro?.trim().isNotEmpty ?? false) ||
+        (endereco.nomeCidade?.trim().isNotEmpty ?? false);
+  }
+
+  bool _validarCamposEndereco(EnderecoUsuarioModel endereco) {
+    _logEndereco(endereco, origem: '_validarCamposEndereco');
+
     // ------------------------------
     // 🔹 Endereço
     // ------------------------------
-    if (endereco.cep.isEmpty) {
+    if (endereco.cep.trim().isEmpty) {
+      _log('FALHA endereço: CEP vazio.');
       _showError('Informe o CEP');
       return false;
     }
-    if (endereco.logradouro.isEmpty) {
+    if (endereco.logradouro.trim().isEmpty) {
+      _log('FALHA endereço: logradouro vazio.');
       _showError('Informe o endereço completo');
       return false;
     }
-    if (endereco.numero.isEmpty) {
-      _showError('Informe o número do enredeço');
+    if (endereco.numero.trim().isEmpty) {
+      _log('FALHA endereço: número vazio.');
+      _showError('Informe o número do endereço');
       return false;
     }
-    if (endereco.bairro == null || endereco.bairro!.isEmpty) {
+    if (endereco.bairro == null || endereco.bairro!.trim().isEmpty) {
+      _log('FALHA endereço: bairro vazio.');
       _showError('Informe o bairro');
       return false;
     }
-    if (endereco.uf == null || endereco.uf!.isEmpty) {
+    if (endereco.uf == null || endereco.uf!.trim().isEmpty) {
+      _log('FALHA endereço: UF vazia.');
       _showError('Informe o estado (UF)');
       return false;
     }
-    if (endereco.nomeCidade == null || endereco.nomeCidade!.isEmpty) {
+    if (endereco.nomeCidade == null || endereco.nomeCidade!.trim().isEmpty) {
+      _log('FALHA endereço: cidade vazia.');
       _showError('Informe a cidade');
       return false;
     }
 
+    _log('Endereço validado com sucesso.');
     return true;
+  }
+
+  bool _usuarioEhConvidado(dynamic usuario) {
+    if (usuario == null) {
+      _log('_usuarioEhConvidado=false porque usuário é null.');
+      return false;
+    }
+
+    final valoresPossiveis = <dynamic>[
+      _safeRead(() => usuario.isConvidado),
+      _safeRead(() => usuario.ehConvidado),
+      _safeRead(() => usuario.convidado),
+      _safeRead(() => usuario.tipoUsuario),
+      _safeRead(() => usuario.tipo),
+      _safeRead(() => usuario.perfil),
+      _safeRead(() => usuario.role),
+      _safeRead(() => usuario.nivelAcesso),
+      _safeRead(() => usuario.grupoUsuario),
+      _safeRead(() => usuario.tipoCadastro),
+      _safeRead(() => usuario.origemCadastro),
+    ];
+
+    final usuarioMap = _safeRead(() => usuario.toMap());
+    if (usuarioMap is Map) {
+      for (final key in const [
+        'isConvidado',
+        'ehConvidado',
+        'convidado',
+        'tipoUsuario',
+        'tipo',
+        'perfil',
+        'role',
+        'nivelAcesso',
+        'grupoUsuario',
+        'tipoCadastro',
+        'origemCadastro',
+      ]) {
+        valoresPossiveis.add(usuarioMap[key]);
+      }
+    }
+
+    final filtrados = valoresPossiveis.where((v) => v != null).toList();
+    final resultado = filtrados.any(_valorRepresentaConvidado);
+    _log('_usuarioEhConvidado=$resultado | valores=$filtrados');
+    return resultado;
+  }
+
+  bool _argumentsIndicamConvidado(dynamic args) {
+    if (args == null) return false;
+
+    if (args is Map) {
+      final valores = <dynamic>[
+        args['isConvidado'],
+        args['ehConvidado'],
+        args['convidado'],
+        args['cadastroConvidado'],
+        args['cadastroComoConvidado'],
+        args['tipoCadastro'],
+        args['origemCadastro'],
+        args['perfil'],
+        args['tipoUsuario'],
+      ];
+      return valores.any(_valorRepresentaConvidado);
+    }
+
+    return _valorRepresentaConvidado(args);
+  }
+
+  bool _valorRepresentaConvidado(dynamic valor) {
+    if (valor == null) return false;
+    if (valor is bool) return valor;
+
+    final texto = _normalizeTexto(valor.toString());
+    return texto == 'convidado' ||
+        texto == 'guest' ||
+        texto == 'area convidado' ||
+        texto.contains('convidado') ||
+        texto.contains('guest');
+  }
+
+  void _logUsuario(dynamic usuario) {
+    if (usuario == null) {
+      _log('Usuário logado: null');
+      return;
+    }
+
+    final usuarioMap = _safeRead(() => usuario.toMap());
+    _log('Usuário logado runtimeType=${usuario.runtimeType}');
+    _log(
+        'Usuário id=${_safeRead(() => usuario.idUsuario)} | nome=${_safeRead(() => usuario.nome)}');
+    if (usuarioMap is Map) {
+      _log('Usuário toMap=$usuarioMap');
+    } else {
+      _log('Usuário sem toMap disponível.');
+    }
+  }
+
+  void _logEndereco(EnderecoUsuarioModel endereco, {required String origem}) {
+    _log(
+      'Endereço [$origem]: '
+      'cep="${endereco.cep}" | '
+      'logradouro="${endereco.logradouro}" | '
+      'numero="${endereco.numero}" | '
+      'bairro="${endereco.bairro}" | '
+      'cidade="${endereco.nomeCidade}" | '
+      'uf="${endereco.uf}" | '
+      'complemento="${endereco.complemento}"',
+    );
+  }
+
+  void _log(String mensagem) {
+    debugPrint('$_logTag $mensagem');
+  }
+
+  dynamic _safeRead(dynamic Function() read) {
+    try {
+      return read();
+    } catch (_) {
+      return null;
+    }
   }
 
   /// 🔹 Exibe mensagens elegantes de erro
@@ -457,8 +702,10 @@ class EventoCadastroController extends GetxController {
   // ===============================
   // 🔹 UTILITÁRIOS INTERNOS
   // ===============================
-  String _normalizeTipoEvento(String tipo) {
-    return tipo.replaceAll(RegExp(r'[^\w\s]'), '').trim().toLowerCase();
+  String _normalizeTipoEvento(String tipo) => _normalizeTexto(tipo);
+
+  String _normalizeTexto(String texto) {
+    return texto.replaceAll(RegExp(r'[^\w\s]'), '').trim().toLowerCase();
   }
 
   String _capitalizar(String nome) {

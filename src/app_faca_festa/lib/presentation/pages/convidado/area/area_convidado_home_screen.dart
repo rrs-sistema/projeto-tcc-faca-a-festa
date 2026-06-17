@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui';
 
 import './../../../../controllers/convidado/convidado_controller.dart';
@@ -34,11 +34,23 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
   final theme = Get.find<EventThemeController>();
 
   int _selectedIndex = 0;
+  StatusConvidado? _statusPresencaLocal;
 
   @override
   void initState() {
     super.initState();
+    _statusPresencaLocal = widget.convidado.status;
     convidadoController.convidadoAtual.value = widget.convidado;
+  }
+
+  @override
+  void didUpdateWidget(covariant AreaConvidadoHomeScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.convidado.idConvidado != widget.convidado.idConvidado ||
+        oldWidget.convidado.status != widget.convidado.status) {
+      _statusPresencaLocal = widget.convidado.status;
+      convidadoController.convidadoAtual.value = widget.convidado;
+    }
   }
 
   @override
@@ -46,15 +58,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     final gradient = theme.gradient.value;
     final icon = theme.icon.value;
     final evento = widget.evento;
-    final convidado = convidadoController.convidadoAtual.value;
     final titulo = evento.nomeEvento;
-
-    final List<Widget> pages = [
-      _buildInformacoesPage(evento),
-      PresentesSection(evento: evento, theme: theme),
-      _buildConfirmacaoPage(convidado),
-      _buildTarefasPage(evento, convidado!),
-    ];
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -144,8 +148,16 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
             return const Center(child: CircularProgressIndicator(color: Colors.white));
           }
 
-          final nomeConvidado = widget.convidado.nome.split(' ').first;
+          final convidadoAtual = convidadoController.convidadoAtual.value ?? widget.convidado;
+          final nomeConvidado = convidadoAtual.nome.split(' ').first;
           final mensagemBoasVindas = 'Bem-vindo(a), $nomeConvidado! 🎉';
+
+          final pages = [
+            _buildInformacoesPage(evento),
+            PresentesSection(evento: evento, theme: theme),
+            _buildConfirmacaoPage(convidadoAtual),
+            _buildTarefasPage(evento, convidadoAtual),
+          ];
 
           return Stack(
             children: [
@@ -250,95 +262,142 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
           );
         }),
       ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewPadding.bottom > 0
-              ? MediaQuery.of(context).viewPadding.bottom
-              : 0, // 🔹 Sem padding desnecessário em Androids com barra nativa fina
-        ),
-        child: _buildAnimatedBottomBar(theme.primaryColor.value),
-      ),
+      bottomNavigationBar: _buildAnimatedBottomBar(theme.primaryColor.value),
     );
   }
 
   Widget _buildAnimatedBottomBar(Color cor) {
-    final gradientActive = LinearGradient(
-      colors: [cor.withValues(alpha: 0.95), cor.withValues(alpha: 0.6)],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-
     final itens = [
-      {'icon': Icons.info_outline, 'label': 'Infos'}, // 🔹 Texto encurtado
-      {'icon': Icons.card_giftcard, 'label': 'Presentes'},
-      {'icon': Icons.event_available, 'label': 'Confirmação'},
+      {'icon': Icons.celebration_rounded, 'label': 'Evento'},
+      {'icon': Icons.card_giftcard_rounded, 'label': 'Presentes'},
+      {'icon': Icons.how_to_reg_rounded, 'label': 'Presença'},
       {'icon': Icons.task_alt_rounded, 'label': 'Tarefas'},
     ];
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 500),
-      height: 56, // 🔹 Extremamente fina (era 68)
+    return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.85),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        color: Colors.transparent,
         boxShadow: [
           BoxShadow(
-            color: cor.withValues(alpha: 0.15),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+            color: Colors.black.withValues(alpha: 0.10),
+            blurRadius: 26,
+            spreadRadius: 0,
+            offset: const Offset(0, -10),
           ),
         ],
-        backgroundBlendMode: BlendMode.overlay,
       ),
-      child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(itens.length, (i) {
-              final selected = _selectedIndex == i;
-              final item = itens[i];
-
-              return GestureDetector(
-                onTap: () => setState(() => _selectedIndex = i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 350),
-                  curve: Curves.easeInOutCubic,
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // 🔹 Compacto
-                  decoration: BoxDecoration(
-                    gradient: selected ? gradientActive : null,
-                    color: selected ? cor.withValues(alpha: 0.08) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        child: Icon(
-                          item['icon'] as IconData,
-                          size: selected ? 22 : 20, // 🔹 Ícones menores
-                          color:
-                              selected ? Colors.white : Colors.grey.shade600.withValues(alpha: 0.9),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 300),
-                        style: GoogleFonts.poppins(
-                          fontSize: selected ? 10.0 : 9.0, // 🔹 Fonte menor
-                          fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                          color:
-                              selected ? Colors.white : Colors.grey.shade700.withValues(alpha: 0.9),
-                        ),
-                        child: Text(item['label'] as String),
-                      ),
-                    ],
-                  ),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+            child: Container(
+              height: 76,
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.96),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: cor.withValues(alpha: 0.18),
+                  width: 1.1,
                 ),
-              );
-            }),
+              ),
+              child: Row(
+                children: List.generate(itens.length, (i) {
+                  final selected = _selectedIndex == i;
+                  final item = itens[i];
+
+                  return Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 2),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(22),
+                          splashColor: cor.withValues(alpha: 0.10),
+                          highlightColor: cor.withValues(alpha: 0.06),
+                          onTap: () => setState(() => _selectedIndex = i),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOutCubic,
+                            height: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                            decoration: BoxDecoration(
+                              gradient: selected
+                                  ? LinearGradient(
+                                      colors: [
+                                        cor.withValues(alpha: 1),
+                                        cor.withValues(alpha: 0.78),
+                                      ],
+                                      begin: Alignment.topLeft,
+                                      end: Alignment.bottomRight,
+                                    )
+                                  : null,
+                              color: selected ? null : Colors.transparent,
+                              borderRadius: BorderRadius.circular(22),
+                              border: Border.all(
+                                color: selected
+                                    ? Colors.white.withValues(alpha: 0.45)
+                                    : Colors.transparent,
+                              ),
+                              boxShadow: selected
+                                  ? [
+                                      BoxShadow(
+                                        color: cor.withValues(alpha: 0.28),
+                                        blurRadius: 14,
+                                        offset: const Offset(0, 6),
+                                      ),
+                                    ]
+                                  : null,
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  curve: Curves.easeOutCubic,
+                                  width: selected ? 30 : 28,
+                                  height: selected ? 30 : 28,
+                                  decoration: BoxDecoration(
+                                    color: selected
+                                        ? Colors.white.withValues(alpha: 0.18)
+                                        : cor.withValues(alpha: 0.10),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    item['icon'] as IconData,
+                                    size: selected ? 20 : 19,
+                                    color: selected ? Colors.white : cor.withValues(alpha: 0.92),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                AnimatedDefaultTextStyle(
+                                  duration: const Duration(milliseconds: 250),
+                                  curve: Curves.easeOutCubic,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: selected ? 11.2 : 10.4,
+                                    height: 1.0,
+                                    fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+                                    color: selected ? Colors.white : Colors.grey.shade800,
+                                    letterSpacing: selected ? 0.1 : 0,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  child: Text(item['label'] as String),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
           ),
         ),
       ),
@@ -409,83 +468,513 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
   Widget _buildConfirmacaoPage(ConvidadoModel? convidado) {
     if (convidado == null) return const Center(child: CircularProgressIndicator());
 
-    final confirmado = convidado.status == StatusConvidado.confirmado;
-    final naoVai = convidado.status == StatusConvidado.recusado;
+    // VERSÃO PREMIUM V2 - resposta sempre editável pelo convidado.
+    final primary = theme.primaryColor.value;
+    final statusAtual = _statusPresencaLocal ?? convidado.status;
+    final confirmado = statusAtual == StatusConvidado.confirmado;
+    final naoVai = statusAtual == StatusConvidado.recusado;
+    final aguardando = !confirmado && !naoVai;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16), // 🔹 Compacto
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            confirmado
-                ? Icons.check_circle_outline
-                : naoVai
-                    ? Icons.cancel_outlined
-                    : Icons.event_available,
-            size: 60, // 🔹 Ícone menor (era 90)
-            color: theme.primaryColor.value,
-          ),
-          const SizedBox(height: 12),
-          Text(
-            confirmado
-                ? '🎉 Confirmado'
-                : naoVai
-                    ? '😢 Não comparecerá'
-                    : 'Sua Presença',
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            confirmado
-                ? 'Aguardamos você com alegria! 💖'
-                : naoVai
-                    ? 'Sentiremos sua falta.'
-                    : 'Por favor, confirme se poderá participar.',
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          if (!confirmado && !naoVai)
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.check_circle_outline, color: Colors.white, size: 18),
-                    label: const Text('Confirmar Presença'),
-                    onPressed: () => convidadoController.atualizarStatusPresenca(
-                        convidado, StatusConvidado.confirmado),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: theme.primaryColor.value,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12), // 🔹 Botão mais fino
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                      elevation: 2,
-                      textStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton.icon(
-                    icon: const Icon(Icons.cancel_outlined, size: 18),
-                    label: const Text('Não Poderei Ir'),
-                    onPressed: () => convidadoController.atualizarStatusPresenca(
-                        convidado, StatusConvidado.recusado),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.grey.shade800,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      textStyle: GoogleFonts.poppins(fontSize: 13),
-                    ),
-                  ),
-                ),
+    final statusColor = confirmado
+        ? Colors.green.shade600
+        : naoVai
+            ? Colors.redAccent.shade400
+            : primary;
+
+    final statusIcon = confirmado
+        ? Icons.verified_rounded
+        : naoVai
+            ? Icons.event_busy_rounded
+            : Icons.favorite_border_rounded;
+
+    final statusLabel = confirmado
+        ? 'Presença confirmada'
+        : naoVai
+            ? 'Ausência informada'
+            : 'Aguardando resposta';
+
+    final statusMessage = confirmado
+        ? 'Que alegria! Sua presença está confirmada para este momento especial.'
+        : naoVai
+            ? 'Tudo certo. Se mudar de ideia, você pode confirmar presença agora.'
+            : 'Responda abaixo para ajudar o organizador a preparar tudo com carinho.';
+
+    return ListView(
+      key: ValueKey('confirmacao_premium_v2_${statusAtual.name}'),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 112),
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                Colors.white,
+                statusColor.withValues(alpha: 0.06),
               ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-        ],
+            borderRadius: BorderRadius.circular(30),
+            border: Border.all(color: statusColor.withValues(alpha: 0.16)),
+            boxShadow: [
+              BoxShadow(
+                color: statusColor.withValues(alpha: 0.12),
+                blurRadius: 28,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.14)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(statusIcon, size: 16, color: statusColor),
+                    const SizedBox(width: 6),
+                    Text(
+                      statusLabel,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        color: statusColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [
+                      statusColor.withValues(alpha: 0.98),
+                      statusColor.withValues(alpha: 0.62),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: statusColor.withValues(alpha: 0.28),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Icon(statusIcon, color: Colors.white, size: 42),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                aguardando ? 'Você vai participar?' : statusLabel,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 19,
+                  height: 1.15,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                statusMessage,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  height: 1.45,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.88),
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: primary.withValues(alpha: 0.10)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 34,
+                    height: 34,
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(Icons.touch_app_rounded, color: primary, size: 20),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Escolha sua resposta',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Você pode alterar sua decisão a qualquer momento. O organizador receberá a resposta mais recente.',
+                style: GoogleFonts.poppins(
+                  fontSize: 11.6,
+                  height: 1.4,
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 14),
+              _presencaChoiceTile(
+                selected: confirmado,
+                icon: Icons.celebration_rounded,
+                titulo: confirmado ? 'Estou confirmado' : 'Vou participar',
+                subtitulo: confirmado
+                    ? 'Sua presença já está registrada'
+                    : 'Confirmar minha presença no evento',
+                cor: Colors.green.shade600,
+                onTap: () {
+                  if (confirmado) {
+                    _mostrarRespostaJaSelecionada('Sua presença já está confirmada.');
+                    return;
+                  }
+
+                  _confirmarAlteracaoPresenca(
+                    convidado: convidado,
+                    novoStatus: StatusConvidado.confirmado,
+                    titulo: naoVai ? 'Mudar para confirmado?' : 'Confirmar presença?',
+                    mensagem: naoVai
+                        ? 'Sua resposta será atualizada de “não poderei ir” para “vou participar”.'
+                        : 'O organizador será avisado que você participará do evento.',
+                    textoBotao: naoVai ? 'Sim, vou participar' : 'Confirmar presença',
+                    icone: Icons.celebration_rounded,
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              _presencaChoiceTile(
+                selected: naoVai,
+                icon: Icons.event_busy_rounded,
+                titulo: naoVai ? 'Não vou participar' : 'Não poderei ir',
+                subtitulo: naoVai
+                    ? 'Sua ausência já está registrada'
+                    : 'Avisar que não conseguirá participar',
+                cor: Colors.redAccent.shade400,
+                onTap: () {
+                  if (naoVai) {
+                    _mostrarRespostaJaSelecionada('Sua ausência já está registrada.');
+                    return;
+                  }
+
+                  _confirmarAlteracaoPresenca(
+                    convidado: convidado,
+                    novoStatus: StatusConvidado.recusado,
+                    titulo: confirmado ? 'Cancelar presença?' : 'Informar ausência?',
+                    mensagem: confirmado
+                        ? 'Sua resposta será atualizada de “presença confirmada” para “não poderei ir”.'
+                        : 'O organizador será avisado que você não poderá participar.',
+                    textoBotao: confirmado ? 'Sim, cancelar presença' : 'Não poderei ir',
+                    icone: Icons.event_busy_rounded,
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            color: primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: primary.withValues(alpha: 0.10)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.sync_rounded, size: 18, color: primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  confirmado
+                      ? 'Mudou de ideia? Use “Não poderei ir” para cancelar sua presença.'
+                      : naoVai
+                          ? 'Mudou de ideia? Use “Vou participar” para confirmar sua presença.'
+                          : 'Sua resposta ajuda na organização da festa, lista de convidados e preparativos.',
+                  style: GoogleFonts.poppins(
+                    fontSize: 11.5,
+                    height: 1.35,
+                    color: Colors.grey.shade800,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _presencaChoiceTile({
+    required bool selected,
+    required IconData icon,
+    required String titulo,
+    required String subtitulo,
+    required Color cor,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.all(13),
+          decoration: BoxDecoration(
+            gradient: selected
+                ? LinearGradient(
+                    colors: [
+                      cor,
+                      cor.withValues(alpha: 0.78),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  )
+                : null,
+            color: selected ? null : cor.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: selected ? Colors.white.withValues(alpha: 0.36) : cor.withValues(alpha: 0.16),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: cor.withValues(alpha: selected ? 0.22 : 0.07),
+                blurRadius: selected ? 18 : 10,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 46,
+                height: 46,
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white.withValues(alpha: 0.18) : Colors.white,
+                  borderRadius: BorderRadius.circular(17),
+                  border: Border.all(
+                    color: selected
+                        ? Colors.white.withValues(alpha: 0.20)
+                        : cor.withValues(alpha: 0.10),
+                  ),
+                ),
+                child: Icon(icon, color: selected ? Colors.white : cor, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titulo,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13.4,
+                        fontWeight: FontWeight.w900,
+                        color: selected ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitulo,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11.2,
+                        height: 1.3,
+                        fontWeight: FontWeight.w600,
+                        color:
+                            selected ? Colors.white.withValues(alpha: 0.90) : Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 260),
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: selected ? Colors.white.withValues(alpha: 0.20) : Colors.white,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: selected ? Colors.white : cor.withValues(alpha: 0.20)),
+                ),
+                child: Icon(
+                  selected ? Icons.check_rounded : Icons.arrow_forward_rounded,
+                  color: selected ? Colors.white : cor,
+                  size: selected ? 18 : 16,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
+    );
+  }
+
+  void _mostrarRespostaJaSelecionada(String mensagem) {
+    Get.snackbar(
+      'Resposta atual',
+      mensagem,
+      snackPosition: SnackPosition.BOTTOM,
+      margin: const EdgeInsets.all(14),
+      borderRadius: 16,
+      backgroundColor: Colors.white,
+      colorText: Colors.black87,
+      duration: const Duration(seconds: 2),
+    );
+  }
+
+  void _salvarStatusPresenca(ConvidadoModel convidado, StatusConvidado novoStatus) {
+    setState(() => _statusPresencaLocal = novoStatus);
+    convidadoController.atualizarStatusPresenca(convidado, novoStatus);
+  }
+
+  void _confirmarAlteracaoPresenca({
+    required ConvidadoModel convidado,
+    required StatusConvidado novoStatus,
+    required String titulo,
+    required String mensagem,
+    required String textoBotao,
+    required IconData icone,
+  }) {
+    final isConfirmando = novoStatus == StatusConvidado.confirmado;
+    final actionColor = isConfirmando ? Colors.green.shade600 : Colors.redAccent.shade400;
+
+    Get.bottomSheet(
+      SafeArea(
+        child: Container(
+          margin: const EdgeInsets.all(12),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.14),
+                blurRadius: 28,
+                offset: const Offset(0, -8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 46,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              ),
+              const SizedBox(height: 18),
+              Container(
+                width: 62,
+                height: 62,
+                decoration: BoxDecoration(
+                  color: actionColor.withValues(alpha: 0.10),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icone, color: actionColor, size: 32),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                titulo,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                mensagem,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  height: 1.45,
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  icon: Icon(icone, size: 18, color: Colors.white),
+                  label: Text(textoBotao),
+                  onPressed: () {
+                    Get.back();
+                    _salvarStatusPresenca(convidado, novoStatus);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: actionColor,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
+                    textStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Get.back(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.grey.shade700,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    textStyle: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700),
+                  ),
+                  child: const Text('Manter resposta atual'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
     );
   }
 

@@ -120,19 +120,25 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: color.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              solicitacao.status.label.toUpperCase(),
-                              style: GoogleFonts.poppins(
-                                color: color,
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.5,
+                          ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 118),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                solicitacao.status.label.toUpperCase(),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  color: color,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
                           ),
@@ -208,34 +214,68 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                       const Divider(height: 20, thickness: 0.5, color: Color(0xFFEEEEEE)),
 
                       // Rodapé: Data + Valor total
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          final totalLabel = solicitacao.valorEstimadoTotal != null
+                              ? "Total: R\$ ${Biblioteca.formatarValorDecimal(solicitacao.valorEstimadoTotal)}"
+                              : "Aguardando";
+
+                          final dateInfo = Row(
                             children: [
-                              Icon(Icons.calendar_today_outlined,
-                                  size: 12, color: Colors.grey.shade400),
+                              Icon(
+                                Icons.calendar_today_outlined,
+                                size: 12,
+                                color: Colors.grey.shade400,
+                              ),
                               const SizedBox(width: 6),
-                              Text(
-                                dataFmt,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade500,
+                              Expanded(
+                                child: Text(
+                                  dataFmt,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade500,
+                                  ),
                                 ),
                               ),
                             ],
-                          ),
-                          Text(
-                            solicitacao.valorEstimadoTotal != null
-                                ? "Total: R\$ ${Biblioteca.formatarValorDecimal(solicitacao.valorEstimadoTotal)}"
-                                : "Aguardando",
+                          );
+
+                          final totalInfo = Text(
+                            totalLabel,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.end,
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
-                              color: color, // Usa a cor do status para dar peso ao valor final
+                              color: color,
                             ),
-                          ),
-                        ],
+                          );
+
+                          if (constraints.maxWidth < 285) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                dateInfo,
+                                const SizedBox(height: 6),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: totalInfo,
+                                ),
+                              ],
+                            );
+                          }
+
+                          return Row(
+                            children: [
+                              Expanded(child: dateInfo),
+                              const SizedBox(width: 8),
+                              Flexible(child: totalInfo),
+                            ],
+                          );
+                        },
                       ),
                     ],
                   ),

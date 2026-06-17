@@ -17,6 +17,10 @@ class RegisterController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final AppController appController = Get.find<AppController>();
+
+  static const String _logTag = '[RegisterController]';
+  static const String _versaoDiagnostico = 'v2026-06-16-convidado-sem-endereco-vinculo-convite';
+
   // 🔹 Categorias e subcategorias selecionadas
   RxList<FornecedorCategoriaModel> categoriasSelecionadas = <FornecedorCategoriaModel>[].obs;
 
@@ -28,7 +32,7 @@ class RegisterController extends GetxController {
   final RxMap<String, List<SubcategoriaServicoModel>> subcategoriasPorCategoria =
       <String, List<SubcategoriaServicoModel>>{}.obs;
 
-// 🆕 Nova lista de subcategorias selecionadas
+  // 🆕 Nova lista de subcategorias selecionadas
   final RxList<SubcategoriaServicoModel> subcategoriasSelecionadas =
       <SubcategoriaServicoModel>[].obs;
 
@@ -52,52 +56,144 @@ class RegisterController extends GetxController {
 
   final enderecoController = EnderecoSectionController().obs;
 
+  /// Permite que a tela force o cadastro como convidado quando o tipo não vier
+  /// corretamente em Get.arguments.
+  ///
+  /// Exemplo na tela de cadastro do convidado:
+  /// controller.configurarCadastroComoConvidado(true);
+  final cadastroConvidadoManual = false.obs;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _log('onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=${Get.arguments}');
+    _log('tipoCadastroInicial=$tipoCadastroAtual | cadastroComoConvidado=$cadastroComoConvidado');
+  }
+
+  /// Tipo esperado hoje:
+  /// O = Organizador
+  /// F = Fornecedor
+  /// C = Convidado
+  String get tipoCadastroAtual {
+    final args = Get.arguments;
+    final rawTipo = args is Map ? args['tipo'] : null;
+    final tipo = (rawTipo ?? 'O').toString().trim().toUpperCase();
+
+    if (tipo.isEmpty) return 'O';
+    return tipo;
+  }
+
+  bool get cadastroComoFornecedor => tipoCadastroAtual == 'F';
+
+  bool get cadastroComoConvidado {
+    final manual = cadastroConvidadoManual.value;
+    final porTipo = tipoCadastroAtual == 'C';
+    final porArgumentos = _argumentsIndicamConvidado(Get.arguments);
+    final porRota = _normalizeTexto(Get.currentRoute).contains('convidado');
+
+    final resultado = manual || porTipo || porArgumentos || porRota;
+
+    _log(
+      'cadastroComoConvidado => $resultado | '
+      'manual=$manual | porTipo=$porTipo | tipo=$tipoCadastroAtual | '
+      'porArgumentos=$porArgumentos | porRota=$porRota | route=${Get.currentRoute} | args=${Get.arguments}',
+    );
+
+    return resultado;
+  }
+
+  /// Organizador e fornecedor precisam informar endereço.
+  /// Convidado não precisa informar endereço.
+  bool get enderecoObrigatorio => !cadastroComoConvidado;
+
+  void configurarCadastroComoConvidado(bool value) {
+    cadastroConvidadoManual.value = value;
+    _log('configurarCadastroComoConvidado($value)');
+  }
+
   Future<void> registrarUsuario() async {
-    EnderecoUsuarioModel endereco = enderecoController.value.toModel('');
-    if (!_validarCamposFornecedor()) return;
+    _log('===== INÍCIO registrarUsuario $_versaoDiagnostico =====');
+    _log('route=${Get.currentRoute} | args=${Get.arguments}');
+
+    final tipo = tipoCadastroAtual;
+    final cadastroConvidado = cadastroComoConvidado;
+
+    // Se a tela/argumentos indicarem cadastro de convidado, o tipo efetivo deve
+    // ser C mesmo que Get.arguments['tipo'] não tenha vindo corretamente.
+    final tipoEfetivo = cadastroConvidado ? 'C' : tipo;
+    final tokenConvite = _tokenConviteEntrada();
+
+    final enderecoAntesDoUid = enderecoController.value.toModel('');
+    final enderecoFoiInformado = _enderecoTemAlgumCampoPreenchido(enderecoAntesDoUid);
+    final deveSalvarEndereco = !cadastroConvidado || enderecoFoiInformado;
+
+    _log(
+      'Decisão inicial: tipo=$tipo | tipoEfetivo=$tipoEfetivo | cadastroConvidado=$cadastroConvidado | '
+      'enderecoObrigatorio=$enderecoObrigatorio | enderecoFoiInformado=$enderecoFoiInformado | '
+      "deveSalvarEndereco=$deveSalvarEndereco | tokenConvite=${tokenConvite ?? 'sem token'}",
+    );
+    _logEndereco(enderecoAntesDoUid, origem: 'registrarUsuario antes da validação');
+
+    if (!_validarCamposCadastro()) {
+      _log('BLOQUEADO: _validarCamposCadastro retornou false.');
+      return;
+    }
 
     try {
       carregando.value = true;
+
       final credencial = await _auth.createUserWithEmailAndPassword(
         email: email.value.trim(),
         password: senha.value.trim(),
       );
 
       final uid = credencial.user!.uid;
+      final endereco = enderecoAntesDoUid.copyWith(idUsuario: uid);
 
-      endereco = endereco.copyWith(idUsuario: uid);
-      final tipo = (Get.arguments?['tipo'] ?? 'O') as String;
+      _log('Usuário criado no FirebaseAuth: uid=$uid | tipo=$tipo | tipoEfetivo=$tipoEfetivo');
+      _logEndereco(endereco, origem: 'registrarUsuario após uid');
 
       final novoUsuario = UsuarioModel(
         idUsuario: uid,
-        nome: nome.value,
-        email: email.value,
-        tipo: tipo,
+        nome: nome.value.trim(),
+        email: email.value.trim(),
+        tipo: tipoEfetivo,
         ativo: true,
-        cidade: endereco.nomeCidade,
-        uf: endereco.uf,
+        cidade: _texto(endereco.nomeCidade),
+        uf: _texto(endereco.uf),
         dataCadastro: DateTime.now(),
       );
 
-      await _db.collection('usuarios').doc(uid).set(novoUsuario.toMap());
-      await _db
-          .collection('usuarios')
-          .doc(uid)
-          .collection('enderecos')
-          .doc(endereco.id)
-          .set(endereco.toMap());
+      final usuarioMap = novoUsuario.toMap();
+      usuarioMap['email_normalizado'] = _normalizarEmail(email.value);
+      usuarioMap['tipo'] = tipoEfetivo;
 
-      if (tipo == 'F') {
+      await _db.collection('usuarios').doc(uid).set(usuarioMap);
+      _log('Documento usuarios/$uid salvo com tipo=$tipoEfetivo.');
+
+      if (deveSalvarEndereco) {
+        await _db
+            .collection('usuarios')
+            .doc(uid)
+            .collection('enderecos')
+            .doc(endereco.id)
+            .set(endereco.toMap());
+        _log('Endereço salvo em usuarios/$uid/enderecos/${endereco.id}.');
+      } else {
+        _log('Endereço não salvo: cadastro de convidado sem endereço informado.');
+      }
+
+      if (tipoEfetivo == 'F') {
         final novoFornecedor = FornecedorModel(
           idFornecedor: uid,
           idUsuario: uid,
-          razaoSocial: razaoSocial.value,
-          telefone: telefone.value,
-          email: email.value,
+          razaoSocial: razaoSocial.value.trim(),
+          telefone: telefone.value.trim(),
+          email: email.value.trim(),
           aptoParaOperar: false,
           ativo: true,
           bannerUrl: bannerUrl,
-          cnpj: cnpj.value,
+          cnpj: cnpj.value.trim(),
           descricao: '',
           dataCadastro: DateTime.now(),
           tipoEventoIds: tipoEventoIds.toList(growable: false),
@@ -106,13 +202,16 @@ class RegisterController extends GetxController {
         );
 
         await _db.collection('fornecedor').doc(uid).set(novoFornecedor.toMap());
+        _log('Documento fornecedor/$uid salvo.');
 
         for (final cat in categoriasSelecionadas) {
           final catUpdate = cat.copyWith(idFornecedor: uid);
           await _db.collection('fornecedor_categoria').add(catUpdate.toMap());
         }
+        _log('Categorias vinculadas ao fornecedor: ${categoriasSelecionadas.length}.');
+
         for (final serv in servicosSelecionados) {
-          FornecedorProdutoServicoModel model = FornecedorProdutoServicoModel(
+          final model = FornecedorProdutoServicoModel(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
             idProdutoServico: serv.id,
             idFornecedor: uid,
@@ -125,20 +224,33 @@ class RegisterController extends GetxController {
           final vinculoId = '${model.idFornecedor}_${model.idProdutoServico}';
           await _db.collection('fornecedor_servico').doc(vinculoId).set(model.toMap());
         }
-      } else if (tipo == 'C') {
-        Get.offAllNamed('/convidadosPage');
-      } else {
-        Get.offAllNamed('/welcome');
+        _log('Serviços vinculados ao fornecedor: ${servicosSelecionados.length}.');
       }
 
-      Get.snackbar('Sucesso', 'Usuário cadastrado com sucesso!',
-          backgroundColor: Colors.green.shade700, colorText: Colors.white);
+      Get.snackbar(
+        'Sucesso',
+        'Usuário cadastrado com sucesso!',
+        backgroundColor: Colors.green.shade700,
+        colorText: Colors.white,
+      );
+
+      if (tipoEfetivo == 'C') {
+        _log('Cadastro de convidado concluído. Vinculando convites pendentes e redirecionando.');
+        await appController.redirecionarConvidadoAposLogin(novoUsuario, token: tokenConvite);
+      } else {
+        _log('Navegando para /welcome.');
+        Get.offAllNamed('/welcome');
+      }
     } on FirebaseAuthException catch (e) {
+      _log('FirebaseAuthException: code=${e.code} | message=${e.message}');
       EasyLoading.showError(_traduzErro(e.code));
-    } catch (e) {
+    } catch (e, s) {
+      _log('Erro ao salvar: $e');
+      _log('StackTrace: $s');
       EasyLoading.showError('Erro ao salvar: $e');
     } finally {
       carregando.value = false;
+      _log('===== FIM registrarUsuario =====');
     }
   }
 
@@ -251,7 +363,7 @@ class RegisterController extends GetxController {
         .toList(growable: false);
   }
 
-// 🔹 Carrega todas as subcategorias de uma categoria
+  // 🔹 Carrega todas as subcategorias de uma categoria
   Future<void> carregarSubcategoriasPorCategoria(String idCategoria) async {
     try {
       carregando.value = true;
@@ -282,23 +394,34 @@ class RegisterController extends GetxController {
     subcategoriasPorCategoria.clear();
   }
 
-  bool _validarCamposFornecedor() {
-    final tipo = (Get.arguments?['tipo'] ?? 'O') as String;
+  bool _validarCamposCadastro() {
+    final tipoOriginal = tipoCadastroAtual;
+    final cadastroConvidado = cadastroComoConvidado;
+    final tipo = cadastroConvidado ? 'C' : tipoOriginal;
+
+    _log('===== INÍCIO _validarCamposCadastro =====');
+    _log(
+      'tipoOriginal=$tipoOriginal | tipoValidacao=$tipo | cadastroConvidado=$cadastroConvidado | '
+      'enderecoObrigatorio=$enderecoObrigatorio | nome="${nome.value}" | email="${email.value}"',
+    );
 
     // ------------------------------
     // 🔹 Validações comuns
     // ------------------------------
     if (nome.value.trim().isEmpty) {
+      _log('FALHA validação: nome vazio.');
       _showError('Informe seu nome completo');
       return false;
     }
 
     if (!EmailValidator.validate(email.value.trim())) {
+      _log('FALHA validação: e-mail inválido.');
       _showError('Digite um e-mail válido (ex: contato@email.com)');
       return false;
     }
 
     if (senha.value.trim().length < 6) {
+      _log('FALHA validação: senha com menos de 6 caracteres.');
       _showError('A senha deve ter pelo menos 6 caracteres');
       return false;
     }
@@ -308,36 +431,43 @@ class RegisterController extends GetxController {
     // ------------------------------
     if (tipo == 'F') {
       if (razaoSocial.value.trim().isEmpty) {
+        _log('FALHA fornecedor: razão social vazia.');
         _showError('Informe a razão social da sua empresa');
         return false;
       }
 
       if (telefone.value.trim().length < 8) {
+        _log('FALHA fornecedor: telefone inválido.');
         _showError('Informe um telefone de contato válido');
         return false;
       }
 
       if (cnpj.value.trim().isEmpty) {
+        _log('FALHA fornecedor: CNPJ vazio.');
         _showError('Informe o CNPJ da sua empresa');
         return false;
       }
 
       if (!BRValidators.validateCNPJ(cnpj.value.trim())) {
+        _log('FALHA fornecedor: CNPJ inválido.');
         _showError('CNPJ inválido. Verifique e tente novamente.');
         return false;
       }
 
       if (categoriasSelecionadas.isEmpty) {
+        _log('FALHA fornecedor: nenhuma categoria selecionada.');
         _showError('Selecione pelo menos uma categoria de atuação');
         return false;
       }
 
       if (servicosSelecionados.isEmpty) {
+        _log('FALHA fornecedor: nenhum serviço selecionado.');
         _showError('Selecione pelo menos um serviço oferecido');
         return false;
       }
 
       if (tipoEventoIds.isEmpty) {
+        _log('FALHA fornecedor: nenhum tipo de evento selecionado.');
         _showError('Selecione pelo menos um tipo de evento atendido');
         return false;
       }
@@ -347,32 +477,165 @@ class RegisterController extends GetxController {
     // 🔹 Endereço
     // ------------------------------
     final endereco = enderecoController.value.toModel('');
-    if (endereco.cep.isEmpty) {
+    final enderecoFoiInformado = _enderecoTemAlgumCampoPreenchido(endereco);
+    final deveValidarEndereco = !cadastroConvidado || enderecoFoiInformado;
+
+    _logEndereco(endereco, origem: '_validarCamposCadastro');
+    _log(
+      'Decisão endereço na validação: cadastroConvidado=$cadastroConvidado | '
+      'enderecoFoiInformado=$enderecoFoiInformado | deveValidarEndereco=$deveValidarEndereco',
+    );
+
+    // Organizador e fornecedor precisam informar endereço.
+    // Convidado só precisa validar endereço se começou a preencher algum campo.
+    if (deveValidarEndereco && !_validarCamposEndereco(endereco)) {
+      _log('BLOQUEADO: _validarCamposEndereco retornou false.');
+      return false;
+    }
+
+    if (!deveValidarEndereco) {
+      _log('Endereço ignorado na validação: convidado sem endereço preenchido.');
+    }
+
+    _log('Cadastro validado com sucesso.');
+    return true;
+  }
+
+  // Mantido para compatibilidade caso alguma tela/teste ainda chame o nome antigo.
+  bool _validarCamposFornecedor() => _validarCamposCadastro();
+
+  bool _validarCamposEndereco(EnderecoUsuarioModel endereco) {
+    if (endereco.cep.trim().isEmpty) {
+      _log('FALHA endereço: CEP vazio.');
       _showError('Informe o CEP');
       return false;
     }
-    if (endereco.logradouro.isEmpty) {
+    if (endereco.logradouro.trim().isEmpty) {
+      _log('FALHA endereço: logradouro vazio.');
       _showError('Informe o endereço completo');
       return false;
     }
-    if (endereco.numero.isEmpty) {
-      _showError('Informe o número do enredeço');
+    if (endereco.numero.trim().isEmpty) {
+      _log('FALHA endereço: número vazio.');
+      _showError('Informe o número do endereço');
       return false;
     }
-    if (endereco.bairro == null || endereco.bairro!.isEmpty) {
+    if (endereco.bairro == null || endereco.bairro!.trim().isEmpty) {
+      _log('FALHA endereço: bairro vazio.');
       _showError('Informe o bairro');
       return false;
     }
-    if (endereco.uf == null || endereco.uf!.isEmpty) {
+    if (endereco.uf == null || endereco.uf!.trim().isEmpty) {
+      _log('FALHA endereço: UF vazia.');
       _showError('Informe o estado (UF)');
       return false;
     }
-    if (endereco.nomeCidade == null || endereco.nomeCidade!.isEmpty) {
+    if (endereco.nomeCidade == null || endereco.nomeCidade!.trim().isEmpty) {
+      _log('FALHA endereço: cidade vazia.');
       _showError('Informe a cidade');
       return false;
     }
 
+    _log('Endereço validado com sucesso.');
     return true;
+  }
+
+  bool _enderecoTemAlgumCampoPreenchido(EnderecoUsuarioModel endereco) {
+    // Não considera UF sozinha, porque alguns controllers iniciam com "PR" por padrão.
+    return endereco.cep.trim().isNotEmpty ||
+        endereco.logradouro.trim().isNotEmpty ||
+        endereco.numero.trim().isNotEmpty ||
+        (endereco.complemento?.trim().isNotEmpty ?? false) ||
+        (endereco.bairro?.trim().isNotEmpty ?? false) ||
+        (endereco.nomeCidade?.trim().isNotEmpty ?? false);
+  }
+
+  bool _argumentsIndicamConvidado(dynamic args) {
+    if (args == null) return false;
+
+    if (args is Map) {
+      final valores = <dynamic>[
+        args['tipo'],
+        args['isConvidado'],
+        args['ehConvidado'],
+        args['convidado'],
+        args['cadastroConvidado'],
+        args['cadastroComoConvidado'],
+        args['tipoCadastro'],
+        args['origemCadastro'],
+        args['perfil'],
+        args['tipoUsuario'],
+      ];
+
+      final resultado = valores.any(_valorRepresentaConvidado);
+      _log('_argumentsIndicamConvidado=$resultado | valores=$valores');
+      return resultado;
+    }
+
+    final resultado = _valorRepresentaConvidado(args);
+    _log('_argumentsIndicamConvidado=$resultado | valor=$args');
+    return resultado;
+  }
+
+  bool _valorRepresentaConvidado(dynamic valor) {
+    if (valor == null) return false;
+    if (valor is bool) return valor;
+
+    final texto = _normalizeTexto(valor.toString());
+    return texto == 'c' ||
+        texto == 'convidado' ||
+        texto == 'guest' ||
+        texto == 'area convidado' ||
+        texto.contains('convidado') ||
+        texto.contains('guest');
+  }
+
+  String _normalizeTexto(String texto) {
+    return texto.replaceAll(RegExp(r'[^\w\s]'), '').trim().toLowerCase();
+  }
+
+  String _texto(String? value) => value?.trim() ?? '';
+
+  String _normalizarEmail(String value) => value.trim().toLowerCase();
+
+  String? _tokenConviteEntrada() {
+    final args = Get.arguments;
+
+    if (args is Map) {
+      final raw = args['conviteToken'] ??
+          args['tokenConvite'] ??
+          args['token'] ??
+          args['convite_token'] ??
+          args['token_convite'];
+      final tokenArgs = raw?.toString().trim() ?? '';
+      if (tokenArgs.isNotEmpty) return tokenArgs;
+    }
+
+    final tokenApp = appController.conviteToken.value.trim();
+    if (tokenApp.isNotEmpty) return tokenApp;
+
+    final tokenUrl = appController.obterTokenConvite()?.trim() ?? '';
+    if (tokenUrl.isNotEmpty) return tokenUrl;
+
+    return null;
+  }
+
+  void _logEndereco(EnderecoUsuarioModel endereco, {required String origem}) {
+    _log(
+      'Endereço [$origem]: '
+      'id="${endereco.id}" | '
+      'cep="${endereco.cep}" | '
+      'logradouro="${endereco.logradouro}" | '
+      'numero="${endereco.numero}" | '
+      'bairro="${endereco.bairro}" | '
+      'cidade="${endereco.nomeCidade}" | '
+      'uf="${endereco.uf}" | '
+      'complemento="${endereco.complemento}"',
+    );
+  }
+
+  void _log(String mensagem) {
+    debugPrint('$_logTag $mensagem');
   }
 
   /// 🔹 Exibe mensagens elegantes de erro

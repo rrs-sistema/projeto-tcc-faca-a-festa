@@ -682,10 +682,46 @@ Color _colorFromHex(String? hex, {required Color fallback}) {
 }
 
 IconData _iconFromString(String? value) {
-  final codePoint = int.tryParse(value ?? '');
-  return codePoint == null || codePoint == 0
-      ? Icons.restaurant_menu_rounded
-      : IconData(codePoint, fontFamily: 'MaterialIcons');
+  final iconKey = (value ?? '').trim().toLowerCase();
+
+  switch (iconKey) {
+    case 'bolo':
+    case 'cake':
+      return Icons.cake_rounded;
+
+    case 'bebida':
+    case 'bebidas':
+    case 'drink':
+      return Icons.local_drink_rounded;
+
+    case 'docinho':
+    case 'docinhos':
+    case 'sobremesa':
+    case 'sobremesas':
+      return Icons.emoji_food_beverage_rounded;
+
+    case 'salgado':
+    case 'salgados':
+    case 'salgadinho':
+    case 'salgadinhos':
+      return Icons.fastfood_rounded;
+
+    case 'almoco':
+    case 'almoço':
+    case 'jantar':
+    case 'refeicao':
+    case 'refeição':
+      return Icons.dinner_dining_rounded;
+
+    case 'buffet':
+    case 'cardapio':
+    case 'cardápio':
+    case 'menu':
+      return Icons.restaurant_menu_rounded;
+
+    default:
+      return Icons.restaurant_menu_rounded;
+  }
 }
 
 String _itensIncluidosLabel(int q) => q == 1 ? '1 item' : '$q itens';

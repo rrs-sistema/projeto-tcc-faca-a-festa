@@ -13,11 +13,13 @@ enum TipoVisualizacao { semana, mes }
 class FinanceiroSection extends StatelessWidget {
   const FinanceiroSection({super.key});
 
+  static final Rx<TipoVisualizacao> _tipoVisualizacao = TipoVisualizacao.semana.obs;
+
   @override
   Widget build(BuildContext context) {
     final orcamentoController = Get.find<OrcamentoController>();
     final cotacaoController = Get.find<CotacaoController>();
-    final Rx<TipoVisualizacao> tipoVisualizacao = TipoVisualizacao.semana.obs;
+    final tipoVisualizacao = _tipoVisualizacao;
 
     return Obx(() {
       final orcamentos = orcamentoController.orcamentos;
@@ -359,9 +361,10 @@ class FinanceiroSection extends StatelessWidget {
   }
 
   Widget _listaCategorias(Map<String, double> categorias) {
-    if (categorias.isEmpty)
+    if (categorias.isEmpty) {
       return Text("Não há faturamento categorizado.",
           style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13));
+    }
     return Column(
       children: categorias.entries.map((e) {
         final total = categorias.values.fold(0.0, (soma, v) => soma + v);
@@ -446,7 +449,9 @@ class FinanceiroSection extends StatelessWidget {
   }
 
   List<OrcamentoModel> _pegarContratosRecentes(List<OrcamentoModel> orcs) {
-    final fechados = orcs.where((o) => o.status == StatusOrcamento.fechado).toList()
+    final fechados = orcs
+        .where((o) => o.status == StatusOrcamento.fechado && o.dataFechamento != null)
+        .toList()
       ..sort((a, b) => b.dataFechamento!.compareTo(a.dataFechamento!));
     return fechados.take(4).toList();
   }

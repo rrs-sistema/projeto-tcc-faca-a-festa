@@ -3,7 +3,6 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:ui';
 
 import './../cadastro/fornecedor/territorio/admin_territorio_screen.dart';
 import './../cadastro/fornecedor/fornecedores_admin_list_screen.dart';
