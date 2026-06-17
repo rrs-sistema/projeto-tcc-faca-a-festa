@@ -22,14 +22,60 @@ class FornecedorHomeScreen extends StatefulWidget {
 class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
   final FornecedorController controller = Get.find<FornecedorController>();
   final GlobalKey _cotacoesKey = GlobalKey();
+  final GlobalKey _catalogoKey = GlobalKey();
+  final GlobalKey _avaliacoesKey = GlobalKey();
+  final GlobalKey _insightsKey = GlobalKey();
 
   Future<void> _scrollToCotacoes() async {
-    final contextCotacoes = _cotacoesKey.currentContext;
+    await _scrollToSection(
+      key: _cotacoesKey,
+      title: 'Cotações inteligentes',
+      fallbackMessage: 'Não foi possível localizar a seção de cotações agora.',
+    );
+  }
 
-    if (contextCotacoes == null) {
+  Future<void> _scrollToCatalogo() async {
+    await _scrollToSection(
+      key: _catalogoKey,
+      title: 'Catálogo',
+      fallbackMessage: 'Não foi possível localizar a seção de catálogo agora.',
+    );
+  }
+
+  Future<void> _scrollToAvaliacoes() async {
+    await _scrollToSection(
+      key: _avaliacoesKey,
+      title: 'Avaliações',
+      fallbackMessage: 'Não foi possível localizar a seção de avaliações agora.',
+    );
+  }
+
+  Future<void> _scrollToInsights() async {
+    await _scrollToSection(
+      key: _insightsKey,
+      title: 'Insights',
+      fallbackMessage: 'Não foi possível localizar a seção de insights agora.',
+    );
+  }
+
+  Future<void> _scrollToSection({
+    required GlobalKey key,
+    required String title,
+    required String fallbackMessage,
+  }) async {
+    BuildContext? sectionContext = key.currentContext;
+
+    // Em algumas reconstruções do Obx, a key pode ficar disponível apenas
+    // no próximo frame. Esse pequeno retry evita cair no snackbar sem tentar rolar.
+    if (sectionContext == null) {
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+      sectionContext = key.currentContext;
+    }
+
+    if (sectionContext == null) {
       Get.snackbar(
-        'Cotações inteligentes',
-        'Abra a seção Cotações para responder com segurança.',
+        title,
+        fallbackMessage,
         backgroundColor: const Color(0xFF111827),
         colorText: Colors.white,
       );
@@ -37,10 +83,11 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
     }
 
     await Scrollable.ensureVisible(
-      contextCotacoes,
-      duration: const Duration(milliseconds: 520),
+      sectionContext,
+      duration: const Duration(milliseconds: 560),
       curve: Curves.easeOutCubic,
-      alignment: 0.06,
+      alignment: 0.04,
+      alignmentPolicy: ScrollPositionAlignmentPolicy.explicit,
     );
   }
 
@@ -103,6 +150,9 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                                   if (fornecedor != null && apto) ...[
                                     _ProximaAcaoInteligenteSection(
                                       onAbrirCotacoes: _scrollToCotacoes,
+                                      onAbrirCatalogo: _scrollToCatalogo,
+                                      onAbrirAvaliacoes: _scrollToAvaliacoes,
+                                      onAbrirInsights: _scrollToInsights,
                                     ),
                                     const SizedBox(height: 12),
                                     const ResumoSection(),
@@ -112,11 +162,20 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                                       child: const SolicitacoesSection(),
                                     ),
                                     const SizedBox(height: 12),
-                                    const PerfilSection(),
+                                    Container(
+                                      key: _catalogoKey,
+                                      child: const PerfilSection(),
+                                    ),
                                     const SizedBox(height: 12),
-                                    const AvaliacoesSection(),
+                                    Container(
+                                      key: _avaliacoesKey,
+                                      child: const AvaliacoesSection(),
+                                    ),
                                     const SizedBox(height: 12),
-                                    const InsightsSection(),
+                                    Container(
+                                      key: _insightsKey,
+                                      child: const InsightsSection(),
+                                    ),
                                   ] else ...[
                                     _AguardandoAprovacaoCard(
                                       carregando: controller.carregando.value,
@@ -143,8 +202,16 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
 
 class _ProximaAcaoInteligenteSection extends StatelessWidget {
   final VoidCallback onAbrirCotacoes;
+  final VoidCallback onAbrirCatalogo;
+  final VoidCallback onAbrirAvaliacoes;
+  final VoidCallback onAbrirInsights;
 
-  const _ProximaAcaoInteligenteSection({required this.onAbrirCotacoes});
+  const _ProximaAcaoInteligenteSection({
+    required this.onAbrirCotacoes,
+    required this.onAbrirCatalogo,
+    required this.onAbrirAvaliacoes,
+    required this.onAbrirInsights,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -231,20 +298,10 @@ class _ProximaAcaoInteligenteSection extends StatelessWidget {
         onAbrirCotacoes();
         return;
       case 'melhorar_catalogo':
-        Get.snackbar(
-          'Catálogo',
-          'Role até Catálogo para ver os serviços que precisam de foto, preço ou descrição.',
-          backgroundColor: const Color(0xFF111827),
-          colorText: Colors.white,
-        );
+        onAbrirCatalogo();
         return;
       case 'pedir_avaliacao':
-        Get.snackbar(
-          'Avaliações',
-          'Use a seção Avaliações para acompanhar sua reputação e pontos de melhoria.',
-          backgroundColor: const Color(0xFF111827),
-          colorText: Colors.white,
-        );
+        onAbrirAvaliacoes();
         return;
       case 'revisar_mensagens':
         Get.to(() => FornecedorMensagensPage());
@@ -365,7 +422,7 @@ class _PremiumActionShell extends StatelessWidget {
 
           final button = ElevatedButton.icon(
             onPressed: onPressed,
-            icon: const Icon(Icons.arrow_outward_outlined, color: Colors.white, size: 16),
+            icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
             label: Text(
               actionLabel,
               overflow: TextOverflow.ellipsis,
