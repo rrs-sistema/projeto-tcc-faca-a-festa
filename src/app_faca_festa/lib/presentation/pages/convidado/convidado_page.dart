@@ -8,6 +8,7 @@ import './../../../controllers/convidado/grupo_convidado_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './components/abrir_adicionar_grupo_bottom_sheet.dart';
 import './../../../controllers/evento_controller.dart';
+import './../../../domain/entities/evento.dart';
 import './../../../data/models/model.dart';
 import './../../../controllers/app_controller.dart';
 import './area/lista_convidados_screen.dart';
@@ -44,7 +45,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
 
     _iniciarEscutaDoEventoAtual();
 
-    _eventoWorker = ever<EventoModel?>(
+    _eventoWorker = ever<Evento?>(
       eventoController.eventoAtual,
       (evento) {
         if (evento != null && evento.idEvento.trim().isNotEmpty) {
@@ -62,7 +63,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
   }
 
   void _iniciarEscutaDoEventoAtual() {
-    final evento = eventoController.eventoAtual.value;
+    final evento = eventoController.eventoAtualEntidade;
 
     if (evento == null || evento.idEvento.trim().isEmpty) {
       return;
@@ -265,7 +266,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
   }
 
   void _abrirNovoGrupo() {
-    final evento = eventoController.eventoAtual.value;
+    final evento = eventoController.eventoAtualEntidade;
     if (evento == null || evento.idEvento.trim().isEmpty) {
       _mostrarEventoNaoEncontrado();
       return;
@@ -279,7 +280,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
   }
 
   void _abrirNovoCardapio() {
-    final evento = eventoController.eventoAtual.value;
+    final evento = eventoController.eventoAtualEntidade;
     if (evento == null || evento.idEvento.trim().isEmpty) {
       _mostrarEventoNaoEncontrado();
       return;

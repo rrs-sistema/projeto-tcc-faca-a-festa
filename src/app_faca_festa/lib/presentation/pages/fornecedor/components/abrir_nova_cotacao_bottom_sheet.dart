@@ -90,7 +90,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
   // ==========================================================
 
   Future<void> _enviarCotacao() async {
-    final evento = eventoCtrl.eventoAtual.value;
+    final evento = eventoCtrl.eventoAtualEntidade;
     final usuario = appCtrl.usuarioLogado.value;
     final db = FirebaseFirestore.instance;
 

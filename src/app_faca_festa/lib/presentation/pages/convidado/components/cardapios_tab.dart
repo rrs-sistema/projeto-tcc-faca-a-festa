@@ -27,7 +27,9 @@ class CardapiosTab extends StatelessWidget {
         if (controller.carregando.value) {
           return Center(child: CircularProgressIndicator(color: primary));
         }
-        if (controller.cardapios.isEmpty) return _CardapioEmptyState(primary: primary);
+        if (controller.cardapios.isEmpty) {
+          return _CardapioEmptyState(primary: primary);
+        }
 
         return RefreshIndicator(
           color: primary,
@@ -48,7 +50,8 @@ class CardapiosTab extends StatelessWidget {
                   subtitle: 'Organize por categoria.',
                   color: primary),
               const SizedBox(height: 10),
-              ...controller.cardapios.map((cardapio) => _CardapioCategoriaCard(cardapio: cardapio)),
+              ...controller.cardapios.map(
+                  (cardapio) => _CardapioCategoriaCard(cardapio: cardapio)),
               const SizedBox(height: 10),
               _ResumoCardapioResumo(controller: controller),
               const SizedBox(height: 16),
@@ -76,7 +79,10 @@ class _CardapioEmptyState extends StatelessWidget {
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(color: primary.withValues(alpha: 0.10)),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 10)]),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.04), blurRadius: 10)
+              ]),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -86,13 +92,17 @@ class _CardapioEmptyState extends StatelessWidget {
                   decoration: BoxDecoration(
                       color: primary.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(16)),
-                  child: Icon(Icons.restaurant_menu_rounded, color: primary, size: 26)),
+                  child: Icon(Icons.restaurant_menu_rounded,
+                      color: primary, size: 26)),
               const SizedBox(height: 12),
               Text('Nenhum cardápio',
                   style: GoogleFonts.poppins(
-                      fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF111827))),
               Text('Monte categorias para organizar o evento.',
-                  style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 12),
+                  style: GoogleFonts.poppins(
+                      color: const Color(0xFF64748B), fontSize: 12),
                   textAlign: TextAlign.center),
             ],
           ),
@@ -116,8 +126,10 @@ class _CardapioHeader extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-          gradient: LinearGradient(
-              colors: [primary.withValues(alpha: 0.96), primary.withValues(alpha: 0.76)]),
+          gradient: LinearGradient(colors: [
+            primary.withValues(alpha: 0.96),
+            primary.withValues(alpha: 0.76)
+          ]),
           borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -130,7 +142,8 @@ class _CardapioHeader extends StatelessWidget {
                   decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(12)),
-                  child: const Icon(Icons.room_service_rounded, color: Colors.white, size: 22)),
+                  child: const Icon(Icons.room_service_rounded,
+                      color: Colors.white, size: 22)),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -138,10 +151,13 @@ class _CardapioHeader extends StatelessWidget {
                   children: [
                     Text('Cardápio do evento',
                         style: GoogleFonts.poppins(
-                            color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800)),
                     Text('Controle os itens servidos.',
                         style: GoogleFonts.poppins(
-                            color: Colors.white.withValues(alpha: 0.88), fontSize: 11)),
+                            color: Colors.white.withValues(alpha: 0.88),
+                            fontSize: 11)),
                   ],
                 ),
               ),
@@ -206,7 +222,8 @@ class _CardapioQuickStats extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: cards
-              .map((card) => SizedBox(width: itemWidth, child: _StatMiniCard(data: card)))
+              .map((card) =>
+                  SizedBox(width: itemWidth, child: _StatMiniCard(data: card)))
               .toList());
     });
   }
@@ -234,15 +251,20 @@ class _StatMiniCard extends StatelessWidget {
               child: Icon(data.icon, color: data.color, size: 18)),
           const SizedBox(width: 8),
           Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(data.value,
-                style: GoogleFonts.poppins(
-                    fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
-            Text(data.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF64748B)))
-          ])),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(data.value,
+                    style: GoogleFonts.poppins(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827))),
+                Text(data.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                        fontSize: 10, color: const Color(0xFF64748B)))
+              ])),
         ],
       ),
     );
@@ -255,7 +277,10 @@ class _SectionHeader extends StatelessWidget {
   final String subtitle;
   final Color color;
   const _SectionHeader(
-      {required this.icon, required this.title, required this.subtitle, required this.color});
+      {required this.icon,
+      required this.title,
+      required this.subtitle,
+      required this.color});
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -264,15 +289,21 @@ class _SectionHeader extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10)),
+                color: color.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: color, size: 18)),
         const SizedBox(width: 8),
         Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title,
               style: GoogleFonts.poppins(
-                  color: const Color(0xFF111827), fontSize: 14, fontWeight: FontWeight.w800)),
-          Text(subtitle, style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 10))
+                  color: const Color(0xFF111827),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800)),
+          Text(subtitle,
+              style: GoogleFonts.poppins(
+                  color: const Color(0xFF64748B), fontSize: 10))
         ])),
       ],
     );
@@ -280,7 +311,7 @@ class _SectionHeader extends StatelessWidget {
 }
 
 class _CardapioCategoriaCard extends StatelessWidget {
-  final CardapioModel cardapio;
+  final Cardapio cardapio;
   const _CardapioCategoriaCard({required this.cardapio});
 
   @override
@@ -292,7 +323,8 @@ class _CardapioCategoriaCard extends StatelessWidget {
       final itens = controller.itensDoCardapio(cardapio.idCardapio);
       final totalItens = controller.totalItensDoCardapio(cardapio.idCardapio);
       final itensConfirmados = itens.where((i) => i.confirmado).length;
-      final color = _colorFromHex(cardapio.corHex, fallback: theme.primaryColor.value);
+      final color =
+          _colorFromHex(cardapio.corHex, fallback: theme.primaryColor.value);
       final icon = _iconFromString(cardapio.icone);
 
       return Container(
@@ -310,13 +342,16 @@ class _CardapioCategoriaCard extends StatelessWidget {
                 height: 36,
                 width: 36,
                 decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(12)),
+                    color: color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(12)),
                 child: Icon(icon, color: color, size: 18)),
             title: Text(cardapio.titulo,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w800, fontSize: 13, color: const Color(0xFF111827))),
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                    color: const Color(0xFF111827))),
             subtitle: Wrap(spacing: 6, runSpacing: 4, children: [
               _InfoChip(
                   icon: Icons.format_list_bulleted_rounded,
@@ -337,31 +372,38 @@ class _CardapioCategoriaCard extends StatelessWidget {
                         context, cardapio.idEvento, cardapio.idCardapio)),
                 PopupMenuButton<String>(
                   color: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                   onSelected: (v) {
                     if (v == 'edit') abrirEditarCardapio(context, cardapio);
-                    if (v == 'delete') controller.excluirCardapio(cardapio.idCardapio);
+                    if (v == 'delete') {
+                      controller.excluirCardapio(cardapio.idCardapio);
+                    }
                   },
                   itemBuilder: (_) => [
                     const PopupMenuItem(
-                        value: 'edit', child: Text('Editar', style: TextStyle(fontSize: 12))),
+                        value: 'edit',
+                        child: Text('Editar', style: TextStyle(fontSize: 12))),
                     const PopupMenuItem(
                         value: 'delete',
-                        child: Text('Excluir', style: TextStyle(fontSize: 12, color: Colors.red)))
+                        child: Text('Excluir',
+                            style: TextStyle(fontSize: 12, color: Colors.red)))
                   ],
                   child: Container(
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
-                      child:
-                          const Icon(Icons.more_vert_rounded, color: Color(0xFF475569), size: 16)),
+                          color: const Color(0xFFF1F5F9),
+                          borderRadius: BorderRadius.circular(10)),
+                      child: const Icon(Icons.more_vert_rounded,
+                          color: Color(0xFF475569), size: 16)),
                 ),
               ],
             ),
             children: itens.isNotEmpty
                 ? itens
-                    .map((item) => _CardapioItemTile(item: item, idCardapio: cardapio.idCardapio))
+                    .map((item) => _CardapioItemTile(
+                        item: item, idCardapio: cardapio.idCardapio))
                     .toList()
                 : [_EmptyItemsCard(color: color)],
           ),
@@ -371,7 +413,9 @@ class _CardapioCategoriaCard extends StatelessWidget {
   }
 
   Widget _circleAction(
-      {required IconData icon, required Color color, required VoidCallback onTap}) {
+      {required IconData icon,
+      required Color color,
+      required VoidCallback onTap}) {
     return Padding(
         padding: const EdgeInsets.only(right: 6),
         child: InkWell(
@@ -380,7 +424,8 @@ class _CardapioCategoriaCard extends StatelessWidget {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10)),
+                    color: color.withValues(alpha: 0.10),
+                    borderRadius: BorderRadius.circular(10)),
                 child: Icon(icon, color: color, size: 16))));
   }
 }
@@ -389,18 +434,21 @@ class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
-  const _InfoChip({required this.icon, required this.label, required this.color});
+  const _InfoChip(
+      {required this.icon, required this.label, required this.color});
   @override
   Widget build(BuildContext context) {
     return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
         decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.09), borderRadius: BorderRadius.circular(999)),
+            color: color.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(999)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, color: color, size: 12),
           const SizedBox(width: 4),
           Text(label,
-              style: GoogleFonts.poppins(color: color, fontSize: 9, fontWeight: FontWeight.w700))
+              style: GoogleFonts.poppins(
+                  color: color, fontSize: 9, fontWeight: FontWeight.w700))
         ]));
   }
 }
@@ -421,13 +469,14 @@ class _EmptyItemsCard extends StatelessWidget {
           const SizedBox(width: 8),
           Expanded(
               child: Text('Vazio. Adicione itens.',
-                  style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 11)))
+                  style: GoogleFonts.poppins(
+                      color: const Color(0xFF64748B), fontSize: 11)))
         ]));
   }
 }
 
 class _CardapioItemTile extends StatelessWidget {
-  final CardapioItemModel item;
+  final CardapioItem item;
   final String idCardapio;
   const _CardapioItemTile({required this.item, required this.idCardapio});
   @override
@@ -439,11 +488,14 @@ class _CardapioItemTile extends StatelessWidget {
       margin: const EdgeInsets.only(top: 8),
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-          color: item.confirmado ? primary.withValues(alpha: 0.05) : Colors.white,
+          color:
+              item.confirmado ? primary.withValues(alpha: 0.05) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
               width: 1,
-              color: item.confirmado ? primary.withValues(alpha: 0.2) : const Color(0xFFE2E8F0))),
+              color: item.confirmado
+                  ? primary.withValues(alpha: 0.2)
+                  : const Color(0xFFE2E8F0))),
       child: Row(
         children: [
           InkWell(
@@ -452,47 +504,73 @@ class _CardapioItemTile extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: BoxDecoration(
-                      color: item.confirmado ? primary : const Color(0xFFF1F5F9),
+                      color:
+                          item.confirmado ? primary : const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(10)),
-                  child: Icon(item.confirmado ? Icons.check_rounded : Icons.circle_outlined,
-                      color: item.confirmado ? Colors.white : const Color(0xFF94A3B8), size: 18))),
+                  child: Icon(
+                      item.confirmado
+                          ? Icons.check_rounded
+                          : Icons.circle_outlined,
+                      color: item.confirmado
+                          ? Colors.white
+                          : const Color(0xFF94A3B8),
+                      size: 18))),
           const SizedBox(width: 10),
           Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(item.nome,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                    fontSize: 12, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
-            Wrap(spacing: 4, runSpacing: 4, children: [
-              _InfoChip(
-                  icon: _iconByTipo(item.tipo), label: _tipoItemLabel(item.tipo), color: typeColor),
-              _InfoChip(
-                  icon: item.confirmado ? Icons.verified_rounded : Icons.schedule_rounded,
-                  label: item.confirmado ? 'Def.' : 'Pend.',
-                  color: item.confirmado ? const Color(0xFF059669) : const Color(0xFFF59E0B))
-            ])
-          ])),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(item.nome,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827))),
+                Wrap(spacing: 4, runSpacing: 4, children: [
+                  _InfoChip(
+                      icon: _iconByTipo(item.tipo),
+                      label: _tipoItemLabel(item.tipo),
+                      color: typeColor),
+                  _InfoChip(
+                      icon: item.confirmado
+                          ? Icons.verified_rounded
+                          : Icons.schedule_rounded,
+                      label: item.confirmado ? 'Def.' : 'Pend.',
+                      color: item.confirmado
+                          ? const Color(0xFF059669)
+                          : const Color(0xFFF59E0B))
+                ])
+              ])),
           PopupMenuButton<String>(
             color: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             onSelected: (v) {
-              if (v == 'edit') abrirEditarItemCardapio(context, idCardapio, item);
-              if (v == 'delete') controller.excluirItem(idCardapio, item.idItem);
+              if (v == 'edit') {
+                abrirEditarItemCardapio(context, idCardapio, item);
+              }
+              if (v == 'delete') {
+                controller.excluirItem(idCardapio, item.idItem);
+              }
             },
             itemBuilder: (_) => [
               const PopupMenuItem(
-                  value: 'edit', child: Text('Editar', style: TextStyle(fontSize: 12))),
+                  value: 'edit',
+                  child: Text('Editar', style: TextStyle(fontSize: 12))),
               const PopupMenuItem(
                   value: 'delete',
-                  child: Text('Excluir', style: TextStyle(fontSize: 12, color: Colors.red)))
+                  child: Text('Excluir',
+                      style: TextStyle(fontSize: 12, color: Colors.red)))
             ],
             child: Container(
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9), borderRadius: BorderRadius.circular(10)),
-                child: const Icon(Icons.more_horiz_rounded, color: Color(0xFF475569), size: 16)),
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(10)),
+                child: const Icon(Icons.more_horiz_rounded,
+                    color: Color(0xFF475569), size: 16)),
           ),
         ],
       ),
@@ -554,7 +632,10 @@ class _SummaryLineCard extends StatelessWidget {
   final String value;
   final Color color;
   const _SummaryLineCard(
-      {required this.icon, required this.label, required this.value, required this.color});
+      {required this.icon,
+      required this.label,
+      required this.value,
+      required this.color});
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -567,11 +648,16 @@ class _SummaryLineCard extends StatelessWidget {
         Icon(icon, color: color, size: 16),
         const SizedBox(width: 6),
         Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(value,
               style: GoogleFonts.poppins(
-                  fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
-          Text(label, style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF64748B)))
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF111827))),
+          Text(label,
+              style: GoogleFonts.poppins(
+                  fontSize: 9, color: const Color(0xFF64748B)))
         ]))
       ]),
     );
@@ -587,7 +673,10 @@ class _GraficoCardapio extends StatelessWidget {
     final comidas = _toInt(controller.totalComidas).toDouble();
     final bebidas = _toInt(controller.totalBebidas).toDouble();
     final sobremesas = _toInt(controller.totalSobremesas).toDouble();
-    final outros = (_toInt(controller.totalItens).toDouble() - comidas - bebidas - sobremesas)
+    final outros = (_toInt(controller.totalItens).toDouble() -
+            comidas -
+            bebidas -
+            sobremesas)
         .clamp(0, double.infinity);
     final total = comidas + bebidas + sobremesas + outros;
 
@@ -617,19 +706,28 @@ class _GraficoCardapio extends StatelessWidget {
                     centerSpaceRadius: 40,
                     startDegreeOffset: -90,
                     sections: [
-                      if (comidas > 0) _pieSection('Com', comidas, total, primary),
-                      if (bebidas > 0) _pieSection('Beb', bebidas, total, const Color(0xFF2563EB)),
+                      if (comidas > 0)
+                        _pieSection('Com', comidas, total, primary),
+                      if (bebidas > 0)
+                        _pieSection(
+                            'Beb', bebidas, total, const Color(0xFF2563EB)),
                       if (sobremesas > 0)
-                        _pieSection('Sob', sobremesas, total, const Color(0xFFDB2777)),
+                        _pieSection(
+                            'Sob', sobremesas, total, const Color(0xFFDB2777)),
                       if (outros > 0)
-                        _pieSection('Out', outros.toDouble(), total, const Color(0xFF64748B))
+                        _pieSection('Out', outros.toDouble(), total,
+                            const Color(0xFF64748B))
                     ]))),
             const SizedBox(height: 12),
             Wrap(spacing: 8, runSpacing: 8, children: [
-              if (comidas > 0) _graficoLegenda('Comidas', comidas.toInt(), primary),
-              if (bebidas > 0) _graficoLegenda('Bebidas', bebidas.toInt(), const Color(0xFF2563EB)),
+              if (comidas > 0)
+                _graficoLegenda('Comidas', comidas.toInt(), primary),
+              if (bebidas > 0)
+                _graficoLegenda(
+                    'Bebidas', bebidas.toInt(), const Color(0xFF2563EB)),
               if (sobremesas > 0)
-                _graficoLegenda('Sobremesas', sobremesas.toInt(), const Color(0xFFDB2777))
+                _graficoLegenda(
+                    'Sobremesas', sobremesas.toInt(), const Color(0xFFDB2777))
             ]),
           ],
         ],
@@ -637,26 +735,29 @@ class _GraficoCardapio extends StatelessWidget {
     );
   }
 
-  PieChartSectionData _pieSection(String label, double value, double total, Color color) {
+  PieChartSectionData _pieSection(
+      String label, double value, double total, Color color) {
     return PieChartSectionData(
         color: color,
         value: value,
         title: '${((value / total) * 100).toStringAsFixed(0)}%',
         radius: 50,
-        titleStyle:
-            GoogleFonts.poppins(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800));
+        titleStyle: GoogleFonts.poppins(
+            color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800));
   }
 
   Widget _graficoLegenda(String label, int value, Color color) {
     return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.09), borderRadius: BorderRadius.circular(999)),
+            color: color.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(999)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.circle, color: color, size: 8),
           const SizedBox(width: 4),
           Text('$label · $value',
-              style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: color))
+              style: GoogleFonts.poppins(
+                  fontSize: 10, fontWeight: FontWeight.w700, color: color))
         ]));
   }
 }
@@ -667,7 +768,10 @@ class _StatData {
   final IconData icon;
   final Color color;
   const _StatData(
-      {required this.label, required this.value, required this.icon, required this.color});
+      {required this.label,
+      required this.value,
+      required this.icon,
+      required this.color});
 }
 
 Color _colorFromHex(String? hex, {required Color fallback}) {
@@ -727,7 +831,9 @@ IconData _iconFromString(String? value) {
 String _itensIncluidosLabel(int q) => q == 1 ? '1 item' : '$q itens';
 String _tipoItemLabel(dynamic tipo) {
   final t = _normalizeText(_enumValueToText(tipo));
-  return t == 'descartavel' ? 'Descartável' : (t.isEmpty ? '-' : t.capitalizeFirst ?? t);
+  return t == 'descartavel'
+      ? 'Descartável'
+      : (t.isEmpty ? '-' : t.capitalizeFirst ?? t);
 }
 
 IconData _iconByTipo(dynamic tipo) {
@@ -786,12 +892,14 @@ int _totalItensConfirmados(CardapioController c) {
   return t;
 }
 
-void abrirEditarItemCardapio(BuildContext context, String idCardapio, CardapioItemModel item) {
+void abrirEditarItemCardapio(
+    BuildContext context, String idCardapio, CardapioItem item) {
   showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => EditarItemCardapioBottomSheet(idCardapio: idCardapio, item: item));
+      builder: (_) =>
+          EditarItemCardapioBottomSheet(idCardapio: idCardapio, item: item));
 }
 
 void abrirCadastroCardapio(BuildContext context, String idEvento) {
@@ -802,15 +910,17 @@ void abrirCadastroCardapio(BuildContext context, String idEvento) {
       builder: (_) => CadastroCardapioBottomSheet(idEvento: idEvento));
 }
 
-void abrirAdicionarItemCardapio(BuildContext context, String idEvento, String idCardapio) {
+void abrirAdicionarItemCardapio(
+    BuildContext context, String idEvento, String idCardapio) {
   showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => AddItemCardapioBottomSheet(idEvento: idEvento, idCardapio: idCardapio));
+      builder: (_) => AddItemCardapioBottomSheet(
+          idEvento: idEvento, idCardapio: idCardapio));
 }
 
-void abrirEditarCardapio(BuildContext context, CardapioModel cardapio) {
+void abrirEditarCardapio(BuildContext context, Cardapio cardapio) {
   showModalBottomSheet(
       context: context,
       isScrollControlled: true,

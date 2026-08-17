@@ -1,22 +1,46 @@
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
 import './../../core/services/whatsGw/whatsapp_service.dart';
 import './../../presentation/whatsapp/whatsapp_templates.dart';
+import './../../domain/entities/convidado.dart';
+import './../../domain/entities/evento.dart';
+import './../../domain/repositories/convidado_repository.dart';
+import './../../domain/repositories/grupo_convidado_repository.dart';
+import './../../domain/repositories/presente_reservation_repository.dart';
 import './grupo_convidado_controller.dart';
-import './../../data/models/model.dart';
 import './../evento_controller.dart';
 
 class ConvidadoController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  ConvidadoController({
+    required ConvidadoRepository repository,
+    required PresenteReservationRepository presenteReservationRepository,
+  })  : _repository = repository,
+        _presenteReservationRepository = presenteReservationRepository;
+
+  final ConvidadoRepository _repository;
+  final PresenteReservationRepository _presenteReservationRepository;
 
   // 🔹 Lista completa de convidados do evento atual
-  final RxList<ConvidadoModel> convidados = <ConvidadoModel>[].obs;
+  final RxList<Convidado> convidados = <Convidado>[].obs;
 
-  final grupoController = Get.put(GrupoConvidadoController());
+  GrupoConvidadoController? _grupoController;
+  GrupoConvidadoController get grupoController {
+    final existente = _grupoController;
+    if (existente != null) return existente;
+
+    final criado = Get.isRegistered<GrupoConvidadoController>()
+        ? Get.find<GrupoConvidadoController>()
+        : Get.put(
+            GrupoConvidadoController(
+              repository: Get.find<GrupoConvidadoRepository>(),
+            ),
+          );
+    _grupoController = criado;
+    return criado;
+  }
 
   // 🔹 Estados de carregamento e erro
   final RxBool carregando = false.obs;
@@ -26,17 +50,17 @@ class ConvidadoController extends GetxController {
   final RxString idEventoAtual = ''.obs;
   final RxString termoBusca = ''.obs;
 
-  final Rx<ConvidadoModel?> convidadoAtual = Rx<ConvidadoModel?>(null);
+  final Rx<Convidado?> convidadoAtual = Rx<Convidado?>(null);
 
   StreamSubscription? _convidadosSub;
 
 // =============================================================
 // 🔹 Lista temporária de novos convidados (somente em memória)
 // =============================================================
-  final RxList<ConvidadoModel> novosConvidados = <ConvidadoModel>[].obs;
+  final RxList<Convidado> novosConvidados = <Convidado>[].obs;
 
   Future<void> enviarConviteAoAdicionar(
-      ConvidadoModel convidado, EventoModel evento, String tipoEvento) async {
+      Convidado convidado, Evento evento, String tipoEvento) async {
     final whats = Get.find<WhatsAppService>();
     final templates = Get.find<WhatsAppTemplates>();
 
@@ -59,10 +83,9 @@ class ConvidadoController extends GetxController {
   Future<void> migrarTipoConvidadoLegado() async {
     try {
       carregando.value = true;
+      final resultado = await _repository.migrarTiposLegados();
 
-      final snapshot = await _db.collection('convidado').get();
-
-      if (snapshot.docs.isEmpty) {
+      if (resultado.totalEncontrados == 0) {
         Get.snackbar(
           'Migração',
           'Nenhum convidado encontrado para migrar.',
@@ -72,56 +95,10 @@ class ConvidadoController extends GetxController {
         return;
       }
 
-      WriteBatch batch = _db.batch();
-
-      int contadorBatch = 0;
-      int totalAtualizados = 0;
-      int totalIgnorados = 0;
-
-      for (final doc in snapshot.docs) {
-        final data = doc.data();
-
-        final tipoAtual = data['tipo_convidado'];
-
-        final jaTemTipo = tipoAtual != null && tipoAtual.toString().trim().isNotEmpty;
-
-        if (jaTemTipo) {
-          totalIgnorados++;
-          continue;
-        }
-
-        final adultoValue = data['adulto'];
-
-        String tipoConvidado;
-
-        if (adultoValue == false) {
-          tipoConvidado = 'crianca';
-        } else {
-          tipoConvidado = 'adulto';
-        }
-
-        batch.update(doc.reference, {
-          'tipo_convidado': tipoConvidado,
-          'data_atualizacao': FieldValue.serverTimestamp(),
-        });
-
-        contadorBatch++;
-        totalAtualizados++;
-
-        if (contadorBatch == 450) {
-          await batch.commit();
-          batch = _db.batch();
-          contadorBatch = 0;
-        }
-      }
-
-      if (contadorBatch > 0) {
-        await batch.commit();
-      }
-
       Get.snackbar(
         'Migração concluída',
-        '$totalAtualizados convidados atualizados. $totalIgnorados já estavam corretos.',
+        '${resultado.totalAtualizados} convidados atualizados. '
+            '${resultado.totalIgnorados} já estavam corretos.',
         backgroundColor: Colors.teal,
         colorText: Colors.white,
       );
@@ -138,7 +115,7 @@ class ConvidadoController extends GetxController {
   }
 
   Future<void> confirmarPresenca(
-      ConvidadoModel convidado, EventoModel evento, String tipoEvento) async {
+      Convidado convidado, Evento evento, String tipoEvento) async {
     final whats = Get.find<WhatsAppService>();
     final templates = Get.find<WhatsAppTemplates>();
 
@@ -157,7 +134,7 @@ class ConvidadoController extends GetxController {
   }
 
   Future<void> enviarLembreteEvento(
-      ConvidadoModel convidado, EventoModel evento, String tipoEvento) async {
+      Convidado convidado, Evento evento, String tipoEvento) async {
     final whats = Get.find<WhatsAppService>();
     final templates = Get.find<WhatsAppTemplates>();
 
@@ -175,7 +152,7 @@ class ConvidadoController extends GetxController {
   }
 
   /// 🔹 Adiciona novo convidado temporário
-  void adicionarNovoConvidadoLocal(ConvidadoModel convidado) {
+  void adicionarNovoConvidadoLocal(Convidado convidado) {
     novosConvidados.add(convidado);
   }
 
@@ -187,19 +164,14 @@ class ConvidadoController extends GetxController {
   /// =====================================================
   /// 🔹 Busca convidado pelo ID do usuário
   /// =====================================================
-  Future<ConvidadoModel?> buscarPeloIdConvidado(String idUsuario) async {
+  Future<Convidado?> buscarPeloIdConvidado(String idUsuario) async {
     try {
       carregando.value = true;
-      final snapshot = await _db
-          .collection('convidado')
-          .where('id_convidado', isEqualTo: idUsuario)
-          .limit(1)
-          .get();
+      final convidado = await _repository.buscarPorId(idUsuario);
 
-      if (snapshot.docs.isNotEmpty) {
-        final model = ConvidadoModel.fromMap(snapshot.docs.first.data());
-        convidadoAtual.value = model;
-        return model;
+      if (convidado != null) {
+        convidadoAtual.value = convidado;
+        return convidado;
       } else {
         return null;
       }
@@ -211,37 +183,30 @@ class ConvidadoController extends GetxController {
     }
   }
 
-  Future<ConvidadoModel?> buscarPeloIdEvento(String idEvento) async {
+  Future<Convidado?> buscarPeloIdEvento(String idEvento) async {
     try {
       carregando.value = true;
-
-      final snapshot =
-          await _db.collection('convidado').where('id_evento', isEqualTo: idEvento).limit(1).get();
-
-      if (snapshot.docs.isNotEmpty) {
-        carregando.value = false;
-        return ConvidadoModel.fromMap(snapshot.docs.first.data());
-      } else {
-        carregando.value = false;
-        return null;
-      }
+      final convidado = await _repository.buscarPrimeiroPorEvento(idEvento);
+      return convidado;
     } catch (e) {
-      carregando.value = false;
       return null;
+    } finally {
+      carregando.value = false;
     }
   }
 
-  /// 🔹 Persiste todos os convidados novos no Firestore
-  Future<void> enviarNovosConvidados(EventoModel evento) async {
+  /// 🔹 Persiste todos os convidados novos
+  Future<void> enviarNovosConvidados(Evento evento) async {
     if (novosConvidados.isEmpty) return;
 
     try {
       carregando.value = true;
       final eventoController = Get.find<EventoController>();
-      final tipoEvento = eventoController.tipoEventoAtual.value?.nome ?? evento.nomeEvento;
+      final tipoEvento =
+          eventoController.tipoEventoAtualEntidade?.nome ?? evento.nomeEvento;
 
       for (final c in novosConvidados) {
-        await _db.collection('convidado').doc(c.idConvidado).set(c.toMap());
+        await _repository.salvar(c);
         enviarConviteAoAdicionar(c, evento, tipoEvento);
       }
       novosConvidados.clear();
@@ -277,10 +242,9 @@ class ConvidadoController extends GetxController {
     carregando.value = true;
     erro.value = '';
 
-    _convidadosSub =
-        _db.collection('convidado').where('id_evento', isEqualTo: idEventoLimpo).snapshots().listen(
-      (snapshot) {
-        final lista = snapshot.docs.map((doc) => ConvidadoModel.fromMap(doc.data())).toList();
+    _convidadosSub = _repository.observarPorEvento(idEventoLimpo).listen(
+      (resultado) {
+        final lista = resultado.toList();
 
         lista.sort(
           (a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()),
@@ -296,15 +260,12 @@ class ConvidadoController extends GetxController {
     );
   }
 
-  Future<void> adicionarConvidado(ConvidadoModel model) async {
+  Future<void> adicionarConvidado(Convidado model) async {
     try {
       carregando.value = true;
       erro.value = '';
 
-      await _db.collection('convidado').doc(model.idConvidado).set(
-            model.toMap(),
-            SetOptions(merge: true),
-          );
+      await _repository.salvar(model);
     } catch (e) {
       erro.value = 'Erro ao salvar convidado: $e';
       rethrow;
@@ -313,15 +274,12 @@ class ConvidadoController extends GetxController {
     }
   }
 
-  Future<void> atualizarConvidado(ConvidadoModel model) async {
+  Future<void> atualizarConvidado(Convidado model) async {
     try {
       carregando.value = true;
       erro.value = '';
 
-      await _db.collection('convidado').doc(model.idConvidado).set(
-            model.toMap(),
-            SetOptions(merge: true),
-          );
+      await _repository.salvar(model);
     } catch (e) {
       erro.value = 'Erro ao atualizar convidado: $e';
       rethrow;
@@ -332,7 +290,7 @@ class ConvidadoController extends GetxController {
 
   Future<void> excluirConvidado(String idConvidado) async {
     try {
-      await _db.collection('convidado').doc(idConvidado).delete();
+      await _repository.excluir(idConvidado);
     } catch (e) {
       erro.value = 'Erro ao excluir convidado: $e';
       rethrow;
@@ -340,8 +298,8 @@ class ConvidadoController extends GetxController {
   }
 
   Future<void> enviarConvitesSelecionados({
-    required List<ConvidadoModel> convidadosSelecionados,
-    required EventoModel evento,
+    required List<Convidado> convidadosSelecionados,
+    required Evento evento,
     required String tipoEnvio,
   }) async {
     if (convidadosSelecionados.isEmpty) return;
@@ -351,9 +309,8 @@ class ConvidadoController extends GetxController {
       erro.value = '';
 
       final eventoController = Get.find<EventoController>();
-      final tipoEvento = eventoController.tipoEventoAtual.value?.nome ?? evento.nomeEvento;
-
-      final batch = _db.batch();
+      final tipoEvento =
+          eventoController.tipoEventoAtualEntidade?.nome ?? evento.nomeEvento;
 
       for (final convidado in convidadosSelecionados) {
         await enviarConviteAoAdicionar(
@@ -361,22 +318,14 @@ class ConvidadoController extends GetxController {
           evento,
           tipoEvento,
         );
-
-        final ref = _db.collection('convidado').doc(convidado.idConvidado);
-
-        batch.set(
-          ref,
-          {
-            'convite_enviado': true,
-            'canal_ultimo_convite': tipoEnvio,
-            'data_envio_convite': FieldValue.serverTimestamp(),
-            'data_atualizacao': FieldValue.serverTimestamp(),
-          },
-          SetOptions(merge: true),
-        );
       }
 
-      await batch.commit();
+      await _repository.marcarConvitesEnviados(
+        convidadosSelecionados
+            .map((convidado) => convidado.idConvidado)
+            .toList(growable: false),
+        tipoEnvio,
+      );
     } catch (e) {
       erro.value = 'Erro ao enviar convites: $e';
       rethrow;
@@ -404,21 +353,15 @@ class ConvidadoController extends GetxController {
   }
 
   /// =====================================================
-  /// 🔹 Cria ou atualiza convidado no Firestore
+  /// 🔹 Cria ou atualiza convidado
   /// =====================================================
-  Future<void> salvarConvidado(ConvidadoModel convidado) async {
-    await _db.collection('convidado').doc(convidado.idConvidado).set(
-          convidado.toMap(),
-          SetOptions(merge: true),
-        );
+  Future<void> salvarConvidado(Convidado convidado) async {
+    await _repository.salvar(convidado);
   }
 
-  Future<ConvidadoModel?> buscarPorToken(String token) async {
-    final convidadoDoc = await FirebaseFirestore.instance.collection('convidado').doc(token).get();
-
-    if (!convidadoDoc.exists) return null;
-
-    return ConvidadoModel.fromMap(convidadoDoc.data()!);
+  Future<Convidado?> buscarPorToken(String token) async {
+    final convidado = await _repository.buscarPorToken(token);
+    return convidado;
   }
 
   Future<void> reservarPresente(
@@ -426,14 +369,13 @@ class ConvidadoController extends GetxController {
       required String idConvidado,
       required String nomeConvidado,
       required Color backgroundColor}) async {
-    final ref =
-        _db.collection('evento').doc(idEventoAtual.value).collection('presentes').doc(idPresente);
-
-    await ref.update({
-      'reservado_por': nomeConvidado,
-      'id_convidado': idConvidado,
-      'data_reserva': Timestamp.now(),
-    });
+    await _presenteReservationRepository.reservar(
+      idEvento: idEventoAtual.value,
+      idPresente: idPresente,
+      idConvidado: idConvidado,
+      nomeConvidado: nomeConvidado,
+      dataReserva: DateTime.now(),
+    );
 
     Get.snackbar(
       '🎁 Presente reservado!',
@@ -447,7 +389,7 @@ class ConvidadoController extends GetxController {
   /// 🔹 Atualiza status de presença
   /// =====================================================
   Future<void> atualizarStatusPresenca(
-    ConvidadoModel convidado,
+    Convidado convidado,
     StatusConvidado novoStatus,
   ) async {
     try {
@@ -456,16 +398,15 @@ class ConvidadoController extends GetxController {
         dataResposta: DateTime.now(),
       );
 
-      await _db
-          .collection('convidado')
-          .doc(convidado.idConvidado)
-          .set(atualizado.toMap(), SetOptions(merge: true));
+      await _repository.salvar(atualizado);
 
       convidadoAtual.value = atualizado;
 
       String msg = switch (novoStatus) {
-        StatusConvidado.confirmado => '🎉 Presença confirmada! Obrigado por confirmar.',
-        StatusConvidado.recusado => '🙁 Sentiremos sua falta, confirmação registrada.',
+        StatusConvidado.confirmado =>
+          '🎉 Presença confirmada! Obrigado por confirmar.',
+        StatusConvidado.recusado =>
+          '🙁 Sentiremos sua falta, confirmação registrada.',
         _ => 'Status atualizado.'
       };
 
@@ -485,20 +426,22 @@ class ConvidadoController extends GetxController {
   /// =============================================================
   /// 🔹 Atualiza o status do convidado (Pendente, Confirmado, Recusado)
   /// =============================================================
-  Future<void> atualizarStatus(String idConvidado, StatusConvidado status) async {
+  Future<void> atualizarStatus(
+      String idConvidado, StatusConvidado status) async {
     try {
-      await _db.collection('convidado').doc(idConvidado).update({
-        'status': status.firestoreValue,
-        'data_resposta': Timestamp.fromDate(DateTime.now()),
-      });
+      await _repository.atualizarStatus(
+        idConvidado,
+        status,
+        DateTime.now(),
+      );
     } catch (e) {
       erro.value = 'Erro ao atualizar status: $e';
     }
   }
 
   /// 🔹 Agrupa convidados por mesa/grupo
-  Map<String, List<ConvidadoModel>> get convidadosPorMesa {
-    final Map<String, List<ConvidadoModel>> grupos = {};
+  Map<String, List<Convidado>> get convidadosPorMesa {
+    final Map<String, List<Convidado>> grupos = {};
     for (var c in convidados) {
       final grupo = c.nomeGrupo ?? 'Sem mesa';
       grupos.putIfAbsent(grupo, () => []);
@@ -530,7 +473,8 @@ class ConvidadoController extends GetxController {
       final nomeMesa = g.nome;
 
       totalOcupados += todosConvidados
-          .where((c) => c.nomeGrupo == nomeMesa && c.status == StatusConvidado.confirmado)
+          .where((c) =>
+              c.nomeGrupo == nomeMesa && c.status == StatusConvidado.confirmado)
           .length;
     }
 
@@ -549,7 +493,8 @@ class ConvidadoController extends GetxController {
     final grupos = convidadosPorMesa;
     final totalMesas = grupos.length;
     final totalAssentos = grupos.values.fold<int>(0, (a, b) => a + b.length);
-    final totalOcupados = convidados.where((c) => c.status == StatusConvidado.confirmado).length;
+    final totalOcupados =
+        convidados.where((c) => c.status == StatusConvidado.confirmado).length;
     final totalLivres = totalAssentos - totalOcupados;
 
     return {
@@ -568,9 +513,11 @@ class ConvidadoController extends GetxController {
   int get totalConfirmados =>
       convidados.where((c) => c.status == StatusConvidado.confirmado).length;
 
-  int get totalPendentes => convidados.where((c) => c.status == StatusConvidado.pendente).length;
+  int get totalPendentes =>
+      convidados.where((c) => c.status == StatusConvidado.pendente).length;
 
-  int get totalRecusados => convidados.where((c) => c.status == StatusConvidado.recusado).length;
+  int get totalRecusados =>
+      convidados.where((c) => c.status == StatusConvidado.recusado).length;
 
   int get totalAdultos => convidados.where((c) => c.adulto == true).length;
 
@@ -579,7 +526,7 @@ class ConvidadoController extends GetxController {
   /// =============================================================
   /// 🔹 Filtro de busca por nome ou e-mail
   /// =============================================================
-  List<ConvidadoModel> get listaFiltrada {
+  List<Convidado> get listaFiltrada {
     final termo = termoBusca.value.toLowerCase();
     if (termo.isEmpty) return convidados;
     return convidados

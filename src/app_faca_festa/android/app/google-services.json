@@ -12,7 +12,20 @@
           "package_name": "com.rrs.system.technology.facafesta"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "300274184803-p8m1knv2mrlkfil8f396g7raatik0di7.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rrs.system.technology.facafesta",
+            "certificate_hash": "81f14255a5f220ed429c5a947c0861930c5e1615"
+          }
+        },
+        {
+          "client_id": "300274184803-6vk4dg1e2m1qouquq4jj9dafamh6qk8i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDbusofhs3GIRJH_zIQD_n0yYN1FrLoHbU"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "300274184803-6vk4dg1e2m1qouquq4jj9dafamh6qk8i.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "300274184803-3ve145uftd70nj8gu265q32i6i51lt18.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.appFacaFesta"
+              }
+            }
+          ]
         }
       }
     }

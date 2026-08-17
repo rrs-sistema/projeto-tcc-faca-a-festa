@@ -60,8 +60,9 @@ class OrcamentoController extends GetxController {
           .where('id_evento', isEqualTo: idEvento)
           .snapshots()
           .listen((snapshot) {
-        final lista =
-            snapshot.docs.map((doc) => OrcamentoModel.fromMap(doc.data(), docId: doc.id)).toList();
+        final lista = snapshot.docs
+            .map((doc) => OrcamentoModel.fromMap(doc.data(), docId: doc.id))
+            .toList();
 
         orcamentos.assignAll(lista);
         _atualizarContagens();
@@ -93,8 +94,9 @@ class OrcamentoController extends GetxController {
           .where('id_fornecedor', isEqualTo: idFornecedor)
           .snapshots()
           .listen((snapshot) {
-        final lista =
-            snapshot.docs.map((doc) => OrcamentoModel.fromMap(doc.data(), docId: doc.id)).toList();
+        final lista = snapshot.docs
+            .map((doc) => OrcamentoModel.fromMap(doc.data(), docId: doc.id))
+            .toList();
 
         orcamentos.assignAll(lista);
         _atualizarContagens();
@@ -137,11 +139,13 @@ class OrcamentoController extends GetxController {
   /// 🔹 Atualiza métricas e somatórios básicos
   /// ===========================================================
   void _atualizarContagens() {
-    fornecedorContatadoCount.value = orcamentos.where((o) => o.idServicoFornecido != null).length;
+    fornecedorContatadoCount.value =
+        orcamentos.where((o) => o.idServicoFornecido != null).length;
 
     contratadosCount.value = orcamentos.where((o) => o.isFechado).length;
 
-    totalCustoEstimado.value = orcamentos.fold(0.0, (soma, o) => soma + (o.custoEstimado ?? 0.0));
+    totalCustoEstimado.value =
+        orcamentos.fold(0.0, (soma, o) => soma + (o.custoEstimado ?? 0.0));
 
     totalCount.value = orcamentos.length;
   }
@@ -149,26 +153,43 @@ class OrcamentoController extends GetxController {
   /// ===========================================================
   /// 🔹 Valida criação de orçamento
   /// ===========================================================
-  Future<(bool ok, String? mensagem, double? excedente, double? limite)> validarCriacaoOrcamento(
-      double novoValor) async {
+  Future<(bool ok, String? mensagem, double? excedente, double? limite)>
+      validarCriacaoOrcamento(double novoValor) async {
     final eventoController = Get.find<EventoController>();
-    final double limiteEvento = eventoController.eventoAtual.value?.custoEstimado ?? 0;
+    final double limiteEvento =
+        eventoController.eventoAtualEntidade?.custoEstimado ?? 0;
 
     if (limiteEvento <= 0) {
-      return (false, "O evento não possui orçamento estimado definido!", null, 0.0);
+      return (
+        false,
+        "O evento não possui orçamento estimado definido!",
+        null,
+        0.0
+      );
     }
 
     if (novoValor > limiteEvento) {
       final exced = novoValor - limiteEvento;
-      return (false, "O valor informado excede o limite total do evento!", exced, limiteEvento);
+      return (
+        false,
+        "O valor informado excede o limite total do evento!",
+        exced,
+        limiteEvento
+      );
     }
 
-    final double totalAtual = orcamentos.fold(0, (s, o) => s + (o.custoEstimado ?? 0));
+    final double totalAtual =
+        orcamentos.fold(0, (s, o) => s + (o.custoEstimado ?? 0));
     final double totalPosInsercao = totalAtual + novoValor;
 
     if (totalPosInsercao > limiteEvento) {
       final exced = totalPosInsercao - limiteEvento;
-      return (false, "A soma dos orçamentos excede o limite geral do evento!", exced, limiteEvento);
+      return (
+        false,
+        "A soma dos orçamentos excede o limite geral do evento!",
+        exced,
+        limiteEvento
+      );
     }
 
     return (true, null, null, limiteEvento);
@@ -179,7 +200,10 @@ class OrcamentoController extends GetxController {
   /// ===========================================================
   Future<void> criarOrcamento(OrcamentoModel model) async {
     try {
-      await _db.collection('orcamento').doc(model.idOrcamento).set(model.toMap());
+      await _db
+          .collection('orcamento')
+          .doc(model.idOrcamento)
+          .set(model.toMap());
     } catch (e) {
       Get.snackbar(
         "Erro",

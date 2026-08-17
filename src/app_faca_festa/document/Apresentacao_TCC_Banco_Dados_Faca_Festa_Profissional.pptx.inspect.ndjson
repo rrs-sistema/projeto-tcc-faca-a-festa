@@ -1,0 +1,223 @@
+{"kind":"deck","id":"pr/rkpnfh","name":"Deck"}
+{"kind":"layout","layoutId":"f5daa0c1-b574-430a-9b7e-04ffdd967719","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"5ffab227-7a51-4b8d-9d73-d27c1508ee9c","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/bc7pq6","slide":1,"title":"BANCO DE DADOS","textShapes":4}
+{"kind":"shape","id":"sh/0jqhonul","slide":1,"bbox":[700,0,34,720]}
+{"kind":"textbox","id":"sh/m58zqxcb","slide":1,"text":"BANCO DE DADOS\nDO FAÇA A FESTA","textPreview":"BANCO DE DADOS | DO FAÇA A FESTA","textChars":30,"textLines":2,"bbox":[52,210,590,160]}
+{"kind":"textbox","id":"sh/n6h0zitw","slide":1,"text":"Mapeamento atual, chaves e modelo relacional para um produto preparado para o mercado","textPreview":"Mapeamento atual, chaves e modelo relacional para um produto preparado para o mercado","textChars":85,"textLines":1,"bbox":[52,397,570,95]}
+{"kind":"shape","id":"sh/o7qhsnuh","slide":1,"bbox":[52,540,250,4]}
+{"kind":"textbox","id":"sh/98zi1sb2","slide":1,"text":"Trabalho de Conclusão de Curso","textPreview":"Trabalho de Conclusão de Curso","textChars":30,"textLines":1,"bbox":[52,566,420,30]}
+{"kind":"textbox","id":"sh/294zetc7","slide":1,"text":"Sistemas · 2026","textPreview":"Sistemas · 2026","textChars":15,"textLines":1,"bbox":[52,607,260,28]}
+{"kind":"image","id":"im/y50ze1kz","slide":1,"name":"","alt":"Imagem: fornecedor_default.jpg","bbox":[720,0,560,720]}
+{"kind":"image","id":"im/krihgb25","slide":1,"name":"","alt":"Imagem: logo-faca-festa.png","bbox":[52,42,118,118]}
+{"kind":"notes","id":"nt/bc7pq6","slide":1,"text":"Abra relacionando tecnologia e negócio: o banco de dados sustenta os fluxos do organizador, do convidado e do fornecedor. O objetivo desta apresentação é mostrar o modelo que existe hoje e como ele foi formalizado para evolução do produto.\n\n[Sources]\n- assets/logo/logo-faca-festa.png\n- assets/images/fornecedor_default.jpg\n- document/MAPEAMENTO_FIREBASE_APRESENTACAO.md"}
+{"kind":"slide","id":"sl/d2e12u","slide":2,"title":"O banco já reflete um ecossistema de produto","textShapes":12}
+{"kind":"textbox","id":"sh/9cnydk7q","slide":2,"text":"O banco já reflete um ecossistema de produto","textPreview":"O banco já reflete um ecossistema de produto","textChars":44,"textLines":1,"bbox":[52,42,1176,60]}
+{"kind":"textbox","id":"sh/m9wf258z","slide":2,"text":"O levantamento separou modelos de código das estruturas realmente persistidas.","textPreview":"O levantamento separou modelos de código das estruturas realmente persistidas.","textChars":78,"textLines":1,"bbox":[52,112,1120,46]}
+{"kind":"shape","id":"sh/na5gbapk","slide":2,"bbox":[52,674,90,3]}
+{"kind":"textbox","id":"sh/wfyx8zq1","slide":2,"text":"FAÇA A FESTA · TCC","textPreview":"FAÇA A FESTA · TCC","textChars":18,"textLines":1,"bbox":[52,683,260,20]}
+{"kind":"textbox","id":"sh/xg7yh47m","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1190,681,38,20]}
+{"kind":"textbox","id":"sh/adwf6p8b","slide":2,"text":"29","textPreview":"29","textChars":2,"textLines":1,"bbox":[60,225,300,120]}
+{"kind":"textbox","id":"sh/be5gfupg","slide":2,"text":"coleções raiz","textPreview":"coleções raiz","textChars":13,"textLines":1,"bbox":[60,350,310,42]}
+{"kind":"shape","id":"sh/sjuxwvqx","slide":2,"bbox":[60,418,310,0]}
+{"kind":"textbox","id":"sh/dk3e507i","slide":2,"text":"17","textPreview":"17","textChars":2,"textLines":1,"bbox":[465,225,300,120]}
+{"kind":"textbox","id":"sh/1k3u98za","slide":2,"text":"caminhos aninhados","textPreview":"caminhos aninhados","textChars":18,"textLines":1,"bbox":[465,350,310,42]}
+{"kind":"shape","id":"sh/0judg3ip","slide":2,"bbox":[465,418,310,0]}
+{"kind":"textbox","id":"sh/zilc7yh4","slide":2,"text":"54","textPreview":"54","textChars":2,"textLines":1,"bbox":[870,225,300,120]}
+{"kind":"textbox","id":"sh/ehsvet0j","slide":2,"text":"tabelas no modelo SQL","textPreview":"tabelas no modelo SQL","textChars":21,"textLines":1,"bbox":[870,350,310,42]}
+{"kind":"shape","id":"sh/9o3ed8z6","slide":2,"bbox":[870,418,310,0]}
+{"kind":"textbox","id":"sh/onudk3il","slide":2,"text":"74 arquivos de modelo foram analisados — mas classe não significa tabela.","textPreview":"74 arquivos de modelo foram analisados — mas classe não significa tabela.","textChars":73,"textLines":1,"bbox":[60,488,1090,44]}
+{"kind":"textbox","id":"sh/nmlcbih0","slide":2,"text":"DTOs, projeções administrativas, cálculos locais e respostas de IA só entraram no modelo quando representam informação persistida ou uma entidade de domínio relevante.","textPreview":"DTOs, projeções administrativas, cálculos locais e respostas de IA só entraram no modelo quando representam informação persistida ou uma ...","textChars":167,"textLines":1,"bbox":[60,548,1110,68]}
+{"kind":"notes","id":"nt/d2e12u","slide":2,"text":"A mensagem é maturidade: o projeto cresceu e o modelo antigo ficou menor que a implementação. Os números mostram a diferença entre código e persistência e justificam a atualização do DER.\n\n[Sources]\n- lib/data/models/**\n- lib/controllers/**\n- functions/src/**\n- document/modelo_sql_vycanis.sql"}
+{"kind":"slide","id":"sl/oyccd8","slide":3,"title":"O novo modelo nasceu do uso real do sistema","textShapes":14}
+{"kind":"textbox","id":"sh/sj2tkni1","slide":3,"text":"O novo modelo nasceu do uso real do sistema","textPreview":"O novo modelo nasceu do uso real do sistema","textChars":43,"textLines":1,"bbox":[52,42,1176,60]}
+{"kind":"textbox","id":"sh/ritsri1g","slide":3,"text":"Três evidências foram cruzadas para evitar tabelas fictícias ou campos desatualizados.","textPreview":"Três evidências foram cruzadas para evitar tabelas fictícias ou campos desatualizados.","textChars":86,"textLines":1,"bbox":[52,112,1120,46]}
+{"kind":"shape","id":"sh/qhkbid0v","slide":3,"bbox":[52,674,90,3]}
+{"kind":"textbox","id":"sh/18vuxcjy","slide":3,"text":"FAÇA A FESTA · TCC","textPreview":"FAÇA A FESTA · TCC","textChars":18,"textLines":1,"bbox":[52,683,260,20]}
+{"kind":"textbox","id":"sh/07mto7id","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1190,681,38,20]}
+{"kind":"shape","id":"sh/fmdcv21s","slide":3,"bbox":[170,360,925,0]}
+{"kind":"shape","id":"sh/el4bmx07","slide":3,"bbox":[150,320,54,54]}
+{"kind":"textbox","id":"sh/hcral8je","slide":3,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[159,332,36,26]}
+{"kind":"textbox","id":"sh/gbitc3it","slide":3,"text":"Modelos","textPreview":"Modelos","textChars":7,"textLines":1,"bbox":[140,418,280,40]}
+{"kind":"textbox","id":"sh/m9w7mtcz","slide":3,"text":"Campos e tipos definidos em Dart","textPreview":"Campos e tipos definidos em Dart","textChars":32,"textLines":1,"bbox":[140,473,280,75]}
+{"kind":"shape","id":"sh/na58vydk","slide":3,"bbox":[520,320,54,54]}
+{"kind":"textbox","id":"sh/obe9o3u5","slide":3,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[529,332,36,26]}
+{"kind":"textbox","id":"sh/9cnqx8vq","slide":3,"text":"Persistência","textPreview":"Persistência","textChars":12,"textLines":1,"bbox":[510,418,280,40]}
+{"kind":"textbox","id":"sh/adgrqdcb","slide":3,"text":"Leituras, gravações e consultas no Firestore","textPreview":"Leituras, gravações e consultas no Firestore","textChars":44,"textLines":1,"bbox":[510,473,280,75]}
+{"kind":"shape","id":"sh/bep8zidw","slide":3,"bbox":[890,320,54,54]}
+{"kind":"textbox","id":"sh/wfy9snuh","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[899,332,36,26]}
+{"kind":"textbox","id":"sh/x07q1svm","slide":3,"text":"Contrato SQL","textPreview":"Contrato SQL","textChars":12,"textLines":1,"bbox":[880,418,280,40]}
+{"kind":"textbox","id":"sh/i1grudc7","slide":3,"text":"PKs, FKs e normalização para o Vycanis","textPreview":"PKs, FKs e normalização para o Vycanis","textChars":38,"textLines":1,"bbox":[880,473,280,75]}
+{"kind":"textbox","id":"sh/j2p83its","slide":3,"text":"Resultado: um modelo rastreável ao código e explicável para a banca.","textPreview":"Resultado: um modelo rastreável ao código e explicável para a banca.","textChars":68,"textLines":1,"bbox":[150,590,900,35]}
+{"kind":"notes","id":"nt/oyccd8","slide":3,"text":"Explique que o trabalho não foi apenas copiar classes. Foram verificados controllers, repositories, telas e funções de backend. Em seguida, subcoleções e listas foram convertidas em relações SQL.\n\n[Sources]\n- lib/data/models/**\n- lib/controllers/**\n- lib/data/repositories/**\n- lib/data/datasources/**\n- functions/src/**"}
+{"kind":"slide","id":"sl/5soynk","slide":4,"title":"O evento conecta os principais fluxos do produto","textShapes":18}
+{"kind":"textbox","id":"sh/vitwfydg","slide":4,"text":"O evento conecta os principais fluxos do produto","textPreview":"O evento conecta os principais fluxos do produto","textChars":48,"textLines":1,"bbox":[52,42,1176,60]}
+{"kind":"textbox","id":"sh/wj2xo3ul","slide":4,"text":"A entidade central concentra planejamento, convidados, consumo e decisões financeiras.","textPreview":"A entidade central concentra planejamento, convidados, consumo e decisões financeiras.","textChars":86,"textLines":1,"bbox":[52,112,1120,46]}
+{"kind":"shape","id":"sh/hkbeh8v6","slide":4,"bbox":[52,674,90,3]}
+{"kind":"textbox","id":"sh/md0fitcj","slide":4,"text":"FAÇA A FESTA · TCC","textPreview":"FAÇA A FESTA · TCC","textChars":18,"textLines":1,"bbox":[52,683,260,20]}
+{"kind":"textbox","id":"sh/ne9wbyd4","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1190,681,38,20]}
+{"kind":"shape","id":"sh/8fixk3up","slide":4,"bbox":[365,198,85,0]}
+{"kind":"shape","id":"sh/9gred8va","slide":4,"bbox":[450,198,0,127]}
+{"kind":"shape","id":"sh/ypgvetcn","slide":4,"bbox":[450,325,70,0]}
+{"kind":"shape","id":"sh/zq9w7ed8","slide":4,"bbox":[365,538,85,0]}
+{"kind":"shape","id":"sh/be5c3e1w","slide":4,"bbox":[450,405,0,133]}
+{"kind":"shape","id":"sh/qdwvu90b","slide":4,"bbox":[450,405,70,0]}
+{"kind":"shape","id":"sh/d07u5oj2","slide":4,"bbox":[760,315,90,0]}
+{"kind":"shape","id":"sh/cfydwjih","slide":4,"bbox":[850,178,0,137]}
+{"kind":"shape","id":"sh/z2pc7y1s","slide":4,"bbox":[850,178,80,0]}
+{"kind":"shape","id":"sh/y1gvyt0n","slide":4,"bbox":[760,345,90,0]}
+{"kind":"shape","id":"sh/l47u9ojy","slide":4,"bbox":[850,308,0,37]}
+{"kind":"shape","id":"sh/03yd0jid","slide":4,"bbox":[850,308,80,0]}
+{"kind":"shape","id":"sh/f6lcvu1o","slide":4,"bbox":[760,385,90,0]}
+{"kind":"shape","id":"sh/e5cbmpk3","slide":4,"bbox":[850,385,0,73]}
+{"kind":"shape","id":"sh/i1kfuxkr","slide":4,"bbox":[850,458,80,0]}
+{"kind":"shape","id":"sh/j2tg32lc","slide":4,"bbox":[760,415,90,0]}
+{"kind":"shape","id":"sh/432xw72x","slide":4,"bbox":[850,415,0,173]}
+{"kind":"shape","id":"sh/54by5c3i","slide":4,"bbox":[850,588,80,0]}
+{"kind":"shape","id":"sh/ux0fqxkv","slide":4,"bbox":[520,285,240,160]}
+{"kind":"textbox","id":"sh/vy9gzil0","slide":4,"text":"evento","textPreview":"evento","textChars":6,"textLines":1,"bbox":[558,317,165,38]}
+{"kind":"textbox","id":"sh/wz2xsn2l","slide":4,"text":"PK · id_evento","textPreview":"PK · id_evento","textChars":14,"textLines":1,"bbox":[558,374,165,26]}
+{"kind":"shape","id":"sh/h0by1s36","slide":4,"bbox":[135,155,230,86]}
+{"kind":"textbox","id":"sh/m90fmd4j","slide":4,"text":"usuario","textPreview":"usuario","textChars":7,"textLines":1,"bbox":[155,170,190,28]}
+{"kind":"textbox","id":"sh/7u9wvil4","slide":4,"text":"id_usuario","textPreview":"id_usuario","textChars":10,"textLines":1,"bbox":[155,206,190,20]}
+{"kind":"shape","id":"sh/pofi1gnm","slide":4,"bbox":[135,495,230,86]}
+{"kind":"textbox","id":"sh/on618bm1","slide":4,"text":"tipo_evento","textPreview":"tipo_evento","textChars":11,"textLines":1,"bbox":[155,510,190,28]}
+{"kind":"textbox","id":"sh/3mx0z65g","slide":4,"text":"id_tipo_evento","textPreview":"id_tipo_evento","textChars":14,"textLines":1,"bbox":[155,546,190,20]}
+{"kind":"shape","id":"sh/2loj614v","slide":4,"bbox":[930,135,230,86]}
+{"kind":"textbox","id":"sh/1kfixgnq","slide":4,"text":"convidado","textPreview":"convidado","textChars":9,"textLines":1,"bbox":[950,150,190,28]}
+{"kind":"textbox","id":"sh/gz614bm5","slide":4,"text":"id_evento","textPreview":"id_evento","textChars":9,"textLines":1,"bbox":[950,186,190,20]}
+{"kind":"shape","id":"sh/fyx0v65k","slide":4,"bbox":[930,265,230,86]}
+{"kind":"textbox","id":"sh/ex4z214z","slide":4,"text":"tarefa","textPreview":"tarefa","textChars":6,"textLines":1,"bbox":[950,280,190,28]}
+{"kind":"textbox","id":"sh/twvitwne","slide":4,"text":"id_evento","textPreview":"id_evento","textChars":9,"textLines":1,"bbox":[950,316,190,20]}
+{"kind":"shape","id":"sh/svmh0rmt","slide":4,"bbox":[930,415,230,86]}
+{"kind":"textbox","id":"sh/sze90vm5","slide":4,"text":"cardapio","textPreview":"cardapio","textChars":8,"textLines":1,"bbox":[950,430,190,28]}
+{"kind":"textbox","id":"sh/t0nq90na","slide":4,"text":"id_evento","textPreview":"id_evento","textChars":9,"textLines":1,"bbox":[950,466,190,20]}
+{"kind":"shape","id":"sh/6xwry54z","slide":4,"bbox":[930,545,230,86]}
+{"kind":"textbox","id":"sh/7y587q5k","slide":4,"text":"orcamento","textPreview":"orcamento","textChars":9,"textLines":1,"bbox":[950,560,190,28]}
+{"kind":"textbox","id":"sh/g3y94fm1","slide":4,"text":"id_evento","textPreview":"id_evento","textChars":9,"textLines":1,"bbox":[950,596,190,20]}
+{"kind":"notes","id":"nt/5soynk","slide":4,"text":"Mostre o relacionamento central: um usuário organiza eventos; o tipo classifica; convidados, tarefas, cardápios e orçamentos dependem do evento. No Firestore essas são FKs lógicas; no modelo SQL passaram a ser relacionamentos explícitos.\n\n[Sources]\n- lib/data/models/evento/evento_model.dart\n- lib/data/models/usuario/usuario_model.dart\n- lib/data/models/convidado/convidado_model.dart\n- lib/data/models/tarefa/tarefa_model.dart\n- document/modelo_sql_vycanis.sql"}
+{"kind":"slide","id":"sl/dkmqn7","slide":5,"title":"As tabelas centrais preservam identidade e contexto","textShapes":5}
+{"kind":"textbox","id":"sh/al4zm9of","slide":5,"text":"As tabelas centrais preservam identidade e contexto","textPreview":"As tabelas centrais preservam identidade e contexto","textChars":51,"textLines":1,"bbox":[52,42,1176,60]}
+{"kind":"textbox","id":"sh/x8vihon6","slide":5,"text":"Campos essenciais foram priorizados; detalhes completos permanecem no dicionário de dados.","textPreview":"Campos essenciais foram priorizados; detalhes completos permanecem no dicionário de dados.","textChars":90,"textLines":1,"bbox":[52,112,1120,46]}
+{"kind":"shape","id":"sh/wnmhoj6l","slide":5,"bbox":[52,674,90,3]}
+{"kind":"textbox","id":"sh/jad0jy5w","slide":5,"text":"FAÇA A FESTA · TCC","textPreview":"FAÇA A FESTA · TCC","textChars":18,"textLines":1,"bbox":[52,683,260,20]}
+{"kind":"textbox","id":"sh/i94zqtob","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1190,681,38,20]}
+{"kind":"shape","id":"sh/kbmhs36h","slide":5,"bbox":[52,622,1176,4]}
+{"kind":"textbox","id":"sh/7ex0ny58","slide":5,"text":"No Firestore, a relação é uma convenção. No SQL, a FK torna o vínculo documentado e verificável.","textPreview":"No Firestore, a relação é uma convenção. No SQL, a FK torna o vínculo documentado e verificável.","textChars":96,"textLines":1,"bbox":[52,636,1120,30]}
+{"kind":"table","id":"tb/8j298by5","slide":5,"name":"","rows":6,"cols":4,"preview":"Entidade | Chave primária | Chaves estrangeiras | Campos essenciais","bbox":[52,205,1176,400]}
+{"kind":"notes","id":"nt/dkmqn7","slide":5,"text":"Não leia todos os campos. Use um exemplo: evento.id_usuario liga o evento ao organizador; convidado.id_evento liga cada pessoa à festa. A diferença entre PK e FK deve ficar clara para a banca.\n\n[Sources]\n- lib/data/models/usuario/usuario_model.dart\n- lib/data/models/evento/evento_model.dart\n- lib/data/models/convidado/convidado_model.dart\n- lib/data/models/cardapio/**"}
+{"kind":"slide","id":"sl/kwihbx","slide":6,"title":"O marketplace exige relações muitos-para-muitos","textShapes":15}
+{"kind":"textbox","id":"sh/54zidsrq","slide":6,"text":"O marketplace exige relações muitos-para-muitos","textPreview":"O marketplace exige relações muitos-para-muitos","textChars":47,"textLines":1,"bbox":[52,42,1176,60]}
+{"kind":"textbox","id":"sh/i1ozid8z","slide":6,"text":"Fornecedor, catálogo e território foram separados para permitir busca, preço e expansão regional.","textPreview":"Fornecedor, catálogo e território foram separados para permitir busca, preço e expansão regional.","textChars":97,"textLines":1,"bbox":[52,112,1120,46]}
+{"kind":"shape","id":"sh/j2xgbi9k","slide":6,"bbox":[52,674,90,3]}
+{"kind":"textbox","id":"sh/wz6hgnqt","slide":6,"text":"FAÇA A FESTA · TCC","textPreview":"FAÇA A FESTA · TCC","textChars":18,"textLines":1,"bbox":[52,683,260,20]}
+{"kind":"textbox","id":"sh/h0fy98re","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1190,681,38,20]}
+{"kind":"shape","id":"sh/uxozed83","slide":6,"bbox":[320,210,240,145]}
+{"kind":"shape","id":"sh/vyxg7i98","slide":6,"bbox":[320,355,240,0]}
+{"kind":"shape","id":"sh/gvahs7qd","slide":6,"bbox":[320,355,240,145]}
+{"kind":"shape","id":"sh/1wjilcri","slide":6,"bbox":[780,210,210,145]}
+{"kind":"shape","id":"sh/p8nu14ze","slide":6,"bbox":[110,285,240,140]}
+{"kind":"textbox","id":"sh/47et8zyt","slide":6,"text":"fornecedor","textPreview":"fornecedor","textChars":10,"textLines":1,"bbox":[140,315,180,38]}
+{"kind":"textbox","id":"sh/365czuh8","slide":6,"text":"PK · id_fornecedor","textPreview":"PK · id_fornecedor","textChars":18,"textLines":1,"bbox":[140,375,180,24]}
+{"kind":"shape","id":"sh/25wb6pgn","slide":6,"bbox":[560,160,245,92]}
+{"kind":"textbox","id":"sh/h4nuxkz2","slide":6,"text":"fornecedor_categoria","textPreview":"fornecedor_categoria","textChars":20,"textLines":1,"bbox":[578,176,210,26]}
+{"kind":"textbox","id":"sh/g3et4fyx","slide":6,"text":"fornecedor + categoria","textPreview":"fornecedor + categoria","textChars":22,"textLines":1,"bbox":[578,214,210,22]}
+{"kind":"shape","id":"sh/f25cvahc","slide":6,"bbox":[560,310,245,92]}
+{"kind":"textbox","id":"sh/u1wb25gr","slide":6,"text":"fornecedor_servico","textPreview":"fornecedor_servico","textChars":18,"textLines":1,"bbox":[578,326,210,26]}
+{"kind":"textbox","id":"sh/l0ru9ozm","slide":6,"text":"preço · promoção · ativo","textPreview":"preço · promoção · ativo","textChars":24,"textLines":1,"bbox":[578,364,210,22]}
+{"kind":"shape","id":"sh/0zydgjy1","slide":6,"bbox":[560,460,245,92]}
+{"kind":"textbox","id":"sh/k36dcn6d","slide":6,"text":"territorio","textPreview":"territorio","textChars":10,"textLines":1,"bbox":[578,476,210,26]}
+{"kind":"textbox","id":"sh/l4ze5sni","slide":6,"text":"região · raio · coordenadas","textPreview":"região · raio · coordenadas","textChars":27,"textLines":1,"bbox":[578,514,210,22]}
+{"kind":"shape","id":"sh/yhovado7","slide":6,"bbox":[990,310,245,92]}
+{"kind":"textbox","id":"sh/jixw3i5s","slide":6,"text":"servico_produto","textPreview":"servico_produto","textChars":15,"textLines":1,"bbox":[1008,326,210,26]}
+{"kind":"textbox","id":"sh/wf6d8361","slide":6,"text":"nome · medida · descrição","textPreview":"nome · medida · descrição","textChars":25,"textLines":1,"bbox":[1008,364,210,22]}
+{"kind":"textbox","id":"sh/xgfe18nm","slide":6,"text":"A tabela associativa fornecedor_servico resolve a relação N:N e centraliza preço, disponibilidade e reputação do serviço.","textPreview":"A tabela associativa fornecedor_servico resolve a relação N:N e centraliza preço, disponibilidade e reputação do serviço.","textChars":121,"textLines":1,"bbox":[110,575,1070,50]}
+{"kind":"notes","id":"nt/kwihbx","slide":6,"text":"Este é o núcleo de mercado do aplicativo. Um fornecedor pode oferecer vários serviços e um serviço pode ser oferecido por vários fornecedores. A tabela associativa também guarda preço e métricas.\n\n[Sources]\n- lib/data/models/fornecedor/fornecedor_model.dart\n- lib/data/models/servico_produto/**\n- lib/controllers/fornecedor/**\n- lib/controllers/servico/**"}
+{"kind":"slide","id":"sl/b5edii","slide":7,"title":"A jornada comercial permanece rastreável ponta a ponta","textShapes":20}
+{"kind":"textbox","id":"sh/g3a1o3u1","slide":7,"text":"A jornada comercial permanece rastreável ponta a ponta","textPreview":"A jornada comercial permanece rastreável ponta a ponta","textChars":54,"textLines":1,"bbox":[52,42,1176,60]}
+{"kind":"textbox","id":"sh/f21kfytw","slide":7,"text":"Da solicitação ao gasto realizado, cada etapa possui identidade e vínculo com o evento.","textPreview":"Da solicitação ao gasto realizado, cada etapa possui identidade e vínculo com o evento.","textChars":87,"textLines":1,"bbox":[52,112,1120,46]}
+{"kind":"shape","id":"sh/u1sjmtcb","slide":7,"bbox":[52,674,90,3]}
+{"kind":"textbox","id":"sh/ps32l8by","slide":7,"text":"FAÇA A FESTA · TCC","textPreview":"FAÇA A FESTA · TCC","textChars":18,"textLines":1,"bbox":[52,683,260,20]}
+{"kind":"textbox","id":"sh/o7u1s3ud","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1190,681,38,20]}
+{"kind":"shape","id":"sh/36lkjyts","slide":7,"bbox":[145,355,930,0]}
+{"kind":"shape","id":"sh/25cjqdc7","slide":7,"bbox":[95,322,66,66]}
+{"kind":"textbox","id":"sh/dwn2psbu","slide":7,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[112,337,32,28]}
+{"kind":"textbox","id":"sh/cvulwnu9","slide":7,"text":"cotacao","textPreview":"cotacao","textChars":7,"textLines":1,"bbox":[70,425,190,50]}
+{"kind":"textbox","id":"sh/ed4fq90j","slide":7,"text":"evento + solicitante","textPreview":"evento + solicitante","textChars":20,"textLines":1,"bbox":[70,485,190,48]}
+{"kind":"shape","id":"sh/fydgzeh4","slide":7,"bbox":[330,322,66,66]}
+{"kind":"textbox","id":"sh/gzmxsjip","slide":7,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[347,337,32,28]}
+{"kind":"textbox","id":"sh/10vy1oza","slide":7,"text":"cotacao_fornecedor","textPreview":"cotacao_fornecedor","textChars":18,"textLines":1,"bbox":[305,425,190,50]}
+{"kind":"textbox","id":"sh/214fu90v","slide":7,"text":"prazo + resposta","textPreview":"prazo + resposta","textChars":16,"textLines":1,"bbox":[305,485,190,48]}
+{"kind":"shape","id":"sh/32xg3ehg","slide":7,"bbox":[565,322,66,66]}
+{"kind":"textbox","id":"sh/o36xwji1","slide":7,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[582,337,32,28]}
+{"kind":"textbox","id":"sh/p4fy5oz6","slide":7,"text":"cotacao_servico","textPreview":"cotacao_servico","textChars":15,"textLines":1,"bbox":[540,425,190,50]}
+{"kind":"textbox","id":"sh/i5kfip0b","slide":7,"text":"quantidade + valores","textPreview":"quantidade + valores","textChars":20,"textLines":1,"bbox":[540,485,190,48]}
+{"kind":"shape","id":"sh/j6twru1w","slide":7,"bbox":[800,322,66,66]}
+{"kind":"textbox","id":"sh/napczqho","slide":7,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[817,337,32,28]}
+{"kind":"textbox","id":"sh/m9gvqlg3","slide":7,"text":"orcamento","textPreview":"orcamento","textChars":9,"textLines":1,"bbox":[775,425,190,50]}
+{"kind":"textbox","id":"sh/9cru10zu","slide":7,"text":"fornecedor + status","textPreview":"fornecedor + status","textChars":19,"textLines":1,"bbox":[775,485,190,48]}
+{"kind":"shape","id":"sh/8bidsvy9","slide":7,"bbox":[1035,322,66,66]}
+{"kind":"textbox","id":"sh/zmpcv6hs","slide":7,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[1052,337,32,28]}
+{"kind":"textbox","id":"sh/ylgbm1g7","slide":7,"text":"orcamento_gasto","textPreview":"orcamento_gasto","textChars":15,"textLines":1,"bbox":[1010,425,190,50]}
+{"kind":"textbox","id":"sh/lo7uxgzy","slide":7,"text":"custo + pago","textPreview":"custo + pago","textChars":12,"textLines":1,"bbox":[1010,485,190,48]}
+{"kind":"textbox","id":"sh/0nydobyd","slide":7,"text":"Mensagens e serviços ficam associados ao fornecedor dentro da cotação; gastos detalham o orçamento aprovado.","textPreview":"Mensagens e serviços ficam associados ao fornecedor dentro da cotação; gastos detalham o orçamento aprovado.","textChars":108,"textLines":1,"bbox":[112,588,1030,38]}
+{"kind":"notes","id":"nt/b5edii","slide":7,"text":"Conte o fluxo como uma história: o evento abre uma cotação, fornecedores respondem, serviços recebem valores, a proposta escolhida gera orçamento e os gastos passam a ser controlados.\n\n[Sources]\n- lib/controllers/contacao/**\n- lib/controllers/orcamento_controller.dart\n- lib/controllers/orcamento_gasto_controller.dart\n- lib/presentation/pages/fornecedor/chat/**"}
+{"kind":"slide","id":"sl/ock4wh","slide":8,"title":"Recursos avançados já têm estrutura para escalar","textShapes":19}
+{"kind":"textbox","id":"sh/4rq9kzi9","slide":8,"text":"Recursos avançados já têm estrutura para escalar","textPreview":"Recursos avançados já têm estrutura para escalar","textChars":48,"textLines":1,"bbox":[52,42,1176,60]}
+{"kind":"textbox","id":"sh/3qh8bu1o","slide":8,"text":"Dados de cálculo, inspiração e inteligência permanecem separados do núcleo transacional.","textPreview":"Dados de cálculo, inspiração e inteligência permanecem separados do núcleo transacional.","textChars":88,"textLines":1,"bbox":[52,112,1120,46]}
+{"kind":"shape","id":"sh/258ri903","slide":8,"bbox":[52,674,90,3]}
+{"kind":"textbox","id":"sh/h4fq94jy","slide":8,"text":"FAÇA A FESTA · TCC","textPreview":"FAÇA A FESTA · TCC","textChars":18,"textLines":1,"bbox":[52,683,260,20]}
+{"kind":"textbox","id":"sh/g369gzid","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1190,681,38,20]}
+{"kind":"shape","id":"sh/f2x87u1s","slide":8,"bbox":[52,205,360,6]}
+{"kind":"textbox","id":"sh/u1orep07","slide":8,"text":"CALCULADORA","textPreview":"CALCULADORA","textChars":11,"textLines":1,"bbox":[52,232,330,30]}
+{"kind":"textbox","id":"sh/t0fq5kjm","slide":8,"text":"calculadora_festa","textPreview":"calculadora_festa","textChars":17,"textLines":1,"bbox":[52,300,330,44]}
+{"kind":"textbox","id":"sh/sz6pcf21","slide":8,"text":"itens · custos · conversão","textPreview":"itens · custos · conversão","textChars":26,"textLines":1,"bbox":[52,370,330,52]}
+{"kind":"shape","id":"sh/ilkb6hof","slide":8,"bbox":[52,445,330,0]}
+{"kind":"textbox","id":"sh/j6tsfm50","slide":8,"text":"analises_ia","textPreview":"analises_ia","textChars":11,"textLines":1,"bbox":[52,475,330,38]}
+{"kind":"textbox","id":"sh/k72t8r6l","slide":8,"text":"Histórico e contexto preservados sem sobrecarregar evento e fornecedor.","textPreview":"Histórico e contexto preservados sem sobrecarregar evento e fornecedor.","textChars":71,"textLines":1,"bbox":[52,530,330,68]}
+{"kind":"shape","id":"sh/58vahwn6","slide":8,"bbox":[454,205,360,6]}
+{"kind":"textbox","id":"sh/ahkb2hoj","slide":8,"text":"INSPIRAÇÃO","textPreview":"INSPIRAÇÃO","textChars":10,"textLines":1,"bbox":[454,232,330,30]}
+{"kind":"textbox","id":"sh/bitsbm5o","slide":8,"text":"inspiracao","textPreview":"inspiracao","textChars":10,"textLines":1,"bbox":[454,300,330,44]}
+{"kind":"textbox","id":"sh/wj2t4r69","slide":8,"text":"galeria · tags · sugestões","textPreview":"galeria · tags · sugestões","textChars":26,"textLines":1,"bbox":[454,370,330,52]}
+{"kind":"shape","id":"sh/xkbadcnu","slide":8,"bbox":[454,445,330,0]}
+{"kind":"textbox","id":"sh/md0ryxo7","slide":8,"text":"evento_referencia","textPreview":"evento_referencia","textChars":17,"textLines":1,"bbox":[454,475,330,38]}
+{"kind":"textbox","id":"sh/ne9s725s","slide":8,"text":"Histórico e contexto preservados sem sobrecarregar evento e fornecedor.","textPreview":"Histórico e contexto preservados sem sobrecarregar evento e fornecedor.","textChars":71,"textLines":1,"bbox":[454,530,330,68]}
+{"kind":"shape","id":"sh/r65gjeh8","slide":8,"bbox":[856,205,360,6]}
+{"kind":"textbox","id":"sh/q5wzq90n","slide":8,"text":"INTELIGÊNCIA","textPreview":"INTELIGÊNCIA","textChars":12,"textLines":1,"bbox":[856,232,330,30]}
+{"kind":"textbox","id":"sh/d8nyloze","slide":8,"text":"fornecedor_recomendacao","textPreview":"fornecedor_recomendacao","textChars":23,"textLines":1,"bbox":[856,300,330,44]}
+{"kind":"textbox","id":"sh/s7ehsjit","slide":8,"text":"score · motivos · compatibilidade","textPreview":"score · motivos · compatibilidade","textChars":33,"textLines":1,"bbox":[856,370,330,52]}
+{"kind":"shape","id":"sh/fa5gnehk","slide":8,"bbox":[856,445,330,0]}
+{"kind":"textbox","id":"sh/e9wzu90z","slide":8,"text":"fornecedor_interacao","textPreview":"fornecedor_interacao","textChars":20,"textLines":1,"bbox":[856,475,330,38]}
+{"kind":"textbox","id":"sh/1c7ypoza","slide":8,"text":"Histórico e contexto preservados sem sobrecarregar evento e fornecedor.","textPreview":"Histórico e contexto preservados sem sobrecarregar evento e fornecedor.","textChars":71,"textLines":1,"bbox":[856,530,330,68]}
+{"kind":"notes","id":"nt/ock4wh","slide":8,"text":"A separação por domínios reduz acoplamento. A calculadora pode evoluir, a inspiração pode receber novos conteúdos e os algoritmos de recomendação podem mudar sem alterar as tabelas centrais.\n\n[Sources]\n- lib/data/repositories/calculadora_festa_repository.dart\n- functions/src/services/calculadora/**\n- lib/controllers/inspiracao/**\n- functions/src/services/fornecedores/**"}
+{"kind":"slide","id":"sl/8b60z8","slide":9,"title":"O modelo inicial evoluiu para um contrato relacional completo","textShapes":8}
+{"kind":"shape","id":"sh/ve1g7294","slide":9,"bbox":[755,0,20,720]}
+{"kind":"textbox","id":"sh/udsfyx8j","slide":9,"text":"O modelo inicial evoluiu para um contrato relacional completo","textPreview":"O modelo inicial evoluiu para um contrato relacional completo","textChars":61,"textLines":1,"bbox":[820,58,390,150]}
+{"kind":"textbox","id":"sh/tczy5sry","slide":9,"text":"MODELO ATUAL","textPreview":"MODELO ATUAL","textChars":12,"textLines":1,"bbox":[820,246,220,28]}
+{"kind":"textbox","id":"sh/8bqxwnqt","slide":9,"text":"54","textPreview":"54","textChars":2,"textLines":1,"bbox":[820,285,160,90]}
+{"kind":"textbox","id":"sh/7ahg3i98","slide":9,"text":"tabelas SQL","textPreview":"tabelas SQL","textChars":11,"textLines":1,"bbox":[965,330,210,34]}
+{"kind":"textbox","id":"sh/698fud8n","slide":9,"text":"PKs e FKs explícitas","textPreview":"PKs e FKs explícitas","textChars":20,"textLines":1,"bbox":[820,410,300,32]}
+{"kind":"textbox","id":"sh/l8zy18r2","slide":9,"text":"Subcoleções normalizadas","textPreview":"Subcoleções normalizadas","textChars":24,"textLines":1,"bbox":[820,462,330,32]}
+{"kind":"textbox","id":"sh/knqxsnqh","slide":9,"text":"DDL validado sem FKs inválidas","textPreview":"DDL validado sem FKs inválidas","textChars":30,"textLines":1,"bbox":[820,514,360,32]}
+{"kind":"shape","id":"sh/6x8z6l8r","slide":9,"bbox":[820,582,320,4]}
+{"kind":"textbox","id":"sh/7yhgf6pc","slide":9,"text":"Pronto para Engenharia Reversa no Vycanis","textPreview":"Pronto para Engenharia Reversa no Vycanis","textChars":41,"textLines":1,"bbox":[820,603,370,50]}
+{"kind":"image","id":"im/lwbyxcbi","slide":9,"name":"","alt":"Imagem: codex-clipboard-9619a521-5e06-4afe-8b5d-06b74955ba01.png","bbox":[0,0,770,720]}
+{"kind":"notes","id":"nt/8b60z8","slide":9,"text":"A captura representa o modelo inicial. A atualização não é apenas visual: o DDL atual inclui 54 tabelas, converte subcoleções em relações e valida todas as referências. O arquivo pode ser importado pela Engenharia Reversa do Vycanis.\n\n[Sources]\n- Captura do Vycanis fornecida pelo usuário\n- document/modelo_sql_vycanis.sql\n- document/GUIA_MODELO_SQL_VYCANIS.md"}
+{"kind":"slide","id":"sl/lodmqt","slide":10,"title":"O banco deixa de ser apenas implementação e passa a ser um ativo do produto","textShapes":14}
+{"kind":"textbox","id":"sh/o3q9gvuh","slide":10,"text":"O banco deixa de ser apenas implementação e passa a ser um ativo do produto","textPreview":"O banco deixa de ser apenas implementação e passa a ser um ativo do produto","textChars":75,"textLines":1,"bbox":[52,190,1030,150]}
+{"kind":"textbox","id":"sh/p4zqp0v2","slide":10,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[52,410,60,28]}
+{"kind":"textbox","id":"sh/edo7alcf","slide":10,"text":"Contrato de dados","textPreview":"Contrato de dados","textChars":17,"textLines":1,"bbox":[52,452,260,34]}
+{"kind":"textbox","id":"sh/fex8jqd0","slide":10,"text":"campos, chaves e domínios documentados","textPreview":"campos, chaves e domínios documentados","textChars":38,"textLines":1,"bbox":[52,500,255,62]}
+{"kind":"textbox","id":"sh/0f6pcvul","slide":10,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[350,410,60,28]}
+{"kind":"textbox","id":"sh/1gfql0v6","slide":10,"text":"Governança","textPreview":"Governança","textChars":10,"textLines":1,"bbox":[350,452,260,34]}
+{"kind":"textbox","id":"sh/y9srmpcz","slide":10,"text":"uma fonte oficial para cada conceito","textPreview":"uma fonte oficial para cada conceito","textChars":36,"textLines":1,"bbox":[350,500,255,62]}
+{"kind":"textbox","id":"sh/za18vud4","slide":10,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[648,410,60,28]}
+{"kind":"textbox","id":"sh/rql0n254","slide":10,"text":"Escalabilidade","textPreview":"Escalabilidade","textChars":14,"textLines":1,"bbox":[648,452,260,34]}
+{"kind":"textbox","id":"sh/65czuxoj","slide":10,"text":"módulos evoluem sem romper o núcleo","textPreview":"módulos evoluem sem romper o núcleo","textChars":35,"textLines":1,"bbox":[648,500,255,62]}
+{"kind":"textbox","id":"sh/tsnipsnu","slide":10,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[946,410,60,28]}
+{"kind":"textbox","id":"sh/srehw76p","slide":10,"text":"Prontidão de mercado","textPreview":"Prontidão de mercado","textChars":20,"textLines":1,"bbox":[946,452,260,34]}
+{"kind":"textbox","id":"sh/fu50r250","slide":10,"text":"modelo revisável por equipe e investidores","textPreview":"modelo revisável por equipe e investidores","textChars":42,"textLines":1,"bbox":[946,500,255,62]}
+{"kind":"shape","id":"sh/etwzyx4f","slide":10,"bbox":[52,618,1176,4]}
+{"kind":"textbox","id":"sh/1wnitcn6","slide":10,"text":"Próximo passo: manter o SQL e o dicionário atualizados junto de cada evolução do aplicativo.","textPreview":"Próximo passo: manter o SQL e o dicionário atualizados junto de cada evolução do aplicativo.","textChars":92,"textLines":1,"bbox":[52,638,1120,32]}
+{"kind":"image","id":"im/61obqpk7","slide":10,"name":"","alt":"Imagem: logo-faca-festa.png","bbox":[52,46,104,104]}
+{"kind":"notes","id":"nt/lodmqt","slide":10,"text":"Feche conectando o trabalho técnico à visão de mercado. Um produto que pretende crescer precisa de um banco explicável, governado e compartilhável. O resultado do TCC é também uma base para manutenção e evolução comercial.\n\n[Sources]\n- document/MAPEAMENTO_FIREBASE_APRESENTACAO.md\n- document/modelo_sql_vycanis.sql\n- document/GUIA_MODELO_SQL_VYCANIS.md"}

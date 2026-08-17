@@ -84,8 +84,8 @@ class PainelCotacaoPage extends StatelessWidget {
     final eventoCtrl = Get.find<EventoController>();
 
     return Obx(() {
-      final eventoAtual = eventoCtrl.eventoAtual.value;
-      final tipoEventoAtual = eventoCtrl.tipoEventoAtual.value;
+      final eventoAtual = eventoCtrl.eventoAtualEntidade;
+      final tipoEventoAtual = eventoCtrl.tipoEventoAtualEntidade;
       final idUsuario = FirebaseAuth.instance.currentUser?.uid ?? '';
 
       final idEvento = _resolverIdEvento(eventoAtual);

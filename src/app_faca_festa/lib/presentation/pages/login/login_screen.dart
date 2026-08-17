@@ -56,7 +56,8 @@ class LoginScreen extends StatelessWidget {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
@@ -128,7 +129,22 @@ class LoginScreen extends StatelessWidget {
                             onChanged: (v) => controller.senha.value = v,
                           ),
 
-                          const SizedBox(height: 25),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () => Get.toNamed('/forgotPassword'),
+                              child: Text(
+                                'Esqueci minha senha',
+                                style: GoogleFonts.poppins(
+                                  color: theme.primaryColor.value,
+                                  fontSize: 13.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 12),
 
                           // Botão Entrar
                           Obx(() {
@@ -139,7 +155,8 @@ class LoginScreen extends StatelessWidget {
                                     ? null
                                     : () async => await controller.login(),
                                 style: ElevatedButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(vertical: 2),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 2),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                   ),
@@ -147,9 +164,11 @@ class LoginScreen extends StatelessWidget {
                                   shadowColor: Colors.transparent,
                                 ).copyWith(
                                   elevation: WidgetStateProperty.all(0),
-                                  backgroundColor: WidgetStateProperty.resolveWith((states) {
+                                  backgroundColor:
+                                      WidgetStateProperty.resolveWith((states) {
                                     if (states.contains(WidgetState.disabled)) {
-                                      return gradient.colors.first.withValues(alpha: 0.6);
+                                      return gradient.colors.first
+                                          .withValues(alpha: 0.6);
                                     }
                                     return null;
                                   }),
@@ -183,6 +202,63 @@ class LoginScreen extends StatelessWidget {
                               ),
                             );
                           }),
+                          const SizedBox(height: 18),
+                          Row(
+                            children: [
+                              Expanded(
+                                  child: Divider(color: Colors.grey.shade300)),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 12),
+                                child: Text(
+                                  'ou',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade600,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              Expanded(
+                                  child: Divider(color: Colors.grey.shade300)),
+                            ],
+                          ),
+                          const SizedBox(height: 18),
+                          Obx(
+                            () => SizedBox(
+                              width: double.infinity,
+                              height: 52,
+                              child: OutlinedButton.icon(
+                                onPressed: controller.carregando.value
+                                    ? null
+                                    : () async =>
+                                        await controller.loginComGoogle(),
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.grey.shade800,
+                                  side: BorderSide(color: Colors.grey.shade300),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                icon: Text(
+                                  'G',
+                                  style: GoogleFonts.poppins(
+                                    color: const Color(0xFF4285F4),
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                label: Text(
+                                  'Entrar com Google',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -232,7 +308,7 @@ class LoginScreen extends StatelessWidget {
                             end: Alignment.centerRight,
                           ).createShader(bounds),
                           child: Text(
-                            "by RRS System Technology",
+                            "by Jullia A. Nicolas B. Rivaldo R.",
                             style: GoogleFonts.poppins(
                               fontSize: 13,
                               fontWeight: FontWeight.w600,

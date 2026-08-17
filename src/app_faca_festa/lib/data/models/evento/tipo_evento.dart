@@ -1,13 +1,20 @@
-class TipoEventoModel {
-  final String idTipoEvento;
-  final String nome;
-  final bool ativo;
+import '../../../domain/entities/tipo_evento.dart';
+export '../../../domain/entities/tipo_evento.dart' show TipoEvento;
 
+class TipoEventoModel extends TipoEvento {
   const TipoEventoModel({
-    required this.idTipoEvento,
-    required this.nome,
-    this.ativo = true,
+    required super.idTipoEvento,
+    required super.nome,
+    super.ativo,
   });
+
+  factory TipoEventoModel.fromEntity(TipoEvento tipoEvento) {
+    return TipoEventoModel(
+      idTipoEvento: tipoEvento.idTipoEvento,
+      nome: tipoEvento.nome,
+      ativo: tipoEvento.ativo,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {

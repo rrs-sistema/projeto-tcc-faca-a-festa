@@ -1,0 +1,970 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/xlud0e",
+    "id": "xlud0e",
+    "slide": 7,
+    "layoutId": "25c5dfe9-8aa0-471d-954a-8c5d3d5e25db",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "aed41b87-a4c0-4482-b122-bceb8bdb1301",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "25c5dfe9-8aa0-471d-954a-8c5d3d5e25db",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "aed41b87-a4c0-4482-b122-bceb8bdb1301",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "aed41b87-a4c0-4482-b122-bceb8bdb1301",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/87a1wb6h",
+      "id": "1",
+      "bbox": [
+        42,
+        34,
+        1196,
+        70
+      ],
+      "geometry": "rect",
+      "text": "Módulos avançados ampliam o banco sem criar tabelas para cada modelo",
+      "textPreview": "Módulos avançados ampliam o banco sem criar tabelas para cada modelo",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#111111",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Módulos avançados ampliam o banco sem criar tabelas para cada modelo"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Módulos avançados ampliam o banco sem criar tabelas para cada modelo",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#111111",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Módulos avançados ampliam o banco sem criar tabelas para cada modelo",
+              "fontSize": 38,
+              "color": "#111111",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/761kn6pw",
+      "id": "2",
+      "bbox": [
+        42,
+        112,
+        1196,
+        60
+      ],
+      "geometry": "rect",
+      "text": "Calculadora, inspiração, presentes e recomendação usam documentos compostos e histórico aninhado.",
+      "textPreview": "Calculadora, inspiração, presentes e recomendação usam documentos compostos e histórico aninhado.",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "fontSize": 19,
+        "typeface": "+mn-lt",
+        "color": "#59616C",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Calculadora, inspiração, presentes e recomendação usam documentos compostos e histórico aninhado."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Calculadora, inspiração, presentes e recomendação usam documentos compostos e histórico aninhado.",
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "color": "#59616C",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Calculadora, inspiração, presentes e recomendação usam documentos compostos e histórico aninhado.",
+              "fontSize": 19,
+              "color": "#59616C",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/6lsju1ob",
+      "id": "3",
+      "bbox": [
+        1170,
+        668,
+        68,
+        24
+      ],
+      "geometry": "rect",
+      "text": "07",
+      "textPreview": "07",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#59616C",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "07"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "07",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#59616C",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "07",
+              "fontSize": 12,
+              "color": "#59616C",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "table",
+      "scope": "slide",
+      "aid": "tb/gza5ovex",
+      "id": "4",
+      "bbox": [
+        42,
+        190,
+        1196,
+        445
+      ],
+      "text": "Domínio | Coleções | Chaves / estrutura | Dados relevantes\nCalculadora | calculadora_festa + itens | id_calculo; itens filhos | perfil, convidados, custos, status\nIA da calculadora | analises_ia | filha do cálculo | índices, diagnóstico, versões de prompt/schema\nBase de cálculo | calculadora_*_itens | IDs semânticos | regras, unidade, público, ordem, ativo\nInspiração | inspiracoes + referencias | referência filha do evento | imagens, tags, favoritos, sugestões\nPresentes | presentes + contributions | filhas do evento/presente | reserva, meta, arrecadação, contribuições\nRecomendação | fornecedor_* | evento + fornecedor + usuário | interações, score, motivos e compatibilidade",
+      "textPreview": "Domínio | Coleções | Chaves / estrutura | Dados relevantes | Calculadora | calculadora_festa + itens | id_calculo; itens filhos | perfil,...",
+      "rows": 7,
+      "cols": 4,
+      "cells": [
+        {
+          "index": 1,
+          "row": 1,
+          "column": 1,
+          "bbox": [
+            42,
+            190,
+            220,
+            63.57
+          ],
+          "text": "Domínio",
+          "textPreview": "Domínio",
+          "fillColor": "#111111",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Domínio",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Domínio"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "row": 1,
+          "column": 2,
+          "bbox": [
+            262,
+            190,
+            275,
+            63.57
+          ],
+          "text": "Coleções",
+          "textPreview": "Coleções",
+          "fillColor": "#111111",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Coleções",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Coleções"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "row": 1,
+          "column": 3,
+          "bbox": [
+            537,
+            190,
+            285,
+            63.57
+          ],
+          "text": "Chaves / estrutura",
+          "textPreview": "Chaves / estrutura",
+          "fillColor": "#111111",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Chaves / estrutura",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Chaves / estrutura"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "row": 1,
+          "column": 4,
+          "bbox": [
+            822,
+            190,
+            416,
+            63.57
+          ],
+          "text": "Dados relevantes",
+          "textPreview": "Dados relevantes",
+          "fillColor": "#111111",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Dados relevantes",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Dados relevantes"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "row": 2,
+          "column": 1,
+          "bbox": [
+            42,
+            253.57,
+            220,
+            63.57
+          ],
+          "text": "Calculadora",
+          "textPreview": "Calculadora",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Calculadora",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Calculadora"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "row": 2,
+          "column": 2,
+          "bbox": [
+            262,
+            253.57,
+            275,
+            63.57
+          ],
+          "text": "calculadora_festa + itens",
+          "textPreview": "calculadora_festa + itens",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "calculadora_festa + itens",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "calculadora_festa + itens"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "row": 2,
+          "column": 3,
+          "bbox": [
+            537,
+            253.57,
+            285,
+            63.57
+          ],
+          "text": "id_calculo; itens filhos",
+          "textPreview": "id_calculo; itens filhos",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_calculo; itens filhos",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_calculo; itens filhos"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "row": 2,
+          "column": 4,
+          "bbox": [
+            822,
+            253.57,
+            416,
+            63.57
+          ],
+          "text": "perfil, convidados, custos, status",
+          "textPreview": "perfil, convidados, custos, status",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "perfil, convidados, custos, status",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "perfil, convidados, custos, status"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "row": 3,
+          "column": 1,
+          "bbox": [
+            42,
+            317.14,
+            220,
+            63.57
+          ],
+          "text": "IA da calculadora",
+          "textPreview": "IA da calculadora",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "IA da calculadora",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "IA da calculadora"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 10,
+          "row": 3,
+          "column": 2,
+          "bbox": [
+            262,
+            317.14,
+            275,
+            63.57
+          ],
+          "text": "analises_ia",
+          "textPreview": "analises_ia",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "analises_ia",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "analises_ia"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 11,
+          "row": 3,
+          "column": 3,
+          "bbox": [
+            537,
+            317.14,
+            285,
+            63.57
+          ],
+          "text": "filha do cálculo",
+          "textPreview": "filha do cálculo",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "filha do cálculo",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "filha do cálculo"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 12,
+          "row": 3,
+          "column": 4,
+          "bbox": [
+            822,
+            317.14,
+            416,
+            63.57
+          ],
+          "text": "índices, diagnóstico, versões de prompt/schema",
+          "textPreview": "índices, diagnóstico, versões de prompt/schema",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "índices, diagnóstico, versões de prompt/schema",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "índices, diagnóstico, versões de prompt/schema"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 13,
+          "row": 4,
+          "column": 1,
+          "bbox": [
+            42,
+            380.71,
+            220,
+            63.57
+          ],
+          "text": "Base de cálculo",
+          "textPreview": "Base de cálculo",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Base de cálculo",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Base de cálculo"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 14,
+          "row": 4,
+          "column": 2,
+          "bbox": [
+            262,
+            380.71,
+            275,
+            63.57
+          ],
+          "text": "calculadora_*_itens",
+          "textPreview": "calculadora_*_itens",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "calculadora_*_itens",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "calculadora_*_itens"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 15,
+          "row": 4,
+          "column": 3,
+          "bbox": [
+            537,
+            380.71,
+            285,
+            63.57
+          ],
+          "text": "IDs semânticos",
+          "textPreview": "IDs semânticos",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "IDs semânticos",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "IDs semânticos"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 16,
+          "row": 4,
+          "column": 4,
+          "bbox": [
+            822,
+            380.71,
+            416,
+            63.57
+          ],
+          "text": "regras, unidade, público, ordem, ativo",
+          "textPreview": "regras, unidade, público, ordem, ativo",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "regras, unidade, público, ordem, ativo",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "regras, unidade, público, ordem, ativo"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 17,
+          "row": 5,
+          "column": 1,
+          "bbox": [
+            42,
+            444.29,
+            220,
+            63.57
+          ],
+          "text": "Inspiração",
+          "textPreview": "Inspiração",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Inspiração",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Inspiração"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 18,
+          "row": 5,
+          "column": 2,
+          "bbox": [
+            262,
+            444.29,
+            275,
+            63.57
+          ],
+          "text": "inspiracoes + referencias",
+          "textPreview": "inspiracoes + referencias",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "inspiracoes + referencias",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "inspiracoes + referencias"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 19,
+          "row": 5,
+          "column": 3,
+          "bbox": [
+            537,
+            444.29,
+            285,
+            63.57
+          ],
+          "text": "referência filha do evento",
+          "textPreview": "referência filha do evento",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "referência filha do evento",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "referência filha do evento"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "row": 5,
+          "column": 4,
+          "bbox": [
+            822,
+            444.29,
+            416,
+            63.57
+          ],
+          "text": "imagens, tags, favoritos, sugestões",
+          "textPreview": "imagens, tags, favoritos, sugestões",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "imagens, tags, favoritos, sugestões",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "imagens, tags, favoritos, sugestões"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 21,
+          "row": 6,
+          "column": 1,
+          "bbox": [
+            42,
+            507.86,
+            220,
+            63.57
+          ],
+          "text": "Presentes",
+          "textPreview": "Presentes",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Presentes",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Presentes"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 22,
+          "row": 6,
+          "column": 2,
+          "bbox": [
+            262,
+            507.86,
+            275,
+            63.57
+          ],
+          "text": "presentes + contributions",
+          "textPreview": "presentes + contributions",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "presentes + contributions",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "presentes + contributions"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 23,
+          "row": 6,
+          "column": 3,
+          "bbox": [
+            537,
+            507.86,
+            285,
+            63.57
+          ],
+          "text": "filhas do evento/presente",
+          "textPreview": "filhas do evento/presente",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "filhas do evento/presente",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "filhas do evento/presente"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 24,
+          "row": 6,
+          "column": 4,
+          "bbox": [
+            822,
+            507.86,
+            416,
+            63.57
+          ],
+          "text": "reserva, meta, arrecadação, contribuições",
+          "textPreview": "reserva, meta, arrecadação, contribuições",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "reserva, meta, arrecadação, contribuições",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "reserva, meta, arrecadação, contribuições"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 25,
+          "row": 7,
+          "column": 1,
+          "bbox": [
+            42,
+            571.43,
+            220,
+            63.57
+          ],
+          "text": "Recomendação",
+          "textPreview": "Recomendação",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Recomendação",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Recomendação"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 26,
+          "row": 7,
+          "column": 2,
+          "bbox": [
+            262,
+            571.43,
+            275,
+            63.57
+          ],
+          "text": "fornecedor_*",
+          "textPreview": "fornecedor_*",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "fornecedor_*",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "fornecedor_*"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 27,
+          "row": 7,
+          "column": 3,
+          "bbox": [
+            537,
+            571.43,
+            285,
+            63.57
+          ],
+          "text": "evento + fornecedor + usuário",
+          "textPreview": "evento + fornecedor + usuário",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "evento + fornecedor + usuário",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "evento + fornecedor + usuário"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 28,
+          "row": 7,
+          "column": 4,
+          "bbox": [
+            822,
+            571.43,
+            416,
+            63.57
+          ],
+          "text": "interações, score, motivos e compatibilidade",
+          "textPreview": "interações, score, motivos e compatibilidade",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "interações, score, motivos e compatibilidade",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "interações, score, motivos e compatibilidade"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": []
+}

@@ -53,7 +53,8 @@ class TarefasScreen extends StatelessWidget {
                         descricao: descricao,
                         dataPrevista: data,
                         idResponsavel: usuario.idConvidado,
-                        idEvento: eventoController.eventoAtual.value!.idEvento);
+                        idEvento:
+                            eventoController.eventoAtualEntidade!.idEvento);
                   },
                 );
               },
@@ -65,7 +66,8 @@ class TarefasScreen extends StatelessWidget {
           children: [
             // ===== Indicador de progresso =====
             Container(
-              margin: const EdgeInsets.fromLTRB(14, 14, 14, 8), // 🔹 Margens compactas
+              margin: const EdgeInsets.fromLTRB(
+                  14, 14, 14, 8), // 🔹 Margens compactas
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 color: Colors.white,
@@ -105,7 +107,8 @@ class TarefasScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                primary.withValues(alpha: 1.0), // Ajustado de 1.6
+                                primary.withValues(
+                                    alpha: 1.0), // Ajustado de 1.6
                                 primary.withValues(alpha: 0.9),
                               ],
                               begin: Alignment.centerLeft,
@@ -120,8 +123,8 @@ class TarefasScreen extends StatelessWidget {
               ),
             ),
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 6), // 🔹 Margens compactas
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 14, vertical: 6), // 🔹 Margens compactas
               child: resumoTarefasCardElegante(
                 gradient,
                 totalTarefas: tarefaController.tarefas.length,
@@ -137,23 +140,30 @@ class TarefasScreen extends StatelessWidget {
 
                 return ListView.builder(
                   itemCount: tarefas.length,
-                  padding: const EdgeInsets.all(14), // Espaçamento da lista menor
+                  padding:
+                      const EdgeInsets.all(14), // Espaçamento da lista menor
                   itemBuilder: (context, index) {
                     final tarefa = tarefas[index];
                     final responsavel = convidadoController.convidados
-                        .firstWhereOrNull((r) => r.idConvidado == tarefa.idResponsavel);
-                    final tarefaComResponsavel =
-                        responsavel != null ? tarefa.copyWith(responsavel: responsavel) : tarefa;
+                        .firstWhereOrNull(
+                            (r) => r.idConvidado == tarefa.idResponsavel);
+                    final tarefaComResponsavel = responsavel != null
+                        ? tarefa.copyWith(responsavel: responsavel)
+                        : tarefa;
 
                     return _TarefaCard(
                       data: tarefaComResponsavel,
                       themeGradient: gradient,
                       primaryColor: primary,
                       onToggle: (checked) {
-                        final novoStatus = checked ? StatusTarefa.concluida : StatusTarefa.aFazer;
-                        tarefaController.atualizarStatus(tarefa.idTarefa, novoStatus);
+                        final novoStatus = checked
+                            ? StatusTarefa.concluida
+                            : StatusTarefa.aFazer;
+                        tarefaController.atualizarStatus(
+                            tarefa.idTarefa, novoStatus);
                       },
-                      onDelete: () => tarefaController.excluirTarefa(tarefa.idTarefa),
+                      onDelete: () =>
+                          tarefaController.excluirTarefa(tarefa.idTarefa),
                       onEdit: () => tarefaController.editarTarefa(
                         tarefa.copyWith(descricao: tarefa.descricao),
                       ),
@@ -175,7 +185,8 @@ class TarefasScreen extends StatelessWidget {
         children: [
           ShaderMask(
             shaderCallback: (rect) => gradient.createShader(rect),
-            child: const Icon(Icons.fact_check_outlined, size: 60, color: Colors.white), // Menor
+            child: const Icon(Icons.fact_check_outlined,
+                size: 60, color: Colors.white), // Menor
           ),
           const SizedBox(height: 14),
           Text(
@@ -198,7 +209,8 @@ class TarefasScreen extends StatelessWidget {
                   color: Colors.grey.shade700,
                 ),
               ),
-              Icon(Icons.add_task_outlined, color: Colors.grey.shade700, size: 18),
+              Icon(Icons.add_task_outlined,
+                  color: Colors.grey.shade700, size: 18),
               Text(
                 ' acima para criar!',
                 style: TextStyle(
@@ -216,7 +228,7 @@ class TarefasScreen extends StatelessWidget {
 }
 
 class _TarefaCard extends StatelessWidget {
-  final TarefaModel data;
+  final Tarefa data;
   final LinearGradient themeGradient;
   final Color primaryColor;
   final ValueChanged<bool> onToggle;
@@ -239,7 +251,8 @@ class _TarefaCard extends StatelessWidget {
     final concluida = status == StatusTarefa.concluida;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12), // 🔹 Espaçamento compacto (era 16)
+      padding:
+          const EdgeInsets.only(bottom: 12), // 🔹 Espaçamento compacto (era 16)
       child: Slidable(
         key: ValueKey(tarefa.idTarefa),
         startActionPane: ActionPane(
@@ -339,8 +352,10 @@ class _TarefaCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 13, // Menor
                             fontWeight: FontWeight.bold,
-                            color: concluida ? primaryColor : Colors.grey.shade900,
-                            decoration: concluida ? TextDecoration.lineThrough : null,
+                            color:
+                                concluida ? primaryColor : Colors.grey.shade900,
+                            decoration:
+                                concluida ? TextDecoration.lineThrough : null,
                           ),
                         ),
                         const SizedBox(height: 2),
@@ -348,7 +363,8 @@ class _TarefaCard extends StatelessWidget {
                           tarefa.responsavel?.nome ?? 'Sem responsável',
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
-                          style: const TextStyle(fontSize: 12, color: Colors.grey),
+                          style:
+                              const TextStyle(fontSize: 12, color: Colors.grey),
                         ),
                       ],
                     ),
@@ -368,9 +384,13 @@ class _TarefaCard extends StatelessWidget {
                           ScaleTransition(scale: anim, child: child),
                       child: concluida
                           ? Icon(Icons.check_circle_rounded,
-                              key: const ValueKey(1), color: primaryColor, size: 26) // Menor
+                              key: const ValueKey(1),
+                              color: primaryColor,
+                              size: 26) // Menor
                           : Icon(Icons.radio_button_unchecked,
-                              key: const ValueKey(0), color: Colors.grey.shade300, size: 26),
+                              key: const ValueKey(0),
+                              color: Colors.grey.shade300,
+                              size: 26),
                     ),
                   ),
                 ],
@@ -396,13 +416,15 @@ class _TarefaCard extends StatelessWidget {
               // ===== Linha inferior: data + status =====
               Row(
                 children: [
-                  const Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey),
+                  const Icon(Icons.calendar_today_outlined,
+                      size: 14, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
                     tarefa.dataPrevista != null
                         ? DateFormat('dd/MM/yyyy').format(tarefa.dataPrevista!)
                         : '--/--/----',
-                    style: const TextStyle(fontSize: 12, color: Colors.grey), // Menor
+                    style: const TextStyle(
+                        fontSize: 12, color: Colors.grey), // Menor
                   ),
                   const Spacer(),
                   _StatusChip(status: status, primaryColor: primaryColor),
@@ -448,7 +470,8 @@ class _StatusChip extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Mais fino
+      padding:
+          const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Mais fino
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(8),
@@ -470,7 +493,8 @@ Widget resumoTarefasCardElegante(
   required int totalTarefas,
   required int concluidas,
 }) {
-  final percent = totalTarefas > 0 ? (concluidas / totalTarefas).clamp(0.0, 1.0) : 0.0;
+  final percent =
+      totalTarefas > 0 ? (concluidas / totalTarefas).clamp(0.0, 1.0) : 0.0;
   final pendentes = totalTarefas - concluidas;
 
   return Container(
@@ -563,7 +587,8 @@ Widget resumoTarefasCardElegante(
                 if (percent >= 1)
                   Row(
                     children: [
-                      const Icon(Icons.emoji_events_rounded, color: Colors.yellowAccent, size: 16),
+                      const Icon(Icons.emoji_events_rounded,
+                          color: Colors.yellowAccent, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         'Todas concluídas! 🥳',

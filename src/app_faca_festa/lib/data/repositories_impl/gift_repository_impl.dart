@@ -29,7 +29,7 @@ class GiftRepositoryImpl implements GiftRepository {
 
   @override
   Future<void> createGift(String eventoId, Gift gift) async {
-    final model = gift as GiftModel;
+    final model = GiftModel.fromEntity(gift);
 
     final companion = model.toCompanion(
       eventoId: eventoId,
@@ -48,7 +48,7 @@ class GiftRepositoryImpl implements GiftRepository {
 
   @override
   Future<void> updateGift(String eventoId, Gift gift) async {
-    final model = gift as GiftModel;
+    final model = GiftModel.fromEntity(gift);
 
     final existing = await local.getGift(model.id);
 

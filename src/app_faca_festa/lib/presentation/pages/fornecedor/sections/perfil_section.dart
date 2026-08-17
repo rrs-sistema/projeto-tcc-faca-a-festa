@@ -127,7 +127,7 @@ class PerfilSection extends StatelessWidget {
       fornecedor.ativo,
       fornecedor.aptoParaOperar,
       fornecedor.razaoSocial.trim().isNotEmpty,
-      (fornecedor.email ?? '').trim().isNotEmpty || (fornecedor.telefone ?? '').trim().isNotEmpty,
+      (fornecedor.email).trim().isNotEmpty || (fornecedor.telefone ).trim().isNotEmpty,
       (fornecedor.descricao ?? '').trim().isNotEmpty,
       (fornecedor.bannerUrl ?? '').trim().isNotEmpty,
       fornecedor.categorias.isNotEmpty,

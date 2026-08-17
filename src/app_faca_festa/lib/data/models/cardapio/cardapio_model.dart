@@ -1,104 +1,74 @@
-enum PublicoAlvoCardapio {
-  todos,
-  adultos,
-  criancas,
-  bebes;
+import '../../../domain/entities/cardapio.dart';
 
-  String get firestoreValue {
-    switch (this) {
-      case PublicoAlvoCardapio.todos:
-        return 'todos';
-      case PublicoAlvoCardapio.adultos:
-        return 'adultos';
-      case PublicoAlvoCardapio.criancas:
-        return 'criancas';
-      case PublicoAlvoCardapio.bebes:
-        return 'bebes';
-    }
-  }
+export '../../../domain/entities/cardapio.dart';
 
-  static PublicoAlvoCardapio fromString(String? value) {
-    switch (value?.trim().toLowerCase()) {
-      case 'adultos':
-        return PublicoAlvoCardapio.adultos;
-      case 'criancas':
-      case 'crianças':
-        return PublicoAlvoCardapio.criancas;
-      case 'bebes':
-      case 'bebês':
-        return PublicoAlvoCardapio.bebes;
-      case 'todos':
-      default:
-        return PublicoAlvoCardapio.todos;
-    }
-  }
+extension PublicoAlvoCardapioPersistence on PublicoAlvoCardapio {
+  String get firestoreValue => name;
 }
 
-class CardapioModel {
-  final String idCardapio;
-  final String idEvento;
-
-  final String titulo;
-  final PublicoAlvoCardapio publicoAlvo;
-
-  final String? icone;
-  final String? corHex;
-
-  final int totalItens;
-  final int totalComidas;
-  final int totalBebidas;
-  final int totalSobremesas;
-
-  final bool ativo;
-
+class CardapioModel extends Cardapio {
   const CardapioModel({
-    required this.idCardapio,
-    required this.idEvento,
-    required this.titulo,
-    this.publicoAlvo = PublicoAlvoCardapio.todos,
-    this.icone,
-    this.corHex,
-    this.totalItens = 0,
-    this.totalComidas = 0,
-    this.totalBebidas = 0,
-    this.totalSobremesas = 0,
-    this.ativo = true,
+    required super.idCardapio,
+    required super.idEvento,
+    required super.titulo,
+    super.publicoAlvo,
+    super.icone,
+    super.corHex,
+    super.totalItens,
+    super.totalComidas,
+    super.totalBebidas,
+    super.totalSobremesas,
+    super.ativo,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id_cardapio': idCardapio,
-      'id_evento': idEvento,
-      'titulo': titulo,
-      'publico_alvo': publicoAlvo.firestoreValue,
-      'icone': icone,
-      'cor_hex': corHex,
-      'total_itens': totalItens,
-      'total_comidas': totalComidas,
-      'total_bebidas': totalBebidas,
-      'total_sobremesas': totalSobremesas,
-      'ativo': ativo,
-    };
-  }
+  factory CardapioModel.fromEntity(Cardapio cardapio) => CardapioModel(
+        idCardapio: cardapio.idCardapio,
+        idEvento: cardapio.idEvento,
+        titulo: cardapio.titulo,
+        publicoAlvo: cardapio.publicoAlvo,
+        icone: cardapio.icone,
+        corHex: cardapio.corHex,
+        totalItens: cardapio.totalItens,
+        totalComidas: cardapio.totalComidas,
+        totalBebidas: cardapio.totalBebidas,
+        totalSobremesas: cardapio.totalSobremesas,
+        ativo: cardapio.ativo,
+      );
 
-  factory CardapioModel.fromMap(Map<String, dynamic> map) {
-    return CardapioModel(
-      idCardapio: map['id_cardapio']?.toString() ?? '',
-      idEvento: map['id_evento']?.toString() ?? '',
-      titulo: map['titulo']?.toString() ?? '',
-      publicoAlvo: PublicoAlvoCardapio.fromString(map['publico_alvo']),
-      icone: map['icone']?.toString(),
-      corHex: map['cor_hex']?.toString(),
-      totalItens: map['total_itens'] is num ? (map['total_itens'] as num).toInt() : 0,
-      totalComidas: map['total_comidas'] is num ? (map['total_comidas'] as num).toInt() : 0,
-      totalBebidas: map['total_bebidas'] is num ? (map['total_bebidas'] as num).toInt() : 0,
-      totalSobremesas:
-          map['total_sobremesas'] is num ? (map['total_sobremesas'] as num).toInt() : 0,
-      ativo: map['ativo'] ?? true,
-    );
-  }
+  Map<String, dynamic> toMap() => {
+        'id_cardapio': idCardapio,
+        'id_evento': idEvento,
+        'titulo': titulo,
+        'publico_alvo': publicoAlvo.firestoreValue,
+        'icone': icone,
+        'cor_hex': corHex,
+        'total_itens': totalItens,
+        'total_comidas': totalComidas,
+        'total_bebidas': totalBebidas,
+        'total_sobremesas': totalSobremesas,
+        'ativo': ativo,
+      };
 
+  factory CardapioModel.fromMap(Map<String, dynamic> map) => CardapioModel(
+        idCardapio: map['id_cardapio']?.toString() ?? '',
+        idEvento: map['id_evento']?.toString() ?? '',
+        titulo: map['titulo']?.toString() ?? '',
+        publicoAlvo: PublicoAlvoCardapio.fromString(map['publico_alvo']),
+        icone: map['icone']?.toString(),
+        corHex: map['cor_hex']?.toString(),
+        totalItens: _intValue(map['total_itens']),
+        totalComidas: _intValue(map['total_comidas']),
+        totalBebidas: _intValue(map['total_bebidas']),
+        totalSobremesas: _intValue(map['total_sobremesas']),
+        ativo: map['ativo'] ?? true,
+      );
+
+  static int _intValue(dynamic value) => value is num ? value.toInt() : 0;
+
+  @override
   CardapioModel copyWith({
+    String? idCardapio,
+    String? idEvento,
     String? titulo,
     PublicoAlvoCardapio? publicoAlvo,
     String? icone,
@@ -108,19 +78,18 @@ class CardapioModel {
     int? totalBebidas,
     int? totalSobremesas,
     bool? ativo,
-  }) {
-    return CardapioModel(
-      idCardapio: idCardapio,
-      idEvento: idEvento,
-      titulo: titulo ?? this.titulo,
-      publicoAlvo: publicoAlvo ?? this.publicoAlvo,
-      icone: icone ?? this.icone,
-      corHex: corHex ?? this.corHex,
-      totalItens: totalItens ?? this.totalItens,
-      totalComidas: totalComidas ?? this.totalComidas,
-      totalBebidas: totalBebidas ?? this.totalBebidas,
-      totalSobremesas: totalSobremesas ?? this.totalSobremesas,
-      ativo: ativo ?? this.ativo,
-    );
-  }
+  }) =>
+      CardapioModel(
+        idCardapio: idCardapio ?? this.idCardapio,
+        idEvento: idEvento ?? this.idEvento,
+        titulo: titulo ?? this.titulo,
+        publicoAlvo: publicoAlvo ?? this.publicoAlvo,
+        icone: icone ?? this.icone,
+        corHex: corHex ?? this.corHex,
+        totalItens: totalItens ?? this.totalItens,
+        totalComidas: totalComidas ?? this.totalComidas,
+        totalBebidas: totalBebidas ?? this.totalBebidas,
+        totalSobremesas: totalSobremesas ?? this.totalSobremesas,
+        ativo: ativo ?? this.ativo,
+      );
 }

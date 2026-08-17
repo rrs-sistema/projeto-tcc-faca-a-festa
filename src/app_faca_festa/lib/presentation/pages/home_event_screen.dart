@@ -19,6 +19,7 @@ import './../../controllers/orcamento_controller.dart';
 import './fornecedor/fornecedor_detalhe_screen.dart';
 import './../../controllers/tarefa_controller.dart';
 import './../../controllers/evento_controller.dart';
+import './../../domain/entities/tipo_evento.dart';
 import './../widgets/menu_drawer_faca_festa.dart';
 import './components/build_animated_header.dart';
 import './../../controllers/app_controller.dart';
@@ -27,7 +28,6 @@ import './inspiracao/inspiracao_screen.dart';
 import './../../core/utils/biblioteca.dart';
 import './orcamento/orcamento_screen.dart';
 import './convidado/convidado_page.dart';
-import './../../data/models/model.dart';
 import './contador_evento_screen.dart';
 import './tarefa/tarefas_screen.dart';
 import 'calculadora/calculadora_festa_screen.dart';
@@ -113,8 +113,8 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   }
 
   Widget _buildHome(EventThemeController theme) {
-    final eventoModel = eventoController.eventoAtual.value!;
-    final tipoEventoModel = eventoController.tipoEventoAtual.value;
+    final eventoModel = eventoController.eventoAtualEntidade!;
+    final tipoEventoModel = eventoController.tipoEventoAtualEntidade;
     final nomeUsuario = appController.usuarioLogado.value?.nome.split(' ').first ?? 'Organizador';
 
     return Column(
@@ -153,7 +153,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
               _buildQuickActions(theme),
               _buildUpcomingTasks(tarefaController, theme),
               _buildBudgetChart(
-                eventoController.eventoAtual,
+                eventoController,
                 orcamentoController.totalCustoEstimado,
                 theme,
               ),
@@ -169,7 +169,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   // 🔹 Dashboard Unificado e Compacto
   Widget _buildDashboardOverview(EventThemeController theme) {
     final cor = theme.primaryColor.value;
-    final eventoModel = eventoController.eventoAtual.value!;
+    final eventoModel = eventoController.eventoAtualEntidade!;
 
     return SliverToBoxAdapter(
       child: FadeInUp(
@@ -239,8 +239,8 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
 
   Widget _buildInspiration(EventThemeController theme) {
     return InspiracaoScreen(
-      tipoEvento: eventoController.tipoEventoAtual.value ??
-          TipoEventoModel(idTipoEvento: '1', nome: 'Evento'),
+      tipoEvento: eventoController.tipoEventoAtualEntidade ??
+          const TipoEvento(idTipoEvento: '1', nome: 'Evento'),
     );
   }
 
@@ -526,11 +526,14 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 Widget _buildBudgetChart(
-    Rx<EventoModel?> eventoAtual, RxDouble totalCustoEstimado, EventThemeController theme) {
+    EventoController eventoController,
+    RxDouble totalCustoEstimado,
+    EventThemeController theme) {
   return SliverToBoxAdapter(
     child: Obx(() {
       final total = totalCustoEstimado.value;
-      final limite = eventoAtual.value?.custoEstimado ?? 0.0;
+      final limite =
+          eventoController.eventoAtualEntidade?.custoEstimado ?? 0.0;
       final usado = limite > 0 ? (total / limite).clamp(0, 1) : 0.0;
       final primary = theme.primaryColor.value;
 

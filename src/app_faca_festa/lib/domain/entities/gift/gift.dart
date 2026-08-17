@@ -1,11 +1,8 @@
-import './../../../data/models/gift/gift_model.dart';
-
 enum GiftType { fisico, pix, coletivo }
 
 enum GiftStatus { disponivel, reservado, comprado, finalizado }
 
 class Gift {
-  
   final String id;
   final String nome;
   final String? descricao;
@@ -43,28 +40,4 @@ class Gift {
     this.dataReserva,
     required this.createdAt,
   });
-}
-
-extension GiftEntityMapper on Gift {
-  GiftModel toModel() {
-    return GiftModel(
-      id: id,
-      nome: nome,
-      descricao: descricao ?? '',
-      categoria: categoria,
-      tipo: tipo,
-      valor: valor ?? 0.0,
-      valorArrecadado: valorArrecadado,
-      metaValor: metaValor ?? 0.0,
-      loja: loja ?? '',
-      link: link ?? '',
-      pix: pix ?? '',
-      imagem: imagem,
-      status: status,
-      reservadoPor: reservadoPor,
-      reservadoUid: reservadoUid,
-      dataReserva: dataReserva,
-      createdAt: createdAt,
-    );
-  }
 }

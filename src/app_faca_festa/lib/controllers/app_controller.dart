@@ -1,6 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
@@ -22,40 +21,47 @@ import './../role_selector_screen.dart';
 import 'fornecedor/fornecedor_controller.dart';
 import './orcamento_controller.dart';
 import './../data/models/model.dart';
+import './../domain/repositories/convite_convidado_repository.dart';
+import './../domain/repositories/autenticacao_repository.dart';
+import './../domain/repositories/perfil_usuario_repository.dart';
 import './evento_controller.dart';
 import './tarefa_controller.dart';
 import 'tema/event_theme_controller.dart';
 
 class AppController extends GetxController {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   // Estado reativo do usuário
   final Rx<UsuarioModel?> usuarioLogado = Rx<UsuarioModel?>(null);
-  final Rx<EnderecoUsuarioModel?> enderecoPrincipal = Rx<EnderecoUsuarioModel?>(null);
-  final RxList<EnderecoUsuarioModel> enderecosUsuario = <EnderecoUsuarioModel>[].obs;
+  final Rx<EnderecoUsuarioModel?> enderecoPrincipal =
+      Rx<EnderecoUsuarioModel?>(null);
+  final RxList<EnderecoUsuarioModel> enderecosUsuario =
+      <EnderecoUsuarioModel>[].obs;
 
   /// 🔹 Lista global de serviços selecionados para cotação
-  final RxList<ServicoCotadoDto> servicosSelecionados = <ServicoCotadoDto>[].obs;
+  final RxList<ServicoCotadoDto> servicosSelecionados =
+      <ServicoCotadoDto>[].obs;
 
   final RxBool contaIncompleta = false.obs;
   bool conviteProcessado = false;
   String conviteTokenProcessado = '';
   RxString conviteToken = ''.obs;
   final RxBool carregando = false.obs;
-  StreamSubscription<User?>? _authSub;
+  StreamSubscription<SessaoUsuario?>? _sessaoSub;
   bool devMode = true;
 
   static const String _logTag = '[AppController]';
-  static const List<String> _colecoesConvidados = ['convidado', 'convidados'];
+  final conviteConvidadoRepository = Get.find<ConviteConvidadoRepository>();
+  final autenticacaoRepository = Get.find<AutenticacaoRepository>();
+  final perfilUsuarioRepository = Get.find<PerfilUsuarioRepository>();
 
   // ✅ Injeção de controladores auxiliares
-  final convidadoController = Get.put(ConvidadoController());
-  final eventoController = Get.put(EventoController());
+  final convidadoController = Get.find<ConvidadoController>();
+  final eventoController = Get.find<EventoController>();
   final orcamentoController = Get.put(OrcamentoController());
   final cotacaoController = Get.put(CotacaoController());
   final fornecedorController = Get.put(FornecedorController());
-  final tarefaController = Get.put(TarefaController());
+  final tarefaController = Get.find<TarefaController>();
   final avaliacaoController = Get.put(AvaliacaoServicoController());
   final servicoController = Get.put(ServicoProdutoController());
   final themeController = Get.put(EventThemeController());
@@ -81,47 +87,25 @@ class AppController extends GetxController {
   // ------------------------------------------------------------
   Future<UsuarioModel?> prepararUsuarioComEndereco() async {
     try {
-      final user = _auth.currentUser;
-      if (user == null) return null;
+      final idUsuario = autenticacaoRepository.idUsuarioAtual;
+      if (idUsuario == null) return null;
 
       carregando.value = true;
 
       // 🔹 1️⃣ Busca o documento do usuário
-      final docUser = await _db.collection('usuarios').doc(user.uid).get();
-      if (!docUser.exists || docUser.data() == null) {
+      final usuario = await perfilUsuarioRepository.buscarUsuario(idUsuario);
+      if (usuario == null) {
         debugPrint('⚠️ Usuário não encontrado no Firestore.');
         carregando.value = false;
         return null;
       }
 
-      final usuario = UsuarioModel.fromMap(docUser.data()!);
-      await buscarUltimoEvento(user.uid);
+      await buscarUltimoEvento(idUsuario);
 
       // 🔹 2️⃣ Busca subcoleção de endereços
-      final enderecosSnapshot =
-          await _db.collection('usuarios').doc(user.uid).collection('enderecos').get();
-
       final enderecos =
-          enderecosSnapshot.docs.map((e) => EnderecoUsuarioModel.fromMap(e.data())).toList();
-
-      enderecosUsuario.assignAll(enderecos);
-
-      if (enderecos.isNotEmpty) {
-        final principal = enderecos.firstWhere(
-          (e) => e.principal,
-          orElse: () => enderecos.first,
-        );
-
-        enderecoPrincipal.value = principal;
-
-        usuarioLogado.value = usuario.copyWith(
-          cidade: principal.nomeCidade,
-          uf: principal.uf,
-        );
-      } else {
-        enderecoPrincipal.value = null;
-        usuarioLogado.value = usuario;
-      }
+          await perfilUsuarioRepository.listarEnderecos(idUsuario);
+      _aplicarPerfil(PerfilUsuario(usuario: usuario, enderecos: enderecos));
 
       carregando.value = false;
       return usuarioLogado.value;
@@ -145,15 +129,17 @@ class AppController extends GetxController {
   // 🔹 Monitora sessão do Firebase Auth e redireciona o usuário
   // ------------------------------------------------------------
   void _monitorarSessao() {
-    _authSub = _auth.authStateChanges().listen((user) async {
-      await Future.delayed(const Duration(milliseconds: 300)); // ✅ pequeno delay
+    _sessaoSub = autenticacaoRepository.observarSessao().listen((user) async {
+      await Future.delayed(
+          const Duration(milliseconds: 300)); // ✅ pequeno delay
       // 🔥 verifica token de convite primeiro
       final token = _tokenConviteAtual();
 
       if (user == null) {
         if (token != null && token.isNotEmpty && !conviteProcessado) {
           conviteToken.value = token;
-          debugPrint('$_logTag Convidado acessando via convite sem sessão: $token');
+          debugPrint(
+              '$_logTag Convidado acessando via convite sem sessão: $token');
 
           // Mantém o convidado no fluxo de autenticação. O token será vinculado
           // depois do login/cadastro.
@@ -169,8 +155,7 @@ class AppController extends GetxController {
 
         usuarioLogado.value = null;
         enderecoPrincipal.value = null;
-        eventoController.eventoAtual.value = null;
-        eventoController.tipoEventoAtual.value = null;
+        eventoController.limparSessaoAtual();
 
         if (Get.currentRoute != '/role') Get.offAllNamed('/role');
         return;
@@ -186,37 +171,13 @@ class AppController extends GetxController {
 
       try {
         // Busca usuário + endereços
-        final results = await Future.wait([
-          _db.collection('usuarios').doc(user.uid).get(),
-          _db.collection('usuarios').doc(user.uid).collection('enderecos').get(),
-        ]);
+        final perfil = await _carregarPerfilComTentativas(user.idUsuario);
 
-        final docUser = results[0] as DocumentSnapshot<Map<String, dynamic>>;
-        final enderecosSnapshot = results[1] as QuerySnapshot<Map<String, dynamic>>;
-
-        if (!docUser.exists || docUser.data() == null) {
+        if (perfil == null) {
           throw Exception('Usuário não encontrado no Firestore.');
         }
 
-        final usuario = UsuarioModel.fromMap(docUser.data()!);
-        final enderecos =
-            enderecosSnapshot.docs.map((e) => EnderecoUsuarioModel.fromMap(e.data())).toList();
-
-        // Atualiza cache reativo
-        if (enderecos.isNotEmpty) {
-          final principal = enderecos.firstWhere(
-            (e) => e.principal,
-            orElse: () => enderecos.first,
-          );
-          enderecoPrincipal.value = principal;
-          usuarioLogado.value = usuario.copyWith(
-            cidade: principal.nomeCidade,
-            uf: principal.uf,
-          );
-        } else {
-          enderecoPrincipal.value = null;
-          usuarioLogado.value = usuario;
-        }
+        final usuario = _aplicarPerfil(perfil);
 
         Widget destino;
 
@@ -225,7 +186,8 @@ class AppController extends GetxController {
         // ----------------------------------------------------------
         switch (usuario.tipo) {
           case 'F': // 🧑‍🔧 Fornecedor
-            final fornecedorDoc = await _db.collection('fornecedor').doc(usuario.idUsuario).get();
+            final fornecedorDoc =
+                await _db.collection('fornecedor').doc(usuario.idUsuario).get();
 
             if (fornecedorDoc.exists && fornecedorDoc.data() != null) {
               final fornecedor = FornecedorModel.fromMap(fornecedorDoc.data()!);
@@ -245,11 +207,14 @@ class AppController extends GetxController {
               fornecedorController.fornecedor.value = fornecedor;
 
               fornecedorController.ouvirMensagensNaoLidas(fornecedor.idUsuario);
-              fornecedorController.iniciarListenerFornecedor(fornecedor.idUsuario);
-              fornecedorController.escutarSolicitacoesPendentes(fornecedor.idUsuario);
+              fornecedorController
+                  .iniciarListenerFornecedor(fornecedor.idUsuario);
+              fornecedorController
+                  .escutarSolicitacoesPendentes(fornecedor.idUsuario);
 
               orcamentoController.escutarOrcamentos(fornecedor.idUsuario);
-              avaliacaoController.carregarAvaliacoesFornecedor(fornecedor.idUsuario);
+              avaliacaoController
+                  .carregarAvaliacoesFornecedor(fornecedor.idUsuario);
               servicoController.carregarServicosComDetalhesOtimizado(
                   idFornecedor: fornecedor.idUsuario);
             }
@@ -267,15 +232,18 @@ class AppController extends GetxController {
 
           default: // 🎉 Organizador
             await eventoController.buscarUltimoEvento(usuario.idUsuario);
-            final evento = eventoController.eventoAtual.value;
+            final evento = eventoController.eventoAtualEntidade;
 
             if (evento != null) {
-              debugPrint('🔹 Carregando dados do evento ${evento.nomeEvento}...');
+              debugPrint(
+                  '🔹 Carregando dados do evento ${evento.nomeEvento}...');
               fornecedorController.carregarServicosPorEvento(evento.idEvento);
-              await orcamentoController.carregarOrcamentosDoEvento(evento.idEvento);
+              await orcamentoController
+                  .carregarOrcamentosDoEvento(evento.idEvento);
               cotacaoController.ouvirMinhasCotacoes();
 
-              debugPrint('✅ Evento ${evento.nomeEvento} carregado com sucesso!');
+              debugPrint(
+                  '✅ Evento ${evento.nomeEvento} carregado com sucesso!');
               destino = HomeEventScreen();
             } else {
               contaIncompleta.value = true;
@@ -294,7 +262,8 @@ class AppController extends GetxController {
                 snackPosition: SnackPosition.BOTTOM,
                 margin: const EdgeInsets.all(12),
                 borderRadius: 14,
-                icon: const Icon(Icons.celebration_rounded, color: Colors.white),
+                icon:
+                    const Icon(Icons.celebration_rounded, color: Colors.white),
                 duration: const Duration(seconds: 10),
               );
 
@@ -321,6 +290,21 @@ class AppController extends GetxController {
         Get.offAllNamed('/role');
       }
     });
+  }
+
+  Future<PerfilUsuario?> _carregarPerfilComTentativas(String idUsuario) async {
+    for (var tentativa = 1; tentativa <= 8; tentativa++) {
+      final perfil = await perfilUsuarioRepository.carregarPerfil(idUsuario);
+      if (perfil != null) return perfil;
+
+      debugPrint(
+        '$_logTag Perfil $idUsuario ainda não disponível no Firestore. '
+        'Tentativa $tentativa/8.',
+      );
+      await Future.delayed(const Duration(milliseconds: 350));
+    }
+
+    return null;
   }
 
   String? obterTokenConvite() {
@@ -356,11 +340,12 @@ class AppController extends GetxController {
     conviteToken.value = tokenLimpo;
     conviteProcessado = false;
     conviteTokenProcessado = '';
-    final firebaseUser = _auth.currentUser;
+    final idUsuario = autenticacaoRepository.idUsuarioAtual;
 
-    if (firebaseUser == null) {
+    if (idUsuario == null) {
       conviteProcessado = false;
-      debugPrint('$_logTag Convite guardado aguardando autenticação: $tokenLimpo');
+      debugPrint(
+          '$_logTag Convite guardado aguardando autenticação: $tokenLimpo');
       Get.offAllNamed('/role', arguments: {
         'tipo': 'C',
         'convidado': true,
@@ -369,7 +354,7 @@ class AppController extends GetxController {
       return;
     }
 
-    final usuario = await obterUsuario(firebaseUser.uid);
+    final usuario = await obterUsuario(idUsuario);
     if (usuario == null) {
       Get.offAllNamed('/role', arguments: {
         'tipo': 'C',
@@ -394,7 +379,8 @@ class AppController extends GetxController {
 
   /// Usado também pelo cadastro: depois de criar uma conta do tipo convidado,
   /// vincula convites pendentes pelo token e/ou pelo e-mail do usuário.
-  Future<void> redirecionarConvidadoAposLogin(UsuarioModel usuario, {String? token}) async {
+  Future<void> redirecionarConvidadoAposLogin(UsuarioModel usuario,
+      {String? token}) async {
     carregando.value = true;
     try {
       final destino = await _resolverDestinoConvidado(usuario, token: token);
@@ -411,7 +397,8 @@ class AppController extends GetxController {
     }
   }
 
-  Future<Widget> _resolverDestinoConvidado(UsuarioModel usuario, {String? token}) async {
+  Future<Widget> _resolverDestinoConvidado(UsuarioModel usuario,
+      {String? token}) async {
     final tokenLimpo = (token ?? _tokenConviteAtual() ?? '').trim();
     final email = usuario.email.trim();
 
@@ -420,7 +407,7 @@ class AppController extends GetxController {
       "email=$email | token=${tokenLimpo.isEmpty ? 'sem token' : tokenLimpo}",
     );
 
-    ConvidadoModel? convidado;
+    Convidado? convidado;
 
     if (tokenLimpo.isNotEmpty && conviteTokenProcessado != tokenLimpo) {
       convidado = await _vincularConvitePorToken(
@@ -442,9 +429,11 @@ class AppController extends GetxController {
       return const ConvidadosPage();
     }
 
-    final evento = await eventoController.buscarEventoPeloIdEvento(convidado.idEvento);
+    final evento =
+        await eventoController.buscarEventoPeloIdEvento(convidado.idEvento);
     if (evento == null) {
-      debugPrint('$_logTag Convite encontrado, mas evento não existe: ${convidado.idEvento}.');
+      debugPrint(
+          '$_logTag Convite encontrado, mas evento não existe: ${convidado.idEvento}.');
       return const ConvidadosPage();
     }
 
@@ -454,197 +443,59 @@ class AppController extends GetxController {
     return AreaConvidadoHomeScreen(convidado: convidado, evento: evento);
   }
 
-  Future<ConvidadoModel?> _vincularConvitePorToken({
+  Future<Convidado?> _vincularConvitePorToken({
     required String token,
     required String uid,
     required String email,
   }) async {
     try {
-      final doc = await _buscarDocumentoConvidadoPorToken(token);
-      if (doc == null) {
-        debugPrint('$_logTag Token de convite não encontrado: $token');
-        return null;
-      }
-
-      return _vincularDocumentoConvidado(
-        doc: doc,
+      return await conviteConvidadoRepository.vincularPorToken(
+        token: token,
         uid: uid,
         email: email,
-        origem: 'token',
       );
+    } on ConviteJaVinculadoException {
+      _mostrarConviteJaVinculado();
+      return null;
     } catch (e, s) {
       debugPrint('$_logTag Erro ao vincular convite por token: $e\n$s');
       return null;
     }
   }
 
-  Future<ConvidadoModel?> _buscarOuVincularConvitePorUsuario({
+  Future<Convidado?> _buscarOuVincularConvitePorUsuario({
     required String uid,
     required String email,
   }) async {
     try {
-      final docs = await _buscarDocumentosConvidadoDoUsuario(uid: uid, email: email);
-      if (docs.isEmpty) return null;
-
-      // Prioriza convite já vinculado ao UID. Se não houver, vincula o primeiro
-      // convite pendente encontrado para o e-mail da conta.
-      QueryDocumentSnapshot<Map<String, dynamic>>? escolhido;
-      for (final doc in docs) {
-        final idUsuario = _campoTexto(doc.data(), const ['id_usuario', 'idUsuario']);
-        if (idUsuario == uid) {
-          escolhido = doc;
-          break;
-        }
-      }
-
-      escolhido ??= docs.first;
-
-      return _vincularDocumentoConvidado(
-        doc: escolhido,
+      return await conviteConvidadoRepository.buscarOuVincularPorUsuario(
         uid: uid,
         email: email,
-        origem: 'email',
       );
+    } on ConviteJaVinculadoException {
+      _mostrarConviteJaVinculado();
+      return null;
     } catch (e, s) {
-      debugPrint('$_logTag Erro ao buscar/vincular convite por usuário: $e\n$s');
-      return null;
-    }
-  }
-
-  Future<QueryDocumentSnapshot<Map<String, dynamic>>?> _buscarDocumentoConvidadoPorToken(
-    String token,
-  ) async {
-    final tokenLimpo = token.trim();
-    if (tokenLimpo.isEmpty) return null;
-
-    const camposToken = ['convite_token', 'token_convite', 'token'];
-
-    for (final colecao in _colecoesConvidados) {
-      for (final campo in camposToken) {
-        final snap =
-            await _db.collection(colecao).where(campo, isEqualTo: tokenLimpo).limit(1).get();
-
-        if (snap.docs.isNotEmpty) return snap.docs.first;
-      }
-    }
-
-    return null;
-  }
-
-  Future<List<QueryDocumentSnapshot<Map<String, dynamic>>>> _buscarDocumentosConvidadoDoUsuario({
-    required String uid,
-    required String email,
-  }) async {
-    final emailNormalizado = _normalizarEmail(email);
-    final encontrados = <String, QueryDocumentSnapshot<Map<String, dynamic>>>{};
-
-    Future<void> adicionarBusca(String colecao, String campo, String valor) async {
-      if (valor.trim().isEmpty) return;
-
-      final snap = await _db.collection(colecao).where(campo, isEqualTo: valor).limit(20).get();
-      for (final doc in snap.docs) {
-        final key = doc.reference.path;
-        encontrados[key] = doc;
-      }
-    }
-
-    for (final colecao in _colecoesConvidados) {
-      await adicionarBusca(colecao, 'id_usuario', uid);
-      await adicionarBusca(colecao, 'idUsuario', uid);
-
-      if (emailNormalizado.isNotEmpty) {
-        await adicionarBusca(colecao, 'email_normalizado', emailNormalizado);
-        await adicionarBusca(colecao, 'email', email.trim());
-        await adicionarBusca(colecao, 'email', emailNormalizado);
-      }
-    }
-
-    final filtrados = encontrados.values.where((doc) {
-      final data = doc.data();
-      final idUsuario = _campoTexto(data, const ['id_usuario', 'idUsuario']);
-      final emailDoc = _normalizarEmail(_campoTexto(data, const ['email_normalizado', 'email']));
-
-      final vinculadoAoUsuario = idUsuario == uid;
-      final pendenteDoEmail =
-          idUsuario.isEmpty && emailNormalizado.isNotEmpty && emailDoc == emailNormalizado;
-
-      return vinculadoAoUsuario || pendenteDoEmail;
-    }).toList(growable: false);
-
-    debugPrint(
-      '$_logTag Convites encontrados para uid/email: ${filtrados.length} | '
-      'uid=$uid | email=$emailNormalizado',
-    );
-
-    return filtrados;
-  }
-
-  Future<ConvidadoModel?> _vincularDocumentoConvidado({
-    required QueryDocumentSnapshot<Map<String, dynamic>> doc,
-    required String uid,
-    required String email,
-    required String origem,
-  }) async {
-    final data = doc.data();
-    final idUsuarioAtual = _campoTexto(data, const ['id_usuario', 'idUsuario']);
-
-    if (idUsuarioAtual.isNotEmpty && idUsuarioAtual != uid) {
       debugPrint(
-        '$_logTag Convite ${doc.reference.path} já está vinculado a outro usuário. '
-        'origem=$origem',
-      );
-      Get.snackbar(
-        'Convite já vinculado',
-        'Este convite já está associado a outra conta.',
-        backgroundColor: Colors.orange.shade600,
-        colorText: Colors.white,
-      );
+          '$_logTag Erro ao buscar/vincular convite por usuário: $e\n$s');
       return null;
     }
-
-    final emailNormalizado = _normalizarEmail(email);
-
-    await doc.reference.set({
-      'id_usuario': uid,
-      'email_usuario': email.trim(),
-      'email_normalizado': emailNormalizado,
-      'convite_status': 'vinculado',
-      'data_vinculo_usuario': FieldValue.serverTimestamp(),
-      'data_ultimo_acesso': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    final atualizado = await doc.reference.get();
-    if (!atualizado.exists || atualizado.data() == null) return null;
-
-    debugPrint('$_logTag Convite vinculado com sucesso por $origem: ${doc.reference.path}');
-    return _convidadoFromDoc(atualizado);
   }
 
-  ConvidadoModel _convidadoFromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
-    final data = doc.data() ?? <String, dynamic>{};
-    return ConvidadoModel.fromMap({
-      ...data,
-      'id_convidado': data['id_convidado'] ?? data['idConvidado'] ?? doc.id,
-    });
+  void _mostrarConviteJaVinculado() {
+    Get.snackbar(
+      'Convite já vinculado',
+      'Este convite já está associado a outra conta.',
+      backgroundColor: Colors.orange.shade600,
+      colorText: Colors.white,
+    );
   }
-
-  String _campoTexto(Map<String, dynamic> data, List<String> campos) {
-    for (final campo in campos) {
-      final valor = data[campo];
-      if (valor != null && valor.toString().trim().isNotEmpty) {
-        return valor.toString().trim();
-      }
-    }
-    return '';
-  }
-
-  String _normalizarEmail(String email) => email.trim().toLowerCase();
   // ------------------------------------------------------------
   // 🔹 Logout
   // ------------------------------------------------------------
 
   Future<void> logout() async {
-    await _auth.signOut();
+    await autenticacaoRepository.sair();
     usuarioLogado.value = null;
     eventoController.reset();
     orcamentoController.reset();
@@ -653,8 +504,8 @@ class AppController extends GetxController {
   }
 
   Future<void> logoutFornecedor() async {
-    await _authSub?.cancel();
-    await _auth.signOut();
+    await _sessaoSub?.cancel();
+    await autenticacaoRepository.sair();
     usuarioLogado.value = null;
     eventoController.reset();
     orcamentoController.reset();
@@ -668,14 +519,39 @@ class AppController extends GetxController {
   // 🔹 Usuários (CRUD básico)
   // ------------------------------------------------------------
   Future<void> salvarUsuario(UsuarioModel usuario) async {
-    await _db.collection('usuarios').doc(usuario.idUsuario).set(usuario.toMap());
+    await perfilUsuarioRepository.salvarUsuario(usuario);
     usuarioLogado.value = usuario;
   }
 
   Future<UsuarioModel?> obterUsuario(String id) async {
-    final doc = await _db.collection('usuarios').doc(id).get();
-    if (!doc.exists) return null;
-    return UsuarioModel.fromMap(doc.data()!);
+    final usuario = await perfilUsuarioRepository.buscarUsuario(id);
+    return usuario == null ? null : UsuarioModel.fromEntity(usuario);
+  }
+
+  UsuarioModel _aplicarPerfil(PerfilUsuario perfil) {
+    final usuario = UsuarioModel.fromEntity(perfil.usuario);
+    final enderecos = perfil.enderecos
+        .map(EnderecoUsuarioModel.fromEntity)
+        .toList(growable: false);
+
+    enderecosUsuario.assignAll(enderecos);
+    if (enderecos.isEmpty) {
+      enderecoPrincipal.value = null;
+      usuarioLogado.value = usuario;
+      return usuario;
+    }
+
+    final principal = enderecos.firstWhere(
+      (endereco) => endereco.principal,
+      orElse: () => enderecos.first,
+    );
+    enderecoPrincipal.value = principal;
+    final usuarioComEndereco = usuario.copyWith(
+      cidade: principal.nomeCidade,
+      uf: principal.uf,
+    );
+    usuarioLogado.value = usuarioComEndereco;
+    return usuarioComEndereco;
   }
 
   Future<void> atualizarFcmTokenFornecedor(String idFornecedor) async {
@@ -694,14 +570,20 @@ class AppController extends GetxController {
       final token = await messaging.getToken();
       if (token == null || token.isEmpty) return;
 
-      await FirebaseFirestore.instance.collection('fornecedor').doc(idFornecedor).update({
+      await FirebaseFirestore.instance
+          .collection('fornecedor')
+          .doc(idFornecedor)
+          .update({
         'fcm_token': token,
       });
 
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
         if (newToken.isEmpty) return;
 
-        await FirebaseFirestore.instance.collection('fornecedor').doc(idFornecedor).update({
+        await FirebaseFirestore.instance
+            .collection('fornecedor')
+            .doc(idFornecedor)
+            .update({
           'fcm_token': newToken,
         });
       });
@@ -750,7 +632,7 @@ class AppController extends GetxController {
 
   @override
   void onClose() {
-    _authSub?.cancel();
+    _sessaoSub?.cancel();
     super.onClose();
   }
 }

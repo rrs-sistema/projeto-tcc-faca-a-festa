@@ -18,10 +18,12 @@ class AddItemCardapioBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<AddItemCardapioBottomSheet> createState() => _AddItemCardapioBottomSheetState();
+  State<AddItemCardapioBottomSheet> createState() =>
+      _AddItemCardapioBottomSheetState();
 }
 
-class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet> {
+class _AddItemCardapioBottomSheetState
+    extends State<AddItemCardapioBottomSheet> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nomeCtrl;
   TipoItemCardapio _tipo = TipoItemCardapio.comida;
@@ -55,7 +57,8 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: EdgeInsets.only(left: 16, right: 16, bottom: bottomInset + 16),
+            padding:
+                EdgeInsets.only(left: 16, right: 16, bottom: bottomInset + 16),
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Form(
@@ -70,7 +73,8 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
                         width: 50,
                         height: 4,
                         decoration: BoxDecoration(
-                            color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -82,7 +86,9 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
                     ),
                     const SizedBox(height: 10),
                     Divider(
-                        height: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                        height: 1,
+                        color: theme.colorScheme.outlineVariant
+                            .withValues(alpha: 0.5)),
                     const SizedBox(height: 16),
                     _textField(
                       controller: _nomeCtrl,
@@ -92,17 +98,22 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
                     ),
                     const SizedBox(height: 16),
                     Text('Tipo do Item',
-                        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _tipoChip('Comida', TipoItemCardapio.comida, primaryColor),
-                        _tipoChip('Bebida', TipoItemCardapio.bebida, primaryColor),
-                        _tipoChip('Sobremesa', TipoItemCardapio.sobremesa, primaryColor),
+                        _tipoChip(
+                            'Comida', TipoItemCardapio.comida, primaryColor),
+                        _tipoChip(
+                            'Bebida', TipoItemCardapio.bebida, primaryColor),
+                        _tipoChip('Sobremesa', TipoItemCardapio.sobremesa,
+                            primaryColor),
                         _tipoChip('Bolo', TipoItemCardapio.bolo, primaryColor),
-                        _tipoChip('Descartável', TipoItemCardapio.descartavel, primaryColor),
+                        _tipoChip('Descartável', TipoItemCardapio.descartavel,
+                            primaryColor),
                       ],
                     ),
                     const SizedBox(height: 32),
@@ -128,8 +139,9 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
       selected: selected,
       onSelected: (_) => setState(() => _tipo = valor),
       selectedColor: primaryColor.withValues(alpha: 0.2),
-      labelStyle:
-          TextStyle(fontWeight: FontWeight.w600, color: selected ? primaryColor : Colors.black87),
+      labelStyle: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: selected ? primaryColor : Colors.black87),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: selected ? primaryColor : Colors.grey.shade300),
@@ -153,13 +165,17 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+          borderSide:
+              BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
         ),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       ),
       validator: requiredField
-          ? (value) => (value == null || value.trim().isEmpty) ? 'Campo obrigatório' : null
+          ? (value) => (value == null || value.trim().isEmpty)
+              ? 'Campo obrigatório'
+              : null
           : null,
     );
   }
@@ -182,7 +198,7 @@ class _AddItemCardapioBottomSheetState extends State<AddItemCardapioBottomSheet>
         return;
       }
 
-      final novoItem = CardapioItemModel(
+      final novoItem = CardapioItem(
         idItem: '',
         idEvento: idEvento,
         idCardapio: widget.idCardapio,
@@ -238,7 +254,8 @@ class _Header extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: color, size: 22),
         ),
         const SizedBox(width: 12),
@@ -250,8 +267,8 @@ class _Header extends StatelessWidget {
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w800, fontSize: 16)),
               Text(subtitle,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
             ],
           ),
         ),
@@ -287,7 +304,8 @@ class _FooterActions extends StatelessWidget {
             label: const Text('Cancelar', style: TextStyle(fontSize: 13)),
             style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
           ),
         ),
         const SizedBox(width: 12),
@@ -298,13 +316,16 @@ class _FooterActions extends StatelessWidget {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.save_outlined, size: 16),
-            label: Text(isSaving ? 'Salvando...' : 'Salvar', style: const TextStyle(fontSize: 13)),
+            label: Text(isSaving ? 'Salvando...' : 'Salvar',
+                style: const TextStyle(fontSize: 13)),
             style: FilledButton.styleFrom(
                 backgroundColor: primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
           ),
         ),
       ],

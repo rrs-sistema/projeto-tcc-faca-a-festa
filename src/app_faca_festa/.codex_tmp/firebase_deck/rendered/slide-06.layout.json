@@ -1,0 +1,970 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/cogbrh",
+    "id": "cogbrh",
+    "slide": 6,
+    "layoutId": "25c5dfe9-8aa0-471d-954a-8c5d3d5e25db",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "aed41b87-a4c0-4482-b122-bceb8bdb1301",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "25c5dfe9-8aa0-471d-954a-8c5d3d5e25db",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "aed41b87-a4c0-4482-b122-bceb8bdb1301",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "aed41b87-a4c0-4482-b122-bceb8bdb1301",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/50rytk72",
+      "id": "1",
+      "bbox": [
+        42,
+        34,
+        1196,
+        70
+      ],
+      "geometry": "rect",
+      "text": "A cotação concentra propostas, serviços e mensagens",
+      "textPreview": "A cotação concentra propostas, serviços e mensagens",
+      "resolvedFontSize": 38,
+      "resolvedTextStyle": {
+        "fontSize": 38,
+        "typeface": "+mn-lt",
+        "color": "#111111",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "A cotação concentra propostas, serviços e mensagens"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "A cotação concentra propostas, serviços e mensagens",
+          "resolvedTextStyle": {
+            "fontSize": 38,
+            "color": "#111111",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "A cotação concentra propostas, serviços e mensagens",
+              "fontSize": 38,
+              "color": "#111111",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/idgfipor",
+      "id": "2",
+      "bbox": [
+        42,
+        112,
+        1196,
+        60
+      ],
+      "geometry": "rect",
+      "text": "O orçamento fechado é gravado em outra coleção e detalhado por uma subcoleção de gastos.",
+      "textPreview": "O orçamento fechado é gravado em outra coleção e detalhado por uma subcoleção de gastos.",
+      "resolvedFontSize": 19,
+      "resolvedTextStyle": {
+        "fontSize": 19,
+        "typeface": "+mn-lt",
+        "color": "#59616C",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "O orçamento fechado é gravado em outra coleção e detalhado por uma subcoleção de gastos."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "O orçamento fechado é gravado em outra coleção e detalhado por uma subcoleção de gastos.",
+          "resolvedTextStyle": {
+            "fontSize": 19,
+            "color": "#59616C",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "O orçamento fechado é gravado em outra coleção e detalhado por uma subcoleção de gastos.",
+              "fontSize": 19,
+              "color": "#59616C",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/3epgrapw",
+      "id": "3",
+      "bbox": [
+        1170,
+        668,
+        68,
+        24
+      ],
+      "geometry": "rect",
+      "text": "06",
+      "textPreview": "06",
+      "resolvedFontSize": 12,
+      "resolvedTextStyle": {
+        "fontSize": 12,
+        "typeface": "+mn-lt",
+        "color": "#59616C",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "06"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "06",
+          "resolvedTextStyle": {
+            "fontSize": 12,
+            "color": "#59616C",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "06",
+              "fontSize": 12,
+              "color": "#59616C",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "table",
+      "scope": "slide",
+      "aid": "tb/t03u9ory",
+      "id": "4",
+      "bbox": [
+        42,
+        195,
+        1196,
+        440
+      ],
+      "text": "Caminho | Chave | Referências | Campos centrais\ncotacao/{id} | idCotacao | evento + solicitante | descrição, categoria, datas, status\n.../fornecedores/{id} | idFornecedor | cotação + fornecedor | prazo, pagamento, status, resposta\n.../servicos/{id} | idServico | produto/serviço | quantidade, valor unitário e total\n.../mensagens/{id} | automática | id_usuario | mensagem, data, lido\norcamento/{id} | id_orcamento | evento + fornecedor | custo, status, datas, anotações\n.../orcamento_gasto/{id} | id_gasto | orçamento + serviço | nome, custo, pago, cadastro",
+      "textPreview": "Caminho | Chave | Referências | Campos centrais | cotacao/{id} | idCotacao | evento + solicitante | descrição, categoria, datas, status |...",
+      "rows": 7,
+      "cols": 4,
+      "cells": [
+        {
+          "index": 1,
+          "row": 1,
+          "column": 1,
+          "bbox": [
+            42,
+            195,
+            295,
+            62.86
+          ],
+          "text": "Caminho",
+          "textPreview": "Caminho",
+          "fillColor": "#111111",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Caminho",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Caminho"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "row": 1,
+          "column": 2,
+          "bbox": [
+            337,
+            195,
+            205,
+            62.86
+          ],
+          "text": "Chave",
+          "textPreview": "Chave",
+          "fillColor": "#111111",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Chave",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Chave"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "row": 1,
+          "column": 3,
+          "bbox": [
+            542,
+            195,
+            275,
+            62.86
+          ],
+          "text": "Referências",
+          "textPreview": "Referências",
+          "fillColor": "#111111",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Referências",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Referências"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "row": 1,
+          "column": 4,
+          "bbox": [
+            817,
+            195,
+            421,
+            62.86
+          ],
+          "text": "Campos centrais",
+          "textPreview": "Campos centrais",
+          "fillColor": "#111111",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Campos centrais",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Campos centrais"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "row": 2,
+          "column": 1,
+          "bbox": [
+            42,
+            257.86,
+            295,
+            62.86
+          ],
+          "text": "cotacao/{id}",
+          "textPreview": "cotacao/{id}",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "cotacao/{id}",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "cotacao/{id}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "row": 2,
+          "column": 2,
+          "bbox": [
+            337,
+            257.86,
+            205,
+            62.86
+          ],
+          "text": "idCotacao",
+          "textPreview": "idCotacao",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "idCotacao",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "idCotacao"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "row": 2,
+          "column": 3,
+          "bbox": [
+            542,
+            257.86,
+            275,
+            62.86
+          ],
+          "text": "evento + solicitante",
+          "textPreview": "evento + solicitante",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "evento + solicitante",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "evento + solicitante"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "row": 2,
+          "column": 4,
+          "bbox": [
+            817,
+            257.86,
+            421,
+            62.86
+          ],
+          "text": "descrição, categoria, datas, status",
+          "textPreview": "descrição, categoria, datas, status",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "descrição, categoria, datas, status",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "descrição, categoria, datas, status"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "row": 3,
+          "column": 1,
+          "bbox": [
+            42,
+            320.71,
+            295,
+            62.86
+          ],
+          "text": ".../fornecedores/{id}",
+          "textPreview": ".../fornecedores/{id}",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": ".../fornecedores/{id}",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": ".../fornecedores/{id}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 10,
+          "row": 3,
+          "column": 2,
+          "bbox": [
+            337,
+            320.71,
+            205,
+            62.86
+          ],
+          "text": "idFornecedor",
+          "textPreview": "idFornecedor",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "idFornecedor",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "idFornecedor"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 11,
+          "row": 3,
+          "column": 3,
+          "bbox": [
+            542,
+            320.71,
+            275,
+            62.86
+          ],
+          "text": "cotação + fornecedor",
+          "textPreview": "cotação + fornecedor",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "cotação + fornecedor",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "cotação + fornecedor"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 12,
+          "row": 3,
+          "column": 4,
+          "bbox": [
+            817,
+            320.71,
+            421,
+            62.86
+          ],
+          "text": "prazo, pagamento, status, resposta",
+          "textPreview": "prazo, pagamento, status, resposta",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "prazo, pagamento, status, resposta",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "prazo, pagamento, status, resposta"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 13,
+          "row": 4,
+          "column": 1,
+          "bbox": [
+            42,
+            383.57,
+            295,
+            62.86
+          ],
+          "text": ".../servicos/{id}",
+          "textPreview": ".../servicos/{id}",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": ".../servicos/{id}",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": ".../servicos/{id}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 14,
+          "row": 4,
+          "column": 2,
+          "bbox": [
+            337,
+            383.57,
+            205,
+            62.86
+          ],
+          "text": "idServico",
+          "textPreview": "idServico",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "idServico",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "idServico"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 15,
+          "row": 4,
+          "column": 3,
+          "bbox": [
+            542,
+            383.57,
+            275,
+            62.86
+          ],
+          "text": "produto/serviço",
+          "textPreview": "produto/serviço",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "produto/serviço",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "produto/serviço"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 16,
+          "row": 4,
+          "column": 4,
+          "bbox": [
+            817,
+            383.57,
+            421,
+            62.86
+          ],
+          "text": "quantidade, valor unitário e total",
+          "textPreview": "quantidade, valor unitário e total",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "quantidade, valor unitário e total",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "quantidade, valor unitário e total"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 17,
+          "row": 5,
+          "column": 1,
+          "bbox": [
+            42,
+            446.43,
+            295,
+            62.86
+          ],
+          "text": ".../mensagens/{id}",
+          "textPreview": ".../mensagens/{id}",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": ".../mensagens/{id}",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": ".../mensagens/{id}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 18,
+          "row": 5,
+          "column": 2,
+          "bbox": [
+            337,
+            446.43,
+            205,
+            62.86
+          ],
+          "text": "automática",
+          "textPreview": "automática",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "automática",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "automática"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 19,
+          "row": 5,
+          "column": 3,
+          "bbox": [
+            542,
+            446.43,
+            275,
+            62.86
+          ],
+          "text": "id_usuario",
+          "textPreview": "id_usuario",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_usuario",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_usuario"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "row": 5,
+          "column": 4,
+          "bbox": [
+            817,
+            446.43,
+            421,
+            62.86
+          ],
+          "text": "mensagem, data, lido",
+          "textPreview": "mensagem, data, lido",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "mensagem, data, lido",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "mensagem, data, lido"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 21,
+          "row": 6,
+          "column": 1,
+          "bbox": [
+            42,
+            509.29,
+            295,
+            62.86
+          ],
+          "text": "orcamento/{id}",
+          "textPreview": "orcamento/{id}",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "orcamento/{id}",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "orcamento/{id}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 22,
+          "row": 6,
+          "column": 2,
+          "bbox": [
+            337,
+            509.29,
+            205,
+            62.86
+          ],
+          "text": "id_orcamento",
+          "textPreview": "id_orcamento",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_orcamento",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_orcamento"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 23,
+          "row": 6,
+          "column": 3,
+          "bbox": [
+            542,
+            509.29,
+            275,
+            62.86
+          ],
+          "text": "evento + fornecedor",
+          "textPreview": "evento + fornecedor",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "evento + fornecedor",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "evento + fornecedor"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 24,
+          "row": 6,
+          "column": 4,
+          "bbox": [
+            817,
+            509.29,
+            421,
+            62.86
+          ],
+          "text": "custo, status, datas, anotações",
+          "textPreview": "custo, status, datas, anotações",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "custo, status, datas, anotações",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "custo, status, datas, anotações"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 25,
+          "row": 7,
+          "column": 1,
+          "bbox": [
+            42,
+            572.14,
+            295,
+            62.86
+          ],
+          "text": ".../orcamento_gasto/{id}",
+          "textPreview": ".../orcamento_gasto/{id}",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": ".../orcamento_gasto/{id}",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": ".../orcamento_gasto/{id}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 26,
+          "row": 7,
+          "column": 2,
+          "bbox": [
+            337,
+            572.14,
+            205,
+            62.86
+          ],
+          "text": "id_gasto",
+          "textPreview": "id_gasto",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_gasto",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_gasto"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 27,
+          "row": 7,
+          "column": 3,
+          "bbox": [
+            542,
+            572.14,
+            275,
+            62.86
+          ],
+          "text": "orçamento + serviço",
+          "textPreview": "orçamento + serviço",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "orçamento + serviço",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "orçamento + serviço"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 28,
+          "row": 7,
+          "column": 4,
+          "bbox": [
+            817,
+            572.14,
+            421,
+            62.86
+          ],
+          "text": "nome, custo, pago, cadastro",
+          "textPreview": "nome, custo, pago, cadastro",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "nome, custo, pago, cadastro",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "nome, custo, pago, cadastro"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "composeRuns": []
+}

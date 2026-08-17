@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
@@ -7,18 +6,24 @@ import 'package:get/get.dart';
 import '../core/utils/biblioteca.dart';
 import './../presentation/pages/endereco/endereco_section_controller.dart';
 import './../controllers/app_controller.dart';
-import './../data/models/model.dart';
+import './../data/models/endereco/endereco_usuario.dart';
+import '../domain/entities/evento.dart';
+import '../domain/entities/tipo_evento.dart';
+import '../domain/repositories/evento_repository.dart';
 
 class EventoCadastroController extends GetxController {
-  final db = FirebaseFirestore.instance;
+  EventoCadastroController({required EventoRepository repository})
+      : _repository = repository;
+
+  final EventoRepository _repository;
   final uuid = const Uuid();
-  final app = Get.find<AppController>();
+  AppController get app => Get.find<AppController>();
 
   /// ===============================
   /// 🔹 LISTA E MODELO DE TIPO DE EVENTO
   /// ===============================
-  final tiposEvento = <TipoEventoModel>[].obs;
-  final Rx<TipoEventoModel?> tipoEventoModel = Rx<TipoEventoModel?>(null);
+  final tiposEvento = <TipoEvento>[].obs;
+  final Rx<TipoEvento?> tipoEventoSelecionado = Rx<TipoEvento?>(null);
 
   /// ===============================
   /// 🔹 CAMPOS CONTROLADOS PELO CONTROLLER
@@ -56,7 +61,9 @@ class EventoCadastroController extends GetxController {
   final email = TextEditingController();
   final celular = TextEditingController();
 
-  final enderecoController = EnderecoSectionController().obs;
+  Rx<EnderecoSectionController>? _enderecoController;
+  Rx<EnderecoSectionController> get enderecoController =>
+      _enderecoController ??= EnderecoSectionController().obs;
   final padrinhos = <String>[].obs;
 
   final formKey = GlobalKey<FormState>();
@@ -107,7 +114,8 @@ class EventoCadastroController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _log('onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=${Get.arguments}');
+    _log(
+        'onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=${Get.arguments}');
   }
 
   void configurarCadastroComoConvidado(bool value) {
@@ -120,10 +128,7 @@ class EventoCadastroController extends GetxController {
   // ===============================
   Future<void> carregarTiposEvento() async {
     try {
-      final snapshot = await db.collection('tipo_evento').where('ativo', isEqualTo: true).get();
-      tiposEvento.assignAll(
-        snapshot.docs.map((d) => TipoEventoModel.fromMap(d.data())).toList(),
-      );
+      tiposEvento.assignAll(await _repository.listarTiposAtivos());
     } catch (e) {
       debugPrint('❌ Erro ao carregar tipos de evento: $e');
     }
@@ -133,8 +138,9 @@ class EventoCadastroController extends GetxController {
 // 🔹 ATUALIZAR PRÉ-VISUALIZAÇÃO DO EVENTO
 // ===============================
   void atualizarPreview() {
-    if (tipoEventoModel.value == null) return;
-    final nomeTipoEvento = _normalizeTipoEvento(tipoEventoModel.value!.nome.toLowerCase());
+    if (tipoEventoSelecionado.value == null) return;
+    final nomeTipoEvento =
+        _normalizeTipoEvento(tipoEventoSelecionado.value!.nome.toLowerCase());
 
     switch (nomeTipoEvento) {
       case 'casamento':
@@ -159,7 +165,8 @@ class EventoCadastroController extends GetxController {
         nomeEventoPreview.value = '🎓 Formatura \n ${nomeEvento.text}';
         break;
       default:
-        nomeEventoPreview.value = '🎉 ${_capitalizar(tipoEventoModel.value!.nome)}';
+        nomeEventoPreview.value =
+            '🎉 ${_capitalizar(tipoEventoSelecionado.value!.nome)}';
     }
   }
 
@@ -177,9 +184,10 @@ class EventoCadastroController extends GetxController {
 // ===============================
 // 🔹 CARREGAR EVENTO EXISTENTE (EDIÇÃO)
 // ===============================
-  void carregarEvento(EventoModel evento) {
+  void carregarEvento(Evento evento) {
     carregando.value = false;
-    final currencyFormat = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
+    final currencyFormat =
+        NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$');
 
     idEvento.value = evento.idEvento;
     nomeEvento.text = evento.nomeEvento;
@@ -211,7 +219,8 @@ class EventoCadastroController extends GetxController {
     final bebesParaTela = totalPorTipoSalvo > 0 ? bebesSalvos : 0;
 
     totalAdultos.text = adultosParaTela > 0 ? adultosParaTela.toString() : '';
-    totalCriancas.text = criancasParaTela > 0 ? criancasParaTela.toString() : '';
+    totalCriancas.text =
+        criancasParaTela > 0 ? criancasParaTela.toString() : '';
     totalBebes.text = bebesParaTela > 0 ? bebesParaTela.toString() : '';
     totalConvidados.text = totalSalvo > 0 ? totalSalvo.toString() : '';
 
@@ -223,7 +232,7 @@ class EventoCadastroController extends GetxController {
     }
 
     // ✅ Seleciona tipo de evento, se existir
-    tipoEventoModel.value = tiposEvento.firstWhereOrNull(
+    tipoEventoSelecionado.value = tiposEvento.firstWhereOrNull(
       (t) => t.idTipoEvento == evento.idTipoEvento,
     );
 
@@ -296,11 +305,12 @@ class EventoCadastroController extends GetxController {
     }
 
     if (cadastroConvidado) {
-      _log('FormKey.validate ignorado para convidado. Executando apenas save().');
+      _log(
+          'FormKey.validate ignorado para convidado. Executando apenas save().');
       formKey.currentState?.save();
     }
 
-    final tipoAtual = tipoEventoModel.value;
+    final tipoAtual = tipoEventoSelecionado.value;
     final dataStr = dataFesta.text.trim();
     final horaStr = horaFesta.text.trim();
 
@@ -394,22 +404,26 @@ class EventoCadastroController extends GetxController {
       final totalAdultosValor = _parseIntController(totalAdultos);
       final totalCriancasValor = _parseIntController(totalCriancas);
       final totalBebesValor = _parseIntController(totalBebes);
-      final totalConvidadosValor = totalAdultosValor + totalCriancasValor + totalBebesValor;
+      final totalConvidadosValor =
+          totalAdultosValor + totalCriancasValor + totalBebesValor;
 
-      totalConvidados.text = totalConvidadosValor > 0 ? totalConvidadosValor.toString() : '';
+      totalConvidados.text =
+          totalConvidadosValor > 0 ? totalConvidadosValor.toString() : '';
 
       carregando.value = true;
 
       // ⚙️ Mapeamento da cidade e estado
-      final idCidade =
-          deveSalvarEndereco ? end.ufCidadeController.idCidadeSelecionada?.toString() : null;
-      final nomeCidade = deveSalvarEndereco ? end.nomeCidadeController.text.trim() : '';
+      final idCidade = deveSalvarEndereco
+          ? end.ufCidadeController.idCidadeSelecionada?.toString()
+          : null;
+      final nomeCidade =
+          deveSalvarEndereco ? end.nomeCidadeController.text.trim() : '';
       final uf = deveSalvarEndereco && end.ufController.text.trim().isNotEmpty
           ? end.ufController.text.trim().toUpperCase()
           : null;
 
-      // ✅ Criação do modelo do evento
-      final evento = EventoModel(
+      // ✅ Criação da entidade do evento
+      final evento = Evento(
         idEvento: idEvento.value.isEmpty ? uuid.v4() : idEvento.value,
         idTipoEvento: tipoAtual.idTipoEvento,
         idUsuario: user.idUsuario,
@@ -445,9 +459,9 @@ class EventoCadastroController extends GetxController {
         bairro: deveSalvarEndereco ? endereco.bairro : null,
       );
 
-      // ✅ Gravação no Firestore
+      // ✅ Persistência delegada ao repository por meio do controller
       _log('Gravando evento ${evento.idEvento} no Firestore...');
-      await db.collection('evento').doc(evento.idEvento).set(evento.toMap());
+      await _repository.salvar(evento);
       _log('Evento ${evento.idEvento} gravado com sucesso.');
 
       carregando.value = false;
@@ -712,7 +726,9 @@ class EventoCadastroController extends GetxController {
     if (nome.isEmpty) return '';
     return nome
         .split(' ')
-        .map((p) => p.isEmpty ? '' : '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}')
+        .map((p) => p.isEmpty
+            ? ''
+            : '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}')
         .join(' ');
   }
 }

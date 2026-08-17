@@ -32,7 +32,7 @@ class OrcamentoScreen extends StatelessWidget {
     final orcamentoController = Get.put(OrcamentoController());
     final eventoController = Get.find<EventoController>();
 
-    final idEvento = eventoController.eventoAtual.value?.idEvento ?? '';
+    final idEvento = eventoController.eventoAtualEntidade?.idEvento ?? '';
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (idEvento.isNotEmpty) {
@@ -51,7 +51,8 @@ class OrcamentoScreen extends StatelessWidget {
           titulo: 'Meu Orçamento',
           acoes: [
             IconButton(
-              icon: const Icon(Icons.add_circle_outline, color: Colors.white, size: 24),
+              icon: const Icon(Icons.add_circle_outline,
+                  color: Colors.white, size: 24),
               tooltip: 'Adicionar gasto',
               onPressed: () => showAddOrcamentoBottomSheet(context, idEvento),
             ),
@@ -106,13 +107,16 @@ class OrcamentoScreen extends StatelessWidget {
                 children: [
                   resumoCard(
                     gradient,
-                    custoEstimado: eventoController.eventoAtual.value?.custoEstimado ?? 0,
+                    custoEstimado:
+                        eventoController.eventoAtualEntidade?.custoEstimado ??
+                            0,
                     custoFinal: orcamentoController.totalPagoGeral.value,
                   ),
                   const SizedBox(height: 12),
                   ...orcamentos.map((orcamento) {
-                    final temFornecedor = orcamento.idServicoFornecido != null &&
-                        orcamento.idServicoFornecido!.isNotEmpty;
+                    final temFornecedor =
+                        orcamento.idServicoFornecido != null &&
+                            orcamento.idServicoFornecido!.isNotEmpty;
 
                     if (!temFornecedor) {
                       final gastoC = Get.put(
@@ -129,7 +133,8 @@ class OrcamentoScreen extends StatelessWidget {
                         final gastosWidgets = gastos.isEmpty
                             ? [
                                 Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 4),
                                   child: Text(
                                     'Nenhum gasto registrado.',
                                     style: GoogleFonts.poppins(
@@ -198,11 +203,12 @@ class OrcamentoScreen extends StatelessWidget {
     List<Widget> gastos,
     bool mostrarBotaoAddGasto,
   ) {
-    final totalPrevisto = 'R\$ ${Biblioteca.formatarValorDecimal(orcamento.custoEstimado)}';
+    final totalPrevisto =
+        'R\$ ${Biblioteca.formatarValorDecimal(orcamento.custoEstimado)}';
 
     final double custo = orcamento.custoEstimado ?? 0;
-    final double totalPago =
-        Get.find<OrcamentoController>().totalPagoDoOrcamento(orcamento.idOrcamento);
+    final double totalPago = Get.find<OrcamentoController>()
+        .totalPagoDoOrcamento(orcamento.idOrcamento);
     final bool servicoContratado = !mostrarBotaoAddGasto;
 
     final bool podeAvaliar = servicoContratado &&
@@ -244,8 +250,10 @@ class OrcamentoScreen extends StatelessWidget {
             collapsedBackgroundColor: Colors.transparent,
             iconColor: primary.withValues(alpha: 0.9),
             collapsedIconColor: Colors.grey.shade500,
-            tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-            childrenPadding: const EdgeInsets.only(left: 14, right: 14, bottom: 10),
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+            childrenPadding:
+                const EdgeInsets.only(left: 14, right: 14, bottom: 10),
             title: Row(
               children: [
                 Container(
@@ -268,7 +276,8 @@ class OrcamentoScreen extends StatelessWidget {
                       )
                     ],
                   ),
-                  child: const Icon(Icons.folder_special_rounded, color: Colors.white, size: 16),
+                  child: const Icon(Icons.folder_special_rounded,
+                      color: Colors.white, size: 16),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -311,8 +320,10 @@ class OrcamentoScreen extends StatelessWidget {
                         elevation: 0,
                         backgroundColor: primary.withValues(alpha: 0.1),
                         foregroundColor: primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
                         minimumSize: const Size(0, 32),
                       ),
                       onPressed: () => _showAddGastoDialog(
@@ -323,13 +334,15 @@ class OrcamentoScreen extends StatelessWidget {
                       icon: const Icon(Icons.add_circle_outline, size: 16),
                       label: Text(
                         'Adicionar',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12),
+                        style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600, fontSize: 12),
                       ),
                     ),
                   const SizedBox(width: 8),
                   TextButton.icon(
                     style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       minimumSize: const Size(0, 32),
                     ),
                     onPressed: () async {
@@ -337,7 +350,8 @@ class OrcamentoScreen extends StatelessWidget {
                         AlertDialog(
                           title: Text(
                             'Excluir orçamento',
-                            style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16),
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600, fontSize: 16),
                           ),
                           content: Text(
                             'Deseja realmente excluir "${orcamento.anotacoes}"?',
@@ -350,7 +364,8 @@ class OrcamentoScreen extends StatelessWidget {
                             ),
                             ElevatedButton(
                               onPressed: () => Get.back(result: true),
-                              style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.redAccent),
                               child: const Text('Excluir'),
                             ),
                           ],
@@ -390,7 +405,8 @@ class OrcamentoScreen extends StatelessWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      Icon(Icons.info_outline_rounded, size: 14, color: Colors.grey.shade500),
+                      Icon(Icons.info_outline_rounded,
+                          size: 14, color: Colors.grey.shade500),
                       const SizedBox(width: 4),
                       Text(
                         _mensagemMotivoNaoAvaliar(orcamento, totalPago),
@@ -444,7 +460,8 @@ class OrcamentoScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.receipt_long_rounded, size: 16, color: Colors.teal.shade700),
+              Icon(Icons.receipt_long_rounded,
+                  size: 16, color: Colors.teal.shade700),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -457,21 +474,25 @@ class OrcamentoScreen extends StatelessWidget {
                 ),
               ),
               if (restante == 0)
-                Icon(Icons.check_circle_rounded, color: Colors.green.shade600, size: 18)
+                Icon(Icons.check_circle_rounded,
+                    color: Colors.green.shade600, size: 18)
               else if (idOrcamento != null && idGasto != null)
                 InkWell(
                   onTap: () async {
                     Biblioteca.showConfirmDialog(
                       context,
                       title: 'Pergunta!',
-                      message: 'Deseja realmente marcar esse serviço como pago?',
+                      message:
+                          'Deseja realmente marcar esse serviço como pago?',
                       confirmLabel: 'Pagar',
                       color: themeController.primaryColor.value,
                       onConfirm: () async {
                         EasyLoading.show(status: 'Processando...');
-                        final gastoC = Get.find<OrcamentoGastoController>(tag: idOrcamento);
+                        final gastoC = Get.find<OrcamentoGastoController>(
+                            tag: idOrcamento);
 
-                        await gastoC.marcarComoPago(idOrcamento, idGasto, custo);
+                        await gastoC.marcarComoPago(
+                            idOrcamento, idGasto, custo);
 
                         gastoC.escutarGastos(idOrcamento);
 
@@ -488,7 +509,8 @@ class OrcamentoScreen extends StatelessWidget {
                     );
                   },
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: Colors.green.shade50,
                       borderRadius: BorderRadius.circular(8),
@@ -506,7 +528,8 @@ class OrcamentoScreen extends StatelessWidget {
                 ),
               if (idOrcamento != null && idGasto != null)
                 InkWell(
-                  onTap: () => _confirmarExcluirGasto(context, idOrcamento, idGasto),
+                  onTap: () =>
+                      _confirmarExcluirGasto(context, idOrcamento, idGasto),
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8),
                     child: Icon(Icons.delete_outline_rounded,
@@ -534,14 +557,18 @@ class OrcamentoScreen extends StatelessWidget {
               Text(
                 'Pago: R\$ ${pago.toStringAsFixed(2)}',
                 style: GoogleFonts.poppins(
-                    fontSize: 11, fontWeight: FontWeight.w500, color: Colors.teal.shade800),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.teal.shade800),
               ),
               Text(
                 'Restante: R\$ ${restante.toStringAsFixed(2)}',
                 style: GoogleFonts.poppins(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: restante > 0 ? Colors.orange.shade700 : Colors.green.shade700,
+                  color: restante > 0
+                      ? Colors.orange.shade700
+                      : Colors.green.shade700,
                 ),
               ),
             ],
@@ -562,11 +589,14 @@ class OrcamentoScreen extends StatelessWidget {
                     nomeServico: nome,
                   );
                 },
-                icon: const Icon(Icons.star_rate_rounded, color: Colors.amber, size: 16),
+                icon: const Icon(Icons.star_rate_rounded,
+                    color: Colors.amber, size: 16),
                 label: Text(
                   "Avaliar",
                   style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w600, fontSize: 11, color: Colors.amber.shade700),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11,
+                      color: Colors.amber.shade700),
                 ),
               ),
             ),
@@ -677,7 +707,8 @@ Future<void> _showAddGastoDialog(
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(12),
         borderRadius: 12,
-        icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white),
+        icon:
+            const Icon(Icons.check_circle_outline_rounded, color: Colors.white),
       );
     } catch (e) {
       EasyLoading.dismiss();
@@ -729,9 +760,11 @@ Future<void> _showAddGastoDialog(
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.30)),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.30)),
                 ),
-                child: const Icon(Icons.receipt_long_rounded, color: Colors.white, size: 24),
+                child: const Icon(Icons.receipt_long_rounded,
+                    color: Colors.white, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -749,7 +782,9 @@ Future<void> _showAddGastoDialog(
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      categoria.isNotEmpty ? categoria : 'Preencha os valores do serviço',
+                      categoria.isNotEmpty
+                          ? categoria
+                          : 'Preencha os valores do serviço',
                       style: GoogleFonts.poppins(
                         color: Colors.white.withValues(alpha: 0.88),
                         fontSize: 11,
@@ -834,15 +869,19 @@ Future<void> _showAddGastoDialog(
         textCapitalization: textCapitalization,
         textInputAction: textInputAction,
         maxLines: maxLines,
-        style: GoogleFonts.poppins(color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
+        style: GoogleFonts.poppins(
+            color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          labelStyle:
-              GoogleFonts.poppins(color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
-          hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
+          labelStyle: GoogleFonts.poppins(
+              color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
+          hintStyle:
+              GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
           prefixIcon: Column(
-            mainAxisAlignment: maxLines > 1 ? MainAxisAlignment.start : MainAxisAlignment.center,
+            mainAxisAlignment: maxLines > 1
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
@@ -853,7 +892,8 @@ Future<void> _showAddGastoDialog(
           ),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(color: Colors.grey.shade200),
@@ -916,14 +956,16 @@ Future<void> _showAddGastoDialog(
                           label: 'Custo total (R\$)',
                           hint: '0,00',
                           icon: Icons.attach_money_rounded,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
                         ),
                         buildTextField(
                           controller: pagoCtrl,
                           label: 'Valor pago (R\$)',
                           hint: '0,00',
                           icon: Icons.payments_rounded,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
                           textInputAction: TextInputAction.done,
                         ),
                         const SizedBox(height: 20),
@@ -935,12 +977,15 @@ Future<void> _showAddGastoDialog(
                             child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: primary,
-                                disabledBackgroundColor: primary.withValues(alpha: 0.45),
+                                disabledBackgroundColor:
+                                    primary.withValues(alpha: 0.45),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
-                              onPressed: isSaving ? null : () => salvarGasto(modalContext),
+                              onPressed: isSaving
+                                  ? null
+                                  : () => salvarGasto(modalContext),
                               icon: isSaving
                                   ? const SizedBox(
                                       width: 16,
@@ -948,8 +993,10 @@ Future<void> _showAddGastoDialog(
                                       child: CircularProgressIndicator(
                                           strokeWidth: 2, color: Colors.white),
                                     )
-                                  : const Icon(Icons.check_circle_outline_rounded,
-                                      color: Colors.white, size: 18),
+                                  : const Icon(
+                                      Icons.check_circle_outline_rounded,
+                                      color: Colors.white,
+                                      size: 18),
                               label: Text(
                                 isSaving ? 'Salvando...' : 'Salvar gasto',
                                 style: GoogleFonts.poppins(
@@ -973,7 +1020,8 @@ Future<void> _showAddGastoDialog(
                             icon: const Icon(Icons.close_rounded, size: 18),
                             label: Text(
                               'Cancelar',
-                              style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13),
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w700, fontSize: 13),
                             ),
                             style: TextButton.styleFrom(
                               foregroundColor: textMuted,
@@ -1008,7 +1056,8 @@ Widget resumoCard(
   required double custoEstimado,
   required double custoFinal,
 }) {
-  final percent = (custoEstimado > 0) ? (custoFinal / custoEstimado).clamp(0.0, 1.0) : 0.0;
+  final percent =
+      (custoEstimado > 0) ? (custoFinal / custoEstimado).clamp(0.0, 1.0) : 0.0;
 
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -1017,7 +1066,9 @@ Widget resumoCard(
       borderRadius: BorderRadius.circular(18),
       boxShadow: [
         BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08), blurRadius: 8, offset: const Offset(0, 4)),
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 4)),
       ],
     ),
     child: Row(
@@ -1038,7 +1089,9 @@ Widget resumoCard(
               Text(
                 '${(percent * 100).toStringAsFixed(0)}%',
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    fontSize: 16),
               ),
             ],
           ),
@@ -1051,14 +1104,22 @@ Widget resumoCard(
               Text(
                 'Resumo Financeiro',
                 style: GoogleFonts.poppins(
-                    color: Colors.white, fontWeight: FontWeight.w600, fontSize: 13),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13),
               ),
               const SizedBox(height: 6),
-              _infoBoxResumo('Estimado:', 'R\$ ${Biblioteca.formatarValorDecimal(custoEstimado)}',
-                  Icons.savings_rounded, Colors.white),
+              _infoBoxResumo(
+                  'Estimado:',
+                  'R\$ ${Biblioteca.formatarValorDecimal(custoEstimado)}',
+                  Icons.savings_rounded,
+                  Colors.white),
               const SizedBox(height: 4),
-              _infoBoxResumo('Final:', 'R\$ ${Biblioteca.formatarValorDecimal(custoFinal)}',
-                  Icons.stacked_bar_chart_rounded, Colors.white),
+              _infoBoxResumo(
+                  'Final:',
+                  'R\$ ${Biblioteca.formatarValorDecimal(custoFinal)}',
+                  Icons.stacked_bar_chart_rounded,
+                  Colors.white),
             ],
           ),
         ),
@@ -1075,12 +1136,15 @@ Widget _infoBoxResumo(String label, String value, IconData icon, Color color) {
       Text(
         label,
         style: GoogleFonts.poppins(
-            fontSize: 11, color: color.withValues(alpha: 0.8), fontWeight: FontWeight.w500),
+            fontSize: 11,
+            color: color.withValues(alpha: 0.8),
+            fontWeight: FontWeight.w500),
       ),
       const Spacer(),
       Text(
         value,
-        style: GoogleFonts.poppins(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
+        style: GoogleFonts.poppins(
+            fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
       ),
     ],
   );
@@ -1141,7 +1205,8 @@ Future<void> showAddOrcamentoBottomSheet(
       salvando.value = true;
       final double custo = Biblioteca.toDouble(custoTexto);
 
-      final resultado = await orcamentoController.validarCriacaoOrcamento(custo);
+      final resultado =
+          await orcamentoController.validarCriacaoOrcamento(custo);
 
       if (!resultado.$1) {
         Get.snackbar(
@@ -1187,7 +1252,8 @@ Future<void> showAddOrcamentoBottomSheet(
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(12),
         borderRadius: 12,
-        icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.white),
+        icon:
+            const Icon(Icons.check_circle_outline_rounded, color: Colors.white),
       );
     } catch (e) {
       EasyLoading.dismiss();
@@ -1239,9 +1305,11 @@ Future<void> showAddOrcamentoBottomSheet(
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.30)),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.30)),
                 ),
-                child: const Icon(Icons.attach_money_rounded, color: Colors.white, size: 24),
+                child: const Icon(Icons.attach_money_rounded,
+                    color: Colors.white, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1344,15 +1412,19 @@ Future<void> showAddOrcamentoBottomSheet(
         textCapitalization: textCapitalization,
         textInputAction: textInputAction,
         maxLines: maxLines,
-        style: GoogleFonts.poppins(color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
+        style: GoogleFonts.poppins(
+            color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          labelStyle:
-              GoogleFonts.poppins(color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
-          hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
+          labelStyle: GoogleFonts.poppins(
+              color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
+          hintStyle:
+              GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
           prefixIcon: Column(
-            mainAxisAlignment: maxLines > 1 ? MainAxisAlignment.start : MainAxisAlignment.center,
+            mainAxisAlignment: maxLines > 1
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
@@ -1363,7 +1435,8 @@ Future<void> showAddOrcamentoBottomSheet(
           ),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(color: Colors.grey.shade200),
@@ -1426,7 +1499,8 @@ Future<void> showAddOrcamentoBottomSheet(
                           label: 'Custo estimado (R\$)',
                           hint: '0,00',
                           icon: Icons.savings_outlined,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true),
                           textInputAction: TextInputAction.done,
                         ),
                         const SizedBox(height: 20),
@@ -1438,12 +1512,15 @@ Future<void> showAddOrcamentoBottomSheet(
                             child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: primary,
-                                disabledBackgroundColor: primary.withValues(alpha: 0.45),
+                                disabledBackgroundColor:
+                                    primary.withValues(alpha: 0.45),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
-                              onPressed: isSaving ? null : () => salvarOrcamento(modalContext),
+                              onPressed: isSaving
+                                  ? null
+                                  : () => salvarOrcamento(modalContext),
                               icon: isSaving
                                   ? const SizedBox(
                                       width: 16,
@@ -1451,8 +1528,10 @@ Future<void> showAddOrcamentoBottomSheet(
                                       child: CircularProgressIndicator(
                                           strokeWidth: 2, color: Colors.white),
                                     )
-                                  : const Icon(Icons.check_circle_outline_rounded,
-                                      color: Colors.white, size: 18),
+                                  : const Icon(
+                                      Icons.check_circle_outline_rounded,
+                                      color: Colors.white,
+                                      size: 18),
                               label: Text(
                                 isSaving ? 'Salvando...' : 'Salvar orçamento',
                                 style: GoogleFonts.poppins(
@@ -1476,7 +1555,8 @@ Future<void> showAddOrcamentoBottomSheet(
                             icon: const Icon(Icons.close_rounded, size: 18),
                             label: Text(
                               'Cancelar',
-                              style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13),
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w700, fontSize: 13),
                             ),
                             style: TextButton.styleFrom(
                               foregroundColor: textMuted,
@@ -1512,7 +1592,7 @@ void _abrirDialogAvaliacaoServico({
   required String nomeServico,
 }) {
   final usuario = Get.find<AppController>().usuarioLogado.value;
-  final evento = Get.find<EventoController>().eventoAtual.value;
+  final evento = Get.find<EventoController>().eventoAtualEntidade;
 
   Get.dialog(
     EnviarAvaliacaoDialog(

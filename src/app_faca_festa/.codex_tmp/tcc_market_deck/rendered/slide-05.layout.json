@@ -1,0 +1,1028 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/dkmqn7",
+    "id": "dkmqn7",
+    "slide": 5,
+    "layoutId": "5ffab227-7a51-4b8d-9d73-d27c1508ee9c",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "f5daa0c1-b574-430a-9b7e-04ffdd967719",
+    "masterLayoutName": "Master",
+    "backgroundColor": "#F7F5F6",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "5ffab227-7a51-4b8d-9d73-d27c1508ee9c",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "f5daa0c1-b574-430a-9b7e-04ffdd967719",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "f5daa0c1-b574-430a-9b7e-04ffdd967719",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/al4zm9of",
+      "id": "1",
+      "bbox": [
+        52,
+        42,
+        1176,
+        60
+      ],
+      "geometry": "rect",
+      "text": "As tabelas centrais preservam identidade e contexto",
+      "textPreview": "As tabelas centrais preservam identidade e contexto",
+      "resolvedFontSize": 39,
+      "resolvedTextStyle": {
+        "fontSize": 39,
+        "typeface": "+mn-lt",
+        "color": "#131B2A",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "As tabelas centrais preservam identidade e contexto"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "As tabelas centrais preservam identidade e contexto",
+          "resolvedTextStyle": {
+            "fontSize": 39,
+            "color": "#131B2A",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "As tabelas centrais preservam identidade e contexto",
+              "fontSize": 39,
+              "color": "#131B2A",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/x8vihon6",
+      "id": "2",
+      "bbox": [
+        52,
+        112,
+        1120,
+        46
+      ],
+      "geometry": "rect",
+      "text": "Campos essenciais foram priorizados; detalhes completos permanecem no dicionário de dados.",
+      "textPreview": "Campos essenciais foram priorizados; detalhes completos permanecem no dicionário de dados.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#667085",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Campos essenciais foram priorizados; detalhes completos permanecem no dicionário de dados."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Campos essenciais foram priorizados; detalhes completos permanecem no dicionário de dados.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#667085",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Campos essenciais foram priorizados; detalhes completos permanecem no dicionário de dados.",
+              "fontSize": 18,
+              "color": "#667085",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/wnmhoj6l",
+      "id": "3",
+      "bbox": [
+        52,
+        674,
+        90,
+        3
+      ],
+      "geometry": "rect",
+      "fillColor": "#1769C2",
+      "lineColor": "#1769C2",
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/jad0jy5w",
+      "id": "4",
+      "bbox": [
+        52,
+        683,
+        260,
+        20
+      ],
+      "geometry": "rect",
+      "text": "FAÇA A FESTA · TCC",
+      "textPreview": "FAÇA A FESTA · TCC",
+      "resolvedFontSize": 11,
+      "resolvedTextStyle": {
+        "fontSize": 11,
+        "typeface": "+mn-lt",
+        "color": "#667085",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "FAÇA A FESTA · TCC"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "FAÇA A FESTA · TCC",
+          "resolvedTextStyle": {
+            "fontSize": 11,
+            "color": "#667085",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "FAÇA A FESTA · TCC",
+              "fontSize": 11,
+              "color": "#667085",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/i94zqtob",
+      "id": "5",
+      "bbox": [
+        1190,
+        681,
+        38,
+        20
+      ],
+      "geometry": "rect",
+      "text": "05",
+      "textPreview": "05",
+      "resolvedFontSize": 11,
+      "resolvedTextStyle": {
+        "fontSize": 11,
+        "typeface": "+mn-lt",
+        "color": "#667085",
+        "alignment": "right",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "05"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "05",
+          "resolvedTextStyle": {
+            "fontSize": 11,
+            "color": "#667085",
+            "alignment": "right"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "05",
+              "fontSize": 11,
+              "color": "#667085",
+              "alignment": "right"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "table",
+      "scope": "slide",
+      "aid": "tb/8j298by5",
+      "id": "6",
+      "bbox": [
+        52,
+        205,
+        1176,
+        400
+      ],
+      "text": "Entidade | Chave primária | Chaves estrangeiras | Campos essenciais\nusuario | id_usuario | — | nome · email · tipo · ativo\nevento | id_evento | id_usuario · id_tipo_evento · id_cidade | nome · data · status · totais · endereço\nconvidado | id_convidado | id_evento · id_grupo · id_mesa | nome · contato · status · tipo\ntarefa | id_tarefa | id_evento · id_responsavel | título · data prevista · status\ncardapio_item | id_item | id_cardapio · id_evento | tipo · público · quantidades · confirmação",
+      "textPreview": "Entidade | Chave primária | Chaves estrangeiras | Campos essenciais | usuario | id_usuario | — | nome · email · tipo · ativo | evento | i...",
+      "rows": 6,
+      "cols": 4,
+      "cells": [
+        {
+          "index": 1,
+          "row": 1,
+          "column": 1,
+          "bbox": [
+            52,
+            205,
+            210,
+            66.67
+          ],
+          "text": "Entidade",
+          "textPreview": "Entidade",
+          "fillColor": "#0B1220",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Entidade",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Entidade"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 2,
+          "row": 1,
+          "column": 2,
+          "bbox": [
+            262,
+            205,
+            230,
+            66.67
+          ],
+          "text": "Chave primária",
+          "textPreview": "Chave primária",
+          "fillColor": "#0B1220",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Chave primária",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Chave primária"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 3,
+          "row": 1,
+          "column": 3,
+          "bbox": [
+            492,
+            205,
+            340,
+            66.67
+          ],
+          "text": "Chaves estrangeiras",
+          "textPreview": "Chaves estrangeiras",
+          "fillColor": "#0B1220",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Chaves estrangeiras",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Chaves estrangeiras"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 4,
+          "row": 1,
+          "column": 4,
+          "bbox": [
+            832,
+            205,
+            396,
+            66.67
+          ],
+          "text": "Campos essenciais",
+          "textPreview": "Campos essenciais",
+          "fillColor": "#0B1220",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "Campos essenciais",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "Campos essenciais"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 5,
+          "row": 2,
+          "column": 1,
+          "bbox": [
+            52,
+            271.67,
+            210,
+            66.67
+          ],
+          "text": "usuario",
+          "textPreview": "usuario",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "usuario",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "usuario"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 6,
+          "row": 2,
+          "column": 2,
+          "bbox": [
+            262,
+            271.67,
+            230,
+            66.67
+          ],
+          "text": "id_usuario",
+          "textPreview": "id_usuario",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_usuario",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_usuario"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 7,
+          "row": 2,
+          "column": 3,
+          "bbox": [
+            492,
+            271.67,
+            340,
+            66.67
+          ],
+          "text": "—",
+          "textPreview": "—",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "—",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "—"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 8,
+          "row": 2,
+          "column": 4,
+          "bbox": [
+            832,
+            271.67,
+            396,
+            66.67
+          ],
+          "text": "nome · email · tipo · ativo",
+          "textPreview": "nome · email · tipo · ativo",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "nome · email · tipo · ativo",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "nome · email · tipo · ativo"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 9,
+          "row": 3,
+          "column": 1,
+          "bbox": [
+            52,
+            338.33,
+            210,
+            66.67
+          ],
+          "text": "evento",
+          "textPreview": "evento",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "evento",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "evento"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 10,
+          "row": 3,
+          "column": 2,
+          "bbox": [
+            262,
+            338.33,
+            230,
+            66.67
+          ],
+          "text": "id_evento",
+          "textPreview": "id_evento",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_evento",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_evento"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 11,
+          "row": 3,
+          "column": 3,
+          "bbox": [
+            492,
+            338.33,
+            340,
+            66.67
+          ],
+          "text": "id_usuario · id_tipo_evento · id_cidade",
+          "textPreview": "id_usuario · id_tipo_evento · id_cidade",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_usuario · id_tipo_evento · id_cidade",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_usuario · id_tipo_evento · id_cidade"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 12,
+          "row": 3,
+          "column": 4,
+          "bbox": [
+            832,
+            338.33,
+            396,
+            66.67
+          ],
+          "text": "nome · data · status · totais · endereço",
+          "textPreview": "nome · data · status · totais · endereço",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "nome · data · status · totais · endereço",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "nome · data · status · totais · endereço"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 13,
+          "row": 4,
+          "column": 1,
+          "bbox": [
+            52,
+            405,
+            210,
+            66.67
+          ],
+          "text": "convidado",
+          "textPreview": "convidado",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "convidado",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "convidado"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 14,
+          "row": 4,
+          "column": 2,
+          "bbox": [
+            262,
+            405,
+            230,
+            66.67
+          ],
+          "text": "id_convidado",
+          "textPreview": "id_convidado",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_convidado",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_convidado"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 15,
+          "row": 4,
+          "column": 3,
+          "bbox": [
+            492,
+            405,
+            340,
+            66.67
+          ],
+          "text": "id_evento · id_grupo · id_mesa",
+          "textPreview": "id_evento · id_grupo · id_mesa",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_evento · id_grupo · id_mesa",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_evento · id_grupo · id_mesa"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 16,
+          "row": 4,
+          "column": 4,
+          "bbox": [
+            832,
+            405,
+            396,
+            66.67
+          ],
+          "text": "nome · contato · status · tipo",
+          "textPreview": "nome · contato · status · tipo",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "nome · contato · status · tipo",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "nome · contato · status · tipo"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 17,
+          "row": 5,
+          "column": 1,
+          "bbox": [
+            52,
+            471.67,
+            210,
+            66.67
+          ],
+          "text": "tarefa",
+          "textPreview": "tarefa",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "tarefa",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "tarefa"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 18,
+          "row": 5,
+          "column": 2,
+          "bbox": [
+            262,
+            471.67,
+            230,
+            66.67
+          ],
+          "text": "id_tarefa",
+          "textPreview": "id_tarefa",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_tarefa",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_tarefa"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 19,
+          "row": 5,
+          "column": 3,
+          "bbox": [
+            492,
+            471.67,
+            340,
+            66.67
+          ],
+          "text": "id_evento · id_responsavel",
+          "textPreview": "id_evento · id_responsavel",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_evento · id_responsavel",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_evento · id_responsavel"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 20,
+          "row": 5,
+          "column": 4,
+          "bbox": [
+            832,
+            471.67,
+            396,
+            66.67
+          ],
+          "text": "título · data prevista · status",
+          "textPreview": "título · data prevista · status",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "título · data prevista · status",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "título · data prevista · status"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 21,
+          "row": 6,
+          "column": 1,
+          "bbox": [
+            52,
+            538.33,
+            210,
+            66.67
+          ],
+          "text": "cardapio_item",
+          "textPreview": "cardapio_item",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "cardapio_item",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "cardapio_item"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 22,
+          "row": 6,
+          "column": 2,
+          "bbox": [
+            262,
+            538.33,
+            230,
+            66.67
+          ],
+          "text": "id_item",
+          "textPreview": "id_item",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_item",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_item"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 23,
+          "row": 6,
+          "column": 3,
+          "bbox": [
+            492,
+            538.33,
+            340,
+            66.67
+          ],
+          "text": "id_cardapio · id_evento",
+          "textPreview": "id_cardapio · id_evento",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "id_cardapio · id_evento",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "id_cardapio · id_evento"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "index": 24,
+          "row": 6,
+          "column": 4,
+          "bbox": [
+            832,
+            538.33,
+            396,
+            66.67
+          ],
+          "text": "tipo · público · quantidades · confirmação",
+          "textPreview": "tipo · público · quantidades · confirmação",
+          "paragraphs": [
+            {
+              "index": 1,
+              "text": "tipo · público · quantidades · confirmação",
+              "runs": [
+                {
+                  "index": 1,
+                  "text": "tipo · público · quantidades · confirmação"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "order": 7,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/kbmhs36h",
+      "id": "7",
+      "bbox": [
+        52,
+        622,
+        1176,
+        4
+      ],
+      "geometry": "rect",
+      "fillColor": "#E83D91",
+      "lineColor": "#E83D91",
+      "lineWidth": 0
+    },
+    {
+      "order": 8,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/7ex0ny58",
+      "id": "8",
+      "bbox": [
+        52,
+        636,
+        1120,
+        30
+      ],
+      "geometry": "rect",
+      "text": "No Firestore, a relação é uma convenção. No SQL, a FK torna o vínculo documentado e verificável.",
+      "textPreview": "No Firestore, a relação é uma convenção. No SQL, a FK torna o vínculo documentado e verificável.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#1769C2",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "No Firestore, a relação é uma convenção. No SQL, a FK torna o vínculo documentado e verificável."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "No Firestore, a relação é uma convenção. No SQL, a FK torna o vínculo documentado e verificável.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#1769C2",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "No Firestore, a relação é uma convenção. No SQL, a FK torna o vínculo documentado e verificável.",
+              "fontSize": 18,
+              "color": "#1769C2",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

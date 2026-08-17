@@ -1,12 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models/endereco/endereco.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:convert';
 
+import '../../domain/repositories/perfil_usuario_repository.dart';
+
 class EnderecoUsuarioController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final PerfilUsuarioRepository _perfilRepository =
+      Get.find<PerfilUsuarioRepository>();
 
   final enderecoPrincipal = Rxn<EnderecoUsuarioModel>();
   final carregando = false.obs;
@@ -16,20 +18,14 @@ class EnderecoUsuarioController extends GetxController {
     try {
       carregando.value = true;
 
-      final snap = await _db
-          .collection('usuarios')
-          .doc(idUsuario)
-          .collection('enderecos')
-          .where('principal', isEqualTo: true)
-          .limit(1)
-          .get();
-
-      if (snap.docs.isEmpty) {
+      final endereco =
+          await _perfilRepository.buscarEnderecoPrincipal(idUsuario);
+      if (endereco == null) {
         enderecoPrincipal.value = null;
         return;
       }
 
-      enderecoPrincipal.value = EnderecoUsuarioModel.fromMap(snap.docs.first.data());
+      enderecoPrincipal.value = EnderecoUsuarioModel.fromEntity(endereco);
     } catch (e) {
       debugPrint('❌ Erro ao carregar endereço principal: $e');
     } finally {
@@ -53,7 +49,7 @@ class EnderecoUsuarioController extends GetxController {
 
       // Constrói modelo
       final novo = EnderecoUsuarioModel(
-        id: enderecoPrincipal.value?.id ?? _db.collection('x').doc().id,
+        id: enderecoPrincipal.value?.id ?? _perfilRepository.criarIdEndereco(),
         idUsuario: idUsuario,
         idCidade: 0,
         cep: cep,
@@ -67,17 +63,16 @@ class EnderecoUsuarioController extends GetxController {
         dataCadastro: DateTime.now(),
       );
 
-      final ref = _db.collection('usuarios').doc(idUsuario).collection('enderecos').doc(novo.id);
-
-      await ref.set(novo.toMap());
+      await _perfilRepository.salvarEndereco(novo);
 
       enderecoPrincipal.value = novo;
 
       // 🔹 Atualiza cidade/UF no documento principal do usuário
-      await _db.collection('usuarios').doc(idUsuario).update({
-        'cidade': nomeCidade,
-        'uf': uf,
-      });
+      await _perfilRepository.atualizarLocalizacaoUsuario(
+        idUsuario: idUsuario,
+        cidade: nomeCidade,
+        uf: uf,
+      );
 
       Get.snackbar(
         'Endereço atualizado',

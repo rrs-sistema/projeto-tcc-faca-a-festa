@@ -15,7 +15,6 @@ import './../../controllers/evento_cadastro_controller.dart';
 import './../pages/usuario/edit_usuario_screen.dart';
 import './../../controllers/evento_controller.dart';
 import './../../controllers/app_controller.dart';
-import './../../app/bindings/gift_binding.dart';
 import './../../core/utils/biblioteca.dart';
 
 class MenuDrawerFacaFesta extends StatelessWidget {
@@ -37,7 +36,7 @@ class MenuDrawerFacaFesta extends StatelessWidget {
       final primary = themeController.primaryColor.value;
       final icon = themeController.icon.value;
       final tituloCabecalho = themeController.tituloCabecalho.value;
-      final evento = eventoController.eventoAtual.value;
+      final evento = eventoController.eventoAtualEntidade;
       final eventoTitulo = _resolverTituloEvento(evento, tituloCabecalho);
 
       return Drawer(
@@ -61,7 +60,9 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                   _menuItem(
                     Icons.event_note_rounded,
                     'Meu Evento',
-                    subtitle: evento == null ? 'Cadastre ou edite seu evento' : eventoTitulo,
+                    subtitle: evento == null
+                        ? 'Cadastre ou edite seu evento'
+                        : eventoTitulo,
                     color: primary,
                     onTap: () => _abrirMeuEvento(evento),
                   ),
@@ -84,7 +85,6 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                     color: primary,
                     onTap: () {
                       Get.back();
-                      GiftBinding().dependencies();
                       Get.toNamed(
                         '/gerenciarPresentes',
                         arguments: {
@@ -223,7 +223,8 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.16),
                     borderRadius: BorderRadius.circular(999),
@@ -351,7 +352,8 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (badgeText != null && badgeText.trim().isNotEmpty) ...[
+                          if (badgeText != null &&
+                              badgeText.trim().isNotEmpty) ...[
                             const SizedBox(width: 6),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -517,8 +519,6 @@ class MenuDrawerFacaFesta extends StatelessWidget {
     }
   }
 
-
-
   Future<void> _abrirCalculadoraItensAdmin() async {
     Get.to(
       () => CalculadoraItensAdminPage(),
@@ -536,7 +536,7 @@ class MenuDrawerFacaFesta extends StatelessWidget {
   }
 
   Future<void> _abrirMinhasReferencias() async {
-    final evento = eventoController.eventoAtual.value;
+    final evento = eventoController.eventoAtualEntidade;
     final usuarioId = _resolverUsuarioIdAtual();
 
     if (evento == null) {
@@ -585,7 +585,8 @@ class MenuDrawerFacaFesta extends StatelessWidget {
     } catch (_) {}
 
     try {
-      final dynamic usuario = (usuarioController as dynamic).usuarioLogado.value;
+      final dynamic usuario =
+          (usuarioController as dynamic).usuarioLogado.value;
       final id = (usuario?.idUsuario ?? usuario?.id ?? '').toString().trim();
 
       if (id.isNotEmpty) return id;
@@ -612,10 +613,13 @@ class MenuDrawerFacaFesta extends StatelessWidget {
       return 'Nenhuma referência salva';
     }
 
-    final aprovadas = referencias.where((ref) => ref.status == 'aprovada').length;
+    final aprovadas =
+        referencias.where((ref) => ref.status == 'aprovada').length;
 
     final pendentes = referencias.where((ref) {
-      return ref.status == 'salva' || ref.status == 'em_analise' || ref.status == 'orcar';
+      return ref.status == 'salva' ||
+          ref.status == 'em_analise' ||
+          ref.status == 'orcar';
     }).length;
 
     if (aprovadas > 0 && pendentes > 0) {
@@ -683,13 +687,15 @@ class MenuDrawerFacaFesta extends StatelessWidget {
 
     possuiPermissao = possuiPermissao ||
         lerPermissao(() {
-          final dynamic value = (usuarioController as dynamic).adminEnabled.value;
+          final dynamic value =
+              (usuarioController as dynamic).adminEnabled.value;
           return _asBool(value);
         });
 
     possuiPermissao = possuiPermissao ||
         lerPermissao(() {
-          final dynamic value = (usuarioController as dynamic).suporteEnabled.value;
+          final dynamic value =
+              (usuarioController as dynamic).suporteEnabled.value;
           return _asBool(value);
         });
 
@@ -701,13 +707,15 @@ class MenuDrawerFacaFesta extends StatelessWidget {
 
     possuiPermissao = possuiPermissao ||
         lerPermissao(() {
-          final dynamic value = (usuarioController as dynamic).userLogado.value.adminEnabled;
+          final dynamic value =
+              (usuarioController as dynamic).userLogado.value.adminEnabled;
           return _asBool(value);
         });
 
     possuiPermissao = possuiPermissao ||
         lerPermissao(() {
-          final dynamic value = (usuarioController as dynamic).userLogado.value.suporteEnabled;
+          final dynamic value =
+              (usuarioController as dynamic).userLogado.value.suporteEnabled;
           return _asBool(value);
         });
 

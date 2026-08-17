@@ -600,8 +600,9 @@ void getDialogAvaliacaoFornecedor({required FornecedorModel fornecedor}) {
       idServico: null,
       idCliente: Get.find<AppController>().usuarioLogado.value!.idUsuario,
       nomeCliente: Get.find<AppController>().usuarioLogado.value!.nome,
-      idEvento: Get.find<EventoController>().eventoAtual.value!.idEvento,
-      nomeEventoAtual: Get.find<EventoController>().eventoAtual.value!.nomeEvento,
+      idEvento: Get.find<EventoController>().eventoAtualEntidade!.idEvento,
+      nomeEventoAtual:
+          Get.find<EventoController>().eventoAtualEntidade!.nomeEvento,
     ),
   );
 }

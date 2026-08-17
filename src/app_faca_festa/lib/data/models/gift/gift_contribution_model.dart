@@ -12,6 +12,41 @@ class GiftContributionModel extends GiftContribution {
     required super.data,
   });
 
+  factory GiftContributionModel.fromEntity(GiftContribution contribution) {
+    return GiftContributionModel(
+      id: contribution.id,
+      nome: contribution.nome,
+      uid: contribution.uid,
+      valor: contribution.valor,
+      mensagem: contribution.mensagem,
+      data: contribution.data,
+    );
+  }
+
+  factory GiftContributionModel.fromMap(Map<String, dynamic> map) {
+    return GiftContributionModel(
+      id: map['id'] ?? '',
+      nome: map['nome'] ?? 'Anônimo',
+      uid: map['uid'],
+      valor: (map['valor'] ?? 0).toDouble(),
+      mensagem: map['mensagem'],
+      data: (map['data'] as Timestamp).toDate(),
+    );
+  }
+
+  /// Preserves the document shape used by the existing saveContribution flow.
+  Map<String, dynamic> toCreateMap() {
+    return {
+      'id': id,
+      'nome': nome,
+      'uid': uid,
+      'valor': valor,
+      'mensagem': mensagem,
+      'data': Timestamp.fromDate(data),
+      'created_at': FieldValue.serverTimestamp(),
+    };
+  }
+
   /// Firestore -> Model
   factory GiftContributionModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -26,7 +61,6 @@ class GiftContributionModel extends GiftContribution {
     );
   }
 
-  @override
   Map<String, dynamic> toMap() {
     return {
       "nome": nome,

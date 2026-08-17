@@ -1,8 +1,3 @@
-import 'dart:io';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
@@ -10,11 +5,18 @@ import 'package:image_picker/image_picker.dart';
 
 import './../../presentation/pages/endereco/endereco_section_controller.dart';
 import './../../data/models/model.dart';
+import './../../domain/repositories/autenticacao_repository.dart';
+import './../../domain/repositories/foto_perfil_repository.dart';
+import './../../domain/repositories/perfil_usuario_repository.dart';
 import 'endereco_usuario_controller.dart';
 
 class UsuarioController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AutenticacaoRepository _autenticacaoRepository =
+      Get.find<AutenticacaoRepository>();
+  final PerfilUsuarioRepository _perfilRepository =
+      Get.find<PerfilUsuarioRepository>();
+  final FotoPerfilRepository _fotoPerfilRepository =
+      Get.find<FotoPerfilRepository>();
 
   // LISTA DE USUÁRIOS (já existia)
   final usuarios = <UsuarioModel>[].obs;
@@ -30,7 +32,7 @@ class UsuarioController extends GetxController {
   final senhaVisivel = false.obs;
 
   // CONTROLLER DE ENDEREÇO
-  final enderecoUsuarioController = Get.put(EnderecoUsuarioController());
+  final enderecoUsuarioController = Get.find<EnderecoUsuarioController>();
   final enderecoController = EnderecoSectionController().obs;
 
   @override
@@ -45,13 +47,13 @@ class UsuarioController extends GetxController {
   // =============================================================
   Future<void> carregarUsuarioLogado() async {
     try {
-      final uid = _auth.currentUser?.uid;
+      final uid = _autenticacaoRepository.idUsuarioAtual;
       if (uid == null) return;
 
-      final snap = await _db.collection('usuarios').doc(uid).get();
-      if (!snap.exists) return;
+      final usuarioEncontrado = await _perfilRepository.buscarUsuario(uid);
+      if (usuarioEncontrado == null) return;
 
-      usuario.value = UsuarioModel.fromMap(snap.data()!);
+      usuario.value = UsuarioModel.fromEntity(usuarioEncontrado);
 
       // 🔹 Carrega endereço principal
       await enderecoUsuarioController.carregarEnderecoPrincipal(uid);
@@ -70,12 +72,13 @@ class UsuarioController extends GetxController {
     try {
       carregandoPerfil.value = true;
 
-      final uid = _auth.currentUser!.uid;
+      final uid = _autenticacaoRepository.idUsuarioAtual!;
 
-      await _db.collection('usuarios').doc(uid).update({
-        'nome': nome,
-        'cpf': cpf,
-      });
+      await _perfilRepository.atualizarDadosBasicos(
+        idUsuario: uid,
+        nome: nome,
+        cpf: cpf,
+      );
 
       // Atualiza instância local
       usuario.value = usuario.value!.copyWith(
@@ -100,28 +103,25 @@ class UsuarioController extends GetxController {
   Future<void> salvarNovoUsuario(UsuarioModel usuario) async {
     try {
       // Cria usuário Firebase Auth
-      final credencial = await _auth.createUserWithEmailAndPassword(
+      final uid = await _autenticacaoRepository.criarUsuario(
         email: usuario.email.trim(),
-        password: usuario.senhaHash ?? '123456',
+        senha: usuario.senhaHash ?? '123456',
       );
-      final uid = credencial.user!.uid;
       final endereco = enderecoController.value.toModel(uid);
       final novo = usuario.copyWith(
-          idUsuario: uid, cidade: endereco.nomeCidade, uf: endereco.uf, senhaHash: null);
-      await _db.collection('usuarios').doc(uid).set(novo.toMap());
+          idUsuario: uid,
+          cidade: endereco.nomeCidade,
+          uf: endereco.uf,
+          senhaHash: null);
+      await _perfilRepository.salvarUsuario(novo);
       // 🔹 Subcoleção de endereços
-      await _db
-          .collection('usuarios')
-          .doc(uid)
-          .collection('enderecos')
-          .doc(endereco.id)
-          .set(endereco.toMap());
+      await _perfilRepository.salvarEndereco(endereco);
       usuarios.add(novo);
       filtrarUsuarios(buscaCtrl.text);
       Get.snackbar('Sucesso', 'Usuário cadastrado com sucesso!',
           backgroundColor: Colors.green.shade700, colorText: Colors.white);
-    } on FirebaseAuthException catch (e) {
-      EasyLoading.showError(_traduzErro(e.code));
+    } on AutenticacaoException catch (e) {
+      EasyLoading.showError(_traduzErro(e.codigo));
     } catch (e) {
       Get.snackbar('Erro', 'Falha ao cadastrar usuário: $e',
           backgroundColor: Colors.redAccent, colorText: Colors.white);
@@ -133,7 +133,7 @@ class UsuarioController extends GetxController {
   // =============================================================
   Future<void> trocarFotoPerfil() async {
     try {
-      final uid = _auth.currentUser!.uid;
+      final uid = _autenticacaoRepository.idUsuarioAtual!;
 
       // Seleciona imagem
       final picker = ImagePicker();
@@ -143,18 +143,13 @@ class UsuarioController extends GetxController {
 
       EasyLoading.show(status: 'Enviando foto...');
 
-      final ext = img.name.split('.').last;
+      final url = await _fotoPerfilRepository.enviar(
+        idUsuario: uid,
+        caminhoArquivo: img.path,
+        nomeArquivo: img.name,
+      );
 
-      final ref = FirebaseStorage.instance.ref().child('usuarios').child(uid).child('perfil.$ext');
-
-      await ref.putFile(File(img.path));
-
-      final url = await ref.getDownloadURL();
-
-      // Atualiza Firestore
-      await _db.collection('usuarios').doc(uid).update({
-        'foto_perfil_url': url,
-      });
+      await _perfilRepository.atualizarFotoPerfil(uid, url);
 
       // Atualiza localmente
       usuario.value = usuario.value!.copyWith(fotoPerfilUrl: url);
@@ -173,9 +168,8 @@ class UsuarioController extends GetxController {
   Future<void> carregarUsuarios() async {
     try {
       carregando.value = true;
-      final snap = await _db.collection('usuarios').get();
-
-      final lista = snap.docs.map((d) => UsuarioModel.fromMap(d.data())).toList();
+      final usuariosEncontrados = await _perfilRepository.listarUsuarios();
+      final lista = usuariosEncontrados.map(UsuarioModel.fromEntity).toList();
 
       lista.sort((a, b) {
         final nomeComp = (a.nome.toLowerCase()).compareTo(b.nome.toLowerCase());
@@ -208,7 +202,7 @@ class UsuarioController extends GetxController {
   }
 
   Future<void> tornarAdmin(String idUsuario) async {
-    await _db.collection('usuarios').doc(idUsuario).update({'tipo': 'A'});
+    await _perfilRepository.atualizarTipo(idUsuario, 'A');
     final user = usuarios.firstWhereOrNull((u) => u.idUsuario == idUsuario);
     if (user != null) {
       usuarios[usuarios.indexOf(user)] = user.copyWith(isAdmin: true);
@@ -219,7 +213,7 @@ class UsuarioController extends GetxController {
   }
 
   Future<void> removerAdmin(String idUsuario) async {
-    await _db.collection('usuarios').doc(idUsuario).update({'tipo': 'A'});
+    await _perfilRepository.atualizarTipo(idUsuario, 'A');
     final user = usuarios.firstWhereOrNull((u) => u.idUsuario == idUsuario);
     if (user != null) {
       usuarios[usuarios.indexOf(user)] = user.copyWith(isAdmin: false);
@@ -231,7 +225,7 @@ class UsuarioController extends GetxController {
 
   Future<void> toggleAtivo(String idUsuario, bool novoStatus) async {
     try {
-      await _db.collection('usuarios').doc(idUsuario).update({'ativo': novoStatus});
+      await _perfilRepository.atualizarStatusAtivo(idUsuario, novoStatus);
 
       final user = usuarios.firstWhereOrNull((u) => u.idUsuario == idUsuario);
       if (user != null) {

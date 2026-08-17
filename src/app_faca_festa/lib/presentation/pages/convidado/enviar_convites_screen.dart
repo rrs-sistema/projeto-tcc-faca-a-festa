@@ -21,7 +21,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
   final convidadoController = Get.find<ConvidadoController>();
 
   final TextEditingController _searchController = TextEditingController();
-  final RxMap<String, ConvidadoModel> _selecionados = <String, ConvidadoModel>{}.obs;
+  final RxMap<String, Convidado> _selecionados = <String, Convidado>{}.obs;
 
   @override
   void initState() {
@@ -71,14 +71,17 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
         ),
         leading: IconButton(
           tooltip: 'Voltar',
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded,
+              color: Colors.white, size: 20),
           onPressed: () => Get.back(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: Colors.white, size: 22),
+            icon: const Icon(Icons.refresh_rounded,
+                color: Colors.white, size: 22),
             tooltip: 'Recarregar',
-            onPressed: () => _carregarConvidadosDoEventoAtual(mostrarSnack: true),
+            onPressed: () =>
+                _carregarConvidadosDoEventoAtual(mostrarSnack: true),
           ),
         ],
       ),
@@ -152,7 +155,8 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                   decoration: BoxDecoration(
                       color: primary.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(10)),
-                  child: Icon(Icons.mark_email_read_rounded, color: primary, size: 20),
+                  child: Icon(Icons.mark_email_read_rounded,
+                      color: primary, size: 20),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -165,11 +169,13 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                               fontWeight: FontWeight.w800,
                               color: const Color(0xFF111827))),
                       Text('Selecione e envie em lote.',
-                          style: GoogleFonts.poppins(fontSize: 11, color: const Color(0xFF6B7280))),
+                          style: GoogleFonts.poppins(
+                              fontSize: 11, color: const Color(0xFF6B7280))),
                     ],
                   ),
                 ),
-                _SelectionCounter(selected: selecionados, total: total, color: primary),
+                _SelectionCounter(
+                    selected: selecionados, total: total, color: primary),
               ],
             ),
             const SizedBox(height: 10),
@@ -208,7 +214,8 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
           style: const TextStyle(fontSize: 13),
           decoration: InputDecoration(
             hintText: 'Buscar para envio...',
-            hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
+            hintStyle:
+                GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
             prefixIcon: Icon(Icons.search_rounded, color: primary, size: 20),
             suffixIcon: Obx(() {
               final termo = convidadoController.termoBusca.value.trim();
@@ -223,9 +230,11 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
             }),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 0, horizontal: 12),
             border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16), borderSide: BorderSide.none),
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide.none),
           ),
           onChanged: (query) => convidadoController.termoBusca.value = query,
         ),
@@ -250,7 +259,9 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                     ? '$totalVisivel disponíveis'
                     : '$totalSelecionado selecionados',
                 style: GoogleFonts.poppins(
-                    fontSize: 12, color: const Color(0xFF6B7280), fontWeight: FontWeight.w600),
+                    fontSize: 12,
+                    color: const Color(0xFF6B7280),
+                    fontWeight: FontWeight.w600),
               ),
             ),
             TextButton.icon(
@@ -267,7 +278,8 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                       ? Icons.check_box_rounded
                       : Icons.check_box_outline_blank_rounded,
                   size: 18),
-              label: Text(todosSelecionados ? 'Limpar visíveis' : 'Selecionar visíveis',
+              label: Text(
+                  todosSelecionados ? 'Limpar visíveis' : 'Selecionar visíveis',
                   style: const TextStyle(fontSize: 12)),
               style: TextButton.styleFrom(foregroundColor: primary),
             ),
@@ -285,12 +297,14 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
       }
       if (lista.isEmpty) {
         return _EmptyInviteState(
-            primary: primary, onAdd: () => abrirDialogAdicionarConvidado(context, primary));
+            primary: primary,
+            onAdd: () => abrirDialogAdicionarConvidado(context, primary));
       }
 
       return RefreshIndicator(
         color: primary,
-        onRefresh: () async => _carregarConvidadosDoEventoAtual(mostrarSnack: true),
+        onRefresh: () async =>
+            _carregarConvidadosDoEventoAtual(mostrarSnack: true),
         child: ListView.builder(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 120),
@@ -330,7 +344,8 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                 key: const ValueKey('send-bar'),
                 decoration: BoxDecoration(
                   gradient: gradient,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(24)),
                   boxShadow: [
                     BoxShadow(
                         color: Colors.black.withValues(alpha: 0.16),
@@ -347,17 +362,21 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                       Row(
                         children: [
                           Expanded(
-                              child: Text('${_selecionados.length} selecionados',
+                              child: Text(
+                                  '${_selecionados.length} selecionados',
                                   style: GoogleFonts.poppins(
                                       color: Colors.white,
                                       fontWeight: FontWeight.w800,
                                       fontSize: 13))),
                           TextButton.icon(
                             onPressed: _selecionados.clear,
-                            icon: const Icon(Icons.close_rounded, size: 16, color: Colors.white),
-                            label: const Text('Limpar', style: TextStyle(fontSize: 12)),
+                            icon: const Icon(Icons.close_rounded,
+                                size: 16, color: Colors.white),
+                            label: const Text('Limpar',
+                                style: TextStyle(fontSize: 12)),
                             style: TextButton.styleFrom(
-                                foregroundColor: Colors.white, padding: EdgeInsets.zero),
+                                foregroundColor: Colors.white,
+                                padding: EdgeInsets.zero),
                           ),
                         ],
                       ),
@@ -369,13 +388,15 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   foregroundColor: primary,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12))),
                               icon: const Icon(Icons.email_outlined, size: 16),
                               label: Text('E-mail',
                                   style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w800, fontSize: 13)),
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13)),
                               onPressed: () => _confirmarEnvio('por E-mail'),
                             ),
                           ),
@@ -385,13 +406,15 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: Colors.white,
                                   foregroundColor: primary,
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12))),
                               icon: const Icon(Icons.sms_outlined, size: 16),
                               label: Text('SMS',
                                   style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w800, fontSize: 13)),
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 13)),
                               onPressed: () => _confirmarEnvio('por SMS'),
                             ),
                           ),
@@ -406,9 +429,9 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
     });
   }
 
-  List<ConvidadoModel> _listaParaEnvio() => convidadoController.listaFiltrada;
+  List<Convidado> _listaParaEnvio() => convidadoController.listaFiltrada;
 
-  String _chaveConvidado(ConvidadoModel convidado) {
+  String _chaveConvidado(Convidado convidado) {
     final id = convidado.idConvidado.trim();
     if (id.isNotEmpty) return id;
 
@@ -419,12 +442,12 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
     return 'sem_id|$nome|$email|$grupo';
   }
 
-  bool _isSelecionado(ConvidadoModel convidado) {
+  bool _isSelecionado(Convidado convidado) {
     final chave = _chaveConvidado(convidado);
     return _selecionados.containsKey(chave);
   }
 
-  void _toggleSelecionado(ConvidadoModel convidado) {
+  void _toggleSelecionado(Convidado convidado) {
     final chave = _chaveConvidado(convidado);
 
     if (_selecionados.containsKey(chave)) {
@@ -437,7 +460,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
   }
 
   void _alternarSelecaoVisivel({
-    required List<ConvidadoModel> lista,
+    required List<Convidado> lista,
     required bool todosSelecionados,
   }) {
     if (todosSelecionados) {
@@ -459,16 +482,21 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
       AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
         title: Text('Enviar $tipo?',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 16)),
-        content: Text('Deseja enviar convites para ${_selecionados.length} convidados?',
+            style:
+                GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 16)),
+        content: Text(
+            'Deseja enviar convites para ${_selecionados.length} convidados?',
             style: GoogleFonts.poppins(fontSize: 13)),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancelar')),
+          TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Cancelar')),
           ElevatedButton.icon(
             style: ElevatedButton.styleFrom(
                 backgroundColor: themeController.primaryColor.value,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
             onPressed: () => Get.back(result: true),
             icon: const Icon(Icons.send_rounded, size: 16),
             label: const Text('Enviar'),
@@ -480,7 +508,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
   }
 
   Future<void> _executarEnvio(String tipo) async {
-    final evento = eventoController.eventoAtual.value;
+    final evento = eventoController.eventoAtualEntidade;
     if (evento == null || evento.idEvento.trim().isEmpty) return;
     try {
       await convidadoController.enviarConvitesSelecionados(
@@ -488,7 +516,8 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
         evento: evento,
         tipoEnvio: tipo,
       );
-      Get.snackbar('Convites enviados!', 'Os convites foram disparados com sucesso.',
+      Get.snackbar(
+          'Convites enviados!', 'Os convites foram disparados com sucesso.',
           backgroundColor: themeController.primaryColor.value,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
@@ -504,8 +533,9 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
     }
   }
 
-  Future<void> _carregarConvidadosDoEventoAtual({bool mostrarSnack = false}) async {
-    final idEvento = eventoController.eventoAtual.value?.idEvento;
+  Future<void> _carregarConvidadosDoEventoAtual(
+      {bool mostrarSnack = false}) async {
+    final idEvento = eventoController.eventoAtualEntidade?.idEvento;
     if (idEvento == null || idEvento.trim().isEmpty) return;
     await convidadoController.escutarConvidados(idEvento);
     if (mostrarSnack) {
@@ -520,7 +550,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
 }
 
 class _InviteGuestCard extends StatelessWidget {
-  final ConvidadoModel convidado;
+  final Convidado convidado;
   final bool selected;
   final Color primary;
   final VoidCallback onTap;
@@ -534,11 +564,15 @@ class _InviteGuestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _getCorStatus(convidado.status);
-    final initial = convidado.nome.trim().isEmpty ? '?' : convidado.nome.trim()[0].toUpperCase();
-    final email =
-        convidado.email?.trim().isNotEmpty == true ? convidado.email!.trim() : 'Sem e-mail';
-    final grupo =
-        convidado.nomeGrupo?.trim().isNotEmpty == true ? convidado.nomeGrupo!.trim() : 'Sem grupo';
+    final initial = convidado.nome.trim().isEmpty
+        ? '?'
+        : convidado.nome.trim()[0].toUpperCase();
+    final email = convidado.email?.trim().isNotEmpty == true
+        ? convidado.email!.trim()
+        : 'Sem e-mail';
+    final grupo = convidado.nomeGrupo?.trim().isNotEmpty == true
+        ? convidado.nomeGrupo!.trim()
+        : 'Sem grupo';
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -546,12 +580,15 @@ class _InviteGuestCard extends StatelessWidget {
         color: selected ? primary.withValues(alpha: 0.08) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-            color: selected ? primary.withValues(alpha: 0.4) : Colors.black.withValues(alpha: 0.04),
+            color: selected
+                ? primary.withValues(alpha: 0.4)
+                : Colors.black.withValues(alpha: 0.04),
             width: selected ? 1.2 : 1),
         boxShadow: [
           BoxShadow(
-              color:
-                  selected ? primary.withValues(alpha: 0.1) : Colors.black.withValues(alpha: 0.03),
+              color: selected
+                  ? primary.withValues(alpha: 0.1)
+                  : Colors.black.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4))
         ],
@@ -565,12 +602,16 @@ class _InviteGuestCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20, // 🔹 Menor
-                backgroundColor: selected ? primary : statusColor.withValues(alpha: 0.12),
+                backgroundColor:
+                    selected ? primary : statusColor.withValues(alpha: 0.12),
                 child: selected
-                    ? const Icon(Icons.check_rounded, color: Colors.white, size: 20)
+                    ? const Icon(Icons.check_rounded,
+                        color: Colors.white, size: 20)
                     : Text(initial,
                         style: GoogleFonts.poppins(
-                            color: statusColor, fontWeight: FontWeight.w900, fontSize: 16)),
+                            color: statusColor,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16)),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -587,14 +628,16 @@ class _InviteGuestCard extends StatelessWidget {
                     const SizedBox(height: 2),
                     Row(
                       children: [
-                        Icon(Icons.email_outlined, size: 12, color: Colors.grey.shade500),
+                        Icon(Icons.email_outlined,
+                            size: 12, color: Colors.grey.shade500),
                         const SizedBox(width: 4),
                         Expanded(
                             child: Text(email,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.poppins(
-                                    fontSize: 11, color: const Color(0xFF6B7280)))),
+                                    fontSize: 11,
+                                    color: const Color(0xFF6B7280)))),
                       ],
                     ),
                     const SizedBox(height: 6),
@@ -602,7 +645,10 @@ class _InviteGuestCard extends StatelessWidget {
                       spacing: 6,
                       runSpacing: 4,
                       children: [
-                        _InviteChip(label: grupo, icon: Icons.group_outlined, color: primary),
+                        _InviteChip(
+                            label: grupo,
+                            icon: Icons.group_outlined,
+                            color: primary),
                         _InviteChip(
                             label: _getStatusLabel(convidado.status),
                             icon: _getStatusIcon(convidado.status),
@@ -615,7 +661,8 @@ class _InviteGuestCard extends StatelessWidget {
               Checkbox(
                   value: selected,
                   activeColor: primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4)),
                   onChanged: (_) => onTap()),
             ],
           ),
@@ -629,20 +676,23 @@ class _InviteChip extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
-  const _InviteChip({required this.label, required this.icon, required this.color});
+  const _InviteChip(
+      {required this.label, required this.icon, required this.color});
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
       decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(8)),
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 11, color: color),
           const SizedBox(width: 4),
           Text(label,
-              style: GoogleFonts.poppins(color: color, fontSize: 9, fontWeight: FontWeight.w800)),
+              style: GoogleFonts.poppins(
+                  color: color, fontSize: 9, fontWeight: FontWeight.w800)),
         ],
       ),
     );
@@ -653,20 +703,25 @@ class _SelectionCounter extends StatelessWidget {
   final int selected;
   final int total;
   final Color color;
-  const _SelectionCounter({required this.selected, required this.total, required this.color});
+  const _SelectionCounter(
+      {required this.selected, required this.total, required this.color});
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+          color: color.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10)),
       child: Column(
         children: [
           Text('$selected/$total',
-              style: GoogleFonts.poppins(color: color, fontWeight: FontWeight.w900, fontSize: 12)),
+              style: GoogleFonts.poppins(
+                  color: color, fontWeight: FontWeight.w900, fontSize: 12)),
           Text('seleção',
               style: GoogleFonts.poppins(
-                  color: const Color(0xFF6B7280), fontWeight: FontWeight.w600, fontSize: 9)),
+                  color: const Color(0xFF6B7280),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 9)),
         ],
       ),
     );

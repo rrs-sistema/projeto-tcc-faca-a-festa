@@ -148,8 +148,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   }
 
   Map<String, String> _dadosEventoParaIA() {
-    final eventoAtual = eventoController.eventoAtual.value;
-    final tipoEventoAtual = eventoController.tipoEventoAtual.value;
+    final eventoAtual = eventoController.eventoAtualEntidade;
+    final tipoEventoAtual = eventoController.tipoEventoAtualEntidade;
     final usuarioFirebase = FirebaseAuth.instance.currentUser;
 
     return {

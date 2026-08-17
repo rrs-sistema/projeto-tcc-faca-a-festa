@@ -23,6 +23,31 @@ class GiftModel extends Gift {
     required super.createdAt,
   });
 
+  /// Domain entity -> data model.
+  ///
+  /// Keeps the domain layer independent from Firestore and persistence models.
+  factory GiftModel.fromEntity(Gift gift) {
+    return GiftModel(
+      id: gift.id,
+      nome: gift.nome,
+      descricao: gift.descricao,
+      categoria: gift.categoria,
+      tipo: gift.tipo,
+      valor: gift.valor,
+      loja: gift.loja,
+      link: gift.link,
+      pix: gift.pix,
+      metaValor: gift.metaValor,
+      valorArrecadado: gift.valorArrecadado,
+      imagem: gift.imagem,
+      status: gift.status,
+      reservadoPor: gift.reservadoPor,
+      reservadoUid: gift.reservadoUid,
+      dataReserva: gift.dataReserva,
+      createdAt: gift.createdAt,
+    );
+  }
+
   /// Firestore -> Model
   factory GiftModel.fromFirestore(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
@@ -49,8 +74,9 @@ class GiftModel extends Gift {
       ),
       reservadoPor: data['reservado_por'],
       reservadoUid: data['reservado_uid'],
-      dataReserva:
-          data['data_reserva'] != null ? (data['data_reserva'] as Timestamp).toDate() : null,
+      dataReserva: data['data_reserva'] != null
+          ? (data['data_reserva'] as Timestamp).toDate()
+          : null,
       createdAt: (data['created_at'] as Timestamp).toDate(),
     );
   }
@@ -72,7 +98,8 @@ class GiftModel extends Gift {
       "status": status.name,
       "reservado_por": reservadoPor,
       "reservado_uid": reservadoUid,
-      "data_reserva": dataReserva != null ? Timestamp.fromDate(dataReserva!) : null,
+      "data_reserva":
+          dataReserva != null ? Timestamp.fromDate(dataReserva!) : null,
       "created_at": Timestamp.fromDate(createdAt),
     };
   }

@@ -1,0 +1,437 @@
+{
+  "schema": "openai.presentation.layout/v4",
+  "unit": "px",
+  "slide": {
+    "aid": "sl/0ksyv3",
+    "id": "0ksyv3",
+    "slide": 10,
+    "layoutId": "25c5dfe9-8aa0-471d-954a-8c5d3d5e25db",
+    "layoutName": "Title Slide",
+    "layoutType": "title",
+    "masterLayoutId": "aed41b87-a4c0-4482-b122-bceb8bdb1301",
+    "masterLayoutName": "Master",
+    "frame": {
+      "left": 0,
+      "top": 0,
+      "width": 1280,
+      "height": 720
+    }
+  },
+  "theme": {
+    "colorSchemeName": "ChatGPT",
+    "colors": {
+      "accent1": "#156082",
+      "accent2": "#E97132",
+      "accent3": "#196B24",
+      "accent4": "#0F9ED5",
+      "accent5": "#A02B93",
+      "accent6": "#4EA72E",
+      "bg1": "#FFFFFF",
+      "bg2": "#000000",
+      "tx1": "#1F1F1F",
+      "tx2": "#FFFFFF",
+      "dk1": "#000000",
+      "lt1": "#FFFFFF",
+      "dk2": "#0E2841",
+      "lt2": "#E8E8E8",
+      "hlink": "#467886",
+      "folHlink": "#96607D"
+    },
+    "typefaces": [
+      "+mn-lt"
+    ]
+  },
+  "inheritedLayers": [
+    {
+      "scope": "layout",
+      "id": "25c5dfe9-8aa0-471d-954a-8c5d3d5e25db",
+      "name": "Title Slide",
+      "type": "title",
+      "parentLayoutId": "aed41b87-a4c0-4482-b122-bceb8bdb1301",
+      "elements": []
+    },
+    {
+      "scope": "master",
+      "id": "aed41b87-a4c0-4482-b122-bceb8bdb1301",
+      "name": "Master",
+      "type": "master",
+      "elements": []
+    }
+  ],
+  "elements": [
+    {
+      "order": 1,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/k36dobql",
+      "id": "1",
+      "bbox": [
+        42,
+        42,
+        300,
+        36
+      ],
+      "geometry": "rect",
+      "text": "CONCLUSÃO",
+      "textPreview": "CONCLUSÃO",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#3D8DFF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "CONCLUSÃO"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "CONCLUSÃO",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#3D8DFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "CONCLUSÃO",
+              "fontSize": 22,
+              "color": "#3D8DFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 2,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/zidwf6pg",
+      "id": "2",
+      "bbox": [
+        42,
+        175,
+        1050,
+        180
+      ],
+      "geometry": "rect",
+      "text": "O próximo passo é transformar o mapa em contrato de dados",
+      "textPreview": "O próximo passo é transformar o mapa em contrato de dados",
+      "resolvedFontSize": 54,
+      "resolvedTextStyle": {
+        "fontSize": 54,
+        "typeface": "+mn-lt",
+        "color": "#111111",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 2,
+        "lines": [
+          {
+            "index": 1,
+            "text": "O próximo passo é transformar o mapa em"
+          },
+          {
+            "index": 2,
+            "text": "contrato de dados"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "O próximo passo é transformar o mapa em contrato de dados",
+          "resolvedTextStyle": {
+            "fontSize": 54,
+            "color": "#111111",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "O próximo passo é transformar o mapa em contrato de dados",
+              "fontSize": 54,
+              "color": "#111111",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 3,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/yh4vm18v",
+      "id": "3",
+      "bbox": [
+        42,
+        455,
+        1000,
+        36
+      ],
+      "geometry": "rect",
+      "text": "1. Padronizar nomes e campos obrigatórios",
+      "textPreview": "1. Padronizar nomes e campos obrigatórios",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#3D8DFF",
+        "bold": true,
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "1. Padronizar nomes e campos obrigatórios"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "1. Padronizar nomes e campos obrigatórios",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#3D8DFF",
+            "bold": true,
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "1. Padronizar nomes e campos obrigatórios",
+              "fontSize": 22,
+              "color": "#3D8DFF",
+              "bold": true,
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 4,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/98felg7i",
+      "id": "4",
+      "bbox": [
+        42,
+        507,
+        1000,
+        36
+      ],
+      "geometry": "rect",
+      "text": "2. Escolher uma fonte por conceito",
+      "textPreview": "2. Escolher uma fonte por conceito",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#111111",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "2. Escolher uma fonte por conceito"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "2. Escolher uma fonte por conceito",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#111111",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "2. Escolher uma fonte por conceito",
+              "fontSize": 22,
+              "color": "#111111",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 5,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/876xsbqx",
+      "id": "5",
+      "bbox": [
+        42,
+        559,
+        1000,
+        36
+      ],
+      "geometry": "rect",
+      "text": "3. Versionar regras, índices e exclusões em cascata",
+      "textPreview": "3. Versionar regras, índices e exclusões em cascata",
+      "resolvedFontSize": 22,
+      "resolvedTextStyle": {
+        "fontSize": 22,
+        "typeface": "+mn-lt",
+        "color": "#111111",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "3. Versionar regras, índices e exclusões em cascata"
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "3. Versionar regras, índices e exclusões em cascata",
+          "resolvedTextStyle": {
+            "fontSize": 22,
+            "color": "#111111",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "3. Versionar regras, índices e exclusões em cascata",
+              "fontSize": 22,
+              "color": "#111111",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    },
+    {
+      "order": 6,
+      "kind": "shape",
+      "scope": "slide",
+      "aid": "sh/76xwj6pc",
+      "id": "6",
+      "bbox": [
+        42,
+        635,
+        1110,
+        32
+      ],
+      "geometry": "rect",
+      "text": "Resultado: banco explicável, consultas previsíveis e menos risco de documentos órfãos.",
+      "textPreview": "Resultado: banco explicável, consultas previsíveis e menos risco de documentos órfãos.",
+      "resolvedFontSize": 18,
+      "resolvedTextStyle": {
+        "fontSize": 18,
+        "typeface": "+mn-lt",
+        "color": "#59616C",
+        "alignment": "left",
+        "insets": {
+          "top": 4.8,
+          "right": 9.6,
+          "bottom": 4.8,
+          "left": 9.6
+        }
+      },
+      "textLayout": {
+        "lineCount": 1,
+        "lines": [
+          {
+            "index": 1,
+            "text": "Resultado: banco explicável, consultas previsíveis e menos risco de documentos órfãos."
+          }
+        ]
+      },
+      "paragraphs": [
+        {
+          "index": 1,
+          "text": "Resultado: banco explicável, consultas previsíveis e menos risco de documentos órfãos.",
+          "resolvedTextStyle": {
+            "fontSize": 18,
+            "color": "#59616C",
+            "alignment": "left"
+          },
+          "runs": [
+            {
+              "index": 1,
+              "text": "Resultado: banco explicável, consultas previsíveis e menos risco de documentos órfãos.",
+              "fontSize": 18,
+              "color": "#59616C",
+              "alignment": "left"
+            }
+          ],
+          "marginLeft": 0
+        }
+      ],
+      "lineWidth": 0
+    }
+  ],
+  "composeRuns": []
+}

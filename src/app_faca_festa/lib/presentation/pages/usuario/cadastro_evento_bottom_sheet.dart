@@ -31,7 +31,7 @@ Future<void> showCadastroEventoBottomSheet(
 
   final primary = theme.primaryColor.value;
 
-  final tipoNormalizado = controller.tipoEventoModel.value?.nome
+  final tipoNormalizado = controller.tipoEventoSelecionado.value?.nome
           .toLowerCase()
           .replaceAll(RegExp(r'[^a-zá-úà-ùãõâêîôûç\s]'), '')
           .trim() ??
@@ -159,7 +159,7 @@ List<Widget> _buildCamposPorTipo(
   EventoModel? eventoParaEdicao,
   BuildContext context,
 ) {
-  final tipoNormalizado = controller.tipoEventoModel.value?.nome
+  final tipoNormalizado = controller.tipoEventoSelecionado.value?.nome
       .toLowerCase()
       .replaceAll(RegExp(r'[^a-zá-úà-ùãõâêîôûç\s]'), '')
       .trim();
@@ -862,7 +862,8 @@ int _parseIntText(String? value) {
 }
 
 String _resolverTipoEventoCalculadora(EventoCadastroController controller) {
-  final tipoSelecionado = controller.tipoEventoModel.value?.nome.trim() ?? '';
+  final tipoSelecionado =
+      controller.tipoEventoSelecionado.value?.nome.trim() ?? '';
   if (tipoSelecionado.isNotEmpty) return tipoSelecionado;
   final nomeEvento = controller.nomeEvento.text.trim();
   if (nomeEvento.isNotEmpty) return nomeEvento;

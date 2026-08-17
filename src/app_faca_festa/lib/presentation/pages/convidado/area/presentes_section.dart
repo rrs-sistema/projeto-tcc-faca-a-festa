@@ -11,10 +11,10 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import './../../../../controllers/tema/event_theme_controller.dart';
-import './../../../../data/models/model.dart';
+import './../../../../domain/entities/evento.dart';
 
 class PresentesSection extends StatefulWidget {
-  final EventoModel evento;
+  final Evento evento;
   final EventThemeController theme;
 
   const PresentesSection({

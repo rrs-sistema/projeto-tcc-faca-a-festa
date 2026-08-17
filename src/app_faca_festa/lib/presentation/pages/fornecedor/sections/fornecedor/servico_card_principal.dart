@@ -189,7 +189,8 @@ class ServicoCardPrincipal extends StatelessWidget {
               appController.adicionarServico(servicoCotado);
               Get.bottomSheet(
                 CotacaoNovaBottomSheet(
-                  tipoEventoNome: eventoController.tipoEventoAtual.value?.nome ?? '',
+                  tipoEventoNome:
+                      eventoController.tipoEventoAtualEntidade?.nome ?? '',
                   fornecedoresSelecionados: [fornecedorId],
                   servicosSelecionados: [
                     FornecedorServicoDetalhadoDto(

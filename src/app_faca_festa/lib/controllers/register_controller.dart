@@ -6,6 +6,7 @@ import 'package:br_validators/br_validators.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../domain/repositories/autenticacao_repository.dart';
 import './../presentation/pages/endereco/endereco_section_controller.dart';
 import '../data/models/servico_produto/fornecedor_categoria_model.dart';
 import '../data/models/servico_produto/subcategoria_servico_model.dart';
@@ -16,20 +17,26 @@ import 'app_controller.dart';
 class RegisterController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final AutenticacaoRepository _autenticacaoRepository =
+      Get.find<AutenticacaoRepository>();
   final AppController appController = Get.find<AppController>();
 
   static const String _logTag = '[RegisterController]';
-  static const String _versaoDiagnostico = 'v2026-06-16-convidado-sem-endereco-vinculo-convite';
+  static const String _versaoDiagnostico =
+      'v2026-06-16-convidado-sem-endereco-vinculo-convite';
 
   // 🔹 Categorias e subcategorias selecionadas
-  RxList<FornecedorCategoriaModel> categoriasSelecionadas = <FornecedorCategoriaModel>[].obs;
+  RxList<FornecedorCategoriaModel> categoriasSelecionadas =
+      <FornecedorCategoriaModel>[].obs;
 
   // 🆕 Controle reativo de seleção de serviços
   //final RxSet<String> servicosSelecionados = <String>{}.obs;
-  RxList<ServicoProdutoModel> servicosSelecionados = <ServicoProdutoModel>[].obs;
+  RxList<ServicoProdutoModel> servicosSelecionados =
+      <ServicoProdutoModel>[].obs;
 
   // 🔹 Mapa de subcategorias organizadas por categoria
-  final RxMap<String, List<SubcategoriaServicoModel>> subcategoriasPorCategoria =
+  final RxMap<String, List<SubcategoriaServicoModel>>
+      subcategoriasPorCategoria =
       <String, List<SubcategoriaServicoModel>>{}.obs;
 
   // 🆕 Nova lista de subcategorias selecionadas
@@ -66,8 +73,10 @@ class RegisterController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _log('onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=${Get.arguments}');
-    _log('tipoCadastroInicial=$tipoCadastroAtual | cadastroComoConvidado=$cadastroComoConvidado');
+    _log(
+        'onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=${Get.arguments}');
+    _log(
+        'tipoCadastroInicial=$tipoCadastroAtual | cadastroComoConvidado=$cadastroComoConvidado');
   }
 
   /// Tipo esperado hoje:
@@ -112,6 +121,7 @@ class RegisterController extends GetxController {
   }
 
   Future<void> registrarUsuario() async {
+    if (carregando.value) return;
     _log('===== INÍCIO registrarUsuario $_versaoDiagnostico =====');
     _log('route=${Get.currentRoute} | args=${Get.arguments}');
 
@@ -124,7 +134,8 @@ class RegisterController extends GetxController {
     final tokenConvite = _tokenConviteEntrada();
 
     final enderecoAntesDoUid = enderecoController.value.toModel('');
-    final enderecoFoiInformado = _enderecoTemAlgumCampoPreenchido(enderecoAntesDoUid);
+    final enderecoFoiInformado =
+        _enderecoTemAlgumCampoPreenchido(enderecoAntesDoUid);
     final deveSalvarEndereco = !cadastroConvidado || enderecoFoiInformado;
 
     _log(
@@ -132,7 +143,8 @@ class RegisterController extends GetxController {
       'enderecoObrigatorio=$enderecoObrigatorio | enderecoFoiInformado=$enderecoFoiInformado | '
       "deveSalvarEndereco=$deveSalvarEndereco | tokenConvite=${tokenConvite ?? 'sem token'}",
     );
-    _logEndereco(enderecoAntesDoUid, origem: 'registrarUsuario antes da validação');
+    _logEndereco(enderecoAntesDoUid,
+        origem: 'registrarUsuario antes da validação');
 
     if (!_validarCamposCadastro()) {
       _log('BLOQUEADO: _validarCamposCadastro retornou false.');
@@ -141,6 +153,7 @@ class RegisterController extends GetxController {
 
     try {
       carregando.value = true;
+      EasyLoading.show(status: 'Criando cadastro...');
 
       final credencial = await _auth.createUserWithEmailAndPassword(
         email: email.value.trim(),
@@ -150,7 +163,8 @@ class RegisterController extends GetxController {
       final uid = credencial.user!.uid;
       final endereco = enderecoAntesDoUid.copyWith(idUsuario: uid);
 
-      _log('Usuário criado no FirebaseAuth: uid=$uid | tipo=$tipo | tipoEfetivo=$tipoEfetivo');
+      _log(
+          'Usuário criado no FirebaseAuth: uid=$uid | tipo=$tipo | tipoEfetivo=$tipoEfetivo');
       _logEndereco(endereco, origem: 'registrarUsuario após uid');
 
       final novoUsuario = UsuarioModel(
@@ -180,7 +194,8 @@ class RegisterController extends GetxController {
             .set(endereco.toMap());
         _log('Endereço salvo em usuarios/$uid/enderecos/${endereco.id}.');
       } else {
-        _log('Endereço não salvo: cadastro de convidado sem endereço informado.');
+        _log(
+            'Endereço não salvo: cadastro de convidado sem endereço informado.');
       }
 
       if (tipoEfetivo == 'F') {
@@ -208,7 +223,8 @@ class RegisterController extends GetxController {
           final catUpdate = cat.copyWith(idFornecedor: uid);
           await _db.collection('fornecedor_categoria').add(catUpdate.toMap());
         }
-        _log('Categorias vinculadas ao fornecedor: ${categoriasSelecionadas.length}.');
+        _log(
+            'Categorias vinculadas ao fornecedor: ${categoriasSelecionadas.length}.');
 
         for (final serv in servicosSelecionados) {
           final model = FornecedorProdutoServicoModel(
@@ -222,9 +238,13 @@ class RegisterController extends GetxController {
             precoPromocao: 0.0,
           );
           final vinculoId = '${model.idFornecedor}_${model.idProdutoServico}';
-          await _db.collection('fornecedor_servico').doc(vinculoId).set(model.toMap());
+          await _db
+              .collection('fornecedor_servico')
+              .doc(vinculoId)
+              .set(model.toMap());
         }
-        _log('Serviços vinculados ao fornecedor: ${servicosSelecionados.length}.');
+        _log(
+            'Serviços vinculados ao fornecedor: ${servicosSelecionados.length}.');
       }
 
       Get.snackbar(
@@ -234,23 +254,138 @@ class RegisterController extends GetxController {
         colorText: Colors.white,
       );
 
+      EasyLoading.dismiss();
       if (tipoEfetivo == 'C') {
-        _log('Cadastro de convidado concluído. Vinculando convites pendentes e redirecionando.');
-        await appController.redirecionarConvidadoAposLogin(novoUsuario, token: tokenConvite);
+        _log(
+            'Cadastro de convidado concluído. Vinculando convites pendentes e redirecionando.');
+        await appController.redirecionarConvidadoAposLogin(novoUsuario,
+            token: tokenConvite);
       } else {
         _log('Navegando para /welcome.');
         Get.offAllNamed('/welcome');
       }
     } on FirebaseAuthException catch (e) {
       _log('FirebaseAuthException: code=${e.code} | message=${e.message}');
-      EasyLoading.showError(_traduzErro(e.code));
+      _showError(_traduzErro(e.code));
     } catch (e, s) {
       _log('Erro ao salvar: $e');
       _log('StackTrace: $s');
-      EasyLoading.showError('Erro ao salvar: $e');
+      _showError('Erro ao salvar cadastro. Tente novamente.');
     } finally {
+      EasyLoading.dismiss();
       carregando.value = false;
       _log('===== FIM registrarUsuario =====');
+    }
+  }
+
+  Future<void> registrarComGoogle() async {
+    if (carregando.value) return;
+    final tipo = tipoCadastroAtual;
+    final cadastroConvidado = cadastroComoConvidado;
+    final tipoEfetivo = cadastroConvidado ? 'C' : tipo;
+    final tokenConvite = _tokenConviteEntrada();
+
+    final enderecoAntesDoUid = enderecoController.value.toModel('');
+    final enderecoFoiInformado =
+        _enderecoTemAlgumCampoPreenchido(enderecoAntesDoUid);
+    final deveSalvarEndereco = !cadastroConvidado || enderecoFoiInformado;
+
+    if (!_validarCamposCadastroGoogle(tipoEfetivo, enderecoAntesDoUid)) {
+      return;
+    }
+
+    try {
+      carregando.value = true;
+      EasyLoading.show(status: 'Conectando com Google...');
+      await _autenticacaoRepository.entrarComGoogle();
+
+      final firebaseUser = _auth.currentUser;
+      final uid = firebaseUser?.uid;
+      if (uid == null) {
+        _showError('Não foi possível identificar sua conta Google.');
+        return;
+      }
+
+      final usuarioExistente = await _db.collection('usuarios').doc(uid).get();
+      final emailGoogle = firebaseUser?.email ??
+          _autenticacaoRepository.emailUsuarioAtual ??
+          '';
+      final nomeGoogle = firebaseUser?.displayName?.trim() ?? nome.value.trim();
+
+      if (!usuarioExistente.exists) {
+        final novoUsuario = UsuarioModel(
+          idUsuario: uid,
+          nome: nomeGoogle.isEmpty ? 'Usuário Google' : nomeGoogle,
+          email: emailGoogle,
+          tipo: tipoEfetivo,
+          ativo: true,
+          fotoPerfilUrl: firebaseUser?.photoURL,
+          cidade: _texto(enderecoAntesDoUid.nomeCidade),
+          uf: _texto(enderecoAntesDoUid.uf),
+          dataCadastro: DateTime.now(),
+        );
+
+        final usuarioMap = novoUsuario.toMap();
+        usuarioMap['email_normalizado'] = _normalizarEmail(emailGoogle);
+        usuarioMap['tipo'] = tipoEfetivo;
+        usuarioMap['provider'] = 'google';
+
+        await _db.collection('usuarios').doc(uid).set(usuarioMap);
+      } else if ((usuarioExistente.data()?['tipo']?.toString().trim().isEmpty ??
+          true)) {
+        await _db.collection('usuarios').doc(uid).update({'tipo': tipoEfetivo});
+      }
+
+      if (deveSalvarEndereco) {
+        final endereco = enderecoAntesDoUid.copyWith(idUsuario: uid);
+        await _db
+            .collection('usuarios')
+            .doc(uid)
+            .collection('enderecos')
+            .doc(endereco.id)
+            .set(endereco.toMap());
+      }
+
+      if (tipoEfetivo == 'F') {
+        await _salvarDadosFornecedorGoogle(
+          uid: uid,
+          email: emailGoogle,
+        );
+      }
+
+      Get.snackbar(
+        'Sucesso',
+        'Conta Google conectada com sucesso!',
+        backgroundColor: Colors.green.shade700,
+        colorText: Colors.white,
+      );
+
+      EasyLoading.dismiss();
+      final usuario = UsuarioModel.fromMap({
+        ...(usuarioExistente.data() ?? const <String, dynamic>{}),
+        'id_usuario': uid,
+        'nome': usuarioExistente.data()?['nome'] ?? nomeGoogle,
+        'email': usuarioExistente.data()?['email'] ?? emailGoogle,
+        'tipo': usuarioExistente.data()?['tipo'] ?? tipoEfetivo,
+        'foto_perfil_url': usuarioExistente.data()?['foto_perfil_url'] ??
+            firebaseUser?.photoURL,
+      });
+
+      if (tipoEfetivo == 'C') {
+        await appController.redirecionarConvidadoAposLogin(usuario,
+            token: tokenConvite);
+      } else {
+        Get.offAllNamed('/welcome');
+      }
+    } on AutenticacaoException catch (e) {
+      _showError(_traduzErro(e.codigo));
+    } catch (e, s) {
+      _log('Erro no cadastro Google: $e');
+      _log('StackTrace: $s');
+      _showError('Erro ao entrar com Google. Tente novamente.');
+    } finally {
+      EasyLoading.dismiss();
+      carregando.value = false;
     }
   }
 
@@ -264,13 +399,62 @@ class RegisterController extends GetxController {
     );
   }
 
-  void alternarSubcategoria(
-      FornecedorCategoriaModel catSel, SubcategoriaServicoModel sub, bool selected) {
-    final index = categoriasSelecionadas.indexWhere((c) => c.idCategoria == catSel.idCategoria);
+  Future<void> _salvarDadosFornecedorGoogle({
+    required String uid,
+    required String email,
+  }) async {
+    final novoFornecedor = FornecedorModel(
+      idFornecedor: uid,
+      idUsuario: uid,
+      razaoSocial: razaoSocial.value.trim(),
+      telefone: telefone.value.trim(),
+      email: email,
+      aptoParaOperar: false,
+      ativo: true,
+      bannerUrl: bannerUrl,
+      cnpj: cnpj.value.trim(),
+      descricao: '',
+      dataCadastro: DateTime.now(),
+      tipoEventoIds: tipoEventoIds.toList(growable: false),
+      tipoEventoSlugs: tipoEventoSlugs.toList(growable: false),
+      tipoEventoNomes: tipoEventoNomes.toList(growable: false),
+    );
+
+    await _db.collection('fornecedor').doc(uid).set(novoFornecedor.toMap());
+
+    for (final cat in categoriasSelecionadas) {
+      final catUpdate = cat.copyWith(idFornecedor: uid);
+      await _db.collection('fornecedor_categoria').add(catUpdate.toMap());
+    }
+
+    for (final serv in servicosSelecionados) {
+      final model = FornecedorProdutoServicoModel(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        idProdutoServico: serv.id,
+        idFornecedor: uid,
+        preco: 0.0,
+        dataCadastro: DateTime.now(),
+        ativo: true,
+        idSubcategoria: serv.idSubcategoria,
+        precoPromocao: 0.0,
+      );
+      final vinculoId = '${model.idFornecedor}_${model.idProdutoServico}';
+      await _db
+          .collection('fornecedor_servico')
+          .doc(vinculoId)
+          .set(model.toMap());
+    }
+  }
+
+  void alternarSubcategoria(FornecedorCategoriaModel catSel,
+      SubcategoriaServicoModel sub, bool selected) {
+    final index = categoriasSelecionadas
+        .indexWhere((c) => c.idCategoria == catSel.idCategoria);
     if (index == -1) return;
 
     final atual = categoriasSelecionadas[index];
-    final subcats = List<Map<String, dynamic>>.from((atual as dynamic).subcategorias ?? []);
+    final subcats =
+        List<Map<String, dynamic>>.from((atual as dynamic).subcategorias ?? []);
 
     if (selected) {
       subcats.add({
@@ -373,7 +557,8 @@ class RegisterController extends GetxController {
           .get();
 
       final lista = snap.docs
-          .map((doc) => SubcategoriaServicoModel.fromMap({...doc.data(), 'id': doc.id}))
+          .map((doc) =>
+              SubcategoriaServicoModel.fromMap({...doc.data(), 'id': doc.id}))
           .toList();
 
       subcategoriasPorCategoria[idCategoria] = lista;
@@ -494,15 +679,66 @@ class RegisterController extends GetxController {
     }
 
     if (!deveValidarEndereco) {
-      _log('Endereço ignorado na validação: convidado sem endereço preenchido.');
+      _log(
+          'Endereço ignorado na validação: convidado sem endereço preenchido.');
     }
 
     _log('Cadastro validado com sucesso.');
     return true;
   }
 
-  // Mantido para compatibilidade caso alguma tela/teste ainda chame o nome antigo.
-  bool _validarCamposFornecedor() => _validarCamposCadastro();
+  bool _validarCamposCadastroGoogle(
+    String tipo,
+    EnderecoUsuarioModel endereco,
+  ) {
+    if (tipo == 'F') {
+      if (nome.value.trim().isEmpty) {
+        _showError('Informe o nome do responsável');
+        return false;
+      }
+
+      if (razaoSocial.value.trim().isEmpty) {
+        _showError('Informe a razão social da sua empresa');
+        return false;
+      }
+
+      if (telefone.value.trim().length < 8) {
+        _showError('Informe um telefone de contato válido');
+        return false;
+      }
+
+      if (cnpj.value.trim().isEmpty) {
+        _showError('Informe o CNPJ da sua empresa');
+        return false;
+      }
+
+      if (!BRValidators.validateCNPJ(cnpj.value.trim())) {
+        _showError('CNPJ inválido. Verifique e tente novamente.');
+        return false;
+      }
+
+      if (categoriasSelecionadas.isEmpty) {
+        _showError('Selecione pelo menos uma categoria de atuação');
+        return false;
+      }
+
+      if (servicosSelecionados.isEmpty) {
+        _showError('Selecione pelo menos um serviço oferecido');
+        return false;
+      }
+
+      if (tipoEventoIds.isEmpty) {
+        _showError('Selecione pelo menos um tipo de evento atendido');
+        return false;
+      }
+    }
+
+    if (tipo != 'C' || _enderecoTemAlgumCampoPreenchido(endereco)) {
+      return _validarCamposEndereco(endereco);
+    }
+
+    return true;
+  }
 
   bool _validarCamposEndereco(EnderecoUsuarioModel endereco) {
     if (endereco.cep.trim().isEmpty) {
@@ -640,11 +876,19 @@ class RegisterController extends GetxController {
 
   /// 🔹 Exibe mensagens elegantes de erro
   void _showError(String mensagem) {
-    Get.snackbar(
-      'Verificação necessária',
-      mensagem,
+    EasyLoading.dismiss();
+    Get.rawSnackbar(
+      title: 'Verificação necessária',
+      message: mensagem,
+      titleText: const Text(
+        'Verificação necessária',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+      ),
+      messageText: Text(
+        mensagem,
+        style: const TextStyle(color: Colors.white),
+      ),
       backgroundColor: Colors.red.shade600.withValues(alpha: 0.95),
-      colorText: Colors.white,
       snackPosition: SnackPosition.TOP,
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       borderRadius: 12,
@@ -661,6 +905,19 @@ class RegisterController extends GetxController {
         return 'E-mail inválido';
       case 'weak-password':
         return 'A senha deve ter pelo menos 6 caracteres';
+      case 'account-exists-with-different-credential':
+        return 'Este e-mail já está cadastrado com outro método de login';
+      case 'canceled':
+        return 'Cadastro com Google cancelado';
+      case 'interrupted':
+        return 'O Google interrompeu o cadastro. Tente novamente.';
+      case 'clientConfigurationError':
+      case 'providerConfigurationError':
+        return 'Google não configurado corretamente no Firebase';
+      case 'google-token-not-found':
+      case 'google-sign-in-unsupported':
+      case 'google-unexpected-error':
+        return 'Login com Google indisponível neste dispositivo';
       default:
         return 'Erro ao criar conta. Tente novamente.';
     }

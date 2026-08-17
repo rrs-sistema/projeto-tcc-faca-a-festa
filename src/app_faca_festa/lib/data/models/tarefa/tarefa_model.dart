@@ -1,25 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../model.dart';
+import '../../../domain/entities/convidado.dart';
+import '../../../domain/entities/tarefa.dart';
 
-enum StatusTarefa {
-  aFazer,
-  emAndamento,
-  concluida;
+export '../../../domain/entities/tarefa.dart';
 
-  /// 🔹 Retorna uma string legível para a interface
-  String get label {
-    switch (this) {
-      case StatusTarefa.aFazer:
-        return 'A fazer';
-      case StatusTarefa.emAndamento:
-        return 'Em andamento';
-      case StatusTarefa.concluida:
-        return 'Concluída';
-    }
-  }
-
-  /// 🔹 Retorna o valor usado no Firestore
+extension StatusTarefaPersistence on StatusTarefa {
   String get firestoreValue {
     switch (this) {
       case StatusTarefa.aFazer:
@@ -30,108 +16,81 @@ enum StatusTarefa {
         return 'concluida';
     }
   }
-
-  /// 🔹 Converte uma string do Firestore em enum
-  static StatusTarefa fromString(String? value) {
-    if (value == null) return StatusTarefa.aFazer;
-
-    final normalized = value.trim().toLowerCase();
-
-    switch (normalized) {
-      case 'em_andamento':
-      case 'em andamento':
-      case 'e':
-        return StatusTarefa.emAndamento;
-
-      case 'concluida':
-      case 'concluído':
-      case 'c':
-        return StatusTarefa.concluida;
-
-      case 'a_fazer':
-      case 'a fazer':
-      case 'pendente':
-      case 'a':
-      default:
-        return StatusTarefa.aFazer;
-    }
-  }
 }
 
-class TarefaModel {
-  final String idTarefa;
-  final String idEvento;
-  final String? idResponsavel;
-  final String titulo;
-  final String? descricao;
-  final DateTime? dataPrevista;
-  final StatusTarefa status;
-  final DateTime dataCadastro;
-
-  /// 🔹 Campo opcional (não salvo no Firestore)
-  final ConvidadoModel? responsavel;
-
+class TarefaModel extends Tarefa {
   TarefaModel({
-    required this.idTarefa,
-    required this.idEvento,
-    required this.titulo,
-    this.idResponsavel,
-    this.responsavel,
-    this.descricao,
-    this.dataPrevista,
-    this.status = StatusTarefa.aFazer,
-    DateTime? dataCadastro,
-  }) : dataCadastro = dataCadastro ?? DateTime.now();
+    required super.idTarefa,
+    required super.idEvento,
+    required super.titulo,
+    super.idResponsavel,
+    super.responsavel,
+    super.descricao,
+    super.dataPrevista,
+    super.status,
+    super.dataCadastro,
+  });
 
-  /// 🔹 Conversão para Firestore
-  Map<String, dynamic> toMap() {
-    return {
-      'id_tarefa': idTarefa,
-      'id_evento': idEvento,
-      'id_responsavel': idResponsavel,
-      'titulo': titulo,
-      'descricao': descricao,
-      'data_prevista': dataPrevista != null ? Timestamp.fromDate(dataPrevista!) : null,
-      'status': status.firestoreValue,
-      'data_cadastro': Timestamp.fromDate(dataCadastro),
-    };
-  }
+  factory TarefaModel.fromEntity(Tarefa tarefa) => TarefaModel(
+        idTarefa: tarefa.idTarefa,
+        idEvento: tarefa.idEvento,
+        idResponsavel: tarefa.idResponsavel,
+        titulo: tarefa.titulo,
+        descricao: tarefa.descricao,
+        dataPrevista: tarefa.dataPrevista,
+        status: tarefa.status,
+        dataCadastro: tarefa.dataCadastro,
+        responsavel: tarefa.responsavel,
+      );
 
-  /// 🔹 Conversão a partir do Firestore
-  factory TarefaModel.fromMap(Map<String, dynamic> map) {
-    return TarefaModel(
-      idTarefa: map['id_tarefa'] ?? '',
-      idEvento: map['id_evento'] ?? '',
-      idResponsavel: map['id_responsavel'],
-      titulo: map['titulo'] ?? '',
-      descricao: map['descricao'],
-      dataPrevista:
-          map['data_prevista'] is Timestamp ? (map['data_prevista'] as Timestamp).toDate() : null,
-      status: StatusTarefa.fromString(map['status']),
-      dataCadastro: map['data_cadastro'] is Timestamp
-          ? (map['data_cadastro'] as Timestamp).toDate()
-          : DateTime.now(),
-    );
-  }
+  Map<String, dynamic> toMap() => {
+        'id_tarefa': idTarefa,
+        'id_evento': idEvento,
+        'id_responsavel': idResponsavel,
+        'titulo': titulo,
+        'descricao': descricao,
+        'data_prevista':
+            dataPrevista == null ? null : Timestamp.fromDate(dataPrevista!),
+        'status': status.firestoreValue,
+        'data_cadastro': Timestamp.fromDate(dataCadastro),
+      };
 
-  /// 🔹 Atualização parcial
+  factory TarefaModel.fromMap(Map<String, dynamic> map) => TarefaModel(
+        idTarefa: map['id_tarefa'] ?? '',
+        idEvento: map['id_evento'] ?? '',
+        idResponsavel: map['id_responsavel'],
+        titulo: map['titulo'] ?? '',
+        descricao: map['descricao'],
+        dataPrevista: map['data_prevista'] is Timestamp
+            ? (map['data_prevista'] as Timestamp).toDate()
+            : null,
+        status: StatusTarefa.fromString(map['status']),
+        dataCadastro: map['data_cadastro'] is Timestamp
+            ? (map['data_cadastro'] as Timestamp).toDate()
+            : DateTime.now(),
+      );
+
+  @override
   TarefaModel copyWith({
+    String? idTarefa,
+    String? idEvento,
+    String? idResponsavel,
     String? titulo,
     String? descricao,
     DateTime? dataPrevista,
     StatusTarefa? status,
-    ConvidadoModel? responsavel,
-  }) {
-    return TarefaModel(
-      idTarefa: idTarefa,
-      idEvento: idEvento,
-      idResponsavel: idResponsavel,
-      titulo: titulo ?? this.titulo,
-      descricao: descricao ?? this.descricao,
-      dataPrevista: dataPrevista ?? this.dataPrevista,
-      status: status ?? this.status,
-      dataCadastro: dataCadastro,
-      responsavel: responsavel ?? this.responsavel,
-    );
-  }
+    DateTime? dataCadastro,
+    Convidado? responsavel,
+  }) =>
+      TarefaModel(
+        idTarefa: idTarefa ?? this.idTarefa,
+        idEvento: idEvento ?? this.idEvento,
+        idResponsavel: idResponsavel ?? this.idResponsavel,
+        titulo: titulo ?? this.titulo,
+        descricao: descricao ?? this.descricao,
+        dataPrevista: dataPrevista ?? this.dataPrevista,
+        status: status ?? this.status,
+        dataCadastro: dataCadastro ?? this.dataCadastro,
+        responsavel: responsavel ?? this.responsavel,
+      );
 }

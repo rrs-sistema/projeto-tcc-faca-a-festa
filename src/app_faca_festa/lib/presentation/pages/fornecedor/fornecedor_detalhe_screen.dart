@@ -52,7 +52,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
       final appController = Get.find<AppController>();
 
       final idFornecedor = fornecedorDetalhado.fornecedor.idFornecedor;
-      final idEvento = eventoController.eventoAtual.value?.idEvento ?? '';
+      final idEvento = eventoController.eventoAtualEntidade?.idEvento ?? '';
       final idUsuario = appController.usuarioLogado.value?.idUsuario ?? '';
 
       if (idEvento.isNotEmpty && idUsuario.isNotEmpty) {
@@ -1850,8 +1850,9 @@ void getDialogAvaliacaoFornecedor({required FornecedorModel fornecedor}) {
       idServico: null,
       idCliente: Get.find<AppController>().usuarioLogado.value!.idUsuario,
       nomeCliente: Get.find<AppController>().usuarioLogado.value!.nome,
-      idEvento: Get.find<EventoController>().eventoAtual.value!.idEvento,
-      nomeEventoAtual: Get.find<EventoController>().eventoAtual.value!.nomeEvento,
+      idEvento: Get.find<EventoController>().eventoAtualEntidade!.idEvento,
+      nomeEventoAtual:
+          Get.find<EventoController>().eventoAtualEntidade!.nomeEvento,
     ),
   );
 }

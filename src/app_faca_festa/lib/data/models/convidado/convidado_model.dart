@@ -1,151 +1,59 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
-enum StatusConvidado {
-  pendente,
-  confirmado,
-  recusado;
+import '../../../domain/entities/convidado.dart';
+export '../../../domain/entities/convidado.dart';
 
-  String get label {
-    switch (this) {
-      case StatusConvidado.pendente:
-        return 'Pendente';
-      case StatusConvidado.confirmado:
-        return 'Confirmado';
-      case StatusConvidado.recusado:
-        return 'Recusado';
-    }
-  }
-
-  String get firestoreValue {
-    switch (this) {
-      case StatusConvidado.pendente:
-        return 'pendente';
-      case StatusConvidado.confirmado:
-        return 'confirmado';
-      case StatusConvidado.recusado:
-        return 'recusado';
-    }
-  }
-
-  static StatusConvidado fromString(String? value) {
-    final normalized = value?.trim().toLowerCase();
-
-    switch (normalized) {
-      case 'confirmado':
-      case 'c':
-        return StatusConvidado.confirmado;
-      case 'recusado':
-      case 'r':
-        return StatusConvidado.recusado;
-      case 'pendente':
-      case 'p':
-      default:
-        return StatusConvidado.pendente;
-    }
-  }
+extension StatusConvidadoFirestore on StatusConvidado {
+  String get firestoreValue => name;
 }
 
-enum TipoConvidado {
-  adulto,
-  crianca,
-  bebe;
-
-  String get label {
-    switch (this) {
-      case TipoConvidado.adulto:
-        return 'Adulto';
-      case TipoConvidado.crianca:
-        return 'Criança';
-      case TipoConvidado.bebe:
-        return 'Bebê';
-    }
-  }
-
-  String get firestoreValue {
-    switch (this) {
-      case TipoConvidado.adulto:
-        return 'adulto';
-      case TipoConvidado.crianca:
-        return 'crianca';
-      case TipoConvidado.bebe:
-        return 'bebe';
-    }
-  }
-
-  static TipoConvidado fromString(String? value) {
-    final normalized = value?.trim().toLowerCase();
-
-    switch (normalized) {
-      case 'adulto':
-        return TipoConvidado.adulto;
-      case 'crianca':
-      case 'criança':
-        return TipoConvidado.crianca;
-      case 'bebe':
-      case 'bebê':
-        return TipoConvidado.bebe;
-      default:
-        return TipoConvidado.adulto;
-    }
-  }
-
-  static TipoConvidado fromLegacyAdulto(bool? adulto) {
-    if (adulto == false) return TipoConvidado.crianca;
-    return TipoConvidado.adulto;
-  }
+extension TipoConvidadoFirestore on TipoConvidado {
+  String get firestoreValue => name;
 }
 
-class ConvidadoModel {
-  final String idConvidado;
-  final String idEvento;
-
-  final String nome;
-  final String contato;
-  final String? email;
-
-  final StatusConvidado status;
-  final TipoConvidado tipoConvidado;
-
-  final String? idGrupo;
-  final String? nomeGrupo;
-
-  final String? idMesa;
-  final int? numeroMesa;
-
-  final bool ocupaAssento;
-  final bool cuidadoEspecial;
-
-  final DateTime? dataEnvio;
-  final DateTime? dataResposta;
-
-  final DateTime dataCadastro;
-  final DateTime dataAtualizacao;
-
+class ConvidadoModel extends Convidado {
   const ConvidadoModel({
-    required this.idConvidado,
-    required this.idEvento,
-    required this.nome,
-    required this.contato,
-    this.email,
-    this.status = StatusConvidado.pendente,
-    this.tipoConvidado = TipoConvidado.adulto,
-    this.idGrupo,
-    this.nomeGrupo,
-    this.idMesa,
-    this.numeroMesa,
-    this.ocupaAssento = true,
-    this.cuidadoEspecial = false,
-    this.dataEnvio,
-    this.dataResposta,
-    required this.dataCadastro,
-    required this.dataAtualizacao,
+    required super.idConvidado,
+    required super.idEvento,
+    required super.nome,
+    required super.contato,
+    super.email,
+    super.status,
+    super.tipoConvidado,
+    super.idGrupo,
+    super.nomeGrupo,
+    super.idMesa,
+    super.numeroMesa,
+    super.ocupaAssento,
+    super.cuidadoEspecial,
+    super.dataEnvio,
+    super.dataResposta,
+    required super.dataCadastro,
+    required super.dataAtualizacao,
   });
 
-  bool get adulto => tipoConvidado == TipoConvidado.adulto;
-  bool get crianca => tipoConvidado == TipoConvidado.crianca;
-  bool get bebe => tipoConvidado == TipoConvidado.bebe;
-  bool get confirmado => status == StatusConvidado.confirmado;
+  factory ConvidadoModel.fromEntity(Convidado convidado) {
+    return ConvidadoModel(
+      idConvidado: convidado.idConvidado,
+      idEvento: convidado.idEvento,
+      nome: convidado.nome,
+      contato: convidado.contato,
+      email: convidado.email,
+      status: convidado.status,
+      tipoConvidado: convidado.tipoConvidado,
+      idGrupo: convidado.idGrupo,
+      nomeGrupo: convidado.nomeGrupo,
+      idMesa: convidado.idMesa,
+      numeroMesa: convidado.numeroMesa,
+      ocupaAssento: convidado.ocupaAssento,
+      cuidadoEspecial: convidado.cuidadoEspecial,
+      dataEnvio: convidado.dataEnvio,
+      dataResposta: convidado.dataResposta,
+      dataCadastro: convidado.dataCadastro,
+      dataAtualizacao: convidado.dataAtualizacao,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     try {
@@ -157,7 +65,6 @@ class ConvidadoModel {
         'email': email,
         'status': status.firestoreValue,
         'tipo_convidado': tipoConvidado.firestoreValue,
-        // Campo legado opcional para compatibilidade com telas antigas.
         'adulto': tipoConvidado == TipoConvidado.adulto,
         'id_grupo': idGrupo,
         'nome_grupo': nomeGrupo,
@@ -166,7 +73,8 @@ class ConvidadoModel {
         'ocupa_assento': ocupaAssento,
         'cuidado_especial': cuidadoEspecial,
         'data_envio': dataEnvio != null ? Timestamp.fromDate(dataEnvio!) : null,
-        'data_resposta': dataResposta != null ? Timestamp.fromDate(dataResposta!) : null,
+        'data_resposta':
+            dataResposta != null ? Timestamp.fromDate(dataResposta!) : null,
         'data_cadastro': Timestamp.fromDate(dataCadastro),
         'data_atualizacao': Timestamp.fromDate(dataAtualizacao),
       };
@@ -201,8 +109,11 @@ class ConvidadoModel {
         idGrupo: map['id_grupo']?.toString(),
         nomeGrupo: map['nome_grupo']?.toString(),
         idMesa: map['id_mesa']?.toString(),
-        numeroMesa: map['numero_mesa'] is num ? (map['numero_mesa'] as num).toInt() : null,
-        ocupaAssento: map['ocupa_assento'] ?? tipoConvidado != TipoConvidado.bebe,
+        numeroMesa: map['numero_mesa'] is num
+            ? (map['numero_mesa'] as num).toInt()
+            : null,
+        ocupaAssento:
+            map['ocupa_assento'] ?? tipoConvidado != TipoConvidado.bebe,
         cuidadoEspecial: map['cuidado_especial'] ?? false,
         dataEnvio: parseDate(map['data_envio']),
         dataResposta: parseDate(map['data_resposta']),
@@ -213,17 +124,22 @@ class ConvidadoModel {
       if (kDebugMode) {
         print('Erro ao listar os grupos fromMap: ${e.toString()}');
       }
+      final now = DateTime.now();
       return ConvidadoModel(
-          idConvidado: '',
-          idEvento: '',
-          nome: '',
-          contato: '',
-          dataCadastro: DateTime.now(),
-          dataAtualizacao: DateTime.now());
+        idConvidado: '',
+        idEvento: '',
+        nome: '',
+        contato: '',
+        dataCadastro: now,
+        dataAtualizacao: now,
+      );
     }
   }
 
+  @override
   ConvidadoModel copyWith({
+    String? idConvidado,
+    String? idEvento,
     String? nome,
     String? contato,
     String? email,
@@ -237,11 +153,12 @@ class ConvidadoModel {
     bool? cuidadoEspecial,
     DateTime? dataEnvio,
     DateTime? dataResposta,
+    DateTime? dataCadastro,
     DateTime? dataAtualizacao,
   }) {
     return ConvidadoModel(
-      idConvidado: idConvidado,
-      idEvento: idEvento,
+      idConvidado: idConvidado ?? this.idConvidado,
+      idEvento: idEvento ?? this.idEvento,
       nome: nome ?? this.nome,
       contato: contato ?? this.contato,
       email: email ?? this.email,
@@ -255,7 +172,7 @@ class ConvidadoModel {
       cuidadoEspecial: cuidadoEspecial ?? this.cuidadoEspecial,
       dataEnvio: dataEnvio ?? this.dataEnvio,
       dataResposta: dataResposta ?? this.dataResposta,
-      dataCadastro: dataCadastro,
+      dataCadastro: dataCadastro ?? this.dataCadastro,
       dataAtualizacao: dataAtualizacao ?? DateTime.now(),
     );
   }

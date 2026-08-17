@@ -7,11 +7,12 @@ import './../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../data/models/cardapio/cardapio_model.dart';
 
 class EditarCardapioBottomSheet extends StatefulWidget {
-  final CardapioModel cardapio;
+  final Cardapio cardapio;
   const EditarCardapioBottomSheet({super.key, required this.cardapio});
 
   @override
-  State<EditarCardapioBottomSheet> createState() => _EditarCardapioBottomSheetState();
+  State<EditarCardapioBottomSheet> createState() =>
+      _EditarCardapioBottomSheetState();
 }
 
 class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
@@ -45,7 +46,8 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
     super.initState();
     _tituloCtrl = TextEditingController(text: widget.cardapio.titulo);
     _iconeSelecionado = _iconFromString(widget.cardapio.icone);
-    _corSelecionada = _colorFromHex(widget.cardapio.corHex, fallback: Colors.teal);
+    _corSelecionada =
+        _colorFromHex(widget.cardapio.corHex, fallback: Colors.teal);
   }
 
   @override
@@ -131,7 +133,8 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: EdgeInsets.only(left: 16, right: 16, bottom: bottomInset + 16),
+            padding:
+                EdgeInsets.only(left: 16, right: 16, bottom: bottomInset + 16),
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Form(
@@ -146,7 +149,8 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
                         width: 50,
                         height: 4,
                         decoration: BoxDecoration(
-                            color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -158,7 +162,9 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
                     ),
                     const SizedBox(height: 10),
                     Divider(
-                        height: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                        height: 1,
+                        color: theme.colorScheme.outlineVariant
+                            .withValues(alpha: 0.5)),
                     const SizedBox(height: 16),
                     _textField(
                       controller: _tituloCtrl,
@@ -168,21 +174,27 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
                     ),
                     const SizedBox(height: 16),
                     Text('Ícone',
-                        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 12,
                       runSpacing: 12,
-                      children: icones.map((icon) => _buildIconOption(icon, primaryColor)).toList(),
+                      children: icones
+                          .map((icon) => _buildIconOption(icon, primaryColor))
+                          .toList(),
                     ),
                     const SizedBox(height: 16),
                     Text('Cor',
-                        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 12,
                       runSpacing: 12,
-                      children: cores.map((color) => _buildColorOption(color)).toList(),
+                      children: cores
+                          .map((color) => _buildColorOption(color))
+                          .toList(),
                     ),
                     const SizedBox(height: 32),
                     _FooterActions(
@@ -208,11 +220,15 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: selected ? primaryColor.withValues(alpha: 0.15) : Colors.transparent,
+          color: selected
+              ? primaryColor.withValues(alpha: 0.15)
+              : Colors.transparent,
           shape: BoxShape.circle,
-          border: Border.all(color: selected ? primaryColor : Colors.grey.shade300),
+          border:
+              Border.all(color: selected ? primaryColor : Colors.grey.shade300),
         ),
-        child: Icon(icon, color: selected ? primaryColor : Colors.black54, size: 24),
+        child: Icon(icon,
+            color: selected ? primaryColor : Colors.black54, size: 24),
       ),
     );
   }
@@ -229,9 +245,12 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
           color: color,
           shape: BoxShape.circle,
           border: Border.all(
-              color: selected ? Colors.black54 : Colors.transparent, width: selected ? 2 : 0),
+              color: selected ? Colors.black54 : Colors.transparent,
+              width: selected ? 2 : 0),
         ),
-        child: selected ? const Icon(Icons.check, color: Colors.white, size: 18) : null,
+        child: selected
+            ? const Icon(Icons.check, color: Colors.white, size: 18)
+            : null,
       ),
     );
   }
@@ -252,13 +271,17 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+          borderSide:
+              BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
         ),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       ),
       validator: requiredField
-          ? (value) => (value == null || value.trim().isEmpty) ? 'Campo obrigatório' : null
+          ? (value) => (value == null || value.trim().isEmpty)
+              ? 'Campo obrigatório'
+              : null
           : null,
     );
   }
@@ -269,7 +292,7 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
 
     try {
       final controller = Get.find<CardapioController>();
-      final atualizado = CardapioModel(
+      final atualizado = Cardapio(
         idCardapio: widget.cardapio.idCardapio,
         idEvento: widget.cardapio.idEvento,
         titulo: _tituloCtrl.text.trim(),
@@ -312,7 +335,8 @@ class _Header extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: color, size: 22),
         ),
         const SizedBox(width: 12),
@@ -324,8 +348,8 @@ class _Header extends StatelessWidget {
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w800, fontSize: 16)),
               Text(subtitle,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
             ],
           ),
         ),
@@ -361,7 +385,8 @@ class _FooterActions extends StatelessWidget {
             label: const Text('Cancelar', style: TextStyle(fontSize: 13)),
             style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
           ),
         ),
         const SizedBox(width: 12),
@@ -372,13 +397,16 @@ class _FooterActions extends StatelessWidget {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.save_outlined, size: 16),
-            label: Text(isSaving ? 'Salvando...' : 'Salvar', style: const TextStyle(fontSize: 13)),
+            label: Text(isSaving ? 'Salvando...' : 'Salvar',
+                style: const TextStyle(fontSize: 13)),
             style: FilledButton.styleFrom(
                 backgroundColor: primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
           ),
         ),
       ],

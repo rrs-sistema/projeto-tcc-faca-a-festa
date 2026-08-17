@@ -1,0 +1,19 @@
+Communication job: ao final, a banca do TCC deve compreender que o Faça a Festa possui um banco de dados atual mapeado, coerente com os fluxos do produto e preparado para documentação relacional e evolução comercial.
+
+Visual direction: apresentação institucional de tecnologia para produto de mercado; base navy/off-white, acentos azul, rosa e dourado extraídos da marca Faça a Festa; tipografia limpa; uso comedido do logotipo e de imagens reais do repositório.
+
+Fontes internas:
+- lib/data/models/**
+- lib/controllers/**
+- lib/data/repositories/**
+- lib/data/datasources/**
+- functions/src/**
+- firebase.json
+- document/MAPEAMENTO_FIREBASE_APRESENTACAO.md
+- document/modelo_sql_vycanis.sql
+- document/GUIA_MODELO_SQL_VYCANIS.md
+
+Ativos:
+- assets/logo/logo-faca-festa.png — marca do projeto
+- assets/images/fornecedor_default.jpg — imagem existente no aplicativo
+- C:/Users/User/AppData/Local/Temp/codex-clipboard-9619a521-5e06-4afe-8b5d-06b74955ba01.png — captura fornecida pelo usuário do modelo antigo no Vycanis

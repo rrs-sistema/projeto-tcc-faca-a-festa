@@ -10,6 +10,7 @@ import '../../../controllers/tests/fornecedor_migracao_admin_controller.dart';
 import '../../../data/models/evento/analise_calculadora_ia_model.dart';
 import '../../../data/models/evento/calculadora_festa_item_model.dart';
 import '../../../controllers/convidado/cardapio_controller.dart';
+import '../../../domain/repositories/cardapio_repository.dart';
 import '../../../data/models/evento/calculadora_festa_model.dart';
 import '../../../controllers/evento_controller.dart';
 import '../../../data/models/evento/perfil_festa_model.dart';
@@ -65,13 +66,13 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
         ? Get.find<CalculadoraFestaController>()
         : Get.put(CalculadoraFestaController());
 
-    eventoController = Get.isRegistered<EventoController>()
-        ? Get.find<EventoController>()
-        : Get.put(EventoController());
+    eventoController = Get.find<EventoController>();
 
     cardapioController = Get.isRegistered<CardapioController>()
         ? Get.find<CardapioController>()
-        : Get.put(CardapioController());
+        : Get.put(
+            CardapioController(repository: Get.find<CardapioRepository>()),
+          );
 
     controllerTest = Get.isRegistered<FornecedorMigracaoAdminController>()
         ? Get.find<FornecedorMigracaoAdminController>()
@@ -97,7 +98,7 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
   }
 
   Future<void> _prepararCalculadora() async {
-    final evento = eventoController.eventoAtual.value;
+    final evento = eventoController.eventoAtualEntidade;
     final idEvento = widget.idEvento ?? evento?.idEvento ?? '';
     final permiteSemEvento = widget.permitirEstimativaSemEvento;
 
@@ -112,19 +113,23 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
     }
 
     final tipoEvento = widget.tipoEvento ??
-        eventoController.tipoEventoAtual.value?.nome ??
+        eventoController.tipoEventoAtualEntidade?.nome ??
         evento?.nomeEvento ??
         'Evento';
 
-    final adultosIniciais = _normalizarQuantidadeInicial(widget.adultosIniciais);
-    final criancasIniciais = _normalizarQuantidadeInicial(widget.criancasIniciais);
+    final adultosIniciais =
+        _normalizarQuantidadeInicial(widget.adultosIniciais);
+    final criancasIniciais =
+        _normalizarQuantidadeInicial(widget.criancasIniciais);
     final bebesIniciais = _normalizarQuantidadeInicial(widget.bebesIniciais);
     final totalInicial = adultosIniciais + criancasIniciais + bebesIniciais;
 
     await calculadoraController.prepararCalculadora(
       idEvento: idEvento,
       tipoEvento: tipoEvento,
-      base: idEvento.isEmpty ? BaseCalculoFesta.manual : BaseCalculoFesta.todosConvidados,
+      base: idEvento.isEmpty
+          ? BaseCalculoFesta.manual
+          : BaseCalculoFesta.todosConvidados,
       duracaoInicialHoras: widget.duracaoInicialHoras,
       permitirEstimativaSemEvento: permiteSemEvento,
       adultosManuais: adultosIniciais,
@@ -221,7 +226,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
       return;
     }
 
-    await calculadoraController.enviarResultadoParaCardapio(idCardapio: idCardapio);
+    await calculadoraController.enviarResultadoParaCardapio(
+        idCardapio: idCardapio);
   }
 
   Future<void> _abrirMinhasSimulacoes() async {
@@ -276,7 +282,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
         return RefreshIndicator(
           onRefresh: _prepararCalculadora,
           child: ListView(
-            padding: const EdgeInsets.fromLTRB(6, 10, 6, 80), // Margens laterais reduzidas
+            padding: const EdgeInsets.fromLTRB(
+                6, 10, 6, 80), // Margens laterais reduzidas
             children: [
               _buildHero(primary),
               const SizedBox(height: 10), // Espaçamentos gerais reduzidos
@@ -312,7 +319,10 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [primary.withValues(alpha: 0.92), primary.withValues(alpha: 0.62)],
+          colors: [
+            primary.withValues(alpha: 0.92),
+            primary.withValues(alpha: 0.62)
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -337,7 +347,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
+                child: const Icon(Icons.auto_awesome_rounded,
+                    color: Colors.white, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -395,14 +406,16 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
           style: OutlinedButton.styleFrom(
             foregroundColor: primary,
             side: BorderSide(color: primary.withValues(alpha: 0.45)),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
             padding: EdgeInsets.zero,
           ),
           onPressed: _abrirMinhasSimulacoes,
           icon: const Icon(Icons.auto_awesome_motion_rounded, size: 18),
           label: Text(
             'Abrir minhas simulações',
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+            style:
+                GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
           ),
         ),
       ),
@@ -449,7 +462,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
   Widget _buildPerfilFestaCard(Color primary) {
     return Obx(() {
       final perfilAtual = calculadoraController.perfilSelecionado.value;
-      final margemPercentual = (calculadoraController.margemEmUso * 100).round();
+      final margemPercentual =
+          (calculadoraController.margemEmUso * 100).round();
 
       return _SectionCard(
         title: 'Perfil da festa',
@@ -470,8 +484,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
               runSpacing: 6,
               children: TipoPerfilFesta.values.map((tipo) {
                 final perfilTipo = PerfilFestaModel.fromTipo(tipo);
-                final selected =
-                    _normalizarTexto(perfilAtual.nome) == _normalizarTexto(perfilTipo.nome);
+                final selected = _normalizarTexto(perfilAtual.nome) ==
+                    _normalizarTexto(perfilTipo.nome);
 
                 return _buildPerfilFestaChip(
                   primary: primary,
@@ -530,8 +544,9 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
             color: selected ? primary.withValues(alpha: 0.12) : Colors.white,
             borderRadius: borderRadius,
             border: Border.all(
-              color:
-                  selected ? primary.withValues(alpha: 0.45) : Colors.black.withValues(alpha: 0.12),
+              color: selected
+                  ? primary.withValues(alpha: 0.45)
+                  : Colors.black.withValues(alpha: 0.12),
               width: selected ? 1.2 : 1,
             ),
             boxShadow: selected
@@ -552,7 +567,9 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
                 width: 20,
                 height: 20,
                 decoration: BoxDecoration(
-                  color: selected ? primary.withValues(alpha: 0.14) : Colors.grey.shade100,
+                  color: selected
+                      ? primary.withValues(alpha: 0.14)
+                      : Colors.grey.shade100,
                   shape: BoxShape.circle,
                 ),
                 alignment: Alignment.center,
@@ -615,7 +632,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
   }
 
   Widget _buildTotaisCard(Color primary) {
-    final manual = calculadoraController.baseCalculo.value == BaseCalculoFesta.manual;
+    final manual =
+        calculadoraController.baseCalculo.value == BaseCalculoFesta.manual;
 
     return _SectionCard(
       title: 'Convidados',
@@ -667,7 +685,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
             const SizedBox(height: 6),
             Row(
               children: [
-                Icon(Icons.info_outline_rounded, size: 14, color: Colors.grey.shade500),
+                Icon(Icons.info_outline_rounded,
+                    size: 14, color: Colors.grey.shade500),
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
@@ -712,7 +731,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
             min: 2,
             max: 8,
             divisions: 6,
-            onChanged: (value) => calculadoraController.atualizarDuracao(value.round()),
+            onChanged: (value) =>
+                calculadoraController.atualizarDuracao(value.round()),
           ),
         ),
       ),
@@ -731,7 +751,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
               text: 'Informe convidados para calcular.',
             )
           : Column(
-              children: itens.map((item) => _ResultadoItemTile(item: item)).toList(),
+              children:
+                  itens.map((item) => _ResultadoItemTile(item: item)).toList(),
             ),
     );
   }
@@ -751,7 +772,9 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
             )
           : _MiniBadge(
               label: analise?.statusOrcamento ?? 'Pronta',
-              color: analise?.acimaDoOrcamento == true ? Colors.orange : Colors.teal,
+              color: analise?.acimaDoOrcamento == true
+                  ? Colors.orange
+                  : Colors.teal,
             ),
       child: analisando && analise == null
           ? Column(
@@ -779,7 +802,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
           : _AnaliseIACompacta(
               analise: analise,
               primary: primary,
-              onDetalhes: analise == null ? null : () => _abrirDetalhesIA(analise),
+              onDetalhes:
+                  analise == null ? null : () => _abrirDetalhesIA(analise),
             ),
     );
   }
@@ -808,9 +832,10 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
           );
         }
 
-        final selectedValue = cardapios.any((c) => c.idCardapio == idCardapioSelecionado.value)
-            ? idCardapioSelecionado.value
-            : null;
+        final selectedValue =
+            cardapios.any((c) => c.idCardapio == idCardapioSelecionado.value)
+                ? idCardapioSelecionado.value
+                : null;
 
         return SizedBox(
           height: 44, // Força uma altura menor no dropdown
@@ -821,15 +846,18 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
               labelText: 'Destino',
               labelStyle: GoogleFonts.poppins(fontSize: 12),
               prefixIcon: const Icon(Icons.restaurant_rounded, size: 18),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+              border:
+                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               filled: true,
               fillColor: Colors.grey.shade50,
             ),
             items: cardapios.map((cardapio) {
               return DropdownMenuItem<String>(
                 value: cardapio.idCardapio,
-                child: Text(cardapio.titulo, style: GoogleFonts.poppins(fontSize: 12)),
+                child: Text(cardapio.titulo,
+                    style: GoogleFonts.poppins(fontSize: 12)),
               );
             }).toList(),
             onChanged: (value) => idCardapioSelecionado.value = value ?? '',
@@ -854,7 +882,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                   padding: EdgeInsets.zero,
                 ),
                 onPressed: salvando ? null : _salvarCalculo,
@@ -862,11 +891,13 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
                     ? const SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.save_rounded, size: 18),
                 label: Text(
                   salvando ? 'Salvando...' : 'Salvar',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w800, fontSize: 12),
                 ),
               ),
             ),
@@ -879,20 +910,24 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: primary,
                   side: BorderSide(color: primary.withValues(alpha: 0.55)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                   padding: EdgeInsets.zero,
                 ),
-                onPressed:
-                    enviando || idCardapioSelecionado.value.isEmpty ? null : _enviarParaCardapio,
+                onPressed: enviando || idCardapioSelecionado.value.isEmpty
+                    ? null
+                    : _enviarParaCardapio,
                 icon: enviando
                     ? SizedBox(
                         width: 14,
                         height: 14,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: primary))
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: primary))
                     : const Icon(Icons.playlist_add_check_rounded, size: 18),
                 label: Text(
                   enviando ? 'Enviando...' : 'Adicionar',
-                  style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w800, fontSize: 12),
                 ),
               ),
             ),
@@ -909,7 +944,11 @@ class _SectionCard extends StatelessWidget {
   final Widget child;
   final Widget? trailing;
 
-  const _SectionCard({required this.title, required this.icon, required this.child, this.trailing});
+  const _SectionCard(
+      {required this.title,
+      required this.icon,
+      required this.child,
+      this.trailing});
 
   @override
   Widget build(BuildContext context) {
@@ -985,7 +1024,8 @@ class _NumberField extends StatelessWidget {
           labelStyle: GoogleFonts.poppins(fontSize: 11),
           prefixIcon: Icon(icon, size: 16),
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           filled: true,
           fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
@@ -1017,10 +1057,12 @@ class _AnaliseIACompacta extends StatelessWidget {
       );
     }
 
-    final primeiraSugestao = data.sugestoes.isNotEmpty ? data.sugestoes.first : null;
+    final primeiraSugestao =
+        data.sugestoes.isNotEmpty ? data.sugestoes.first : null;
     final resumo = data.resumo.trim().isNotEmpty
         ? data.resumo.trim()
-        : primeiraSugestao?.descricao.trim() ?? 'Análise inteligente concluída.';
+        : primeiraSugestao?.descricao.trim() ??
+            'Análise inteligente concluída.';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1039,7 +1081,9 @@ class _AnaliseIACompacta extends StatelessWidget {
               child: _IndicadorIA(
                 label: 'Risco',
                 value: _formatPercent(data.indiceRiscoFaltarItens),
-                color: data.indiceRiscoFaltarItens >= 70 ? Colors.redAccent : Colors.orange,
+                color: data.indiceRiscoFaltarItens >= 70
+                    ? Colors.redAccent
+                    : Colors.orange,
               ),
             ),
             const SizedBox(width: 6),
@@ -1101,7 +1145,8 @@ class _AnaliseIACompacta extends StatelessWidget {
                     onTap: onDetalhes,
                     borderRadius: BorderRadius.circular(999),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 4, vertical: 2),
                       child: Text(
                         'Ver',
                         style: GoogleFonts.poppins(
@@ -1299,7 +1344,8 @@ class _AnaliseIADetalhesSheet extends StatelessWidget {
                     Expanded(
                       child: _IndicadorIA(
                         label: 'Conforto',
-                        value: _AnaliseIACompacta._formatPercent(analise.indiceConforto),
+                        value: _AnaliseIACompacta._formatPercent(
+                            analise.indiceConforto),
                         color: Colors.teal,
                       ),
                     ),
@@ -1310,15 +1356,17 @@ class _AnaliseIADetalhesSheet extends StatelessWidget {
                         value: _AnaliseIACompacta._formatPercent(
                           analise.indiceRiscoFaltarItens,
                         ),
-                        color:
-                            analise.indiceRiscoFaltarItens >= 70 ? Colors.redAccent : Colors.orange,
+                        color: analise.indiceRiscoFaltarItens >= 70
+                            ? Colors.redAccent
+                            : Colors.orange,
                       ),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: _IndicadorIA(
                         label: 'Economia',
-                        value: _AnaliseIACompacta._formatPercent(analise.indiceEconomia),
+                        value: _AnaliseIACompacta._formatPercent(
+                            analise.indiceEconomia),
                         color: primary,
                       ),
                     ),
@@ -1348,7 +1396,8 @@ class _AnaliseIADetalhesSheet extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  for (final sugestao in topSugestoes) _SugestaoIATile(sugestao: sugestao),
+                  for (final sugestao in topSugestoes)
+                    _SugestaoIATile(sugestao: sugestao),
                 ],
               ],
             ),
@@ -1425,7 +1474,8 @@ class _SugestaoIATile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(_AnaliseIACompacta._iconeSugestao(sugestao), size: 17, color: color),
+          Icon(_AnaliseIACompacta._iconeSugestao(sugestao),
+              size: 17, color: color),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -1465,7 +1515,9 @@ class _ResultadoItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final Color color = item.adicionadoAoCardapio ? Colors.teal : Theme.of(context).primaryColor;
+    final Color color = item.adicionadoAoCardapio
+        ? Colors.teal
+        : Theme.of(context).primaryColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
@@ -1503,7 +1555,8 @@ class _ResultadoItemTile extends StatelessWidget {
                   item.regraAplicada,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(fontSize: 10, color: Colors.grey.shade600),
+                  style: GoogleFonts.poppins(
+                      fontSize: 10, color: Colors.grey.shade600),
                 ),
               ],
             ),

@@ -43,7 +43,8 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
   late final TextEditingController telefoneCtrl;
   late final TextEditingController descCtrl;
 
-  final List<_TipoEventoCadastro> _tiposEventoSelecionados = <_TipoEventoCadastro>[];
+  final List<_TipoEventoCadastro> _tiposEventoSelecionados =
+      <_TipoEventoCadastro>[];
 
   static const List<_TipoEventoCadastro> _tiposEventoDisponiveis = [
     _TipoEventoCadastro(
@@ -154,12 +155,34 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
               _aplicarTiposEventoNoController(controller);
 
               if (widget.bannerFile != null) {
-                controller.bannerUrl = await fornecedorController.uploadBanner(widget.bannerFile!);
+                controller.bannerUrl =
+                    await fornecedorController.uploadBanner(widget.bannerFile!);
               }
 
               await controller.registrarUsuario();
             },
           ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                  child: Divider(color: Colors.white.withValues(alpha: 0.24))),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  'ou',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white.withValues(alpha: 0.82),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              Expanded(
+                  child: Divider(color: Colors.white.withValues(alpha: 0.24))),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _botaoCadastrarGoogle(primary, controller, fornecedorController),
           const SizedBox(height: 20),
           PrimaryActionButton(
             label: 'Cancelar/Sair',
@@ -218,7 +241,9 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
               obscureText: !controller.exibirSenha.value,
               suffixIcon: IconButton(
                 icon: Icon(
-                  controller.exibirSenha.value ? Icons.visibility_off : Icons.visibility,
+                  controller.exibirSenha.value
+                      ? Icons.visibility_off
+                      : Icons.visibility,
                   color: primary.withValues(alpha: 0.8),
                 ),
                 onPressed: () => controller.exibirSenha.toggle(),
@@ -239,7 +264,8 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                   color: primary,
                   type: InputType.cpfCnpj,
                   // Remove a máscara na hora de salvar, pegando apenas os dígitos
-                  onChanged: (v) => controller.cnpj.value = v.replaceAll(RegExp(r'\D'), ''),
+                  onChanged: (v) =>
+                      controller.cnpj.value = v.replaceAll(RegExp(r'\D'), ''),
                 ),
               ),
               const SizedBox(width: 10),
@@ -253,7 +279,8 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                   isRequired: true,
                   color: primary,
                   // Remove a máscara na hora de salvar, pegando apenas os dígitos
-                  onChanged: (v) => controller.telefone.value = v.replaceAll(RegExp(r'\D'), ''),
+                  onChanged: (v) => controller.telefone.value =
+                      v.replaceAll(RegExp(r'\D'), ''),
                 ),
               ),
             ],
@@ -271,6 +298,57 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
         ],
       );
 
+  Widget _botaoCadastrarGoogle(
+    Color primary,
+    RegisterController controller,
+    FornecedorController fornecedorController,
+  ) =>
+      Obx(
+        () => SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: OutlinedButton.icon(
+            onPressed: controller.carregando.value
+                ? null
+                : () async {
+                    if (!_validarTiposEvento()) return;
+
+                    _aplicarTiposEventoNoController(controller);
+
+                    if (widget.bannerFile != null) {
+                      controller.bannerUrl = await fornecedorController
+                          .uploadBanner(widget.bannerFile!);
+                    }
+
+                    await controller.registrarComGoogle();
+                  },
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: primary,
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.75)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            icon: Text(
+              'G',
+              style: GoogleFonts.poppins(
+                color: const Color(0xFF4285F4),
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            label: Text(
+              'Cadastrar com Google',
+              style: GoogleFonts.poppins(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      );
+
   Widget _uploadBanner(Color color) => GestureDetector(
         onTap: () async {
           final picked = await widget.picker.pickImage(
@@ -284,7 +362,9 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
           decoration: BoxDecoration(
             border: Border.all(
               color: color.withValues(alpha: 0.4),
-              style: widget.bannerFile == null ? BorderStyle.solid : BorderStyle.none,
+              style: widget.bannerFile == null
+                  ? BorderStyle.solid
+                  : BorderStyle.none,
             ),
             borderRadius: BorderRadius.circular(14),
             color: Colors.white.withValues(alpha: 0.9),
@@ -299,7 +379,9 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                   )
                 : null,
           ),
-          padding: widget.bannerFile == null ? const EdgeInsets.all(16) : EdgeInsets.zero,
+          padding: widget.bannerFile == null
+              ? const EdgeInsets.all(16)
+              : EdgeInsets.zero,
           child: widget.bannerFile == null
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -322,7 +404,8 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.check_circle, color: Colors.white, size: 28),
+                      const Icon(Icons.check_circle,
+                          color: Colors.white, size: 28),
                       const SizedBox(width: 8),
                       Text(
                         'Trocar Imagem',

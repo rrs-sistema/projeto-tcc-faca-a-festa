@@ -31,10 +31,12 @@ class _AdicionarGrupoFormContent extends StatefulWidget {
   });
 
   @override
-  State<_AdicionarGrupoFormContent> createState() => _AdicionarGrupoFormContentState();
+  State<_AdicionarGrupoFormContent> createState() =>
+      _AdicionarGrupoFormContentState();
 }
 
-class _AdicionarGrupoFormContentState extends State<_AdicionarGrupoFormContent> {
+class _AdicionarGrupoFormContentState
+    extends State<_AdicionarGrupoFormContent> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nomeCtrl;
   late final TextEditingController _numeroMesaCtrl;
@@ -104,7 +106,8 @@ class _AdicionarGrupoFormContentState extends State<_AdicionarGrupoFormContent> 
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: EdgeInsets.only(left: 16, right: 16, bottom: bottomInset + 16),
+            padding:
+                EdgeInsets.only(left: 16, right: 16, bottom: bottomInset + 16),
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               child: Form(
@@ -119,7 +122,8 @@ class _AdicionarGrupoFormContentState extends State<_AdicionarGrupoFormContent> 
                         width: 50,
                         height: 4,
                         decoration: BoxDecoration(
-                            color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10)),
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -131,7 +135,9 @@ class _AdicionarGrupoFormContentState extends State<_AdicionarGrupoFormContent> 
                     ),
                     const SizedBox(height: 10),
                     Divider(
-                        height: 1, color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+                        height: 1,
+                        color: theme.colorScheme.outlineVariant
+                            .withValues(alpha: 0.5)),
                     const SizedBox(height: 16),
                     _textField(
                       controller: _nomeCtrl,
@@ -155,22 +161,26 @@ class _AdicionarGrupoFormContentState extends State<_AdicionarGrupoFormContent> 
                     ),
                     const SizedBox(height: 16),
                     Text('Cor do grupo',
-                        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: cores.map((hex) => _buildColorOption(hex)).toList(),
+                      children:
+                          cores.map((hex) => _buildColorOption(hex)).toList(),
                     ),
                     const SizedBox(height: 16),
                     Text('Ícone',
-                        style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(fontWeight: FontWeight.w600)),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: icones.entries
-                          .map((entry) => _buildIconOption(entry.key, entry.value, primaryColor))
+                          .map((entry) => _buildIconOption(
+                              entry.key, entry.value, primaryColor))
                           .toList(),
                     ),
                     const SizedBox(height: 24),
@@ -202,9 +212,12 @@ class _AdicionarGrupoFormContentState extends State<_AdicionarGrupoFormContent> 
           color: color,
           shape: BoxShape.circle,
           border: Border.all(
-              color: selected ? Colors.black54 : Colors.transparent, width: selected ? 2 : 0),
+              color: selected ? Colors.black54 : Colors.transparent,
+              width: selected ? 2 : 0),
         ),
-        child: selected ? const Icon(Icons.check, color: Colors.white, size: 16) : null,
+        child: selected
+            ? const Icon(Icons.check, color: Colors.white, size: 16)
+            : null,
       ),
     );
   }
@@ -217,11 +230,15 @@ class _AdicionarGrupoFormContentState extends State<_AdicionarGrupoFormContent> 
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: selected ? primaryColor.withValues(alpha: 0.15) : Colors.transparent,
+          color: selected
+              ? primaryColor.withValues(alpha: 0.15)
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: selected ? primaryColor : Colors.grey.shade300),
+          border:
+              Border.all(color: selected ? primaryColor : Colors.grey.shade300),
         ),
-        child: Icon(icon, color: selected ? primaryColor : Colors.black54, size: 22),
+        child: Icon(icon,
+            color: selected ? primaryColor : Colors.black54, size: 22),
       ),
     );
   }
@@ -246,13 +263,17 @@ class _AdicionarGrupoFormContentState extends State<_AdicionarGrupoFormContent> 
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+          borderSide:
+              BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
         ),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       ),
       validator: requiredField
-          ? (value) => (value == null || value.trim().isEmpty) ? 'Campo obrigatório' : null
+          ? (value) => (value == null || value.trim().isEmpty)
+              ? 'Campo obrigatório'
+              : null
           : null,
     );
   }
@@ -263,7 +284,7 @@ class _AdicionarGrupoFormContentState extends State<_AdicionarGrupoFormContent> 
 
     try {
       final agora = DateTime.now();
-      final novo = GrupoConvidadoModel(
+      final novo = GrupoConvidado(
         idGrupo: DateTime.now().millisecondsSinceEpoch.toString(),
         idEvento: widget.idEvento,
         nome: _nomeCtrl.text.trim(),
@@ -296,7 +317,10 @@ class _Header extends StatelessWidget {
   final IconData icon;
   final Color color;
   const _Header(
-      {required this.title, required this.subtitle, required this.icon, required this.color});
+      {required this.title,
+      required this.subtitle,
+      required this.icon,
+      required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -307,7 +331,8 @@ class _Header extends StatelessWidget {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(12)),
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12)),
           child: Icon(icon, color: color, size: 22),
         ),
         const SizedBox(width: 12),
@@ -319,8 +344,8 @@ class _Header extends StatelessWidget {
                   style: theme.textTheme.titleMedium
                       ?.copyWith(fontWeight: FontWeight.w800, fontSize: 16)),
               Text(subtitle,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
             ],
           ),
         ),
@@ -339,7 +364,9 @@ class _FooterActions extends StatelessWidget {
   final VoidCallback onSubmit;
   final Color primaryColor;
   const _FooterActions(
-      {required this.isSaving, required this.onSubmit, required this.primaryColor});
+      {required this.isSaving,
+      required this.onSubmit,
+      required this.primaryColor});
 
   @override
   Widget build(BuildContext context) {
@@ -352,7 +379,8 @@ class _FooterActions extends StatelessWidget {
             label: const Text('Cancelar', style: TextStyle(fontSize: 13)),
             style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
           ),
         ),
         const SizedBox(width: 12),
@@ -363,13 +391,16 @@ class _FooterActions extends StatelessWidget {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.save_outlined, size: 16),
-            label: Text(isSaving ? 'Salvando...' : 'Salvar', style: const TextStyle(fontSize: 13)),
+            label: Text(isSaving ? 'Salvando...' : 'Salvar',
+                style: const TextStyle(fontSize: 13)),
             style: FilledButton.styleFrom(
                 backgroundColor: primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12))),
           ),
         ),
       ],

@@ -147,7 +147,7 @@ class RoleSelectorScreen extends StatelessWidget {
                           end: Alignment.centerRight,
                         ).createShader(bounds),
                         child: Text(
-                          "by RRS System Technology",
+                          "by Jullia A. Nicolas B. Rivaldo R.",
                           style: GoogleFonts.poppins(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

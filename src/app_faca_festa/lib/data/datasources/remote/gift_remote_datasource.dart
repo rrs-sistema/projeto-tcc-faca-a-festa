@@ -17,8 +17,12 @@ class GiftRemoteDatasource {
   // STREAM REMOTO
   // ======================================================
   Stream<List<GiftModel>> watchRemote(String eventoId) {
-    return _ref(eventoId).orderBy('created_at', descending: true).snapshots().map(
-          (snapshot) => snapshot.docs.map((doc) => GiftModel.fromFirestore(doc)).toList(),
+    return _ref(eventoId)
+        .orderBy('created_at', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => GiftModel.fromFirestore(doc)).toList(),
         );
   }
 
@@ -53,13 +57,13 @@ class GiftRemoteDatasource {
         throw Exception("Presente não encontrado no servidor.");
       }
 
-      final atualArrecadado = (snap.data()?["valor_arrecadado"] ?? 0).toDouble();
+      final atualArrecadado =
+          (snap.data()?["valor_arrecadado"] ?? 0).toDouble();
 
       // 1. Salva o registro da contribuição
       transaction.set(
         contribRef,
-        // Certifique-se que sua Entity/Model tenha o toMap ou use um Model específico aqui
-        contribution.toMap(),
+        GiftContributionModel.fromEntity(contribution).toCreateMap(),
       );
 
       // 2. Atualiza o valor acumulado no presente (Incremento)

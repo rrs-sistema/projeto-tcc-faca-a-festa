@@ -1,133 +1,106 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:uuid/uuid.dart';
-import 'package:get/get.dart';
 import 'dart:async';
 
-import './../data/models/model.dart';
+import 'package:get/get.dart';
+import 'package:uuid/uuid.dart';
+
+import './../domain/entities/convidado.dart';
+import './../domain/entities/tarefa.dart';
+import './../domain/repositories/convidado_repository.dart';
+import './../domain/repositories/tarefa_repository.dart';
 import 'app_controller.dart';
 import 'evento_controller.dart';
 
 class TarefaController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  TarefaController({
+    required TarefaRepository repository,
+    required ConvidadoRepository convidadoRepository,
+  })  : _repository = repository,
+        _convidadoRepository = convidadoRepository;
 
-  // 🔹 Observáveis reativos
-  final RxList<TarefaModel> tarefas = <TarefaModel>[].obs;
-  final RxList<ConvidadoModel> usuarios = <ConvidadoModel>[].obs;
+  final TarefaRepository _repository;
+  final ConvidadoRepository _convidadoRepository;
+
+  final RxList<Tarefa> tarefas = <Tarefa>[].obs;
+  final RxList<Convidado> usuarios = <Convidado>[].obs;
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
+  StreamSubscription<List<Tarefa>>? _tarefasSubscription;
 
-  // 🔹 Assinatura para cancelamento de escuta
-  StreamSubscription? _tarefasSubscription;
-
-  final eventoController = Get.put(EventoController());
+  EventoController get eventoController => Get.find<EventoController>();
 
   @override
   void onInit() {
     super.onInit();
-    carregarUsuarios();
+    unawaited(carregarUsuarios());
   }
-
-  // ==========================================================
-  // 🔹 Escuta tarefas em tempo real (reatividade total)
-  // ==========================================================
 
   Future<void> listenTarefas(String idEvento) async {
     if (idEvento.isEmpty) return;
-
-    _db.collection('tarefa').where('id_evento', isEqualTo: idEvento).snapshots().listen((snapshot) {
-      final lista = snapshot.docs.map((d) {
-        final data = d.data();
-        return TarefaModel.fromMap(data);
-      }).toList();
-
-      tarefas.assignAll(lista);
-    }, onError: (e) {
-      erro.value = 'Erro ao carregar tarefas: $e';
-    });
+    carregando.value = true;
+    erro.value = '';
+    await _iniciarEscuta(idEvento, ordenarPorData: false);
   }
 
   void listenTarefas00(String? idEvento) {
     if (idEvento == null) return;
     carregando.value = true;
-
-    // Cancela escuta anterior, se existir
-    _tarefasSubscription?.cancel();
-
-    // Cria nova stream com bind direto na RxList
-    _tarefasSubscription = _db
-        .collection('tarefa')
-        .where('id_evento', isEqualTo: idEvento) // 🔹 campo correto
-        .orderBy('data_prevista', descending: false)
-        .snapshots()
-        .listen((snapshot) {
-      final lista = snapshot.docs.map((doc) => TarefaModel.fromMap(doc.data())).toList();
-
-      tarefas.assignAll(lista);
-      carregando.value = false;
-    }, onError: (e) {
-      erro.value = e.toString();
-      carregando.value = false;
-    });
+    unawaited(_iniciarEscuta(idEvento, ordenarPorData: true));
   }
 
-  // ==========================================================
-  // 🔹 Carrega usuários ativos (para seleção de responsáveis)
-  // ==========================================================
+  Future<void> _iniciarEscuta(
+    String idEvento, {
+    required bool ordenarPorData,
+  }) async {
+    await _tarefasSubscription?.cancel();
+    _tarefasSubscription = _repository
+        .observarPorEvento(idEvento, ordenarPorData: ordenarPorData)
+        .listen(
+      (lista) {
+        tarefas.assignAll(lista);
+        carregando.value = false;
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        erro.value = ordenarPorData
+            ? error.toString()
+            : 'Erro ao carregar tarefas: $error';
+        carregando.value = false;
+      },
+    );
+  }
+
   Future<void> carregarUsuarios() async {
     try {
       carregando.value = true;
-      await Future.delayed(const Duration(seconds: 5));
+      await Future<void>.delayed(const Duration(seconds: 5));
       erro.value = '';
-
-      // 🔹 LIMPA lista atual
       usuarios.clear();
 
-      // ============================================================
-      // 1️⃣ BUSCAR CONVIDADOS DO EVENTO
-      // ============================================================
-      final snapshot = await _db
-          .collection('convidado')
-          .where('id_evento', isEqualTo: eventoController.eventoAtual.value?.idEvento)
-          .get();
+      final idEvento = eventoController.eventoAtualEntidade?.idEvento ?? '';
+      final lista = idEvento.isEmpty
+          ? <Convidado>[]
+          : await _convidadoRepository.observarPorEvento(idEvento).first;
 
-      final listaConvidados = snapshot.docs.map((d) => ConvidadoModel.fromMap(d.data())).toList();
-
-      // ============================================================
-      // 2️⃣ PEGAR ORGANIZADOR LOGADO (AppController)
-      // ============================================================
-      final appController = Get.find<AppController>();
-      final user = appController.usuarioLogado.value;
-
-      if (user != null) {
-        // ============================================================
-        // 3️⃣ CONVERTER USUÁRIO → ConvidadoModel "virtual"
-        // ============================================================
-        final organizador = ConvidadoModel(
-          idConvidado: user.idUsuario,
-          idEvento: eventoController.eventoAtual.value?.idEvento ?? '',
-          nome: user.nome,
-          contato: user.email,
-          email: user.email,
-          status: StatusConvidado.confirmado, // Organizador sempre confirmado
-          //adulto: true,
-          //grupoMesa: null,
-          cuidadoEspecial: false, 
-          dataCadastro: DateTime.now(),
-          dataAtualizacao: DateTime.now(),
+      final convidados = lista.toList();
+      final user = Get.find<AppController>().usuarioLogado.value;
+      if (user != null &&
+          !convidados.any((item) => item.idConvidado == user.idUsuario)) {
+        final agora = DateTime.now();
+        convidados.insert(
+          0,
+          Convidado(
+            idConvidado: user.idUsuario,
+            idEvento: idEvento,
+            nome: user.nome,
+            contato: user.email,
+            email: user.email,
+            status: StatusConvidado.confirmado,
+            cuidadoEspecial: false,
+            dataCadastro: agora,
+            dataAtualizacao: agora,
+          ),
         );
-
-        // Evitar duplicação caso o organizador também esteja na coleção "convidado"
-        final jaExiste = listaConvidados.any((c) => c.idConvidado == user.idUsuario);
-
-        if (!jaExiste) {
-          listaConvidados.insert(0, organizador); // adiciona no topo
-        }
       }
-
-      // ============================================================
-      // 4️⃣ Atualizar lista reativa
-      // ============================================================
-      usuarios.assignAll(listaConvidados);
+      usuarios.assignAll(convidados);
     } catch (e) {
       erro.value = 'Erro ao carregar usuários: $e';
     } finally {
@@ -135,111 +108,93 @@ class TarefaController extends GetxController {
     }
   }
 
-  // ==========================================================
-  // 🔹 Adiciona nova tarefa
-  // ==========================================================
-  Future<void> adicionarTarefa(
-      {required String nome,
-      String? descricao,
-      DateTime? dataPrevista,
-      String? idResponsavel,
-      String? idEvento}) async {
+  Future<void> adicionarTarefa({
+    required String nome,
+    String? descricao,
+    DateTime? dataPrevista,
+    String? idResponsavel,
+    String? idEvento,
+  }) async {
     try {
-      final id = const Uuid().v4();
-      final nova = TarefaModel(
-        idTarefa: id,
-        idEvento: idEvento ?? '',
-        titulo: nome,
-        descricao: descricao,
-        dataPrevista: dataPrevista,
-        idResponsavel: idResponsavel,
-        status: StatusTarefa.aFazer,
+      await _repository.adicionar(
+        Tarefa(
+          idTarefa: const Uuid().v4(),
+          idEvento: idEvento ?? '',
+          titulo: nome,
+          descricao: descricao,
+          dataPrevista: dataPrevista,
+          idResponsavel: idResponsavel,
+          status: StatusTarefa.aFazer,
+        ),
       );
-
-      await _db.collection('tarefa').doc(id).set(nova.toMap());
     } catch (e) {
       erro.value = 'Erro ao adicionar tarefa: $e';
     }
   }
 
-  // ==========================================================
-  // 🔹 Editar / Atualizar tarefa
-  // ==========================================================
-  Future<void> editarTarefa(TarefaModel tarefa) async {
+  Future<void> editarTarefa(Tarefa tarefa) async {
     try {
-      await _db.collection('tarefa').doc(tarefa.idTarefa).update(tarefa.toMap());
+      await _repository.atualizar(tarefa);
     } catch (e) {
       erro.value = 'Erro ao editar tarefa: $e';
     }
   }
 
-  Future<void> atualizarStatus(String idTarefa, StatusTarefa novoStatus) async {
+  Future<bool> atualizarStatus(
+    String idTarefa,
+    StatusTarefa novoStatus,
+  ) async {
     try {
-      await _db.collection('tarefa').doc(idTarefa).update({
-        'status': novoStatus.firestoreValue,
-      });
+      await _repository.atualizarStatus(idTarefa, novoStatus);
+      return true;
     } catch (e) {
       erro.value = 'Erro ao atualizar status: $e';
+      return false;
     }
   }
 
-  // ==========================================================
-  // 🔹 Excluir tarefa
-  // ==========================================================
   Future<void> excluirTarefa(String idTarefa) async {
     try {
-      await _db.collection('tarefa').doc(idTarefa).delete();
+      await _repository.excluir(idTarefa);
     } catch (e) {
       erro.value = 'Erro ao excluir tarefa: $e';
     }
   }
 
-// ==========================================================
-// 🔹 Lista de tarefas com data mais próxima (ordenadas)
-// ==========================================================
-  List<TarefaModel> tarefasProximas({int diasLimite = 30}) {
-    final hoje = DateTime.now().subtract(Duration(days: 150));
+  List<Tarefa> tarefasProximas({int diasLimite = 30}) {
+    final hoje = DateTime.now().subtract(const Duration(days: 150));
     final limite = hoje.add(Duration(days: diasLimite));
-
-    final proximas = tarefas
-        .where((t) =>
-            t.dataPrevista != null &&
-            t.dataPrevista!.isAfter(hoje.subtract(const Duration(days: 1))) &&
-            t.dataPrevista!.isBefore(limite))
-        .toList();
-
-    proximas.sort((a, b) => a.dataPrevista!.compareTo(b.dataPrevista!));
-    return proximas;
+    return tarefas
+        .where((tarefa) =>
+            tarefa.dataPrevista != null &&
+            tarefa.dataPrevista!
+                .isAfter(hoje.subtract(const Duration(days: 1))) &&
+            tarefa.dataPrevista!.isBefore(limite))
+        .toList()
+      ..sort((a, b) => a.dataPrevista!.compareTo(b.dataPrevista!));
   }
 
-  // ==========================================================
-  // 🔹 Cálculos reativos de progresso
-  // ==========================================================
   double get progresso {
     if (tarefas.isEmpty) return 0;
-    final concluidas = tarefas.where((t) => t.status == StatusTarefa.concluida).length;
     return concluidas / tarefas.length;
   }
 
   int get total => tarefas.length;
-  int get concluidas => tarefas.where((t) => t.status == StatusTarefa.concluida).length;
-  int get pendentes => tarefas.where((t) => t.status != StatusTarefa.concluida).length;
+  int get concluidas =>
+      tarefas.where((t) => t.status == StatusTarefa.concluida).length;
+  int get pendentes =>
+      tarefas.where((t) => t.status != StatusTarefa.concluida).length;
 
-  // ==========================================================
-  // 🔹 Resetar controller
-  // ==========================================================
   void reset() {
-    _tarefasSubscription?.cancel();
+    unawaited(_tarefasSubscription?.cancel());
+    _tarefasSubscription = null;
     tarefas.clear();
     usuarios.clear();
   }
 
-  // ==========================================================
-  // 🔹 Fechamento seguro do controller
-  // ==========================================================
   @override
   void onClose() {
-    _tarefasSubscription?.cancel();
+    unawaited(_tarefasSubscription?.cancel());
     super.onClose();
   }
 }

@@ -1,178 +1,103 @@
-// ======================================================
-// 🏷️ ENUM - Status do Evento
-// ======================================================
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum StatusEvento {
-  rascunho,
-  planejamento,
-  confirmado,
-  emAndamento,
-  finalizado,
-  adiado,
-  cancelado,
-}
-
-extension StatusEventoExtension on StatusEvento {
-  String get label {
-    switch (this) {
-      case StatusEvento.rascunho:
-        return 'Rascunho';
-      case StatusEvento.planejamento:
-        return 'Em planejamento';
-      case StatusEvento.confirmado:
-        return 'Confirmado';
-      case StatusEvento.emAndamento:
-        return 'Em andamento';
-      case StatusEvento.finalizado:
-        return 'Finalizado';
-      case StatusEvento.adiado:
-        return 'Adiado';
-      case StatusEvento.cancelado:
-        return 'Cancelado';
-    }
-  }
-
-  String get value => toString().split('.').last;
-}
+import '../../../domain/entities/evento.dart';
+export '../../../domain/entities/evento.dart'
+    show Evento, StatusEvento, StatusEventoExtension;
 
 // ======================================================
 // 🗓️ MODELO - EventoModel
 // ======================================================
-class EventoModel {
-  final String idEvento;
-  final String idTipoEvento;
-  final String idUsuario;
-
-  // 🗺️ Localização
-  final String? idCidade;
-  final String? nomeCidade;
-  final String? uf;
-  final String? cep;
-  final String? logradouro;
-  final String? numero;
-  final String? complemento;
-  final String? bairro;
-
-  // 📅 Informações gerais
-  final String? nomePessoalPrincipal;
-  final String nomeEvento;
-
-  final String localEvento;
-  final DateTime data;
-  final String? hora;
-  final double? custoEstimado;
-
-  /// Total geral informado/estimado para o evento.
-  /// Mantido para compatibilidade com telas antigas e consultas rápidas.
-  final int? totalConvidados;
-
-  /// Quantidade estimada por tipo de convidado.
-  /// Esses campos alimentam a calculadora inteligente, pois cada tipo possui
-  /// peso de consumo diferente: adulto, criança e bebê.
-  final int? totalAdultos;
-  final int? totalCriancas;
-  final int? totalBebes;
-
-  final StatusEvento? status;
-  final String? descricao;
-
-  // ⚙️ Controle
-  final bool ativo;
-  final DateTime dataCadastro;
-
-  // 💍 Casamento
-  final String? nomeNoiva;
-  final String? nomeNoivo;
-  final String? tipoCerimonia;
-  final String? estiloCasamento;
-  final List<String>? padrinhos;
-
-  // 🎂 Aniversário / 🎈 Festa Infantil
-  final String? nomeAniversariante;
-  final int? idade;
-  final String? tema;
-  final String? nomeResponsavel;
-
-  // 🍼 Chá de Bebê
-  final String? nomeGestante;
-  final String? nomeBebe;
-  final String? tipoCha;
-  final DateTime? dataPrevistaNascimento;
-
-  // 🌐 Personalização
-  final String? hashtagEvento;
-  final String? siteEvento;
-  final String? dressCode;
-
+class EventoModel extends Evento {
   EventoModel({
-    required this.idEvento,
-    required this.idTipoEvento,
-    required this.idUsuario,
-    required this.nomeEvento,
-    required this.localEvento,
-    required this.data,
-    this.nomePessoalPrincipal,
-    this.idCidade,
-    this.nomeCidade,
-    this.uf,
-    this.hora,
-    this.custoEstimado,
-    this.totalConvidados,
-    this.totalAdultos,
-    this.totalCriancas,
-    this.totalBebes,
-    this.status = StatusEvento.planejamento,
-    this.descricao,
-    this.cep,
-    this.logradouro,
-    this.numero,
-    this.complemento,
-    this.bairro,
-    this.ativo = true,
-    DateTime? dataCadastro,
-    this.nomeNoiva,
-    this.nomeNoivo,
-    this.tipoCerimonia,
-    this.estiloCasamento,
-    this.padrinhos,
-    this.nomeAniversariante,
-    this.idade,
-    this.tema,
-    this.nomeResponsavel,
-    this.nomeGestante,
-    this.nomeBebe,
-    this.tipoCha,
-    this.dataPrevistaNascimento,
-    this.hashtagEvento,
-    this.siteEvento,
-    this.dressCode,
-  }) : dataCadastro = dataCadastro ?? DateTime.now();
+    required super.idEvento,
+    required super.idTipoEvento,
+    required super.idUsuario,
+    required super.nomeEvento,
+    required super.localEvento,
+    required super.data,
+    super.nomePessoalPrincipal,
+    super.idCidade,
+    super.nomeCidade,
+    super.uf,
+    super.hora,
+    super.custoEstimado,
+    super.totalConvidados,
+    super.totalAdultos,
+    super.totalCriancas,
+    super.totalBebes,
+    super.status,
+    super.descricao,
+    super.mensagemConvidado,
+    super.cep,
+    super.logradouro,
+    super.numero,
+    super.complemento,
+    super.bairro,
+    super.ativo,
+    super.dataCadastro,
+    super.nomeNoiva,
+    super.nomeNoivo,
+    super.tipoCerimonia,
+    super.estiloCasamento,
+    super.padrinhos,
+    super.nomeAniversariante,
+    super.idade,
+    super.tema,
+    super.nomeResponsavel,
+    super.nomeGestante,
+    super.nomeBebe,
+    super.tipoCha,
+    super.dataPrevistaNascimento,
+    super.hashtagEvento,
+    super.siteEvento,
+    super.dressCode,
+  });
 
-  // ======================================================
-  // 🔹 Getters auxiliares
-  // ======================================================
-
-  int get totalAdultosCalculado => totalAdultos ?? 0;
-
-  int get totalCriancasCalculado => totalCriancas ?? 0;
-
-  int get totalBebesCalculado => totalBebes ?? 0;
-
-  int get totalConvidadosPorTipo {
-    return totalAdultosCalculado + totalCriancasCalculado + totalBebesCalculado;
-  }
-
-  int get totalConvidadosCalculado {
-    if (totalConvidados != null && totalConvidados! > 0) {
-      return totalConvidados!;
-    }
-
-    return totalConvidadosPorTipo;
-  }
-
-  bool get possuiQuantidadePorTipo {
-    return totalConvidadosPorTipo > 0;
+  factory EventoModel.fromEntity(Evento evento) {
+    return EventoModel(
+      idEvento: evento.idEvento,
+      idTipoEvento: evento.idTipoEvento,
+      idUsuario: evento.idUsuario,
+      nomeEvento: evento.nomeEvento,
+      localEvento: evento.localEvento,
+      data: evento.data,
+      nomePessoalPrincipal: evento.nomePessoalPrincipal,
+      idCidade: evento.idCidade,
+      nomeCidade: evento.nomeCidade,
+      uf: evento.uf,
+      hora: evento.hora,
+      custoEstimado: evento.custoEstimado,
+      totalConvidados: evento.totalConvidados,
+      totalAdultos: evento.totalAdultos,
+      totalCriancas: evento.totalCriancas,
+      totalBebes: evento.totalBebes,
+      status: evento.status,
+      descricao: evento.descricao,
+      mensagemConvidado: evento.mensagemConvidado,
+      cep: evento.cep,
+      logradouro: evento.logradouro,
+      numero: evento.numero,
+      complemento: evento.complemento,
+      bairro: evento.bairro,
+      ativo: evento.ativo,
+      dataCadastro: evento.dataCadastro,
+      nomeNoiva: evento.nomeNoiva,
+      nomeNoivo: evento.nomeNoivo,
+      tipoCerimonia: evento.tipoCerimonia,
+      estiloCasamento: evento.estiloCasamento,
+      padrinhos: evento.padrinhos,
+      nomeAniversariante: evento.nomeAniversariante,
+      idade: evento.idade,
+      tema: evento.tema,
+      nomeResponsavel: evento.nomeResponsavel,
+      nomeGestante: evento.nomeGestante,
+      nomeBebe: evento.nomeBebe,
+      tipoCha: evento.tipoCha,
+      dataPrevistaNascimento: evento.dataPrevistaNascimento,
+      hashtagEvento: evento.hashtagEvento,
+      siteEvento: evento.siteEvento,
+      dressCode: evento.dressCode,
+    );
   }
 
   // ======================================================
@@ -219,8 +144,9 @@ class EventoModel {
       'nome_gestante': nomeGestante,
       'nome_bebe': nomeBebe,
       'tipo_cha': tipoCha,
-      'data_prevista_nascimento':
-          dataPrevistaNascimento != null ? Timestamp.fromDate(dataPrevistaNascimento!) : null,
+      'data_prevista_nascimento': dataPrevistaNascimento != null
+          ? Timestamp.fromDate(dataPrevistaNascimento!)
+          : null,
       'hashtag_evento': hashtagEvento,
       'site_evento': siteEvento,
       'dress_code': dressCode,
@@ -238,21 +164,23 @@ class EventoModel {
       idCidade: map['id_cidade']?.toString(),
       nomeCidade: map['nome_cidade'],
       uf: map['uf'],
-      nomeEvento: map['nome_evento'] ?? '',
+      nomeEvento: map['nome_evento'] ?? map['nome'] ?? '',
       nomePessoalPrincipal: map['nome_pessoa_principal'] ?? '',
       localEvento: map['local_evento'] ?? map['logradouro'] ?? '',
       data: map['data'] is Timestamp
           ? (map['data'] as Timestamp).toDate()
           : DateTime.tryParse(map['data']?.toString() ?? '') ?? DateTime.now(),
       hora: map['hora'],
-      custoEstimado:
-          map['custo_estimado'] != null ? (map['custo_estimado'] as num).toDouble() : null,
+      custoEstimado: map['custo_estimado'] != null
+          ? (map['custo_estimado'] as num).toDouble()
+          : null,
       totalConvidados: _parseTotalConvidados(map),
       totalAdultos: _parseIntNullable(map['total_adultos']),
       totalCriancas: _parseIntNullable(map['total_criancas']),
       totalBebes: _parseIntNullable(map['total_bebes']),
       status: _parseStatus(map['status']),
       descricao: map['descricao'],
+      mensagemConvidado: map['mensagem'],
       cep: map['cep'],
       logradouro: map['logradouro'],
       numero: map['numero'],
@@ -266,7 +194,8 @@ class EventoModel {
       nomeNoivo: map['nome_noivo'],
       tipoCerimonia: map['tipo_cerimonia'],
       estiloCasamento: map['estilo_casamento'],
-      padrinhos: map['padrinhos'] != null ? List<String>.from(map['padrinhos']) : null,
+      padrinhos:
+          map['padrinhos'] != null ? List<String>.from(map['padrinhos']) : null,
       nomeAniversariante: map['nome_aniversariante'],
       idade: map['idade'],
       tema: map['tema'],
@@ -337,6 +266,7 @@ class EventoModel {
     int? totalBebes,
     StatusEvento? status,
     String? descricao,
+    String? mensagemConvidado,
     String? cep,
     String? logradouro,
     String? numero,
@@ -380,6 +310,7 @@ class EventoModel {
       totalBebes: totalBebes ?? this.totalBebes,
       status: status ?? this.status,
       descricao: descricao ?? this.descricao,
+      mensagemConvidado: mensagemConvidado ?? this.mensagemConvidado,
       cep: cep ?? this.cep,
       logradouro: logradouro ?? this.logradouro,
       numero: numero ?? this.numero,
@@ -399,7 +330,8 @@ class EventoModel {
       nomeGestante: nomeGestante ?? this.nomeGestante,
       nomeBebe: nomeBebe ?? this.nomeBebe,
       tipoCha: tipoCha ?? this.tipoCha,
-      dataPrevistaNascimento: dataPrevistaNascimento ?? this.dataPrevistaNascimento,
+      dataPrevistaNascimento:
+          dataPrevistaNascimento ?? this.dataPrevistaNascimento,
       hashtagEvento: hashtagEvento ?? this.hashtagEvento,
       siteEvento: siteEvento ?? this.siteEvento,
       dressCode: dressCode ?? this.dressCode,

@@ -1,10 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:get/get.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
+import '../domain/entities/usuario.dart';
+import '../domain/repositories/autenticacao_repository.dart';
+import '../domain/repositories/perfil_usuario_repository.dart';
+
 class LoginController extends GetxController {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AutenticacaoRepository _autenticacaoRepository =
+      Get.find<AutenticacaoRepository>();
+  final PerfilUsuarioRepository _perfilRepository =
+      Get.find<PerfilUsuarioRepository>();
 
   var email = ''.obs;
   var senha = ''.obs;
@@ -18,34 +24,63 @@ class LoginController extends GetxController {
 
     try {
       carregando.value = true;
-      await _auth.signInWithEmailAndPassword(
+      await _autenticacaoRepository.entrar(
         email: email.value.trim(),
-        password: senha.value.trim(),
+        senha: senha.value.trim(),
       );
 
-      final user = _auth.currentUser;
-      if (user != null) {
-        final doc = await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).get();
-
-        if (doc.exists) {
-          // final dados = doc.data()!;
-          // Preenche temporariamente
-          // final usuario = UsuarioModel.fromMap(dados);
-          // pode armazenar localmente ou passar como parâmetro
-        } else {
-          await FirebaseFirestore.instance.collection('usuarios').doc(user.uid).set({
-            'idUsuario': user.uid,
-            'email': user.email,
-            'criadoAutomaticamente': true,
-          });
-        }
-      }
+      await _garantirPerfilDoUsuario();
       Get.offAllNamed('/welcome');
-    } on FirebaseAuthException catch (e) {
-      EasyLoading.showError(_traduzErro(e.code));
+    } on AutenticacaoException catch (e) {
+      EasyLoading.showError(_traduzErro(e.codigo));
     } finally {
       carregando.value = false;
     }
+  }
+
+  Future<void> loginComGoogle() async {
+    try {
+      carregando.value = true;
+      await _autenticacaoRepository.entrarComGoogle();
+      await _garantirPerfilDoUsuario();
+      Get.offAllNamed('/welcome');
+    } on AutenticacaoException catch (e) {
+      EasyLoading.showError(_traduzErro(e.codigo));
+    } finally {
+      carregando.value = false;
+    }
+  }
+
+  Future<void> _garantirPerfilDoUsuario() async {
+    final idUsuario = _autenticacaoRepository.idUsuarioAtual;
+    if (idUsuario == null) return;
+
+    final usuario = await _perfilRepository.buscarUsuario(idUsuario);
+    if (usuario != null) return;
+
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    final nome = firebaseUser?.displayName?.trim() ?? '';
+    final email = _autenticacaoRepository.emailUsuarioAtual ?? '';
+
+    if (nome.isNotEmpty) {
+      await _perfilRepository.salvarUsuario(
+        Usuario(
+          idUsuario: idUsuario,
+          nome: nome,
+          email: email,
+          tipo: 'O',
+          fotoPerfilUrl: firebaseUser?.photoURL,
+          ativo: true,
+          dataCadastro: DateTime.now(),
+        ),
+      );
+      return;
+    }
+
+    await _perfilRepository.criarUsuarioAutomatico(
+      idUsuario: idUsuario,
+      email: _autenticacaoRepository.emailUsuarioAtual,
+    );
   }
 
   String _traduzErro(String code) {
@@ -56,6 +91,19 @@ class LoginController extends GetxController {
         return 'Senha incorreta';
       case 'invalid-email':
         return 'Email inválido';
+      case 'account-exists-with-different-credential':
+        return 'Este e-mail já está cadastrado com outro método de login';
+      case 'canceled':
+        return 'Login com Google cancelado';
+      case 'interrupted':
+        return 'O Google interrompeu o login. Tente novamente.';
+      case 'clientConfigurationError':
+      case 'providerConfigurationError':
+        return 'Google não configurado corretamente no Firebase';
+      case 'google-token-not-found':
+      case 'google-sign-in-unsupported':
+      case 'google-unexpected-error':
+        return 'Login com Google indisponível neste dispositivo';
       default:
         return 'Erro ao fazer login. Tente novamente.';
     }

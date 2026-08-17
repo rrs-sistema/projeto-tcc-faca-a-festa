@@ -1,7 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
@@ -12,8 +11,8 @@ import './../../../controllers/evento_cadastro_controller.dart';
 import './../usuario/cadastro_evento_bottom_sheet.dart';
 import './../../../controllers/evento_controller.dart';
 import './../../../controllers/app_controller.dart';
+import './../../../domain/entities/tipo_evento.dart';
 import './../../../role_selector_screen.dart';
-import './../../../data/models/model.dart';
 import './../login/login_screen.dart';
 
 class WelcomeEventScreen extends StatefulWidget {
@@ -24,14 +23,13 @@ class WelcomeEventScreen extends StatefulWidget {
 }
 
 class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
-  final _db = FirebaseFirestore.instance;
   final themeController = Get.find<EventThemeController>();
   final appController = Get.find<AppController>();
   final eventoController = Get.find<EventoController>();
 
   final eventoCadastroController = Get.find<EventoCadastroController>();
 
-  List<TipoEventoModel> _tiposEvento = [];
+  List<TipoEvento> _tiposEvento = [];
   bool _loading = true;
 
   @override
@@ -42,9 +40,9 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
 
   Future<void> _carregarTiposEvento() async {
     try {
-      final snap = await _db.collection('tipo_evento').where('ativo', isEqualTo: true).get();
+      await eventoCadastroController.carregarTiposEvento();
       setState(() {
-        _tiposEvento = snap.docs.map((d) => TipoEventoModel.fromMap(d.data())).toList();
+        _tiposEvento = eventoCadastroController.tiposEvento.toList();
         _loading = false;
       });
     } catch (e) {
@@ -187,15 +185,18 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                                   };
                                 }
                                 eventoCadastroController.limpar(manterEndereco: true);
-                                eventoCadastroController.tipoEventoModel.value = tipo;
+                                eventoCadastroController
+                                    .tipoEventoSelecionado.value = tipo;
                                 EasyLoading.dismiss();
 
                                 await showCadastroEventoBottomSheet(context);
 
-                                if (eventoController.eventoAtual.value != null) {
+                                final eventoAtual =
+                                    eventoController.eventoAtualEntidade;
+                                if (eventoAtual != null) {
                                   EasyLoading.show(status: 'Processando...');
-                                  await eventoController.buscarUltimoEvento(
-                                      eventoController.eventoAtual.value!.idUsuario);
+                                  await eventoController
+                                      .buscarUltimoEvento(eventoAtual.idUsuario);
 
                                   await Future.delayed(Duration(milliseconds: 350));
 
@@ -363,7 +364,7 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                               end: Alignment.centerRight,
                             ).createShader(bounds),
                             child: Text(
-                              "by RRS System Technology",
+                              "by Jullia A. Nicolas B. Rivaldo R.",
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,

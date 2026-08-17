@@ -63,6 +63,7 @@ dependencies:
   path_provider: ^2.1.5
   cloud_functions: ^6.3.1
   firebase_app_check: ^0.4.4+1
+  google_sign_in: ^7.1.1
 
 dev_dependencies:
   flutter_test:

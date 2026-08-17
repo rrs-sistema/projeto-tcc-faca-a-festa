@@ -10,7 +10,8 @@ import './../endereco/endereco_section.dart';
 class RegisterOrganizadorForm extends StatelessWidget {
   final RegisterController controller;
   final String tipo;
-  const RegisterOrganizadorForm({super.key, required this.controller, required this.tipo});
+  const RegisterOrganizadorForm(
+      {super.key, required this.controller, required this.tipo});
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +47,9 @@ class RegisterOrganizadorForm extends StatelessWidget {
               obscureText: !controller.exibirSenha.value,
               suffixIcon: IconButton(
                 icon: Icon(
-                  controller.exibirSenha.value ? Icons.visibility_off : Icons.visibility,
+                  controller.exibirSenha.value
+                      ? Icons.visibility_off
+                      : Icons.visibility,
                   color: Colors.white,
                 ),
                 onPressed: () => controller.exibirSenha.toggle(),
@@ -55,13 +58,34 @@ class RegisterOrganizadorForm extends StatelessWidget {
             )),
         const SizedBox(height: 15),
         if (tipo != 'C')
-        EnderecoSection(
-          cor: primary,
-          controller: controller.enderecoController.value,
-          titulo: 'Endereço do usuário',
-        ),
+          EnderecoSection(
+            cor: primary,
+            controller: controller.enderecoController.value,
+            titulo: 'Endereço do usuário',
+          ),
         const SizedBox(height: 15),
         _botaoCadastrar(primary),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+                child: Divider(color: Colors.white.withValues(alpha: 0.35))),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Text(
+                'ou',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Expanded(
+                child: Divider(color: Colors.white.withValues(alpha: 0.35))),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _botaoCadastrarGoogle(primary),
       ],
     );
   }
@@ -79,4 +103,39 @@ class RegisterOrganizadorForm extends StatelessWidget {
           texto: controller.carregando.value ? 'Cadastrando...' : 'Cadastrar',
           onPressed: () => controller.registrarUsuario(),
         ));
+
+  Widget _botaoCadastrarGoogle(Color primary) => Obx(
+        () => SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: OutlinedButton.icon(
+            onPressed: controller.carregando.value
+                ? null
+                : () => controller.registrarComGoogle(),
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: primary,
+              side: BorderSide(color: Colors.white.withValues(alpha: 0.75)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            icon: const Text(
+              'G',
+              style: TextStyle(
+                color: Color(0xFF4285F4),
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            label: const Text(
+              'Cadastrar com Google',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ),
+      );
 }

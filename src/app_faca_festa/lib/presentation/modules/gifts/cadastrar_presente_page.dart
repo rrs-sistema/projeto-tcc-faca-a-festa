@@ -5,18 +5,14 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
-import './../../../app/bindings/gift_binding.dart';
 import './../../../controllers/gift/gift_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
-import './../../../data/models/gift/gift_model.dart';
 import './../../../domain/entities/gift/gift.dart';
 
 void abrirDialogCadastrarPresente(
   BuildContext context, {
-  GiftModel? presente,
+  Gift? presente,
 }) {
-  GiftBinding().dependencies();
-
   final themeController = Get.find<EventThemeController>();
   final controller = Get.find<GiftController>();
   final uuid = const Uuid();
@@ -29,7 +25,8 @@ void abrirDialogCadastrarPresente(
   final lojaCtrl = TextEditingController(text: presente?.loja ?? '');
   final linkCtrl = TextEditingController(text: presente?.link ?? '');
   final pixCtrl = TextEditingController(text: presente?.pix ?? '');
-  final metaCtrl = TextEditingController(text: _valueToField(presente?.metaValor));
+  final metaCtrl =
+      TextEditingController(text: _valueToField(presente?.metaValor));
   final imagemCtrl = TextEditingController(text: presente?.imagem ?? '');
 
   final Rx<GiftType> tipoSelecionado = (presente?.tipo ?? GiftType.fisico).obs;
@@ -97,7 +94,7 @@ void abrirDialogCadastrarPresente(
       final valor = tipo == GiftType.fisico ? 0.0 : _parseMoney(valorCtrl.text);
       final meta = tipo == GiftType.coletivo ? _parseMoney(metaCtrl.text) : 0.0;
 
-      final model = GiftModel(
+      final model = Gift(
         id: editando ? presente.id : uuid.v4(),
         nome: nomeCtrl.text.trim(),
         descricao: descricaoCtrl.text.trim(),
@@ -123,7 +120,9 @@ void abrirDialogCadastrarPresente(
 
       showSnack(
         title: 'Tudo certo',
-        message: editando ? 'Presente atualizado com sucesso.' : 'Presente adicionado à lista.',
+        message: editando
+            ? 'Presente atualizado com sucesso.'
+            : 'Presente adicionado à lista.',
         color: primary,
       );
     } catch (e, s) {
@@ -191,20 +190,23 @@ void abrirDialogCadastrarPresente(
                           const SizedBox(height: 16),
                           _SectionTitle(
                             title: 'Formato do presente',
-                            subtitle: 'Escolha como o convidado verá essa sugestão.',
+                            subtitle:
+                                'Escolha como o convidado verá essa sugestão.',
                           ),
                           const SizedBox(height: 10),
                           Obx(
                             () => _GiftTypeSelector(
                               primary: primary,
                               selected: tipoSelecionado.value,
-                              onChanged: (value) => tipoSelecionado.value = value,
+                              onChanged: (value) =>
+                                  tipoSelecionado.value = value,
                             ),
                           ),
                           const SizedBox(height: 18),
                           _SectionTitle(
                             title: 'Dados principais',
-                            subtitle: 'Use nomes curtos e objetivos para facilitar a escolha.',
+                            subtitle:
+                                'Use nomes curtos e objetivos para facilitar a escolha.',
                           ),
                           const SizedBox(height: 10),
                           _PremiumTextField(
@@ -215,7 +217,9 @@ void abrirDialogCadastrarPresente(
                             icon: Icons.redeem_rounded,
                             textCapitalization: TextCapitalization.sentences,
                             validator: (value) {
-                              if ((value ?? '').trim().isEmpty) return 'Informe o nome do presente';
+                              if ((value ?? '').trim().isEmpty) {
+                                return 'Informe o nome do presente';
+                              }
                               return null;
                             },
                             onChanged: (_) => urlPreview.refresh(),
@@ -225,7 +229,8 @@ void abrirDialogCadastrarPresente(
                             controller: descricaoCtrl,
                             primary: primary,
                             label: 'Descrição curta',
-                            hint: 'Opcional: cor, tamanho, observação ou preferência.',
+                            hint:
+                                'Opcional: cor, tamanho, observação ou preferência.',
                             icon: Icons.notes_rounded,
                             maxLines: 3,
                             textCapitalization: TextCapitalization.sentences,
@@ -328,10 +333,13 @@ class _GiftFormHeader extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.18),
                         borderRadius: BorderRadius.circular(18),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.18)),
                       ),
                       child: Icon(
-                        editando ? Icons.edit_note_rounded : Icons.add_shopping_cart_rounded,
+                        editando
+                            ? Icons.edit_note_rounded
+                            : Icons.add_shopping_cart_rounded,
                         color: Colors.white,
                         size: 25,
                       ),
@@ -366,7 +374,8 @@ class _GiftFormHeader extends StatelessWidget {
                     IconButton(
                       onPressed: onClose,
                       tooltip: 'Fechar',
-                      icon: const Icon(Icons.close_rounded, color: Colors.white),
+                      icon:
+                          const Icon(Icons.close_rounded, color: Colors.white),
                     ),
                   ],
                 ),
@@ -540,7 +549,8 @@ class _GiftTypeSelector extends StatelessWidget {
                     Text(
                       _tipoLabel(tipo),
                       style: GoogleFonts.poppins(
-                        color: isSelected ? Colors.white : const Color(0xFF111827),
+                        color:
+                            isSelected ? Colors.white : const Color(0xFF111827),
                         fontSize: 12.5,
                         fontWeight: FontWeight.w800,
                       ),
@@ -631,7 +641,9 @@ class _TipoCamposDinamicos extends StatelessWidget {
         _PremiumTextField(
           controller: valorCtrl,
           primary: primary,
-          label: tipo == GiftType.coletivo ? 'Valor sugerido por contribuição' : 'Valor sugerido',
+          label: tipo == GiftType.coletivo
+              ? 'Valor sugerido por contribuição'
+              : 'Valor sugerido',
           hint: 'Ex.: 50,00',
           icon: Icons.payments_rounded,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -733,7 +745,8 @@ class _PremiumTextField extends StatelessWidget {
         ),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: Color(0xFFE5EAF3)),
@@ -773,10 +786,12 @@ class _GiftFormFooter extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
+      padding: EdgeInsets.fromLTRB(
+          16, 12, 16, MediaQuery.of(context).padding.bottom + 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
+        border: Border(
+            top: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.06),
@@ -795,7 +810,8 @@ class _GiftFormFooter extends StatelessWidget {
                 onPressed: onCancel,
                 style: OutlinedButton.styleFrom(
                   side: const BorderSide(color: Color(0xFFE2E8F0)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                 ),
                 child: Text(
                   'Cancelar',
@@ -821,17 +837,22 @@ class _GiftFormFooter extends StatelessWidget {
                     elevation: 0,
                     backgroundColor: primary,
                     disabledBackgroundColor: primary.withValues(alpha: 0.55),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                   ),
                   icon: saving
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
-                      : const Icon(Icons.check_rounded, color: Colors.white, size: 20),
+                      : const Icon(Icons.check_rounded,
+                          color: Colors.white, size: 20),
                   label: Text(
-                    saving ? 'Salvando...' : (editando ? 'Salvar' : 'Adicionar'),
+                    saving
+                        ? 'Salvando...'
+                        : (editando ? 'Salvar' : 'Adicionar'),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
@@ -924,7 +945,8 @@ class _MiniBadge extends StatelessWidget {
   final Color color;
   final IconData icon;
 
-  const _MiniBadge({required this.label, required this.color, required this.icon});
+  const _MiniBadge(
+      {required this.label, required this.color, required this.icon});
 
   @override
   Widget build(BuildContext context) {

@@ -1,64 +1,88 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import './convidado/grupo_convidado_controller.dart';
-import './convidado/convidado_controller.dart';
-import './convidado/cardapio_controller.dart';
-import './../data/models/model.dart';
-import './orcamento_controller.dart';
-import 'inspiracao/inspiracao_controller.dart';
-import 'tarefa_controller.dart';
-import 'tema/event_theme_controller.dart';
-import 'usuario/usuario_controller.dart';
+import '../domain/entities/evento.dart';
+import '../domain/entities/tipo_evento.dart';
+import '../domain/repositories/evento_repository.dart';
+import '../presentation/coordinators/evento_session_coordinator.dart';
 
 class EventoController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  EventoController({
+    required EventoRepository repository,
+    required EventoSessionCoordinator sessionCoordinator,
+  })  : _repository = repository,
+        _sessionCoordinator = sessionCoordinator;
 
-  final Rx<EventoModel?> eventoAtual = Rx<EventoModel?>(null);
-  final Rx<TipoEventoModel?> tipoEventoAtual = Rx<TipoEventoModel?>(null);
+  final EventoRepository _repository;
+  final EventoSessionCoordinator _sessionCoordinator;
+
+  final Rx<Evento?> eventoAtual = Rx<Evento?>(null);
+  final Rx<TipoEvento?> tipoEventoAtual = Rx<TipoEvento?>(null);
   final RxBool carregando = false.obs;
 
-  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _eventoSubscription;
-  StreamSubscription<DocumentSnapshot<Map<String, dynamic>>>? _eventoDocSub;
+  /// Domain-facing access used by presentation and application controllers.
+  Evento? get eventoAtualEntidade => eventoAtual.value;
 
-  // 🔹 Escutas individuais de dados relacionados
-  StreamSubscription? _convidadosSub;
-  StreamSubscription? _gruposSub;
-  StreamSubscription? _cardapiosSub;
-  StreamSubscription? _orcamentosSub;
-  StreamSubscription? _tarefasSub;
+  /// Domain-facing access used by presentation and application controllers.
+  TipoEvento? get tipoEventoAtualEntidade => tipoEventoAtual.value;
+
+  StreamSubscription<Evento?>? _eventoSubscription;
+  StreamSubscription<Evento?>? _eventoDocSub;
 
   /// =====================================================
   /// 🔹 Busca o último evento do usuário (uma vez)
   /// =====================================================
-  Future<EventoModel?> buscarEventoPeloIdEvento(String idEvento) async {
+  Future<Evento?> buscarEventoPeloIdEvento(String idEvento) async {
     try {
       carregando.value = true;
       debugPrint("📦 [EventoController] Buscando o evento para id: $idEvento");
 
-      final snapshot = await _db
-          .collection('evento')
-          .where('id_evento', isEqualTo: idEvento)
-          .orderBy('data_cadastro', descending: true)
-          .limit(1)
-          .get();
+      final evento = await _repository.buscarPorId(idEvento);
 
-      if (snapshot.docs.isNotEmpty) {
+      if (evento != null) {
         carregando.value = false;
-        return EventoModel.fromMap(snapshot.docs.first.data());
+        return evento;
       } else {
         carregando.value = false;
         eventoAtual.value = null;
-        debugPrint("⚠️ [EventoController] Nenhum evento encontrado para id: $idEvento");
+        debugPrint(
+            "⚠️ [EventoController] Nenhum evento encontrado para id: $idEvento");
         return null;
       }
     } catch (e, s) {
       carregando.value = false;
-      debugPrint("❌ [EventoController] Erro ao buscar o evento do id: $idEvento - erros: $e\n$s");
+      debugPrint(
+          "❌ [EventoController] Erro ao buscar o evento do id: $idEvento - erros: $e\n$s");
       return null;
     }
+  }
+
+  Future<void> escutarEventoPorId(
+    String idEvento, {
+    Evento? eventoInicial,
+  }) async {
+    if (idEvento.trim().isEmpty) return;
+
+    await _eventoDocSub?.cancel();
+    if (eventoInicial != null &&
+        (eventoAtual.value == null ||
+            eventoAtual.value!.idEvento != idEvento)) {
+      eventoAtual.value = eventoInicial;
+    }
+
+    _eventoDocSub = _repository.observarPorId(idEvento).listen(
+      (eventoAtualizado) {
+        if (eventoAtualizado != null) {
+          eventoAtual.value = eventoAtualizado;
+          debugPrint(
+              'Evento atualizado em tempo real: ${eventoAtualizado.nomeEvento}');
+        }
+      },
+      onError: (Object error, StackTrace stackTrace) {
+        debugPrint('Erro ao acompanhar evento: $error');
+      },
+    );
   }
 
   /// =====================================================
@@ -67,21 +91,17 @@ class EventoController extends GetxController {
   Future<void> buscarUltimoEvento(String idUsuario) async {
     try {
       carregando.value = true;
-      debugPrint("📦 [EventoController] Buscando último evento para usuário: $idUsuario");
+      debugPrint(
+          "📦 [EventoController] Buscando último evento para usuário: $idUsuario");
 
-      final snapshot = await _db
-          .collection('evento')
-          .where('id_usuario', isEqualTo: idUsuario)
-          .orderBy('data_cadastro', descending: true)
-          .limit(1)
-          .get();
+      final evento = await _repository.buscarUltimoPorUsuario(idUsuario);
 
-      if (snapshot.docs.isNotEmpty) {
-        final evento = EventoModel.fromMap(snapshot.docs.first.data());
+      if (evento != null) {
         await _inicializarEvento(evento);
       } else {
         eventoAtual.value = null;
-        debugPrint("⚠️ [EventoController] Nenhum evento encontrado para este usuário.");
+        debugPrint(
+            "⚠️ [EventoController] Nenhum evento encontrado para este usuário.");
       }
 
       carregando.value = false;
@@ -97,19 +117,14 @@ class EventoController extends GetxController {
   void escutarUltimoEvento(String idUsuario) {
     _eventoSubscription?.cancel();
 
-    _eventoSubscription = _db
-        .collection('evento')
-        .where('id_usuario', isEqualTo: idUsuario)
-        .orderBy('data_cadastro', descending: true)
-        .limit(1)
-        .snapshots()
-        .listen((snapshot) async {
-      if (snapshot.docs.isNotEmpty) {
-        final evento = EventoModel.fromMap(snapshot.docs.first.data());
-
+    _eventoSubscription =
+        _repository.observarUltimoPorUsuario(idUsuario).listen((evento) async {
+      if (evento != null) {
         // Evita reinicialização desnecessária
-        if (eventoAtual.value == null || evento.idEvento != eventoAtual.value!.idEvento) {
-          debugPrint("🔁 [EventoController] Evento detectado/atualizado: ${evento.nomeEvento}");
+        if (eventoAtual.value == null ||
+            evento.idEvento != eventoAtual.value!.idEvento) {
+          debugPrint(
+              "🔁 [EventoController] Evento detectado/atualizado: ${evento.nomeEvento}");
           await _inicializarEvento(evento);
         }
       } else {
@@ -123,9 +138,10 @@ class EventoController extends GetxController {
   /// =====================================================
   /// 🔹 Inicializa todos os controladores do evento atual
   /// =====================================================
-  Future<void> _inicializarEvento(EventoModel evento) async {
+  Future<void> _inicializarEvento(Evento evento) async {
     try {
-      debugPrint("🎯 [EventoController] Inicializando evento: ${evento.nomeEvento}");
+      debugPrint(
+          "🎯 [EventoController] Inicializando evento: ${evento.nomeEvento}");
       await _cancelarEscutas();
 
       eventoAtual.value = evento;
@@ -134,47 +150,23 @@ class EventoController extends GetxController {
       await buscarTipoEvento(evento.idTipoEvento);
 
       // ✅ Aplica o tema visual automaticamente
-      final themeController = Get.find<EventThemeController>();
       final tipoNome = tipoEventoAtual.value?.nome ?? 'Padrão';
       debugPrint("🎨 [EventoController] Aplicando tema para tipo: $tipoNome");
-      themeController.aplicarTemaPorNome(tipoNome);
+      _sessionCoordinator.aplicarTema(tipoNome);
 
       // ✅ Escuta o documento do evento em tempo real
-      _eventoDocSub = _db.collection('evento').doc(evento.idEvento).snapshots().listen((doc) {
-        if (doc.exists) {
-          final data = doc.data()!;
-          final eventoAtualizado = EventoModel.fromMap(data);
-          eventoAtual.value = eventoAtualizado;
+      _eventoDocSub = _repository.observarPorId(evento.idEvento).listen(
+        (eventoAtualizado) {
+          if (eventoAtualizado != null) {
+            eventoAtual.value = eventoAtualizado;
 
-          debugPrint(
-              "🔄 [EventoController] Evento atualizado em tempo real: ${eventoAtualizado.nomeEvento}");
-        }
-      });
+            debugPrint(
+                "🔄 [EventoController] Evento atualizado em tempo real: ${eventoAtualizado.nomeEvento}");
+          }
+        },
+      );
 
-      // 🔹 Inicializa controladores auxiliares
-      final orcamentoController = Get.find<OrcamentoController>();
-      final convidadoController = Get.find<ConvidadoController>();
-      final cardapioController = Get.find<CardapioController>();
-      final grupoController = Get.find<GrupoConvidadoController>();
-      final tarefaController = Get.find<TarefaController>();
-      final inspiracaoController = Get.find<InspiracaoController>();
-      final usuarioController = Get.find<UsuarioController>();
-
-      _orcamentosSub =
-          orcamentoController.carregarOrcamentosDoEvento(evento.idEvento).asStream().listen((_) {});
-      _convidadosSub =
-          convidadoController.escutarConvidados(evento.idEvento).asStream().listen((_) {});
-
-      _cardapiosSub =
-          cardapioController.escutarCardapios(evento.idEvento).asStream().listen((_) {});
-      _gruposSub = grupoController.escutarGrupos(evento.idEvento).asStream().listen((_) {});
-      _tarefasSub = tarefaController.listenTarefas(evento.idEvento).asStream().listen((_) {});
-      final userLogado = usuarioController.usuario.value;
-
-      inspiracaoController
-          .configurarContextoEvento(eventoId: evento.idEvento, userId: userLogado?.idUsuario ?? '')
-          .asStream()
-          .listen((_) {});
+      await _sessionCoordinator.inicializarModulosRelacionados(evento);
 
       debugPrint(
           "✅ [EventoController] Evento '${evento.nomeEvento}' inicializado com sucesso e escutando alterações.");
@@ -188,18 +180,9 @@ class EventoController extends GetxController {
   /// =====================================================
   Future<void> _cancelarEscutas() async {
     await _eventoDocSub?.cancel();
-    await _orcamentosSub?.cancel();
-    await _tarefasSub?.cancel();
-    await _convidadosSub?.cancel();
-    await _cardapiosSub?.cancel();
-    await _gruposSub?.cancel();
+    await _sessionCoordinator.cancelar();
 
-    _tarefasSub = null;
     _eventoDocSub = null;
-    _orcamentosSub = null;
-    _convidadosSub = null;
-    _cardapiosSub = null;
-    _gruposSub = null;
   }
 
   /// =====================================================
@@ -207,23 +190,19 @@ class EventoController extends GetxController {
   /// =====================================================
   Future<void> buscarTipoEvento(String idTipoEvento) async {
     try {
-      final snapshot = await _db
-          .collection('tipo_evento')
-          .where('id_tipo_evento', isEqualTo: idTipoEvento)
-          .limit(1)
-          .get();
+      final tipoEvento = await _repository.buscarTipoPorId(idTipoEvento);
 
-      if (snapshot.docs.isNotEmpty) {
-        tipoEventoAtual.value = TipoEventoModel.fromMap(snapshot.docs.first.data());
+      if (tipoEvento != null) {
+        tipoEventoAtual.value = tipoEvento;
 
         final nome = tipoEventoAtual.value!.nome;
         debugPrint("📘 [EventoController] Tipo de evento carregado: $nome");
 
         // 🔹 Aplica tema imediatamente
-        final themeController = Get.find<EventThemeController>();
-        themeController.aplicarTemaPorNome(nome);
+        _sessionCoordinator.aplicarTema(nome);
       } else {
-        debugPrint("⚠️ [EventoController] Tipo de evento não encontrado para ID: $idTipoEvento");
+        debugPrint(
+            "⚠️ [EventoController] Tipo de evento não encontrado para ID: $idTipoEvento");
       }
     } catch (e, s) {
       debugPrint("❌ [EventoController] Erro ao buscar tipo de evento: $e\n$s");
@@ -233,23 +212,23 @@ class EventoController extends GetxController {
   /// =====================================================
   /// 🔹 Salvar e excluir eventos
   /// =====================================================
-  Future<void> salvarEvento(EventoModel evento) async {
-    await _db.collection('evento').doc(evento.idEvento).set(evento.toMap());
+  Future<void> salvarEvento(Evento evento) async {
+    await _repository.salvar(evento);
   }
 
   Future<void> excluirEvento(String idEvento) async {
-    await _db.collection('evento').doc(idEvento).delete();
+    await _repository.excluir(idEvento);
   }
 
   /// =====================================================
   /// 🔹 Listar eventos por usuário
   /// =====================================================
-  Stream<List<EventoModel>> listarEventosPorUsuario(String idUsuario) {
-    return _db
-        .collection('evento')
-        .where('id_usuario', isEqualTo: idUsuario)
-        .snapshots()
-        .map((snap) => snap.docs.map((d) => EventoModel.fromMap(d.data())).toList());
+  Stream<List<Evento>> listarEventosPorUsuario(String idUsuario) {
+    return _repository.listarPorUsuario(idUsuario);
+  }
+
+  Stream<List<Evento>> listarEntidadesPorUsuario(String idUsuario) {
+    return _repository.listarPorUsuario(idUsuario);
   }
 
   /// =====================================================
@@ -266,4 +245,8 @@ class EventoController extends GetxController {
     eventoAtual.value = null;
   }
 
+  void limparSessaoAtual() {
+    eventoAtual.value = null;
+    tipoEventoAtual.value = null;
+  }
 }

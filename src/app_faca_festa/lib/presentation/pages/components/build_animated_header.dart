@@ -16,8 +16,8 @@ Widget buildAnimatedHeader() {
   final gradient = theme.gradient.value;
 
   return Obx(() {
-    final evento = eventoController.eventoAtual.value;
-    final tipoEvento = eventoController.tipoEventoAtual.value;
+    final evento = eventoController.eventoAtualEntidade;
+    final tipoEvento = eventoController.tipoEventoAtualEntidade;
 
     return Container(
       height: 200,
@@ -101,7 +101,10 @@ Widget buildAnimatedHeader() {
                         fontSize: isCelular ? 14 : 18,
                         fontWeight: FontWeight.w700,
                         shadows: const [
-                          Shadow(color: Colors.black54, blurRadius: 6, offset: Offset(0, 2)),
+                          Shadow(
+                              color: Colors.black54,
+                              blurRadius: 6,
+                              offset: Offset(0, 2)),
                         ],
                       ),
                     ),
@@ -140,11 +143,13 @@ Widget buildAnimatedHeader() {
                 fit: BoxFit.scaleDown,
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_month, color: Colors.white, size: 18),
+                    const Icon(Icons.calendar_month,
+                        color: Colors.white, size: 18),
                     const SizedBox(width: 6),
                     Text(
                       evento?.data != null
-                          ? DateFormat("d 'de' MMMM yyyy", 'pt_BR').format(evento!.data)
+                          ? DateFormat("d 'de' MMMM yyyy", 'pt_BR')
+                              .format(evento!.data)
                           : 'Data a definir',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
@@ -153,7 +158,8 @@ Widget buildAnimatedHeader() {
                       ),
                     ),
                     const SizedBox(width: 20),
-                    const Icon(Icons.place_rounded, color: Colors.white, size: 18),
+                    const Icon(Icons.place_rounded,
+                        color: Colors.white, size: 18),
                     const SizedBox(width: 6),
                     Text(
                       evento?.logradouro ?? 'Local não definido',

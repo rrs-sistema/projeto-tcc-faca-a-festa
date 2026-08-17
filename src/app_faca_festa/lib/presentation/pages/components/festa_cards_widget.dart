@@ -51,7 +51,8 @@ class FestaCardsWidget extends StatelessWidget {
                     ),
                     onTap: () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const PainelCotacaoPage()),
+                      MaterialPageRoute(
+                          builder: (_) => const PainelCotacaoPage()),
                     ),
                   )
                       .animate()
@@ -61,13 +62,15 @@ class FestaCardsWidget extends StatelessWidget {
             // === 2️⃣ Orçamentos ===
             case 1:
               return _FestaInfoCard(
-                card: _CardData(title: "Orçamentos", subtitle: "", style: paleta[1]),
+                card: _CardData(
+                    title: "Orçamentos", subtitle: "", style: paleta[1]),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const OrcamentoScreen()),
                 ),
                 reactiveSubtitle: Obx(() {
-                  final custo = eventoController.eventoAtual.value?.custoEstimado ?? 0;
+                  final custo =
+                      eventoController.eventoAtualEntidade?.custoEstimado ?? 0;
                   return Text(
                     Biblioteca.formatarValorDecimal(custo),
                     textAlign: TextAlign.center,
@@ -85,7 +88,8 @@ class FestaCardsWidget extends StatelessWidget {
             // === 3️⃣ Convidados ===
             case 2:
               return _FestaInfoCard(
-                card: _CardData(title: "Convidados", subtitle: "", style: paleta[2]),
+                card: _CardData(
+                    title: "Convidados", subtitle: "", style: paleta[2]),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const ConvidadosPage()),
@@ -111,7 +115,8 @@ class FestaCardsWidget extends StatelessWidget {
             // === 4️⃣ Tarefas ===
             case 3:
               return _FestaInfoCard(
-                card: _CardData(title: "Tarefas", subtitle: "", style: paleta[3]),
+                card:
+                    _CardData(title: "Tarefas", subtitle: "", style: paleta[3]),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const TarefasScreen()),
@@ -144,7 +149,10 @@ class FestaCardsWidget extends StatelessWidget {
   List<_CardStyle> _obterPaletaPorTema(String temaAtivo, Color corBase) {
     final Map<String, List<_CardStyle>> paletaPorTema = {
       'casamento': [
-        _CardStyle(bg: Colors.white, text: Colors.pink.shade700, icon: Icons.storefront_rounded),
+        _CardStyle(
+            bg: Colors.white,
+            text: Colors.pink.shade700,
+            icon: Icons.storefront_rounded),
         _CardStyle(
             bg: const Color(0xFFFFF3F7),
             text: Colors.red.shade400,
@@ -159,7 +167,10 @@ class FestaCardsWidget extends StatelessWidget {
             icon: Icons.check_circle_outline_rounded),
       ],
       'festa infantil': [
-        _CardStyle(bg: Colors.white, text: Colors.orange.shade700, icon: Icons.storefront_rounded),
+        _CardStyle(
+            bg: Colors.white,
+            text: Colors.orange.shade700,
+            icon: Icons.storefront_rounded),
         _CardStyle(
             bg: const Color(0xFFFFF8E1),
             text: Colors.orange.shade800,
@@ -174,7 +185,10 @@ class FestaCardsWidget extends StatelessWidget {
             icon: Icons.check_circle_outline_rounded),
       ],
       'chá de bebê': [
-        _CardStyle(bg: Colors.white, text: Colors.blue.shade600, icon: Icons.storefront_rounded),
+        _CardStyle(
+            bg: Colors.white,
+            text: Colors.blue.shade600,
+            icon: Icons.storefront_rounded),
         _CardStyle(
             bg: const Color(0xFFE1F5FE),
             text: Colors.blue.shade700,
@@ -190,7 +204,9 @@ class FestaCardsWidget extends StatelessWidget {
       ],
       'aniversário': [
         _CardStyle(
-            bg: Colors.white, text: Colors.deepPurple.shade600, icon: Icons.storefront_rounded),
+            bg: Colors.white,
+            text: Colors.deepPurple.shade600,
+            icon: Icons.storefront_rounded),
         _CardStyle(
             bg: const Color(0xFFF3E5F5),
             text: Colors.purple.shade700,
@@ -205,11 +221,20 @@ class FestaCardsWidget extends StatelessWidget {
             icon: Icons.check_circle_outline_rounded),
       ],
       'padrão': [
-        _CardStyle(bg: Colors.white, text: corBase, icon: Icons.storefront_rounded),
-        _CardStyle(bg: const Color(0xFFF1F8E9), text: corBase, icon: Icons.attach_money_rounded),
-        _CardStyle(bg: const Color(0xFFE0F2F1), text: corBase, icon: Icons.people_alt_rounded),
         _CardStyle(
-            bg: const Color(0xFFB2DFDB), text: corBase, icon: Icons.check_circle_outline_rounded),
+            bg: Colors.white, text: corBase, icon: Icons.storefront_rounded),
+        _CardStyle(
+            bg: const Color(0xFFF1F8E9),
+            text: corBase,
+            icon: Icons.attach_money_rounded),
+        _CardStyle(
+            bg: const Color(0xFFE0F2F1),
+            text: corBase,
+            icon: Icons.people_alt_rounded),
+        _CardStyle(
+            bg: const Color(0xFFB2DFDB),
+            text: corBase,
+            icon: Icons.check_circle_outline_rounded),
       ],
     };
 

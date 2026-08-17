@@ -1,0 +1,115 @@
+{"kind":"deck","id":"pr/84yd3y","name":"Deck"}
+{"kind":"layout","layoutId":"aed41b87-a4c0-4482-b122-bceb8bdb1301","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"25c5dfe9-8aa0-471d-954a-8c5d3d5e25db","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/2x7qjk","slide":1,"title":"FAÇA A FESTA · BANCO DE DADOS","textShapes":4}
+{"kind":"textbox","id":"sh/xgna1or2","slide":1,"text":"FAÇA A FESTA · BANCO DE DADOS","textPreview":"FAÇA A FESTA · BANCO DE DADOS","textChars":29,"textLines":1,"bbox":[42,42,620,40]}
+{"kind":"textbox","id":"sh/atcbq98b","slide":1,"text":"O que o aplicativo realmente usa no Firebase","textPreview":"O que o aplicativo realmente usa no Firebase","textChars":44,"textLines":1,"bbox":[42,184,1030,220]}
+{"kind":"textbox","id":"sh/bulsze9w","slide":1,"text":"Coleções, documentos, campos e chaves lógicas mapeados a partir do código","textPreview":"Coleções, documentos, campos e chaves lógicas mapeados a partir do código","textChars":73,"textLines":1,"bbox":[42,510,820,90]}
+{"kind":"textbox","id":"sh/orutozql","slide":1,"text":"Apresentação técnica · 10 minutos","textPreview":"Apresentação técnica · 10 minutos","textChars":33,"textLines":1,"bbox":[42,640,500,28]}
+{"kind":"notes","id":"nt/2x7qjk","slide":1,"text":"Abra dizendo que o objetivo não foi desenhar um banco ideal, mas comprovar o banco que o código usa hoje. Explique que o levantamento cruzou modelos, acessos do app e Cloud Functions.\n\n[Sources]\n- lib/data/models/**\n- lib/controllers/**\n- lib/data/repositories/**\n- functions/src/**"}
+{"kind":"slide","id":"sl/hwbg79","slide":2,"title":"Os 74 modelos não equivalem a 74 tabelas","textShapes":12}
+{"kind":"textbox","id":"sh/sr69wz6x","slide":2,"text":"Os 74 modelos não equivalem a 74 tabelas","textPreview":"Os 74 modelos não equivalem a 74 tabelas","textChars":40,"textLines":1,"bbox":[42,34,1196,70]}
+{"kind":"textbox","id":"sh/rqxs3upc","slide":2,"text":"Só foram contabilizados caminhos com evidência de leitura ou gravação no Firestore.","textPreview":"Só foram contabilizados caminhos com evidência de leitura ou gravação no Firestore.","textChars":83,"textLines":1,"bbox":[42,112,1196,60]}
+{"kind":"textbox","id":"sh/qporup8r","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1170,668,68,24]}
+{"kind":"shape","id":"sh/1gfa947e","slide":2,"bbox":[42,300,374,320]}
+{"kind":"textbox","id":"sh/0v690z6t","slide":2,"text":"29","textPreview":"29","textChars":2,"textLines":1,"bbox":[72,334,310,106]}
+{"kind":"textbox","id":"sh/fuxs7up8","slide":2,"text":"coleções raiz","textPreview":"coleções raiz","textChars":13,"textLines":1,"bbox":[72,455,310,42]}
+{"kind":"textbox","id":"sh/etory9on","slide":2,"text":"Usadas pelo app ou pelas Cloud Functions","textPreview":"Usadas pelo app ou pelas Cloud Functions","textChars":40,"textLines":1,"bbox":[72,515,310,78]}
+{"kind":"shape","id":"sh/9kzado7a","slide":2,"bbox":[453,300,374,320]}
+{"kind":"textbox","id":"sh/ojq94j65","slide":2,"text":"17","textPreview":"17","textChars":2,"textLines":1,"bbox":[483,334,310,106]}
+{"kind":"textbox","id":"sh/2p8ra50z","slide":2,"text":"caminhos de subcoleção","textPreview":"caminhos de subcoleção","textChars":22,"textLines":1,"bbox":[483,455,310,42]}
+{"kind":"textbox","id":"sh/3q1s3ahk","slide":2,"text":"Dados aninhados sob usuário, evento, cotação e outros","textPreview":"Dados aninhados sob usuário, evento, cotação e outros","textChars":53,"textLines":1,"bbox":[483,515,310,78]}
+{"kind":"shape","id":"sh/oba9cfi5","slide":2,"bbox":[864,300,374,320]}
+{"kind":"textbox","id":"sh/pcja5kzq","slide":2,"text":"74","textPreview":"74","textChars":2,"textLines":1,"bbox":[894,334,310,106]}
+{"kind":"textbox","id":"sh/qdsrep0v","slide":2,"text":"arquivos de modelo","textPreview":"arquivos de modelo","textChars":18,"textLines":1,"bbox":[894,455,310,42]}
+{"kind":"textbox","id":"sh/be1s7ahg","slide":2,"text":"Incluem DTOs, projeções, cálculos e armazenamento local","textPreview":"Incluem DTOs, projeções, cálculos e armazenamento local","textChars":55,"textLines":1,"bbox":[894,515,310,78]}
+{"kind":"notes","id":"nt/hwbg79","slide":2,"text":"Esta é a principal correção do mapeamento antigo: classe não significa coleção. Há modelos para telas administrativas, respostas de IA, DTOs e banco local. A apresentação passa a focar somente nos caminhos comprovados.\n\n[Sources]\n- lib/data/models/** (74 arquivos .dart)\n- Ocorrências de collection(...) em lib/**\n- Constantes de coleção em functions/src/**"}
+{"kind":"slide","id":"sl/nn6vnw","slide":3,"title":"No Firestore, a estrutura é coleção → documento → subcoleção","textShapes":13}
+{"kind":"textbox","id":"sh/n69crit8","slide":3,"text":"No Firestore, a estrutura é coleção → documento → subcoleção","textPreview":"No Firestore, a estrutura é coleção → documento → subcoleção","textChars":60,"textLines":1,"bbox":[42,34,1196,70]}
+{"kind":"textbox","id":"sh/o7it0nut","slide":3,"text":"As relações existem por convenção do código; não há chave estrangeira automática.","textPreview":"As relações existem por convenção do código; não há chave estrangeira automática.","textChars":81,"textLines":1,"bbox":[42,112,1196,60]}
+{"kind":"textbox","id":"sh/p8rut8be","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1170,668,68,24]}
+{"kind":"shape","id":"sh/atkb2dcz","slide":3,"bbox":[70,340,1090,0]}
+{"kind":"shape","id":"sh/butcvit4","slide":3,"bbox":[90,333,15,15]}
+{"kind":"textbox","id":"sh/cv2d4nup","slide":3,"text":"COLEÇÃO","textPreview":"COLEÇÃO","textChars":7,"textLines":1,"bbox":[90,278,240,32]}
+{"kind":"textbox","id":"sh/xwbuxsba","slide":3,"text":"evento","textPreview":"evento","textChars":6,"textLines":1,"bbox":[90,390,300,45]}
+{"kind":"textbox","id":"sh/yxkv6xcv","slide":3,"text":"Agrupa documentos do mesmo domínio","textPreview":"Agrupa documentos do mesmo domínio","textChars":34,"textLines":1,"bbox":[90,447,300,80]}
+{"kind":"shape","id":"sh/zytcz2tg","slide":3,"bbox":[465,333,15,15]}
+{"kind":"textbox","id":"sh/3ihgve9s","slide":3,"text":"DOCUMENTO","textPreview":"DOCUMENTO","textChars":9,"textLines":1,"bbox":[465,278,240,32]}
+{"kind":"textbox","id":"sh/2h8fm9s7","slide":3,"text":"{idEvento}","textPreview":"{idEvento}","textChars":10,"textLines":1,"bbox":[465,390,300,45]}
+{"kind":"textbox","id":"sh/pkzyx4ry","slide":3,"text":"A PK real é o ID do caminho","textPreview":"A PK real é o ID do caminho","textChars":27,"textLines":1,"bbox":[465,447,300,80]}
+{"kind":"shape","id":"sh/4jqhojad","slide":3,"bbox":[840,333,15,15]}
+{"kind":"textbox","id":"sh/vehgru9w","slide":3,"text":"SUBCOLEÇÃO","textPreview":"SUBCOLEÇÃO","textChars":10,"textLines":1,"bbox":[840,278,240,32]}
+{"kind":"textbox","id":"sh/udofipsb","slide":3,"text":"presentes/{id}","textPreview":"presentes/{id}","textChars":14,"textLines":1,"bbox":[840,390,300,45]}
+{"kind":"textbox","id":"sh/hgzyt4rm","slide":3,"text":"Dados filhos ficam aninhados","textPreview":"Dados filhos ficam aninhados","textChars":28,"textLines":1,"bbox":[840,447,300,80]}
+{"kind":"textbox","id":"sh/gfqxkzah","slide":3,"text":"Exemplo completo: evento/{idEvento}/presentes/{idPresente}/contributions/{id}","textPreview":"Exemplo completo: evento/{idEvento}/presentes/{idPresente}/contributions/{id}","textChars":77,"textLines":1,"bbox":[90,585,1050,38]}
+{"kind":"notes","id":"nt/nn6vnw","slide":3,"text":"Use um exemplo concreto. O documento do evento pode ter presentes; cada presente pode ter contribuições. Campos como id_evento funcionam como FK lógica, mas o Firestore não impede que apontem para um documento inexistente.\n\n[Sources]\n- lib/data/datasources/remote/gift_remote_datasource.dart:12-151\n- lib/data/models/gift/gift_model.dart\n- lib/data/models/gift/gift_contribution_model.dart"}
+{"kind":"slide","id":"sl/calwap","slide":4,"title":"O núcleo liga usuário, evento e operação da festa","textShapes":3}
+{"kind":"textbox","id":"sh/q143yxk3","slide":4,"text":"O núcleo liga usuário, evento e operação da festa","textPreview":"O núcleo liga usuário, evento e operação da festa","textChars":49,"textLines":1,"bbox":[42,34,1196,70]}
+{"kind":"textbox","id":"sh/d4vm9s3e","slide":4,"text":"A maior parte das consultas filtra os documentos filhos por id_evento.","textPreview":"A maior parte das consultas filtra os documentos filhos por id_evento.","textChars":70,"textLines":1,"bbox":[42,112,1196,60]}
+{"kind":"textbox","id":"sh/c3ml0n29","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1170,668,68,24]}
+{"kind":"table","id":"tb/ap4r6t4f","slide":4,"name":"","rows":7,"cols":4,"preview":"Coleção | PK do documento | FKs lógicas | Campos mais usados","bbox":[42,195,1196,440]}
+{"kind":"notes","id":"nt/calwap","slide":4,"text":"Apresente primeiro o caminho principal: o usuário cria um evento; convidados e tarefas referenciam o evento; cardápios possuem itens aninhados. Ressalte que o ID costuma ser repetido no corpo do documento.\n\n[Sources]\n- lib/data/models/usuario/usuario_model.dart\n- lib/data/models/evento/evento_model.dart\n- lib/data/models/convidado/convidado_model.dart\n- lib/data/models/tarefa/tarefa_model.dart\n- lib/controllers/convidado/cardapio_controller.dart"}
+{"kind":"slide","id":"sl/oz8b6b","slide":5,"title":"O catálogo de fornecedores usa coleções de ligação","textShapes":3}
+{"kind":"textbox","id":"sh/vyxk76p4","slide":5,"text":"O catálogo de fornecedores usa coleções de ligação","textPreview":"O catálogo de fornecedores usa coleções de ligação","textChars":50,"textLines":1,"bbox":[42,34,1196,70]}
+{"kind":"textbox","id":"sh/wz610b6p","slide":5,"text":"Fornecedor e serviço têm uma relação muitos-para-muitos representada por documentos intermediários.","textPreview":"Fornecedor e serviço têm uma relação muitos-para-muitos representada por documentos intermediários.","textChars":99,"textLines":1,"bbox":[42,112,1196,60]}
+{"kind":"textbox","id":"sh/x0f29g7a","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1170,668,68,24]}
+{"kind":"table","id":"tb/jqxc3qhw","slide":5,"name":"","rows":8,"cols":4,"preview":"Coleção | PK | Vínculo | Campos principais","bbox":[42,185,1196,455]}
+{"kind":"notes","id":"nt/oz8b6b","slide":5,"text":"Explique a função das coleções de ligação. fornecedor_categoria e fornecedor_servico evitam colocar todo o catálogo em um único documento e permitem consultas por fornecedor, categoria e serviço.\n\n[Sources]\n- lib/data/models/fornecedor/fornecedor_model.dart\n- lib/data/models/servico_produto/**\n- lib/controllers/servico/servico_produto_controller.dart\n- lib/controllers/fornecedor/fornecedor_controller.dart"}
+{"kind":"slide","id":"sl/cogbrh","slide":6,"title":"A cotação concentra propostas, serviços e mensagens","textShapes":3}
+{"kind":"textbox","id":"sh/50rytk72","slide":6,"text":"A cotação concentra propostas, serviços e mensagens","textPreview":"A cotação concentra propostas, serviços e mensagens","textChars":51,"textLines":1,"bbox":[42,34,1196,70]}
+{"kind":"textbox","id":"sh/idgfipor","slide":6,"text":"O orçamento fechado é gravado em outra coleção e detalhado por uma subcoleção de gastos.","textPreview":"O orçamento fechado é gravado em outra coleção e detalhado por uma subcoleção de gastos.","textChars":88,"textLines":1,"bbox":[42,112,1196,60]}
+{"kind":"textbox","id":"sh/3epgrapw","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1170,668,68,24]}
+{"kind":"table","id":"tb/t03u9ory","slide":6,"name":"","rows":7,"cols":4,"preview":"Caminho | Chave | Referências | Campos centrais","bbox":[42,195,1196,440]}
+{"kind":"notes","id":"nt/cogbrh","slide":6,"text":"Mostre que cotação é um agregado aninhado: fornecedores, serviços e chat ficam abaixo dela. Quando há fechamento, o sistema também cria orçamento, que passa a controlar gastos e pagamento.\n\n[Sources]\n- lib/controllers/contacao/cotacao_controller.dart\n- lib/controllers/contacao/solicitacoes_controller.dart\n- lib/controllers/orcamento_controller.dart\n- lib/controllers/orcamento_gasto_controller.dart\n- lib/presentation/pages/fornecedor/chat/chat_mensagens_page.dart"}
+{"kind":"slide","id":"sl/xlud0e","slide":7,"title":"Módulos avançados ampliam o banco sem criar tabelas para cada modelo","textShapes":3}
+{"kind":"textbox","id":"sh/87a1wb6h","slide":7,"text":"Módulos avançados ampliam o banco sem criar tabelas para cada modelo","textPreview":"Módulos avançados ampliam o banco sem criar tabelas para cada modelo","textChars":68,"textLines":1,"bbox":[42,34,1196,70]}
+{"kind":"textbox","id":"sh/761kn6pw","slide":7,"text":"Calculadora, inspiração, presentes e recomendação usam documentos compostos e histórico aninhado.","textPreview":"Calculadora, inspiração, presentes e recomendação usam documentos compostos e histórico aninhado.","textChars":97,"textLines":1,"bbox":[42,112,1196,60]}
+{"kind":"textbox","id":"sh/6lsju1ob","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1170,668,68,24]}
+{"kind":"table","id":"tb/gza5ovex","slide":7,"name":"","rows":7,"cols":4,"preview":"Domínio | Coleções | Chaves / estrutura | Dados relevantes","bbox":[42,190,1196,445]}
+{"kind":"notes","id":"nt/xlud0e","slide":7,"text":"Esta parte demonstra por que modelos de resposta de IA não devem ser contados automaticamente como tabelas. Só entram no mapa quando existe um caminho persistido, como calculadora_festa/analises_ia.\n\n[Sources]\n- lib/data/repositories/calculadora_festa_repository.dart\n- functions/src/services/calculadora/calculadoraFirestoreService.ts\n- lib/controllers/inspiracao/inspiracao_controller.dart\n- lib/data/datasources/remote/gift_remote_datasource.dart\n- functions/src/services/fornecedores/**"}
+{"kind":"slide","id":"sl/fhsa9u","slide":8,"title":"As chaves são lógicas — o código precisa manter a consistência","textShapes":12}
+{"kind":"textbox","id":"sh/yt876xg3","slide":8,"text":"As chaves são lógicas — o código precisa manter a consistência","textPreview":"As chaves são lógicas — o código precisa manter a consistência","textChars":62,"textLines":1,"bbox":[42,34,1196,70]}
+{"kind":"textbox","id":"sh/lwj6hcfe","slide":8,"text":"Três estratégias aparecem repetidamente na implementação.","textPreview":"Três estratégias aparecem repetidamente na implementação.","textChars":57,"textLines":1,"bbox":[42,112,1196,60]}
+{"kind":"textbox","id":"sh/kvap87yt","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1170,668,68,24]}
+{"kind":"shape","id":"sh/bqhobixc","slide":8,"bbox":[42,250,374,360]}
+{"kind":"textbox","id":"sh/a5872dgr","slide":8,"text":"PK do documento","textPreview":"PK do documento","textChars":15,"textLines":1,"bbox":[70,285,318,42]}
+{"kind":"textbox","id":"sh/xsz6dsfi","slide":8,"text":"evento/{idEvento}","textPreview":"evento/{idEvento}","textChars":17,"textLines":1,"bbox":[70,355,318,55]}
+{"kind":"textbox","id":"sh/wrqp4nyx","slide":8,"text":"É a identidade real no Firestore. Em vários casos ela também é repetida como id_evento.","textPreview":"É a identidade real no Firestore. Em vários casos ela também é repetida como id_evento.","textChars":87,"textLines":1,"bbox":[70,440,318,125]}
+{"kind":"shape","id":"sh/n2xo7ixg","slide":8,"bbox":[453,250,374,360]}
+{"kind":"textbox","id":"sh/m1o7ydgv","slide":8,"text":"FK textual","textPreview":"FK textual","textChars":10,"textLines":1,"bbox":[481,285,318,42]}
+{"kind":"textbox","id":"sh/cfulwne5","slide":8,"text":"tarefa.id_evento","textPreview":"tarefa.id_evento","textChars":16,"textLines":1,"bbox":[481,355,318,55]}
+{"kind":"textbox","id":"sh/dg3mpsfq","slide":8,"text":"Permite consultas com where(), mas não impede referência órfã após uma exclusão.","textPreview":"Permite consultas com where(), mas não impede referência órfã após uma exclusão.","textChars":80,"textLines":1,"bbox":[481,440,318,125]}
+{"kind":"shape","id":"sh/qdc3udwz","slide":8,"bbox":[864,250,374,360]}
+{"kind":"textbox","id":"sh/bel4nixk","slide":8,"text":"ID composto","textPreview":"ID composto","textChars":11,"textLines":1,"bbox":[892,285,318,42]}
+{"kind":"textbox","id":"sh/4rals3et","slide":8,"text":"fornecedor_servico/{fornecedor_servico}","textPreview":"fornecedor_servico/{fornecedor_servico}","textChars":39,"textLines":1,"bbox":[892,355,318,55]}
+{"kind":"textbox","id":"sh/pc3ml8fe","slide":8,"text":"Evita duplicidade de vínculo, desde que todos os pontos usem a mesma fórmula.","textPreview":"Evita duplicidade de vínculo, desde que todos os pontos usem a mesma fórmula.","textChars":77,"textLines":1,"bbox":[892,440,318,125]}
+{"kind":"notes","id":"nt/fhsa9u","slide":8,"text":"Diferencie PK real, FK lógica e ID composto. O ganho de flexibilidade do NoSQL exige disciplina: as relações não são validadas pelo banco como em SQL.\n\n[Sources]\n- lib/controllers/evento_controller.dart\n- lib/controllers/tarefa_controller.dart\n- lib/controllers/avaliacao/avaliacao_servico_controller.dart\n- lib/controllers/servico/servico_produto_controller.dart"}
+{"kind":"slide","id":"sl/ohmbb8","slide":9,"title":"Quatro pontos hoje podem gerar dados divergentes","textShapes":15}
+{"kind":"textbox","id":"sh/sfqlgvu9","slide":9,"text":"Quatro pontos hoje podem gerar dados divergentes","textPreview":"Quatro pontos hoje podem gerar dados divergentes","textChars":48,"textLines":1,"bbox":[42,34,1196,70]}
+{"kind":"textbox","id":"sh/rehk7qd4","slide":9,"text":"O problema principal não é o Firestore; é a falta de uma convenção única entre os módulos.","textPreview":"O problema principal não é o Firestore; é a falta de uma convenção única entre os módulos.","textChars":90,"textLines":1,"bbox":[42,112,1196,60]}
+{"kind":"textbox","id":"sh/6d83elcj","slide":9,"text":"09","textPreview":"09","textChars":2,"textLines":1,"bbox":[1170,668,68,24]}
+{"kind":"shape","id":"sh/14jmd0v6","slide":9,"bbox":[42,205,575,170]}
+{"kind":"textbox","id":"sh/g3alkvul","slide":9,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[66,230,48,52]}
+{"kind":"textbox","id":"sh/f2h4bqd0","slide":9,"text":"Avaliações em várias origens","textPreview":"Avaliações em várias origens","textChars":28,"textLines":1,"bbox":[130,227,455,42]}
+{"kind":"textbox","id":"sh/e183i5cf","slide":9,"text":"fornecedor/avaliacoes, fornecedor_servico/avaliacoes, avaliacao_fornecedor, avaliacoes e fornecedor_avaliacoes","textPreview":"fornecedor/avaliacoes, fornecedor_servico/avaliacoes, avaliacao_fornecedor, avaliacoes e fornecedor_avaliacoes","textChars":110,"textLines":1,"bbox":[130,281,455,72]}
+{"kind":"shape","id":"sh/h8f21gvm","slide":9,"bbox":[652,205,575,170]}
+{"kind":"textbox","id":"sh/w76l8buh","slide":9,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[676,230,48,52]}
+{"kind":"textbox","id":"sh/qp0bapgr","slide":9,"text":"Dois caminhos para tarefas e orçamento","textPreview":"Dois caminhos para tarefas e orçamento","textChars":38,"textLines":1,"bbox":[740,227,455,42]}
+{"kind":"textbox","id":"sh/rq9s3uhc","slide":9,"text":"Coleções raiz coexistem com evento/{id}/tarefas e evento/{id}/orcamento","textPreview":"Coleções raiz coexistem com evento/{id}/tarefas e evento/{id}/orcamento","textChars":71,"textLines":1,"bbox":[740,281,455,72]}
+{"kind":"shape","id":"sh/critczyx","slide":9,"bbox":[42,410,575,170]}
+{"kind":"textbox","id":"sh/dsra54zi","slide":9,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[66,435,48,52]}
+{"kind":"textbox","id":"sh/et0be9g3","slide":9,"text":"snake_case + camelCase","textPreview":"snake_case + camelCase","textChars":22,"textLines":1,"bbox":[130,432,455,42]}
+{"kind":"textbox","id":"sh/zu9s7eho","slide":9,"text":"Recomendações mantêm consultas de compatibilidade para os dois padrões","textPreview":"Recomendações mantêm consultas de compatibilidade para os dois padrões","textChars":70,"textLines":1,"bbox":[130,486,455,72]}
+{"kind":"shape","id":"sh/0vitgjyt","slide":9,"bbox":[652,410,575,170]}
+{"kind":"textbox","id":"sh/1gra9oze","slide":9,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[676,435,48,52]}
+{"kind":"textbox","id":"sh/mhkbi9gz","slide":9,"text":"Regras fora do versionamento","textPreview":"Regras fora do versionamento","textChars":28,"textLines":1,"bbox":[740,432,455,42]}
+{"kind":"textbox","id":"sh/nitcbehk","slide":9,"text":"firebase.json não referencia firestore.rules nem firestore.indexes.json","textPreview":"firebase.json não referencia firestore.rules nem firestore.indexes.json","textChars":71,"textLines":1,"bbox":[740,486,455,72]}
+{"kind":"notes","id":"nt/ohmbb8","slide":9,"text":"Apresente estes pontos como achados do código, não como falhas do banco. Eles explicam por que o novo mapeamento deve ser mantido como contrato de dados.\n\n[Sources]\n- lib/controllers/avaliacao/avaliacao_servico_controller.dart\n- lib/controllers/inspiracao/inspiracao_controller.dart\n- lib/controllers/fornecedor/fornecedor_recomendacao_controller.dart\n- firebase.json"}
+{"kind":"slide","id":"sl/0ksyv3","slide":10,"title":"CONCLUSÃO","textShapes":6}
+{"kind":"textbox","id":"sh/k36dobql","slide":10,"text":"CONCLUSÃO","textPreview":"CONCLUSÃO","textChars":9,"textLines":1,"bbox":[42,42,300,36]}
+{"kind":"textbox","id":"sh/zidwf6pg","slide":10,"text":"O próximo passo é transformar o mapa em contrato de dados","textPreview":"O próximo passo é transformar o mapa em contrato de dados","textChars":57,"textLines":1,"bbox":[42,175,1050,180]}
+{"kind":"textbox","id":"sh/yh4vm18v","slide":10,"text":"1. Padronizar nomes e campos obrigatórios","textPreview":"1. Padronizar nomes e campos obrigatórios","textChars":41,"textLines":1,"bbox":[42,455,1000,36]}
+{"kind":"textbox","id":"sh/98felg7i","slide":10,"text":"2. Escolher uma fonte por conceito","textPreview":"2. Escolher uma fonte por conceito","textChars":34,"textLines":1,"bbox":[42,507,1000,36]}
+{"kind":"textbox","id":"sh/876xsbqx","slide":10,"text":"3. Versionar regras, índices e exclusões em cascata","textPreview":"3. Versionar regras, índices e exclusões em cascata","textChars":51,"textLines":1,"bbox":[42,559,1000,36]}
+{"kind":"textbox","id":"sh/76xwj6pc","slide":10,"text":"Resultado: banco explicável, consultas previsíveis e menos risco de documentos órfãos.","textPreview":"Resultado: banco explicável, consultas previsíveis e menos risco de documentos órfãos.","textChars":86,"textLines":1,"bbox":[42,635,1110,32]}
+{"kind":"notes","id":"nt/0ksyv3","slide":10,"text":"Feche retomando a pergunta inicial: agora sabemos o que é realmente persistido. A recomendação é manter este dicionário junto do código e usar uma única convenção por domínio.\n\n[Sources]\n- document/MAPEAMENTO_FIREBASE_APRESENTACAO.md\n- Levantamento consolidado em 11/08/2026"}

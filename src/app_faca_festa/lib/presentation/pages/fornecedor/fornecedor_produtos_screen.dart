@@ -15,11 +15,13 @@ class FornecedorProdutosScreen extends StatefulWidget {
   const FornecedorProdutosScreen({super.key, required this.fornecedor});
 
   @override
-  State<FornecedorProdutosScreen> createState() => _FornecedorProdutosScreenState();
+  State<FornecedorProdutosScreen> createState() =>
+      _FornecedorProdutosScreenState();
 }
 
 class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
-  final RxSet<String> selecionados = <String>{}.obs; // 🔹 IDs dos serviços selecionados
+  final RxSet<String> selecionados =
+      <String>{}.obs; // 🔹 IDs dos serviços selecionados
   final fornecedorController = Get.find<FornecedorController>();
   final eventoController = Get.find<EventoController>();
 
@@ -31,7 +33,8 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
 
   Future<void> _carregarProdutos() async {
     // 🔹 Carrega todos os serviços vinculados a este fornecedor
-    fornecedorController.escutarServicosFornecedor(widget.fornecedor.idFornecedor);
+    fornecedorController
+        .escutarServicosFornecedor(widget.fornecedor.idFornecedor);
   }
 
   @override
@@ -53,14 +56,16 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
 
       // 🔹 Mapeia cada vínculo com seu produto do catálogo
       final List<Map<String, dynamic>> produtos = servicos.map((fs) {
-        final produto = fornecedorController.buscarServicoPorId(fs.idProdutoServico);
+        final produto =
+            fornecedorController.buscarServicoPorId(fs.idProdutoServico);
         return {
           'id_servico': fs.id,
           'nome': produto?.nome ?? 'Serviço sem nome',
           'preco': fs.preco,
           'descricao': produto?.descricao ?? '',
           'imagem': fornecedorController.fotosServico
-              .firstWhereOrNull((f) => f.idProdutoServico == fs.idProdutoServico)
+              .firstWhereOrNull(
+                  (f) => f.idProdutoServico == fs.idProdutoServico)
               ?.url,
         };
       }).toList();
@@ -80,7 +85,8 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
             ),
           ),
           centerTitle: true,
-          flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
+          flexibleSpace:
+              Container(decoration: BoxDecoration(gradient: gradient)),
         ),
 
         // === GRID DE PRODUTOS ===
@@ -90,13 +96,15 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
                   padding: const EdgeInsets.all(30),
                   child: Text(
                     'Este fornecedor ainda não possui produtos cadastrados.',
-                    style: GoogleFonts.poppins(fontSize: 15, color: Colors.black54),
+                    style: GoogleFonts.poppins(
+                        fontSize: 15, color: Colors.black54),
                     textAlign: TextAlign.center,
                   ),
                 ),
               )
             : Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                 child: GridView.builder(
                   itemCount: produtos.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -127,15 +135,19 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
         floatingActionButton: selecionados.isEmpty
             ? null
             : ElevatedButton.icon(
-                icon: const Icon(Icons.request_quote_rounded, color: Colors.white),
+                icon: const Icon(Icons.request_quote_rounded,
+                    color: Colors.white),
                 label: Text(
                   'Cotar (${selecionados.length})',
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, color: Colors.white),
                 ),
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 28),
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 14, horizontal: 28),
                   backgroundColor: primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                   elevation: 6,
                 ),
                 onPressed: () async {
@@ -146,7 +158,9 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
                     if (servico != null) {
                       await showNovoOrcamentoBottomSheet(
                         context: context,
-                        idEvento: eventoController.eventoAtual.value?.idEvento ?? '',
+                        idEvento:
+                            eventoController.eventoAtualEntidade?.idEvento ??
+                                '',
                         idFornecedor: widget.fornecedor.idFornecedor,
                         servico: servico,
                         statusInicial: StatusOrcamento.emNegociacao,
@@ -195,7 +209,8 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
                 child: Image.network(
                   imagem,
                   height: isTablet ? 320 : 100,
@@ -204,7 +219,8 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -212,7 +228,8 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
                       p['nome'] ?? 'Sem nome',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 14),
                     ),
                     const SizedBox(height: 4),
                     Text(
@@ -241,7 +258,8 @@ class _FornecedorProdutosScreenState extends State<FornecedorProdutosScreen> {
                 shape: BoxShape.circle,
                 gradient: selecionado ? gradient : null,
                 border: Border.all(
-                  color: selecionado ? Colors.transparent : Colors.grey.shade400,
+                  color:
+                      selecionado ? Colors.transparent : Colors.grey.shade400,
                   width: 1.2,
                 ),
                 color: selecionado ? null : Colors.white,

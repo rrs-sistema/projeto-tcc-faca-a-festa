@@ -84,7 +84,8 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
           icon: const Icon(Icons.add_rounded, size: 21),
           label: Text(
             'Novo presente',
-            style: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w800),
+            style: GoogleFonts.poppins(
+                fontSize: 12.5, fontWeight: FontWeight.w800),
           ),
           onPressed: () => abrirDialogCadastrarPresente(context),
         ),
@@ -117,7 +118,8 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
                   totalFiltrado: gifts.length,
                   onSearch: (value) => setState(() => _busca = value),
                   onTipoChanged: (value) => setState(() => _tipoFiltro = value),
-                  onStatusChanged: (value) => setState(() => _statusFiltro = value),
+                  onStatusChanged: (value) =>
+                      setState(() => _statusFiltro = value),
                   searchController: _searchCtrl,
                   onClear: _limparFiltros,
                 ),
@@ -141,7 +143,8 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
                 child: _PremiumEmptyState(
                   primary: primary,
                   title: 'Nenhum presente encontrado',
-                  message: 'Ajuste os filtros ou pesquise por outro nome, loja ou descrição.',
+                  message:
+                      'Ajuste os filtros ou pesquise por outro nome, loja ou descrição.',
                   actionLabel: 'Limpar filtros',
                   onAction: _limparFiltros,
                 ),
@@ -157,9 +160,10 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
                       return _PremiumGiftCard(
                         gift: gift,
                         primary: primary,
-                        onEdit: () =>
-                            abrirDialogCadastrarPresente(context, presente: gift.toModel()),
-                        onDelete: () => _confirmarExclusao(context, gift, primary),
+                        onEdit: () => abrirDialogCadastrarPresente(context,
+                            presente: gift),
+                        onDelete: () =>
+                            _confirmarExclusao(context, gift, primary),
                       );
                     },
                     childCount: gifts.length * 2 - 1,
@@ -196,7 +200,8 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
                       color: Colors.redAccent.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                    child: const Icon(Icons.delete_outline_rounded,
+                        color: Colors.redAccent),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -230,7 +235,8 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
                         onPressed: () => Get.back(),
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: Color(0xFFE2E8F0)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
                         ),
                         child: Text(
                           'Cancelar',
@@ -264,7 +270,8 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
                         style: ElevatedButton.styleFrom(
                           elevation: 0,
                           backgroundColor: Colors.redAccent,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
                         ),
                         child: Text(
                           'Remover',
@@ -308,8 +315,14 @@ class _PremiumGiftHeader extends StatelessWidget {
       decoration: BoxDecoration(gradient: gradient),
       child: Stack(
         children: [
-          Positioned(right: -58, top: -52, child: _GlowCircle(size: 170, opacity: 0.12)),
-          Positioned(left: -46, bottom: -66, child: _GlowCircle(size: 148, opacity: 0.10)),
+          Positioned(
+              right: -58,
+              top: -52,
+              child: _GlowCircle(size: 170, opacity: 0.12)),
+          Positioned(
+              left: -46,
+              bottom: -66,
+              child: _GlowCircle(size: 148, opacity: 0.10)),
           SafeArea(
             bottom: false,
             child: Padding(
@@ -486,7 +499,9 @@ class _FilterPanel extends StatelessWidget {
   });
 
   bool get _temFiltro =>
-      busca.trim().isNotEmpty || tipoSelecionado != null || statusSelecionado != null;
+      busca.trim().isNotEmpty ||
+      tipoSelecionado != null ||
+      statusSelecionado != null;
 
   @override
   Widget build(BuildContext context) {
@@ -520,7 +535,8 @@ class _FilterPanel extends StatelessWidget {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                   color: primary.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(999),
@@ -547,17 +563,20 @@ class _FilterPanel extends StatelessWidget {
             ),
             decoration: InputDecoration(
               hintText: 'Buscar por presente, descrição ou loja...',
-              hintStyle: GoogleFonts.poppins(color: const Color(0xFF94A3B8), fontSize: 12),
+              hintStyle: GoogleFonts.poppins(
+                  color: const Color(0xFF94A3B8), fontSize: 12),
               prefixIcon: Icon(Icons.search_rounded, color: primary),
               suffixIcon: _temFiltro
                   ? IconButton(
                       onPressed: onClear,
-                      icon: const Icon(Icons.close_rounded, color: Color(0xFF64748B)),
+                      icon: const Icon(Icons.close_rounded,
+                          color: Color(0xFF64748B)),
                     )
                   : null,
               filled: true,
               fillColor: const Color(0xFFF8FAFC),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
                 borderSide: const BorderSide(color: Color(0xFFE5EAF3)),
@@ -597,7 +616,9 @@ class _FilterPanel extends StatelessWidget {
                   label: 'Disponíveis',
                   icon: Icons.check_circle_outline_rounded,
                   onTap: () => onStatusChanged(
-                    statusSelecionado == GiftStatus.disponivel ? null : GiftStatus.disponivel,
+                    statusSelecionado == GiftStatus.disponivel
+                        ? null
+                        : GiftStatus.disponivel,
                   ),
                 ),
                 _FilterChipButton(
@@ -606,7 +627,9 @@ class _FilterPanel extends StatelessWidget {
                   label: 'Reservados',
                   icon: Icons.lock_clock_rounded,
                   onTap: () => onStatusChanged(
-                    statusSelecionado == GiftStatus.reservado ? null : GiftStatus.reservado,
+                    statusSelecionado == GiftStatus.reservado
+                        ? null
+                        : GiftStatus.reservado,
                   ),
                 ),
               ],
@@ -672,14 +695,17 @@ class _PremiumGiftCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: primary.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: primary.withValues(alpha: 0.10)),
+                      border:
+                          Border.all(color: primary.withValues(alpha: 0.10)),
                     ),
                     child: temImagem
                         ? Image.network(
                             gift.imagem!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                Icon(_tipoIcon(gift.tipo), color: primary, size: 30),
+                            errorBuilder: (_, __, ___) => Icon(
+                                _tipoIcon(gift.tipo),
+                                color: primary,
+                                size: 30),
                           )
                         : Icon(_tipoIcon(gift.tipo), color: primary, size: 32),
                   ),
@@ -698,9 +724,12 @@ class _PremiumGiftCard extends StatelessWidget {
                             const SizedBox(width: 6),
                             _SoftBadge(
                               label: reservado ? 'Reservado' : 'Disponível',
-                              icon:
-                                  reservado ? Icons.lock_clock_rounded : Icons.check_circle_rounded,
-                              color: reservado ? Colors.orange.shade800 : Colors.green.shade700,
+                              icon: reservado
+                                  ? Icons.lock_clock_rounded
+                                  : Icons.check_circle_rounded,
+                              color: reservado
+                                  ? Colors.orange.shade800
+                                  : Colors.green.shade700,
                             ),
                           ],
                         ),
@@ -734,8 +763,10 @@ class _PremiumGiftCard extends StatelessWidget {
                   ),
                   PopupMenuButton<String>(
                     tooltip: 'Ações',
-                    icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF64748B)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    icon: const Icon(Icons.more_vert_rounded,
+                        color: Color(0xFF64748B)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                     onSelected: (value) {
                       if (value == 'edit') onEdit();
                       if (value == 'delete') onDelete();
@@ -743,7 +774,8 @@ class _PremiumGiftCard extends StatelessWidget {
                     itemBuilder: (_) => [
                       PopupMenuItem(
                         value: 'edit',
-                        child: _MenuItem(icon: Icons.edit_rounded, label: 'Editar'),
+                        child: _MenuItem(
+                            icon: Icons.edit_rounded, label: 'Editar'),
                       ),
                       PopupMenuItem(
                         value: 'delete',
@@ -803,20 +835,25 @@ class _PremiumGiftCard extends StatelessWidget {
                   children: [
                     Expanded(
                       child: _GiftInfoLine(
-                        icon: isFisico ? Icons.storefront_rounded : Icons.payments_rounded,
+                        icon: isFisico
+                            ? Icons.storefront_rounded
+                            : Icons.payments_rounded,
                         label: isFisico ? 'Loja' : 'Valor',
                         value: isFisico
                             ? _fallback(gift.loja, 'Não informada')
                             : _money(gift.valor ?? 0),
                       ),
                     ),
-                    Container(width: 1, height: 34, color: const Color(0xFFE5EAF3)),
+                    Container(
+                        width: 1, height: 34, color: const Color(0xFFE5EAF3)),
                     Expanded(
                       child: _GiftInfoLine(
                         icon: isFisico ? Icons.link_rounded : Icons.pix_rounded,
                         label: isFisico ? 'Link' : 'PIX',
                         value: isFisico
-                            ? ((gift.link ?? '').trim().isEmpty ? 'Sem link' : 'Informado')
+                            ? ((gift.link ?? '').trim().isEmpty
+                                ? 'Sem link'
+                                : 'Informado')
                             : _fallback(gift.pix, 'Não informado'),
                       ),
                     ),
@@ -876,7 +913,8 @@ class _PremiumEmptyState extends StatelessWidget {
                   color: primary.withValues(alpha: 0.09),
                   borderRadius: BorderRadius.circular(24),
                 ),
-                child: Icon(Icons.card_giftcard_rounded, color: primary, size: 34),
+                child:
+                    Icon(Icons.card_giftcard_rounded, color: primary, size: 34),
               ),
               const SizedBox(height: 16),
               Text(
@@ -907,9 +945,11 @@ class _PremiumEmptyState extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     elevation: 0,
                     backgroundColor: primary,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16)),
                   ),
-                  icon: const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                  icon: const Icon(Icons.add_rounded,
+                      color: Colors.white, size: 20),
                   label: Text(
                     actionLabel,
                     style: GoogleFonts.poppins(
@@ -933,7 +973,8 @@ class _GiftInfoLine extends StatelessWidget {
   final String label;
   final String value;
 
-  const _GiftInfoLine({required this.icon, required this.label, required this.value});
+  const _GiftInfoLine(
+      {required this.icon, required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -1097,12 +1138,15 @@ class _FilterChipButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: selected ? primary : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: selected ? primary : const Color(0xFFE5EAF3)),
+            border:
+                Border.all(color: selected ? primary : const Color(0xFFE5EAF3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 15, color: selected ? Colors.white : const Color(0xFF64748B)),
+              Icon(icon,
+                  size: 15,
+                  color: selected ? Colors.white : const Color(0xFF64748B)),
               const SizedBox(width: 5),
               Text(
                 label,
@@ -1125,7 +1169,8 @@ class _SoftBadge extends StatelessWidget {
   final IconData icon;
   final Color color;
 
-  const _SoftBadge({required this.label, required this.icon, required this.color});
+  const _SoftBadge(
+      {required this.label, required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -1288,9 +1333,12 @@ class _GiftStats {
   factory _GiftStats.from(List<Gift> gifts) {
     return _GiftStats(
       total: gifts.length,
-      disponiveis: gifts.where((gift) => gift.status == GiftStatus.disponivel).length,
-      reservados: gifts.where((gift) => gift.status == GiftStatus.reservado).length,
-      valorArrecadado: gifts.fold<double>(0, (sum, gift) => sum + gift.valorArrecadado),
+      disponiveis:
+          gifts.where((gift) => gift.status == GiftStatus.disponivel).length,
+      reservados:
+          gifts.where((gift) => gift.status == GiftStatus.reservado).length,
+      valorArrecadado:
+          gifts.fold<double>(0, (sum, gift) => sum + gift.valorArrecadado),
     );
   }
 }

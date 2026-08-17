@@ -55,9 +55,13 @@ class GruposTab extends StatelessWidget {
                   grupo: grupo,
                   color: fromHex(grupo.corHex ?? '#FF7BAC'),
                   icon: _iconFromKey(grupo.icone),
-                  convidados: grupoController.convidadosDoGrupo(grupo.idGrupo))),
+                  convidados:
+                      grupoController.convidadosDoGrupo(grupo.idGrupo))),
               const SizedBox(height: 6),
-              _GraficoGrupos(grupos: grupos, controller: grupoController, primary: primary),
+              _GraficoGrupos(
+                  grupos: grupos,
+                  controller: grupoController,
+                  primary: primary),
             ],
           ],
         ),
@@ -78,17 +82,23 @@ class GruposTab extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(12)),
+                  color: primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12)),
               child: Icon(Icons.groups_2_rounded, color: primary, size: 20)),
           const SizedBox(width: 8),
           Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Grupos de convidados',
-                style: GoogleFonts.poppins(
-                    fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
-            Text('Organize por famílias ou amigos.',
-                style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF6B7280)))
-          ])),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text('Grupos de convidados',
+                    style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827))),
+                Text('Organize por famílias ou amigos.',
+                    style: GoogleFonts.poppins(
+                        fontSize: 10, color: const Color(0xFF6B7280)))
+              ])),
         ],
       ),
     );
@@ -111,10 +121,12 @@ class _ResumoGrupos extends StatelessWidget {
   Widget build(BuildContext context) {
     final resumo = [
       _ResumoItem('Grupos', totalGrupos, Icons.folder_shared_rounded, primary),
-      _ResumoItem(
-          'Com convid.', gruposComConvidados, Icons.people_alt_rounded, Colors.green.shade700),
-      _ResumoItem('Convidados', totalConvidados, Icons.person_pin_rounded, Colors.pink.shade600),
-      _ResumoItem('Vazios', gruposVazios, Icons.folder_off_rounded, Colors.orange.shade700)
+      _ResumoItem('Com convid.', gruposComConvidados, Icons.people_alt_rounded,
+          Colors.green.shade700),
+      _ResumoItem('Convidados', totalConvidados, Icons.person_pin_rounded,
+          Colors.pink.shade600),
+      _ResumoItem('Vazios', gruposVazios, Icons.folder_off_rounded,
+          Colors.orange.shade700)
     ];
     return LayoutBuilder(builder: (context, constraints) {
       final width = (constraints.maxWidth - 24) / 4;
@@ -122,7 +134,8 @@ class _ResumoGrupos extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: resumo
-              .map((item) => SizedBox(width: width, child: _ResumoCard(item: item)))
+              .map((item) =>
+                  SizedBox(width: width, child: _ResumoCard(item: item)))
               .toList());
     });
   }
@@ -160,12 +173,16 @@ class _ResumoCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(item.value.toString(),
               style: GoogleFonts.poppins(
-                  color: const Color(0xFF111827), fontSize: 16, fontWeight: FontWeight.w800)),
+                  color: const Color(0xFF111827),
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800)),
           Text(item.label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
-                  color: const Color(0xFF6B7280), fontSize: 9, fontWeight: FontWeight.w600)),
+                  color: const Color(0xFF6B7280),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -178,7 +195,10 @@ class _SectionTitle extends StatelessWidget {
   final String subtitle;
   final Color color;
   const _SectionTitle(
-      {required this.icon, required this.title, required this.subtitle, required this.color});
+      {required this.icon,
+      required this.title,
+      required this.subtitle,
+      required this.color});
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -186,11 +206,16 @@ class _SectionTitle extends StatelessWidget {
         Icon(icon, color: color, size: 18),
         const SizedBox(width: 6),
         Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title,
               style: GoogleFonts.poppins(
-                  fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
-          Text(subtitle, style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF6B7280)))
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF111827))),
+          Text(subtitle,
+              style: GoogleFonts.poppins(
+                  fontSize: 10, color: const Color(0xFF6B7280)))
         ]))
       ],
     );
@@ -198,19 +223,22 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _GraficoGrupos extends StatelessWidget {
-  final List<GrupoConvidadoModel> grupos;
+  final List<GrupoConvidado> grupos;
   final GrupoConvidadoController controller;
   final Color primary;
-  const _GraficoGrupos({required this.grupos, required this.controller, required this.primary});
+  const _GraficoGrupos(
+      {required this.grupos, required this.controller, required this.primary});
 
   @override
   Widget build(BuildContext context) {
     final gruposComQuantidade = grupos
-        .map((g) =>
-            _GrupoQuantidade(grupo: g, quantidade: controller.convidadosDoGrupo(g.idGrupo).length))
+        .map((g) => _GrupoQuantidade(
+            grupo: g,
+            quantidade: controller.convidadosDoGrupo(g.idGrupo).length))
         .where((i) => i.quantidade > 0)
         .toList();
-    final total = gruposComQuantidade.fold<int>(0, (soma, item) => soma + item.quantidade);
+    final total = gruposComQuantidade.fold<int>(
+        0, (soma, item) => soma + item.quantidade);
     if (total == 0) return const SizedBox.shrink();
 
     return Container(
@@ -235,25 +263,31 @@ class _GraficoGrupos extends StatelessWidget {
                   sectionsSpace: 2,
                   centerSpaceRadius: 36,
                   sections: gruposComQuantidade.map((item) {
-                    final color = Colors
-                        .primaries[gruposComQuantidade.indexOf(item) % Colors.primaries.length];
+                    final color = Colors.primaries[
+                        gruposComQuantidade.indexOf(item) %
+                            Colors.primaries.length];
                     return PieChartSectionData(
                         color: color,
                         value: item.quantidade.toDouble(),
-                        title: '${((item.quantidade / total) * 100).toStringAsFixed(0)}%',
+                        title:
+                            '${((item.quantidade / total) * 100).toStringAsFixed(0)}%',
                         radius: 50,
                         titleStyle: GoogleFonts.poppins(
-                            color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800));
+                            color: Colors.white,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w800));
                   }).toList()))),
           const SizedBox(height: 8),
           Wrap(
               spacing: 8,
               runSpacing: 6,
               children: gruposComQuantidade.map((item) {
-                final color =
-                    Colors.primaries[gruposComQuantidade.indexOf(item) % Colors.primaries.length];
+                final color = Colors.primaries[
+                    gruposComQuantidade.indexOf(item) %
+                        Colors.primaries.length];
                 return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(999)),
@@ -274,23 +308,28 @@ class _GraficoGrupos extends StatelessWidget {
 }
 
 class _GrupoQuantidade {
-  final GrupoConvidadoModel grupo;
+  final GrupoConvidado grupo;
   final int quantidade;
   const _GrupoQuantidade({required this.grupo, required this.quantidade});
 }
 
 class _GrupoCard extends StatelessWidget {
-  final GrupoConvidadoModel grupo;
+  final GrupoConvidado grupo;
   final IconData icon;
   final Color color;
-  final List<ConvidadoModel> convidados;
+  final List<Convidado> convidados;
   const _GrupoCard(
-      {required this.grupo, required this.icon, required this.color, required this.convidados});
+      {required this.grupo,
+      required this.icon,
+      required this.color,
+      required this.convidados});
   @override
   Widget build(BuildContext context) {
     final total = convidados.length;
-    final confirmados = convidados.where((c) => c.status == StatusConvidado.confirmado).length;
-    final pendentes = convidados.where((c) => c.status == StatusConvidado.pendente).length;
+    final confirmados =
+        convidados.where((c) => c.status == StatusConvidado.confirmado).length;
+    final pendentes =
+        convidados.where((c) => c.status == StatusConvidado.pendente).length;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -307,15 +346,19 @@ class _GrupoCard extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(12)),
               child: Icon(icon, color: color, size: 18)),
           title: Text(grupo.nome,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w800, fontSize: 13, color: const Color(0xFF111827))),
+                  fontWeight: FontWeight.w800,
+                  fontSize: 13,
+                  color: const Color(0xFF111827))),
           subtitle: Wrap(spacing: 4, runSpacing: 4, children: [
-            _SmallStatusChip(label: '$total', icon: Icons.people_alt_rounded, color: color),
+            _SmallStatusChip(
+                label: '$total', icon: Icons.people_alt_rounded, color: color),
             if (confirmados > 0)
               _SmallStatusChip(
                   label: '$confirmados conf.',
@@ -337,7 +380,7 @@ class _GrupoCard extends StatelessWidget {
 }
 
 class _ConvidadoItem extends StatelessWidget {
-  final ConvidadoModel convidado;
+  final Convidado convidado;
   const _ConvidadoItem({required this.convidado});
   @override
   Widget build(BuildContext context) {
@@ -355,22 +398,34 @@ class _ConvidadoItem extends StatelessWidget {
               radius: 14,
               backgroundColor: color.withValues(alpha: 0.12),
               child: Text(
-                  convidado.nome.trim().isEmpty ? '?' : convidado.nome.trim()[0].toUpperCase(),
+                  convidado.nome.trim().isEmpty
+                      ? '?'
+                      : convidado.nome.trim()[0].toUpperCase(),
                   style: GoogleFonts.poppins(
-                      color: color, fontWeight: FontWeight.w800, fontSize: 11))),
+                      color: color,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11))),
           const SizedBox(width: 8),
           Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(convidado.nome,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                    fontSize: 11, fontWeight: FontWeight.w700, color: const Color(0xFF111827))),
-            Text(convidado.email?.trim().isNotEmpty == true ? convidado.email!.trim() : '-',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF6B7280)))
-          ])),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(convidado.nome,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF111827))),
+                Text(
+                    convidado.email?.trim().isNotEmpty == true
+                        ? convidado.email!.trim()
+                        : '-',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                        fontSize: 9, color: const Color(0xFF6B7280)))
+              ])),
           _SmallStatusChip(
               label: _getStatusLabel(convidado.status),
               icon: _getStatusIcon(convidado.status),
@@ -385,18 +440,21 @@ class _SmallStatusChip extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color color;
-  const _SmallStatusChip({required this.label, required this.icon, required this.color});
+  const _SmallStatusChip(
+      {required this.label, required this.icon, required this.color});
   @override
   Widget build(BuildContext context) {
     return Container(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.09), borderRadius: BorderRadius.circular(999)),
+            color: color.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(999)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, size: 10, color: color),
           const SizedBox(width: 4),
           Text(label,
-              style: GoogleFonts.poppins(color: color, fontSize: 9, fontWeight: FontWeight.w700))
+              style: GoogleFonts.poppins(
+                  color: color, fontSize: 9, fontWeight: FontWeight.w700))
         ]));
   }
 }
@@ -411,13 +469,15 @@ class _EmptyGroupMessage extends StatelessWidget {
         margin: const EdgeInsets.only(top: 6),
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(12)),
+            color: color.withValues(alpha: 0.06),
+            borderRadius: BorderRadius.circular(12)),
         child: Row(children: [
           Icon(Icons.info_outline_rounded, color: color, size: 16),
           const SizedBox(width: 6),
           Expanded(
               child: Text('Vazio.',
-                  style: GoogleFonts.poppins(fontSize: 10, color: const Color(0xFF4B5563))))
+                  style: GoogleFonts.poppins(
+                      fontSize: 10, color: const Color(0xFF4B5563))))
         ]));
   }
 }
@@ -437,13 +497,16 @@ class _EmptyGroupsState extends StatelessWidget {
           Container(
               width: 50,
               height: 50,
-              decoration:
-                  BoxDecoration(color: primary.withValues(alpha: 0.10), shape: BoxShape.circle),
+              decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.10),
+                  shape: BoxShape.circle),
               child: Icon(Icons.group_add_rounded, color: primary, size: 26)),
           const SizedBox(height: 10),
           Text('Nenhum grupo',
               style: GoogleFonts.poppins(
-                  fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF111827)))
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF111827)))
         ]));
   }
 }
@@ -451,7 +514,9 @@ class _EmptyGroupsState extends StatelessWidget {
 Color fromHex(String hex) {
   var value = hex.replaceAll('#', '').trim();
   if (value.length == 6) value = 'FF$value';
-  return value.length != 8 ? const Color(0xFFFF7BAC) : Color(int.parse(value, radix: 16));
+  return value.length != 8
+      ? const Color(0xFFFF7BAC)
+      : Color(int.parse(value, radix: 16));
 }
 
 IconData _iconFromKey(String? key) => mapaIcones[key] ?? Icons.group_rounded;

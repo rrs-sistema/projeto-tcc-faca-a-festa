@@ -13,7 +13,7 @@ import '../../../../data/models/model.dart';
 Future<void> abrirDialogAdicionarConvidado(
   BuildContext context,
   Color primary, {
-  ConvidadoModel? convidado,
+  Convidado? convidado,
 }) async {
   final themeController = Get.find<EventThemeController>();
   final eventoController = Get.find<EventoController>();
@@ -28,7 +28,8 @@ Future<void> abrirDialogAdicionarConvidado(
   final telCtrl = TextEditingController(text: convidado?.contato ?? '');
 
   final RxString idGrupoSelecionado = (convidado?.idGrupo ?? '').obs;
-  final Rx<TipoConvidado> tipoConvidado = (convidado?.tipoConvidado ?? TipoConvidado.adulto).obs;
+  final Rx<TipoConvidado> tipoConvidado =
+      (convidado?.tipoConvidado ?? TipoConvidado.adulto).obs;
   final RxBool cuidadoEspecial = (convidado?.cuidadoEspecial ?? false).obs;
   final RxBool salvando = false.obs;
 
@@ -51,7 +52,8 @@ Future<void> abrirDialogAdicionarConvidado(
     }
   }
 
-  void showSnack({required String title, required String message, required Color color}) {
+  void showSnack(
+      {required String title, required String message, required Color color}) {
     Get.snackbar(
       title,
       message,
@@ -69,7 +71,7 @@ Future<void> abrirDialogAdicionarConvidado(
     );
   }
 
-  GrupoConvidadoModel? grupoSelecionadoAtual() {
+  GrupoConvidado? grupoSelecionadoAtual() {
     final idGrupo = idGrupoSelecionado.value.trim();
     if (idGrupo.isEmpty) return null;
     for (final grupo in grupoController.grupos) {
@@ -118,17 +120,26 @@ Future<void> abrirDialogAdicionarConvidado(
     final email = emailCtrl.text.trim();
 
     if (nome.isEmpty) {
-      showSnack(title: 'Atenção', message: 'Informe o nome do convidado.', color: Colors.redAccent);
+      showSnack(
+          title: 'Atenção',
+          message: 'Informe o nome do convidado.',
+          color: Colors.redAccent);
       return;
     }
     final grupo = grupoSelecionadoAtual();
     if (grupo == null) {
-      showSnack(title: 'Atenção', message: 'Selecione um grupo.', color: Colors.redAccent);
+      showSnack(
+          title: 'Atenção',
+          message: 'Selecione um grupo.',
+          color: Colors.redAccent);
       return;
     }
-    final idEvento = eventoController.eventoAtual.value?.idEvento ?? '';
+    final idEvento = eventoController.eventoAtualEntidade?.idEvento ?? '';
     if (idEvento.isEmpty) {
-      showSnack(title: 'Atenção', message: 'Nenhum evento selecionado.', color: Colors.redAccent);
+      showSnack(
+          title: 'Atenção',
+          message: 'Nenhum evento selecionado.',
+          color: Colors.redAccent);
       return;
     }
 
@@ -159,7 +170,7 @@ Future<void> abrirDialogAdicionarConvidado(
         return;
       }
 
-      final novo = ConvidadoModel(
+      final novo = Convidado(
         idConvidado: uuid.v4(),
         idEvento: idEvento,
         nome: nome,
@@ -184,7 +195,10 @@ Future<void> abrirDialogAdicionarConvidado(
 
       showSnack(title: 'Convidado adicionado', message: nome, color: primary);
     } catch (e) {
-      showSnack(title: 'Erro', message: 'Não foi possível salvar: $e', color: Colors.redAccent);
+      showSnack(
+          title: 'Erro',
+          message: 'Não foi possível salvar: $e',
+          color: Colors.redAccent);
     } finally {
       salvando.value = false;
     }
@@ -196,7 +210,8 @@ Future<void> abrirDialogAdicionarConvidado(
         width: 40,
         height: 4,
         decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(999)),
+            color: Colors.white.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(999)),
       ),
     );
   }
@@ -222,10 +237,13 @@ Future<void> abrirDialogAdicionarConvidado(
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.30)),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.30)),
                 ),
                 child: Icon(
-                    editando ? Icons.manage_accounts_rounded : Icons.person_add_alt_1_rounded,
+                    editando
+                        ? Icons.manage_accounts_rounded
+                        : Icons.person_add_alt_1_rounded,
                     color: Colors.white,
                     size: 24),
               ),
@@ -244,7 +262,9 @@ Future<void> abrirDialogAdicionarConvidado(
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      editando ? 'Atualize os dados e grupo.' : 'Cadastre e organize para a lista.',
+                      editando
+                          ? 'Atualize os dados e grupo.'
+                          : 'Cadastre e organize para a lista.',
                       style: GoogleFonts.poppins(
                           color: Colors.white.withValues(alpha: 0.88),
                           fontSize: 11,
@@ -261,7 +281,8 @@ Future<void> abrirDialogAdicionarConvidado(
     );
   }
 
-  Widget buildSectionTitle({required IconData icon, required String title, String? subtitle}) {
+  Widget buildSectionTitle(
+      {required IconData icon, required String title, String? subtitle}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -271,7 +292,8 @@ Future<void> abrirDialogAdicionarConvidado(
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(8)),
+                color: primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(8)),
             child: Icon(icon, color: primary, size: 16),
           ),
           const SizedBox(width: 8),
@@ -281,7 +303,9 @@ Future<void> abrirDialogAdicionarConvidado(
               children: [
                 Text(title,
                     style: GoogleFonts.poppins(
-                        color: textDark, fontSize: 13, fontWeight: FontWeight.w800)),
+                        color: textDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800)),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(subtitle,
@@ -325,17 +349,20 @@ Future<void> abrirDialogAdicionarConvidado(
         keyboardType: keyboardType,
         textCapitalization: textCapitalization,
         textInputAction: textInputAction,
-        style: GoogleFonts.poppins(color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
+        style: GoogleFonts.poppins(
+            color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
-          labelStyle:
-              GoogleFonts.poppins(color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
-          hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
+          labelStyle: GoogleFonts.poppins(
+              color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
+          hintStyle:
+              GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
           prefixIcon: Icon(icon, color: primary, size: 20),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(color: Colors.grey.shade200)),
@@ -364,7 +391,8 @@ Future<void> abrirDialogAdicionarConvidado(
             color: color,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-                color: selected ? primary : Colors.grey.shade200, width: selected ? 1.5 : 1),
+                color: selected ? primary : Colors.grey.shade200,
+                width: selected ? 1.5 : 1),
             boxShadow: [
               BoxShadow(
                   color: selected
@@ -392,17 +420,22 @@ Future<void> abrirDialogAdicionarConvidado(
                   ),
                   const Spacer(),
                   if (selected)
-                    const Icon(Icons.check_circle_rounded, color: Colors.white, size: 16),
+                    const Icon(Icons.check_circle_rounded,
+                        color: Colors.white, size: 16),
                 ],
               ),
               const SizedBox(height: 8),
               Text(tipoConvidadoLabel(tipo),
                   style: GoogleFonts.poppins(
-                      color: foreground, fontSize: 12, fontWeight: FontWeight.w800)),
+                      color: foreground,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800)),
               const SizedBox(height: 2),
               Text(tipoConvidadoDescricao(tipo),
                   style: GoogleFonts.poppins(
-                      color: selected ? Colors.white.withValues(alpha: 0.88) : textMuted,
+                      color: selected
+                          ? Colors.white.withValues(alpha: 0.88)
+                          : textMuted,
                       fontSize: 10,
                       height: 1.25,
                       fontWeight: FontWeight.w500)),
@@ -419,14 +452,17 @@ Future<void> abrirDialogAdicionarConvidado(
       if (grupoController.carregando.value) {
         return Container(
           padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(14)),
+          decoration: BoxDecoration(
+              color: Colors.white, borderRadius: BorderRadius.circular(14)),
           child: Row(children: [
             SizedBox(
                 width: 18,
                 height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2, color: primary)),
+                child:
+                    CircularProgressIndicator(strokeWidth: 2, color: primary)),
             const SizedBox(width: 10),
-            Text('Carregando...', style: GoogleFonts.poppins(color: textMuted, fontSize: 12))
+            Text('Carregando...',
+                style: GoogleFonts.poppins(color: textMuted, fontSize: 12))
           ]),
         );
       }
@@ -438,18 +474,23 @@ Future<void> abrirDialogAdicionarConvidado(
               borderRadius: BorderRadius.circular(14),
               border: Border.all(color: const Color(0xFFFDE68A))),
           child: Row(children: [
-            const Icon(Icons.info_outline_rounded, color: Color(0xFFD97706), size: 18),
+            const Icon(Icons.info_outline_rounded,
+                color: Color(0xFFD97706), size: 18),
             const SizedBox(width: 8),
             Expanded(
                 child: Text('Nenhum grupo cadastrado.',
                     style: GoogleFonts.poppins(
-                        color: const Color(0xFF92400E), fontSize: 11, fontWeight: FontWeight.w600)))
+                        color: const Color(0xFF92400E),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600)))
           ]),
         );
       }
-      final selectedValue =
-          idGrupoSelecionado.value.trim().isEmpty ? null : idGrupoSelecionado.value.trim();
-      final valueExists = selectedValue == null || grupos.any((g) => g.idGrupo == selectedValue);
+      final selectedValue = idGrupoSelecionado.value.trim().isEmpty
+          ? null
+          : idGrupoSelecionado.value.trim();
+      final valueExists = selectedValue == null ||
+          grupos.any((g) => g.idGrupo == selectedValue);
 
       return Container(
         decoration: BoxDecoration(
@@ -473,7 +514,8 @@ Future<void> abrirDialogAdicionarConvidado(
             prefixIcon: Icon(Icons.group_outlined, color: primary, size: 20),
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(color: Colors.grey.shade200)),
@@ -481,14 +523,17 @@ Future<void> abrirDialogAdicionarConvidado(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide(color: primary, width: 1.2)),
           ),
-          icon: Icon(Icons.keyboard_arrow_down_rounded, color: primary, size: 20),
+          icon:
+              Icon(Icons.keyboard_arrow_down_rounded, color: primary, size: 20),
           items: grupos
               .map((g) => DropdownMenuItem(
                   value: g.idGrupo,
                   child: Text(g.nome,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
-                          color: textDark, fontSize: 13, fontWeight: FontWeight.w600))))
+                          color: textDark,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600))))
               .toList(),
           onChanged: (v) => idGrupoSelecionado.value = v ?? '',
         ),
@@ -505,10 +550,13 @@ Future<void> abrirDialogAdicionarConvidado(
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: cuidadoEspecial.value ? const Color(0xFFECFDF5) : Colors.white,
+            color:
+                cuidadoEspecial.value ? const Color(0xFFECFDF5) : Colors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-                color: cuidadoEspecial.value ? const Color(0xFF34D399) : Colors.grey.shade200,
+                color: cuidadoEspecial.value
+                    ? const Color(0xFF34D399)
+                    : Colors.grey.shade200,
                 width: 1),
             boxShadow: [
               BoxShadow(
@@ -528,7 +576,8 @@ Future<void> abrirDialogAdicionarConvidado(
                         : primary.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(10)),
                 child: Icon(Icons.health_and_safety_rounded,
-                    color: cuidadoEspecial.value ? Colors.white : primary, size: 18),
+                    color: cuidadoEspecial.value ? Colors.white : primary,
+                    size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -537,10 +586,14 @@ Future<void> abrirDialogAdicionarConvidado(
                   children: [
                     Text('Cuidado especial',
                         style: GoogleFonts.poppins(
-                            color: textDark, fontSize: 13, fontWeight: FontWeight.w800)),
+                            color: textDark,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800)),
                     Text('Atenção específica.',
                         style: GoogleFonts.poppins(
-                            color: textMuted, fontSize: 10, fontWeight: FontWeight.w500)),
+                            color: textMuted,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500)),
                   ],
                 ),
               ),
@@ -571,17 +624,21 @@ Future<void> abrirDialogAdicionarConvidado(
             return Container(
               clipBehavior: Clip.antiAlias,
               decoration: const BoxDecoration(
-                  color: background, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                  color: background,
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(24))),
               child: Column(
                 children: [
                   buildHeader(),
                   Expanded(
                     child: ListView(
                       controller: controllerScroll,
-                      padding: EdgeInsets.fromLTRB(
-                          16, 16, 16, MediaQuery.of(modalContext).viewInsets.bottom + 16),
+                      padding: EdgeInsets.fromLTRB(16, 16, 16,
+                          MediaQuery.of(modalContext).viewInsets.bottom + 16),
                       children: [
-                        buildSectionTitle(icon: Icons.badge_outlined, title: 'Dados do convidado'),
+                        buildSectionTitle(
+                            icon: Icons.badge_outlined,
+                            title: 'Dados do convidado'),
                         buildTextField(
                             controller: nomeCtrl,
                             label: 'Nome',
@@ -599,7 +656,9 @@ Future<void> abrirDialogAdicionarConvidado(
                             keyboardType: TextInputType.emailAddress,
                             textInputAction: TextInputAction.done),
                         const SizedBox(height: 10),
-                        buildSectionTitle(icon: Icons.groups_2_outlined, title: 'Classificação'),
+                        buildSectionTitle(
+                            icon: Icons.groups_2_outlined,
+                            title: 'Classificação'),
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.only(bottom: 4),
@@ -624,18 +683,23 @@ Future<void> abrirDialogAdicionarConvidado(
                             child: ElevatedButton.icon(
                               style: ElevatedButton.styleFrom(
                                   backgroundColor: primary,
-                                  disabledBackgroundColor: primary.withValues(alpha: 0.45),
+                                  disabledBackgroundColor:
+                                      primary.withValues(alpha: 0.45),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14))),
-                              onPressed: isSaving ? null : () => salvarConvidado(modalContext),
+                              onPressed: isSaving
+                                  ? null
+                                  : () => salvarConvidado(modalContext),
                               icon: isSaving
                                   ? const SizedBox(
                                       width: 16,
                                       height: 16,
                                       child: CircularProgressIndicator(
                                           strokeWidth: 2, color: Colors.white))
-                                  : const Icon(Icons.check_circle_outline_rounded,
-                                      color: Colors.white, size: 18),
+                                  : const Icon(
+                                      Icons.check_circle_outline_rounded,
+                                      color: Colors.white,
+                                      size: 18),
                               label: Text(
                                   isSaving
                                       ? 'Salvando...'
@@ -660,8 +724,8 @@ Future<void> abrirDialogAdicionarConvidado(
                             },
                             icon: const Icon(Icons.close_rounded, size: 18),
                             label: Text('Cancelar',
-                                style:
-                                    GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13)),
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w700, fontSize: 13)),
                             style: TextButton.styleFrom(
                                 foregroundColor: textMuted,
                                 shape: RoundedRectangleBorder(

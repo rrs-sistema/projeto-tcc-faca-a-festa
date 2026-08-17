@@ -178,7 +178,7 @@ class ResumoSection extends StatelessWidget {
 
     final checks = [
       f.razaoSocial.trim().isNotEmpty,
-      (f.email ?? '').trim().isNotEmpty || (f.telefone ?? '').trim().isNotEmpty,
+      (f.email).trim().isNotEmpty || (f.telefone).trim().isNotEmpty,
       (f.descricao ?? '').trim().isNotEmpty,
       (f.bannerUrl ?? '').trim().isNotEmpty,
       f.categorias.isNotEmpty,

@@ -14,20 +14,21 @@ Future<void> showTarefaDialog({
   String? tituloInicial,
   String? descricaoInicial,
   DateTime? dataInicial,
-  ConvidadoModel? responsavelInicial,
-  required List<ConvidadoModel> usuarios,
+  Convidado? responsavelInicial,
+  required List<Convidado> usuarios,
   bool isEdit = false,
-  required void Function(String, String, DateTime, ConvidadoModel) onSave,
+  required void Function(String, String, DateTime, Convidado) onSave,
 }) async {
   final app = Get.find<AppController>();
   final themeController = Get.find<EventThemeController>();
   final tituloController = TextEditingController(text: tituloInicial ?? '');
-  final descricaoController = TextEditingController(text: descricaoInicial ?? '');
+  final descricaoController =
+      TextEditingController(text: descricaoInicial ?? '');
   final dataController = TextEditingController(
     text: DateFormat('dd/MM/yyyy').format(dataInicial ?? DateTime.now()),
   );
   DateTime dataSelecionada = dataInicial ?? DateTime.now();
-  ConvidadoModel? responsavelSelecionado = responsavelInicial;
+  Convidado? responsavelSelecionado = responsavelInicial;
 
   // 🔹 Trocado para showModalBottomSheet para seguir o padrão das outras telas
   await showModalBottomSheet<void>(
@@ -47,8 +48,10 @@ Future<void> showTarefaDialog({
               heightFactor: 0.90, // Altura padronizada
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white, // Fundo sólido (sem blur para o bottom sheet)
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                  color: Colors
+                      .white, // Fundo sólido (sem blur para o bottom sheet)
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(28)),
                   boxShadow: [
                     BoxShadow(
                       color: primary.withValues(alpha: 0.15),
@@ -93,7 +96,10 @@ Future<void> showTarefaDialog({
                                   shape: BoxShape.circle,
                                   gradient: isEdit
                                       ? LinearGradient(
-                                          colors: [Colors.orange.shade400, Colors.deepOrangeAccent],
+                                          colors: [
+                                            Colors.orange.shade400,
+                                            Colors.deepOrangeAccent
+                                          ],
                                           begin: Alignment.topLeft,
                                           end: Alignment.bottomRight,
                                         )
@@ -101,7 +107,9 @@ Future<void> showTarefaDialog({
                                 ),
                                 padding: const EdgeInsets.all(10), // Reduzido
                                 child: Icon(
-                                  isEdit ? Icons.edit_note_rounded : Icons.task_alt,
+                                  isEdit
+                                      ? Icons.edit_note_rounded
+                                      : Icons.task_alt,
                                   color: Colors.white,
                                   size: 22, // Reduzido
                                 ),
@@ -156,7 +164,8 @@ Future<void> showTarefaDialog({
                               if (novaData != null) {
                                 setState(() {
                                   dataSelecionada = novaData;
-                                  dataController.text = DateFormat('dd/MM/yyyy').format(novaData);
+                                  dataController.text =
+                                      DateFormat('dd/MM/yyyy').format(novaData);
                                 });
                               }
                             },
@@ -192,11 +201,14 @@ Future<void> showTarefaDialog({
                           usuarios.isEmpty
                               ? Column(
                                   children: [
-                                    const Icon(Icons.group_outlined, size: 32, color: Colors.grey),
+                                    const Icon(Icons.group_outlined,
+                                        size: 32, color: Colors.grey),
                                     const SizedBox(height: 6),
                                     Text(
                                       'Nenhum usuário disponível 😅',
-                                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+                                      style: TextStyle(
+                                          color: Colors.grey.shade600,
+                                          fontSize: 13),
                                     )
                                   ],
                                 )
@@ -204,20 +216,24 @@ Future<void> showTarefaDialog({
                                   height: 96, // 🔹 Bem mais compacto (era 120)
                                   child: ListView.separated(
                                     scrollDirection: Axis.horizontal,
-                                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 2),
                                     itemCount: usuarios.length,
-                                    separatorBuilder: (_, __) => const SizedBox(width: 10),
+                                    separatorBuilder: (_, __) =>
+                                        const SizedBox(width: 10),
                                     itemBuilder: (_, index) {
                                       final usuario = usuarios[index];
-                                      final selecionado = responsavelSelecionado?.idConvidado ==
-                                          usuario.idConvidado;
+                                      final selecionado =
+                                          responsavelSelecionado?.idConvidado ==
+                                              usuario.idConvidado;
 
-                                      final isOrganizador =
-                                          usuario.idConvidado == app.usuarioLogado.value?.idUsuario;
+                                      final isOrganizador = usuario
+                                              .idConvidado ==
+                                          app.usuarioLogado.value?.idUsuario;
 
                                       return GestureDetector(
-                                        onTap: () =>
-                                            setState(() => responsavelSelecionado = usuario),
+                                        onTap: () => setState(() =>
+                                            responsavelSelecionado = usuario),
                                         child: _buildUserCard(
                                           usuario,
                                           selecionado,
@@ -262,7 +278,7 @@ Future<void> showTarefaDialog({
 }
 
 Widget _buildUserCard(
-  ConvidadoModel usuario,
+  Convidado usuario,
   bool selecionado,
   bool isOrganizador,
   Gradient gradient,
@@ -271,7 +287,8 @@ Widget _buildUserCard(
   return AnimatedContainer(
     duration: const Duration(milliseconds: 250),
     curve: Curves.easeOutCubic,
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6), // Mais compacto
+    padding:
+        const EdgeInsets.symmetric(horizontal: 8, vertical: 6), // Mais compacto
     decoration: BoxDecoration(
       borderRadius: BorderRadius.circular(16),
       gradient: selecionado
@@ -306,7 +323,8 @@ Widget _buildUserCard(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             border: Border.all(
-              color: selecionado ? Colors.white : primary.withValues(alpha: 0.3),
+              color:
+                  selecionado ? Colors.white : primary.withValues(alpha: 0.3),
               width: selecionado ? 2 : 1.5,
             ),
           ),
@@ -338,7 +356,9 @@ Widget _buildUserCard(
               margin: const EdgeInsets.only(top: 2),
               padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
               decoration: BoxDecoration(
-                color: selecionado ? Colors.white.withValues(alpha: 0.20) : Colors.grey.shade200,
+                color: selecionado
+                    ? Colors.white.withValues(alpha: 0.20)
+                    : Colors.grey.shade200,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -362,9 +382,9 @@ Widget _buildMobileButtons(
   TextEditingController descricaoController,
   Color primary,
   bool isEdit,
-  ConvidadoModel? responsavelSelecionado,
+  Convidado? responsavelSelecionado,
   DateTime dataSelecionada,
-  void Function(String, String, DateTime, ConvidadoModel) onSave,
+  void Function(String, String, DateTime, Convidado) onSave,
 ) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -372,7 +392,8 @@ Widget _buildMobileButtons(
       // === BOTÃO PRINCIPAL ===
       ElevatedButton.icon(
         onPressed: () async {
-          if (tituloController.text.trim().isEmpty || responsavelSelecionado == null) {
+          if (tituloController.text.trim().isEmpty ||
+              responsavelSelecionado == null) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Preencha o título e selecione um responsável.'),
@@ -392,7 +413,9 @@ Widget _buildMobileButtons(
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                isEdit ? 'Tarefa atualizada com sucesso! ✅' : 'Tarefa criada com sucesso! 🎉',
+                isEdit
+                    ? 'Tarefa atualizada com sucesso! ✅'
+                    : 'Tarefa criada com sucesso! 🎉',
               ),
               backgroundColor: primary,
               behavior: SnackBarBehavior.floating,

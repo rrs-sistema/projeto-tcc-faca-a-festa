@@ -1,22 +1,25 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
+import 'dart:async';
 import 'dart:ui';
 
 import './../../../../controllers/convidado/convidado_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../controllers/evento_controller.dart';
+import './../../../../controllers/tarefa_controller.dart';
 import './../../../../controllers/app_controller.dart';
+import './../../../../domain/entities/evento.dart';
+import './../../../../domain/entities/convidado.dart';
+import './../../../../domain/entities/tarefa.dart';
 import './../../../widgets/confetti_background.dart';
-import './../../../../data/models/model.dart';
 import './presentes_section.dart';
 
 class AreaConvidadoHomeScreen extends StatefulWidget {
-  final ConvidadoModel convidado;
-  final EventoModel evento;
+  final Convidado convidado;
+  final Evento evento;
 
   const AreaConvidadoHomeScreen({
     super.key,
@@ -25,12 +28,14 @@ class AreaConvidadoHomeScreen extends StatefulWidget {
   });
 
   @override
-  State<AreaConvidadoHomeScreen> createState() => _AreaConvidadoHomeScreenState();
+  State<AreaConvidadoHomeScreen> createState() =>
+      _AreaConvidadoHomeScreenState();
 }
 
 class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
   final convidadoController = Get.find<ConvidadoController>();
   final eventoController = Get.find<EventoController>();
+  final tarefaController = Get.find<TarefaController>();
   final theme = Get.find<EventThemeController>();
 
   int _selectedIndex = 0;
@@ -41,11 +46,27 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     super.initState();
     _statusPresencaLocal = widget.convidado.status;
     convidadoController.convidadoAtual.value = widget.convidado;
+    unawaited(tarefaController.listenTarefas(widget.evento.idEvento));
+    unawaited(
+      eventoController.escutarEventoPorId(
+        widget.evento.idEvento,
+        eventoInicial: widget.evento,
+      ),
+    );
   }
 
   @override
   void didUpdateWidget(covariant AreaConvidadoHomeScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.evento.idEvento != widget.evento.idEvento) {
+      unawaited(tarefaController.listenTarefas(widget.evento.idEvento));
+      unawaited(
+        eventoController.escutarEventoPorId(
+          widget.evento.idEvento,
+          eventoInicial: widget.evento,
+        ),
+      );
+    }
     if (oldWidget.convidado.idConvidado != widget.convidado.idConvidado ||
         oldWidget.convidado.status != widget.convidado.status) {
       _statusPresencaLocal = widget.convidado.status;
@@ -63,13 +84,15 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(80), // 🔹 Altura reduzida (era 110)
+        preferredSize:
+            const Size.fromHeight(80), // 🔹 Altura reduzida (era 110)
         child: Container(
           decoration: BoxDecoration(
             gradient: gradient,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15), // 🔹 Sombra mais leve
+                color:
+                    Colors.black.withValues(alpha: 0.15), // 🔹 Sombra mais leve
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -77,7 +100,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6), // 🔹 Compacto
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 6), // 🔹 Compacto
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -131,7 +155,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                           shape: BoxShape.circle,
                         ),
                         padding: const EdgeInsets.all(6), // 🔹 Botão menor
-                        child: const Icon(Icons.logout, color: Colors.white, size: 20),
+                        child: const Icon(Icons.logout,
+                            color: Colors.white, size: 20),
                       ),
                     ),
                   ),
@@ -145,10 +170,12 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
         decoration: BoxDecoration(gradient: gradient),
         child: Obx(() {
           if (convidadoController.carregando.value) {
-            return const Center(child: CircularProgressIndicator(color: Colors.white));
+            return const Center(
+                child: CircularProgressIndicator(color: Colors.white));
           }
 
-          final convidadoAtual = convidadoController.convidadoAtual.value ?? widget.convidado;
+          final convidadoAtual =
+              convidadoController.convidadoAtual.value ?? widget.convidado;
           final nomeConvidado = convidadoAtual.nome.split(' ').first;
           final mensagemBoasVindas = 'Bem-vindo(a), $nomeConvidado! 🎉';
 
@@ -185,11 +212,12 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 switchOutCurve: Curves.easeIn,
                 child: Container(
                   key: ValueKey(_selectedIndex),
-                  margin: const EdgeInsets.only(top: 100), // 🔹 Subiu a tela (era 140)
+                  margin: const EdgeInsets.only(
+                      top: 100), // 🔹 Subiu a tela (era 140)
                   decoration: BoxDecoration(
                     color: theme.secondaryColor.value.withValues(alpha: 0.95),
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(24)), // 🔹 Raio menor
+                    borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(24)), // 🔹 Raio menor
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.05),
@@ -201,7 +229,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                   child: Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 6), // 🔹 Compacto
+                        padding: const EdgeInsets.fromLTRB(
+                            16, 12, 16, 6), // 🔹 Compacto
                         child: Column(
                           children: [
                             Text(
@@ -230,7 +259,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                       Expanded(child: pages[_selectedIndex]),
                       const SizedBox(height: 6),
                       Padding(
-                        padding: const EdgeInsets.only(bottom: 6), // 🔹 Compacto
+                        padding:
+                            const EdgeInsets.only(bottom: 6), // 🔹 Compacto
                         child: Column(
                           children: [
                             Text(
@@ -323,7 +353,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                             duration: const Duration(milliseconds: 300),
                             curve: Curves.easeOutCubic,
                             height: double.infinity,
-                            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 4, vertical: 6),
                             decoration: BoxDecoration(
                               gradient: selected
                                   ? LinearGradient(
@@ -370,7 +401,9 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                                   child: Icon(
                                     item['icon'] as IconData,
                                     size: selected ? 20 : 19,
-                                    color: selected ? Colors.white : cor.withValues(alpha: 0.92),
+                                    color: selected
+                                        ? Colors.white
+                                        : cor.withValues(alpha: 0.92),
                                   ),
                                 ),
                                 const SizedBox(height: 4),
@@ -380,8 +413,12 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                                   style: GoogleFonts.poppins(
                                     fontSize: selected ? 11.2 : 10.4,
                                     height: 1.0,
-                                    fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
-                                    color: selected ? Colors.white : Colors.grey.shade800,
+                                    fontWeight: selected
+                                        ? FontWeight.w800
+                                        : FontWeight.w700,
+                                    color: selected
+                                        ? Colors.white
+                                        : Colors.grey.shade800,
                                     letterSpacing: selected ? 0.1 : 0,
                                   ),
                                   maxLines: 1,
@@ -404,69 +441,76 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     );
   }
 
-  Widget _buildInformacoesPage(EventoModel evento) {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: FirebaseFirestore.instance.collection('evento').doc(evento.idEvento).snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+  Widget _buildInformacoesPage(Evento evento) {
+    return Obx(() {
+      final eventoObservado = eventoController.eventoAtual.value;
+      final eventoAtual = eventoObservado?.idEvento == evento.idEvento
+          ? eventoObservado!
+          : evento;
+      final tipo = eventoController.tipoEventoAtualEntidade?.nome ?? '';
+      final nomeEvento = eventoAtual.nomeEvento.trim().isEmpty
+          ? 'Evento Especial'
+          : eventoAtual.nomeEvento;
 
-        final data = snapshot.data!.data() as Map<String, dynamic>? ?? {};
-        final tipo = eventoController.tipoEventoAtual.value?.nome ?? '';
-        final nomeEvento = data['nome'] ?? 'Evento Especial';
-
-        return SingleChildScrollView(
-          key: const ValueKey('info'),
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16), // 🔹 Compacto
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: GoogleFonts.poppins(fontSize: 16, color: Colors.black87), // 🔹 Menor
-                  children: [
-                    if (tipo.isNotEmpty)
-                      TextSpan(
-                        text: '$tipo: ',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: theme.primaryColor.value,
-                          fontSize: 14,
-                        ),
-                      ),
+      return SingleChildScrollView(
+        key: const ValueKey('info'),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16), // 🔹 Compacto
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            RichText(
+              textAlign: TextAlign.center,
+              text: TextSpan(
+                style: GoogleFonts.poppins(
+                    fontSize: 16, color: Colors.black87), // 🔹 Menor
+                children: [
+                  if (tipo.isNotEmpty)
                     TextSpan(
-                      text: nomeEvento,
-                      style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+                      text: '$tipo: ',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: theme.primaryColor.value,
+                        fontSize: 14,
+                      ),
                     ),
-                  ],
-                ),
+                  TextSpan(
+                    text: nomeEvento,
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w600, fontSize: 13),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              _infoTileDataHora(
-                data['data'] is Timestamp ? (data['data'] as Timestamp).toDate() : null,
-                data['hora'],
-              ),
-              _infoTileComAcao(
-                Icons.location_on,
-                'Local',
-                evento.localEvento.isNotEmpty
-                    ? evento.localEvento
-                    : (evento.logradouro?.isNotEmpty == true
-                        ? '${evento.logradouro}, ${evento.numero ?? ''}'
-                        : 'Local a definir'),
-                onTap: () => _abrirNoMapa(evento),
-              ),
-              _infoTile(Icons.message, 'Mensagem',
-                  data['mensagem'] ?? 'Prepare-se para uma celebração especial! 💖'),
-            ],
-          ),
-        );
-      },
-    );
+            ),
+            const SizedBox(height: 8),
+            _infoTileDataHora(
+              eventoAtual.data,
+              eventoAtual.hora,
+            ),
+            _infoTileComAcao(
+              Icons.location_on,
+              'Local',
+              eventoAtual.localEvento.isNotEmpty
+                  ? eventoAtual.localEvento
+                  : (eventoAtual.logradouro?.isNotEmpty == true
+                      ? '${eventoAtual.logradouro}, ${eventoAtual.numero ?? ''}'
+                      : 'Local a definir'),
+              onTap: () => _abrirNoMapa(eventoAtual),
+            ),
+            _infoTile(
+                Icons.message,
+                'Mensagem',
+                eventoAtual.mensagemConvidado ??
+                    'Prepare-se para uma celebração especial! 💖'),
+          ],
+        ),
+      );
+    });
   }
 
-  Widget _buildConfirmacaoPage(ConvidadoModel? convidado) {
-    if (convidado == null) return const Center(child: CircularProgressIndicator());
+  Widget _buildConfirmacaoPage(Convidado? convidado) {
+    if (convidado == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     // VERSÃO PREMIUM V2 - resposta sempre editável pelo convidado.
     final primary = theme.primaryColor.value;
@@ -528,11 +572,13 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
           child: Column(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: statusColor.withValues(alpha: 0.14)),
+                  border:
+                      Border.all(color: statusColor.withValues(alpha: 0.14)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -627,7 +673,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                       color: primary.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(13),
                     ),
-                    child: Icon(Icons.touch_app_rounded, color: primary, size: 20),
+                    child:
+                        Icon(Icons.touch_app_rounded, color: primary, size: 20),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -663,18 +710,22 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 cor: Colors.green.shade600,
                 onTap: () {
                   if (confirmado) {
-                    _mostrarRespostaJaSelecionada('Sua presença já está confirmada.');
+                    _mostrarRespostaJaSelecionada(
+                        'Sua presença já está confirmada.');
                     return;
                   }
 
                   _confirmarAlteracaoPresenca(
                     convidado: convidado,
                     novoStatus: StatusConvidado.confirmado,
-                    titulo: naoVai ? 'Mudar para confirmado?' : 'Confirmar presença?',
+                    titulo: naoVai
+                        ? 'Mudar para confirmado?'
+                        : 'Confirmar presença?',
                     mensagem: naoVai
                         ? 'Sua resposta será atualizada de “não poderei ir” para “vou participar”.'
                         : 'O organizador será avisado que você participará do evento.',
-                    textoBotao: naoVai ? 'Sim, vou participar' : 'Confirmar presença',
+                    textoBotao:
+                        naoVai ? 'Sim, vou participar' : 'Confirmar presença',
                     icone: Icons.celebration_rounded,
                   );
                 },
@@ -690,18 +741,23 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 cor: Colors.redAccent.shade400,
                 onTap: () {
                   if (naoVai) {
-                    _mostrarRespostaJaSelecionada('Sua ausência já está registrada.');
+                    _mostrarRespostaJaSelecionada(
+                        'Sua ausência já está registrada.');
                     return;
                   }
 
                   _confirmarAlteracaoPresenca(
                     convidado: convidado,
                     novoStatus: StatusConvidado.recusado,
-                    titulo: confirmado ? 'Cancelar presença?' : 'Informar ausência?',
+                    titulo: confirmado
+                        ? 'Cancelar presença?'
+                        : 'Informar ausência?',
                     mensagem: confirmado
                         ? 'Sua resposta será atualizada de “presença confirmada” para “não poderei ir”.'
                         : 'O organizador será avisado que você não poderá participar.',
-                    textoBotao: confirmado ? 'Sim, cancelar presença' : 'Não poderei ir',
+                    textoBotao: confirmado
+                        ? 'Sim, cancelar presença'
+                        : 'Não poderei ir',
                     icone: Icons.event_busy_rounded,
                   );
                 },
@@ -774,7 +830,9 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
             color: selected ? null : cor.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: selected ? Colors.white.withValues(alpha: 0.36) : cor.withValues(alpha: 0.16),
+              color: selected
+                  ? Colors.white.withValues(alpha: 0.36)
+                  : cor.withValues(alpha: 0.16),
             ),
             boxShadow: [
               BoxShadow(
@@ -790,7 +848,9 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: selected ? Colors.white.withValues(alpha: 0.18) : Colors.white,
+                  color: selected
+                      ? Colors.white.withValues(alpha: 0.18)
+                      : Colors.white,
                   borderRadius: BorderRadius.circular(17),
                   border: Border.all(
                     color: selected
@@ -798,7 +858,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                         : cor.withValues(alpha: 0.10),
                   ),
                 ),
-                child: Icon(icon, color: selected ? Colors.white : cor, size: 24),
+                child:
+                    Icon(icon, color: selected ? Colors.white : cor, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -820,8 +881,9 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                         fontSize: 11.2,
                         height: 1.3,
                         fontWeight: FontWeight.w600,
-                        color:
-                            selected ? Colors.white.withValues(alpha: 0.90) : Colors.grey.shade600,
+                        color: selected
+                            ? Colors.white.withValues(alpha: 0.90)
+                            : Colors.grey.shade600,
                       ),
                     ),
                   ],
@@ -832,9 +894,14 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: selected ? Colors.white.withValues(alpha: 0.20) : Colors.white,
+                  color: selected
+                      ? Colors.white.withValues(alpha: 0.20)
+                      : Colors.white,
                   shape: BoxShape.circle,
-                  border: Border.all(color: selected ? Colors.white : cor.withValues(alpha: 0.20)),
+                  border: Border.all(
+                      color: selected
+                          ? Colors.white
+                          : cor.withValues(alpha: 0.20)),
                 ),
                 child: Icon(
                   selected ? Icons.check_rounded : Icons.arrow_forward_rounded,
@@ -862,13 +929,13 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     );
   }
 
-  void _salvarStatusPresenca(ConvidadoModel convidado, StatusConvidado novoStatus) {
+  void _salvarStatusPresenca(Convidado convidado, StatusConvidado novoStatus) {
     setState(() => _statusPresencaLocal = novoStatus);
     convidadoController.atualizarStatusPresenca(convidado, novoStatus);
   }
 
   void _confirmarAlteracaoPresenca({
-    required ConvidadoModel convidado,
+    required Convidado convidado,
     required StatusConvidado novoStatus,
     required String titulo,
     required String mensagem,
@@ -876,7 +943,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     required IconData icone,
   }) {
     final isConfirmando = novoStatus == StatusConvidado.confirmado;
-    final actionColor = isConfirmando ? Colors.green.shade600 : Colors.redAccent.shade400;
+    final actionColor =
+        isConfirmando ? Colors.green.shade600 : Colors.redAccent.shade400;
 
     Get.bottomSheet(
       SafeArea(
@@ -951,8 +1019,10 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 13),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(17)),
-                    textStyle: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w900),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(17)),
+                    textStyle: GoogleFonts.poppins(
+                        fontSize: 13, fontWeight: FontWeight.w900),
                   ),
                 ),
               ),
@@ -964,7 +1034,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.grey.shade700,
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    textStyle: GoogleFonts.poppins(fontSize: 12.5, fontWeight: FontWeight.w700),
+                    textStyle: GoogleFonts.poppins(
+                        fontSize: 12.5, fontWeight: FontWeight.w700),
                   ),
                   child: const Text('Manter resposta atual'),
                 ),
@@ -978,40 +1049,39 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     );
   }
 
-  Widget _buildTarefasPage(EventoModel evento, ConvidadoModel convidado) {
+  Widget _buildTarefasPage(Evento evento, Convidado convidado) {
     final primary = theme.primaryColor.value;
 
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('tarefa')
-          .where('id_evento', isEqualTo: evento.idEvento)
-          .where('id_responsavel', isEqualTo: convidado.idConvidado)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+    return Obx(() {
+      if (tarefaController.carregando.value &&
+          tarefaController.tarefas.isEmpty) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-        final docs = snapshot.data!.docs;
-        if (docs.isEmpty) {
-          return _emptyState(
-            icon: Icons.task_alt_rounded,
-            message: 'Nenhuma tarefa 📋',
-            subtitle: 'O organizador pode atribuir tarefas para você futuramente.',
-          );
-        }
+      final tarefas = tarefaController.tarefas
+          .where((tarefa) =>
+              tarefa.idEvento == evento.idEvento &&
+              tarefa.idResponsavel == convidado.idConvidado)
+          .toList();
 
-        final tarefas =
-            docs.map((d) => TarefaModel.fromMap(d.data() as Map<String, dynamic>)).toList();
-
-        return ListView.builder(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 80), // 🔹 Compacto
-          itemCount: tarefas.length,
-          itemBuilder: (context, i) => _tarefaCard(tarefas[i], primary),
+      if (tarefas.isEmpty) {
+        return _emptyState(
+          icon: Icons.task_alt_rounded,
+          message: 'Nenhuma tarefa 📋',
+          subtitle:
+              'O organizador pode atribuir tarefas para você futuramente.',
         );
-      },
-    );
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 80), // 🔹 Compacto
+        itemCount: tarefas.length,
+        itemBuilder: (context, i) => _tarefaCard(tarefas[i], primary),
+      );
+    });
   }
 
-  Widget _tarefaCard(TarefaModel tarefa, Color primary) {
+  Widget _tarefaCard(Tarefa tarefa, Color primary) {
     final corStatus = switch (tarefa.status) {
       StatusTarefa.aFazer => Colors.orange.shade400,
       StatusTarefa.emAndamento => Colors.blue.shade400,
@@ -1051,7 +1121,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   padding: const EdgeInsets.all(8),
-                  child: Icon(iconeStatus, color: corStatus, size: 20), // 🔹 Ícone menor
+                  child: Icon(iconeStatus,
+                      color: corStatus, size: 20), // 🔹 Ícone menor
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1080,20 +1151,25 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 PopupMenuButton<String>(
                   tooltip: 'Alterar status',
                   onSelected: (value) => _atualizarStatusTarefa(tarefa, value),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
                   elevation: 3,
                   color: Colors.white,
                   itemBuilder: (context) => [
                     const PopupMenuItem(
-                        value: 'a_fazer', child: Text('A Fazer', style: TextStyle(fontSize: 13))),
+                        value: 'a_fazer',
+                        child: Text('A Fazer', style: TextStyle(fontSize: 13))),
                     const PopupMenuItem(
                         value: 'em_andamento',
-                        child: Text('Em Andamento', style: TextStyle(fontSize: 13))),
+                        child: Text('Em Andamento',
+                            style: TextStyle(fontSize: 13))),
                     const PopupMenuItem(
                         value: 'concluida',
-                        child: Text('Concluída', style: TextStyle(fontSize: 13))),
+                        child:
+                            Text('Concluída', style: TextStyle(fontSize: 13))),
                   ],
-                  icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade600, size: 20),
+                  icon: Icon(Icons.more_vert_rounded,
+                      color: Colors.grey.shade600, size: 20),
                 )
               ],
             ),
@@ -1101,18 +1177,21 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
               const SizedBox(height: 8),
               Text(
                 tarefa.descricao!,
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700, height: 1.3),
+                style: GoogleFonts.poppins(
+                    fontSize: 12, color: Colors.grey.shade700, height: 1.3),
               ),
             ],
             if (tarefa.dataPrevista != null) ...[
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.calendar_today_rounded, size: 13, color: Colors.grey),
+                  const Icon(Icons.calendar_today_rounded,
+                      size: 13, color: Colors.grey),
                   const SizedBox(width: 4),
                   Text(
                     'Prazo: ${DateFormat('dd/MM/yyyy').format(tarefa.dataPrevista!)}',
-                    style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
+                    style: GoogleFonts.poppins(
+                        fontSize: 11, color: Colors.grey.shade600),
                   ),
                 ],
               ),
@@ -1123,14 +1202,11 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     );
   }
 
-  Future<void> _atualizarStatusTarefa(TarefaModel tarefa, String novoStatus) async {
+  Future<void> _atualizarStatusTarefa(Tarefa tarefa, String novoStatus) async {
     final status = StatusTarefa.fromString(novoStatus);
-    try {
-      await FirebaseFirestore.instance
-          .collection('tarefa')
-          .doc(tarefa.idTarefa)
-          .update({'status': status.firestoreValue});
-    } catch (e) {
+    final atualizado =
+        await tarefaController.atualizarStatus(tarefa.idTarefa, status);
+    if (!atualizado) {
       Get.snackbar('Erro', 'Não foi possível atualizar a tarefa.',
           snackPosition: SnackPosition.BOTTOM);
     }
@@ -1150,17 +1226,22 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
         leading: Icon(icon, color: theme.primaryColor.value, size: 20),
         title: Text(title,
             style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600, fontSize: 13, color: Colors.black87)),
-        subtitle:
-            Text(value, style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+                color: Colors.black87)),
+        subtitle: Text(value,
+            style:
+                GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade700)),
       ),
     );
   }
 
   Widget _infoTileDataHora(DateTime? data, String? hora) {
     final color = theme.primaryColor.value;
-    final dataFormatada = data != null ? DateFormat('dd/MM/yyyy').format(data) : '--/--/----';
-    final horaFormatada = (hora != null && hora.isNotEmpty) ? hora : 'a definir';
+    final dataFormatada =
+        data != null ? DateFormat('dd/MM/yyyy').format(data) : '--/--/----';
+    final horaFormatada =
+        (hora != null && hora.isNotEmpty) ? hora : 'a definir';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10), // 🔹 Compacto
@@ -1175,7 +1256,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
           children: [
             Container(
               decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10)),
+                  color: color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(10)),
               padding: const EdgeInsets.all(8),
               child: Icon(Icons.event_rounded, color: color, size: 20),
             ),
@@ -1186,7 +1268,9 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 children: [
                   Text('Data e Hora',
                       style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600, fontSize: 11, color: Colors.grey.shade600)),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                          color: Colors.grey.shade600)),
                   const SizedBox(height: 2),
                   Row(
                     children: [
@@ -1194,13 +1278,15 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                           size: 14, color: color.withValues(alpha: 0.8)),
                       const SizedBox(width: 4),
                       Text(dataFormatada,
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                          style: GoogleFonts.poppins(
+                              fontSize: 12, fontWeight: FontWeight.w600)),
                       const SizedBox(width: 12),
                       Icon(Icons.access_time_rounded,
                           size: 14, color: color.withValues(alpha: 0.8)),
                       const SizedBox(width: 4),
                       Text(horaFormatada,
-                          style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                          style: GoogleFonts.poppins(
+                              fontSize: 12, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ],
@@ -1212,7 +1298,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     );
   }
 
-  Widget _emptyState({required IconData icon, required String message, String? subtitle}) {
+  Widget _emptyState(
+      {required IconData icon, required String message, String? subtitle}) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -1220,16 +1307,20 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon,
-                size: 48, color: theme.primaryColor.value.withValues(alpha: 0.6)), // 🔹 Menor
+                size: 48,
+                color: theme.primaryColor.value
+                    .withValues(alpha: 0.6)), // 🔹 Menor
             const SizedBox(height: 12),
             Text(message,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600)),
+                style: GoogleFonts.poppins(
+                    fontSize: 14, fontWeight: FontWeight.w600)),
             if (subtitle != null) ...[
               const SizedBox(height: 6),
               Text(subtitle,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(fontSize: 12, color: Colors.black54)),
+                  style:
+                      GoogleFonts.poppins(fontSize: 12, color: Colors.black54)),
             ],
           ],
         ),
@@ -1237,21 +1328,29 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     );
   }
 
-  Future<void> _abrirNoMapa(EventoModel evento) async {
-    final endereco = [evento.logradouro, evento.numero, evento.bairro, evento.nomeCidade, evento.uf]
-        .where((e) => e != null && e.toString().trim().isNotEmpty)
-        .join(', ');
+  Future<void> _abrirNoMapa(Evento evento) async {
+    final endereco = [
+      evento.logradouro,
+      evento.numero,
+      evento.bairro,
+      evento.nomeCidade,
+      evento.uf
+    ].where((e) => e != null && e.toString().trim().isNotEmpty).join(', ');
     final destino = endereco.isNotEmpty
         ? endereco
-        : (evento.localEvento.isNotEmpty ? evento.localEvento : 'Local do evento');
-    final url = Uri.encodeFull('https://www.google.com/maps/search/?api=1&query=$destino');
+        : (evento.localEvento.isNotEmpty
+            ? evento.localEvento
+            : 'Local do evento');
+    final url = Uri.encodeFull(
+        'https://www.google.com/maps/search/?api=1&query=$destino');
 
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
     }
   }
 
-  Widget _infoTileComAcao(IconData icon, String titulo, String valor, {VoidCallback? onTap}) {
+  Widget _infoTileComAcao(IconData icon, String titulo, String valor,
+      {VoidCallback? onTap}) {
     final color = theme.primaryColor.value;
     return Container(
       margin: const EdgeInsets.only(bottom: 10), // 🔹 Compacto
@@ -1270,7 +1369,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
               Container(
                 width: 36, height: 36, // 🔹 Ícone menor
                 decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10)),
                 child: Icon(icon, color: color, size: 20),
               ),
               const SizedBox(width: 12),
@@ -1286,14 +1386,17 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                     const SizedBox(height: 2),
                     Text(valor,
                         style: GoogleFonts.poppins(
-                            fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87)),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87)),
                   ],
                 ),
               ),
               if (onTap != null)
                 Container(
                   decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(8)),
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8)),
                   padding: const EdgeInsets.all(6),
                   child: Icon(Icons.navigation_rounded, color: color, size: 16),
                 ),

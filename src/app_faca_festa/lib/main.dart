@@ -2,7 +2,6 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:get_storage/get_storage.dart';
@@ -18,7 +17,6 @@ import './presentation/modules/gifts/gerenciar_presentes_page.dart';
 import './controllers/categoria/categoria_servico_controller.dart';
 import './presentation/pages/convidado/convite_redirect_page.dart';
 import 'controllers/avaliacao/avaliacao_servico_controller.dart';
-import './controllers/convidado/grupo_convidado_controller.dart';
 import './presentation/pages/fornecedor/orcamentos_screen.dart';
 import './presentation/pages/welcome/welcome_event_screen.dart';
 import './presentation/pages/admin/admin_dashboard_screen.dart';
@@ -30,16 +28,13 @@ import 'controllers/inspiracao/inspiracao_controller.dart';
 import 'controllers/sugestao_base_festa_controller.dart';
 import 'controllers/usuario/endereco_usuario_controller.dart';
 import './controllers/admin/orcamentos_admin_controller.dart';
-import 'data/datasources/remote/gift_remote_datasource.dart';
 import './controllers/contacao/solicitacoes_controller.dart';
 import './controllers/servico/servico_foto_controller.dart';
 import './presentation/pages/convidado/convidado_page.dart';
-import './controllers/convidado/convidado_controller.dart';
 import './controllers/admin/eventos_admin_controller.dart';
-import 'data/datasources/local/gift_local_datasource.dart';
 import 'core/services/whatsGw/whatsapp_cloud_service.dart';
-import './controllers/convidado/cardapio_controller.dart';
 import './presentation/pages/login/register_screen.dart';
+import './presentation/pages/login/forgot_password_screen.dart';
 import './presentation/whatsapp/whatsapp_templates.dart';
 import './controllers/tema/event_theme_controller.dart';
 import './controllers/contacao/cotacao_controller.dart';
@@ -50,25 +45,25 @@ import 'controllers/usuario/usuario_controller.dart';
 import 'core/services/whatsGw/whatsapp_service.dart';
 
 import 'core/services/push/notification_service.dart';
-import 'core/database/database.dart';
-
-import './data/services/gift/gift_sync_service.dart';
 import './presentation/pages/home_event_screen.dart';
 import 'controllers/fornecedor/fornecedor_controller.dart';
 import './controllers/orcamento_controller.dart';
-import './data/services/gift/sync_manager.dart';
-import './controllers/evento_controller.dart';
-import './controllers/tarefa_controller.dart';
 import 'controllers/ranking_controller.dart';
 import './presentation/widgets/splash.dart';
 import './controllers/app_controller.dart';
-import 'core/database/app_database.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
 import 'data/repositories/calculadora/calculadora_itens_base_repository.dart';
 import 'data/repositories/evento/calculadora_festa_remote_ai_service.dart';
 import 'data/repositories/i_calculadora_festa_ai_service.dart';
 import 'data/repositories/sugestao_base_festa_repository.dart';
+import 'app/bindings/gift_binding.dart';
+import 'app/bootstrap/gift_offline_bootstrap.dart';
+import 'app/bootstrap/evento_bootstrap.dart';
+import 'app/bootstrap/convidado_bootstrap.dart';
+import 'app/bootstrap/perfil_usuario_bootstrap.dart';
+import 'app/bootstrap/autenticacao_bootstrap.dart';
+import 'domain/repositories/evento_repository.dart';
 
 // =============================================================
 //  MAIN
@@ -81,38 +76,19 @@ Future<void> main() async {
   );
 
   await FirebaseAppCheck.instance.activate(
-    providerWeb: kDebugMode ? WebDebugProvider() : ReCaptchaV3Provider('SUA_SITE_KEY_RECAPTCHA_V3'),
-    providerAndroid: kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
-    providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+    providerWeb: kDebugMode
+        ? WebDebugProvider()
+        : ReCaptchaV3Provider('SUA_SITE_KEY_RECAPTCHA_V3'),
+    providerAndroid:
+        kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+    providerApple:
+        kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
   );
 
   await GetStorage.init();
 
-  final remoteDatasource = GiftRemoteDatasource(FirebaseFirestore.instance);
-  Get.put<GiftRemoteDatasource>(remoteDatasource, permanent: true);
-
   try {
-    final db = await constructDb();
-    Get.put<AppDatabase>(db, permanent: true);
-
-    final localDatasource = GiftLocalDatasource(db);
-    Get.put<GiftLocalDatasource>(localDatasource, permanent: true);
-
-    final giftSyncService = GiftSyncService(
-      local: localDatasource,
-      remote: remoteDatasource,
-    );
-    Get.put<GiftSyncService>(giftSyncService, permanent: true);
-
-    final syncManager = SyncManager(giftSyncService);
-    Get.put<SyncManager>(syncManager, permanent: true);
-    await syncManager.start();
-
-    debugPrint(
-      kIsWeb
-          ? '🌐 [WEB] Offline-First com Drift/Wasm ativado!'
-          : '📱/🖥️ Offline-First com Drift ativado!',
-    );
+    await GiftOfflineBootstrap.initialize();
   } catch (e) {
     debugPrint('⚠️ Falha ao iniciar banco local: $e');
   }
@@ -139,9 +115,13 @@ Future<void> main001() async {
   );
 
   await FirebaseAppCheck.instance.activate(
-    providerWeb: kDebugMode ? WebDebugProvider() : ReCaptchaV3Provider('SUA_SITE_KEY_RECAPTCHA_V3'),
-    providerAndroid: kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
-    providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+    providerWeb: kDebugMode
+        ? WebDebugProvider()
+        : ReCaptchaV3Provider('SUA_SITE_KEY_RECAPTCHA_V3'),
+    providerAndroid:
+        kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
+    providerApple:
+        kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
   );
   /*
   await CalculadoraItensSeedService().popularSeeds(
@@ -158,31 +138,8 @@ Future<void> main001() async {
 
   await GetStorage.init();
 
-  final remoteDatasource = GiftRemoteDatasource(FirebaseFirestore.instance);
-  Get.put<GiftRemoteDatasource>(remoteDatasource, permanent: true);
-
   try {
-    final db = await constructDb();
-    Get.put<AppDatabase>(db, permanent: true);
-
-    final localDatasource = GiftLocalDatasource(db);
-    Get.put<GiftLocalDatasource>(localDatasource, permanent: true);
-
-    final giftSyncService = GiftSyncService(
-      local: localDatasource,
-      remote: remoteDatasource,
-    );
-    Get.put<GiftSyncService>(giftSyncService, permanent: true);
-
-    final syncManager = SyncManager(giftSyncService);
-    Get.put<SyncManager>(syncManager, permanent: true);
-    await syncManager.start();
-
-    debugPrint(
-      kIsWeb
-          ? '🌐 [WEB] Offline-First com Drift/Wasm ativado!'
-          : '📱/🖥️ Offline-First com Drift ativado!',
-    );
+    await GiftOfflineBootstrap.initialize();
   } catch (e) {
     debugPrint('⚠️ Falha ao iniciar banco local: $e');
   }
@@ -227,16 +184,22 @@ class FacaFestaApp extends StatelessWidget {
         GetPage(name: '/role', page: () => const RoleSelectorScreen()),
         GetPage(name: '/welcome', page: () => const WelcomeEventScreen()),
         GetPage(name: '/login', page: () => const LoginScreen()),
+        GetPage(
+          name: '/forgotPassword',
+          page: () => const ForgotPasswordScreen(),
+        ),
         GetPage(name: '/register', page: () => const RegisterScreen()),
         GetPage(name: '/admin', page: () => const AdminDashboardScreen()),
-        GetPage(name: '/registerGuest', page: () => const GuestRegisterScreen()),
+        GetPage(
+            name: '/registerGuest', page: () => const GuestRegisterScreen()),
         GetPage(name: '/convidadosPage', page: () => const ConvidadosPage()),
         GetPage(
           name: '/gerenciarPresentes',
+          binding: GiftBinding(),
           page: () {
             final args = Get.arguments as Map<String, dynamic>?;
             return GerenciarPresentesPage(
-              eventoId: args?['eventoId'],
+              eventoId: args?['eventoId'] ?? '',
             );
           },
         ),
@@ -288,21 +251,23 @@ class FacaFestaApp extends StatelessWidget {
 }
 
 void _registerControllers() {
+  AutenticacaoBootstrap.register();
+  ConvidadoBootstrap.register();
+  PerfilUsuarioBootstrap.register();
   Get.lazyPut<AppController>(() => AppController(), fenix: true);
-  Get.put(EventoController(), permanent: true);
+  EventoBootstrap.register();
   Get.put(EventThemeController(), permanent: true);
   Get.put(OrcamentoController(), permanent: true);
-  Get.put(EventoCadastroController(), permanent: true).carregarTiposEvento();
+  Get.put(
+    EventoCadastroController(repository: Get.find<EventoRepository>()),
+    permanent: true,
+  ).carregarTiposEvento();
   Get.put(FornecedorController(), permanent: true);
   Get.put(OrcamentoGastoController(), permanent: true);
-  Get.put(TarefaController(), permanent: true);
   Get.put(CategoriaServicoController(), permanent: true);
   Get.put(SubcategoriaServicoController(), permanent: true);
   Get.put(EventosAdminController(), permanent: true);
   Get.put(OrcamentosAdminController(), permanent: true);
-  Get.put(ConvidadoController(), permanent: true);
-  Get.put(CardapioController(), permanent: true);
-  Get.put(GrupoConvidadoController(), permanent: true);
   Get.put(CotacaoController(), permanent: true);
   Get.put(SolicitacoesController(), permanent: true);
   Get.put(ServicoFotoController(), permanent: true);
