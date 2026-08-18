@@ -64,11 +64,20 @@ class TotpVerifyScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  child: Obx(
-                    () => Column(
+                  child: Obx(() {
+                    final porEmail =
+                        controller.metodoLogin.value == TotpMfaController.etapaEmail;
+                    final destino = controller.emailMascarado.value;
+                    return Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.security_rounded, size: 48, color: primary),
+                        Icon(
+                          porEmail
+                              ? Icons.mark_email_read_outlined
+                              : Icons.security_rounded,
+                          size: 48,
+                          color: primary,
+                        ),
                         const SizedBox(height: 12),
                         Text(
                           'Verificação em duas etapas',
@@ -81,7 +90,11 @@ class TotpVerifyScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Abra o app autenticador e informe o código de 6 dígitos para entrar.',
+                          porEmail
+                              ? (destino.isEmpty
+                                  ? 'Informe o código de 6 dígitos enviado para o e-mail da sua conta.'
+                                  : 'Informe o código enviado para $destino.')
+                              : 'Abra o app autenticador e informe o código de 6 dígitos para entrar.',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.poppins(
                             color: Colors.grey.shade700,
@@ -91,7 +104,9 @@ class TotpVerifyScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 22),
                         CustomInputField(
-                          label: 'Código do autenticador',
+                          label: porEmail
+                              ? 'Código do e-mail'
+                              : 'Código do autenticador',
                           hintlabel: '000000',
                           icon: Icons.shield_outlined,
                           controller: codigoCtrl,
@@ -127,6 +142,19 @@ class TotpVerifyScreen extends StatelessWidget {
                             ),
                           ),
                         ),
+                        if (porEmail)
+                          TextButton(
+                            onPressed: controller.enviandoEmail.value
+                                ? null
+                                : controller.solicitarCodigoEmail,
+                            child: Text(
+                              'Reenviar código',
+                              style: GoogleFonts.poppins(
+                                color: primary,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
                         TextButton(
                           onPressed: controller.sair,
                           child: Text(
@@ -138,8 +166,8 @@ class TotpVerifyScreen extends StatelessWidget {
                           ),
                         ),
                       ],
-                    ),
-                  ),
+                    );
+                  }),
                 ),
               ),
             ),

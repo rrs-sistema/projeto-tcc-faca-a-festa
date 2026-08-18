@@ -16,18 +16,49 @@ class TotpMfaController extends GetxController {
   final FirebaseFunctions _functions;
   final AppController appController = Get.find<AppController>();
 
+  static const etapaEscolha = 'escolha';
+  static const etapaTotp = 'totp';
+  static const etapaEmail = 'email';
+
+  final etapa = etapaEscolha.obs;
+  final metodoLogin = 'totp'.obs;
   final codigo = ''.obs;
   final secret = ''.obs;
   final otpauthUrl = ''.obs;
+  final emailMascarado = ''.obs;
   final carregando = false.obs;
   final gerandoQr = false.obs;
+  final enviandoEmail = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    if (gerarQrNoInicio) {
-      iniciarCadastro();
+    final args = Get.arguments;
+    if (args is Map && args['metodo'] == 'email') {
+      metodoLogin.value = etapaEmail;
+      solicitarCodigoEmail();
+      return;
     }
+    if (gerarQrNoInicio) {
+      escolherAutenticador();
+    }
+  }
+
+  void escolherAutenticador() {
+    etapa.value = etapaTotp;
+    iniciarCadastro();
+  }
+
+  Future<void> escolherEmail() async {
+    etapa.value = etapaEmail;
+    await solicitarCodigoEmail();
+  }
+
+  void voltarEscolha() {
+    etapa.value = etapaEscolha;
+    codigo.value = '';
+    secret.value = '';
+    otpauthUrl.value = '';
   }
 
   Future<void> iniciarCadastro() async {
@@ -50,7 +81,46 @@ class TotpMfaController extends GetxController {
     }
   }
 
+  Future<void> solicitarCodigoEmail() async {
+    try {
+      enviandoEmail.value = true;
+      EasyLoading.show(status: 'Enviando código...');
+      final callable = _functions.httpsCallable('solicitarCodigoEmailMfa');
+      final resultado = await callable.call();
+      final data = Map<String, dynamic>.from(resultado.data as Map);
+      emailMascarado.value = (data['emailMascarado'] ?? '').toString();
+      EasyLoading.dismiss();
+      _mostrarSucesso(
+        (data['message'] ?? 'Enviamos um código para o seu e-mail.').toString(),
+      );
+    } on FirebaseFunctionsException catch (e) {
+      EasyLoading.dismiss();
+      _mostrarErro(_traduzErro(e));
+    } catch (_) {
+      EasyLoading.dismiss();
+      _mostrarErro('Não foi possível enviar o código. Tente novamente.');
+    } finally {
+      enviandoEmail.value = false;
+    }
+  }
+
   Future<void> confirmarCadastro() async {
+    if (etapa.value == etapaEmail) {
+      await _confirmarEmail();
+      return;
+    }
+    await _confirmarTotp();
+  }
+
+  Future<void> verificarLogin() async {
+    if (metodoLogin.value == etapaEmail) {
+      await _verificarEmail();
+      return;
+    }
+    await _verificarTotp();
+  }
+
+  Future<void> _confirmarTotp() async {
     final codigoLimpo = _codigoLimpo();
     if (codigoLimpo.length != 6) {
       _mostrarErro('Informe o código de 6 dígitos do autenticador.');
@@ -76,7 +146,33 @@ class TotpMfaController extends GetxController {
     }
   }
 
-  Future<void> verificarLogin() async {
+  Future<void> _confirmarEmail() async {
+    final codigoLimpo = _codigoLimpo();
+    if (codigoLimpo.length != 6) {
+      _mostrarErro('Informe o código de 6 dígitos enviado por e-mail.');
+      return;
+    }
+
+    try {
+      carregando.value = true;
+      EasyLoading.show(status: 'Confirmando e-mail...');
+      final callable = _functions.httpsCallable('confirmarEmailMfa');
+      await callable.call({'codigo': codigoLimpo});
+      EasyLoading.dismiss();
+      appController.marcarTotpVerificado();
+      Get.offAllNamed('/splash');
+    } on FirebaseFunctionsException catch (e) {
+      EasyLoading.dismiss();
+      _mostrarErro(_traduzErro(e));
+    } catch (_) {
+      EasyLoading.dismiss();
+      _mostrarErro('Não foi possível confirmar o código. Tente novamente.');
+    } finally {
+      carregando.value = false;
+    }
+  }
+
+  Future<void> _verificarTotp() async {
     final codigoLimpo = _codigoLimpo();
     if (codigoLimpo.length != 6) {
       _mostrarErro('Informe o código de 6 dígitos do autenticador.');
@@ -87,6 +183,32 @@ class TotpMfaController extends GetxController {
       carregando.value = true;
       EasyLoading.show(status: 'Validando código...');
       final callable = _functions.httpsCallable('verificarTotpMfa');
+      await callable.call({'codigo': codigoLimpo});
+      EasyLoading.dismiss();
+      appController.marcarTotpVerificado();
+      Get.offAllNamed('/splash');
+    } on FirebaseFunctionsException catch (e) {
+      EasyLoading.dismiss();
+      _mostrarErro(_traduzErro(e));
+    } catch (_) {
+      EasyLoading.dismiss();
+      _mostrarErro('Não foi possível validar o código. Tente novamente.');
+    } finally {
+      carregando.value = false;
+    }
+  }
+
+  Future<void> _verificarEmail() async {
+    final codigoLimpo = _codigoLimpo();
+    if (codigoLimpo.length != 6) {
+      _mostrarErro('Informe o código de 6 dígitos enviado por e-mail.');
+      return;
+    }
+
+    try {
+      carregando.value = true;
+      EasyLoading.show(status: 'Validando código...');
+      final callable = _functions.httpsCallable('verificarEmailMfa');
       await callable.call({'codigo': codigoLimpo});
       EasyLoading.dismiss();
       appController.marcarTotpVerificado();
@@ -122,10 +244,12 @@ class TotpMfaController extends GetxController {
         return 'Código incorreto.';
       case 'resource-exhausted':
         return 'Muitas tentativas. Aguarde e tente novamente.';
+      case 'deadline-exceeded':
+        return 'Código expirado. Solicite um novo código.';
       case 'failed-precondition':
-        return mensagem ?? 'Configure o autenticador para continuar.';
+        return mensagem ?? 'Configure a verificação para continuar.';
       default:
-        return 'Não foi possível validar o autenticador.';
+        return 'Não foi possível validar o código.';
     }
   }
 
@@ -146,6 +270,26 @@ class TotpMfaController extends GetxController {
       margin: const EdgeInsets.all(14),
       borderRadius: 12,
       duration: const Duration(seconds: 4),
+    );
+  }
+
+  void _mostrarSucesso(String mensagem) {
+    Get.rawSnackbar(
+      title: 'Tudo certo',
+      message: mensagem,
+      titleText: const Text(
+        'Tudo certo',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+      ),
+      messageText: Text(
+        mensagem,
+        style: const TextStyle(color: Colors.white),
+      ),
+      snackPosition: SnackPosition.TOP,
+      backgroundColor: Colors.green.shade700,
+      margin: const EdgeInsets.all(14),
+      borderRadius: 12,
+      duration: const Duration(seconds: 3),
     );
   }
 }

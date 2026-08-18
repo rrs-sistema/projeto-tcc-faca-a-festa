@@ -18,7 +18,7 @@ import './../../controllers/app_controller.dart';
 import './../../core/utils/biblioteca.dart';
 
 class MenuDrawerFacaFesta extends StatelessWidget {
-  final VoidCallback onLogout;
+  final Future<void> Function() onLogout;
 
   MenuDrawerFacaFesta({super.key, required this.onLogout});
 
@@ -412,6 +412,7 @@ class MenuDrawerFacaFesta extends StatelessWidget {
   }
 
   Widget _buildFooter(BuildContext context, Color primary) {
+    final saindo = appController.encerrandoSessao.value;
     return SafeArea(
       top: false,
       child: Container(
@@ -430,7 +431,9 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                 label: 'Tema',
                 backgroundColor: primary.withValues(alpha: 0.10),
                 foregroundColor: primary,
-                onPressed: () => themeController.mostrarSeletorDeTema(context),
+                onPressed: saindo
+                    ? null
+                    : () => themeController.mostrarSeletorDeTema(context),
               ),
             ),
             const SizedBox(width: 8),
@@ -440,20 +443,22 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                 label: 'Sair',
                 backgroundColor: Colors.red.shade50,
                 foregroundColor: Colors.red.shade500,
-                onPressed: () async {
-                  await Biblioteca.showConfirmDialog(
-                    context,
-                    title: 'Encerramento da sessão!',
-                    message: 'Deseja realmente encerrar sua sessão?',
-                    confirmLabel: 'Encerrar',
-                    color: primary,
-                    onConfirm: () async {
-                      onLogout();
-                      await Future.delayed(const Duration(milliseconds: 150));
-                      return Future.value(true);
-                    },
-                  );
-                },
+                loading: saindo,
+                onPressed: saindo
+                    ? null
+                    : () async {
+                        await Biblioteca.showConfirmDialog(
+                          context,
+                          title: 'Encerramento da sessão!',
+                          message: 'Deseja realmente encerrar sua sessão?',
+                          confirmLabel: 'Encerrar',
+                          color: primary,
+                          onConfirm: () async {
+                            await onLogout();
+                            return true;
+                          },
+                        );
+                      },
               ),
             ),
           ],
@@ -467,31 +472,51 @@ class MenuDrawerFacaFesta extends StatelessWidget {
     required String label,
     required Color backgroundColor,
     required Color foregroundColor,
-    required VoidCallback onPressed,
+    required VoidCallback? onPressed,
+    bool loading = false,
   }) {
     return SizedBox(
       height: 42,
-      child: ElevatedButton.icon(
+      child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           elevation: 0,
           backgroundColor: backgroundColor,
           foregroundColor: foregroundColor,
+          disabledBackgroundColor: backgroundColor,
+          disabledForegroundColor: foregroundColor,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
         ),
-        onPressed: onPressed,
-        icon: Icon(icon, size: 17),
-        label: Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: GoogleFonts.poppins(
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+        onPressed: loading ? null : onPressed,
+        child: loading
+            ? SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.2,
+                  color: foregroundColor,
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, size: 17),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }

@@ -52,6 +52,7 @@ class AppController extends GetxController {
   String conviteTokenProcessado = '';
   RxString conviteToken = ''.obs;
   final RxBool carregando = false.obs;
+  final RxBool encerrandoSessao = false.obs;
   StreamSubscription<SessaoUsuario?>? _sessaoSub;
   bool _processandoSessao = false;
   bool totpVerificadoNestaSessao = false;
@@ -238,10 +239,16 @@ class AppController extends GetxController {
 
         if (_deveExigirTotp()) {
           carregando.value = false;
-          final rota =
-              usuarioTotp.mfaTotpAtivo ? '/loginTotp' : '/loginTotpSetup';
+          final metodoEmail = usuarioTotp.mfaMetodo == 'email' ||
+              (usuarioTotp.mfaEmailAtivo && !usuarioTotp.mfaTotpAtivo);
+          final rota = (usuarioTotp.mfaTotpAtivo || usuarioTotp.mfaEmailAtivo)
+              ? '/loginTotp'
+              : '/loginTotpSetup';
           if (Get.currentRoute != rota) {
-            Get.offAllNamed(rota);
+            Get.offAllNamed(
+              rota,
+              arguments: metodoEmail ? {'metodo': 'email'} : {'metodo': 'totp'},
+            );
           }
           return;
         }
@@ -570,27 +577,36 @@ class AppController extends GetxController {
   }
 
   Future<void> logoutFornecedor() async {
-    fornecedorController.logoutFornecedor();
-    await _encerrarSessao();
+    await _encerrarSessao(limparFornecedorAntes: true);
   }
 
-  Future<void> _encerrarSessao() async {
-    await _sessaoSub?.cancel();
-    _sessaoSub = null;
+  Future<void> _encerrarSessao({bool limparFornecedorAntes = false}) async {
+    if (encerrandoSessao.value) return;
+    encerrandoSessao.value = true;
+    try {
+      if (limparFornecedorAntes) {
+        fornecedorController.logoutFornecedor();
+      }
 
-    await _pararEscutasDaSessao();
+      await _sessaoSub?.cancel();
+      _sessaoSub = null;
 
-    await autenticacaoRepository.sair();
-    usuarioLogado.value = null;
-    enderecoPrincipal.value = null;
-    enderecosUsuario.clear();
-    servicosSelecionados.clear();
-    conviteProcessado = false;
-    conviteTokenProcessado = '';
-    conviteToken.value = '';
-    _limparEstadoTotp();
-    Get.offAllNamed('/role');
-    _monitorarSessao();
+      await _pararEscutasDaSessao();
+
+      await autenticacaoRepository.sair();
+      usuarioLogado.value = null;
+      enderecoPrincipal.value = null;
+      enderecosUsuario.clear();
+      servicosSelecionados.clear();
+      conviteProcessado = false;
+      conviteTokenProcessado = '';
+      conviteToken.value = '';
+      _limparEstadoTotp();
+      Get.offAllNamed('/role');
+      _monitorarSessao();
+    } finally {
+      encerrandoSessao.value = false;
+    }
   }
 
   Future<void> _pararEscutasDaSessao() async {

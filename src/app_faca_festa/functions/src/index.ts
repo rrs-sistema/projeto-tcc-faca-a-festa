@@ -11,6 +11,11 @@ export {
     confirmarTotpMfa,
     verificarTotpMfa,
 } from "./functions/auth/totpMfa";
+export {
+    solicitarCodigoEmailMfa,
+    confirmarEmailMfa,
+    verificarEmailMfa,
+} from "./functions/auth/emailMfa";
 
 
 export {

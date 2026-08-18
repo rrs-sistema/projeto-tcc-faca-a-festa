@@ -15,6 +15,8 @@ class UsuarioModel extends Usuario {
     super.senhaHash,
     super.ativo,
     super.mfaTotpAtivo,
+    super.mfaEmailAtivo,
+    super.mfaMetodo,
     super.dataCadastro,
     super.cidade,
     super.uf,
@@ -30,6 +32,8 @@ class UsuarioModel extends Usuario {
         senhaHash: usuario.senhaHash,
         ativo: usuario.ativo,
         mfaTotpAtivo: usuario.mfaTotpAtivo,
+        mfaEmailAtivo: usuario.mfaEmailAtivo,
+        mfaMetodo: usuario.mfaMetodo,
         dataCadastro: usuario.dataCadastro,
         cidade: usuario.cidade,
         uf: usuario.uf,
@@ -44,6 +48,8 @@ class UsuarioModel extends Usuario {
         'foto_perfil_url': fotoPerfilUrl,
         'ativo': ativo,
         'mfa_totp_ativo': mfaTotpAtivo,
+        'mfa_email_ativo': mfaEmailAtivo,
+        'mfa_metodo': mfaMetodo,
         'data_cadastro': dataCadastro == null
             ? FieldValue.serverTimestamp()
             : Timestamp.fromDate(dataCadastro!),
@@ -61,6 +67,8 @@ class UsuarioModel extends Usuario {
         senhaHash: map['senha_hash'],
         ativo: map['ativo'] ?? true,
         mfaTotpAtivo: map['mfa_totp_ativo'] == true,
+        mfaEmailAtivo: map['mfa_email_ativo'] == true,
+        mfaMetodo: (map['mfa_metodo'] ?? '').toString(),
         dataCadastro: map['data_cadastro'] is Timestamp
             ? (map['data_cadastro'] as Timestamp).toDate()
             : null,
@@ -79,6 +87,8 @@ class UsuarioModel extends Usuario {
     String? senhaHash,
     bool? ativo,
     bool? mfaTotpAtivo,
+    bool? mfaEmailAtivo,
+    String? mfaMetodo,
     DateTime? dataCadastro,
     String? cidade,
     String? uf,
@@ -93,6 +103,8 @@ class UsuarioModel extends Usuario {
         senhaHash: senhaHash ?? this.senhaHash,
         ativo: ativo ?? this.ativo,
         mfaTotpAtivo: mfaTotpAtivo ?? this.mfaTotpAtivo,
+        mfaEmailAtivo: mfaEmailAtivo ?? this.mfaEmailAtivo,
+        mfaMetodo: mfaMetodo ?? this.mfaMetodo,
         dataCadastro: dataCadastro ?? this.dataCadastro,
         cidade: cidade ?? this.cidade,
         uf: uf ?? this.uf,

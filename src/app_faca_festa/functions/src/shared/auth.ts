@@ -37,3 +37,17 @@ export function exigirTipo(perfil: PerfilAuth, tipos: string[]): void {
     );
   }
 }
+
+export async function exigirLoginComSenha(uid: string): Promise<void> {
+  const record = await admin.auth().getUser(uid);
+  const temSenha = record.providerData.some(
+    (provider) => provider.providerId === "password",
+  );
+  if (!temSenha) {
+    throw new HttpsError(
+      "failed-precondition",
+      "Esta verificação é exclusiva do login com e-mail e senha.",
+    );
+  }
+}
+

@@ -8,6 +8,8 @@ class Usuario {
   final String? senhaHash;
   final bool ativo;
   final bool mfaTotpAtivo;
+  final bool mfaEmailAtivo;
+  final String mfaMetodo;
   final DateTime? dataCadastro;
   final String? cidade;
   final String? uf;
@@ -22,6 +24,8 @@ class Usuario {
     this.senhaHash,
     this.ativo = true,
     this.mfaTotpAtivo = false,
+    this.mfaEmailAtivo = false,
+    this.mfaMetodo = '',
     this.dataCadastro,
     this.cidade,
     this.uf,
@@ -37,6 +41,8 @@ class Usuario {
     String? senhaHash,
     bool? ativo,
     bool? mfaTotpAtivo,
+    bool? mfaEmailAtivo,
+    String? mfaMetodo,
     DateTime? dataCadastro,
     String? cidade,
     String? uf,
@@ -51,6 +57,8 @@ class Usuario {
         senhaHash: senhaHash ?? this.senhaHash,
         ativo: ativo ?? this.ativo,
         mfaTotpAtivo: mfaTotpAtivo ?? this.mfaTotpAtivo,
+        mfaEmailAtivo: mfaEmailAtivo ?? this.mfaEmailAtivo,
+        mfaMetodo: mfaMetodo ?? this.mfaMetodo,
         dataCadastro: dataCadastro ?? this.dataCadastro,
         cidade: cidade ?? this.cidade,
         uf: uf ?? this.uf,

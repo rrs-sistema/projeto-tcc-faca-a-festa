@@ -1,7 +1,7 @@
 import { defineSecret } from "firebase-functions/params";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { Timestamp } from "firebase-admin/firestore";
-import { exigirUsuarioAutenticado } from "../../shared/auth";
+import { exigirLoginComSenha, exigirUsuarioAutenticado } from "../../shared/auth";
 import { admin } from "../../shared/firebaseAdmin";
 import {
   cifrarTexto,
@@ -87,6 +87,8 @@ export const confirmarTotpMfa = onCall(
     await admin.firestore().collection("usuarios").doc(perfil.uid).set(
       {
         mfa_totp_ativo: true,
+        mfa_email_ativo: false,
+        mfa_metodo: "totp",
       },
       { merge: true },
     );
@@ -121,19 +123,6 @@ export const verificarTotpMfa = onCall(
 
 function referenciaTotp(uid: string) {
   return admin.firestore().collection("mfa_totp").doc(uid);
-}
-
-async function exigirLoginComSenha(uid: string): Promise<void> {
-  const record = await admin.auth().getUser(uid);
-  const temSenha = record.providerData.some(
-    (provider) => provider.providerId === "password",
-  );
-  if (!temSenha) {
-    throw new HttpsError(
-      "failed-precondition",
-      "O autenticador é exclusivo do login com e-mail e senha.",
-    );
-  }
 }
 
 async function validarCodigoTotp(

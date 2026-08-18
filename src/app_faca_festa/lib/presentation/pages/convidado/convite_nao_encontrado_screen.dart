@@ -39,13 +39,27 @@ class ConviteNaoEncontradoScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 28),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: () => Get.find<AppController>().logout(),
-                  child: const Text('Sair'),
-                ),
-              ),
+              Obx(() {
+                final appController = Get.find<AppController>();
+                final saindo = appController.encerrandoSessao.value;
+                return SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: saindo ? null : appController.logout,
+                    child: saindo
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.4,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Text('Sair'),
+                  ),
+                );
+              }),
             ],
           ),
         ),

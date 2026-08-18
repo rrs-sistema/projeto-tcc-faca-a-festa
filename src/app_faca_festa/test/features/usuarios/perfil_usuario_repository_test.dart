@@ -165,6 +165,8 @@ void main() {
         'foto_perfil_url',
         'ativo',
         'mfa_totp_ativo',
+        'mfa_email_ativo',
+        'mfa_metodo',
         'data_cadastro',
         'cidade',
         'uf',

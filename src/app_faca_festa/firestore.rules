@@ -43,13 +43,39 @@ service cloud.firestore {
       return data.id_usuario == uid() || data.idUsuario == uid();
     }
 
+    function emailDoUsuario() {
+      return signedIn() && request.auth.token.email != null
+        ? request.auth.token.email.lower()
+        : '';
+    }
+
+    function conviteDoEmail(data) {
+      return emailDoUsuario() != ''
+        && (
+          data.email_normalizado == emailDoUsuario()
+          || (data.email is string && data.email.lower() == emailDoUsuario())
+        );
+    }
+
+    function podeVincularConvitePeloEmail() {
+      return conviteDoEmail(resource.data)
+        && request.resource.data.id_usuario == uid()
+        && (
+          !('id_usuario' in resource.data)
+          || resource.data.id_usuario == null
+          || resource.data.id_usuario == ''
+          || resource.data.id_usuario == uid()
+        )
+        && request.resource.data.id_evento == resource.data.id_evento;
+    }
+
     match /usuarios/{userId} {
       allow read: if isAdmin() || (signedIn() && uid() == userId);
       allow create: if isAdmin() || (signedIn() && uid() == userId);
       allow update: if isAdmin()
         || (signedIn() && uid() == userId
             && !request.resource.data.diff(resource.data).affectedKeys()
-                .hasAny(['tipo', 'mfa_totp_ativo']));
+                .hasAny(['tipo', 'mfa_totp_ativo', 'mfa_email_ativo', 'mfa_metodo']));
       allow delete: if isAdmin();
 
       match /enderecos/{enderecoId} {
@@ -127,18 +153,26 @@ service cloud.firestore {
     match /convidado/{id} {
       allow read: if isAdmin()
         || eventoDono(resource.data.id_evento)
-        || (signedIn() && campoIdUsuario(resource.data));
+        || (signedIn() && campoIdUsuario(resource.data))
+        || conviteDoEmail(resource.data);
       allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
       allow update, delete: if isAdmin()
         || eventoDono(resource.data.id_evento)
-        || (signedIn() && campoIdUsuario(resource.data));
+        || (signedIn() && campoIdUsuario(resource.data))
+        || podeVincularConvitePeloEmail();
     }
 
     match /convidados/{id} {
       allow read: if isAdmin()
         || eventoDono(resource.data.id_evento)
-        || (signedIn() && campoIdUsuario(resource.data));
-      allow write: if isAdmin() || eventoDono(resource.data.id_evento);
+        || (signedIn() && campoIdUsuario(resource.data))
+        || conviteDoEmail(resource.data);
+      allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
+      allow update: if isAdmin()
+        || eventoDono(resource.data.id_evento)
+        || (signedIn() && campoIdUsuario(resource.data))
+        || podeVincularConvitePeloEmail();
+      allow delete: if isAdmin() || eventoDono(resource.data.id_evento);
     }
 
     match /grupos_convidado/{id} {
@@ -293,6 +327,10 @@ service cloud.firestore {
     }
 
     match /mfa_totp/{userId} {
+      allow read, write: if false;
+    }
+
+    match /mfa_email_codes/{userId} {
       allow read, write: if false;
     }
   }

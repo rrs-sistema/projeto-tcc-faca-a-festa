@@ -1,19 +1,18 @@
 import * as crypto from "crypto";
-import * as nodemailer from "nodemailer";
 import { defineSecret } from "firebase-functions/params";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { Timestamp } from "firebase-admin/firestore";
 import { admin } from "../../shared/firebaseAdmin";
+import {
+  SECRETS_SMTP,
+  enviarEmailCodigo,
+  isSmtpNaoConfigurado,
+} from "../../shared/emailCodigo";
 
 const CODIGO_EXPIRA_EM_MINUTOS = 10;
 const MAX_TENTATIVAS = 5;
 const DEFAULT_REGION = "southamerica-east1";
 
-const SMTP_HOST = defineSecret("SMTP_HOST");
-const SMTP_PORT = defineSecret("SMTP_PORT");
-const SMTP_USER = defineSecret("SMTP_USER");
-const SMTP_PASS = defineSecret("SMTP_PASS");
-const SMTP_FROM = defineSecret("SMTP_FROM");
 const PASSWORD_RESET_SECRET = defineSecret("PASSWORD_RESET_SECRET");
 
 type SolicitarCodigoData = {
@@ -32,14 +31,7 @@ export const solicitarCodigoRedefinicaoSenha = onCall(
     timeoutSeconds: 30,
     memory: "256MiB",
     cors: true,
-    secrets: [
-      SMTP_HOST,
-      SMTP_PORT,
-      SMTP_USER,
-      SMTP_PASS,
-      SMTP_FROM,
-      PASSWORD_RESET_SECRET,
-    ],
+    secrets: [...SECRETS_SMTP, PASSWORD_RESET_SECRET],
   },
   async (request) => {
     const data = request.data as SolicitarCodigoData;
@@ -71,7 +63,17 @@ export const solicitarCodigoRedefinicaoSenha = onCall(
           expiraEm,
         });
 
-      await enviarEmailCodigo(email, codigo);
+      await enviarEmailCodigo({
+        para: email,
+        assunto: "Código para redefinir sua senha - Faça a Festa",
+        texto:
+          `Seu código para redefinir a senha é ${codigo}.\n\n` +
+          `Ele expira em ${CODIGO_EXPIRA_EM_MINUTOS} minutos.`,
+        html:
+          "<p>Seu código para redefinir a senha é:</p>" +
+          `<p style="font-size:28px;font-weight:700;letter-spacing:4px">${codigo}</p>` +
+          `<p>Ele expira em ${CODIGO_EXPIRA_EM_MINUTOS} minutos.</p>`,
+      });
     } catch (error) {
       if (isAuthUserNotFound(error)) {
         return {
@@ -217,42 +219,4 @@ function isAuthUserNotFound(error: unknown): boolean {
     "code" in error &&
     (error as { code?: unknown }).code === "auth/user-not-found"
   );
-}
-
-function isSmtpNaoConfigurado(error: unknown): boolean {
-  return error instanceof Error && error.message.includes("SMTP não configurado");
-}
-
-async function enviarEmailCodigo(email: string, codigo: string): Promise<void> {
-  const host = SMTP_HOST.value().trim();
-  const port = Number(SMTP_PORT.value().trim() || "587");
-  const user = SMTP_USER.value().trim();
-  const pass = SMTP_PASS.value().replace(/\s/g, "");
-  const from = (SMTP_FROM.value() || user).trim();
-
-  if (!host || !user || !pass || !from) {
-    throw new Error(
-      "SMTP não configurado. Defina SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS e SMTP_FROM.",
-    );
-  }
-
-  const transporter = nodemailer.createTransport({
-    host,
-    port,
-    secure: port === 465,
-    auth: { user, pass },
-  });
-
-  await transporter.sendMail({
-    from,
-    to: email,
-    subject: "Código para redefinir sua senha - Faça a Festa",
-    text:
-      `Seu código para redefinir a senha é ${codigo}.\n\n` +
-      `Ele expira em ${CODIGO_EXPIRA_EM_MINUTOS} minutos.`,
-    html:
-      "<p>Seu código para redefinir a senha é:</p>" +
-      `<p style="font-size:28px;font-weight:700;letter-spacing:4px">${codigo}</p>` +
-      `<p>Ele expira em ${CODIGO_EXPIRA_EM_MINUTOS} minutos.</p>`,
-  });
 }
