@@ -9,7 +9,6 @@ import 'package:get/get.dart';
 
 import '../../../controllers/evento_controller.dart';
 import '../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
-import '../../../controllers/fornecedor/fornecedor_recomendacao_controller.dart';
 import '../../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
 import './../../../controllers/contacao/solicitacoes_controller.dart';
 import './../../../controllers/contacao/cotacao_controller.dart';
@@ -27,10 +26,6 @@ class PainelCotacaoPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Get.find<EventThemeController>();
     final cotacaoCtrl = Get.find<CotacaoController>();
-
-    if (!Get.isRegistered<FornecedorRecomendacaoController>()) {
-      Get.put(FornecedorRecomendacaoController(), permanent: true);
-    }
 
     final primary = theme.primaryColor.value;
     final gradient = theme.gradient.value;
@@ -88,22 +83,10 @@ class PainelCotacaoPage extends StatelessWidget {
       final tipoEventoAtual = eventoCtrl.tipoEventoAtualEntidade;
       final idUsuario = FirebaseAuth.instance.currentUser?.uid ?? '';
 
-      final idEvento = _resolverIdEvento(eventoAtual);
-      final tipoEventoId = _resolverCampoTexto(tipoEventoAtual, [
-        'idTipoEvento',
-        'id',
-        'id_tipo_evento',
-      ]);
-      final tipoEventoNome = _resolverCampoTexto(tipoEventoAtual, [
-        'nome',
-        'nomeTipoEvento',
-        'tipoEventoNome',
-      ]);
-      final cidade = _resolverCampoTexto(eventoAtual, [
-        'cidade',
-        'cidadeEvento',
-        'nomeCidade',
-      ]);
+      final idEvento = eventoAtual?.idEvento ?? '';
+      final tipoEventoId = tipoEventoAtual?.idTipoEvento ?? '';
+      final tipoEventoNome = tipoEventoAtual?.nome ?? '';
+      final cidade = eventoAtual?.nomeCidade ?? '';
 
       if (eventoAtual == null || idEvento.isEmpty || idUsuario.isEmpty) {
         return const SizedBox.shrink();
@@ -130,12 +113,7 @@ class PainelCotacaoPage extends StatelessWidget {
     FornecedorRecomendacaoModel recomendacao,
   ) async {
     try {
-      final fornecedorLocalizacaoCtrl = Get.isRegistered<FornecedorLocalizacaoController>()
-          ? Get.find<FornecedorLocalizacaoController>()
-          : Get.put(
-              FornecedorLocalizacaoController(),
-              permanent: true,
-            );
+      final fornecedorLocalizacaoCtrl = FornecedorLocalizacaoController.to;
 
       final fornecedores = [
         ...fornecedorLocalizacaoCtrl.fornecedoresFiltrados,
@@ -176,75 +154,6 @@ class PainelCotacaoPage extends StatelessWidget {
         colorText: Colors.white,
       );
     }
-  }
-
-  String _resolverIdEvento(dynamic evento) {
-    if (evento == null) return '';
-
-    final idEvento = _resolverCampoTexto(evento, [
-      'idEvento',
-      'id',
-      'id_evento',
-      'documentId',
-    ]);
-
-    return idEvento;
-  }
-
-  String _resolverCampoTexto(dynamic objeto, List<String> campos) {
-    if (objeto == null) return '';
-
-    for (final campo in campos) {
-      try {
-        dynamic valor;
-
-        switch (campo) {
-          case 'idEvento':
-            valor = objeto.idEvento;
-            break;
-          case 'id':
-            valor = objeto.id;
-            break;
-          case 'id_evento':
-            valor = objeto.id_evento;
-            break;
-          case 'documentId':
-            valor = objeto.documentId;
-            break;
-          case 'idTipoEvento':
-            valor = objeto.idTipoEvento;
-            break;
-          case 'id_tipo_evento':
-            valor = objeto.id_tipo_evento;
-            break;
-          case 'nome':
-            valor = objeto.nome;
-            break;
-          case 'nomeTipoEvento':
-            valor = objeto.nomeTipoEvento;
-            break;
-          case 'tipoEventoNome':
-            valor = objeto.tipoEventoNome;
-            break;
-          case 'cidade':
-            valor = objeto.cidade;
-            break;
-          case 'cidadeEvento':
-            valor = objeto.cidadeEvento;
-            break;
-          case 'nomeCidade':
-            valor = objeto.nomeCidade;
-            break;
-        }
-
-        final texto = valor?.toString().trim() ?? '';
-        if (texto.isNotEmpty) return texto;
-      } catch (_) {
-        continue;
-      }
-    }
-
-    return '';
   }
 
   // ===========================================================

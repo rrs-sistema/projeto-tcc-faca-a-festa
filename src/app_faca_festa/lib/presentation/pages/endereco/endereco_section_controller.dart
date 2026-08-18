@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import './../../../controllers/uf_cidade_controller.dart';
 import './../../../data/models/model.dart';
+import './../../../data/services/endereco/buscar_cep_google_service.dart';
 
 /// 🎯 Controller público da seção de endereço
 class EnderecoSectionController {
@@ -15,6 +16,18 @@ class EnderecoSectionController {
   final ufCidadeController = Get.put(UFCidadeController());
   final nomeCidadeController = TextEditingController();
   final ufController = TextEditingController();
+  final numeroFocusNode = FocusNode();
+
+  final consultandoCep = false.obs;
+  final mensagemCep = ''.obs;
+
+  final BuscarCepGoogleService _cepService;
+  String _ultimoCepConsultado = '';
+
+  EnderecoSectionController({BuscarCepGoogleService? cepService})
+      : _cepService = cepService ?? BuscarCepGoogleService() {
+    cepController.addListener(_onCepAlterado);
+  }
 
   /// Retorna o modelo pronto para salvar
   EnderecoUsuarioModel toModel(String idUsuario) {
@@ -28,7 +41,7 @@ class EnderecoSectionController {
       complemento: complementoController.text.trim(),
       bairro: bairroController.text.trim(),
       nomeCidade: nomeCidadeController.text.trim(),
-      uf: ufController.text.trim(),
+      uf: ufController.text.trim().toUpperCase(),
       principal: true,
     );
   }
@@ -45,10 +58,50 @@ class EnderecoSectionController {
       'complemento': complementoController.text.trim(),
       'bairro': bairroController.text.trim(),
       'nome_cidade': nomeCidadeController.text.trim(),
-      'uf': ufController.text.trim(),
+      'uf': ufController.text.trim().toUpperCase(),
       'principal': principal ?? false,
       'data_cadastro': FieldValue.serverTimestamp(),
     };
+  }
+
+  Future<void> buscarPorCep({
+    String? cepInformado,
+    bool forcar = false,
+  }) async {
+    final cep = (cepInformado ?? cepController.text).replaceAll(RegExp(r'\D'), '');
+    if (cep.length != 8) {
+      mensagemCep.value = '';
+      if (forcar) {
+        _mostrarErroCep('Informe um CEP válido com 8 dígitos.');
+      }
+      return;
+    }
+    if (consultandoCep.value) return;
+    if (!forcar && cep == _ultimoCepConsultado) return;
+
+    consultandoCep.value = true;
+    mensagemCep.value = '';
+    _ultimoCepConsultado = cep;
+
+    try {
+      final resultado = await _cepService.buscar(cep: cep);
+      _preencherCampos(resultado);
+      mensagemCep.value = '';
+      if (numeroController.text.trim().isEmpty) {
+        numeroFocusNode.requestFocus();
+      }
+    } on BuscarCepException catch (e) {
+      _ultimoCepConsultado = '';
+      mensagemCep.value = e.mensagem;
+      _mostrarErroCep(e.mensagem);
+    } catch (e) {
+      _ultimoCepConsultado = '';
+      const mensagem = 'Não foi possível consultar o CEP. Tente novamente.';
+      mensagemCep.value = mensagem;
+      _mostrarErroCep(mensagem);
+    } finally {
+      consultandoCep.value = false;
+    }
   }
 
   void limpar() {
@@ -58,13 +111,16 @@ class EnderecoSectionController {
     complementoController.clear();
     bairroController.clear();
     nomeCidadeController.clear();
-    ufController.text = 'PR';
+    ufController.clear();
+    _ultimoCepConsultado = '';
+    mensagemCep.value = '';
+    consultandoCep.value = false;
 
-    // ✅ Zera seleção de cidade/UF
     ufCidadeController.limpar();
   }
 
   void dispose() {
+    cepController.removeListener(_onCepAlterado);
     cepController.dispose();
     logradouroController.dispose();
     numeroController.dispose();
@@ -72,5 +128,54 @@ class EnderecoSectionController {
     bairroController.dispose();
     nomeCidadeController.dispose();
     ufController.dispose();
+    numeroFocusNode.dispose();
+  }
+
+  void _onCepAlterado() {
+    final cep = cepController.text.replaceAll(RegExp(r'\D'), '');
+    if (cep.length != 8) {
+      if (cep.length < 8) {
+        _ultimoCepConsultado = '';
+        mensagemCep.value = '';
+      }
+      return;
+    }
+    buscarPorCep(cepInformado: cep);
+  }
+
+  void _preencherCampos(EnderecoCepResultado resultado) {
+    if (resultado.logradouro.isNotEmpty) {
+      logradouroController.text = resultado.logradouro;
+    }
+    if (resultado.bairro.isNotEmpty) {
+      bairroController.text = resultado.bairro;
+    }
+    if (resultado.cidade.isNotEmpty) {
+      nomeCidadeController.text = resultado.cidade;
+    }
+    if (resultado.uf.isNotEmpty) {
+      ufController.text = resultado.uf.toUpperCase();
+    }
+  }
+
+  void _mostrarErroCep(String mensagem) {
+    Get.rawSnackbar(
+      title: 'CEP',
+      message: mensagem,
+      titleText: const Text(
+        'CEP',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+      ),
+      messageText: Text(
+        mensagem,
+        style: const TextStyle(color: Colors.white),
+      ),
+      backgroundColor: Colors.orange.shade800.withValues(alpha: 0.95),
+      snackPosition: SnackPosition.TOP,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      borderRadius: 12,
+      icon: const Icon(Icons.location_off_outlined, color: Colors.white),
+      duration: const Duration(seconds: 3),
+    );
   }
 }

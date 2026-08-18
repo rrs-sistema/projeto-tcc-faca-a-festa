@@ -47,9 +47,7 @@ class _FornecedorRecomendacoesSectionState extends State<FornecedorRecomendacoes
   void initState() {
     super.initState();
 
-    controller = Get.isRegistered<FornecedorRecomendacaoController>()
-        ? Get.find<FornecedorRecomendacaoController>()
-        : Get.put(FornecedorRecomendacaoController());
+    controller = FornecedorRecomendacaoController.to;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _carregarInicial();
@@ -77,19 +75,16 @@ class _FornecedorRecomendacoesSectionState extends State<FornecedorRecomendacoes
     if (!mounted) return;
 
     if (widget.idEvento.trim().isEmpty || widget.idUsuario.trim().isEmpty) {
-      controller.recomendacoes.clear();
       return;
     }
 
-    await controller.carregarRecomendacoesSalvas(
+    await controller.garantirRecomendacoes(
       idEvento: widget.idEvento,
       idUsuario: widget.idUsuario,
       limite: widget.limite,
+      gerarSeVazio: widget.gerarAoIniciar,
+      modoDemo: widget.modoDemo,
     );
-
-    if (widget.gerarAoIniciar && controller.recomendacoes.isEmpty) {
-      await _atualizar();
-    }
   }
 
   Future<void> _atualizar() {

@@ -315,6 +315,15 @@ class GrupoConvidadoController extends GetxController {
     _subConvidados = null;
   }
 
+  Future<void> encerrarEscutas() async {
+    await _cancelarEscutas();
+    _idEventoAtual = null;
+    _convidadosRecebidos = const [];
+    grupos.clear();
+    convidados.clear();
+    carregando.value = false;
+  }
+
   @override
   void onClose() {
     unawaited(_cancelarEscutas());

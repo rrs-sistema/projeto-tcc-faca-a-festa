@@ -28,12 +28,6 @@ class TarefaController extends GetxController {
 
   EventoController get eventoController => Get.find<EventoController>();
 
-  @override
-  void onInit() {
-    super.onInit();
-    unawaited(carregarUsuarios());
-  }
-
   Future<void> listenTarefas(String idEvento) async {
     if (idEvento.isEmpty) return;
     carregando.value = true;
@@ -71,7 +65,6 @@ class TarefaController extends GetxController {
   Future<void> carregarUsuarios() async {
     try {
       carregando.value = true;
-      await Future<void>.delayed(const Duration(seconds: 5));
       erro.value = '';
       usuarios.clear();
 
@@ -187,6 +180,13 @@ class TarefaController extends GetxController {
 
   void reset() {
     unawaited(_tarefasSubscription?.cancel());
+    _tarefasSubscription = null;
+    tarefas.clear();
+    usuarios.clear();
+  }
+
+  Future<void> encerrarEscutas() async {
+    await _tarefasSubscription?.cancel();
     _tarefasSubscription = null;
     tarefas.clear();
     usuarios.clear();

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
+import 'dart:async';
 
 import './../data/models/orcamento/orcamento_validacao_resultado.dart';
 import './../data/models/orcamento/orcamento_gasto_model.dart';
@@ -9,10 +11,12 @@ import 'orcamento_controller.dart';
 class OrcamentoGastoController extends GetxController {
   final _db = FirebaseFirestore.instance;
   final RxList<OrcamentoGastoModel> gastos = <OrcamentoGastoModel>[].obs;
+  StreamSubscription? _gastosSub;
 
   /// Escuta os gastos de um orçamento específico
   void escutarGastos(String idOrcamento) {
-    _db
+    unawaited(_gastosSub?.cancel());
+    _gastosSub = _db
         .collection('orcamento')
         .doc(idOrcamento)
         .collection('orcamento_gasto')
@@ -23,9 +27,16 @@ class OrcamentoGastoController extends GetxController {
         snapshot.docs.map((doc) => OrcamentoGastoModel.fromMap(doc.data())).toList(),
       );
 
-      // 🔥 Atualiza o total geral do evento automaticamente
       _atualizarResumoGeral();
+    }, onError: (e) {
+      debugPrint('❌ Erro ao escutar gastos do orçamento: $e');
     });
+  }
+
+  Future<void> encerrarEscutas() async {
+    await _gastosSub?.cancel();
+    _gastosSub = null;
+    gastos.clear();
   }
 
   Future<OrcamentoValidacaoResultado> adicionarGasto({

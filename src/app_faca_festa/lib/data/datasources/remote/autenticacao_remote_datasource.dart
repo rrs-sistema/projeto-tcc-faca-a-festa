@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+
+import '../../../domain/repositories/autenticacao_repository.dart';
 
 class AutenticacaoRemoteException implements Exception {
   const AutenticacaoRemoteException(this.codigo);
@@ -27,7 +30,8 @@ abstract interface class AutenticacaoRemoteDatasource {
     required String senha,
   });
 
-  Future<void> entrarComGoogle();
+  /// `true` se autenticou. `false` se o usuário cancelou o seletor.
+  Future<bool> entrarComGoogle();
 
   Future<String> criarUsuario({
     required String email,
@@ -73,69 +77,124 @@ class FirebaseAutenticacaoRemoteDatasource
   }
 
   @override
-  Future<void> entrarComGoogle() async {
+  Future<bool> entrarComGoogle() async {
     try {
-      final provider = GoogleAuthProvider()
-        ..addScope('email')
-        ..addScope('profile');
-
       if (kIsWeb) {
-        await auth.signInWithPopup(provider);
-        return;
-      }
-
-      try {
-        await auth.signInWithProvider(provider);
-        return;
-      } on UnimplementedError {
-        debugPrint(
-          '[AutenticacaoRemote] signInWithProvider não implementado. '
-          'Usando fallback do google_sign_in.',
-        );
-      } on FirebaseAuthException catch (erro) {
-        debugPrint(
-          '[AutenticacaoRemote] signInWithProvider falhou: '
-          'code=${erro.code} | message=${erro.message}',
-        );
-
-        if (!_deveTentarFallbackGoogle(erro.code)) {
-          rethrow;
-        }
+        return await _entrarComGoogleWeb();
       }
 
       await _inicializarGoogleSignIn();
 
-      if (!GoogleSignIn.instance.supportsAuthenticate()) {
-        throw const AutenticacaoRemoteException('google-sign-in-unsupported');
+      // No celular, o seletor nativo devolve o token no próprio app.
+      if (GoogleSignIn.instance.supportsAuthenticate()) {
+        return await _entrarComGoogleNativo();
       }
 
-      final contaGoogle = await GoogleSignIn.instance.authenticate();
-      final autenticacaoGoogle = contaGoogle.authentication;
-      final idToken = autenticacaoGoogle.idToken;
-
-      if (idToken == null || idToken.isEmpty) {
-        throw const AutenticacaoRemoteException('google-token-not-found');
-      }
-
-      final credencial = GoogleAuthProvider.credential(idToken: idToken);
-      await auth.signInWithCredential(credencial);
+      return await _entrarComGoogleProvedorExterno();
+    } on AutenticacaoRemoteException {
+      rethrow;
     } on GoogleSignInException catch (erro) {
+      if (_googleNativoFoiCancelado(erro)) {
+        debugPrint(
+          '[AutenticacaoRemote] Google cancelado pelo usuário: '
+          '${erro.code.name}',
+        );
+        return false;
+      }
       debugPrint(
         '[AutenticacaoRemote] GoogleSignInException: '
-        'code=${erro.code.name} | description=${erro.description} | details=${erro.details}',
+        'code=${erro.code.name} | description=${erro.description}',
       );
       throw AutenticacaoRemoteException(erro.code.name);
     } on FirebaseAuthException catch (erro) {
+      if (autenticacaoFoiCancelada(erro.code)) {
+        debugPrint(
+          '[AutenticacaoRemote] Google cancelado pelo usuário: ${erro.code}',
+        );
+        return false;
+      }
       debugPrint(
         '[AutenticacaoRemote] FirebaseAuthException Google: '
         'code=${erro.code} | message=${erro.message}',
       );
       throw AutenticacaoRemoteException(erro.code);
+    } on PlatformException catch (erro) {
+      if (autenticacaoFoiCancelada(erro.code)) {
+        debugPrint(
+          '[AutenticacaoRemote] Google cancelado pelo usuário: ${erro.code}',
+        );
+        return false;
+      }
+      debugPrint(
+        '[AutenticacaoRemote] PlatformException Google: '
+        'code=${erro.code} | message=${erro.message}',
+      );
+      throw const AutenticacaoRemoteException('google-unexpected-error');
     } catch (erro, stack) {
       debugPrint('[AutenticacaoRemote] Erro inesperado no Google: $erro');
       debugPrint('$stack');
       throw const AutenticacaoRemoteException('google-unexpected-error');
     }
+  }
+
+  Future<bool> _entrarComGoogleWeb() async {
+    final provider = GoogleAuthProvider()
+      ..addScope('email')
+      ..addScope('profile');
+    await auth.signInWithPopup(provider);
+    return true;
+  }
+
+  Future<bool> _entrarComGoogleNativo() async {
+    try {
+      final contaGoogle = await GoogleSignIn.instance.authenticate(
+        scopeHint: const ['email', 'profile'],
+      );
+      final idToken = contaGoogle.authentication.idToken;
+
+      if (idToken == null || idToken.isEmpty) {
+        throw const AutenticacaoRemoteException('google-token-not-found');
+      }
+
+      await auth.signInWithCredential(
+        GoogleAuthProvider.credential(idToken: idToken),
+      );
+      return true;
+    } on GoogleSignInException catch (erro) {
+      if (_googleNativoFoiCancelado(erro)) {
+        debugPrint(
+          '[AutenticacaoRemote] Seletor Google fechado sem conta: '
+          '${erro.description}',
+        );
+        return false;
+      }
+      rethrow;
+    }
+  }
+
+  Future<bool> _entrarComGoogleProvedorExterno() async {
+    try {
+      final provider = GoogleAuthProvider()
+        ..addScope('email')
+        ..addScope('profile');
+      await auth.signInWithProvider(provider);
+      return true;
+    } on FirebaseAuthException catch (erro) {
+      if (autenticacaoFoiCancelada(erro.code)) {
+        return false;
+      }
+      rethrow;
+    } on PlatformException catch (erro) {
+      if (autenticacaoFoiCancelada(erro.code)) {
+        return false;
+      }
+      rethrow;
+    }
+  }
+
+  bool _googleNativoFoiCancelado(GoogleSignInException erro) {
+    return erro.code == GoogleSignInExceptionCode.canceled ||
+        autenticacaoFoiCancelada(erro.code.name);
   }
 
   Future<void> _inicializarGoogleSignIn() async {
@@ -145,12 +204,6 @@ class FirebaseAutenticacaoRemoteDatasource
           '300274184803-6vk4dg1e2m1qouquq4jj9dafamh6qk8i.apps.googleusercontent.com',
     );
     _googleInicializado = true;
-  }
-
-  bool _deveTentarFallbackGoogle(String code) {
-    return code == 'operation-not-supported-in-this-environment' ||
-        code == 'unimplemented' ||
-        code == 'unknown';
   }
 
   @override

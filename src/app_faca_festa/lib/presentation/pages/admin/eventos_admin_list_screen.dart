@@ -7,7 +7,13 @@ import './../../../data/models/admin/evento_com_tipo_model.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 
 class EventosAdminListScreen extends StatelessWidget {
-  const EventosAdminListScreen({super.key});
+  EventosAdminListScreen({super.key}) {
+    Future.microtask(() {
+      if (Get.isRegistered<EventosAdminController>()) {
+        Get.find<EventosAdminController>().carregarEventosComTipo();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

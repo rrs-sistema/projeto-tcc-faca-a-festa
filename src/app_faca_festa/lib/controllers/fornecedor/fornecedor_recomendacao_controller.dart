@@ -6,6 +6,13 @@ import 'package:get/get.dart';
 import '../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
 
 class FornecedorRecomendacaoController extends GetxController {
+  static FornecedorRecomendacaoController get to {
+    if (Get.isRegistered<FornecedorRecomendacaoController>()) {
+      return Get.find<FornecedorRecomendacaoController>();
+    }
+    return Get.put(FornecedorRecomendacaoController(), permanent: true);
+  }
+
   FornecedorRecomendacaoController({
     FirebaseFirestore? firestore,
     FirebaseFunctions? functions,
@@ -20,7 +27,77 @@ class FornecedorRecomendacaoController extends GetxController {
   final RxString erro = ''.obs;
   final RxList<FornecedorRecomendacaoModel> recomendacoes = <FornecedorRecomendacaoModel>[].obs;
 
+  String? _eventoCarregado;
+  String? _usuarioCarregado;
+  Future<void>? _carregamentoEmAndamento;
+  final Set<String> _geracaoTentadaPorEvento = <String>{};
+
   bool get ocupado => carregando.value || gerando.value;
+
+  /// Reutiliza o cache em memória. Só consulta Firestore/IA quando o contexto muda ou é forçado.
+  Future<void> garantirRecomendacoes({
+    required String idEvento,
+    required String idUsuario,
+    int limite = 10,
+    bool forcar = false,
+    bool gerarSeVazio = false,
+    bool modoDemo = false,
+  }) async {
+    if (idEvento.trim().isEmpty || idUsuario.trim().isEmpty) {
+      recomendacoes.clear();
+      _eventoCarregado = null;
+      _usuarioCarregado = null;
+      return;
+    }
+
+    final mesmoContexto = _eventoCarregado == idEvento && _usuarioCarregado == idUsuario;
+
+    if (!forcar && mesmoContexto && recomendacoes.isNotEmpty) {
+      return;
+    }
+
+    if (!forcar && mesmoContexto && _geracaoTentadaPorEvento.contains(idEvento)) {
+      return;
+    }
+
+    if (_carregamentoEmAndamento != null && mesmoContexto && !forcar) {
+      await _carregamentoEmAndamento;
+      return;
+    }
+
+    final execucao = () async {
+      if (!forcar) {
+        await carregarRecomendacoesSalvas(
+          idEvento: idEvento,
+          idUsuario: idUsuario,
+          limite: limite,
+        );
+      }
+
+      _eventoCarregado = idEvento;
+      _usuarioCarregado = idUsuario;
+
+      final deveGerar = forcar || (gerarSeVazio && recomendacoes.isEmpty);
+      if (!deveGerar) return;
+      if (!forcar && _geracaoTentadaPorEvento.contains(idEvento)) return;
+
+      _geracaoTentadaPorEvento.add(idEvento);
+      await gerarRecomendacoes(
+        idEvento: idEvento,
+        limite: limite,
+        modoDemo: modoDemo,
+      );
+    }();
+
+    _carregamentoEmAndamento = execucao;
+    try {
+      await execucao;
+    } finally {
+      if (identical(_carregamentoEmAndamento, execucao)) {
+        _carregamentoEmAndamento = null;
+      }
+    }
+  }
 
   Future<void> carregarRecomendacoesSalvas({
     required String idEvento,
@@ -180,17 +257,14 @@ class FornecedorRecomendacaoController extends GetxController {
     required String idUsuario,
     int limite = 10,
     bool modoDemo = false,
-  }) async {
-    await gerarRecomendacoes(
-      idEvento: idEvento,
-      limite: limite,
-      modoDemo: modoDemo,
-    );
-
-    await carregarRecomendacoesSalvas(
+  }) {
+    return garantirRecomendacoes(
       idEvento: idEvento,
       idUsuario: idUsuario,
       limite: limite,
+      forcar: true,
+      gerarSeVazio: true,
+      modoDemo: modoDemo,
     );
   }
 

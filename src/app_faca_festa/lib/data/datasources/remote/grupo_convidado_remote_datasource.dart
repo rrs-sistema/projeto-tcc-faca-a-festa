@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/convidado/convidado_model.dart';
@@ -41,54 +39,13 @@ class GrupoConvidadoRemoteDatasource {
   }
 
   Stream<List<ConvidadoModel>> observarConvidados(String idEvento) {
-    late StreamController<List<ConvidadoModel>> controller;
-    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? principalSub;
-    StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? legadoSub;
-    final principal = <String, ConvidadoModel>{};
-    final legado = <String, ConvidadoModel>{};
-
-    void publicar() {
-      final lista = <String, ConvidadoModel>{...legado, ...principal}
-          .values
-          .toList()
-        ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
-      controller.add(lista);
-    }
-
-    controller = StreamController<List<ConvidadoModel>>(
-      onListen: () {
-        principalSub = _convidados
-            .where('id_evento', isEqualTo: idEvento)
-            .snapshots()
-            .listen(
-          (snapshot) {
-            principal
-              ..clear()
-              ..addAll(_normalizarConvidados(snapshot, idEvento));
-            publicar();
-          },
-          onError: controller.addError,
-        );
-        legadoSub = _convidados
-            .where('id_evento_evento', isEqualTo: idEvento)
-            .snapshots()
-            .listen(
-          (snapshot) {
-            legado
-              ..clear()
-              ..addAll(_normalizarConvidados(snapshot, idEvento));
-            publicar();
-          },
-          onError: controller.addError,
-        );
-      },
-      onCancel: () async {
-        await principalSub?.cancel();
-        await legadoSub?.cancel();
+    return _convidados.where('id_evento', isEqualTo: idEvento).snapshots().map(
+      (snapshot) {
+        final lista = _normalizarConvidados(snapshot, idEvento).values.toList()
+          ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
+        return lista;
       },
     );
-
-    return controller.stream;
   }
 
   Map<String, ConvidadoModel> _normalizarConvidados(

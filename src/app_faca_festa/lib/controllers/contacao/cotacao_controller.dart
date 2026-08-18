@@ -6,9 +6,7 @@ import 'package:get/get.dart';
 import 'package:uuid/uuid.dart';
 import 'dart:async';
 
-import '../../core/services/whatsGw/whatsapp_service.dart';
 import '../../data/models/orcamento/orcamento_gasto_model.dart';
-import '../../presentation/whatsapp/whatsapp_templates.dart';
 import '../fornecedor/fornecedor_controller.dart';
 import '../orcamento_controller.dart';
 import './../../data/models/model.dart';
@@ -22,25 +20,6 @@ class CotacaoController extends GetxController {
   final Map<String, StreamSubscription> _subStreams = {};
   final RxInt totalCount = 0.obs;
   final RxInt contratadosCount = 0.obs;
-
-  Future<void> notificarFornecedorCotacao({
-    required FornecedorModel fornecedor,
-    required CotacaoModel cotacao,
-  }) async {
-    final whats = Get.find<WhatsAppService>();
-    final templates = Get.find<WhatsAppTemplates>();
-
-    final msg = templates.atualizacaoCotacao(
-      nomeFornecedor: fornecedor.razaoSocial,
-      categoria: cotacao.categoriaNome ?? 'Não informada',
-      status: cotacao.status.label,
-    );
-
-    await whats.sendText(
-      phone: fornecedor.telefone,
-      message: msg,
-    );
-  }
 
   void _atualizarContagens() {
     contratadosCount.value = cotacoes.where((o) => o.status == StatusCotacao.concluida).length;
@@ -312,10 +291,17 @@ class CotacaoController extends GetxController {
     _subStreams.clear();
   }
 
+  Future<void> encerrarEscutas() async {
+    await _cotacaoStream?.cancel();
+    _cotacaoStream = null;
+    _cancelarSubStreams();
+    cotacoes.clear();
+    carregando.value = false;
+  }
+
   @override
   void onClose() {
-    _cotacaoStream?.cancel();
-    _cancelarSubStreams();
+    unawaited(encerrarEscutas());
     super.onClose();
   }
 }

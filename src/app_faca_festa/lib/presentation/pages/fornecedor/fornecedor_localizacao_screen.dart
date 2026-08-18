@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
 
 import '../../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
@@ -26,33 +27,33 @@ class FornecedorLocalizacaoScreen extends StatefulWidget {
   State<FornecedorLocalizacaoScreen> createState() => _FornecedorLocalizacaoScreenState();
 }
 
-class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScreen> {
+class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScreen>
+    with AutomaticKeepAliveClientMixin {
   final EventThemeController themeController = Get.find<EventThemeController>();
-  final FornecedorLocalizacaoController controllerLocalizacao =
-      Get.put(FornecedorLocalizacaoController());
+  final FornecedorLocalizacaoController controllerLocalizacao = FornecedorLocalizacaoController.to;
   final EventoController eventoController = Get.find<EventoController>();
-  final FornecedorRecomendacaoController recomendacaoController =
-      Get.isRegistered<FornecedorRecomendacaoController>()
-          ? Get.find<FornecedorRecomendacaoController>()
-          : Get.put(FornecedorRecomendacaoController(), permanent: true);
+  final FornecedorRecomendacaoController recomendacaoController = FornecedorRecomendacaoController.to;
 
   final TextEditingController _searchController = TextEditingController();
-  final PageController _servicosPageController =
-      PageController(viewportFraction: 0.88); // Mais justinho
+  final PageController _servicosPageController = PageController(viewportFraction: 0.88);
 
   CategoriaServicoModel? categoriaSelecionada;
   String termoBusca = '';
+  bool _recomendacoesSolicitadas = false;
+
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (categoriaSelecionada != null) {
-        await controllerLocalizacao.buscarServicosPorCategoria(categoriaSelecionada!.id);
-      } else {
-        await controllerLocalizacao.buscarFornecedoresSemCategoria();
-      }
-      await _carregarRecomendacoesIA();
+    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.dark,
+      statusBarBrightness: Brightness.light,
+    ));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(_carregarRecomendacoesIA());
     });
   }
 
@@ -65,10 +66,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light));
+    super.build(context);
 
     return Obx(() {
       final gradient = themeController.gradient.value;
@@ -97,10 +95,9 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
         body: RefreshIndicator(
           color: primary,
           onRefresh: () async {
+            await controllerLocalizacao.inicializar(forcarLocalizacao: true);
             if (categoriaSelecionada != null) {
               await controllerLocalizacao.buscarServicosPorCategoria(categoriaSelecionada!.id);
-            } else {
-              await controllerLocalizacao.buscarFornecedoresSemCategoria();
             }
           },
           child: CustomScrollView(
@@ -122,7 +119,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
               SliverPersistentHeader(
                 pinned: true,
                 delegate: _CategoriasHeaderDelegateBuilder(
-                  builder: (_) => _menuCategorias(primary, gradient),
+                  child: _menuCategorias(primary, gradient),
                 ),
               ),
               SliverToBoxAdapter(
@@ -150,31 +147,13 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   Map<String, String> _dadosEventoParaIA() {
     final eventoAtual = eventoController.eventoAtualEntidade;
     final tipoEventoAtual = eventoController.tipoEventoAtualEntidade;
-    final usuarioFirebase = FirebaseAuth.instance.currentUser;
 
     return {
-      'idUsuario': usuarioFirebase?.uid ?? '',
-      'idEvento': _resolverCampoTexto(eventoAtual, const [
-        'idEvento',
-        'id',
-        'id_evento',
-        'documentId',
-      ]),
-      'tipoEventoId': _resolverCampoTexto(tipoEventoAtual, const [
-        'idTipoEvento',
-        'id',
-        'id_tipo_evento',
-      ]),
-      'tipoEventoNome': _resolverCampoTexto(tipoEventoAtual, const [
-        'nome',
-        'nomeTipoEvento',
-        'tipoEventoNome',
-      ]),
-      'cidade': _resolverCampoTexto(eventoAtual, const [
-        'cidade',
-        'cidadeEvento',
-        'nomeCidade',
-      ]),
+      'idUsuario': FirebaseAuth.instance.currentUser?.uid ?? '',
+      'idEvento': eventoAtual?.idEvento ?? '',
+      'tipoEventoId': tipoEventoAtual?.idTipoEvento ?? '',
+      'tipoEventoNome': tipoEventoAtual?.nome ?? '',
+      'cidade': eventoAtual?.nomeCidade ?? '',
     };
   }
 
@@ -183,38 +162,23 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     final idEvento = dados['idEvento'] ?? '';
     final idUsuario = dados['idUsuario'] ?? '';
 
-    debugPrint(
-      '🧠 [FornecedorLocalizacaoScreen] Dados IA | '
-      'idEvento=$idEvento | '
-      'idUsuario=$idUsuario | '
-      'tipoEventoId=${dados['tipoEventoId']} | '
-      'tipoEventoNome=${dados['tipoEventoNome']} | '
-      'cidade=${dados['cidade']}',
-    );
-
     if (idEvento.trim().isEmpty || idUsuario.trim().isEmpty) {
-      debugPrint(
-        '⚠️ [FornecedorLocalizacaoScreen] IA não chamada: evento ou usuário vazio.',
-      );
       return;
     }
 
-    if (!forcar) {
-      await recomendacaoController.carregarRecomendacoesSalvas(
-        idEvento: idEvento,
-        idUsuario: idUsuario,
-        limite: 5,
-      );
+    if (!forcar && _recomendacoesSolicitadas && recomendacaoController.recomendacoes.isNotEmpty) {
+      return;
     }
 
-    if (forcar || recomendacaoController.recomendacoes.isEmpty) {
-      await recomendacaoController.atualizarRecomendacoes(
-        idEvento: idEvento,
-        idUsuario: idUsuario,
-        limite: 5,
-        modoDemo: true,
-      );
-    }
+    _recomendacoesSolicitadas = true;
+    await recomendacaoController.garantirRecomendacoes(
+      idEvento: idEvento,
+      idUsuario: idUsuario,
+      limite: 5,
+      forcar: forcar,
+      gerarSeVazio: true,
+      modoDemo: true,
+    );
   }
 
   Widget _buildIACompactaFornecedores({
@@ -454,62 +418,6 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     return null;
   }
 
-  String _resolverCampoTexto(dynamic objeto, List<String> campos) {
-    if (objeto == null) return '';
-
-    for (final campo in campos) {
-      try {
-        dynamic valor;
-
-        switch (campo) {
-          case 'idEvento':
-            valor = objeto.idEvento;
-            break;
-          case 'id':
-            valor = objeto.id;
-            break;
-          case 'id_evento':
-            valor = objeto.id_evento;
-            break;
-          case 'documentId':
-            valor = objeto.documentId;
-            break;
-          case 'idTipoEvento':
-            valor = objeto.idTipoEvento;
-            break;
-          case 'id_tipo_evento':
-            valor = objeto.id_tipo_evento;
-            break;
-          case 'nome':
-            valor = objeto.nome;
-            break;
-          case 'nomeTipoEvento':
-            valor = objeto.nomeTipoEvento;
-            break;
-          case 'tipoEventoNome':
-            valor = objeto.tipoEventoNome;
-            break;
-          case 'cidade':
-            valor = objeto.cidade;
-            break;
-          case 'cidadeEvento':
-            valor = objeto.cidadeEvento;
-            break;
-          case 'nomeCidade':
-            valor = objeto.nomeCidade;
-            break;
-        }
-
-        final texto = valor?.toString().trim() ?? '';
-        if (texto.isNotEmpty) return texto;
-      } catch (_) {
-        continue;
-      }
-    }
-
-    return '';
-  }
-
   List<FornecedorDetalhadoDto> _baseFornecedores() {
     final filtrados = controllerLocalizacao.fornecedoresFiltrados.toList();
     if (filtrados.isNotEmpty) return filtrados;
@@ -659,48 +567,46 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   Widget _menuCategorias(Color primary, LinearGradient gradient) {
     return Obx(() {
       final categorias = controllerLocalizacao.categorias;
-      if (categorias.isEmpty) return const SizedBox.shrink();
 
-      return Container(
-        height: 48, // Menu super compacto
-        color: const Color(0xFFF8FAFC).withValues(alpha: 0.98),
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          separatorBuilder: (_, __) => const SizedBox(width: 6),
-          itemCount: categorias.length + 1,
-          itemBuilder: (context, index) {
-            if (index == 0) {
+      return SizedBox(
+        height: _CategoriasHeaderDelegateBuilder.extent,
+        child: ColoredBox(
+          color: const Color(0xFFF8FAFC).withValues(alpha: 0.98),
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            separatorBuilder: (_, __) => const SizedBox(width: 6),
+            itemCount: categorias.length + 1,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _NeedChip(
+                  label: 'Todos',
+                  icon: Icons.grid_view_rounded,
+                  selected: categoriaSelecionada == null,
+                  primary: primary,
+                  onTap: () {
+                    setState(() => categoriaSelecionada = null);
+                  },
+                );
+              }
+              final c = categorias[index - 1];
               return _NeedChip(
-                label: 'Todos',
-                icon: Icons.grid_view_rounded,
-                selected: categoriaSelecionada == null,
+                label: c.nome,
+                icon: Biblioteca.iconePorCategoria(c.nome),
+                selected: categoriaSelecionada?.id == c.id,
                 primary: primary,
+                iconColor: Biblioteca.corPorCategoria(c.nome),
                 onTap: () async {
-                  setState(() => categoriaSelecionada = null);
-                  await controllerLocalizacao.buscarFornecedoresSemCategoria();
+                  setState(
+                      () => categoriaSelecionada = (categoriaSelecionada?.id == c.id) ? null : c);
+                  if (categoriaSelecionada != null) {
+                    await controllerLocalizacao.buscarServicosPorCategoria(c.id);
+                  }
                 },
               );
-            }
-            final c = categorias[index - 1];
-            return _NeedChip(
-              label: c.nome,
-              icon: Biblioteca.iconePorCategoria(c.nome),
-              selected: categoriaSelecionada?.id == c.id,
-              primary: primary,
-              iconColor: Biblioteca.corPorCategoria(c.nome),
-              onTap: () async {
-                setState(
-                    () => categoriaSelecionada = (categoriaSelecionada?.id == c.id) ? null : c);
-                if (categoriaSelecionada != null) {
-                  await controllerLocalizacao.buscarServicosPorCategoria(c.id);
-                } else {
-                  await controllerLocalizacao.buscarFornecedoresSemCategoria();
-                }
-              },
-            );
-          },
+            },
+          ),
         ),
       );
     });
@@ -799,9 +705,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
             ),
           ),
           InkWell(
-            onTap: () async {
+            onTap: () {
               setState(() => categoriaSelecionada = null);
-              await controllerLocalizacao.buscarFornecedoresSemCategoria();
             },
             child: Icon(Icons.close_rounded, size: 16, color: primary),
           ),
@@ -900,9 +805,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                         height: 26, // Botão compacto
                         child: ElevatedButton(
                           onPressed: () {
-                            final srv = controllerLocalizacao.allService
-                                .firstWhereOrNull((x) => x.idProdutoServico == s.idProdutoServico);
-                            if (srv != null) Get.to(() => ServicoDetalheScreen(servico: srv));
+                            Get.to(() => ServicoDetalheScreen(servico: s));
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.white,
@@ -1411,15 +1314,25 @@ class _GlassBadge extends StatelessWidget {
 }
 
 class _CategoriasHeaderDelegateBuilder extends SliverPersistentHeaderDelegate {
-  final WidgetBuilder builder;
-  _CategoriasHeaderDelegateBuilder({required this.builder});
+  static const double extent = 48;
+
+  final Widget child;
+
+  _CategoriasHeaderDelegateBuilder({required this.child});
 
   @override
-  double get minExtent => 48; // Compactado
+  double get minExtent => extent;
+
   @override
-  double get maxExtent => 48;
+  double get maxExtent => extent;
+
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => builder(context);
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+    return SizedBox.expand(child: child);
+  }
+
   @override
-  bool shouldRebuild(covariant _CategoriasHeaderDelegateBuilder oldDelegate) => true;
+  bool shouldRebuild(covariant _CategoriasHeaderDelegateBuilder oldDelegate) {
+    return oldDelegate.child != child;
+  }
 }

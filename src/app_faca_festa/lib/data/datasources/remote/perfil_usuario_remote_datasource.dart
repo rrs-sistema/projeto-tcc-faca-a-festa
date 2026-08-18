@@ -131,9 +131,13 @@ class FirebasePerfilUsuarioRemoteDatasource
     required String? email,
   }) =>
       firestore.collection('usuarios').doc(idUsuario).set({
-        'idUsuario': idUsuario,
+        'id_usuario': idUsuario,
         'email': email,
-        'criadoAutomaticamente': true,
+        'nome': '',
+        'tipo': 'O',
+        'ativo': true,
+        'criado_automaticamente': true,
+        'data_cadastro': FieldValue.serverTimestamp(),
       });
 
   @override

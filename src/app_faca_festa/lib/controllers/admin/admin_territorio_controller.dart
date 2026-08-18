@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -9,16 +10,17 @@ class AdminTerritorioController extends GetxController {
   final mapController = MapController();
   final territorios = <TerritorioModel>[].obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    carregarTerritorios();
-  }
-
   Future<void> carregarTerritorios() async {
-    final snap =
-        await FirebaseFirestore.instance.collection('territorio').orderBy('id_fornecedor').get();
-    territorios.value = snap.docs.map((d) => TerritorioModel.fromMap(d.data())).toList();
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection('territorio')
+          .orderBy('id_fornecedor')
+          .get();
+      territorios.value =
+          snap.docs.map((d) => TerritorioModel.fromMap(d.data())).toList();
+    } catch (e) {
+      debugPrint('❌ Erro ao carregar territórios: $e');
+    }
   }
 
   Future<void> toggleAtivo(TerritorioModel t, bool ativo) async {

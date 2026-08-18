@@ -1,10 +1,7 @@
-import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import './../../core/services/whatsGw/whatsapp_service.dart';
-import './../../presentation/whatsapp/whatsapp_templates.dart';
 import './../../domain/entities/convidado.dart';
 import './../../domain/entities/evento.dart';
 import './../../domain/repositories/convidado_repository.dart';
@@ -61,23 +58,7 @@ class ConvidadoController extends GetxController {
 
   Future<void> enviarConviteAoAdicionar(
       Convidado convidado, Evento evento, String tipoEvento) async {
-    final whats = Get.find<WhatsAppService>();
-    final templates = Get.find<WhatsAppTemplates>();
-
-    final msg = templates.conviteFormal(
-      nomeConvidado: convidado.nome,
-      tipoEvento: tipoEvento,
-      nomeEvento: evento.nomeEvento,
-      data: Biblioteca.formatarData(evento.data),
-      hora: evento.hora ?? Biblioteca.formatarHora(evento.data),
-      endereco: evento.localEvento,
-      linkConfirmacao: 'https://www.facaafesta.com.br',
-    );
-
-    await whats.sendText(
-      phone: convidado.contato,
-      message: msg,
-    );
+    // Envio externo (WhatsApp/SMS/e-mail) foi desativado nesta fase.
   }
 
   Future<void> migrarTipoConvidadoLegado() async {
@@ -116,39 +97,12 @@ class ConvidadoController extends GetxController {
 
   Future<void> confirmarPresenca(
       Convidado convidado, Evento evento, String tipoEvento) async {
-    final whats = Get.find<WhatsAppService>();
-    final templates = Get.find<WhatsAppTemplates>();
-
-    final msg = templates.confirmacaoPresenca(
-      nomeConvidado: convidado.nome,
-      nomeEvento: tipoEvento,
-      data: Biblioteca.formatarData(evento.data),
-      hora: evento.hora ?? Biblioteca.formatarHora(evento.data),
-      endereco: evento.localEvento,
-    );
-
-    await whats.sendText(
-      phone: convidado.contato,
-      message: msg,
-    );
+    // Envio externo foi desativado nesta fase.
   }
 
   Future<void> enviarLembreteEvento(
       Convidado convidado, Evento evento, String tipoEvento) async {
-    final whats = Get.find<WhatsAppService>();
-    final templates = Get.find<WhatsAppTemplates>();
-
-    final msg = templates.lembreteEvento(
-      nomeConvidado: convidado.nome,
-      nomeEvento: tipoEvento,
-      data: Biblioteca.formatarData(evento.data),
-      hora: evento.hora ?? Biblioteca.formatarHora(evento.data),
-    );
-
-    await whats.sendText(
-      phone: convidado.contato,
-      message: msg,
-    );
+    // Envio externo foi desativado nesta fase.
   }
 
   /// 🔹 Adiciona novo convidado temporário

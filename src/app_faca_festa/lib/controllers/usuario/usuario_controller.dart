@@ -38,7 +38,6 @@ class UsuarioController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    carregarUsuarios();
     carregarUsuarioLogado();
   }
 
@@ -102,10 +101,20 @@ class UsuarioController extends GetxController {
 
   Future<void> salvarNovoUsuario(UsuarioModel usuario) async {
     try {
-      // Cria usuário Firebase Auth
+      final senha = usuario.senhaHash?.trim() ?? '';
+      if (senha.length < 6) {
+        Get.snackbar(
+          'Senha obrigatória',
+          'Informe uma senha com pelo menos 6 caracteres.',
+          backgroundColor: Colors.orange.shade700,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
       final uid = await _autenticacaoRepository.criarUsuario(
         email: usuario.email.trim(),
-        senha: usuario.senhaHash ?? '123456',
+        senha: senha,
       );
       final endereco = enderecoController.value.toModel(uid);
       final novo = usuario.copyWith(
@@ -205,7 +214,7 @@ class UsuarioController extends GetxController {
     await _perfilRepository.atualizarTipo(idUsuario, 'A');
     final user = usuarios.firstWhereOrNull((u) => u.idUsuario == idUsuario);
     if (user != null) {
-      usuarios[usuarios.indexOf(user)] = user.copyWith(isAdmin: true);
+      usuarios[usuarios.indexOf(user)] = user.copyWith(tipo: 'A');
       filtrarUsuarios(buscaCtrl.text);
     }
     Get.snackbar('Sucesso', 'Usuário promovido a administrador',
@@ -213,10 +222,10 @@ class UsuarioController extends GetxController {
   }
 
   Future<void> removerAdmin(String idUsuario) async {
-    await _perfilRepository.atualizarTipo(idUsuario, 'A');
+    await _perfilRepository.atualizarTipo(idUsuario, 'O');
     final user = usuarios.firstWhereOrNull((u) => u.idUsuario == idUsuario);
     if (user != null) {
-      usuarios[usuarios.indexOf(user)] = user.copyWith(isAdmin: false);
+      usuarios[usuarios.indexOf(user)] = user.copyWith(tipo: 'O');
       filtrarUsuarios(buscaCtrl.text);
     }
     Get.snackbar('Alteração salva', 'Usuário deixou de ser administrador',

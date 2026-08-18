@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import '../core/services/whatsGw/whatsapp_service.dart';
-import '../presentation/whatsapp/whatsapp_templates.dart';
 import './../data/models/model.dart';
 import 'evento_controller.dart';
 import 'orcamento_gasto_controller.dart';
@@ -23,29 +21,6 @@ class OrcamentoController extends GetxController {
   final RxInt totalCount = 0.obs;
   final RxInt contratadosCount = 0.obs;
   final RxDouble totalCustoEstimado = 0.0.obs;
-
-  Future<void> notificarAtualizacaoOrcamento({
-    required String categoria,
-    required String item,
-    required double valor,
-    required String nomeOrganizador,
-    required ConvidadoModel convidado,
-  }) async {
-    final whats = Get.find<WhatsAppService>();
-    final templates = Get.find<WhatsAppTemplates>();
-
-    final msg = templates.atualizacaoOrcamento(
-      categoria: categoria,
-      item: item,
-      valor: valor,
-      nomeOrganizador: nomeOrganizador,
-    );
-
-    await whats.sendText(
-      phone: convidado.contato,
-      message: msg,
-    );
-  }
 
   /// ===========================================================
   /// 🔹 Escuta orçamentos de um evento específico
@@ -274,12 +249,22 @@ class OrcamentoController extends GetxController {
   /// ===========================================================
   @override
   void onClose() {
-    _orcamentoSubscription?.cancel();
+    unawaited(encerrarEscutas());
     super.onClose();
   }
 
+  Future<void> encerrarEscutas() async {
+    await _orcamentoSubscription?.cancel();
+    _orcamentoSubscription = null;
+  }
+
   void reset() {
+    unawaited(encerrarEscutas());
     orcamentos.clear();
     totalPagoGeral.value = 0;
+    fornecedorContatadoCount.value = 0;
+    totalCount.value = 0;
+    contratadosCount.value = 0;
+    totalCustoEstimado.value = 0;
   }
 }

@@ -39,6 +39,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
     fornecedorController.escutarServicosFornecedor(
       fornecedorDetalhado.fornecedor.idFornecedor,
     );
+    FornecedorLocalizacaoController.to.ensureTodosServicos();
 
     final fornecedor = fornecedorDetalhado.fornecedor;
     final territorio = fornecedorDetalhado.territorio;
@@ -780,9 +781,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
     required FornecedorDetalhadoDto detalhe,
   }) {
     final fornecedor = detalhe.fornecedor;
-    final controllerLocalizacao = Get.isRegistered<FornecedorLocalizacaoController>()
-        ? Get.find<FornecedorLocalizacaoController>()
-        : Get.put(FornecedorLocalizacaoController());
+    final controllerLocalizacao = FornecedorLocalizacaoController.to;
 
     final servicoFornecedor = fornecedorController.allServicosFornecedor.firstWhereOrNull(
       (s) => s.idFornecedor == fornecedor.idFornecedor,
@@ -1162,8 +1161,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
                                   elevation: 5,
                                 ),
                                 onPressed: () {
-                                  final controllerLocalizacao =
-                                      Get.put(FornecedorLocalizacaoController());
+                                  final controllerLocalizacao = FornecedorLocalizacaoController.to;
 
                                   final serviceComplet =
                                       controllerLocalizacao.allService.firstWhereOrNull(
@@ -1549,8 +1547,7 @@ class FornecedorDetalheScreen extends StatelessWidget {
                             elevation: 6,
                           ),
                           onPressed: () {
-                            final controllerLocalizacao =
-                                Get.put(FornecedorLocalizacaoController());
+                            final controllerLocalizacao = FornecedorLocalizacaoController.to;
 
                             final serviceComplet =
                                 controllerLocalizacao.allService.firstWhereOrNull(
@@ -1749,7 +1746,7 @@ Widget _cardServicoCarrossel({
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {
-                    final controllerLocalizacao = Get.put(FornecedorLocalizacaoController());
+                    final controllerLocalizacao = FornecedorLocalizacaoController.to;
 
                     final serviceComplet = controllerLocalizacao.allService.firstWhereOrNull(
                       (s) =>

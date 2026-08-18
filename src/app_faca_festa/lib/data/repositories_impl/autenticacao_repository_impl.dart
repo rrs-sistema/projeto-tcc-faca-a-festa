@@ -35,10 +35,13 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
   }
 
   @override
-  Future<void> entrarComGoogle() async {
+  Future<bool> entrarComGoogle() async {
     try {
-      await remote.entrarComGoogle();
+      return await remote.entrarComGoogle();
     } on AutenticacaoRemoteException catch (erro) {
+      if (autenticacaoFoiCancelada(erro.codigo)) {
+        return false;
+      }
       throw AutenticacaoException(erro.codigo);
     }
   }

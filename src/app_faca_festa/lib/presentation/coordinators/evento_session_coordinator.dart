@@ -68,10 +68,13 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
         .listen((_) {});
 
     final usuarioLogado = usuarioController.usuario.value;
+    final userId = (usuarioLogado?.idUsuario ?? '').trim().isNotEmpty
+        ? usuarioLogado!.idUsuario
+        : evento.idUsuario;
     inspiracaoController
         .configurarContextoEvento(
           eventoId: evento.idEvento,
-          userId: usuarioLogado?.idUsuario ?? '',
+          userId: userId,
         )
         .asStream()
         .listen((_) {});
@@ -90,5 +93,24 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
     _convidadosSub = null;
     _cardapiosSub = null;
     _gruposSub = null;
+
+    if (Get.isRegistered<OrcamentoController>()) {
+      await Get.find<OrcamentoController>().encerrarEscutas();
+    }
+    if (Get.isRegistered<TarefaController>()) {
+      await Get.find<TarefaController>().encerrarEscutas();
+    }
+    if (Get.isRegistered<ConvidadoController>()) {
+      Get.find<ConvidadoController>().limpar();
+    }
+    if (Get.isRegistered<CardapioController>()) {
+      await Get.find<CardapioController>().encerrarEscutas();
+    }
+    if (Get.isRegistered<GrupoConvidadoController>()) {
+      await Get.find<GrupoConvidadoController>().encerrarEscutas();
+    }
+    if (Get.isRegistered<InspiracaoController>()) {
+      await Get.find<InspiracaoController>().encerrarEscutas();
+    }
   }
 }

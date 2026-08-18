@@ -117,12 +117,28 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
         evento?.nomeEvento ??
         'Evento';
 
-    final adultosIniciais =
-        _normalizarQuantidadeInicial(widget.adultosIniciais);
-    final criancasIniciais =
-        _normalizarQuantidadeInicial(widget.criancasIniciais);
-    final bebesIniciais = _normalizarQuantidadeInicial(widget.bebesIniciais);
-    final totalInicial = adultosIniciais + criancasIniciais + bebesIniciais;
+    final usouParametrosDaTela = widget.adultosIniciais > 0 ||
+        widget.criancasIniciais > 0 ||
+        widget.bebesIniciais > 0;
+
+    final adultosIniciais = _normalizarQuantidadeInicial(
+      usouParametrosDaTela
+          ? widget.adultosIniciais
+          : (evento?.totalAdultosCalculado ?? 0),
+    );
+    final criancasIniciais = _normalizarQuantidadeInicial(
+      usouParametrosDaTela
+          ? widget.criancasIniciais
+          : (evento?.totalCriancasCalculado ?? 0),
+    );
+    final bebesIniciais = _normalizarQuantidadeInicial(
+      usouParametrosDaTela
+          ? widget.bebesIniciais
+          : (evento?.totalBebesCalculado ?? 0),
+    );
+    final totalInicial = adultosIniciais + criancasIniciais + bebesIniciais > 0
+        ? adultosIniciais + criancasIniciais + bebesIniciais
+        : (evento?.totalConvidadosCalculado ?? 0);
 
     await calculadoraController.prepararCalculadora(
       idEvento: idEvento,
@@ -690,7 +706,9 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
                 const SizedBox(width: 4),
                 Expanded(
                   child: Text(
-                    'Preenchido via lista de convidados.',
+                    calculadoraController.usandoTotaisDoCadastroDoEvento
+                        ? 'Preenchido com a estimativa do cadastro do evento.'
+                        : 'Preenchido via lista de convidados.',
                     style: GoogleFonts.poppins(
                       color: Colors.grey.shade600,
                       fontSize: 10.5,

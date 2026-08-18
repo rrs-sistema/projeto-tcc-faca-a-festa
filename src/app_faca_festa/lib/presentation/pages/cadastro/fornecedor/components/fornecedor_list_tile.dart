@@ -302,8 +302,7 @@ class FornecedorListTile extends StatelessWidget {
                 bgColor: Colors.teal.shade50,
                 borderColor: Colors.teal.shade300,
                 onTap: () async {
-                  final fornecedorLocalizacaoController =
-                      Get.put(FornecedorLocalizacaoController());
+                  final fornecedorLocalizacaoController = FornecedorLocalizacaoController.to;
                   final territorio = fornecedorLocalizacaoController.territoriosFornecedores
                       .firstWhereOrNull((t) => t.idFornecedor == fornecedor.idFornecedor);
                   await showAddTerritorioBottomSheet(context, fornecedor.idFornecedor,

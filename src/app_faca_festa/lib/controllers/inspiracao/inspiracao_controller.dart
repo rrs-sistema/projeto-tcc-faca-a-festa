@@ -1268,10 +1268,18 @@ class InspiracaoController extends GetxController {
 
   @override
   void onClose() {
-    _subInspiracoes?.cancel();
-    _subReferencias?.cancel();
-    _subTarefas?.cancel();
-    _subOrcamento?.cancel();
+    unawaited(encerrarEscutas());
     super.onClose();
+  }
+
+  Future<void> encerrarEscutas() async {
+    await _subInspiracoes?.cancel();
+    await _subReferencias?.cancel();
+    await _subTarefas?.cancel();
+    await _subOrcamento?.cancel();
+    _subInspiracoes = null;
+    _subReferencias = null;
+    _subTarefas = null;
+    _subOrcamento = null;
   }
 }

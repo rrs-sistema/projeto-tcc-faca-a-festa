@@ -1,0 +1,42 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && firestore.get(/databases/(default)/documents/usuarios/$(uid())).data.tipo == 'A';
+    }
+
+    match /usuarios/{userId}/{allPaths=**} {
+      allow read: if signedIn();
+      allow write: if signedIn() && uid() == userId;
+    }
+
+    match /banners_fornecedores/{allPaths=**} {
+      allow read: if signedIn();
+      allow write: if signedIn();
+    }
+
+    match /servicos/{fornecedorId}/{allPaths=**} {
+      allow read: if signedIn();
+      allow write: if isAdmin() || (signedIn() && uid() == fornecedorId);
+    }
+
+    match /eventos/{eventoId}/{allPaths=**} {
+      allow read: if signedIn();
+      allow write: if signedIn();
+    }
+
+    match /inspiracoes/{allPaths=**} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+  }
+}

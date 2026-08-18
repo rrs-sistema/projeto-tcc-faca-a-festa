@@ -2,7 +2,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../controllers/uf_cidade_controller.dart';
 import './../../widgets/custom_input_field.dart';
 import './endereco_section_controller.dart';
 
@@ -23,40 +22,7 @@ class EnderecoSection extends StatefulWidget {
 }
 
 class _EnderecoSectionState extends State<EnderecoSection> {
-  late final UFCidadeController ufCidadeController;
   bool expandido = false;
-
-  @override
-  void initState() {
-    super.initState();
-    ufCidadeController = widget.controller.ufCidadeController;
-    _carregarEstadosInicial();
-  }
-
-  Future<void> _carregarEstadosInicial() async {
-    await ufCidadeController.carregarEstados();
-
-    // ✅ Se já temos um estado/cidade pré-selecionados, sincroniza
-    final c = widget.controller;
-    final ufAtual = c.ufController.text.trim();
-    final cidadeAtual = c.nomeCidadeController.text.trim();
-
-    if (ufAtual.isNotEmpty) {
-      final estado = ufCidadeController.estados.firstWhereOrNull((e) => e['uf'] == ufAtual);
-      if (estado != null) {
-        await ufCidadeController.selecionarEstado(estado);
-      }
-    }
-
-    if (cidadeAtual.isNotEmpty) {
-      final cidade = ufCidadeController.cidades.firstWhereOrNull(
-        (c) => c['nome'].toString().toLowerCase() == cidadeAtual.toLowerCase(),
-      );
-      if (cidade != null) {
-        ufCidadeController.selecionarCidade(cidade);
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -99,112 +65,106 @@ class _EnderecoSectionState extends State<EnderecoSection> {
           ),
           onExpansionChanged: (value) => setState(() => expandido = value),
           children: [
-            Obx(() {
-              if (ufCidadeController.carregando.value) {
-                return const Padding(
-                  padding: EdgeInsets.all(16),
-                  child: Center(child: CircularProgressIndicator()),
-                );
-              }
-
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  CustomInputField(
-                    label: "CEP",
-                    icon: Icons.local_post_office_outlined,
-                    controller: c.cepController,
-                    color: cor,
-                    titleColor: cor,
-                    keyboardType: TextInputType.number,
-                    type: InputType.cep,
-                  ),
-                  CustomInputField(
-                    label: "Logradouro",
-                    icon: Icons.home_outlined,
-                    controller: c.logradouroController,
-                    color: cor,
-                    titleColor: cor,
-                  ),
-                  CustomInputField(
-                    label: "Número",
-                    icon: Icons.tag,
-                    controller: c.numeroController,
-                    color: cor,
-                    titleColor: cor,
-                    keyboardType: TextInputType.text,
-                  ),
-                  CustomInputField(
-                    label: "Complemento",
-                    icon: Icons.add_location_alt_outlined,
-                    controller: c.complementoController,
-                    color: cor,
-                    titleColor: cor,
-                  ),
-                  CustomInputField(
-                    label: "Bairro",
-                    icon: Icons.map_outlined,
-                    controller: c.bairroController,
-                    color: cor,
-                    titleColor: cor,
-                  ),
-                  const SizedBox(height: 10),
-
-                  // === Dropdown Estado ===
-                  DropdownButtonFormField<String>(
-                    value: ufCidadeController.estadoSelecionado.value?['id'],
-                    items: ufCidadeController.estados
-                        .map(
-                          (e) => DropdownMenuItem<String>(
-                            value: e['id'],
-                            child: Text('${e['nome']} (${e['uf']})'),
+            CustomInputField(
+              label: "CEP",
+              hintlabel: "00000-000",
+              icon: Icons.local_post_office_outlined,
+              controller: c.cepController,
+              color: cor,
+              titleColor: cor,
+              keyboardType: TextInputType.number,
+              type: InputType.cep,
+              suffixIcon: Obx(
+                () => c.consultandoCep.value
+                    ? Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: cor,
                           ),
-                        )
-                        .toList(),
-                    onChanged: (id) async {
-                      if (id != null) {
-                        final estado = ufCidadeController.estados.firstWhere((e) => e['id'] == id);
-                        c.ufController.text = estado['uf'];
-                        await ufCidadeController.selecionarEstado(estado);
+                        ),
+                      )
+                    : IconButton(
+                        tooltip: 'Buscar CEP',
+                        onPressed: () => c.buscarPorCep(forcar: true),
+                        icon: Icon(Icons.search_rounded, color: cor),
+                      ),
+              ),
+            ),
+            CustomInputField(
+              label: "Logradouro",
+              icon: Icons.home_outlined,
+              controller: c.logradouroController,
+              color: cor,
+              titleColor: cor,
+            ),
+            CustomInputField(
+              label: "Número",
+              icon: Icons.tag,
+              controller: c.numeroController,
+              focusNode: c.numeroFocusNode,
+              color: cor,
+              titleColor: cor,
+              keyboardType: TextInputType.text,
+            ),
+            CustomInputField(
+              label: "Complemento",
+              icon: Icons.add_location_alt_outlined,
+              controller: c.complementoController,
+              color: cor,
+              titleColor: cor,
+            ),
+            CustomInputField(
+              label: "Bairro",
+              icon: Icons.map_outlined,
+              controller: c.bairroController,
+              color: cor,
+              titleColor: cor,
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: CustomInputField(
+                    label: "Cidade",
+                    icon: Icons.location_city_outlined,
+                    controller: c.nomeCidadeController,
+                    color: cor,
+                    titleColor: cor,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: CustomInputField(
+                    label: "UF",
+                    hintlabel: "UF",
+                    icon: Icons.flag_outlined,
+                    controller: c.ufController,
+                    color: cor,
+                    titleColor: cor,
+                    onChanged: (value) {
+                      final uf = value
+                          .replaceAll(RegExp(r'[^A-Za-z]'), '')
+                          .toUpperCase();
+                      final limitado =
+                          uf.length > 2 ? uf.substring(0, 2) : uf;
+                      if (limitado != value) {
+                        c.ufController.value = TextEditingValue(
+                          text: limitado,
+                          selection: TextSelection.collapsed(
+                            offset: limitado.length,
+                          ),
+                        );
                       }
                     },
-                    decoration: InputDecoration(
-                      labelText: 'Estado',
-                      labelStyle: GoogleFonts.poppins(color: Colors.grey.shade700),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // === Dropdown Cidade ===
-                  DropdownButtonFormField<String>(
-                    value: ufCidadeController.cidadeSelecionada.value?['id'],
-                    items: ufCidadeController.cidades
-                        .map(
-                          (c) => DropdownMenuItem<String>(
-                            value: c['id'],
-                            child: Text(c['nome']),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (id) {
-                      if (id != null) {
-                        final cidade = ufCidadeController.cidades.firstWhere((c) => c['id'] == id);
-                        c.nomeCidadeController.text = cidade['nome'];
-                        ufCidadeController.selecionarCidade(cidade);
-                      }
-                    },
-                    decoration: InputDecoration(
-                      labelText: 'Cidade',
-                      labelStyle: GoogleFonts.poppins(color: Colors.grey.shade700),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    ),
-                  ),
-                ],
-              );
-            }),
+                ),
+              ],
+            ),
           ],
         ),
       ),

@@ -15,7 +15,13 @@ import './../../../controllers/tarefa_controller.dart';
 import './../../../data/models/model.dart';
 
 class TarefasScreen extends StatelessWidget {
-  const TarefasScreen({super.key});
+  TarefasScreen({super.key}) {
+    Future.microtask(() {
+      if (Get.isRegistered<TarefaController>()) {
+        Get.find<TarefaController>().carregarUsuarios();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

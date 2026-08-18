@@ -38,8 +38,9 @@ void main() {
     final remote = _AutenticacaoRemoteFake();
     final repository = AutenticacaoRepositoryImpl(remote);
 
-    await repository.entrarComGoogle();
+    final autenticou = await repository.entrarComGoogle();
 
+    expect(autenticou, isTrue);
     expect(remote.entradasGoogle, 1);
   });
 
@@ -113,6 +114,34 @@ void main() {
       ),
     );
   });
+
+  test('reconhece cancelamento do provedor Google sem conta selecionada', () {
+    expect(autenticacaoFoiCancelada('canceled'), isTrue);
+    expect(autenticacaoFoiCancelada('web-context-canceled'), isTrue);
+    expect(autenticacaoFoiCancelada('ERROR_WEB_CONTEXT_CANCELED'), isTrue);
+    expect(autenticacaoFoiCancelada('popup-closed-by-user'), isTrue);
+    expect(autenticacaoFoiCancelada('invalid-email'), isFalse);
+    expect(const AutenticacaoException('web-context-canceled').foiCancelada,
+        isTrue);
+  });
+
+  test('converte cancelamento remoto do Google em retorno false', () async {
+    final repository = AutenticacaoRepositoryImpl(
+      _AutenticacaoRemoteFake(googleCancelado: true),
+    );
+
+    expect(await repository.entrarComGoogle(), isFalse);
+  });
+
+  test('nao lanca excecao quando o remoto devolve cancelamento', () async {
+    final repository = AutenticacaoRepositoryImpl(
+      _AutenticacaoRemoteFake(
+        erro: const AutenticacaoRemoteException('canceled'),
+      ),
+    );
+
+    expect(await repository.entrarComGoogle(), isFalse);
+  });
 }
 
 class _AutenticacaoRemoteFake implements AutenticacaoRemoteDatasource {
@@ -120,6 +149,7 @@ class _AutenticacaoRemoteFake implements AutenticacaoRemoteDatasource {
     this.idUsuarioAtual,
     this.emailUsuarioAtual,
     this.erro,
+    this.googleCancelado = false,
     this.sessoes = const [],
   });
 
@@ -128,6 +158,7 @@ class _AutenticacaoRemoteFake implements AutenticacaoRemoteDatasource {
   @override
   final String? emailUsuarioAtual;
   final AutenticacaoRemoteException? erro;
+  final bool googleCancelado;
   final List<SessaoUsuarioRemote?> sessoes;
   String? email;
   String? senha;
@@ -156,9 +187,11 @@ class _AutenticacaoRemoteFake implements AutenticacaoRemoteDatasource {
   }
 
   @override
-  Future<void> entrarComGoogle() async {
+  Future<bool> entrarComGoogle() async {
     entradasGoogle++;
+    if (googleCancelado) return false;
     if (erro != null) throw erro!;
+    return true;
   }
 
   @override

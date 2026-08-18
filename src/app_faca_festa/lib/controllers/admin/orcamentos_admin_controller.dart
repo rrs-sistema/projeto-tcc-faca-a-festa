@@ -16,12 +16,6 @@ class OrcamentosAdminController extends GetxController {
   // 🔹 Cache local
   final Map<String, String> _cacheCategorias = {};
 
-  @override
-  void onInit() {
-    super.onInit();
-    carregarOrcamentosComEventoDetalhes();
-  }
-
   Future<void> carregarOrcamentosComEventoDetalhes() async {
     try {
       carregando.value = true;

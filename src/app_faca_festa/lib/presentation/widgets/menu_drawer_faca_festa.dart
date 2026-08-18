@@ -672,83 +672,10 @@ class MenuDrawerFacaFesta extends StatelessWidget {
   }
 
   bool _deveExibirAdminCalculadora() {
-    var encontrouAlgumaPermissao = false;
-    var possuiPermissao = false;
-
-    bool lerPermissao(bool Function() getter) {
-      try {
-        final permitido = getter();
-        encontrouAlgumaPermissao = true;
-        return permitido;
-      } catch (_) {
-        return false;
-      }
-    }
-
-    possuiPermissao = possuiPermissao ||
-        lerPermissao(() {
-          final dynamic value =
-              (usuarioController as dynamic).adminEnabled.value;
-          return _asBool(value);
-        });
-
-    possuiPermissao = possuiPermissao ||
-        lerPermissao(() {
-          final dynamic value =
-              (usuarioController as dynamic).suporteEnabled.value;
-          return _asBool(value);
-        });
-
-    possuiPermissao = possuiPermissao ||
-        lerPermissao(() {
-          final dynamic value = (usuarioController as dynamic).isAdmin.value;
-          return _asBool(value);
-        });
-
-    possuiPermissao = possuiPermissao ||
-        lerPermissao(() {
-          final dynamic value =
-              (usuarioController as dynamic).userLogado.value.adminEnabled;
-          return _asBool(value);
-        });
-
-    possuiPermissao = possuiPermissao ||
-        lerPermissao(() {
-          final dynamic value =
-              (usuarioController as dynamic).userLogado.value.suporteEnabled;
-          return _asBool(value);
-        });
-
-    if (!encontrouAlgumaPermissao) {
-      return true;
-    }
-
-    return possuiPermissao;
-  }
-
-  bool _asBool(dynamic value) {
-    if (value == null) {
+    try {
+      return appController.usuarioLogado.value?.tipo == 'A';
+    } catch (_) {
       return false;
     }
-
-    if (value is bool) {
-      return value;
-    }
-
-    if (value is num) {
-      return value == 1;
-    }
-
-    if (value is String) {
-      final normalized = value.trim().toLowerCase();
-
-      return normalized == 'true' ||
-          normalized == '1' ||
-          normalized == 's' ||
-          normalized == 'sim' ||
-          normalized == 'yes';
-    }
-
-    return false;
   }
 }

@@ -7,6 +7,7 @@ class Usuario {
   final String? fotoPerfilUrl;
   final String? senhaHash;
   final bool ativo;
+  final bool mfaTotpAtivo;
   final DateTime? dataCadastro;
   final String? cidade;
   final String? uf;
@@ -20,6 +21,7 @@ class Usuario {
     this.fotoPerfilUrl,
     this.senhaHash,
     this.ativo = true,
+    this.mfaTotpAtivo = false,
     this.dataCadastro,
     this.cidade,
     this.uf,
@@ -34,6 +36,7 @@ class Usuario {
     String? fotoPerfilUrl,
     String? senhaHash,
     bool? ativo,
+    bool? mfaTotpAtivo,
     DateTime? dataCadastro,
     String? cidade,
     String? uf,
@@ -47,6 +50,7 @@ class Usuario {
         fotoPerfilUrl: fotoPerfilUrl ?? this.fotoPerfilUrl,
         senhaHash: senhaHash ?? this.senhaHash,
         ativo: ativo ?? this.ativo,
+        mfaTotpAtivo: mfaTotpAtivo ?? this.mfaTotpAtivo,
         dataCadastro: dataCadastro ?? this.dataCadastro,
         cidade: cidade ?? this.cidade,
         uf: uf ?? this.uf,

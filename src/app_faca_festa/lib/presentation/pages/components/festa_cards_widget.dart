@@ -119,7 +119,7 @@ class FestaCardsWidget extends StatelessWidget {
                     _CardData(title: "Tarefas", subtitle: "", style: paleta[3]),
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const TarefasScreen()),
+                  MaterialPageRoute(builder: (_) => TarefasScreen()),
                 ),
                 reactiveSubtitle: Obx(() {
                   final concluidas = tarefaController.concluidas;

@@ -32,17 +32,16 @@ import './controllers/contacao/solicitacoes_controller.dart';
 import './controllers/servico/servico_foto_controller.dart';
 import './presentation/pages/convidado/convidado_page.dart';
 import './controllers/admin/eventos_admin_controller.dart';
-import 'core/services/whatsGw/whatsapp_cloud_service.dart';
 import './presentation/pages/login/register_screen.dart';
 import './presentation/pages/login/forgot_password_screen.dart';
-import './presentation/whatsapp/whatsapp_templates.dart';
+import './presentation/pages/login/totp_setup_screen.dart';
+import './presentation/pages/login/totp_verify_screen.dart';
 import './controllers/tema/event_theme_controller.dart';
 import './controllers/contacao/cotacao_controller.dart';
 import './controllers/evento_cadastro_controller.dart';
 import './controllers/orcamento_gasto_controller.dart';
 import './presentation/pages/login/login_screen.dart';
 import 'controllers/usuario/usuario_controller.dart';
-import 'core/services/whatsGw/whatsapp_service.dart';
 
 import 'core/services/push/notification_service.dart';
 import './presentation/pages/home_event_screen.dart';
@@ -63,6 +62,7 @@ import 'app/bootstrap/evento_bootstrap.dart';
 import 'app/bootstrap/convidado_bootstrap.dart';
 import 'app/bootstrap/perfil_usuario_bootstrap.dart';
 import 'app/bootstrap/autenticacao_bootstrap.dart';
+import 'app/middleware/papel_middleware.dart';
 import 'domain/repositories/evento_repository.dart';
 
 // =============================================================
@@ -78,7 +78,7 @@ Future<void> main() async {
   await FirebaseAppCheck.instance.activate(
     providerWeb: kDebugMode
         ? WebDebugProvider()
-        : ReCaptchaV3Provider('SUA_SITE_KEY_RECAPTCHA_V3'),
+        : ReCaptchaV3Provider('6LcKnYstAAAAAM8kfpp132CwtRGEER1BrRTLiI8H'),
     providerAndroid:
         kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
     providerApple:
@@ -179,20 +179,44 @@ class FacaFestaApp extends StatelessWidget {
       ),
       initialRoute: '/splash',
       getPages: [
-        GetPage(name: '/HomeEventScreen', page: () => const HomeEventScreen()),
+        GetPage(
+          name: '/HomeEventScreen',
+          page: () => const HomeEventScreen(),
+          middlewares: [PapelMiddleware(tiposPermitidos: const ['O'])],
+        ),
         GetPage(name: '/splash', page: () => const Splash()),
         GetPage(name: '/role', page: () => const RoleSelectorScreen()),
-        GetPage(name: '/welcome', page: () => const WelcomeEventScreen()),
+        GetPage(
+          name: '/welcome',
+          page: () => const WelcomeEventScreen(),
+          middlewares: [PapelMiddleware(tiposPermitidos: const ['O'])],
+        ),
         GetPage(name: '/login', page: () => const LoginScreen()),
+        GetPage(
+          name: '/loginTotpSetup',
+          page: () => const TotpSetupScreen(),
+        ),
+        GetPage(
+          name: '/loginTotp',
+          page: () => const TotpVerifyScreen(),
+        ),
         GetPage(
           name: '/forgotPassword',
           page: () => const ForgotPasswordScreen(),
         ),
         GetPage(name: '/register', page: () => const RegisterScreen()),
-        GetPage(name: '/admin', page: () => const AdminDashboardScreen()),
+        GetPage(
+          name: '/admin',
+          page: () => const AdminDashboardScreen(),
+          middlewares: [PapelMiddleware(tiposPermitidos: const ['A'])],
+        ),
         GetPage(
             name: '/registerGuest', page: () => const GuestRegisterScreen()),
-        GetPage(name: '/convidadosPage', page: () => const ConvidadosPage()),
+        GetPage(
+          name: '/convidadosPage',
+          page: () => const ConvidadosPage(),
+          middlewares: [PapelMiddleware(tiposPermitidos: const ['O'])],
+        ),
         GetPage(
           name: '/gerenciarPresentes',
           binding: GiftBinding(),
@@ -226,7 +250,11 @@ class FacaFestaApp extends StatelessWidget {
           transition: Transition.cupertino,
         ),
 
-        GetPage(name: '/fornecedor', page: () => FornecedorHomeScreen()),
+        GetPage(
+          name: '/fornecedor',
+          page: () => FornecedorHomeScreen(),
+          middlewares: [PapelMiddleware(tiposPermitidos: const ['F'])],
+        ),
 
         GetPage(
           name: '/areaconvidado',
@@ -237,6 +265,7 @@ class FacaFestaApp extends StatelessWidget {
               evento: args?['evento'],
             );
           },
+          middlewares: [PapelMiddleware(tiposPermitidos: const ['C'])],
         ),
       ],
       builder: (context, child) {
@@ -331,22 +360,6 @@ void _registerControllers() {
     ),
     fenix: true,
   );
-
-  Get.put(
-    WhatsAppService(apiKey: "64824efa-d959-4617-bccc-9a9f2a03e3b2"),
-    permanent: true,
-  );
-
-  Get.put(
-    WhatsAppCloudService(
-      accessToken:
-          "EAAQBMdidePwBPzF4bgveCltHv5sfLvJXkgTAYM5DlSakC0moxZBQ3kCWy4fxNYOMNh3IqZBa47KSrXZBYbJtbXsBQaHzF0Vyv8xUKPfDZAwcc3cQvP4Hmoe0kVszuin9kZA68lGW6drUAhoBFTXDN8g30yMPeSgeRNCVN72NBEb0ueP5SfTWEthg0kJP0ZAR5VlEBgnWSLl1eOmco4Dt2rNtiXmR56ie0t0Tx9bCXXYcjbEZCm9PmWNI8DetPxQJrAZD",
-      phoneNumberId: "868592606338293",
-    ),
-    permanent: true,
-  );
-
-  Get.put(WhatsAppTemplates(), permanent: true);
 }
 
 // =============================================================

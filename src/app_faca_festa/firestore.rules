@@ -1,0 +1,299 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    function userPath() {
+      return /databases/$(database)/documents/usuarios/$(request.auth.uid);
+    }
+
+    function userExists() {
+      return signedIn() && exists(userPath());
+    }
+
+    function userData() {
+      return get(userPath()).data;
+    }
+
+    function isAtivo() {
+      return userExists() && userData().ativo != false;
+    }
+
+    function isAdmin() {
+      return isAtivo() && userData().tipo == 'A';
+    }
+
+    function isTipo(tipo) {
+      return isAtivo() && userData().tipo == tipo;
+    }
+
+    function eventoDono(eventoId) {
+      return signedIn()
+        && exists(/databases/$(database)/documents/evento/$(eventoId))
+        && get(/databases/$(database)/documents/evento/$(eventoId)).data.id_usuario == uid();
+    }
+
+    function campoIdUsuario(data) {
+      return data.id_usuario == uid() || data.idUsuario == uid();
+    }
+
+    match /usuarios/{userId} {
+      allow read: if isAdmin() || (signedIn() && uid() == userId);
+      allow create: if isAdmin() || (signedIn() && uid() == userId);
+      allow update: if isAdmin()
+        || (signedIn() && uid() == userId
+            && !request.resource.data.diff(resource.data).affectedKeys()
+                .hasAny(['tipo', 'mfa_totp_ativo']));
+      allow delete: if isAdmin();
+
+      match /enderecos/{enderecoId} {
+        allow read, write: if isAdmin() || (signedIn() && uid() == userId);
+      }
+    }
+
+    match /tipo_evento/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /categoria_servico/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /subcategoria_servico/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /servico_produto/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /estado/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /cidades/{cidadeId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+
+    match /inspiracoes/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /calculadora_itens_base/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /calculadora_evento_itens/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /ia_sugestoes_base/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /evento/{eventoId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin()
+        || (isTipo('O') && request.resource.data.id_usuario == uid());
+      allow delete: if isAdmin() || eventoDono(eventoId);
+
+      match /{subcolecao}/{docId} {
+        allow read: if signedIn();
+        allow write: if isAdmin() || eventoDono(eventoId);
+
+        match /{sub2}/{doc2} {
+          allow read: if signedIn();
+          allow write: if isAdmin() || eventoDono(eventoId);
+        }
+      }
+    }
+
+    match /convidado/{id} {
+      allow read: if isAdmin()
+        || eventoDono(resource.data.id_evento)
+        || (signedIn() && campoIdUsuario(resource.data));
+      allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
+      allow update, delete: if isAdmin()
+        || eventoDono(resource.data.id_evento)
+        || (signedIn() && campoIdUsuario(resource.data));
+    }
+
+    match /convidados/{id} {
+      allow read: if isAdmin()
+        || eventoDono(resource.data.id_evento)
+        || (signedIn() && campoIdUsuario(resource.data));
+      allow write: if isAdmin() || eventoDono(resource.data.id_evento);
+    }
+
+    match /grupos_convidado/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin() || eventoDono(resource.data.id_evento);
+    }
+
+    match /tarefa/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin()
+        || eventoDono(resource.data.id_evento)
+        || (signedIn() && resource.data.id_responsavel == uid());
+    }
+
+    match /cardapios/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin() || eventoDono(resource.data.id_evento);
+
+      match /itens/{itemId} {
+        allow read: if signedIn();
+        allow write: if isAdmin() || eventoDono(get(/databases/$(database)/documents/cardapios/$(id)).data.id_evento);
+      }
+    }
+
+    match /fornecedor/{fornecedorId} {
+      allow read: if signedIn();
+      allow create: if isAdmin() || (signedIn() && uid() == fornecedorId);
+      allow update: if isAdmin() || (signedIn() && uid() == fornecedorId);
+      allow delete: if isAdmin();
+
+      match /{subcolecao}/{docId} {
+        allow read: if signedIn();
+        allow write: if isAdmin() || uid() == fornecedorId;
+      }
+    }
+
+    match /fornecedor_categoria/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin()
+        || (signedIn() && request.resource.data.id_fornecedor == uid());
+    }
+
+    match /fornecedor_servico/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin()
+        || (signedIn() && (resource.data.id_fornecedor == uid()
+            || request.resource.data.id_fornecedor == uid()));
+
+      match /avaliacoes/{avaliacaoId} {
+        allow read: if signedIn();
+        allow write: if signedIn();
+      }
+    }
+
+    match /servico_foto/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin()
+        || (signedIn() && resource.data.id_fornecedor == uid());
+    }
+
+    match /territorio/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin()
+        || (signedIn() && resource.data.id_fornecedor == uid());
+    }
+
+    match /cotacao/{cotacaoId} {
+      allow read: if isAdmin()
+        || (signedIn() && resource.data.id_usuario_solicitante == uid())
+        || isTipo('F');
+      allow create: if isTipo('O') || isAdmin();
+      allow update, delete: if isAdmin()
+        || (signedIn() && resource.data.id_usuario_solicitante == uid());
+
+      match /fornecedores/{fornecedorId} {
+        allow read: if signedIn();
+        allow write: if isAdmin()
+          || eventoDono(get(/databases/$(database)/documents/cotacao/$(cotacaoId)).data.id_evento)
+          || uid() == fornecedorId;
+
+        match /{subcolecao}/{docId} {
+          allow read: if signedIn();
+          allow write: if isAdmin()
+            || uid() == fornecedorId
+            || eventoDono(get(/databases/$(database)/documents/cotacao/$(cotacaoId)).data.id_evento);
+        }
+      }
+    }
+
+    match /orcamento/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin()
+        || eventoDono(resource.data.id_evento)
+        || (signedIn() && resource.data.id_fornecedor == uid());
+
+      match /orcamento_gasto/{gastoId} {
+        allow read: if signedIn();
+        allow write: if isAdmin()
+          || eventoDono(get(/databases/$(database)/documents/orcamento/$(id)).data.id_evento);
+      }
+    }
+
+    match /calculadora_festa/{id} {
+      allow read: if signedIn();
+      allow write: if isAdmin()
+        || (signedIn() && request.resource.data.id_usuario == uid())
+        || eventoDono(resource.data.id_evento);
+
+      match /{subcolecao}/{docId} {
+        allow read: if signedIn();
+        allow write: if signedIn();
+      }
+    }
+
+    match /fornecedor_interacoes/{id} {
+      allow read: if signedIn();
+      allow create: if signedIn() && request.resource.data.id_usuario == uid();
+      allow update, delete: if isAdmin();
+    }
+
+    match /fornecedor_recomendacoes/{id} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /avaliacao_fornecedor/{id} {
+      allow read: if signedIn();
+      allow write: if signedIn();
+    }
+
+    match /avaliacoes/{id} {
+      allow read: if signedIn();
+      allow write: if signedIn();
+    }
+
+    match /fornecedor_avaliacoes/{id} {
+      allow read: if signedIn();
+      allow write: if signedIn();
+    }
+
+    match /posts/{id} {
+      allow read: if signedIn();
+      allow write: if signedIn();
+
+      match /comentarios/{comentarioId} {
+        allow read, write: if signedIn();
+      }
+    }
+
+    match /password_reset_codes/{id} {
+      allow read, write: if false;
+    }
+
+    match /mfa_totp/{userId} {
+      allow read, write: if false;
+    }
+  }
+}

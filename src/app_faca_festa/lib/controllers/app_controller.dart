@@ -1,23 +1,24 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
 import './../presentation/pages/convidado/area/area_convidado_home_screen.dart';
+import './../presentation/pages/convidado/convite_nao_encontrado_screen.dart';
 import './../presentation/pages/fornecedor/fornecedor_home_screen.dart';
 import './../presentation/pages/admin/admin_dashboard_screen.dart';
 import './../presentation/pages/welcome/welcome_event_screen.dart';
-import './../presentation/pages/convidado/convidado_page.dart';
 import './../presentation/pages/home_event_screen.dart';
 import './avaliacao/avaliacao_servico_controller.dart';
 import './../data/models/DTO/servico_cotado_dto.dart';
 import './convidado/convidado_controller.dart';
 import './contacao/cotacao_controller.dart';
 import 'servico/servico_produto_controller.dart';
-import './../role_selector_screen.dart';
 import 'fornecedor/fornecedor_controller.dart';
 import './orcamento_controller.dart';
 import './../data/models/model.dart';
@@ -26,6 +27,10 @@ import './../domain/repositories/autenticacao_repository.dart';
 import './../domain/repositories/perfil_usuario_repository.dart';
 import './evento_controller.dart';
 import './tarefa_controller.dart';
+import './usuario/usuario_controller.dart';
+import './orcamento_gasto_controller.dart';
+import './inspiracao/inspiracao_controller.dart';
+import 'fornecedor/fornecedor_localizacao_controller.dart';
 import 'tema/event_theme_controller.dart';
 
 class AppController extends GetxController {
@@ -48,9 +53,15 @@ class AppController extends GetxController {
   RxString conviteToken = ''.obs;
   final RxBool carregando = false.obs;
   StreamSubscription<SessaoUsuario?>? _sessaoSub;
+  bool _processandoSessao = false;
+  bool totpVerificadoNestaSessao = false;
   bool devMode = true;
 
   static const String _logTag = '[AppController]';
+  static const String _chaveLoginMetodo = 'login_metodo';
+  static const String _metodoSenha = 'senha';
+  static const String _metodoGoogle = 'google';
+  final GetStorage _storage = GetStorage();
   final conviteConvidadoRepository = Get.find<ConviteConvidadoRepository>();
   final autenticacaoRepository = Get.find<AutenticacaoRepository>();
   final perfilUsuarioRepository = Get.find<PerfilUsuarioRepository>();
@@ -122,20 +133,50 @@ class AppController extends GetxController {
   }
 
   void iniciarSessao() {
-    _monitorarSessao();
+    if (_sessaoSub == null) {
+      _monitorarSessao();
+      return;
+    }
+
+    // Auth já está sendo observado e não emite de novo só porque
+    // voltamos ao splash (ex.: após cadastrar um evento).
+    final idUsuario = autenticacaoRepository.idUsuarioAtual;
+    if (idUsuario == null) {
+      unawaited(_processarSessao(null));
+      return;
+    }
+
+    unawaited(_processarSessao(SessaoUsuario(
+      idUsuario: idUsuario,
+      email: autenticacaoRepository.emailUsuarioAtual,
+    )));
   }
 
   // ------------------------------------------------------------
   // 🔹 Monitora sessão do Firebase Auth e redireciona o usuário
   // ------------------------------------------------------------
   void _monitorarSessao() {
-    _sessaoSub = autenticacaoRepository.observarSessao().listen((user) async {
+    _sessaoSub?.cancel();
+    _sessaoSub = autenticacaoRepository.observarSessao().listen((user) {
+      unawaited(_processarSessao(user));
+    });
+  }
+
+  Future<void> _processarSessao(SessaoUsuario? user) async {
+    if (_processandoSessao) {
+      debugPrint('$_logTag Validação de sessão já em andamento. Ignorando.');
+      return;
+    }
+    _processandoSessao = true;
+
+    try {
       await Future.delayed(
           const Duration(milliseconds: 300)); // ✅ pequeno delay
       // 🔥 verifica token de convite primeiro
       final token = _tokenConviteAtual();
 
       if (user == null) {
+        _limparEstadoTotp();
         if (token != null && token.isNotEmpty && !conviteProcessado) {
           conviteToken.value = token;
           debugPrint(
@@ -161,8 +202,10 @@ class AppController extends GetxController {
         return;
       }
 
-      if (Get.currentRoute.isEmpty || Get.currentRoute != '/splash') {
+      if (!_rotaTotp(Get.currentRoute) &&
+          (Get.currentRoute.isEmpty || Get.currentRoute != '/splash')) {
         Future.microtask(() {
+          if (_rotaTotp(Get.currentRoute)) return;
           Get.offAllNamed('/splash');
         });
       }
@@ -175,6 +218,32 @@ class AppController extends GetxController {
 
         if (perfil == null) {
           throw Exception('Usuário não encontrado no Firestore.');
+        }
+
+        final usuarioTotp = UsuarioModel.fromEntity(perfil.usuario);
+        if (usuarioTotp.ativo == false) {
+          carregando.value = false;
+          Get.snackbar(
+            'Conta desativada',
+            'Entre em contato com o suporte para reativar o acesso.',
+            backgroundColor: Colors.redAccent,
+            colorText: Colors.white,
+          );
+          await autenticacaoRepository.sair();
+          usuarioLogado.value = null;
+          eventoController.limparSessaoAtual();
+          Get.offAllNamed('/role');
+          return;
+        }
+
+        if (_deveExigirTotp()) {
+          carregando.value = false;
+          final rota =
+              usuarioTotp.mfaTotpAtivo ? '/loginTotp' : '/loginTotpSetup';
+          if (Get.currentRoute != rota) {
+            Get.offAllNamed(rota);
+          }
+          return;
         }
 
         final usuario = _aplicarPerfil(perfil);
@@ -289,7 +358,9 @@ class AppController extends GetxController {
         );
         Get.offAllNamed('/role');
       }
-    });
+    } finally {
+      _processandoSessao = false;
+    }
   }
 
   Future<PerfilUsuario?> _carregarPerfilComTentativas(String idUsuario) async {
@@ -393,7 +464,7 @@ class AppController extends GetxController {
     } catch (e, s) {
       carregando.value = false;
       debugPrint('$_logTag Erro ao redirecionar convidado: $e\n$s');
-      Get.offAll(() => const ConvidadosPage());
+      Get.offAll(() => const ConviteNaoEncontradoScreen());
     }
   }
 
@@ -426,7 +497,7 @@ class AppController extends GetxController {
 
     if (convidado == null) {
       debugPrint('$_logTag Nenhum convite encontrado para ${usuario.email}.');
-      return const ConvidadosPage();
+      return const ConviteNaoEncontradoScreen();
     }
 
     final evento =
@@ -434,7 +505,7 @@ class AppController extends GetxController {
     if (evento == null) {
       debugPrint(
           '$_logTag Convite encontrado, mas evento não existe: ${convidado.idEvento}.');
-      return const ConvidadosPage();
+      return const ConviteNaoEncontradoScreen();
     }
 
     await eventoController.buscarTipoEvento(evento.idTipoEvento);
@@ -495,24 +566,49 @@ class AppController extends GetxController {
   // ------------------------------------------------------------
 
   Future<void> logout() async {
-    await autenticacaoRepository.sair();
-    usuarioLogado.value = null;
-    eventoController.reset();
-    orcamentoController.reset();
-    tarefaController.reset();
-    Get.offAll(() => const WelcomeEventScreen());
+    await _encerrarSessao();
   }
 
   Future<void> logoutFornecedor() async {
+    fornecedorController.logoutFornecedor();
+    await _encerrarSessao();
+  }
+
+  Future<void> _encerrarSessao() async {
     await _sessaoSub?.cancel();
+    _sessaoSub = null;
+
+    await _pararEscutasDaSessao();
+
     await autenticacaoRepository.sair();
     usuarioLogado.value = null;
-    eventoController.reset();
-    orcamentoController.reset();
-    tarefaController.reset();
+    enderecoPrincipal.value = null;
+    enderecosUsuario.clear();
+    servicosSelecionados.clear();
+    conviteProcessado = false;
+    conviteTokenProcessado = '';
+    conviteToken.value = '';
+    _limparEstadoTotp();
+    Get.offAllNamed('/role');
+    _monitorarSessao();
+  }
+
+  Future<void> _pararEscutasDaSessao() async {
+    await eventoController.encerrarEscutas();
+    await orcamentoController.encerrarEscutas();
+    await tarefaController.encerrarEscutas();
+    await cotacaoController.encerrarEscutas();
     fornecedorController.logoutFornecedor();
-    Get.offAll(() => const RoleSelectorScreen());
-    _monitorarSessao(); // Reativa sessão
+
+    if (Get.isRegistered<OrcamentoGastoController>()) {
+      await Get.find<OrcamentoGastoController>().encerrarEscutas();
+    }
+    if (Get.isRegistered<FornecedorLocalizacaoController>()) {
+      await Get.find<FornecedorLocalizacaoController>().encerrarEscutas();
+    }
+    if (Get.isRegistered<InspiracaoController>()) {
+      await Get.find<InspiracaoController>().encerrarEscutas();
+    }
   }
 
   // ------------------------------------------------------------
@@ -538,6 +634,7 @@ class AppController extends GetxController {
     if (enderecos.isEmpty) {
       enderecoPrincipal.value = null;
       usuarioLogado.value = usuario;
+      _sincronizarUsuarioController(usuario);
       return usuario;
     }
 
@@ -551,7 +648,48 @@ class AppController extends GetxController {
       uf: principal.uf,
     );
     usuarioLogado.value = usuarioComEndereco;
+    _sincronizarUsuarioController(usuarioComEndereco);
     return usuarioComEndereco;
+  }
+
+  void marcarLoginComSenha() {
+    totpVerificadoNestaSessao = false;
+    _storage.write(_chaveLoginMetodo, _metodoSenha);
+  }
+
+  void marcarLoginComGoogle() {
+    totpVerificadoNestaSessao = true;
+    _storage.write(_chaveLoginMetodo, _metodoGoogle);
+  }
+
+  void marcarTotpVerificado() {
+    totpVerificadoNestaSessao = true;
+  }
+
+  bool _deveExigirTotp() {
+    if (totpVerificadoNestaSessao) return false;
+    if (_storage.read(_chaveLoginMetodo) == _metodoGoogle) return false;
+    if (!_contaTemLoginComSenha()) return false;
+    return true;
+  }
+
+  bool _contaTemLoginComSenha() {
+    final providers =
+        FirebaseAuth.instance.currentUser?.providerData ?? const [];
+    return providers.any((provider) => provider.providerId == 'password');
+  }
+
+  bool _rotaTotp(String rota) =>
+      rota == '/loginTotp' || rota == '/loginTotpSetup';
+
+  void _limparEstadoTotp() {
+    totpVerificadoNestaSessao = false;
+    _storage.remove(_chaveLoginMetodo);
+  }
+
+  void _sincronizarUsuarioController(UsuarioModel usuario) {
+    if (!Get.isRegistered<UsuarioController>()) return;
+    Get.find<UsuarioController>().usuario.value = usuario;
   }
 
   Future<void> atualizarFcmTokenFornecedor(String idFornecedor) async {

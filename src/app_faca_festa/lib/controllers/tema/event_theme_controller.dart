@@ -365,10 +365,12 @@ class EventThemeController extends GetxController {
   // 🔹 5. Utilitário: converter cor para string legível
   // ======================================================
   String _colorToHex(Color color) {
-    final a = color.a.toInt().toRadixString(16).padLeft(2, '0').toUpperCase();
-    final r = color.r.toInt().toRadixString(16).padLeft(2, '0').toUpperCase();
-    final g = color.g.toInt().toRadixString(16).padLeft(2, '0').toUpperCase();
-    final b = color.b.toInt().toRadixString(16).padLeft(2, '0').toUpperCase();
-    return '#$a$r$g$b';
+    String hex(double channel) {
+      final value = (channel * 255).round().clamp(0, 255).toInt();
+      return value.toRadixString(16).padLeft(2, '0');
+    }
+
+    return '#${hex(color.a)}${hex(color.r)}${hex(color.g)}${hex(color.b)}'
+        .toUpperCase();
   }
 }

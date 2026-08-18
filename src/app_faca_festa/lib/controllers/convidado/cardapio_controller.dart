@@ -243,6 +243,8 @@ class CardapioController extends GetxController {
     _itensSubscriptions.clear();
   }
 
+  Future<void> encerrarEscutas() => _cancelarEscutas();
+
   @override
   void onClose() {
     unawaited(_cancelarEscutas());

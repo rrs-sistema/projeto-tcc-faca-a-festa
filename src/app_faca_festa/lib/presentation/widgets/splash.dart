@@ -36,11 +36,12 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
 
     _fadeController.forward();
 
-    // 🔥 inicia sessão após pequeno delay para splash animar
+    // Após cadastrar um evento o usuário já está logado. Sem este passo o
+    // splash fica eterno, porque o Auth não emite de novo só pela navegação.
     Future.delayed(const Duration(milliseconds: 600), () {
-      if (appController.conviteProcessado || appController.usuarioLogado.value == null) {
-        appController.iniciarSessao();
-      }
+      if (!mounted) return;
+      if (Get.currentRoute != '/splash') return;
+      appController.iniciarSessao();
     });
   }
 

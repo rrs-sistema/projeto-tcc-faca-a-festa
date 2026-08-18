@@ -10,12 +10,6 @@ class EventosAdminController extends GetxController {
   final carregando = false.obs;
   final erro = ''.obs;
 
-  @override
-  void onInit() {
-    super.onInit();
-    carregarEventosComTipo();
-  }
-
   Future<void> carregarEventosComTipo() async {
     try {
       carregando.value = true;

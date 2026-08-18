@@ -10,7 +10,13 @@ import './../../../data/models/admin/orcamento_admin_model.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 
 class OrcamentosAdminListScreen extends StatelessWidget {
-  const OrcamentosAdminListScreen({super.key});
+  OrcamentosAdminListScreen({super.key}) {
+    Future.microtask(() {
+      if (Get.isRegistered<OrcamentosAdminController>()) {
+        Get.find<OrcamentosAdminController>().carregarOrcamentosComEventoDetalhes();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {

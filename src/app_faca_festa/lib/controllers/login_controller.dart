@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
+import '../controllers/app_controller.dart';
 import '../domain/entities/usuario.dart';
 import '../domain/repositories/autenticacao_repository.dart';
 import '../domain/repositories/perfil_usuario_repository.dart';
@@ -24,13 +25,14 @@ class LoginController extends GetxController {
 
     try {
       carregando.value = true;
+      Get.find<AppController>().marcarLoginComSenha();
       await _autenticacaoRepository.entrar(
         email: email.value.trim(),
         senha: senha.value.trim(),
       );
 
       await _garantirPerfilDoUsuario();
-      Get.offAllNamed('/welcome');
+      Get.offAllNamed('/splash');
     } on AutenticacaoException catch (e) {
       EasyLoading.showError(_traduzErro(e.codigo));
     } finally {
@@ -41,10 +43,17 @@ class LoginController extends GetxController {
   Future<void> loginComGoogle() async {
     try {
       carregando.value = true;
-      await _autenticacaoRepository.entrarComGoogle();
+      Get.find<AppController>().marcarLoginComGoogle();
+      final autenticou = await _autenticacaoRepository.entrarComGoogle();
+      if (!autenticou) {
+        return;
+      }
       await _garantirPerfilDoUsuario();
-      Get.offAllNamed('/welcome');
+      Get.offAllNamed('/splash');
     } on AutenticacaoException catch (e) {
+      if (e.foiCancelada) {
+        return;
+      }
       EasyLoading.showError(_traduzErro(e.codigo));
     } finally {
       carregando.value = false;
@@ -94,6 +103,9 @@ class LoginController extends GetxController {
       case 'account-exists-with-different-credential':
         return 'Este e-mail já está cadastrado com outro método de login';
       case 'canceled':
+      case 'web-context-canceled':
+      case 'ERROR_WEB_CONTEXT_CANCELED':
+      case 'popup-closed-by-user':
         return 'Login com Google cancelado';
       case 'interrupted':
         return 'O Google interrompeu o login. Tente novamente.';

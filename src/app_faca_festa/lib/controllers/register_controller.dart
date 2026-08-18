@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:br_validators/br_validators.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import '../domain/repositories/autenticacao_repository.dart';
@@ -154,6 +155,7 @@ class RegisterController extends GetxController {
     try {
       carregando.value = true;
       EasyLoading.show(status: 'Criando cadastro...');
+      appController.marcarLoginComSenha();
 
       final credencial = await _auth.createUserWithEmailAndPassword(
         email: email.value.trim(),
@@ -255,15 +257,8 @@ class RegisterController extends GetxController {
       );
 
       EasyLoading.dismiss();
-      if (tipoEfetivo == 'C') {
-        _log(
-            'Cadastro de convidado concluído. Vinculando convites pendentes e redirecionando.');
-        await appController.redirecionarConvidadoAposLogin(novoUsuario,
-            token: tokenConvite);
-      } else {
-        _log('Navegando para /welcome.');
-        Get.offAllNamed('/welcome');
-      }
+      _log('Navegando para /splash para autenticador TOTP e roteamento.');
+      Get.offAllNamed('/splash');
     } on FirebaseAuthException catch (e) {
       _log('FirebaseAuthException: code=${e.code} | message=${e.message}');
       _showError(_traduzErro(e.code));
@@ -297,7 +292,12 @@ class RegisterController extends GetxController {
     try {
       carregando.value = true;
       EasyLoading.show(status: 'Conectando com Google...');
-      await _autenticacaoRepository.entrarComGoogle();
+      appController.marcarLoginComGoogle();
+      final autenticou = await _autenticacaoRepository.entrarComGoogle();
+      if (!autenticou) {
+        _log('Cadastro com Google cancelado: usuário fechou o seletor.');
+        return;
+      }
 
       final firebaseUser = _auth.currentUser;
       final uid = firebaseUser?.uid;
@@ -310,7 +310,10 @@ class RegisterController extends GetxController {
       final emailGoogle = firebaseUser?.email ??
           _autenticacaoRepository.emailUsuarioAtual ??
           '';
-      final nomeGoogle = firebaseUser?.displayName?.trim() ?? nome.value.trim();
+      final nomeInformado = nome.value.trim();
+      final nomeGoogle = nomeInformado.isNotEmpty
+          ? nomeInformado
+          : (firebaseUser?.displayName?.trim() ?? '');
 
       if (!usuarioExistente.exists) {
         final novoUsuario = UsuarioModel(
@@ -375,10 +378,21 @@ class RegisterController extends GetxController {
         await appController.redirecionarConvidadoAposLogin(usuario,
             token: tokenConvite);
       } else {
-        Get.offAllNamed('/welcome');
+        Get.offAllNamed('/splash');
       }
     } on AutenticacaoException catch (e) {
+      if (e.foiCancelada) {
+        _log('Cadastro com Google cancelado pelo usuário: ${e.codigo}');
+        return;
+      }
       _showError(_traduzErro(e.codigo));
+    } on PlatformException catch (e) {
+      if (autenticacaoFoiCancelada(e.code)) {
+        _log('Cadastro com Google cancelado pelo usuário: ${e.code}');
+        return;
+      }
+      _log('PlatformException no cadastro Google: ${e.code} | ${e.message}');
+      _showError('Erro ao entrar com Google. Tente novamente.');
     } catch (e, s) {
       _log('Erro no cadastro Google: $e');
       _log('StackTrace: $s');
@@ -593,9 +607,8 @@ class RegisterController extends GetxController {
     // ------------------------------
     // 🔹 Validações comuns
     // ------------------------------
-    if (nome.value.trim().isEmpty) {
-      _log('FALHA validação: nome vazio.');
-      _showError('Informe seu nome completo');
+    if (!_validarNomeCompleto()) {
+      _log('FALHA validação: nome completo inválido.');
       return false;
     }
 
@@ -691,12 +704,13 @@ class RegisterController extends GetxController {
     String tipo,
     EnderecoUsuarioModel endereco,
   ) {
-    if (tipo == 'F') {
-      if (nome.value.trim().isEmpty) {
-        _showError('Informe o nome do responsável');
-        return false;
-      }
+    if (!_validarNomeCompleto(tipo == 'F'
+        ? 'Informe o nome completo do responsável'
+        : 'Informe seu nome completo (nome e sobrenome)')) {
+      return false;
+    }
 
+    if (tipo == 'F') {
       if (razaoSocial.value.trim().isEmpty) {
         _showError('Informe a razão social da sua empresa');
         return false;
@@ -773,6 +787,26 @@ class RegisterController extends GetxController {
     }
 
     _log('Endereço validado com sucesso.');
+    return true;
+  }
+
+  bool _validarNomeCompleto(
+      [String mensagem = 'Informe seu nome completo (nome e sobrenome)']) {
+    final nomeLimpo = nome.value.trim();
+    if (nomeLimpo.isEmpty) {
+      _showError(mensagem);
+      return false;
+    }
+
+    final partes = nomeLimpo
+        .split(RegExp(r'\s+'))
+        .where((parte) => parte.isNotEmpty)
+        .toList();
+    if (partes.length < 2) {
+      _showError(mensagem);
+      return false;
+    }
+
     return true;
   }
 
@@ -908,6 +942,9 @@ class RegisterController extends GetxController {
       case 'account-exists-with-different-credential':
         return 'Este e-mail já está cadastrado com outro método de login';
       case 'canceled':
+      case 'web-context-canceled':
+      case 'ERROR_WEB_CONTEXT_CANCELED':
+      case 'popup-closed-by-user':
         return 'Cadastro com Google cancelado';
       case 'interrupted':
         return 'O Google interrompeu o cadastro. Tente novamente.';

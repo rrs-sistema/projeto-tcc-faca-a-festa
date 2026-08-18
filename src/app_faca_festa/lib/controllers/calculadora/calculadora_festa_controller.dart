@@ -442,27 +442,16 @@ class CalculadoraFestaController extends GetxController {
       loading.value = true;
       final Map<String, ConvidadoModel> mapa = {};
 
-      final snapPrincipal =
-          await _db.collection(_collectionConvidado).where('id_evento', isEqualTo: idEvento).get();
+      final snapPrincipal = await _db
+          .collection(_collectionConvidado)
+          .where('id_evento', isEqualTo: idEvento)
+          .get();
 
       for (final doc in snapPrincipal.docs) {
         final data = Map<String, dynamic>.from(doc.data());
         data['id_convidado'] = data['id_convidado'] ?? doc.id;
-        data['id_evento'] = data['id_evento'] ?? idEvento;
-        final convidado = ConvidadoModel.fromMap(data);
-        mapa[convidado.idConvidado] = convidado;
-      }
-
-      // Compatibilidade com base antiga, caso algum documento ainda use id_evento_evento.
-      final snapLegado = await _db
-          .collection(_collectionConvidado)
-          .where('id_evento_evento', isEqualTo: idEvento)
-          .get();
-
-      for (final doc in snapLegado.docs) {
-        final data = Map<String, dynamic>.from(doc.data());
-        data['id_convidado'] = data['id_convidado'] ?? doc.id;
-        data['id_evento'] = data['id_evento'] ?? data['id_evento_evento'] ?? idEvento;
+        data['id_evento'] =
+            data['id_evento'] ?? data['id_evento_evento'] ?? idEvento;
         final convidado = ConvidadoModel.fromMap(data);
         mapa[convidado.idConvidado] = convidado;
       }

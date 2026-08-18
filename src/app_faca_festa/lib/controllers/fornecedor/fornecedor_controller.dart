@@ -69,6 +69,7 @@ class FornecedorController extends GetxController {
   StreamSubscription? _solicitacoesSub;
   StreamSubscription<QuerySnapshot>? _fornecedorCotacoesSub;
   StreamSubscription<QuerySnapshot>? _servicosFornecedorSub;
+  String? _servicosEscutandoId;
   final Map<String, int> _mensagensNaoLidasPorCotacao = {};
 
   /// 🔹 Estatísticas do painel
@@ -179,7 +180,8 @@ class FornecedorController extends GetxController {
     Future.delayed(Duration.zero, () {
       appController = Get.find<AppController>();
       ever(appController.usuarioLogado, (usuario) async {
-        carregarTodosFornecedores();
+        if (usuario == null) return;
+        await carregarTodosFornecedores();
       });
     });
   }
@@ -385,9 +387,20 @@ class FornecedorController extends GetxController {
 
       // ================================
       // 🔸 Endereços (subcoleção)
+      // collectionGroup('enderecos') só é permitido para admin nas rules.
       // ================================
-      final endSnap = await _db.collectionGroup('enderecos').get();
-      enderecos.value = endSnap.docs.map((d) => EnderecoUsuarioModel.fromMap(d.data())).toList();
+      try {
+        final tipo = Get.isRegistered<AppController>()
+            ? Get.find<AppController>().usuarioLogado.value?.tipo
+            : null;
+        if (tipo == 'A') {
+          final endSnap = await _db.collectionGroup('enderecos').get();
+          enderecos.value =
+              endSnap.docs.map((d) => EnderecoUsuarioModel.fromMap(d.data())).toList();
+        }
+      } catch (e) {
+        debugPrint('❌ Erro ao carregar endereços via collectionGroup: $e');
+      }
 
       // ================================
       // 🔸 Categorias do fornecedor
@@ -674,8 +687,10 @@ class FornecedorController extends GetxController {
   // ==========================================================
   Future<void> escutarServicosFornecedor(String idFornecedor) async {
     if (idFornecedor.trim().isEmpty) return;
+    if (_servicosEscutandoId == idFornecedor && _servicosFornecedorSub != null) return;
 
     await _servicosFornecedorSub?.cancel();
+    _servicosEscutandoId = idFornecedor;
 
     _servicosFornecedorSub = _db
         .collection('fornecedor_servico')

@@ -242,11 +242,22 @@ class EventoController extends GetxController {
   }
 
   void reset() {
+    unawaited(_eventoSubscription?.cancel());
+    _eventoSubscription = null;
+    unawaited(_cancelarEscutas());
     eventoAtual.value = null;
+    tipoEventoAtual.value = null;
+  }
+
+  Future<void> encerrarEscutas() async {
+    await _eventoSubscription?.cancel();
+    _eventoSubscription = null;
+    await _cancelarEscutas();
+    eventoAtual.value = null;
+    tipoEventoAtual.value = null;
   }
 
   void limparSessaoAtual() {
-    eventoAtual.value = null;
-    tipoEventoAtual.value = null;
+    reset();
   }
 }

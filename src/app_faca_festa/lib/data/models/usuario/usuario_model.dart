@@ -14,6 +14,7 @@ class UsuarioModel extends Usuario {
     super.fotoPerfilUrl,
     super.senhaHash,
     super.ativo,
+    super.mfaTotpAtivo,
     super.dataCadastro,
     super.cidade,
     super.uf,
@@ -28,6 +29,7 @@ class UsuarioModel extends Usuario {
         fotoPerfilUrl: usuario.fotoPerfilUrl,
         senhaHash: usuario.senhaHash,
         ativo: usuario.ativo,
+        mfaTotpAtivo: usuario.mfaTotpAtivo,
         dataCadastro: usuario.dataCadastro,
         cidade: usuario.cidade,
         uf: usuario.uf,
@@ -40,8 +42,8 @@ class UsuarioModel extends Usuario {
         'tipo': tipo,
         'cpf': cpf,
         'foto_perfil_url': fotoPerfilUrl,
-        'senha_hash': senhaHash,
         'ativo': ativo,
+        'mfa_totp_ativo': mfaTotpAtivo,
         'data_cadastro': dataCadastro == null
             ? FieldValue.serverTimestamp()
             : Timestamp.fromDate(dataCadastro!),
@@ -58,6 +60,7 @@ class UsuarioModel extends Usuario {
         fotoPerfilUrl: map['foto_perfil_url'],
         senhaHash: map['senha_hash'],
         ativo: map['ativo'] ?? true,
+        mfaTotpAtivo: map['mfa_totp_ativo'] == true,
         dataCadastro: map['data_cadastro'] is Timestamp
             ? (map['data_cadastro'] as Timestamp).toDate()
             : null,
@@ -75,7 +78,7 @@ class UsuarioModel extends Usuario {
     String? fotoPerfilUrl,
     String? senhaHash,
     bool? ativo,
-    bool? isAdmin,
+    bool? mfaTotpAtivo,
     DateTime? dataCadastro,
     String? cidade,
     String? uf,
@@ -89,6 +92,7 @@ class UsuarioModel extends Usuario {
         fotoPerfilUrl: fotoPerfilUrl ?? this.fotoPerfilUrl,
         senhaHash: senhaHash ?? this.senhaHash,
         ativo: ativo ?? this.ativo,
+        mfaTotpAtivo: mfaTotpAtivo ?? this.mfaTotpAtivo,
         dataCadastro: dataCadastro ?? this.dataCadastro,
         cidade: cidade ?? this.cidade,
         uf: uf ?? this.uf,

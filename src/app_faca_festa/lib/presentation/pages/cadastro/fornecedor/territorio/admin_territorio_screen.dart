@@ -14,7 +14,9 @@ class AdminTerritorioScreen extends StatelessWidget {
   final controller = Get.put(AdminTerritorioController());
   final fornecedorController = Get.find<FornecedorController>();
 
-  AdminTerritorioScreen({super.key});
+  AdminTerritorioScreen({super.key}) {
+    Future.microtask(controller.carregarTerritorios);
+  }
 
   String _getNomeFornecedor(String idFornecedor) {
     final f =

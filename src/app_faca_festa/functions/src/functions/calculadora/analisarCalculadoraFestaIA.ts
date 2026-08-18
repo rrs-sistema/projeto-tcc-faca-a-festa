@@ -1,6 +1,6 @@
 import { defineSecret } from "firebase-functions/params";
 import * as logger from "firebase-functions/logger";
-import { onCall } from "firebase-functions/v2/https";
+import { HttpsError, onCall } from "firebase-functions/v2/https";
 
 import { admin } from "../../shared/firebaseAdmin";
 import { buildInput, buildInstructions } from "../../ia/calculadora/prompt";
@@ -29,6 +29,13 @@ export const analisarCalculadoraFestaIA = onCall(
     secrets: [OPENAI_API_KEY],
   },
   async (request) => {
+    if (!request.auth?.uid) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Faça login para analisar a calculadora.",
+      );
+    }
+
     const rawData = asRecord(request.data);
     const payload = normalizarPayloadCalculadora(rawData);
 

@@ -11,7 +11,13 @@ import '../../../data/models/model.dart';
 import '../../widgets/custom_input_field.dart';
 
 class UsuariosAdminListScreen extends StatelessWidget {
-  const UsuariosAdminListScreen({super.key});
+  UsuariosAdminListScreen({super.key}) {
+    Future.microtask(() {
+      if (Get.isRegistered<UsuarioController>()) {
+        Get.find<UsuarioController>().carregarUsuarios();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -452,10 +458,12 @@ class UsuariosAdminListScreen extends StatelessWidget {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                             onPressed: () async {
-                              if (nomeCtrl.text.isEmpty || emailCtrl.text.isEmpty) {
+                              if (nomeCtrl.text.isEmpty ||
+                                  emailCtrl.text.isEmpty ||
+                                  senhaCtrl.text.trim().length < 6) {
                                 Get.snackbar(
                                   'Campos Obrigatórios',
-                                  'Preencha nome e e-mail para prosseguir.',
+                                  'Preencha nome, e-mail e uma senha com pelo menos 6 caracteres.',
                                   backgroundColor: Colors.grey.shade900,
                                   colorText: Colors.white,
                                 );

@@ -163,12 +163,13 @@ void main() {
         'tipo',
         'cpf',
         'foto_perfil_url',
-        'senha_hash',
         'ativo',
+        'mfa_totp_ativo',
         'data_cadastro',
         'cidade',
         'uf',
       });
+      expect(map.containsKey('senha_hash'), isFalse);
       expect(map['id_usuario'], 'usuario-1');
       expect(
         (map['data_cadastro'] as Timestamp).toDate().millisecondsSinceEpoch,

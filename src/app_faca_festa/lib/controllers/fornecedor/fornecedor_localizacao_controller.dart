@@ -3,6 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:flutter/foundation.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:get/get.dart';
+import 'dart:async';
 import 'dart:math';
 
 import '../../data/models/servico_produto/fornecedor_categoria_model.dart';
@@ -12,12 +13,24 @@ import '../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import '../../data/models/model.dart';
 
 class FornecedorLocalizacaoController extends GetxController {
-  final db = FirebaseFirestore.instance;
+  static FornecedorLocalizacaoController get to {
+    if (Get.isRegistered<FornecedorLocalizacaoController>()) {
+      return Get.find<FornecedorLocalizacaoController>();
+    }
+    return Get.put(FornecedorLocalizacaoController(), permanent: true);
+  }
 
-  // Estados reativos
+  final db = FirebaseFirestore.instance;
 
   var avaliacaoMinima = 0.0.obs;
   bool _dadosCarregados = false;
+  bool _escutasAtivas = false;
+  bool _escutaServicosAtiva = false;
+  bool _inicializando = false;
+  final Set<String> _fontesProntas = <String>{};
+  final List<StreamSubscription<QuerySnapshot<Map<String, dynamic>>>> _subscriptions = [];
+  Timer? _reconstrucaoDebounce;
+
   var userLongitude = 0.0.obs;
   var userLatitude = 0.0.obs;
   var carregando = true.obs;
@@ -47,173 +60,208 @@ class FornecedorLocalizacaoController extends GetxController {
 
   @override
   void onInit() {
-    raio.value = 25.0; // 25 km de raio
-    _obterLocalizacaoUsuario().then((ok) {
-      if (ok) escutarTodosServicos();
-
-      // 🔁 Garante refresh após a primeira carga e build da tela
-      Future.delayed(const Duration(seconds: 1), () {
-        fornecedoresFiltrados.refresh();
-        debugPrint('🔁 Refresh inicial forçado (sincronização UI)');
-      });
-    });
     super.onInit();
+    raio.value = 25.0;
+    unawaited(inicializar());
+  }
+
+  @override
+  void onClose() {
+    _reconstrucaoDebounce?.cancel();
+    unawaited(encerrarEscutas());
+    super.onClose();
+  }
+
+  Future<void> encerrarEscutas() async {
+    _reconstrucaoDebounce?.cancel();
+    _reconstrucaoDebounce = null;
+    for (final sub in _subscriptions) {
+      await sub.cancel();
+    }
+    _subscriptions.clear();
+    _escutasAtivas = false;
+    _escutaServicosAtiva = false;
+    _dadosCarregados = false;
+  }
+
+  /// Carga única de GPS + streams. Reentradas na tela não disparam de novo.
+  Future<void> inicializar({bool forcarLocalizacao = false}) async {
+    if (_inicializando) return;
+    if (_escutasAtivas && _dadosCarregados && !forcarLocalizacao) return;
+
+    _inicializando = true;
+    try {
+      await Future.wait<void>([
+        _obterLocalizacaoUsuario(forcar: forcarLocalizacao),
+        carregarDados(),
+      ]);
+      if (forcarLocalizacao || _dadosCarregados) {
+        _reconstruirLista();
+      }
+    } finally {
+      _inicializando = false;
+    }
+  }
+
+  /// Catálogo global de serviços: só sob demanda (detalhe / cotação).
+  void ensureTodosServicos() {
+    if (_escutaServicosAtiva) return;
+    unawaited(escutarTodosServicos());
   }
 
   // ==========================================================
   // === LOCALIZAÇÃO DO USUÁRIO (com fallback)
   // ==========================================================
-  Future<bool> _obterLocalizacaoUsuario() async {
+  Future<void> _obterLocalizacaoUsuario({bool forcar = false}) async {
+    if (!forcar && (userLatitude.value != 0.0 || userLongitude.value != 0.0)) {
+      return;
+    }
+
     try {
-      // 1️⃣ Verifica se o serviço de localização está ativo
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         debugPrint('⚠️ Serviço de localização desativado — fallback (Curitiba).');
-        userLatitude.value = -25.43;
-        userLongitude.value = -49.27;
-        await carregarDados();
-        await Future.delayed(const Duration(milliseconds: 300));
-        fornecedoresFiltrados.refresh();
-        return false;
+        _aplicarFallbackCuritiba();
+        return;
       }
 
-      // 2️⃣ Verifica a permissão atual
       var permission = await Geolocator.checkPermission();
-
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
 
-      // 3️⃣ Se ainda estiver negada (ou negada para sempre), usa fallback
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
         debugPrint('⚠️ Permissão negada — usando coordenadas padrão (Curitiba).');
-        userLatitude.value = -25.43;
-        userLongitude.value = -49.27;
-        await carregarDados();
-        return false;
+        _aplicarFallbackCuritiba();
+        return;
       }
 
-      // ✅ Nova forma de obter a posição atual
+      final lastKnown = await Geolocator.getLastKnownPosition();
+      if (lastKnown != null && !forcar) {
+        userLatitude.value = lastKnown.latitude;
+        userLongitude.value = lastKnown.longitude;
+      }
+
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.best,
-          distanceFilter: 0, // atualiza sempre que se mover
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 8),
         ),
       );
 
       userLatitude.value = pos.latitude;
       userLongitude.value = pos.longitude;
       debugPrint('📍 Localização obtida: ${pos.latitude}, ${pos.longitude}');
-
-      await carregarDados();
-      await Future.delayed(const Duration(milliseconds: 300));
-      fornecedoresFiltrados.refresh();
-      return true;
     } catch (e, s) {
       debugPrint('❌ Erro ao obter localização: $e\n$s');
-      // fallback para Curitiba
-      userLatitude.value = -25.43;
-      userLongitude.value = -49.27;
-      await carregarDados();
-      return false;
+      if (userLatitude.value == 0.0 && userLongitude.value == 0.0) {
+        _aplicarFallbackCuritiba();
+      }
     }
+  }
+
+  void _aplicarFallbackCuritiba() {
+    userLatitude.value = -25.43;
+    userLongitude.value = -49.27;
   }
 
   // ==========================================================
   // === CARGA PRINCIPAL (streams reativas)
   // ==========================================================
   Future<void> carregarDados() async {
+    if (_escutasAtivas) return;
+    _escutasAtivas = true;
     carregando.value = true;
+
     try {
-      // Categorias
-      db
-          .collection('categoria_servico')
-          .where('ativo', isEqualTo: true)
-          .snapshots()
-          .listen((snapshot) {
-        categorias.assignAll(snapshot.docs.map((d) {
-          return CategoriaServicoModel.fromMap({'id': d.id, ...d.data()});
-        }).toList());
-        _reconstruirLista();
-        _tentarMarcarComoPronto();
-      });
+      _subscriptions.add(
+        db.collection('categoria_servico').where('ativo', isEqualTo: true).snapshots().listen(
+          (snapshot) {
+            categorias.assignAll(snapshot.docs.map((d) {
+              return CategoriaServicoModel.fromMap({'id': d.id, ...d.data()});
+            }).toList());
+            _onFontePronta('categorias');
+          },
+        ),
+      );
 
-      // Fornecedores
-      db.collection('fornecedor').where('ativo', isEqualTo: true).snapshots().listen((snapshot) {
-        final lista = snapshot.docs.map((d) {
-          return FornecedorModel.fromMap(d.data(), documentId: d.id);
-        }).toList();
-        _fornecedoresRaw.assignAll(lista);
-        debugPrint('✅ Fornecedores carregados: ${lista.length}');
-        _reconstruirLista();
-        _tentarMarcarComoPronto();
-      });
+      _subscriptions.add(
+        db.collection('fornecedor').where('ativo', isEqualTo: true).snapshots().listen(
+          (snapshot) {
+            final lista = snapshot.docs.map((d) {
+              return FornecedorModel.fromMap(d.data(), documentId: d.id);
+            }).toList();
+            _fornecedoresRaw.assignAll(lista);
+            debugPrint('✅ Fornecedores carregados: ${lista.length}');
+            _onFontePronta('fornecedores');
+          },
+        ),
+      );
 
-      // Territórios
-      db.collection('territorio').where('ativo', isEqualTo: true).snapshots().listen((snapshot) {
-        final lista = snapshot.docs.map((d) => TerritorioModel.fromMap(d.data())).toList();
-        territoriosFornecedores.assignAll(lista);
-        debugPrint('✅ Territórios carregados: ${lista.length}');
-        _reconstruirLista();
-        _tentarMarcarComoPronto();
-      });
+      _subscriptions.add(
+        db.collection('territorio').where('ativo', isEqualTo: true).snapshots().listen(
+          (snapshot) {
+            final lista = snapshot.docs.map((d) => TerritorioModel.fromMap(d.data())).toList();
+            territoriosFornecedores.assignAll(lista);
+            debugPrint('✅ Territórios carregados: ${lista.length}');
+            _onFontePronta('territorios');
+          },
+        ),
+      );
 
-      // Relações fornecedor ↔ categoria
-      db.collection('fornecedor_categoria').snapshots().listen((snapshot) {
-        final lista = snapshot.docs.map((d) => FornecedorCategoriaModel.fromMap(d.data())).toList();
-        _relacoesRaw.assignAll(lista);
-        _reconstruirLista();
-        _tentarMarcarComoPronto();
-      });
+      _subscriptions.add(
+        db.collection('fornecedor_categoria').snapshots().listen((snapshot) {
+          final lista =
+              snapshot.docs.map((d) => FornecedorCategoriaModel.fromMap(d.data())).toList();
+          _relacoesRaw.assignAll(lista);
+          _onFontePronta('relacoes');
+        }),
+      );
 
-      // Avaliações
-      db.collection('avaliacoes').snapshots().listen((snapshot) {
-        final Map<String, List<int>> notasPorFornecedor = {};
-        for (var doc in snapshot.docs) {
-          final data = doc.data();
-          final idFornecedor = data['id_fornecedor'] ?? '';
-          if (idFornecedor.isEmpty) continue;
-          notasPorFornecedor.putIfAbsent(idFornecedor, () => []).add((data['nota'] ?? 0).toInt());
-        }
+      _subscriptions.add(
+        db.collection('avaliacoes').snapshots().listen((snapshot) {
+          final Map<String, List<int>> notasPorFornecedor = {};
+          for (var doc in snapshot.docs) {
+            final data = doc.data();
+            final idFornecedor = data['id_fornecedor'] ?? '';
+            if (idFornecedor.isEmpty) continue;
+            notasPorFornecedor.putIfAbsent(idFornecedor, () => []).add((data['nota'] ?? 0).toInt());
+          }
 
-        final Map<String, double> medias = {};
-        notasPorFornecedor.forEach((id, notas) {
-          final media = notas.reduce((a, b) => a + b) / notas.length;
-          medias[id] = double.parse(media.toStringAsFixed(2));
-        });
+          final Map<String, double> medias = {};
+          notasPorFornecedor.forEach((id, notas) {
+            final media = notas.reduce((a, b) => a + b) / notas.length;
+            medias[id] = double.parse(media.toStringAsFixed(2));
+          });
 
-        mediasAvaliacoes.assignAll(medias);
-        debugPrint('✅ Avaliações carregadas: ${medias.length}');
-        if (_dadosCarregados) _atualizarListasPorTipo();
-      });
+          mediasAvaliacoes.assignAll(medias);
+          debugPrint('✅ Avaliações carregadas: ${medias.length}');
+          if (_dadosCarregados) _atualizarListasPorTipo();
+        }),
+      );
     } catch (e, s) {
-      debugPrint('❌ Erro na escuta reativa: $e\n$s');
-    } finally {
       carregando.value = false;
+      debugPrint('❌ Erro na escuta reativa: $e\n$s');
     }
   }
 
-  // ==========================================================
-  // === MARCA DADOS COMO PRONTOS
-  // ==========================================================
-  void _tentarMarcarComoPronto() {
-    if (!_dadosCarregados &&
-        _fornecedoresRaw.isNotEmpty &&
-        territoriosFornecedores.isNotEmpty &&
-        categorias.isNotEmpty) {
+  void _onFontePronta(String fonte) {
+    _fontesProntas.add(fonte);
+    if (_fontesProntas.containsAll(const {'categorias', 'fornecedores', 'territorios', 'relacoes'})) {
       _dadosCarregados = true;
-
-      debugPrint('✅ Dados prontos — reconstruindo listas finais...');
-      _reconstruirLista();
-      _atualizarListasPorTipo();
-
-      // 🔹 Força refresh para o primeiro Obx
-      Future.delayed(const Duration(milliseconds: 300), () {
-        fornecedoresFiltrados.refresh();
-        debugPrint('🔁 Refresh forçado para fornecedoresFiltrados');
-      });
     }
+    _agendarReconstrucao();
+  }
+
+  void _agendarReconstrucao() {
+    _reconstrucaoDebounce?.cancel();
+    _reconstrucaoDebounce = Timer(const Duration(milliseconds: 80), () {
+      _reconstruirLista();
+      if (_dadosCarregados) {
+        carregando.value = false;
+      }
+    });
   }
 
   // ==========================================================
@@ -269,13 +317,8 @@ class FornecedorLocalizacaoController extends GetxController {
           if (dentro) {
             distanciaKm = 0.0;
           } else {
-            // 🔹 Calcula a distância mínima até as arestas do polígono
             distanciaKm = _distanciaAteRegiao(userLat, userLon, territorio.regioes!);
           }
-
-          debugPrint('🗺️ ${f.razaoSocial} → Região '
-              '(${territorio.regioes!.length} pontos) '
-              '${dentro ? "✅ Dentro da área" : "📏 Fora — ${distanciaKm.toStringAsFixed(2)} km"}');
         }
       }
 
@@ -355,78 +398,83 @@ class FornecedorLocalizacaoController extends GetxController {
   }
 
   Future<void> escutarTodosServicos() async {
+    if (_escutaServicosAtiva) return;
+    _escutaServicosAtiva = true;
     carregandoServicosFornecedor.value = true;
-    final db = FirebaseFirestore.instance;
     try {
-      allService.clear();
-      db.collection('fornecedor_categoria').snapshots().listen((snapshot) async {
-        List<FornecedorServicoDetalhadoDto> lista = [];
-        for (final doc in snapshot.docs) {
-          final data = doc.data();
-          final idFornecedor = data['id_fornecedor'] ?? '';
-          final nomeCategoria = data['nome_categoria'] ?? '';
-          final subcategorias = (data['subcategorias'] as List?) ?? [];
-          for (final sub in subcategorias) {
-            final idSub = sub['idSubcategoria'];
-            final nomeSub = sub['nomeSubcategoria'] ?? 'Sem subcategoria';
-            if (idSub == null || idSub.isEmpty) continue;
-            final servSnap = await db
-                .collection('servico_produto')
-                .where('id_subcategoria', isEqualTo: idSub)
-                .where('ativo', isEqualTo: true)
-                .get();
+      _subscriptions.add(
+        db.collection('fornecedor_categoria').snapshots().listen((snapshot) async {
+          List<FornecedorServicoDetalhadoDto> lista = [];
+          for (final doc in snapshot.docs) {
+            final data = doc.data();
+            final idFornecedor = data['id_fornecedor'] ?? '';
+            final nomeCategoria = data['nome_categoria'] ?? '';
+            final subcategorias = (data['subcategorias'] as List?) ?? [];
+            for (final sub in subcategorias) {
+              final idSub = sub['idSubcategoria'];
+              final nomeSub = sub['nomeSubcategoria'] ?? 'Sem subcategoria';
+              if (idSub == null || idSub.isEmpty) continue;
+              final servSnap = await db
+                  .collection('servico_produto')
+                  .where('id_subcategoria', isEqualTo: idSub)
+                  .where('ativo', isEqualTo: true)
+                  .get();
 
-            final servFornSnap = await db
-                .collection('fornecedor_servico')
-                .where('id_fornecedor', isEqualTo: idFornecedor)
-                .where('id_subcategoria', isEqualTo: idSub)
-                .limit(1)
-                .get();
-
-            final preco = servFornSnap.docs.isNotEmpty
-                ? (servFornSnap.docs.first.data()['preco'] as num?)?.toDouble() ?? 0.0
-                : 0.0;
-            final precoPromocao = servFornSnap.docs.isNotEmpty
-                ? (servFornSnap.docs.first.data()['preco_promocao'] as num?)?.toDouble() ?? 0.0
-                : 0.0;
-
-            for (final servDoc in servSnap.docs) {
-              final servData = servDoc.data();
-              final fotoSnap = await db
-                  .collection('servico_foto')
-                  .where('id_fornecedor', isEqualTo: idFornecedor ?? '')
-                  .where('id_produto_servico', isEqualTo: servDoc.id)
+              final servFornSnap = await db
+                  .collection('fornecedor_servico')
+                  .where('id_fornecedor', isEqualTo: idFornecedor)
+                  .where('id_subcategoria', isEqualTo: idSub)
                   .limit(1)
                   .get();
 
-              final imagemUrl =
-                  fotoSnap.docs.isNotEmpty ? fotoSnap.docs.first.data()['url'] as String? : null;
+              final preco = servFornSnap.docs.isNotEmpty
+                  ? (servFornSnap.docs.first.data()['preco'] as num?)?.toDouble() ?? 0.0
+                  : 0.0;
+              final precoPromocao = servFornSnap.docs.isNotEmpty
+                  ? (servFornSnap.docs.first.data()['preco_promocao'] as num?)?.toDouble() ?? 0.0
+                  : 0.0;
 
-              final nomeFornecedor = _fornecedoresRaw
-                      .firstWhereOrNull((f) => f.idFornecedor == idFornecedor)
-                      ?.razaoSocial ??
-                  'Não localizado';
-              lista.add(FornecedorServicoDetalhadoDto(
-                  id: servDoc.id,
-                  idFornecedor: idFornecedor ?? '',
-                  idProdutoServico: servDoc.id,
-                  idSubcategoria: idSub,
-                  nomeServico: servData['nome'],
-                  nomeFornecedor: nomeFornecedor,
-                  descricaoServico: servData['descricao'],
-                  preco: preco,
-                  precoPromocao: precoPromocao,
-                  nomeSubcategoria: nomeSub,
-                  nomeCategoria: nomeCategoria,
-                  imagemUrl: imagemUrl,
-                  ativo: servData['ativo'] ?? true,
-                  quantidade: 1));
+              for (final servDoc in servSnap.docs) {
+                final servData = servDoc.data();
+                final fotoSnap = await db
+                    .collection('servico_foto')
+                    .where('id_fornecedor', isEqualTo: idFornecedor ?? '')
+                    .where('id_produto_servico', isEqualTo: servDoc.id)
+                    .limit(1)
+                    .get();
+
+                final imagemUrl =
+                    fotoSnap.docs.isNotEmpty ? fotoSnap.docs.first.data()['url'] as String? : null;
+
+                final nomeFornecedor = _fornecedoresRaw
+                        .firstWhereOrNull((f) => f.idFornecedor == idFornecedor)
+                        ?.razaoSocial ??
+                    'Não localizado';
+                lista.add(FornecedorServicoDetalhadoDto(
+                    id: servDoc.id,
+                    idFornecedor: idFornecedor ?? '',
+                    idProdutoServico: servDoc.id,
+                    idSubcategoria: idSub,
+                    nomeServico: servData['nome'],
+                    nomeFornecedor: nomeFornecedor,
+                    descricaoServico: servData['descricao'],
+                    preco: preco,
+                    precoPromocao: precoPromocao,
+                    nomeSubcategoria: nomeSub,
+                    nomeCategoria: nomeCategoria,
+                    imagemUrl: imagemUrl,
+                    ativo: servData['ativo'] ?? true,
+                    quantidade: 1));
+              }
             }
           }
-        }
-        allService.assignAll(lista);
-      });
+          allService.assignAll(lista);
+          carregandoServicosFornecedor.value = false;
+        }),
+      );
     } catch (e, s) {
+      _escutaServicosAtiva = false;
+      carregandoServicosFornecedor.value = false;
       debugPrint('❌ [FornecedorController] Erro ao escutar serviços fornecedor: $e\n$s');
     }
   }
@@ -542,6 +590,8 @@ class FornecedorLocalizacaoController extends GetxController {
       }
       final fornServSnap =
           await db.collection('fornecedor_servico').where('id_subcategoria', whereIn: subIds).get();
+      final catSnap = await db.collection('categoria_servico').doc(idCategoria).get();
+      final nomeCategoria = catSnap.data()?['nome'];
       List<FornecedorServicoDetalhadoDto> lista = [];
       for (final doc in fornServSnap.docs) {
         final data = doc.data();
@@ -555,8 +605,6 @@ class FornecedorLocalizacaoController extends GetxController {
           final subData = subSnap.docs.firstWhere((s) => s.id == idSubcategoria).data();
           nomeSubcategoria = subData['nome'];
         }
-        final catSnap = await db.collection('categoria_servico').doc(idCategoria).get();
-        final nomeCategoria = catSnap.data()?['nome'];
         final fotoSnap = await db
             .collection('servico_foto')
             .where('id_fornecedor', isEqualTo: idFornecedor)

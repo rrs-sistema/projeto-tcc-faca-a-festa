@@ -8,7 +8,6 @@ import 'package:flutter/services.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
-import 'dart:ui';
 
 import '../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
 import './../../controllers/convidado/convidado_controller.dart';
@@ -21,6 +20,7 @@ import './../../controllers/tarefa_controller.dart';
 import './../../controllers/evento_controller.dart';
 import './../../domain/entities/tipo_evento.dart';
 import './../widgets/menu_drawer_faca_festa.dart';
+import './../widgets/festa_bottom_bar.dart';
 import './components/build_animated_header.dart';
 import './../../controllers/app_controller.dart';
 import './fornecedor/painel_cotacao_page.dart';
@@ -52,12 +52,11 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   late FornecedorLocalizacaoController fornecedorController;
   final theme = Get.find<EventThemeController>();
   bool isCelular = false;
-  bool _carregandoFornecedor = false;
 
   @override
   void initState() {
     super.initState();
-    fornecedorController = Get.put(FornecedorLocalizacaoController(), permanent: true);
+    fornecedorController = FornecedorLocalizacaoController.to;
   }
 
   @override
@@ -72,42 +71,58 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
 
     return Scaffold(
       key: _scaffoldKey,
-      extendBody: true,
       backgroundColor: const Color(0xFFF8FAFC),
       endDrawerEnableOpenDragGesture: false,
       endDrawer: MenuDrawerFacaFesta(onLogout: appController.logoutFornecedor),
       body: SafeArea(
-        bottom: true,
+        bottom: false,
         child: PageView(
           controller: pageController,
           physics: const NeverScrollableScrollPhysics(),
-          onPageChanged: (i) async {
+          onPageChanged: (i) {
             setState(() => _currentIndex = i);
-            if (i == 1) {
-              setState(() => _carregandoFornecedor = true);
-              await Future.delayed(const Duration(milliseconds: 400));
-              setState(() => _carregandoFornecedor = false);
-            }
           },
           children: [
             _buildHome(theme),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 400),
-              child: _currentIndex == 1 && !_carregandoFornecedor
-                  ? FadeIn(child: _buildFornecedorLocalizacao(theme))
-                  : _buildFornecedorShimmer(theme),
-            ),
+            const FornecedorLocalizacaoScreen(showLeading: false),
             _buildInspiration(theme),
           ],
         ),
       ),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewPadding.bottom > 0
-              ? MediaQuery.of(context).viewPadding.bottom
-              : 8,
-        ),
-        child: _buildAnimatedBottomBar(theme.primaryColor.value),
+      bottomNavigationBar: FestaBottomBar(
+        currentIndex: _currentIndex,
+        items: const [
+          FestaNavItem(
+            icon: Icons.home_outlined,
+            activeIcon: Icons.home_rounded,
+            label: 'Home',
+          ),
+          FestaNavItem(
+            icon: Icons.storefront_outlined,
+            activeIcon: Icons.storefront_rounded,
+            label: 'Fornecedores',
+          ),
+          FestaNavItem(
+            icon: Icons.lightbulb_outline_rounded,
+            activeIcon: Icons.lightbulb_rounded,
+            label: 'Inspiração',
+          ),
+          FestaNavItem(
+            icon: Icons.menu_rounded,
+            label: 'Menu',
+            isAction: true,
+          ),
+        ],
+        onTap: (index) {
+          if (index == 3) {
+            _scaffoldKey.currentState?.openEndDrawer();
+            return;
+          }
+          if (_currentIndex != index) {
+            setState(() => _currentIndex = index);
+            pageController.jumpToPage(index);
+          }
+        },
       ),
     );
   }
@@ -189,14 +204,17 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             ],
           ),
           child: Obx(() {
-            // Convidados
-            final conf = convidadoController.totalConfirmados;
-            final totConv = convidadoController.totalConvidados;
+            final evento = eventoController.eventoAtual.value ?? eventoModel;
+            final totLista = convidadoController.totalConvidados;
+            final totConv = totLista > 0
+                ? totLista
+                : evento.totalConvidadosCalculado;
+            final conf = totLista > 0 ? convidadoController.totalConfirmados : 0;
             final progConv = totConv > 0 ? conf / totConv : 0.0;
 
-            // Orçamento
+            // Orçamento: usado (itens) vs teto informado no cadastro.
             final totOrc = orcamentoController.totalCustoEstimado.value;
-            final limOrc = eventoModel.custoEstimado ?? 0.0;
+            final limOrc = evento.custoEstimado ?? 0.0;
             final progOrc = limOrc > 0 ? (totOrc / limOrc).clamp(0.0, 1.0) : 0.0;
 
             // Tarefas
@@ -233,10 +251,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     );
   }
 
-  Widget _buildFornecedorLocalizacao(EventThemeController theme) {
-    return FornecedorLocalizacaoScreen(showLeading: false);
-  }
-
   Widget _buildInspiration(EventThemeController theme) {
     return InspiracaoScreen(
       tipoEvento: eventoController.tipoEventoAtualEntidade ??
@@ -244,87 +258,11 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     );
   }
 
-  Widget _buildAnimatedBottomBar(Color cor) {
-    final itens = [
-      {'icon': Icons.home_rounded, 'label': 'Home'},
-      {'icon': Icons.storefront_rounded, 'label': 'Fornecedores'},
-      {'icon': Icons.lightbulb_rounded, 'label': 'Inspiração'},
-      {'icon': Icons.menu_rounded, 'label': 'Menu'},
-    ];
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 400),
-      height: 60,
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.90),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: cor.withValues(alpha: 0.15),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(itens.length, (i) {
-              final selected = _currentIndex == i;
-              return GestureDetector(
-                onTap: () {
-                  if (i == 3) {
-                    _scaffoldKey.currentState?.openEndDrawer();
-                    return;
-                  }
-                  if (_currentIndex != i) {
-                    setState(() => _currentIndex = i);
-                    pageController.jumpToPage(i);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: selected && i != 3 ? cor.withValues(alpha: 0.1) : Colors.transparent,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        itens[i]['icon'] as IconData,
-                        size: selected ? 22 : 20,
-                        color: selected ? cor : Colors.grey.shade500,
-                      ),
-                      if (selected && i != 3)
-                        Text(
-                          itens[i]['label'] as String,
-                          style: GoogleFonts.poppins(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: cor,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            }),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 // 🔹 Ações rápidas mais compactas
 Widget _buildQuickActions(EventThemeController theme) {
   final convidadoController = Get.find<ConvidadoController>();
-  final orcamentoController = Get.find<OrcamentoController>();
   final cotacaoController = Get.find<CotacaoController>();
   final tarefaController = Get.find<TarefaController>();
 
@@ -335,20 +273,26 @@ Widget _buildQuickActions(EventThemeController theme) {
         final concluidas = tarefaController.concluidas;
         final totalTarefa = tarefaController.pendentes + tarefaController.concluidas;
         final progress = totalTarefa > 0 ? concluidas / totalTarefa : 0.0;
+        final evento = Get.find<EventoController>().eventoAtual.value;
+        final totalListaConvidados = convidadoController.totalConvidados;
+        final totalConvidadosHome = totalListaConvidados > 0
+            ? totalListaConvidados
+            : (evento?.totalConvidadosCalculado ?? 0);
+        final orcamentoPlanejado = evento?.custoEstimado ?? 0.0;
 
         final itens = [
           {
             'icon': Icons.people_alt_rounded,
             'label': 'Convidados',
             'color': Colors.pinkAccent,
-            'val': "${convidadoController.totalConvidados}"
+            'val': "$totalConvidadosHome"
           },
           {
             'icon': Icons.payments_rounded,
             'label': 'Orçamento',
             'color': Colors.tealAccent.shade700,
             'val':
-                "R\$ ${Biblioteca.formatarValorDecimal(orcamentoController.totalCustoEstimado.value)}"
+                "R\$ ${Biblioteca.formatarValorDecimal(orcamentoPlanejado)}"
           },
           {
             'icon': Icons.storefront_rounded,
@@ -395,7 +339,7 @@ Widget _buildQuickActions(EventThemeController theme) {
                 if (i == 0) Get.to(() => const ConvidadosPage());
                 if (i == 1) Get.to(() => const OrcamentoScreen());
                 if (i == 2) Get.to(() => const PainelCotacaoPage());
-                if (i == 3) Get.to(() => const TarefasScreen());
+                if (i == 3) Get.to(() => TarefasScreen());
                 if (i == 4) Get.to(() => const CalculadoraFestaScreen());
                 if (i == 5) Get.to(() => const FornecedorLocalizacaoScreen(showLeading: true));
               },
@@ -533,7 +477,7 @@ Widget _buildBudgetChart(
     child: Obx(() {
       final total = totalCustoEstimado.value;
       final limite =
-          eventoController.eventoAtualEntidade?.custoEstimado ?? 0.0;
+          eventoController.eventoAtual.value?.custoEstimado ?? 0.0;
       final usado = limite > 0 ? (total / limite).clamp(0, 1) : 0.0;
       final primary = theme.primaryColor.value;
 
@@ -591,12 +535,28 @@ Widget _buildBudgetChart(
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Usado: R\$ ${Biblioteca.formatarValorDecimal(total)}',
-                          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600)),
-                      Text('${Biblioteca.formatarValorDecimal(usado * 100)}%',
-                          style: GoogleFonts.poppins(
-                              fontSize: 11, fontWeight: FontWeight.w800, color: primary)),
+                      Text(
+                        'Usado: R\$ ${Biblioteca.formatarValorDecimal(total)}',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11, color: Colors.grey.shade600),
+                      ),
+                      Text(
+                        'Planejado: R\$ ${Biblioteca.formatarValorDecimal(limite)}',
+                        style: GoogleFonts.poppins(
+                            fontSize: 11, color: Colors.grey.shade600),
+                      ),
                     ],
+                  ),
+                  const SizedBox(height: 2),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      '${Biblioteca.formatarValorDecimal(usado * 100)}%',
+                      style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w800,
+                          color: primary),
+                    ),
                   ),
                   const SizedBox(height: 6),
                   ClipRRect(
@@ -775,6 +735,3 @@ Widget _fornecedorCard({required FornecedorDetalhadoDto fornecedorDetalhe, requi
     ),
   );
 }
-
-Widget _buildFornecedorShimmer(EventThemeController theme) =>
-    const Center(child: CircularProgressIndicator());
