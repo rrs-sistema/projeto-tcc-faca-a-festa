@@ -4,9 +4,11 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../../app/bootstrap/admin_dashboard_bootstrap.dart';
 import '../../../controllers/admin/admin_dashboard_controller.dart';
 import '../../../app/bootstrap/servico_produto_bootstrap.dart';
 import '../../../controllers/app_controller.dart';
+import '../../../domain/entities/admin_dashboard_stats.dart';
 import '../../../controllers/tema/admin_theme.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../widgets/admin/admin_kit.dart';
@@ -26,7 +28,7 @@ class AdminDashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.isRegistered<AdminDashboardController>()
         ? Get.find<AdminDashboardController>()
-        : Get.put(AdminDashboardController());
+        : AdminDashboardBootstrap.findController();
     final theme = Get.find<EventThemeController>();
 
     return Theme(
