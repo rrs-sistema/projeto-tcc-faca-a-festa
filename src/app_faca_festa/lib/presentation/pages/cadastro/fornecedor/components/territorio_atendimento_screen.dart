@@ -10,7 +10,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
-import './../../../../../controllers/admin/admin_territorio_controller.dart';
+import './../../../../../app/bootstrap/admin_territorio_bootstrap.dart';
 import './../../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../../data/models/model.dart';
 
@@ -24,7 +24,7 @@ Future<void> showAddTerritorioBottomSheet(
   final theme = Get.find<EventThemeController>();
   final cor = theme.primaryColor.value;
   final gradiente = theme.gradient.value;
-  final controller = Get.find<AdminTerritorioController>();
+  final controller = AdminTerritorioBootstrap.findController();
 
   // 🔹 Controle inicial baseado no modo
   final descricaoCtrl = TextEditingController(text: existente?.descricao ?? '');
@@ -35,7 +35,9 @@ Future<void> showAddTerritorioBottomSheet(
   // 🔹 Converte coordenadas existentes em pontos de mapa
   final pontos = <LatLng>[].obs;
   if (existente != null) {
-    if (modo.value == 'raio' && existente.latitude != null && existente.longitude != null) {
+    if (modo.value == 'raio' &&
+        existente.latitude != null &&
+        existente.longitude != null) {
       pontos.assign(LatLng(existente.latitude!, existente.longitude!));
     } else if (modo.value == 'regiao' && existente.regioes != null) {
       pontos.assignAll(existente.regioes!.map((r) {
@@ -56,7 +58,8 @@ Future<void> showAddTerritorioBottomSheet(
             height: MediaQuery.of(context).size.height * 0.9,
             decoration: BoxDecoration(
               gradient: gradiente,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
             ),
             child: Stack(
               children: [
@@ -64,8 +67,9 @@ Future<void> showAddTerritorioBottomSheet(
                 FlutterMap(
                   mapController: controller.mapController,
                   options: MapOptions(
-                    initialCenter:
-                        pontos.isNotEmpty ? pontos.first : const LatLng(-25.4284, -49.2733),
+                    initialCenter: pontos.isNotEmpty
+                        ? pontos.first
+                        : const LatLng(-25.4284, -49.2733),
                     initialZoom: pontos.isNotEmpty ? 12.5 : 11,
                     onTap: (tapPosition, latLng) {
                       if (modo.value == "raio") {
@@ -170,7 +174,9 @@ Future<void> showAddTerritorioBottomSheet(
                                       ? "Editar Território (Raio)"
                                       : "Editar Território (Região)"),
                               style: GoogleFonts.poppins(
-                                  fontSize: 15, fontWeight: FontWeight.w700, color: cor),
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: cor),
                             ),
                             const SizedBox(height: 4),
                             if (modo.value == "raio")
@@ -189,7 +195,8 @@ Future<void> showAddTerritorioBottomSheet(
                                     min: 1,
                                     max: 100,
                                     divisions: 99,
-                                    label: "${raioKm.value.toStringAsFixed(0)} km",
+                                    label:
+                                        "${raioKm.value.toStringAsFixed(0)} km",
                                     activeColor: cor,
                                     onChanged: (v) => raioKm.value = v,
                                   ),
@@ -210,11 +217,14 @@ Future<void> showAddTerritorioBottomSheet(
                     children: [
                       _mapButton(Icons.gps_fixed, "Centralizar", cor, () async {
                         final loc = await Geolocator.getCurrentPosition();
-                        controller.mapController.move(LatLng(loc.latitude, loc.longitude), 13);
+                        controller.mapController
+                            .move(LatLng(loc.latitude, loc.longitude), 13);
                       }),
                       const SizedBox(height: 10),
                       _mapButton(
-                        modo.value == "raio" ? Icons.public : Icons.polyline_outlined,
+                        modo.value == "raio"
+                            ? Icons.public
+                            : Icons.polyline_outlined,
                         "Alternar modo",
                         cor,
                         () {
@@ -227,14 +237,16 @@ Future<void> showAddTerritorioBottomSheet(
                       if (modo.value == "regiao")
                         _mapButton(
                           Icons.brush,
-                          desenhando.value ? "Finalizar desenho" : "Desenhar região",
+                          desenhando.value
+                              ? "Finalizar desenho"
+                              : "Desenhar região",
                           desenhando.value ? Colors.white : cor,
                           () => desenhando.toggle(),
                           active: desenhando.value,
                         ),
                       const SizedBox(height: 10),
-                      _mapButton(Icons.delete_outline, "Limpar pontos", Colors.redAccent,
-                          () => pontos.clear()),
+                      _mapButton(Icons.delete_outline, "Limpar pontos",
+                          Colors.redAccent, () => pontos.clear()),
                     ],
                   ),
                 ),
@@ -259,22 +271,27 @@ Future<void> showAddTerritorioBottomSheet(
                               child: OutlinedButton(
                                 onPressed: () => Get.back(),
                                 style: OutlinedButton.styleFrom(
-                                  side: BorderSide(color: cor.withValues(alpha: 0.6)),
+                                  side: BorderSide(
+                                      color: cor.withValues(alpha: 0.6)),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12)),
                                 ),
                                 child: Text("Cancelar",
                                     style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600, color: cor)),
+                                        fontWeight: FontWeight.w600,
+                                        color: cor)),
                               ),
                             ),
                             const SizedBox(width: 12),
                             Expanded(
                               child: ElevatedButton.icon(
-                                icon: const Icon(Icons.save, color: Colors.white),
-                                label: Text(existente == null ? "Salvar" : "Atualizar",
+                                icon:
+                                    const Icon(Icons.save, color: Colors.white),
+                                label: Text(
+                                    existente == null ? "Salvar" : "Atualizar",
                                     style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w700, color: Colors.white)),
+                                        fontWeight: FontWeight.w700,
+                                        color: Colors.white)),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: cor,
                                   shape: RoundedRectangleBorder(
@@ -282,35 +299,47 @@ Future<void> showAddTerritorioBottomSheet(
                                 ),
                                 onPressed: () async {
                                   if (pontos.isEmpty) {
-                                    Get.snackbar("Aviso", "Adicione ao menos um ponto no mapa.",
-                                        backgroundColor: Colors.orange, colorText: Colors.white);
+                                    Get.snackbar("Aviso",
+                                        "Adicione ao menos um ponto no mapa.",
+                                        backgroundColor: Colors.orange,
+                                        colorText: Colors.white);
                                     return;
                                   }
-                                  EasyLoading.show(status: 'Salvando as informações...');
+                                  EasyLoading.show(
+                                      status: 'Salvando as informações...');
 
                                   final model = TerritorioModel(
-                                    idTerritorio: existente?.idTerritorio ?? const Uuid().v4(),
+                                    idTerritorio: existente?.idTerritorio ??
+                                        const Uuid().v4(),
                                     idFornecedor: idFornecedor,
                                     ativo: true,
                                     descricao: descricaoCtrl.text.isEmpty
                                         ? "Território ${DateTime.now().day}/${DateTime.now().month}"
                                         : descricaoCtrl.text,
                                     tipoCobertura: modo.value,
-                                    raioKm: modo.value == "raio" ? raioKm.value : null,
-                                    latitude: modo.value == "raio" && pontos.isNotEmpty
+                                    raioKm: modo.value == "raio"
+                                        ? raioKm.value
+                                        : null,
+                                    latitude: modo.value == "raio" &&
+                                            pontos.isNotEmpty
                                         ? pontos.first.latitude
                                         : null,
-                                    longitude: modo.value == "raio" && pontos.isNotEmpty
+                                    longitude: modo.value == "raio" &&
+                                            pontos.isNotEmpty
                                         ? pontos.first.longitude
                                         : null,
                                     regioes: modo.value == "regiao"
-                                        ? pontos.map((p) => "${p.latitude},${p.longitude}").toList()
+                                        ? pontos
+                                            .map((p) =>
+                                                "${p.latitude},${p.longitude}")
+                                            .toList()
                                         : null,
                                   );
 
                                   await controller.salvarTerritorio(model);
                                   Get.back();
-                                  await Future.delayed(const Duration(seconds: 1));
+                                  await Future.delayed(
+                                      const Duration(seconds: 1));
                                   Get.back();
                                   EasyLoading.dismiss();
                                 },

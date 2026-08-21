@@ -4,16 +4,16 @@ import 'package:latlong2/latlong.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../../../app/bootstrap/admin_territorio_bootstrap.dart';
 import '../../../../../core/utils/biblioteca.dart';
 import '../../../../../controllers/tema/admin_theme.dart';
-import './../../../../../controllers/admin/admin_territorio_controller.dart';
 import './../../../../../controllers/tema/event_theme_controller.dart';
 import '../../../../../controllers/fornecedor/fornecedor_controller.dart';
 import '../../../../../data/models/model.dart';
 import '../../../../widgets/admin/admin_kit.dart';
 
 class AdminTerritorioScreen extends StatelessWidget {
-  final controller = Get.put(AdminTerritorioController());
+  final controller = AdminTerritorioBootstrap.findController();
   final fornecedorController = Get.find<FornecedorController>();
 
   AdminTerritorioScreen({super.key}) {
@@ -21,8 +21,8 @@ class AdminTerritorioScreen extends StatelessWidget {
   }
 
   String _getNomeFornecedor(String idFornecedor) {
-    final f =
-        fornecedorController.fornecedores.firstWhereOrNull((x) => x.idFornecedor == idFornecedor);
+    final f = fornecedorController.fornecedores
+        .firstWhereOrNull((x) => x.idFornecedor == idFornecedor);
     return f?.razaoSocial ?? 'Fornecedor não encontrado';
   }
 
@@ -33,179 +33,204 @@ class AdminTerritorioScreen extends StatelessWidget {
     return Theme(
       data: theme.adminThemeData,
       child: Scaffold(
-      backgroundColor: AdminPalette.surface,
-      appBar: AdminBackAppBar(
-        title: 'Gerenciar Territórios',
-        subtitle: 'Cobertura dos fornecedores',
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.white),
-            tooltip: 'Recarregar',
-            onPressed: controller.carregarTerritorios,
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _abrirDialogTerritorio(context),
-        backgroundColor: AdminPalette.dark,
-        icon: const Icon(Icons.add_location_alt_rounded, color: Colors.white),
-        label: const Text(
-          "Novo Território",
-          style: TextStyle(color: Colors.white),
+        backgroundColor: AdminPalette.surface,
+        appBar: AdminBackAppBar(
+          title: 'Gerenciar Territórios',
+          subtitle: 'Cobertura dos fornecedores',
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh, color: Colors.white),
+              tooltip: 'Recarregar',
+              onPressed: controller.carregarTerritorios,
+            ),
+          ],
         ),
-      ),
-      body: Row(
-        children: [
-          // ====================== LISTA LATERAL ======================
-          Expanded(
-            flex: 3,
-            child: Container(
-              color: Colors.grey.shade50,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                    child: Text(
-                      "Territórios Cadastrados",
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: Colors.black87,
+        floatingActionButton: FloatingActionButton.extended(
+          onPressed: () => _abrirDialogTerritorio(context),
+          backgroundColor: AdminPalette.dark,
+          icon: const Icon(Icons.add_location_alt_rounded, color: Colors.white),
+          label: const Text(
+            "Novo Território",
+            style: TextStyle(color: Colors.white),
+          ),
+        ),
+        body: Row(
+          children: [
+            // ====================== LISTA LATERAL ======================
+            Expanded(
+              flex: 3,
+              child: Container(
+                color: Colors.grey.shade50,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 16),
+                      child: Text(
+                        "Territórios Cadastrados",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
                       ),
                     ),
-                  ),
-                  Expanded(
-                    child: Obx(() {
-                      final lista = controller.territorios;
-                      if (lista.isEmpty) {
-                        return const AdminEmptyState(
-                          icon: Icons.map_outlined,
-                          title: 'Nenhum território cadastrado',
-                          message: 'Defina a área de cobertura de cada fornecedor.',
-                        );
-                      }
-
-                      return ListView.builder(
-                        itemCount: lista.length,
-                        itemBuilder: (_, i) {
-                          final t = lista[i];
-                          final nomeFornecedor = _getNomeFornecedor(t.idFornecedor);
-
-                          return Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                            elevation: 2,
-                            child: ListTile(
-                              leading: Icon(
-                                t.tipoCobertura == 'raio'
-                                    ? Icons.circle_outlined
-                                    : Icons.map_outlined,
-                                color: t.ativo ? Colors.green : Colors.grey.shade500,
-                              ),
-                              title: Text(
-                                t.descricao?.isNotEmpty == true ? t.descricao! : 'Sem descrição',
-                                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                              ),
-                              subtitle: Text(
-                                'Fornecedor: $nomeFornecedor\n'
-                                'Cobertura: ${t.tipoCobertura ?? '-'}'
-                                '${t.raioKm != null ? " • Raio: ${t.raioKm!.toStringAsFixed(0)} km" : ""}',
-                                style: GoogleFonts.poppins(fontSize: 12),
-                              ),
-                              trailing: Switch(
-                                value: t.ativo,
-                                activeColor: Colors.green,
-                                onChanged: (v) => controller.toggleAtivo(t, v),
-                              ),
-                              onTap: () => _abrirDialogTerritorio(context, existente: t),
-                            ),
+                    Expanded(
+                      child: Obx(() {
+                        final lista = controller.territorios;
+                        if (lista.isEmpty) {
+                          return const AdminEmptyState(
+                            icon: Icons.map_outlined,
+                            title: 'Nenhum território cadastrado',
+                            message:
+                                'Defina a área de cobertura de cada fornecedor.',
                           );
-                        },
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ),
-          ),
+                        }
 
-          // ====================== MAPA INTERATIVO ======================
-          Expanded(
-            flex: 5,
-            child: Obx(() => FlutterMap(
-                  mapController: controller.mapController,
-                  options: MapOptions(
-                    initialCenter: const LatLng(-15.78, -47.93),
-                    initialZoom: 4.3,
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'app_faca_festa',
-                    ),
+                        return ListView.builder(
+                          itemCount: lista.length,
+                          itemBuilder: (_, i) {
+                            final t = lista[i];
+                            final nomeFornecedor =
+                                _getNomeFornecedor(t.idFornecedor);
 
-                    // Territórios tipo RAIO
-                    CircleLayer(
-                      circles: controller.territorios
-                          .where((t) =>
-                              t.tipoCobertura == 'raio' &&
-                              t.latitude != null &&
-                              t.longitude != null &&
-                              t.ativo)
-                          .map((t) => CircleMarker(
-                                point: LatLng(t.latitude!, t.longitude!),
-                                radius: (t.raioKm ?? 10) * 1000,
-                                color: Colors.blueAccent.withValues(alpha: 0.25),
-                                borderStrokeWidth: 2,
-                                borderColor: Colors.blueAccent,
-                                useRadiusInMeter: true,
-                              ))
-                          .toList(),
-                    ),
-
-                    // Territórios tipo REGIÃO
-                    PolygonLayer(
-                      polygons: controller.territorios
-                          .where((t) => t.tipoCobertura == 'regiao' && t.regioes != null && t.ativo)
-                          .map((t) => Polygon(
-                                points: t.regioes!.map((r) {
-                                  final parts = r.split(',');
-                                  return LatLng(double.parse(parts[0]), double.parse(parts[1]));
-                                }).toList(),
-                                color: Colors.greenAccent.withValues(alpha: 0.25),
-                                borderColor: Colors.green,
-                                borderStrokeWidth: 1.5,
-                              ))
-                          .toList(),
-                    ),
-
-                    // Marcadores
-                    MarkerLayer(
-                      markers: controller.territorios
-                          .where((t) => t.latitude != null && t.longitude != null && t.ativo)
-                          .map((t) {
-                        final nomeFornecedor = _getNomeFornecedor(t.idFornecedor);
-                        return Marker(
-                          point: LatLng(t.latitude!, t.longitude!),
-                          width: 40,
-                          height: 40,
-                          child: Tooltip(
-                            message: "Fornecedor: $nomeFornecedor\n${t.descricao ?? ''}",
-                            child: const Icon(Icons.location_on, color: Colors.redAccent, size: 30),
-                          ),
+                            return Card(
+                              margin: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 6),
+                              elevation: 2,
+                              child: ListTile(
+                                leading: Icon(
+                                  t.tipoCobertura == 'raio'
+                                      ? Icons.circle_outlined
+                                      : Icons.map_outlined,
+                                  color: t.ativo
+                                      ? Colors.green
+                                      : Colors.grey.shade500,
+                                ),
+                                title: Text(
+                                  t.descricao?.isNotEmpty == true
+                                      ? t.descricao!
+                                      : 'Sem descrição',
+                                  style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600),
+                                ),
+                                subtitle: Text(
+                                  'Fornecedor: $nomeFornecedor\n'
+                                  'Cobertura: ${t.tipoCobertura ?? '-'}'
+                                  '${t.raioKm != null ? " • Raio: ${t.raioKm!.toStringAsFixed(0)} km" : ""}',
+                                  style: GoogleFonts.poppins(fontSize: 12),
+                                ),
+                                trailing: Switch(
+                                  value: t.ativo,
+                                  activeColor: Colors.green,
+                                  onChanged: (v) =>
+                                      controller.toggleAtivo(t, v),
+                                ),
+                                onTap: () => _abrirDialogTerritorio(context,
+                                    existente: t),
+                              ),
+                            );
+                          },
                         );
-                      }).toList(),
+                      }),
                     ),
                   ],
-                )),
-          ),
-        ],
+                ),
+              ),
+            ),
+
+            // ====================== MAPA INTERATIVO ======================
+            Expanded(
+              flex: 5,
+              child: Obx(() => FlutterMap(
+                    mapController: controller.mapController,
+                    options: MapOptions(
+                      initialCenter: const LatLng(-15.78, -47.93),
+                      initialZoom: 4.3,
+                    ),
+                    children: [
+                      TileLayer(
+                        urlTemplate:
+                            'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                        userAgentPackageName: 'app_faca_festa',
+                      ),
+
+                      // Territórios tipo RAIO
+                      CircleLayer(
+                        circles: controller.territorios
+                            .where((t) =>
+                                t.tipoCobertura == 'raio' &&
+                                t.latitude != null &&
+                                t.longitude != null &&
+                                t.ativo)
+                            .map((t) => CircleMarker(
+                                  point: LatLng(t.latitude!, t.longitude!),
+                                  radius: (t.raioKm ?? 10) * 1000,
+                                  color:
+                                      Colors.blueAccent.withValues(alpha: 0.25),
+                                  borderStrokeWidth: 2,
+                                  borderColor: Colors.blueAccent,
+                                  useRadiusInMeter: true,
+                                ))
+                            .toList(),
+                      ),
+
+                      // Territórios tipo REGIÃO
+                      PolygonLayer(
+                        polygons: controller.territorios
+                            .where((t) =>
+                                t.tipoCobertura == 'regiao' &&
+                                t.regioes != null &&
+                                t.ativo)
+                            .map((t) => Polygon(
+                                  points: t.regioes!.map((r) {
+                                    final parts = r.split(',');
+                                    return LatLng(double.parse(parts[0]),
+                                        double.parse(parts[1]));
+                                  }).toList(),
+                                  color: Colors.greenAccent
+                                      .withValues(alpha: 0.25),
+                                  borderColor: Colors.green,
+                                  borderStrokeWidth: 1.5,
+                                ))
+                            .toList(),
+                      ),
+
+                      // Marcadores
+                      MarkerLayer(
+                        markers: controller.territorios
+                            .where((t) =>
+                                t.latitude != null &&
+                                t.longitude != null &&
+                                t.ativo)
+                            .map((t) {
+                          final nomeFornecedor =
+                              _getNomeFornecedor(t.idFornecedor);
+                          return Marker(
+                            point: LatLng(t.latitude!, t.longitude!),
+                            width: 40,
+                            height: 40,
+                            child: Tooltip(
+                              message:
+                                  "Fornecedor: $nomeFornecedor\n${t.descricao ?? ''}",
+                              child: const Icon(Icons.location_on,
+                                  color: Colors.redAccent, size: 30),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  )),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 
-  void _abrirDialogTerritorio(BuildContext context, {TerritorioModel? existente}) {
+  void _abrirDialogTerritorio(BuildContext context,
+      {TerritorioModel? existente}) {
     final theme = Get.find<EventThemeController>();
     final cor = theme.primaryColor.value;
     final formKey = GlobalKey<FormState>();
@@ -237,7 +262,8 @@ class AdminTerritorioScreen extends StatelessWidget {
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(28)),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.15),
@@ -247,12 +273,14 @@ class AdminTerritorioScreen extends StatelessWidget {
                 ],
               ),
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(28)),
                 child: Form(
                   key: formKey,
                   child: SingleChildScrollView(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -276,7 +304,9 @@ class AdminTerritorioScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 10),
                               Text(
-                                existente == null ? 'Novo Território' : 'Editar Território',
+                                existente == null
+                                    ? 'Novo Território'
+                                    : 'Editar Território',
                                 style: GoogleFonts.poppins(
                                   fontSize: 19,
                                   fontWeight: FontWeight.bold,
@@ -298,28 +328,33 @@ class AdminTerritorioScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           DropdownButtonFormField<String>(
-                            value: t.idFornecedor.isNotEmpty ? t.idFornecedor : null,
+                            value: t.idFornecedor.isNotEmpty
+                                ? t.idFornecedor
+                                : null,
                             items: fornecedorController.fornecedores
                                 .map((f) => DropdownMenuItem(
                                       value: f.idFornecedor,
-                                      child: Text(f.razaoSocial, overflow: TextOverflow.ellipsis),
+                                      child: Text(f.razaoSocial,
+                                          overflow: TextOverflow.ellipsis),
                                     ))
                                 .toList(),
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.grey.shade100,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: cor.withValues(alpha: 0.3)),
+                                borderSide: BorderSide(
+                                    color: cor.withValues(alpha: 0.3)),
                               ),
                             ),
                             onChanged: (v) => setState(() {
                               t = t.copyWith(idFornecedor: v ?? '');
                             }),
-                            validator: (v) =>
-                                v == null || v.isEmpty ? 'Selecione um fornecedor' : null,
+                            validator: (v) => v == null || v.isEmpty
+                                ? 'Selecione um fornecedor'
+                                : null,
                           ),
                           const SizedBox(height: 16),
 
@@ -336,18 +371,22 @@ class AdminTerritorioScreen extends StatelessWidget {
                           DropdownButtonFormField<String>(
                             value: t.tipoCobertura,
                             items: const [
-                              DropdownMenuItem(value: 'raio', child: Text('Cobertura por Raio')),
                               DropdownMenuItem(
-                                  value: 'regiao', child: Text('Cobertura por Região')),
+                                  value: 'raio',
+                                  child: Text('Cobertura por Raio')),
+                              DropdownMenuItem(
+                                  value: 'regiao',
+                                  child: Text('Cobertura por Região')),
                             ],
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.grey.shade100,
-                              contentPadding:
-                                  const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: Colors.grey.shade400),
+                                borderSide:
+                                    BorderSide(color: Colors.grey.shade400),
                               ),
                             ),
                             onChanged: (v) => setState(() {
@@ -376,7 +415,8 @@ class AdminTerritorioScreen extends StatelessWidget {
                                 hintText: 'Ex: 10',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(12),
-                                  borderSide: BorderSide(color: cor.withValues(alpha: 0.3)),
+                                  borderSide: BorderSide(
+                                      color: cor.withValues(alpha: 0.3)),
                                 ),
                               ),
                               onChanged: (v) => setState(() {
@@ -402,10 +442,12 @@ class AdminTerritorioScreen extends StatelessWidget {
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.grey.shade100,
-                              hintText: 'Ex: Zona Sul - raio de atendimento principal',
+                              hintText:
+                                  'Ex: Zona Sul - raio de atendimento principal',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide(color: cor.withValues(alpha: 0.3)),
+                                borderSide: BorderSide(
+                                    color: cor.withValues(alpha: 0.3)),
                               ),
                             ),
                             onChanged: (v) => setState(() {
@@ -450,9 +492,12 @@ class AdminTerritorioScreen extends StatelessWidget {
                                 ),
                               ),
                               ElevatedButton.icon(
-                                icon: const Icon(Icons.save_rounded, color: Colors.white),
+                                icon: const Icon(Icons.save_rounded,
+                                    color: Colors.white),
                                 label: Text(
-                                  existente == null ? 'Salvar Território' : 'Atualizar',
+                                  existente == null
+                                      ? 'Salvar Território'
+                                      : 'Atualizar',
                                   style: GoogleFonts.poppins(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,
@@ -463,7 +508,8 @@ class AdminTerritorioScreen extends StatelessWidget {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
-                                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 12),
                                   elevation: 4,
                                 ),
                                 onPressed: () {
@@ -476,7 +522,8 @@ class AdminTerritorioScreen extends StatelessWidget {
                                           ? 'Território cadastrado com sucesso.'
                                           : 'Território atualizado com sucesso.',
                                       snackPosition: SnackPosition.BOTTOM,
-                                      backgroundColor: cor.withValues(alpha: 0.1),
+                                      backgroundColor:
+                                          cor.withValues(alpha: 0.1),
                                       colorText: Colors.black87,
                                     );
                                   }
