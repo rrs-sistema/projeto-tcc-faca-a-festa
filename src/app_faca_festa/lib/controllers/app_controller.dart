@@ -19,6 +19,7 @@ import './contacao/cotacao_controller.dart';
 import '../app/bootstrap/orcamento_bootstrap.dart';
 import '../app/bootstrap/avaliacao_servico_bootstrap.dart';
 import '../app/bootstrap/servico_produto_bootstrap.dart';
+import '../domain/usecases/gerenciar_fornecedores.dart';
 import 'fornecedor/fornecedor_controller.dart';
 import './../data/models/model.dart';
 import './../core/utils/convite_link.dart';
@@ -69,6 +70,7 @@ class AppController extends GetxController {
   final conviteConvidadoRepository = Get.find<ConviteConvidadoRepository>();
   final autenticacaoRepository = Get.find<AutenticacaoRepository>();
   final perfilUsuarioRepository = Get.find<PerfilUsuarioRepository>();
+  final fornecedores = Get.find<GerenciarFornecedores>();
   final _abrirConvitePorTokenService = AbrirConvitePorTokenService();
 
   // ✅ Injeção de controladores auxiliares
@@ -628,19 +630,14 @@ class AppController extends GetxController {
   }
 
   Future<Widget> _resolverDestinoFornecedor(String idUsuario) async {
-    final fornecedorDoc =
-        await _db.collection('fornecedor').doc(idUsuario).get();
+    final fornecedor = await fornecedores.buscarPorUsuario(idUsuario);
 
-    if (!fornecedorDoc.exists || fornecedorDoc.data() == null) {
+    if (fornecedor == null) {
       fornecedorController.fornecedor.value = null;
       fornecedorController.aptoParaOperar.value = false;
       return const FornecedorAguardandoAprovacaoScreen();
     }
 
-    final fornecedor = FornecedorModel.fromMap(
-      fornecedorDoc.data()!,
-      documentId: fornecedorDoc.id,
-    );
     fornecedorController.fornecedor.value = fornecedor;
     fornecedorController.aptoParaOperar.value = fornecedor.aptoParaOperar;
 
@@ -902,22 +899,18 @@ class AppController extends GetxController {
       final token = await messaging.getToken();
       if (token == null || token.isEmpty) return;
 
-      await FirebaseFirestore.instance
-          .collection('fornecedor')
-          .doc(idFornecedor)
-          .update({
-        'fcm_token': token,
-      });
+      await fornecedores.atualizarFcmToken(
+        idFornecedor: idFornecedor,
+        token: token,
+      );
 
       FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
         if (newToken.isEmpty) return;
 
-        await FirebaseFirestore.instance
-            .collection('fornecedor')
-            .doc(idFornecedor)
-            .update({
-          'fcm_token': newToken,
-        });
+        await fornecedores.atualizarFcmToken(
+          idFornecedor: idFornecedor,
+          token: newToken,
+        );
       });
     } catch (e) {
       if (kDebugMode) {

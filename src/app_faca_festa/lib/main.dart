@@ -62,6 +62,7 @@ import 'app/bootstrap/orcamentos_admin_bootstrap.dart';
 import 'app/bootstrap/orcamento_bootstrap.dart';
 import 'app/bootstrap/orcamento_gasto_bootstrap.dart';
 import 'app/bootstrap/evento_bootstrap.dart';
+import 'app/bootstrap/fornecedor_bootstrap.dart';
 import 'app/bootstrap/convidado_bootstrap.dart';
 import 'app/bootstrap/fornecedor_recomendacao_bootstrap.dart';
 import 'app/bootstrap/perfil_usuario_bootstrap.dart';
@@ -380,6 +381,7 @@ void _registerControllers() {
   AutenticacaoBootstrap.register();
   ConvidadoBootstrap.register();
   PerfilUsuarioBootstrap.register();
+  FornecedorBootstrap.register();
   ComunidadeBootstrap.register();
   AvaliacaoServicoBootstrap.register();
   RankingBootstrap.register();
