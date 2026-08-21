@@ -1,8 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../domain/repositories/sugestao_base_festa_repository_contract.dart';
 import './../models/evento/sugestao_base_festa_model.dart';
 
-class SugestaoBaseFestaRepository {
+class SugestaoBaseFestaRepository
+    implements SugestaoBaseFestaRepositoryContract {
   SugestaoBaseFestaRepository({FirebaseFirestore? firestore})
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
@@ -31,12 +33,14 @@ class SugestaoBaseFestaRepository {
         .toList();
   }
 
+  @override
   Future<void> ativarDesativarSugestao({
     required String id,
     required bool ativo,
   }) async {
     if (id.trim().isEmpty) {
-      throw ArgumentError('ID da sugestão é obrigatório para ativar/desativar.');
+      throw ArgumentError(
+          'ID da sugestão é obrigatório para ativar/desativar.');
     }
 
     await _collection.doc(id.trim()).update({
@@ -45,6 +49,7 @@ class SugestaoBaseFestaRepository {
     });
   }
 
+  @override
   Future<void> excluirLogicamente(String id) async {
     if (id.trim().isEmpty) {
       throw ArgumentError('ID da sugestão é obrigatório para exclusão lógica.');
@@ -57,6 +62,7 @@ class SugestaoBaseFestaRepository {
     });
   }
 
+  @override
   Future<void> atualizarSugestao(SugestaoBaseFestaModel sugestao) async {
     if (sugestao.id.trim().isEmpty) {
       throw ArgumentError('ID da sugestão é obrigatório para atualização.');
@@ -65,9 +71,12 @@ class SugestaoBaseFestaRepository {
     final data = sugestao.toMap(includeDates: false);
     data['updated_at'] = FieldValue.serverTimestamp();
 
-    await _collection.doc(sugestao.id.trim()).set(data, SetOptions(merge: true));
+    await _collection
+        .doc(sugestao.id.trim())
+        .set(data, SetOptions(merge: true));
   }
-  
+
+  @override
   Future<List<SugestaoBaseFestaModel>> listarSugestoes() async {
     final snapshot = await _collection.orderBy('ordem').get();
 
@@ -77,7 +86,8 @@ class SugestaoBaseFestaRepository {
         .toList();
   }
 
-  Future<List<SugestaoBaseFestaModel>> buscarSugestoesAtivasPorModuloETipoEvento({
+  Future<List<SugestaoBaseFestaModel>>
+      buscarSugestoesAtivasPorModuloETipoEvento({
     required String modulo,
     String? tipoEvento,
   }) async {
@@ -88,7 +98,9 @@ class SugestaoBaseFestaRepository {
       return sugestoes;
     }
 
-    return sugestoes.where((item) => item.aceitaTipoEvento(tipoNormalizado)).toList();
+    return sugestoes
+        .where((item) => item.aceitaTipoEvento(tipoNormalizado))
+        .toList();
   }
 
   Future<List<SugestaoBaseFestaModel>> buscarSugestoesParaCalculadora({
@@ -116,22 +128,64 @@ class SugestaoBaseFestaRepository {
     // Fallback: caso não exista sugestão específica para o tipo/perfil,
     // retorna sugestões genéricas do módulo calculadora.
     final genericas = sugestoes.where((item) {
-      final tipoGenerico = item.tipoEvento.isEmpty || item.tipoEvento.contains('todos');
-      final perfilGenerico = item.perfisFesta.isEmpty || item.perfisFesta.contains('todos');
+      final tipoGenerico =
+          item.tipoEvento.isEmpty || item.tipoEvento.contains('todos');
+      final perfilGenerico =
+          item.perfisFesta.isEmpty || item.perfisFesta.contains('todos');
       return tipoGenerico || perfilGenerico;
     }).toList();
 
-    return _ordenarEPriorizar(genericas.isNotEmpty ? genericas : sugestoes).take(limit).toList();
+    return _ordenarEPriorizar(genericas.isNotEmpty ? genericas : sugestoes)
+        .take(limit)
+        .toList();
   }
 
+  @override
   Future<void> salvarSugestao(SugestaoBaseFestaModel sugestao) async {
-    final id = sugestao.id.trim().isNotEmpty ? sugestao.id.trim() : _collection.doc().id;
+    final id = sugestao.id.trim().isNotEmpty
+        ? sugestao.id.trim()
+        : _collection.doc().id;
     final model = sugestao.copyWith(id: id);
 
     await _collection.doc(id).set(
           model.toMap(includeDates: true),
           SetOptions(merge: true),
         );
+  }
+
+  @override
+  Future<int> importarSugestoesTeste(
+    List<Map<String, dynamic>> sugestoes, {
+    bool sobrescrever = true,
+  }) async {
+    final batch = _firestore.batch();
+    final now = FieldValue.serverTimestamp();
+
+    for (final item in sugestoes) {
+      final id = (item['id'] ?? '').toString().trim();
+      if (id.isEmpty) continue;
+
+      final ref = _collection.doc(id);
+      final data = <String, dynamic>{
+        ...item,
+        'id': id,
+        'deleted': false,
+        'created_at': now,
+        'updated_at': now,
+      };
+
+      if (sobrescrever) {
+        batch.set(ref, data, SetOptions(merge: true));
+      } else {
+        final snapshot = await ref.get();
+        if (!snapshot.exists) {
+          batch.set(ref, data);
+        }
+      }
+    }
+
+    await batch.commit();
+    return sugestoes.length;
   }
 
   List<SugestaoBaseFestaModel> _ordenarEPriorizar(

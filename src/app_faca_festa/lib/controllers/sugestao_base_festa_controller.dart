@@ -1,22 +1,24 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../data/repositories/sugestao_base_festa_repository.dart';
 import '../data/models/evento/sugestao_base_festa_model.dart';
+import '../domain/repositories/sugestao_base_festa_repository_contract.dart';
 
 class SugestaoBaseFestaController extends GetxController {
-  SugestaoBaseFestaController({required SugestaoBaseFestaRepository repository})
-      : _repository = repository;
+  SugestaoBaseFestaController({
+    required SugestaoBaseFestaRepositoryContract repository,
+  }) : _repository = repository;
 
-  final SugestaoBaseFestaRepository _repository;
+  final SugestaoBaseFestaRepositoryContract _repository;
 
   final RxBool loading = false.obs;
   final RxBool saving = false.obs;
   final RxString error = ''.obs;
 
-  final RxList<SugestaoBaseFestaModel> listaSugestoes = <SugestaoBaseFestaModel>[].obs;
-  final RxList<SugestaoBaseFestaModel> listaFiltrada = <SugestaoBaseFestaModel>[].obs;
+  final RxList<SugestaoBaseFestaModel> listaSugestoes =
+      <SugestaoBaseFestaModel>[].obs;
+  final RxList<SugestaoBaseFestaModel> listaFiltrada =
+      <SugestaoBaseFestaModel>[].obs;
 
   final RxString filtroModulo = ''.obs;
   final RxString filtroTema = ''.obs;
@@ -25,11 +27,10 @@ class SugestaoBaseFestaController extends GetxController {
   final RxString filtroAtivo = 'todos'.obs;
   final RxString buscaTexto = ''.obs;
 
-
-  final Rxn<SugestaoBaseFestaModel> sugestaoSelecionada = Rxn<SugestaoBaseFestaModel>();
+  final Rxn<SugestaoBaseFestaModel> sugestaoSelecionada =
+      Rxn<SugestaoBaseFestaModel>();
 
   final TextEditingController buscaController = TextEditingController();
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
 
   @override
   void onInit() {
@@ -56,165 +57,1577 @@ class SugestaoBaseFestaController extends GetxController {
   Future<int> importarSugestoesTeste({
     bool sobrescrever = true,
   }) async {
-    final batch = _db.batch();
-    final now = FieldValue.serverTimestamp();
-
-    for (final item in sugestoesBaseFestaSeed) {
-      final id = (item['id'] ?? '').toString().trim();
-
-      if (id.isEmpty) {
-        continue;
-      }
-      final collection = _db.collection('ia_sugestoes_base');
-      final ref = collection.doc(id);
-
-      final data = <String, dynamic>{
-        ...item,
-        'id': id,
-        'deleted': false,
-        'created_at': now,
-        'updated_at': now,
-      };
-
-      if (sobrescrever) {
-        batch.set(ref, data, SetOptions(merge: true));
-      } else {
-        final snapshot = await ref.get();
-
-        if (!snapshot.exists) {
-          batch.set(ref, data);
-        }
-      }
-    }
-
-    await batch.commit();
-
-    return sugestoesBaseFestaSeed.length;
+    return _repository.importarSugestoesTeste(
+      sugestoesBaseFestaSeed,
+      sobrescrever: sobrescrever,
+    );
   }
 
-
-
-List<Map<String, dynamic>> sugestoesBaseFestaSeed = [
+  List<Map<String, dynamic>> sugestoesBaseFestaSeed = [
 // CALCULADORA (10)
-{'id': 'calc_bebidas_clima_ajuste', 'titulo': 'Ajuste de bebidas por clima', 'descricao': 'Oriente a IA a sugerir incremento em bebidas não alcoólicas e água caso a data coincida com meses de alta temperatura.', 'modulo': 'calculadora', 'tema': 'bebidas', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['economico', 'padrao', 'premium'], 'categoria': 'consumo', 'prioridade': 'media', 'gatilhos': {'dias_antes_evento': 30}, 'tags': ['bebidas', 'clima'], 'ativo': true, 'ordem': 1},
-{'id': 'calc_buffet_infantil_proporcao', 'titulo': 'Proporção buffet infantil', 'descricao': 'Indique que o volume de comida para crianças deve ser calculado com base na média de idade.', 'modulo': 'calculadora', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.festaInfantil], 'perfis_festa': ['padrao'], 'categoria': 'consumo', 'prioridade': 'media', 'gatilhos': {'criancas_minimo': 10}, 'tags': ['buffet', 'infantil'], 'ativo': true, 'ordem': 2},
-{'id': 'calc_corporativo_coffee_break', 'titulo': 'Dimensionamento coffee break', 'descricao': 'Sugira quantidades moderadas de snacks para eventos de curta duração focados em networking.', 'modulo': 'calculadora', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.corporativo], 'perfis_festa': ['padrao'], 'categoria': 'cardapio', 'prioridade': 'media', 'gatilhos': {'duracao_minima_horas': 2}, 'tags': ['corporativo', 'coffee'], 'ativo': true, 'ordem': 3},
-{'id': 'calc_casamento_espumante_brinde', 'titulo': 'Cálculo brinde casamento', 'descricao': 'Recomende a estimativa de espumante baseada no número de brindes previstos.', 'modulo': 'calculadora', 'tema': 'bebidas', 'tipo_evento': [EventoConsts.casamento], 'perfis_festa': ['premium'], 'categoria': 'consumo', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['casamento', 'bebidas'], 'ativo': true, 'ordem': 4},
-{'id': 'calc_formatura_convidados_finais', 'titulo': 'Ajuste de margem de convidados', 'descricao': 'Oriente a sugerir uma margem de segurança de convidados para garantir estoque de lembranças.', 'modulo': 'calculadora', 'tema': 'convidados', 'tipo_evento': [EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'convidados', 'prioridade': 'alta', 'gatilhos': {'quantidade_minima_convidados': 50}, 'tags': ['formatura', 'logistica'], 'ativo': true, 'ordem': 5},
-{'id': 'calc_cha_bebe_lembrancas', 'titulo': 'Cálculo lembrancinhas', 'descricao': 'Sugira considerar 1.2 unidades por convidado para evitar falta em caso de extras.', 'modulo': 'calculadora', 'tema': 'presentes', 'tipo_evento': [EventoConsts.chaDeBebe], 'perfis_festa': ['economico'], 'categoria': 'economia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['cha_de_bebe', 'lembranca'], 'ativo': true, 'ordem': 6},
-{'id': 'calc_aniversario_doces_padrao', 'titulo': 'Cálculo docinhos', 'descricao': 'Oriente sobre a quantidade padrão de doces finos e tradicionais por pessoa.', 'modulo': 'calculadora', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.aniversario], 'perfis_festa': ['padrao'], 'categoria': 'consumo', 'prioridade': 'baixa', 'gatilhos': {'adultos_minimo': 20}, 'tags': ['aniversario', 'doces'], 'ativo': true, 'ordem': 7},
-{'id': 'calc_alcool_controle', 'titulo': 'Consumo de bebidas alcoolicas', 'descricao': 'Recomende um cálculo baseado na estimativa de perfil dos convidados para evitar desperdício.', 'modulo': 'calculadora', 'tema': 'bebidas', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'consumo', 'prioridade': 'alta', 'gatilhos': {'adultos_minimo': 30}, 'tags': ['bebidas', 'alcool'], 'ativo': true, 'ordem': 8},
-{'id': 'calc_buffet_longa_duracao', 'titulo': 'Ajuste para longa duracao', 'descricao': 'Oriente a aumentar a estimativa de consumo para eventos que excedem 5 horas.', 'modulo': 'calculadora', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'cardapio', 'prioridade': 'media', 'gatilhos': {'duracao_minima_horas': 5}, 'tags': ['buffet', 'duracao'], 'ativo': true, 'ordem': 9},
-{'id': 'calc_percentual_criancas', 'titulo': 'Impacto do percentual infantil', 'descricao': 'Sugerir a readequação do cardápio se o percentual de crianças for superior a 30%.', 'modulo': 'calculadora', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'cardapio', 'prioridade': 'media', 'gatilhos': {'percentual_criancas_minimo': 30}, 'tags': ['cardapio', 'infantil'], 'ativo': true, 'ordem': 10},
+    {
+      'id': 'calc_bebidas_clima_ajuste',
+      'titulo': 'Ajuste de bebidas por clima',
+      'descricao':
+          'Oriente a IA a sugerir incremento em bebidas não alcoólicas e água caso a data coincida com meses de alta temperatura.',
+      'modulo': 'calculadora',
+      'tema': 'bebidas',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['economico', 'padrao', 'premium'],
+      'categoria': 'consumo',
+      'prioridade': 'media',
+      'gatilhos': {'dias_antes_evento': 30},
+      'tags': ['bebidas', 'clima'],
+      'ativo': true,
+      'ordem': 1
+    },
+    {
+      'id': 'calc_buffet_infantil_proporcao',
+      'titulo': 'Proporção buffet infantil',
+      'descricao':
+          'Indique que o volume de comida para crianças deve ser calculado com base na média de idade.',
+      'modulo': 'calculadora',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.festaInfantil],
+      'perfis_festa': ['padrao'],
+      'categoria': 'consumo',
+      'prioridade': 'media',
+      'gatilhos': {'criancas_minimo': 10},
+      'tags': ['buffet', 'infantil'],
+      'ativo': true,
+      'ordem': 2
+    },
+    {
+      'id': 'calc_corporativo_coffee_break',
+      'titulo': 'Dimensionamento coffee break',
+      'descricao':
+          'Sugira quantidades moderadas de snacks para eventos de curta duração focados em networking.',
+      'modulo': 'calculadora',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.corporativo],
+      'perfis_festa': ['padrao'],
+      'categoria': 'cardapio',
+      'prioridade': 'media',
+      'gatilhos': {'duracao_minima_horas': 2},
+      'tags': ['corporativo', 'coffee'],
+      'ativo': true,
+      'ordem': 3
+    },
+    {
+      'id': 'calc_casamento_espumante_brinde',
+      'titulo': 'Cálculo brinde casamento',
+      'descricao':
+          'Recomende a estimativa de espumante baseada no número de brindes previstos.',
+      'modulo': 'calculadora',
+      'tema': 'bebidas',
+      'tipo_evento': [EventoConsts.casamento],
+      'perfis_festa': ['premium'],
+      'categoria': 'consumo',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['casamento', 'bebidas'],
+      'ativo': true,
+      'ordem': 4
+    },
+    {
+      'id': 'calc_formatura_convidados_finais',
+      'titulo': 'Ajuste de margem de convidados',
+      'descricao':
+          'Oriente a sugerir uma margem de segurança de convidados para garantir estoque de lembranças.',
+      'modulo': 'calculadora',
+      'tema': 'convidados',
+      'tipo_evento': [EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'convidados',
+      'prioridade': 'alta',
+      'gatilhos': {'quantidade_minima_convidados': 50},
+      'tags': ['formatura', 'logistica'],
+      'ativo': true,
+      'ordem': 5
+    },
+    {
+      'id': 'calc_cha_bebe_lembrancas',
+      'titulo': 'Cálculo lembrancinhas',
+      'descricao':
+          'Sugira considerar 1.2 unidades por convidado para evitar falta em caso de extras.',
+      'modulo': 'calculadora',
+      'tema': 'presentes',
+      'tipo_evento': [EventoConsts.chaDeBebe],
+      'perfis_festa': ['economico'],
+      'categoria': 'economia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['cha_de_bebe', 'lembranca'],
+      'ativo': true,
+      'ordem': 6
+    },
+    {
+      'id': 'calc_aniversario_doces_padrao',
+      'titulo': 'Cálculo docinhos',
+      'descricao':
+          'Oriente sobre a quantidade padrão de doces finos e tradicionais por pessoa.',
+      'modulo': 'calculadora',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.aniversario],
+      'perfis_festa': ['padrao'],
+      'categoria': 'consumo',
+      'prioridade': 'baixa',
+      'gatilhos': {'adultos_minimo': 20},
+      'tags': ['aniversario', 'doces'],
+      'ativo': true,
+      'ordem': 7
+    },
+    {
+      'id': 'calc_alcool_controle',
+      'titulo': 'Consumo de bebidas alcoolicas',
+      'descricao':
+          'Recomende um cálculo baseado na estimativa de perfil dos convidados para evitar desperdício.',
+      'modulo': 'calculadora',
+      'tema': 'bebidas',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'consumo',
+      'prioridade': 'alta',
+      'gatilhos': {'adultos_minimo': 30},
+      'tags': ['bebidas', 'alcool'],
+      'ativo': true,
+      'ordem': 8
+    },
+    {
+      'id': 'calc_buffet_longa_duracao',
+      'titulo': 'Ajuste para longa duracao',
+      'descricao':
+          'Oriente a aumentar a estimativa de consumo para eventos que excedem 5 horas.',
+      'modulo': 'calculadora',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'cardapio',
+      'prioridade': 'media',
+      'gatilhos': {'duracao_minima_horas': 5},
+      'tags': ['buffet', 'duracao'],
+      'ativo': true,
+      'ordem': 9
+    },
+    {
+      'id': 'calc_percentual_criancas',
+      'titulo': 'Impacto do percentual infantil',
+      'descricao':
+          'Sugerir a readequação do cardápio se o percentual de crianças for superior a 30%.',
+      'modulo': 'calculadora',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'cardapio',
+      'prioridade': 'media',
+      'gatilhos': {'percentual_criancas_minimo': 30},
+      'tags': ['cardapio', 'infantil'],
+      'ativo': true,
+      'ordem': 10
+    },
 
 // ORCAMENTO (10)
-{'id': 'orc_reserva_emergencia', 'titulo': 'Fundo de emergência', 'descricao': 'Sugira a criação de uma reserva de 10% do orçamento para imprevistos.', 'modulo': 'orcamento', 'tema': 'financeiro', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'financeiro', 'prioridade': 'alta', 'gatilhos': {'diferenca_orcamento_maxima': 1000}, 'tags': ['financeiro', 'reserva'], 'ativo': true, 'ordem': 11},
-{'id': 'orc_formatura_rateio', 'titulo': 'Gestão de rateio', 'descricao': 'Oriente sobre a necessidade de definir custos fixos claros para transparência.', 'modulo': 'orcamento', 'tema': 'financeiro', 'tipo_evento': [EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'financeiro', 'prioridade': 'critica', 'gatilhos': {}, 'tags': ['formatura', 'rateio'], 'ativo': true, 'ordem': 12},
-{'id': 'orc_corporativo_prestacao', 'titulo': 'Documentacao de despesas', 'descricao': 'Recomende o registro rigoroso para facilitar a prestação de contas corporativa.', 'modulo': 'orcamento', 'tema': 'financeiro', 'tipo_evento': [EventoConsts.corporativo], 'perfis_festa': ['padrao'], 'categoria': 'financeiro', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['corporativo', 'contas'], 'ativo': true, 'ordem': 13},
-{'id': 'orc_prioridade_gastos', 'titulo': 'Priorização de verbas', 'descricao': 'Sugerir que o usuário defina os itens inegociáveis para direcionar a verba.', 'modulo': 'orcamento', 'tema': 'financeiro', 'tipo_evento': [EventoConsts.casamento], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'financeiro', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['casamento', 'prioridades'], 'ativo': true, 'ordem': 14},
-{'id': 'orc_cha_bebe_economico', 'titulo': 'Foco no essencial', 'descricao': 'Oriente a priorização de gastos com itens de bem-estar do bebê.', 'modulo': 'orcamento', 'tema': 'economia', 'tipo_evento': [EventoConsts.chaDeBebe], 'perfis_festa': ['economico'], 'categoria': 'economia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['cha_de_bebe', 'economia'], 'ativo': true, 'ordem': 15},
-{'id': 'orc_infantil_entretenimento', 'titulo': 'Verba de recreação', 'descricao': 'Sugerir alocação de verba específica para entretenimento infantil.', 'modulo': 'orcamento', 'tema': 'financeiro', 'tipo_evento': [EventoConsts.festaInfantil], 'perfis_festa': ['padrao'], 'categoria': 'financeiro', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['infantil', 'entretenimento'], 'ativo': true, 'ordem': 16},
-{'id': 'orc_aniversario_limite', 'titulo': 'Teto de gastos', 'descricao': 'Recomende o acompanhamento do saldo restante para não ultrapassar o limite.', 'modulo': 'orcamento', 'tema': 'financeiro', 'tipo_evento': [EventoConsts.aniversario], 'perfis_festa': ['padrao'], 'categoria': 'financeiro', 'prioridade': 'media', 'gatilhos': {'diferenca_orcamento_maxima': 500}, 'tags': ['aniversario', 'controle'], 'ativo': true, 'ordem': 17},
-{'id': 'orc_pagamento_fornecedores', 'titulo': 'Cronograma pagamentos', 'descricao': 'Sugerir organização das datas de vencimento dos contratos.', 'modulo': 'orcamento', 'tema': 'financeiro', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'financeiro', 'prioridade': 'alta', 'gatilhos': {'fornecedores_pendentes_minimo': 2}, 'tags': ['fornecedores', 'pagamento'], 'ativo': true, 'ordem': 18},
-{'id': 'orc_reducao_custos_decor', 'titulo': 'Otimizacao decorativa', 'descricao': 'Oriente sobre o uso de flores da estação para reduzir custos de decoração.', 'modulo': 'orcamento', 'tema': 'economia', 'tipo_evento': [EventoConsts.casamento, EventoConsts.aniversario], 'perfis_festa': ['economico'], 'categoria': 'economia', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['decoracao', 'economia'], 'ativo': true, 'ordem': 19},
-{'id': 'orc_conferencia_faturas', 'titulo': 'Conferencia de faturas', 'descricao': 'Recomende a verificação detalhada de todas as faturas emitidas por fornecedores.', 'modulo': 'orcamento', 'tema': 'financeiro', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'financeiro', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['financeiro', 'fatura'], 'ativo': true, 'ordem': 20},
+    {
+      'id': 'orc_reserva_emergencia',
+      'titulo': 'Fundo de emergência',
+      'descricao':
+          'Sugira a criação de uma reserva de 10% do orçamento para imprevistos.',
+      'modulo': 'orcamento',
+      'tema': 'financeiro',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'financeiro',
+      'prioridade': 'alta',
+      'gatilhos': {'diferenca_orcamento_maxima': 1000},
+      'tags': ['financeiro', 'reserva'],
+      'ativo': true,
+      'ordem': 11
+    },
+    {
+      'id': 'orc_formatura_rateio',
+      'titulo': 'Gestão de rateio',
+      'descricao':
+          'Oriente sobre a necessidade de definir custos fixos claros para transparência.',
+      'modulo': 'orcamento',
+      'tema': 'financeiro',
+      'tipo_evento': [EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'financeiro',
+      'prioridade': 'critica',
+      'gatilhos': {},
+      'tags': ['formatura', 'rateio'],
+      'ativo': true,
+      'ordem': 12
+    },
+    {
+      'id': 'orc_corporativo_prestacao',
+      'titulo': 'Documentacao de despesas',
+      'descricao':
+          'Recomende o registro rigoroso para facilitar a prestação de contas corporativa.',
+      'modulo': 'orcamento',
+      'tema': 'financeiro',
+      'tipo_evento': [EventoConsts.corporativo],
+      'perfis_festa': ['padrao'],
+      'categoria': 'financeiro',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['corporativo', 'contas'],
+      'ativo': true,
+      'ordem': 13
+    },
+    {
+      'id': 'orc_prioridade_gastos',
+      'titulo': 'Priorização de verbas',
+      'descricao':
+          'Sugerir que o usuário defina os itens inegociáveis para direcionar a verba.',
+      'modulo': 'orcamento',
+      'tema': 'financeiro',
+      'tipo_evento': [EventoConsts.casamento],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'financeiro',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['casamento', 'prioridades'],
+      'ativo': true,
+      'ordem': 14
+    },
+    {
+      'id': 'orc_cha_bebe_economico',
+      'titulo': 'Foco no essencial',
+      'descricao':
+          'Oriente a priorização de gastos com itens de bem-estar do bebê.',
+      'modulo': 'orcamento',
+      'tema': 'economia',
+      'tipo_evento': [EventoConsts.chaDeBebe],
+      'perfis_festa': ['economico'],
+      'categoria': 'economia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['cha_de_bebe', 'economia'],
+      'ativo': true,
+      'ordem': 15
+    },
+    {
+      'id': 'orc_infantil_entretenimento',
+      'titulo': 'Verba de recreação',
+      'descricao':
+          'Sugerir alocação de verba específica para entretenimento infantil.',
+      'modulo': 'orcamento',
+      'tema': 'financeiro',
+      'tipo_evento': [EventoConsts.festaInfantil],
+      'perfis_festa': ['padrao'],
+      'categoria': 'financeiro',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['infantil', 'entretenimento'],
+      'ativo': true,
+      'ordem': 16
+    },
+    {
+      'id': 'orc_aniversario_limite',
+      'titulo': 'Teto de gastos',
+      'descricao':
+          'Recomende o acompanhamento do saldo restante para não ultrapassar o limite.',
+      'modulo': 'orcamento',
+      'tema': 'financeiro',
+      'tipo_evento': [EventoConsts.aniversario],
+      'perfis_festa': ['padrao'],
+      'categoria': 'financeiro',
+      'prioridade': 'media',
+      'gatilhos': {'diferenca_orcamento_maxima': 500},
+      'tags': ['aniversario', 'controle'],
+      'ativo': true,
+      'ordem': 17
+    },
+    {
+      'id': 'orc_pagamento_fornecedores',
+      'titulo': 'Cronograma pagamentos',
+      'descricao': 'Sugerir organização das datas de vencimento dos contratos.',
+      'modulo': 'orcamento',
+      'tema': 'financeiro',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'financeiro',
+      'prioridade': 'alta',
+      'gatilhos': {'fornecedores_pendentes_minimo': 2},
+      'tags': ['fornecedores', 'pagamento'],
+      'ativo': true,
+      'ordem': 18
+    },
+    {
+      'id': 'orc_reducao_custos_decor',
+      'titulo': 'Otimizacao decorativa',
+      'descricao':
+          'Oriente sobre o uso de flores da estação para reduzir custos de decoração.',
+      'modulo': 'orcamento',
+      'tema': 'economia',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.aniversario],
+      'perfis_festa': ['economico'],
+      'categoria': 'economia',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['decoracao', 'economia'],
+      'ativo': true,
+      'ordem': 19
+    },
+    {
+      'id': 'orc_conferencia_faturas',
+      'titulo': 'Conferencia de faturas',
+      'descricao':
+          'Recomende a verificação detalhada de todas as faturas emitidas por fornecedores.',
+      'modulo': 'orcamento',
+      'tema': 'financeiro',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'financeiro',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['financeiro', 'fatura'],
+      'ativo': true,
+      'ordem': 20
+    },
 
 // CONVIDADOS (10)
-{'id': 'conv_rsvp_ativo', 'titulo': 'Gestão de convidados', 'descricao': 'Recomende acompanhamento ativo das respostas para confirmação.', 'modulo': 'convidados', 'tema': 'organizacao', 'tipo_evento': [EventoConsts.casamento, EventoConsts.formatura], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'convidados', 'prioridade': 'critica', 'gatilhos': {'dias_antes_evento': 15}, 'tags': ['convidados', 'rsvp'], 'ativo': true, 'ordem': 21},
-{'id': 'conv_infantil_acompanhantes', 'titulo': 'Controle de acompanhantes', 'descricao': 'Sugerir solicitar confirmação de presença dos pais junto aos filhos.', 'modulo': 'convidados', 'tema': 'organizacao', 'tipo_evento': [EventoConsts.festaInfantil], 'perfis_festa': ['padrao'], 'categoria': 'convidados', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['infantil', 'convidados'], 'ativo': true, 'ordem': 22},
-{'id': 'conv_corporativo_checkin', 'titulo': 'Credenciamento', 'descricao': 'Indicar uso de lista digital para facilitar a recepção.', 'modulo': 'convidados', 'tema': 'organizacao', 'tipo_evento': [EventoConsts.corporativo], 'perfis_festa': ['padrao'], 'categoria': 'convidados', 'prioridade': 'media', 'gatilhos': {'quantidade_minima_convidados': 30}, 'tags': ['corporativo', 'checkin'], 'ativo': true, 'ordem': 23},
-{'id': 'conv_cha_bebe_lista', 'titulo': 'Lista de convidados', 'descricao': 'Oriente a classificação de convidados para facilitar o envio.', 'modulo': 'convidados', 'tema': 'organizacao', 'tipo_evento': [EventoConsts.chaDeBebe], 'perfis_festa': ['economico', 'padrao'], 'categoria': 'convidados', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['cha_de_bebe', 'convidados'], 'ativo': true, 'ordem': 24},
-{'id': 'conv_aniversario_idade', 'titulo': 'Perfil por idade', 'descricao': 'Sugerir separar convidados por faixa etária.', 'modulo': 'convidados', 'tema': 'organizacao', 'tipo_evento': [EventoConsts.aniversario], 'perfis_festa': ['padrao'], 'categoria': 'convidados', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['aniversario', 'organizacao'], 'ativo': true, 'ordem': 25},
-{'id': 'conv_restricoes_alimentares', 'titulo': 'Restricoes no convite', 'descricao': 'Oriente a solicitar informações sobre restrições alimentares.', 'modulo': 'convidados', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'convidados', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['convidados', 'inclusao'], 'ativo': true, 'ordem': 26},
-{'id': 'conv_formatura_familia', 'titulo': 'Prioridade familiar', 'descricao': 'Sugerir destacar a cota de convites para família imediata.', 'modulo': 'convidados', 'tema': 'organizacao', 'tipo_evento': [EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'convidados', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['formatura', 'convites'], 'ativo': true, 'ordem': 27},
-{'id': 'conv_lista_digital', 'titulo': 'Convite interativo', 'descricao': 'Recomende envio de convites digitais para rastreabilidade.', 'modulo': 'convidados', 'tema': 'organizacao', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['economico', 'padrao'], 'categoria': 'convidados', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['convite', 'digital'], 'ativo': true, 'ordem': 28},
-{'id': 'conv_lista_espera', 'titulo': 'Gestão de espera', 'descricao': 'Oriente o usuário a criar lista de espera caso convidados declinem.', 'modulo': 'convidados', 'tema': 'organizacao', 'tipo_evento': [EventoConsts.casamento, EventoConsts.corporativo], 'perfis_festa': ['padrao'], 'categoria': 'convidados', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['convidados', 'gestao'], 'ativo': true, 'ordem': 29},
-{'id': 'conv_agrupamento_familia', 'titulo': 'Agrupamento familiar', 'descricao': 'Sugira agrupar convidados por família ou afinidade na lista.', 'modulo': 'convidados', 'tema': 'organizacao', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'convidados', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['convidados', 'organizacao'], 'ativo': true, 'ordem': 30},
+    {
+      'id': 'conv_rsvp_ativo',
+      'titulo': 'Gestão de convidados',
+      'descricao':
+          'Recomende acompanhamento ativo das respostas para confirmação.',
+      'modulo': 'convidados',
+      'tema': 'organizacao',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.formatura],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'convidados',
+      'prioridade': 'critica',
+      'gatilhos': {'dias_antes_evento': 15},
+      'tags': ['convidados', 'rsvp'],
+      'ativo': true,
+      'ordem': 21
+    },
+    {
+      'id': 'conv_infantil_acompanhantes',
+      'titulo': 'Controle de acompanhantes',
+      'descricao':
+          'Sugerir solicitar confirmação de presença dos pais junto aos filhos.',
+      'modulo': 'convidados',
+      'tema': 'organizacao',
+      'tipo_evento': [EventoConsts.festaInfantil],
+      'perfis_festa': ['padrao'],
+      'categoria': 'convidados',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['infantil', 'convidados'],
+      'ativo': true,
+      'ordem': 22
+    },
+    {
+      'id': 'conv_corporativo_checkin',
+      'titulo': 'Credenciamento',
+      'descricao': 'Indicar uso de lista digital para facilitar a recepção.',
+      'modulo': 'convidados',
+      'tema': 'organizacao',
+      'tipo_evento': [EventoConsts.corporativo],
+      'perfis_festa': ['padrao'],
+      'categoria': 'convidados',
+      'prioridade': 'media',
+      'gatilhos': {'quantidade_minima_convidados': 30},
+      'tags': ['corporativo', 'checkin'],
+      'ativo': true,
+      'ordem': 23
+    },
+    {
+      'id': 'conv_cha_bebe_lista',
+      'titulo': 'Lista de convidados',
+      'descricao':
+          'Oriente a classificação de convidados para facilitar o envio.',
+      'modulo': 'convidados',
+      'tema': 'organizacao',
+      'tipo_evento': [EventoConsts.chaDeBebe],
+      'perfis_festa': ['economico', 'padrao'],
+      'categoria': 'convidados',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['cha_de_bebe', 'convidados'],
+      'ativo': true,
+      'ordem': 24
+    },
+    {
+      'id': 'conv_aniversario_idade',
+      'titulo': 'Perfil por idade',
+      'descricao': 'Sugerir separar convidados por faixa etária.',
+      'modulo': 'convidados',
+      'tema': 'organizacao',
+      'tipo_evento': [EventoConsts.aniversario],
+      'perfis_festa': ['padrao'],
+      'categoria': 'convidados',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['aniversario', 'organizacao'],
+      'ativo': true,
+      'ordem': 25
+    },
+    {
+      'id': 'conv_restricoes_alimentares',
+      'titulo': 'Restricoes no convite',
+      'descricao':
+          'Oriente a solicitar informações sobre restrições alimentares.',
+      'modulo': 'convidados',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'convidados',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['convidados', 'inclusao'],
+      'ativo': true,
+      'ordem': 26
+    },
+    {
+      'id': 'conv_formatura_familia',
+      'titulo': 'Prioridade familiar',
+      'descricao': 'Sugerir destacar a cota de convites para família imediata.',
+      'modulo': 'convidados',
+      'tema': 'organizacao',
+      'tipo_evento': [EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'convidados',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['formatura', 'convites'],
+      'ativo': true,
+      'ordem': 27
+    },
+    {
+      'id': 'conv_lista_digital',
+      'titulo': 'Convite interativo',
+      'descricao': 'Recomende envio de convites digitais para rastreabilidade.',
+      'modulo': 'convidados',
+      'tema': 'organizacao',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['economico', 'padrao'],
+      'categoria': 'convidados',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['convite', 'digital'],
+      'ativo': true,
+      'ordem': 28
+    },
+    {
+      'id': 'conv_lista_espera',
+      'titulo': 'Gestão de espera',
+      'descricao':
+          'Oriente o usuário a criar lista de espera caso convidados declinem.',
+      'modulo': 'convidados',
+      'tema': 'organizacao',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.corporativo],
+      'perfis_festa': ['padrao'],
+      'categoria': 'convidados',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['convidados', 'gestao'],
+      'ativo': true,
+      'ordem': 29
+    },
+    {
+      'id': 'conv_agrupamento_familia',
+      'titulo': 'Agrupamento familiar',
+      'descricao':
+          'Sugira agrupar convidados por família ou afinidade na lista.',
+      'modulo': 'convidados',
+      'tema': 'organizacao',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'convidados',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['convidados', 'organizacao'],
+      'ativo': true,
+      'ordem': 30
+    },
 
 // FORNECEDORES (10)
-{'id': 'forn_casamento_contratos', 'titulo': 'Revisao de contratos', 'descricao': 'Sugerir atenção minuciosa a cláusulas de rescisão.', 'modulo': 'fornecedores', 'tema': 'fornecedor', 'tipo_evento': [EventoConsts.casamento], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'fornecedor', 'prioridade': 'critica', 'gatilhos': {'dias_antes_evento': 90}, 'tags': ['casamento', 'contrato'], 'ativo': true, 'ordem': 31},
-{'id': 'forn_infantil_referencias', 'titulo': 'Checagem de referencias', 'descricao': 'Oriente verificar a reputação de fornecedores de recreação.', 'modulo': 'fornecedores', 'tema': 'fornecedor', 'tipo_evento': [EventoConsts.festaInfantil], 'perfis_festa': ['padrao'], 'categoria': 'fornecedor', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['infantil', 'seguranca'], 'ativo': true, 'ordem': 32},
-{'id': 'forn_corporativo_tecnico', 'titulo': 'Suporte tecnico', 'descricao': 'Recomende testar equipamentos de som e imagem.', 'modulo': 'fornecedores', 'tema': 'fornecedor', 'tipo_evento': [EventoConsts.corporativo], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'fornecedor', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['corporativo', 'tecnico'], 'ativo': true, 'ordem': 33},
-{'id': 'forn_formatura_foto', 'titulo': 'Experiencia em formaturas', 'descricao': 'Sugerir priorizar fotógrafos com experiência em cerimônias.', 'modulo': 'fornecedores', 'tema': 'fornecedor', 'tipo_evento': [EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'fornecedor', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['formatura', 'foto'], 'ativo': true, 'ordem': 34},
-{'id': 'forn_cha_bebe_bolos', 'titulo': 'Confeitaria especializada', 'descricao': 'Recomende buscar profissionais em bolos decorados.', 'modulo': 'fornecedores', 'tema': 'fornecedor', 'tipo_evento': [EventoConsts.chaDeBebe], 'perfis_festa': ['padrao'], 'categoria': 'fornecedor', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['cha_de_bebe', 'bolo'], 'ativo': true, 'ordem': 35},
-{'id': 'forn_aniversario_dj', 'titulo': 'DJ e repertorio', 'descricao': 'Sugerir validar se o DJ possui experiência com o estilo da festa.', 'modulo': 'fornecedores', 'tema': 'fornecedor', 'tipo_evento': [EventoConsts.aniversario], 'perfis_festa': ['padrao'], 'categoria': 'fornecedor', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['aniversario', 'dj'], 'ativo': true, 'ordem': 36},
-{'id': 'forn_avaliacoes_finais', 'titulo': 'Feedback de fornecedores', 'descricao': 'Recomende registrar feedbacks para futuras referências.', 'modulo': 'fornecedores', 'tema': 'fornecedor', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'fornecedor', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['fornecedor', 'feedback'], 'ativo': true, 'ordem': 37},
-{'id': 'forn_orcamento_acordo', 'titulo': 'Negociação de prazos', 'descricao': 'Oriente sobre alinhar cronogramas de montagem.', 'modulo': 'fornecedores', 'tema': 'fornecedor', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'fornecedor', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['fornecedor', 'cronograma'], 'ativo': true, 'ordem': 38},
-{'id': 'forn_seguranca_juridica', 'titulo': 'Conformidade legal', 'descricao': 'Oriente verificar se fornecedores possuem alvarás e seguros necessários.', 'modulo': 'fornecedores', 'tema': 'fornecedor', 'tipo_evento': [EventoConsts.corporativo, EventoConsts.formatura], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'fornecedor', 'prioridade': 'critica', 'gatilhos': {}, 'tags': ['fornecedor', 'legal'], 'ativo': true, 'ordem': 39},
-{'id': 'forn_degustacao', 'titulo': 'Degustacao previa', 'descricao': 'Recomende solicitar degustação de cardápio antes do fechamento.', 'modulo': 'fornecedores', 'tema': 'fornecedor', 'tipo_evento': [EventoConsts.casamento, EventoConsts.aniversario], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'fornecedor', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['fornecedor', 'cardapio'], 'ativo': true, 'ordem': 40},
+    {
+      'id': 'forn_casamento_contratos',
+      'titulo': 'Revisao de contratos',
+      'descricao': 'Sugerir atenção minuciosa a cláusulas de rescisão.',
+      'modulo': 'fornecedores',
+      'tema': 'fornecedor',
+      'tipo_evento': [EventoConsts.casamento],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'fornecedor',
+      'prioridade': 'critica',
+      'gatilhos': {'dias_antes_evento': 90},
+      'tags': ['casamento', 'contrato'],
+      'ativo': true,
+      'ordem': 31
+    },
+    {
+      'id': 'forn_infantil_referencias',
+      'titulo': 'Checagem de referencias',
+      'descricao':
+          'Oriente verificar a reputação de fornecedores de recreação.',
+      'modulo': 'fornecedores',
+      'tema': 'fornecedor',
+      'tipo_evento': [EventoConsts.festaInfantil],
+      'perfis_festa': ['padrao'],
+      'categoria': 'fornecedor',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['infantil', 'seguranca'],
+      'ativo': true,
+      'ordem': 32
+    },
+    {
+      'id': 'forn_corporativo_tecnico',
+      'titulo': 'Suporte tecnico',
+      'descricao': 'Recomende testar equipamentos de som e imagem.',
+      'modulo': 'fornecedores',
+      'tema': 'fornecedor',
+      'tipo_evento': [EventoConsts.corporativo],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'fornecedor',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['corporativo', 'tecnico'],
+      'ativo': true,
+      'ordem': 33
+    },
+    {
+      'id': 'forn_formatura_foto',
+      'titulo': 'Experiencia em formaturas',
+      'descricao':
+          'Sugerir priorizar fotógrafos com experiência em cerimônias.',
+      'modulo': 'fornecedores',
+      'tema': 'fornecedor',
+      'tipo_evento': [EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'fornecedor',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['formatura', 'foto'],
+      'ativo': true,
+      'ordem': 34
+    },
+    {
+      'id': 'forn_cha_bebe_bolos',
+      'titulo': 'Confeitaria especializada',
+      'descricao': 'Recomende buscar profissionais em bolos decorados.',
+      'modulo': 'fornecedores',
+      'tema': 'fornecedor',
+      'tipo_evento': [EventoConsts.chaDeBebe],
+      'perfis_festa': ['padrao'],
+      'categoria': 'fornecedor',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['cha_de_bebe', 'bolo'],
+      'ativo': true,
+      'ordem': 35
+    },
+    {
+      'id': 'forn_aniversario_dj',
+      'titulo': 'DJ e repertorio',
+      'descricao':
+          'Sugerir validar se o DJ possui experiência com o estilo da festa.',
+      'modulo': 'fornecedores',
+      'tema': 'fornecedor',
+      'tipo_evento': [EventoConsts.aniversario],
+      'perfis_festa': ['padrao'],
+      'categoria': 'fornecedor',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['aniversario', 'dj'],
+      'ativo': true,
+      'ordem': 36
+    },
+    {
+      'id': 'forn_avaliacoes_finais',
+      'titulo': 'Feedback de fornecedores',
+      'descricao': 'Recomende registrar feedbacks para futuras referências.',
+      'modulo': 'fornecedores',
+      'tema': 'fornecedor',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'fornecedor',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['fornecedor', 'feedback'],
+      'ativo': true,
+      'ordem': 37
+    },
+    {
+      'id': 'forn_orcamento_acordo',
+      'titulo': 'Negociação de prazos',
+      'descricao': 'Oriente sobre alinhar cronogramas de montagem.',
+      'modulo': 'fornecedores',
+      'tema': 'fornecedor',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'fornecedor',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['fornecedor', 'cronograma'],
+      'ativo': true,
+      'ordem': 38
+    },
+    {
+      'id': 'forn_seguranca_juridica',
+      'titulo': 'Conformidade legal',
+      'descricao':
+          'Oriente verificar se fornecedores possuem alvarás e seguros necessários.',
+      'modulo': 'fornecedores',
+      'tema': 'fornecedor',
+      'tipo_evento': [EventoConsts.corporativo, EventoConsts.formatura],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'fornecedor',
+      'prioridade': 'critica',
+      'gatilhos': {},
+      'tags': ['fornecedor', 'legal'],
+      'ativo': true,
+      'ordem': 39
+    },
+    {
+      'id': 'forn_degustacao',
+      'titulo': 'Degustacao previa',
+      'descricao':
+          'Recomende solicitar degustação de cardápio antes do fechamento.',
+      'modulo': 'fornecedores',
+      'tema': 'fornecedor',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.aniversario],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'fornecedor',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['fornecedor', 'cardapio'],
+      'ativo': true,
+      'ordem': 40
+    },
 
 // CHECKLIST (10)
-{'id': 'chk_casamento_semana', 'titulo': 'Checklist de ultima hora', 'descricao': 'Recomende verificar confirmações na semana do evento.', 'modulo': 'checklist', 'tema': 'checklist', 'tipo_evento': [EventoConsts.casamento], 'perfis_festa': ['padrao'], 'categoria': 'checklist', 'prioridade': 'critica', 'gatilhos': {'dias_antes_evento': 7}, 'tags': ['casamento', 'checklist'], 'ativo': true, 'ordem': 41},
-{'id': 'chk_aniversario_tarefas', 'titulo': 'Tarefas pendentes', 'descricao': 'Sugira priorizar tarefas de decoração e convites.', 'modulo': 'checklist', 'tema': 'checklist', 'tipo_evento': [EventoConsts.aniversario], 'perfis_festa': ['padrao'], 'categoria': 'checklist', 'prioridade': 'media', 'gatilhos': {'tarefas_pendentes_minimo': 3}, 'tags': ['aniversario', 'tarefas'], 'ativo': true, 'ordem': 42},
-{'id': 'chk_corporativo_cronograma', 'titulo': 'Cronograma do evento', 'descricao': 'Oriente a criação de um checklist minuto a minuto.', 'modulo': 'checklist', 'tema': 'checklist', 'tipo_evento': [EventoConsts.corporativo], 'perfis_festa': ['padrao'], 'categoria': 'checklist', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['corporativo', 'agenda'], 'ativo': true, 'ordem': 43},
-{'id': 'chk_formatura_documentos', 'titulo': 'Documentacao academica', 'descricao': 'Recomende listar todas as obrigações junto à instituição.', 'modulo': 'checklist', 'tema': 'checklist', 'tipo_evento': [EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'checklist', 'prioridade': 'critica', 'gatilhos': {}, 'tags': ['formatura', 'checklist'], 'ativo': true, 'ordem': 44},
-{'id': 'chk_cha_bebe_brincadeiras', 'titulo': 'Itens para brincadeiras', 'descricao': 'Sugira verificar materiais para o chá de bebê.', 'modulo': 'checklist', 'tema': 'checklist', 'tipo_evento': [EventoConsts.chaDeBebe], 'perfis_festa': ['economico', 'padrao'], 'categoria': 'checklist', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['cha_de_bebe', 'tarefas'], 'ativo': true, 'ordem': 45},
-{'id': 'chk_infantil_seguranca', 'titulo': 'Verificacao de segurança', 'descricao': 'Oriente um checklist de segurança no espaço.', 'modulo': 'checklist', 'tema': 'checklist', 'tipo_evento': [EventoConsts.festaInfantil], 'perfis_festa': ['padrao'], 'categoria': 'checklist', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['infantil', 'seguranca'], 'ativo': true, 'ordem': 46},
-{'id': 'chk_kit_emergencia', 'titulo': 'Kit de emergencia', 'descricao': 'Sugira preparar um kit com itens básicos (fita, costura, remédios).', 'modulo': 'checklist', 'tema': 'checklist', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'checklist', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['checklist', 'utilidades'], 'ativo': true, 'ordem': 47},
-{'id': 'chk_sinalizacao_local', 'titulo': 'Sinalizacao do local', 'descricao': 'Oriente verificar se o local está bem sinalizado para convidados.', 'modulo': 'checklist', 'tema': 'checklist', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'checklist', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['checklist', 'logistica'], 'ativo': true, 'ordem': 48},
-{'id': 'chk_teste_som', 'titulo': 'Teste de som', 'descricao': 'Recomende realizar teste de som antes da abertura das portas.', 'modulo': 'checklist', 'tema': 'checklist', 'tipo_evento': [EventoConsts.corporativo, EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'checklist', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['checklist', 'tecnico'], 'ativo': true, 'ordem': 49},
-{'id': 'chk_pos_evento', 'titulo': 'Checklist pos-evento', 'descricao': 'Sugerir tarefas de encerramento, como pagamento final e avaliação.', 'modulo': 'checklist', 'tema': 'checklist', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'checklist', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['checklist', 'pos_evento'], 'ativo': true, 'ordem': 50},
+    {
+      'id': 'chk_casamento_semana',
+      'titulo': 'Checklist de ultima hora',
+      'descricao': 'Recomende verificar confirmações na semana do evento.',
+      'modulo': 'checklist',
+      'tema': 'checklist',
+      'tipo_evento': [EventoConsts.casamento],
+      'perfis_festa': ['padrao'],
+      'categoria': 'checklist',
+      'prioridade': 'critica',
+      'gatilhos': {'dias_antes_evento': 7},
+      'tags': ['casamento', 'checklist'],
+      'ativo': true,
+      'ordem': 41
+    },
+    {
+      'id': 'chk_aniversario_tarefas',
+      'titulo': 'Tarefas pendentes',
+      'descricao': 'Sugira priorizar tarefas de decoração e convites.',
+      'modulo': 'checklist',
+      'tema': 'checklist',
+      'tipo_evento': [EventoConsts.aniversario],
+      'perfis_festa': ['padrao'],
+      'categoria': 'checklist',
+      'prioridade': 'media',
+      'gatilhos': {'tarefas_pendentes_minimo': 3},
+      'tags': ['aniversario', 'tarefas'],
+      'ativo': true,
+      'ordem': 42
+    },
+    {
+      'id': 'chk_corporativo_cronograma',
+      'titulo': 'Cronograma do evento',
+      'descricao': 'Oriente a criação de um checklist minuto a minuto.',
+      'modulo': 'checklist',
+      'tema': 'checklist',
+      'tipo_evento': [EventoConsts.corporativo],
+      'perfis_festa': ['padrao'],
+      'categoria': 'checklist',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['corporativo', 'agenda'],
+      'ativo': true,
+      'ordem': 43
+    },
+    {
+      'id': 'chk_formatura_documentos',
+      'titulo': 'Documentacao academica',
+      'descricao': 'Recomende listar todas as obrigações junto à instituição.',
+      'modulo': 'checklist',
+      'tema': 'checklist',
+      'tipo_evento': [EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'checklist',
+      'prioridade': 'critica',
+      'gatilhos': {},
+      'tags': ['formatura', 'checklist'],
+      'ativo': true,
+      'ordem': 44
+    },
+    {
+      'id': 'chk_cha_bebe_brincadeiras',
+      'titulo': 'Itens para brincadeiras',
+      'descricao': 'Sugira verificar materiais para o chá de bebê.',
+      'modulo': 'checklist',
+      'tema': 'checklist',
+      'tipo_evento': [EventoConsts.chaDeBebe],
+      'perfis_festa': ['economico', 'padrao'],
+      'categoria': 'checklist',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['cha_de_bebe', 'tarefas'],
+      'ativo': true,
+      'ordem': 45
+    },
+    {
+      'id': 'chk_infantil_seguranca',
+      'titulo': 'Verificacao de segurança',
+      'descricao': 'Oriente um checklist de segurança no espaço.',
+      'modulo': 'checklist',
+      'tema': 'checklist',
+      'tipo_evento': [EventoConsts.festaInfantil],
+      'perfis_festa': ['padrao'],
+      'categoria': 'checklist',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['infantil', 'seguranca'],
+      'ativo': true,
+      'ordem': 46
+    },
+    {
+      'id': 'chk_kit_emergencia',
+      'titulo': 'Kit de emergencia',
+      'descricao':
+          'Sugira preparar um kit com itens básicos (fita, costura, remédios).',
+      'modulo': 'checklist',
+      'tema': 'checklist',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'checklist',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['checklist', 'utilidades'],
+      'ativo': true,
+      'ordem': 47
+    },
+    {
+      'id': 'chk_sinalizacao_local',
+      'titulo': 'Sinalizacao do local',
+      'descricao':
+          'Oriente verificar se o local está bem sinalizado para convidados.',
+      'modulo': 'checklist',
+      'tema': 'checklist',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'checklist',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['checklist', 'logistica'],
+      'ativo': true,
+      'ordem': 48
+    },
+    {
+      'id': 'chk_teste_som',
+      'titulo': 'Teste de som',
+      'descricao':
+          'Recomende realizar teste de som antes da abertura das portas.',
+      'modulo': 'checklist',
+      'tema': 'checklist',
+      'tipo_evento': [EventoConsts.corporativo, EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'checklist',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['checklist', 'tecnico'],
+      'ativo': true,
+      'ordem': 49
+    },
+    {
+      'id': 'chk_pos_evento',
+      'titulo': 'Checklist pos-evento',
+      'descricao':
+          'Sugerir tarefas de encerramento, como pagamento final e avaliação.',
+      'modulo': 'checklist',
+      'tema': 'checklist',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'checklist',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['checklist', 'pos_evento'],
+      'ativo': true,
+      'ordem': 50
+    },
 
 // CARDAPIO (10)
-{'id': 'card_restricoes_cardapio', 'titulo': 'Cardapio inclusivo', 'descricao': 'Recomende incluir opções vegetarianas se necessário.', 'modulo': 'cardapio', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'cardapio', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['inclusao', 'cardapio'], 'ativo': true, 'ordem': 51},
-{'id': 'card_casamento_menu', 'titulo': 'Escolha do menu', 'descricao': 'Sugerir menu equilibrado que agrade a diferentes paladares.', 'modulo': 'cardapio', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.casamento], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'cardapio', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['casamento', 'cardapio'], 'ativo': true, 'ordem': 52},
-{'id': 'card_corporativo_almoco', 'titulo': 'Menu corporativo', 'descricao': 'Oriente a escolha de refeições leves para produtividade.', 'modulo': 'cardapio', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.corporativo], 'perfis_festa': ['padrao'], 'categoria': 'cardapio', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['corporativo', 'menu'], 'ativo': true, 'ordem': 53},
-{'id': 'card_infantil_saudavel', 'titulo': 'Menu infantil saudavel', 'descricao': 'Sugira integrar frutas no cardápio das crianças.', 'modulo': 'cardapio', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.festaInfantil], 'perfis_festa': ['padrao'], 'categoria': 'cardapio', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['infantil', 'cardapio'], 'ativo': true, 'ordem': 54},
-{'id': 'card_formatura_coquetel', 'titulo': 'Coquetel volante', 'descricao': 'Recomende coquetel para eventos sem mesas fixas.', 'modulo': 'cardapio', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'cardapio', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['formatura', 'cardapio'], 'ativo': true, 'ordem': 55},
-{'id': 'card_cha_bebe_leve', 'titulo': 'Lanches para cha', 'descricao': 'Sugerir finger foods leves.', 'modulo': 'cardapio', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.chaDeBebe], 'perfis_festa': ['economico', 'padrao'], 'categoria': 'cardapio', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['cha_de_bebe', 'cardapio'], 'ativo': true, 'ordem': 56},
-{'id': 'card_hidratação', 'titulo': 'Pontos de hidratação', 'descricao': 'Recomende ilhas de água em eventos longos.', 'modulo': 'cardapio', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'cardapio', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['cardapio', 'bebidas'], 'ativo': true, 'ordem': 57},
-{'id': 'card_mesa_doces', 'titulo': 'Mesa de doces', 'descricao': 'Sugerir montagem estética da mesa de doces como ponto focal.', 'modulo': 'cardapio', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.casamento, EventoConsts.aniversario], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'cardapio', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['cardapio', 'doces'], 'ativo': true, 'ordem': 58},
-{'id': 'card_estacoes_tematicas', 'titulo': 'Estacoes tematicas', 'descricao': 'Oriente o uso de estações de comida ao vivo.', 'modulo': 'cardapio', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.casamento, EventoConsts.formatura], 'perfis_festa': ['premium'], 'categoria': 'cardapio', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['cardapio', 'experiencia'], 'ativo': true, 'ordem': 59},
-{'id': 'card_alergias_sinalizacao', 'titulo': 'Sinalizacao de alergias', 'descricao': 'Recomende informar os convidados sobre ingredientes alergênicos.', 'modulo': 'cardapio', 'tema': 'cardapio', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'cardapio', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['cardapio', 'seguranca'], 'ativo': true, 'ordem': 60},
+    {
+      'id': 'card_restricoes_cardapio',
+      'titulo': 'Cardapio inclusivo',
+      'descricao': 'Recomende incluir opções vegetarianas se necessário.',
+      'modulo': 'cardapio',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'cardapio',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['inclusao', 'cardapio'],
+      'ativo': true,
+      'ordem': 51
+    },
+    {
+      'id': 'card_casamento_menu',
+      'titulo': 'Escolha do menu',
+      'descricao':
+          'Sugerir menu equilibrado que agrade a diferentes paladares.',
+      'modulo': 'cardapio',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.casamento],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'cardapio',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['casamento', 'cardapio'],
+      'ativo': true,
+      'ordem': 52
+    },
+    {
+      'id': 'card_corporativo_almoco',
+      'titulo': 'Menu corporativo',
+      'descricao': 'Oriente a escolha de refeições leves para produtividade.',
+      'modulo': 'cardapio',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.corporativo],
+      'perfis_festa': ['padrao'],
+      'categoria': 'cardapio',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['corporativo', 'menu'],
+      'ativo': true,
+      'ordem': 53
+    },
+    {
+      'id': 'card_infantil_saudavel',
+      'titulo': 'Menu infantil saudavel',
+      'descricao': 'Sugira integrar frutas no cardápio das crianças.',
+      'modulo': 'cardapio',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.festaInfantil],
+      'perfis_festa': ['padrao'],
+      'categoria': 'cardapio',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['infantil', 'cardapio'],
+      'ativo': true,
+      'ordem': 54
+    },
+    {
+      'id': 'card_formatura_coquetel',
+      'titulo': 'Coquetel volante',
+      'descricao': 'Recomende coquetel para eventos sem mesas fixas.',
+      'modulo': 'cardapio',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'cardapio',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['formatura', 'cardapio'],
+      'ativo': true,
+      'ordem': 55
+    },
+    {
+      'id': 'card_cha_bebe_leve',
+      'titulo': 'Lanches para cha',
+      'descricao': 'Sugerir finger foods leves.',
+      'modulo': 'cardapio',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.chaDeBebe],
+      'perfis_festa': ['economico', 'padrao'],
+      'categoria': 'cardapio',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['cha_de_bebe', 'cardapio'],
+      'ativo': true,
+      'ordem': 56
+    },
+    {
+      'id': 'card_hidratação',
+      'titulo': 'Pontos de hidratação',
+      'descricao': 'Recomende ilhas de água em eventos longos.',
+      'modulo': 'cardapio',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'cardapio',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['cardapio', 'bebidas'],
+      'ativo': true,
+      'ordem': 57
+    },
+    {
+      'id': 'card_mesa_doces',
+      'titulo': 'Mesa de doces',
+      'descricao':
+          'Sugerir montagem estética da mesa de doces como ponto focal.',
+      'modulo': 'cardapio',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.aniversario],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'cardapio',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['cardapio', 'doces'],
+      'ativo': true,
+      'ordem': 58
+    },
+    {
+      'id': 'card_estacoes_tematicas',
+      'titulo': 'Estacoes tematicas',
+      'descricao': 'Oriente o uso de estações de comida ao vivo.',
+      'modulo': 'cardapio',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.formatura],
+      'perfis_festa': ['premium'],
+      'categoria': 'cardapio',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['cardapio', 'experiencia'],
+      'ativo': true,
+      'ordem': 59
+    },
+    {
+      'id': 'card_alergias_sinalizacao',
+      'titulo': 'Sinalizacao de alergias',
+      'descricao':
+          'Recomende informar os convidados sobre ingredientes alergênicos.',
+      'modulo': 'cardapio',
+      'tema': 'cardapio',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'cardapio',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['cardapio', 'seguranca'],
+      'ativo': true,
+      'ordem': 60
+    },
 
 // DECORACAO (10)
-{'id': 'decor_corporativo_marca', 'titulo': 'Identidade visual', 'descricao': 'Recomende cores alinhadas ao branding.', 'modulo': 'decoracao', 'tema': 'decoracao', 'tipo_evento': [EventoConsts.corporativo], 'perfis_festa': ['padrao'], 'categoria': 'decoracao', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['corporativo', 'branding'], 'ativo': true, 'ordem': 61},
-{'id': 'decor_casamento_estilo', 'titulo': 'Consistencia visual', 'descricao': 'Oriente a escolha de paleta de cores consistente.', 'modulo': 'decoracao', 'tema': 'decoracao', 'tipo_evento': [EventoConsts.casamento], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'decoracao', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['casamento', 'decoracao'], 'ativo': true, 'ordem': 62},
-{'id': 'decor_infantil_temas', 'titulo': 'Temas em alta', 'descricao': 'Sugerir temas populares.', 'modulo': 'decoracao', 'tema': 'decoracao', 'tipo_evento': [EventoConsts.festaInfantil], 'perfis_festa': ['padrao'], 'categoria': 'decoracao', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['infantil', 'temas'], 'ativo': true, 'ordem': 63},
-{'id': 'decor_formatura_solene', 'titulo': 'Decoracao solene', 'descricao': 'Recomende elementos decorativos sóbrios.', 'modulo': 'decoracao', 'tema': 'decoracao', 'tipo_evento': [EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'decoracao', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['formatura', 'decoracao'], 'ativo': true, 'ordem': 64},
-{'id': 'decor_aniversario_baloes', 'titulo': 'Decoracao de baloes', 'descricao': 'Sugira uso de balões orgânicos.', 'modulo': 'decoracao', 'tema': 'decoracao', 'tipo_evento': [EventoConsts.aniversario], 'perfis_festa': ['economico', 'padrao'], 'categoria': 'decoracao', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['aniversario', 'decoracao'], 'ativo': true, 'ordem': 65},
-{'id': 'decor_cha_bebe_delicado', 'titulo': 'Estilo delicado', 'descricao': 'Recomende cores pastéis.', 'modulo': 'decoracao', 'tema': 'decoracao', 'tipo_evento': [EventoConsts.chaDeBebe], 'perfis_festa': ['padrao'], 'categoria': 'decoracao', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['cha_de_bebe', 'estilo'], 'ativo': true, 'ordem': 66},
-{'id': 'decor_iluminacao_cenica', 'titulo': 'Iluminacao cenica', 'descricao': 'Sugira uso de iluminação cênica para transformar o ambiente.', 'modulo': 'decoracao', 'tema': 'decoracao', 'tipo_evento': [EventoConsts.casamento, EventoConsts.corporativo], 'perfis_festa': ['premium'], 'categoria': 'decoracao', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['decoracao', 'iluminacao'], 'ativo': true, 'ordem': 67},
-{'id': 'decor_flores_estacao', 'titulo': 'Flores da estacao', 'descricao': 'Oriente o uso de flores da estação para custo-benefício.', 'modulo': 'decoracao', 'tema': 'decoracao', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['economico', 'padrao'], 'categoria': 'decoracao', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['decoracao', 'flores'], 'ativo': true, 'ordem': 68},
-{'id': 'decor_personalizacao', 'titulo': 'Itens personalizados', 'descricao': 'Sugira incluir detalhes que reflitam a personalidade do evento.', 'modulo': 'decoracao', 'tema': 'decoracao', 'tipo_evento': [EventoConsts.aniversario, EventoConsts.casamento], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'decoracao', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['decoracao', 'personalizacao'], 'ativo': true, 'ordem': 69},
-{'id': 'decor_acessos', 'titulo': 'Decoracao de entrada', 'descricao': 'Recomende atenção à entrada como impacto visual inicial.', 'modulo': 'decoracao', 'tema': 'decoracao', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'decoracao', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['decoracao', 'impacto'], 'ativo': true, 'ordem': 70},
+    {
+      'id': 'decor_corporativo_marca',
+      'titulo': 'Identidade visual',
+      'descricao': 'Recomende cores alinhadas ao branding.',
+      'modulo': 'decoracao',
+      'tema': 'decoracao',
+      'tipo_evento': [EventoConsts.corporativo],
+      'perfis_festa': ['padrao'],
+      'categoria': 'decoracao',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['corporativo', 'branding'],
+      'ativo': true,
+      'ordem': 61
+    },
+    {
+      'id': 'decor_casamento_estilo',
+      'titulo': 'Consistencia visual',
+      'descricao': 'Oriente a escolha de paleta de cores consistente.',
+      'modulo': 'decoracao',
+      'tema': 'decoracao',
+      'tipo_evento': [EventoConsts.casamento],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'decoracao',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['casamento', 'decoracao'],
+      'ativo': true,
+      'ordem': 62
+    },
+    {
+      'id': 'decor_infantil_temas',
+      'titulo': 'Temas em alta',
+      'descricao': 'Sugerir temas populares.',
+      'modulo': 'decoracao',
+      'tema': 'decoracao',
+      'tipo_evento': [EventoConsts.festaInfantil],
+      'perfis_festa': ['padrao'],
+      'categoria': 'decoracao',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['infantil', 'temas'],
+      'ativo': true,
+      'ordem': 63
+    },
+    {
+      'id': 'decor_formatura_solene',
+      'titulo': 'Decoracao solene',
+      'descricao': 'Recomende elementos decorativos sóbrios.',
+      'modulo': 'decoracao',
+      'tema': 'decoracao',
+      'tipo_evento': [EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'decoracao',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['formatura', 'decoracao'],
+      'ativo': true,
+      'ordem': 64
+    },
+    {
+      'id': 'decor_aniversario_baloes',
+      'titulo': 'Decoracao de baloes',
+      'descricao': 'Sugira uso de balões orgânicos.',
+      'modulo': 'decoracao',
+      'tema': 'decoracao',
+      'tipo_evento': [EventoConsts.aniversario],
+      'perfis_festa': ['economico', 'padrao'],
+      'categoria': 'decoracao',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['aniversario', 'decoracao'],
+      'ativo': true,
+      'ordem': 65
+    },
+    {
+      'id': 'decor_cha_bebe_delicado',
+      'titulo': 'Estilo delicado',
+      'descricao': 'Recomende cores pastéis.',
+      'modulo': 'decoracao',
+      'tema': 'decoracao',
+      'tipo_evento': [EventoConsts.chaDeBebe],
+      'perfis_festa': ['padrao'],
+      'categoria': 'decoracao',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['cha_de_bebe', 'estilo'],
+      'ativo': true,
+      'ordem': 66
+    },
+    {
+      'id': 'decor_iluminacao_cenica',
+      'titulo': 'Iluminacao cenica',
+      'descricao':
+          'Sugira uso de iluminação cênica para transformar o ambiente.',
+      'modulo': 'decoracao',
+      'tema': 'decoracao',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.corporativo],
+      'perfis_festa': ['premium'],
+      'categoria': 'decoracao',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['decoracao', 'iluminacao'],
+      'ativo': true,
+      'ordem': 67
+    },
+    {
+      'id': 'decor_flores_estacao',
+      'titulo': 'Flores da estacao',
+      'descricao': 'Oriente o uso de flores da estação para custo-benefício.',
+      'modulo': 'decoracao',
+      'tema': 'decoracao',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['economico', 'padrao'],
+      'categoria': 'decoracao',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['decoracao', 'flores'],
+      'ativo': true,
+      'ordem': 68
+    },
+    {
+      'id': 'decor_personalizacao',
+      'titulo': 'Itens personalizados',
+      'descricao':
+          'Sugira incluir detalhes que reflitam a personalidade do evento.',
+      'modulo': 'decoracao',
+      'tema': 'decoracao',
+      'tipo_evento': [EventoConsts.aniversario, EventoConsts.casamento],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'decoracao',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['decoracao', 'personalizacao'],
+      'ativo': true,
+      'ordem': 69
+    },
+    {
+      'id': 'decor_acessos',
+      'titulo': 'Decoracao de entrada',
+      'descricao': 'Recomende atenção à entrada como impacto visual inicial.',
+      'modulo': 'decoracao',
+      'tema': 'decoracao',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'decoracao',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['decoracao', 'impacto'],
+      'ativo': true,
+      'ordem': 70
+    },
 
 // PRESENTES (10)
-{'id': 'pres_casamento_lista', 'titulo': 'Lista de presentes', 'descricao': 'Sugerir sites online.', 'modulo': 'presentes', 'tema': 'presentes', 'tipo_evento': [EventoConsts.casamento], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'presentes', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['casamento', 'lista'], 'ativo': true, 'ordem': 71},
-{'id': 'pres_cha_bebe_essenciais', 'titulo': 'Lista de enxoval', 'descricao': 'Oriente a criação de lista essencial.', 'modulo': 'presentes', 'tema': 'presentes', 'tipo_evento': [EventoConsts.chaDeBebe], 'perfis_festa': ['economico', 'padrao'], 'categoria': 'presentes', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['cha_de_bebe', 'enxoval'], 'ativo': true, 'ordem': 72},
-{'id': 'pres_aniversario_sugestoes', 'titulo': 'Sugestoes de presentes', 'descricao': 'Recomende incluir no convite.', 'modulo': 'presentes', 'tema': 'presentes', 'tipo_evento': [EventoConsts.aniversario], 'perfis_festa': ['padrao'], 'categoria': 'presentes', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['aniversario', 'presentes'], 'ativo': true, 'ordem': 73},
-{'id': 'pres_lembrancas_formatura', 'titulo': 'Lembrancas de formatura', 'descricao': 'Sugerir itens que remetam à conquista.', 'modulo': 'presentes', 'tema': 'presentes', 'tipo_evento': [EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'presentes', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['formatura', 'lembranca'], 'ativo': true, 'ordem': 74},
-{'id': 'pres_agradecimento', 'titulo': 'Cartao agradecimento', 'descricao': 'Oriente enviar agradecimentos após o recebimento dos presentes.', 'modulo': 'presentes', 'tema': 'presentes', 'tipo_evento': [EventoConsts.casamento, EventoConsts.chaDeBebe], 'perfis_festa': ['padrao'], 'categoria': 'presentes', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['presentes', 'agradecimento'], 'ativo': true, 'ordem': 75},
-{'id': 'pres_cota_lua_mel', 'titulo': 'Cotar lua de mel', 'descricao': 'Sugira a criação de cotas de lua de mel como presente.', 'modulo': 'presentes', 'tema': 'presentes', 'tipo_evento': [EventoConsts.casamento], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'presentes', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['presentes', 'casamento'], 'ativo': true, 'ordem': 76},
-{'id': 'pres_infantil_didatico', 'titulo': 'Brinquedos didaticos', 'descricao': 'Sugerir focar em presentes didáticos para festas infantis.', 'modulo': 'presentes', 'tema': 'presentes', 'tipo_evento': [EventoConsts.festaInfantil], 'perfis_festa': ['padrao'], 'categoria': 'presentes', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['presentes', 'infantil'], 'ativo': true, 'ordem': 77},
-{'id': 'pres_gestao_lista', 'titulo': 'Atualização de lista', 'descricao': 'Recomende manter a lista de presentes sempre atualizada.', 'modulo': 'presentes', 'tema': 'presentes', 'tipo_evento': [EventoConsts.casamento, EventoConsts.chaDeBebe], 'perfis_festa': ['padrao'], 'categoria': 'presentes', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['presentes', 'gestao'], 'ativo': true, 'ordem': 78},
-{'id': 'pres_lembrancas_corporativas', 'titulo': 'Mimos corporativos', 'descricao': 'Sugira brindes úteis para eventos corporativos.', 'modulo': 'presentes', 'tema': 'presentes', 'tipo_evento': [EventoConsts.corporativo], 'perfis_festa': ['padrao'], 'categoria': 'presentes', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['presentes', 'corporativo'], 'ativo': true, 'ordem': 79},
-{'id': 'pres_estratégia_convidado', 'titulo': 'Estrategia de presentes', 'descricao': 'Oriente sobre manter uma faixa de preços variada na lista.', 'modulo': 'presentes', 'tema': 'presentes', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'presentes', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['presentes', 'estrategia'], 'ativo': true, 'ordem': 80},
+    {
+      'id': 'pres_casamento_lista',
+      'titulo': 'Lista de presentes',
+      'descricao': 'Sugerir sites online.',
+      'modulo': 'presentes',
+      'tema': 'presentes',
+      'tipo_evento': [EventoConsts.casamento],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'presentes',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['casamento', 'lista'],
+      'ativo': true,
+      'ordem': 71
+    },
+    {
+      'id': 'pres_cha_bebe_essenciais',
+      'titulo': 'Lista de enxoval',
+      'descricao': 'Oriente a criação de lista essencial.',
+      'modulo': 'presentes',
+      'tema': 'presentes',
+      'tipo_evento': [EventoConsts.chaDeBebe],
+      'perfis_festa': ['economico', 'padrao'],
+      'categoria': 'presentes',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['cha_de_bebe', 'enxoval'],
+      'ativo': true,
+      'ordem': 72
+    },
+    {
+      'id': 'pres_aniversario_sugestoes',
+      'titulo': 'Sugestoes de presentes',
+      'descricao': 'Recomende incluir no convite.',
+      'modulo': 'presentes',
+      'tema': 'presentes',
+      'tipo_evento': [EventoConsts.aniversario],
+      'perfis_festa': ['padrao'],
+      'categoria': 'presentes',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['aniversario', 'presentes'],
+      'ativo': true,
+      'ordem': 73
+    },
+    {
+      'id': 'pres_lembrancas_formatura',
+      'titulo': 'Lembrancas de formatura',
+      'descricao': 'Sugerir itens que remetam à conquista.',
+      'modulo': 'presentes',
+      'tema': 'presentes',
+      'tipo_evento': [EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'presentes',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['formatura', 'lembranca'],
+      'ativo': true,
+      'ordem': 74
+    },
+    {
+      'id': 'pres_agradecimento',
+      'titulo': 'Cartao agradecimento',
+      'descricao':
+          'Oriente enviar agradecimentos após o recebimento dos presentes.',
+      'modulo': 'presentes',
+      'tema': 'presentes',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.chaDeBebe],
+      'perfis_festa': ['padrao'],
+      'categoria': 'presentes',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['presentes', 'agradecimento'],
+      'ativo': true,
+      'ordem': 75
+    },
+    {
+      'id': 'pres_cota_lua_mel',
+      'titulo': 'Cotar lua de mel',
+      'descricao': 'Sugira a criação de cotas de lua de mel como presente.',
+      'modulo': 'presentes',
+      'tema': 'presentes',
+      'tipo_evento': [EventoConsts.casamento],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'presentes',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['presentes', 'casamento'],
+      'ativo': true,
+      'ordem': 76
+    },
+    {
+      'id': 'pres_infantil_didatico',
+      'titulo': 'Brinquedos didaticos',
+      'descricao': 'Sugerir focar em presentes didáticos para festas infantis.',
+      'modulo': 'presentes',
+      'tema': 'presentes',
+      'tipo_evento': [EventoConsts.festaInfantil],
+      'perfis_festa': ['padrao'],
+      'categoria': 'presentes',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['presentes', 'infantil'],
+      'ativo': true,
+      'ordem': 77
+    },
+    {
+      'id': 'pres_gestao_lista',
+      'titulo': 'Atualização de lista',
+      'descricao': 'Recomende manter a lista de presentes sempre atualizada.',
+      'modulo': 'presentes',
+      'tema': 'presentes',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.chaDeBebe],
+      'perfis_festa': ['padrao'],
+      'categoria': 'presentes',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['presentes', 'gestao'],
+      'ativo': true,
+      'ordem': 78
+    },
+    {
+      'id': 'pres_lembrancas_corporativas',
+      'titulo': 'Mimos corporativos',
+      'descricao': 'Sugira brindes úteis para eventos corporativos.',
+      'modulo': 'presentes',
+      'tema': 'presentes',
+      'tipo_evento': [EventoConsts.corporativo],
+      'perfis_festa': ['padrao'],
+      'categoria': 'presentes',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['presentes', 'corporativo'],
+      'ativo': true,
+      'ordem': 79
+    },
+    {
+      'id': 'pres_estratégia_convidado',
+      'titulo': 'Estrategia de presentes',
+      'descricao': 'Oriente sobre manter uma faixa de preços variada na lista.',
+      'modulo': 'presentes',
+      'tema': 'presentes',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'presentes',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['presentes', 'estrategia'],
+      'ativo': true,
+      'ordem': 80
+    },
 
 // ESPACO_CONVIDADOS (10)
-{'id': 'esp_acessibilidade', 'titulo': 'Verificacao de acessibilidade', 'descricao': 'Oriente conferir se o espaço é adaptado.', 'modulo': 'espaco_convidados', 'tema': 'experiencia', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'experiencia', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['acessibilidade', 'local'], 'ativo': true, 'ordem': 81},
-{'id': 'esp_estacionamento', 'titulo': 'Logistica de chegada', 'descricao': 'Sugerir verificar estacionamento.', 'modulo': 'espaco_convidados', 'tema': 'experiencia', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['logistica', 'estacionamento'], 'ativo': true, 'ordem': 82},
-{'id': 'esp_clima_plano_b', 'titulo': 'Plano B para clima', 'descricao': 'Oriente ter opção coberta em locais ao ar livre.', 'modulo': 'espaco_convidados', 'tema': 'experiencia', 'tipo_evento': [EventoConsts.casamento, EventoConsts.aniversario], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['local', 'clima'], 'ativo': true, 'ordem': 83},
-{'id': 'esp_conforto_termico', 'titulo': 'Conforto termico', 'descricao': 'Sugerir verificar sistemas de climatização do salão.', 'modulo': 'espaco_convidados', 'tema': 'experiencia', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'experiencia', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['local', 'conforto'], 'ativo': true, 'ordem': 84},
-{'id': 'esp_iluminacao_natural', 'titulo': 'Iluminacao natural', 'descricao': 'Oriente o uso de luz natural para eventos diurnos.', 'modulo': 'espaco_convidados', 'tema': 'experiencia', 'tipo_evento': [EventoConsts.chaDeBebe, EventoConsts.festaInfantil], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['local', 'ambiente'], 'ativo': true, 'ordem': 85},
-{'id': 'esp_acustica', 'titulo': 'Acustica do ambiente', 'descricao': 'Sugerir avaliar a acústica para eventos com música ao vivo.', 'modulo': 'espaco_convidados', 'tema': 'experiencia', 'tipo_evento': [EventoConsts.casamento, EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['local', 'acustica'], 'ativo': true, 'ordem': 86},
-{'id': 'esp_wifi', 'titulo': 'Disponibilidade de rede', 'descricao': 'Recomende testar o Wi-Fi para convidados.', 'modulo': 'espaco_convidados', 'tema': 'experiencia', 'tipo_evento': [EventoConsts.corporativo, EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'media', 'gatilhos': {}, 'tags': ['local', 'tecnologia'], 'ativo': true, 'ordem': 87},
-{'id': 'esp_banheiros', 'titulo': 'Capacidade de banheiros', 'descricao': 'Oriente verificar se a capacidade de banheiros atende o número de convidados.', 'modulo': 'espaco_convidados', 'tema': 'experiencia', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['local', 'servicos'], 'ativo': true, 'ordem': 88},
-{'id': 'esp_sala_apoio', 'titulo': 'Sala de apoio', 'descricao': 'Sugira verificar se existe sala para troca de roupas ou apoio.', 'modulo': 'espaco_convidados', 'tema': 'experiencia', 'tipo_evento': [EventoConsts.casamento, EventoConsts.chaDeBebe], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['local', 'apoio'], 'ativo': true, 'ordem': 89},
-{'id': 'esp_seguranca_local', 'titulo': 'Seguranca predial', 'descricao': 'Recomende conferir se o espaço oferece equipe de segurança.', 'modulo': 'espaco_convidados', 'tema': 'experiencia', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'experiencia', 'prioridade': 'alta', 'gatilhos': {}, 'tags': ['local', 'seguranca'], 'ativo': true, 'ordem': 90},
+    {
+      'id': 'esp_acessibilidade',
+      'titulo': 'Verificacao de acessibilidade',
+      'descricao': 'Oriente conferir se o espaço é adaptado.',
+      'modulo': 'espaco_convidados',
+      'tema': 'experiencia',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'experiencia',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['acessibilidade', 'local'],
+      'ativo': true,
+      'ordem': 81
+    },
+    {
+      'id': 'esp_estacionamento',
+      'titulo': 'Logistica de chegada',
+      'descricao': 'Sugerir verificar estacionamento.',
+      'modulo': 'espaco_convidados',
+      'tema': 'experiencia',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['logistica', 'estacionamento'],
+      'ativo': true,
+      'ordem': 82
+    },
+    {
+      'id': 'esp_clima_plano_b',
+      'titulo': 'Plano B para clima',
+      'descricao': 'Oriente ter opção coberta em locais ao ar livre.',
+      'modulo': 'espaco_convidados',
+      'tema': 'experiencia',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.aniversario],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['local', 'clima'],
+      'ativo': true,
+      'ordem': 83
+    },
+    {
+      'id': 'esp_conforto_termico',
+      'titulo': 'Conforto termico',
+      'descricao': 'Sugerir verificar sistemas de climatização do salão.',
+      'modulo': 'espaco_convidados',
+      'tema': 'experiencia',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'experiencia',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['local', 'conforto'],
+      'ativo': true,
+      'ordem': 84
+    },
+    {
+      'id': 'esp_iluminacao_natural',
+      'titulo': 'Iluminacao natural',
+      'descricao': 'Oriente o uso de luz natural para eventos diurnos.',
+      'modulo': 'espaco_convidados',
+      'tema': 'experiencia',
+      'tipo_evento': [EventoConsts.chaDeBebe, EventoConsts.festaInfantil],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['local', 'ambiente'],
+      'ativo': true,
+      'ordem': 85
+    },
+    {
+      'id': 'esp_acustica',
+      'titulo': 'Acustica do ambiente',
+      'descricao':
+          'Sugerir avaliar a acústica para eventos com música ao vivo.',
+      'modulo': 'espaco_convidados',
+      'tema': 'experiencia',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['local', 'acustica'],
+      'ativo': true,
+      'ordem': 86
+    },
+    {
+      'id': 'esp_wifi',
+      'titulo': 'Disponibilidade de rede',
+      'descricao': 'Recomende testar o Wi-Fi para convidados.',
+      'modulo': 'espaco_convidados',
+      'tema': 'experiencia',
+      'tipo_evento': [EventoConsts.corporativo, EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'media',
+      'gatilhos': {},
+      'tags': ['local', 'tecnologia'],
+      'ativo': true,
+      'ordem': 87
+    },
+    {
+      'id': 'esp_banheiros',
+      'titulo': 'Capacidade de banheiros',
+      'descricao':
+          'Oriente verificar se a capacidade de banheiros atende o número de convidados.',
+      'modulo': 'espaco_convidados',
+      'tema': 'experiencia',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['local', 'servicos'],
+      'ativo': true,
+      'ordem': 88
+    },
+    {
+      'id': 'esp_sala_apoio',
+      'titulo': 'Sala de apoio',
+      'descricao':
+          'Sugira verificar se existe sala para troca de roupas ou apoio.',
+      'modulo': 'espaco_convidados',
+      'tema': 'experiencia',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.chaDeBebe],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['local', 'apoio'],
+      'ativo': true,
+      'ordem': 89
+    },
+    {
+      'id': 'esp_seguranca_local',
+      'titulo': 'Seguranca predial',
+      'descricao':
+          'Recomende conferir se o espaço oferece equipe de segurança.',
+      'modulo': 'espaco_convidados',
+      'tema': 'experiencia',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'experiencia',
+      'prioridade': 'alta',
+      'gatilhos': {},
+      'tags': ['local', 'seguranca'],
+      'ativo': true,
+      'ordem': 90
+    },
 
 // REFERENCIAS (10)
-{'id': 'ref_painel_visual', 'titulo': 'Painel de inspiracoes', 'descricao': 'Recomende ao usuário criar painel visual.', 'modulo': 'referencias', 'tema': 'referencias', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['inspiracao', 'visual'], 'ativo': true, 'ordem': 91},
-{'id': 'ref_estilo_convite', 'titulo': 'Estilo de convite', 'descricao': 'Sugerir buscar referências que combinem.', 'modulo': 'referencias', 'tema': 'referencias', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['convite', 'design'], 'ativo': true, 'ordem': 92},
-{'id': 'ref_paleta_cores', 'titulo': 'Paleta de cores', 'descricao': 'Oriente o uso de ferramentas para definir paleta de cores.', 'modulo': 'referencias', 'tema': 'referencias', 'tipo_evento': [EventoConsts.casamento, EventoConsts.aniversario], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['referencias', 'cores'], 'ativo': true, 'ordem': 93},
-{'id': 'ref_tendencias_decor', 'titulo': 'Tendencias de decoracao', 'descricao': 'Sugerir buscar tendências anuais.', 'modulo': 'referencias', 'tema': 'referencias', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao', 'premium'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['referencias', 'decoracao'], 'ativo': true, 'ordem': 94},
-{'id': 'ref_layout_mesa', 'titulo': 'Layout de mesas', 'descricao': 'Recomende buscar referências de disposição de mesas.', 'modulo': 'referencias', 'tema': 'referencias', 'tipo_evento': [EventoConsts.casamento, EventoConsts.corporativo], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['referencias', 'layout'], 'ativo': true, 'ordem': 95},
-{'id': 'ref_inspiracao_foto', 'titulo': 'Inspiracao fotografica', 'descricao': 'Sugira criar lista de poses ou ângulos desejados.', 'modulo': 'referencias', 'tema': 'referencias', 'tipo_evento': [EventoConsts.casamento, EventoConsts.formatura], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['referencias', 'foto'], 'ativo': true, 'ordem': 96},
-{'id': 'ref_estilo_bolo', 'titulo': 'Estilo de bolos', 'descricao': 'Oriente a buscar referências de bolos temáticos.', 'modulo': 'referencias', 'tema': 'referencias', 'tipo_evento': [EventoConsts.aniversario, EventoConsts.casamento], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['referencias', 'bolo'], 'ativo': true, 'ordem': 97},
-{'id': 'ref_identidade_visual', 'titulo': 'Identidade visual completa', 'descricao': 'Recomende alinhar todos os materiais gráficos.', 'modulo': 'referencias', 'tema': 'referencias', 'tipo_evento': [EventoConsts.corporativo, EventoConsts.casamento], 'perfis_festa': ['premium'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['referencias', 'identidade'], 'ativo': true, 'ordem': 98},
-{'id': 'ref_temas_infantis', 'titulo': 'Temas infantis', 'descricao': 'Sugira buscar referências de temas lúdicos.', 'modulo': 'referencias', 'tema': 'referencias', 'tipo_evento': [EventoConsts.festaInfantil, EventoConsts.chaDeBebe], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['referencias', 'infantil'], 'ativo': true, 'ordem': 99},
-{'id': 'ref_organização_referências', 'titulo': 'Pasta de referências', 'descricao': 'Oriente organizar as referências salvas por categoria.', 'modulo': 'referencias', 'tema': 'referencias', 'tipo_evento': [EventoConsts.todos], 'perfis_festa': ['padrao'], 'categoria': 'experiencia', 'prioridade': 'baixa', 'gatilhos': {}, 'tags': ['referencias', 'organizacao'], 'ativo': true, 'ordem': 100},
-];
+    {
+      'id': 'ref_painel_visual',
+      'titulo': 'Painel de inspiracoes',
+      'descricao': 'Recomende ao usuário criar painel visual.',
+      'modulo': 'referencias',
+      'tema': 'referencias',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['inspiracao', 'visual'],
+      'ativo': true,
+      'ordem': 91
+    },
+    {
+      'id': 'ref_estilo_convite',
+      'titulo': 'Estilo de convite',
+      'descricao': 'Sugerir buscar referências que combinem.',
+      'modulo': 'referencias',
+      'tema': 'referencias',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['convite', 'design'],
+      'ativo': true,
+      'ordem': 92
+    },
+    {
+      'id': 'ref_paleta_cores',
+      'titulo': 'Paleta de cores',
+      'descricao': 'Oriente o uso de ferramentas para definir paleta de cores.',
+      'modulo': 'referencias',
+      'tema': 'referencias',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.aniversario],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['referencias', 'cores'],
+      'ativo': true,
+      'ordem': 93
+    },
+    {
+      'id': 'ref_tendencias_decor',
+      'titulo': 'Tendencias de decoracao',
+      'descricao': 'Sugerir buscar tendências anuais.',
+      'modulo': 'referencias',
+      'tema': 'referencias',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao', 'premium'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['referencias', 'decoracao'],
+      'ativo': true,
+      'ordem': 94
+    },
+    {
+      'id': 'ref_layout_mesa',
+      'titulo': 'Layout de mesas',
+      'descricao': 'Recomende buscar referências de disposição de mesas.',
+      'modulo': 'referencias',
+      'tema': 'referencias',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.corporativo],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['referencias', 'layout'],
+      'ativo': true,
+      'ordem': 95
+    },
+    {
+      'id': 'ref_inspiracao_foto',
+      'titulo': 'Inspiracao fotografica',
+      'descricao': 'Sugira criar lista de poses ou ângulos desejados.',
+      'modulo': 'referencias',
+      'tema': 'referencias',
+      'tipo_evento': [EventoConsts.casamento, EventoConsts.formatura],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['referencias', 'foto'],
+      'ativo': true,
+      'ordem': 96
+    },
+    {
+      'id': 'ref_estilo_bolo',
+      'titulo': 'Estilo de bolos',
+      'descricao': 'Oriente a buscar referências de bolos temáticos.',
+      'modulo': 'referencias',
+      'tema': 'referencias',
+      'tipo_evento': [EventoConsts.aniversario, EventoConsts.casamento],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['referencias', 'bolo'],
+      'ativo': true,
+      'ordem': 97
+    },
+    {
+      'id': 'ref_identidade_visual',
+      'titulo': 'Identidade visual completa',
+      'descricao': 'Recomende alinhar todos os materiais gráficos.',
+      'modulo': 'referencias',
+      'tema': 'referencias',
+      'tipo_evento': [EventoConsts.corporativo, EventoConsts.casamento],
+      'perfis_festa': ['premium'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['referencias', 'identidade'],
+      'ativo': true,
+      'ordem': 98
+    },
+    {
+      'id': 'ref_temas_infantis',
+      'titulo': 'Temas infantis',
+      'descricao': 'Sugira buscar referências de temas lúdicos.',
+      'modulo': 'referencias',
+      'tema': 'referencias',
+      'tipo_evento': [EventoConsts.festaInfantil, EventoConsts.chaDeBebe],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['referencias', 'infantil'],
+      'ativo': true,
+      'ordem': 99
+    },
+    {
+      'id': 'ref_organização_referências',
+      'titulo': 'Pasta de referências',
+      'descricao': 'Oriente organizar as referências salvas por categoria.',
+      'modulo': 'referencias',
+      'tema': 'referencias',
+      'tipo_evento': [EventoConsts.todos],
+      'perfis_festa': ['padrao'],
+      'categoria': 'experiencia',
+      'prioridade': 'baixa',
+      'gatilhos': {},
+      'tags': ['referencias', 'organizacao'],
+      'ativo': true,
+      'ordem': 100
+    },
+  ];
 
   List<Map<String, dynamic>> sugestoesBaseFestaSeed002 = [
 // CALCULADORA
@@ -865,7 +2278,8 @@ List<Map<String, dynamic>> sugestoesBaseFestaSeed = [
     {
       'id': 'fornecedores_aniversario_animador',
       'titulo': 'Verificação de antecedentes',
-      'descricao': 'Recomendar checar referências de animadores para aniversários infantis.',
+      'descricao':
+          'Recomendar checar referências de animadores para aniversários infantis.',
       'modulo': 'fornecedores',
       'tema': 'animacao',
       'tipo_evento': ['ccbdb965-8f3c-4c92-bc94-2331c0ca2bb8'],
@@ -1008,7 +2422,8 @@ List<Map<String, dynamic>> sugestoesBaseFestaSeed = [
     {
       'id': 'decoracao_aniversario_baloes',
       'titulo': 'Arco de balões',
-      'descricao': 'Sugestão de arcos de balões para decoração de festas infantis e aniversários.',
+      'descricao':
+          'Sugestão de arcos de balões para decoração de festas infantis e aniversários.',
       'modulo': 'decoracao',
       'tema': 'decoracao',
       'tipo_evento': [
@@ -1074,7 +2489,8 @@ List<Map<String, dynamic>> sugestoesBaseFestaSeed = [
     {
       'id': 'checklist_aniversario_convites',
       'titulo': 'Envio de convites',
-      'descricao': 'Lembrar o prazo ideal para envio de convites de aniversário.',
+      'descricao':
+          'Lembrar o prazo ideal para envio de convites de aniversário.',
       'modulo': 'checklist',
       'tema': 'organizacao',
       'tipo_evento': ['7f8aa427-9b80-45ef-9b7c-f4e7c08ffcda'],
@@ -1089,7 +2505,8 @@ List<Map<String, dynamic>> sugestoesBaseFestaSeed = [
     {
       'id': 'cardapio_corporativo_bebidas',
       'titulo': 'Bebidas em coquetel',
-      'descricao': 'Sugerir variedades de sucos e águas aromatizadas para recepções corporativas.',
+      'descricao':
+          'Sugerir variedades de sucos e águas aromatizadas para recepções corporativas.',
       'modulo': 'cardapio',
       'tema': 'bebidas',
       'tipo_evento': ['lXf0M5vMNvyRn52yQ2fY'],
@@ -1104,7 +2521,8 @@ List<Map<String, dynamic>> sugestoesBaseFestaSeed = [
     {
       'id': 'fornecedores_cha_bebe_fotografia',
       'titulo': 'Fotógrafo para o Chá',
-      'descricao': 'Recomendar a contratação de um fotógrafo para registrar o Chá de Bebê.',
+      'descricao':
+          'Recomendar a contratação de um fotógrafo para registrar o Chá de Bebê.',
       'modulo': 'fornecedores',
       'tema': 'fotografia',
       'tipo_evento': ['1eab2c53-a7d3-4a97-b473-02572464e779'],
@@ -1119,7 +2537,8 @@ List<Map<String, dynamic>> sugestoesBaseFestaSeed = [
     {
       'id': 'decoracao_formatura_iluminacao',
       'titulo': 'Iluminação de palco',
-      'descricao': 'Sugerir iluminação cênica para valorizar o local da cerimônia de formatura.',
+      'descricao':
+          'Sugerir iluminação cênica para valorizar o local da cerimônia de formatura.',
       'modulo': 'decoracao',
       'tema': 'iluminacao',
       'tipo_evento': ['WlLdfdmu4Chvw2p8daUm'],
@@ -1149,7 +2568,8 @@ List<Map<String, dynamic>> sugestoesBaseFestaSeed = [
     {
       'id': 'calculadora_casamento_bebidas',
       'titulo': 'Volume de bebidas',
-      'descricao': 'Cálculo de quantidade de espumante para brinde em casamentos.',
+      'descricao':
+          'Cálculo de quantidade de espumante para brinde em casamentos.',
       'modulo': 'calculadora',
       'tema': 'bebidas',
       'tipo_evento': ['302191a2-dbf3-4ac6-ba53-08273b384cab'],
@@ -1653,7 +3073,10 @@ List<Map<String, dynamic>> sugestoesBaseFestaSeed = [
     Iterable<String> values, {
     required List<String> fallback,
   }) {
-    final set = <String>{...fallback, ...values.where((e) => e.trim().isNotEmpty)};
+    final set = <String>{
+      ...fallback,
+      ...values.where((e) => e.trim().isNotEmpty)
+    };
     final list = set.toList()..sort();
     return list;
   }
@@ -1720,7 +3143,6 @@ class SugestaoBaseFestaOptions {
     'alta',
     'critica',
   ];
-
 }
 
 class EventoConsts {
