@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../../app/bootstrap/fornecedor_recomendacao_bootstrap.dart';
 import '../../../../controllers/fornecedor/fornecedor_recomendacao_controller.dart';
 import '../../../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
 import 'fornecedor_recomendado_card.dart';
@@ -37,17 +38,19 @@ class FornecedorRecomendacoesSection extends StatefulWidget {
   });
 
   @override
-  State<FornecedorRecomendacoesSection> createState() => _FornecedorRecomendacoesSectionState();
+  State<FornecedorRecomendacoesSection> createState() =>
+      _FornecedorRecomendacoesSectionState();
 }
 
-class _FornecedorRecomendacoesSectionState extends State<FornecedorRecomendacoesSection> {
+class _FornecedorRecomendacoesSectionState
+    extends State<FornecedorRecomendacoesSection> {
   late final FornecedorRecomendacaoController controller;
 
   @override
   void initState() {
     super.initState();
 
-    controller = FornecedorRecomendacaoController.to;
+    controller = FornecedorRecomendacaoBootstrap.findController();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _carregarInicial();
@@ -266,7 +269,8 @@ class _SectionHeader extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   fontSize: 11.5,
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.70),
+                  color:
+                      theme.textTheme.bodySmall?.color?.withValues(alpha: 0.70),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -309,7 +313,8 @@ class _EmptyRecomendacaoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final tipoEventoTexto = tipoEventoNome?.trim() ?? '';
-    final evento = tipoEventoTexto.isNotEmpty ? tipoEventoTexto : 'o perfil do seu evento';
+    final evento =
+        tipoEventoTexto.isNotEmpty ? tipoEventoTexto : 'o perfil do seu evento';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -358,7 +363,8 @@ class _EmptyRecomendacaoCard extends StatelessWidget {
                     fontSize: 11.5,
                     color: erro.isNotEmpty
                         ? Colors.redAccent
-                        : theme.textTheme.bodySmall?.color?.withValues(alpha: 0.72),
+                        : theme.textTheme.bodySmall?.color
+                            ?.withValues(alpha: 0.72),
                     height: 1.3,
                   ),
                 ),
@@ -420,7 +426,8 @@ class _RecomendacaoSkeleton extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _SkeletonBox(width: double.infinity, height: 14, primary: primary),
+                    _SkeletonBox(
+                        width: double.infinity, height: 14, primary: primary),
                     const SizedBox(height: 8),
                     _SkeletonBox(width: 190, height: 10, primary: primary),
                   ],
@@ -429,7 +436,11 @@ class _RecomendacaoSkeleton extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          _SkeletonBox(width: double.infinity, height: 180, radius: 20, primary: primary),
+          _SkeletonBox(
+              width: double.infinity,
+              height: 180,
+              radius: 20,
+              primary: primary),
         ],
       ),
     );

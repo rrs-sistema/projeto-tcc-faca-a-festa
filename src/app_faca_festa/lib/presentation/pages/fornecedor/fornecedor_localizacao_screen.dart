@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
+import '../../../app/bootstrap/fornecedor_recomendacao_bootstrap.dart';
 import './../../../controllers/fornecedor/fornecedor_recomendacao_controller.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
 import '../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
@@ -23,18 +24,23 @@ class FornecedorLocalizacaoScreen extends StatefulWidget {
   const FornecedorLocalizacaoScreen({super.key, required this.showLeading});
 
   @override
-  State<FornecedorLocalizacaoScreen> createState() => _FornecedorLocalizacaoScreenState();
+  State<FornecedorLocalizacaoScreen> createState() =>
+      _FornecedorLocalizacaoScreenState();
 }
 
-class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScreen>
+class _FornecedorLocalizacaoScreenState
+    extends State<FornecedorLocalizacaoScreen>
     with AutomaticKeepAliveClientMixin {
   final EventThemeController themeController = Get.find<EventThemeController>();
-  final FornecedorLocalizacaoController controllerLocalizacao = FornecedorLocalizacaoController.to;
+  final FornecedorLocalizacaoController controllerLocalizacao =
+      FornecedorLocalizacaoController.to;
   final EventoController eventoController = Get.find<EventoController>();
-  final FornecedorRecomendacaoController recomendacaoController = FornecedorRecomendacaoController.to;
+  final FornecedorRecomendacaoController recomendacaoController =
+      FornecedorRecomendacaoBootstrap.findController();
 
   final TextEditingController _searchController = TextEditingController();
-  final PageController _servicosPageController = PageController(viewportFraction: 0.88);
+  final PageController _servicosPageController =
+      PageController(viewportFraction: 0.88);
 
   CategoriaServicoModel? categoriaSelecionada;
   String termoBusca = '';
@@ -73,7 +79,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
           _aplicarFiltros(controllerLocalizacao.fornecedoresProximos.toList());
       final fornecedoresDestaque =
           _aplicarFiltros(controllerLocalizacao.fornecedoresDestaque.toList());
-      final recomendados = _recomendados(fornecedoresFiltrados, fornecedoresDestaque);
+      final recomendados =
+          _recomendados(fornecedoresFiltrados, fornecedoresDestaque);
 
       return Scaffold(
         backgroundColor: const Color(0xFFF8FAFC),
@@ -83,7 +90,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
           acoes: [
             IconButton(
               tooltip: 'Filtros',
-              icon: const Icon(Icons.tune_rounded, color: Colors.white, size: 20),
+              icon:
+                  const Icon(Icons.tune_rounded, color: Colors.white, size: 20),
               onPressed: () => Get.back(), // Pode adicionar a lógica do filtro
             )
           ],
@@ -93,11 +101,13 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
           onRefresh: () async {
             await controllerLocalizacao.inicializar(forcarLocalizacao: true);
             if (categoriaSelecionada != null) {
-              await controllerLocalizacao.buscarServicosPorCategoria(categoriaSelecionada!.id);
+              await controllerLocalizacao
+                  .buscarServicosPorCategoria(categoriaSelecionada!.id);
             }
           },
           child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            physics: const AlwaysScrollableScrollPhysics(
+                parent: BouncingScrollPhysics()),
             slivers: [
               SliverToBoxAdapter(
                 child: _buildHeroSection(
@@ -162,7 +172,9 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
       return;
     }
 
-    if (!forcar && _recomendacoesSolicitadas && recomendacaoController.recomendacoes.isNotEmpty) {
+    if (!forcar &&
+        _recomendacoesSolicitadas &&
+        recomendacaoController.recomendacoes.isNotEmpty) {
       return;
     }
 
@@ -190,178 +202,184 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     }
 
     // Sem Obx aninhado: o Obx da tela já observa estes Rx.
-    final loading =
-        recomendacaoController.carregando.value || recomendacaoController.gerando.value;
+    final loading = recomendacaoController.carregando.value ||
+        recomendacaoController.gerando.value;
     final recomendacoes = recomendacaoController.recomendacoes.take(5).toList();
 
     return Container(
-        margin: const EdgeInsets.fromLTRB(12, 8, 12, 6),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: primary.withValues(alpha: 0.10)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.04),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        primary.withValues(alpha: 0.95),
-                        gradient.colors.last.withValues(alpha: 0.85),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: Colors.white,
-                    size: 18,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Fornecedores ideais para seu evento',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF1F2937),
-                        ),
-                      ),
-                      Text(
-                        recomendacoes.isEmpty
-                            ? 'A IA analisa perfil, localização e avaliações.'
-                            : '${recomendacoes.length} sugestão${recomendacoes.length == 1 ? '' : 'ões'} personalizada${recomendacoes.length == 1 ? '' : 's'}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.poppins(
-                          fontSize: 10.5,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 6),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: primary.withValues(alpha: 0.10)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      primary.withValues(alpha: 0.95),
+                      gradient.colors.last.withValues(alpha: 0.85),
                     ],
                   ),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                const SizedBox(width: 6),
-                SizedBox(
-                  height: 32,
-                  child: TextButton.icon(
-                    onPressed: loading ? null : () => _carregarRecomendacoesIA(forcar: true),
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                      foregroundColor: primary,
+                child: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Fornecedores ideais para seu evento',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1F2937),
+                      ),
                     ),
-                    icon: loading
-                        ? SizedBox(
-                            width: 13,
-                            height: 13,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: primary,
-                            ),
-                          )
-                        : const Icon(Icons.refresh_rounded, size: 15),
-                    label: Text(
-                      loading ? 'IA' : 'Atualizar',
+                    Text(
+                      recomendacoes.isEmpty
+                          ? 'A IA analisa perfil, localização e avaliações.'
+                          : '${recomendacoes.length} sugestão${recomendacoes.length == 1 ? '' : 'ões'} personalizada${recomendacoes.length == 1 ? '' : 's'}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
                         fontSize: 10.5,
-                        fontWeight: FontWeight.w700,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                  ),
-                ),
-              ],
-            ),
-            if (loading && recomendacoes.isEmpty) ...[
-              const SizedBox(height: 12),
-              LinearProgressIndicator(
-                minHeight: 4,
-                color: primary,
-                backgroundColor: primary.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Analisando fornecedores compatíveis...',
-                style: GoogleFonts.poppins(
-                  fontSize: 11,
-                  color: Colors.grey.shade600,
-                  fontWeight: FontWeight.w500,
+                  ],
                 ),
               ),
-            ] else if (recomendacoes.isEmpty) ...[
-              const SizedBox(height: 10),
-              InkWell(
-                onTap: () => _carregarRecomendacoesIA(forcar: true),
-                borderRadius: BorderRadius.circular(14),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: primary.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.psychology_alt_rounded, color: primary, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Gerar recomendações inteligentes agora',
-                          style: GoogleFonts.poppins(
-                            fontSize: 11.5,
-                            color: primary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                      Icon(Icons.arrow_forward_ios_rounded, color: primary, size: 12),
-                    ],
-                  ),
-                ),
-              ),
-            ] else ...[
-              const SizedBox(height: 10),
+              const SizedBox(width: 6),
               SizedBox(
-                height: 88,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: recomendacoes.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 8),
-                  itemBuilder: (_, index) => _IACardFornecedorCompacto(
-                    recomendacao: recomendacoes[index],
-                    primary: primary,
-                    onTap: () => _abrirFornecedorRecomendadoIA(recomendacoes[index]),
+                height: 32,
+                child: TextButton.icon(
+                  onPressed: loading
+                      ? null
+                      : () => _carregarRecomendacoesIA(forcar: true),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    foregroundColor: primary,
+                  ),
+                  icon: loading
+                      ? SizedBox(
+                          width: 13,
+                          height: 13,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: primary,
+                          ),
+                        )
+                      : const Icon(Icons.refresh_rounded, size: 15),
+                  label: Text(
+                    loading ? 'IA' : 'Atualizar',
+                    style: GoogleFonts.poppins(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ),
             ],
+          ),
+          if (loading && recomendacoes.isEmpty) ...[
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+              minHeight: 4,
+              color: primary,
+              backgroundColor: primary.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Analisando fornecedores compatíveis...',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ] else if (recomendacoes.isEmpty) ...[
+            const SizedBox(height: 10),
+            InkWell(
+              onTap: () => _carregarRecomendacoesIA(forcar: true),
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                width: double.infinity,
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.psychology_alt_rounded,
+                        color: primary, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Gerar recomendações inteligentes agora',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          color: primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                    Icon(Icons.arrow_forward_ios_rounded,
+                        color: primary, size: 12),
+                  ],
+                ),
+              ),
+            ),
+          ] else ...[
+            const SizedBox(height: 10),
+            SizedBox(
+              height: 88,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: recomendacoes.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (_, index) => _IACardFornecedorCompacto(
+                  recomendacao: recomendacoes[index],
+                  primary: primary,
+                  onTap: () =>
+                      _abrirFornecedorRecomendadoIA(recomendacoes[index]),
+                ),
+              ),
+            ),
           ],
-        ),
-      );
+        ],
+      ),
+    );
   }
 
   Future<void> _abrirFornecedorRecomendadoIA(
@@ -377,7 +395,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
       cidade: dados['cidade'],
     );
 
-    final fornecedor = _buscarFornecedorDetalhadoPorId(recomendacao.idFornecedor);
+    final fornecedor =
+        _buscarFornecedorDetalhadoPorId(recomendacao.idFornecedor);
 
     if (fornecedor == null) {
       Get.snackbar(
@@ -421,7 +440,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     return controllerLocalizacao.fornecedores.toList();
   }
 
-  List<FornecedorDetalhadoDto> _aplicarFiltros(List<FornecedorDetalhadoDto> lista) {
+  List<FornecedorDetalhadoDto> _aplicarFiltros(
+      List<FornecedorDetalhadoDto> lista) {
     final termo = termoBusca.trim().toLowerCase();
     var resultado = List<FornecedorDetalhadoDto>.from(lista);
     if (categoriaSelecionada != null) {
@@ -429,7 +449,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
       final nomeCategoria = categoriaSelecionada!.nome.trim().toLowerCase();
       resultado = resultado
           .where((f) =>
-              f.categoriaId == idCategoria || f.categoriaNome.toLowerCase().contains(nomeCategoria))
+              f.categoriaId == idCategoria ||
+              f.categoriaNome.toLowerCase().contains(nomeCategoria))
           .toList();
     }
     if (termo.isNotEmpty) {
@@ -438,20 +459,26 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
         final nome = fornecedor.razaoSocial.toLowerCase();
         final descricao = (fornecedor.descricao ?? '').toLowerCase();
         final categoria = f.categoriaNome.toLowerCase();
-        return nome.contains(termo) || descricao.contains(termo) || categoria.contains(termo);
+        return nome.contains(termo) ||
+            descricao.contains(termo) ||
+            categoria.contains(termo);
       }).toList();
     }
     resultado.sort((a, b) {
-      final cmpNota = (controllerLocalizacao.mediasAvaliacoes[b.fornecedor.idFornecedor] ?? 0.0)
-          .compareTo(controllerLocalizacao.mediasAvaliacoes[a.fornecedor.idFornecedor] ?? 0.0);
+      final cmpNota =
+          (controllerLocalizacao.mediasAvaliacoes[b.fornecedor.idFornecedor] ??
+                  0.0)
+              .compareTo(controllerLocalizacao
+                      .mediasAvaliacoes[a.fornecedor.idFornecedor] ??
+                  0.0);
       if (cmpNota != 0) return cmpNota;
       return (a.distanciaKm ?? 999999).compareTo(b.distanciaKm ?? 999999);
     });
     return resultado;
   }
 
-  List<FornecedorDetalhadoDto> _recomendados(
-      List<FornecedorDetalhadoDto> todos, List<FornecedorDetalhadoDto> destaques) {
+  List<FornecedorDetalhadoDto> _recomendados(List<FornecedorDetalhadoDto> todos,
+      List<FornecedorDetalhadoDto> destaques) {
     final mapa = <String, FornecedorDetalhadoDto>{};
     for (final f in destaques) {
       mapa[f.fornecedor.idFornecedor] = f;
@@ -464,7 +491,9 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   }
 
   Widget _buildHeroSection(
-      {required Color primary, required LinearGradient gradient, required int totalFornecedores}) {
+      {required Color primary,
+      required LinearGradient gradient,
+      required int totalFornecedores}) {
     return Container(
       margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
       padding: const EdgeInsets.all(12),
@@ -473,11 +502,16 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [primary.withValues(alpha: 0.95), primary.withValues(alpha: 0.75)],
+          colors: [
+            primary.withValues(alpha: 0.95),
+            primary.withValues(alpha: 0.75)
+          ],
         ),
         boxShadow: [
           BoxShadow(
-              color: primary.withValues(alpha: 0.15), blurRadius: 8, offset: const Offset(0, 3)),
+              color: primary.withValues(alpha: 0.15),
+              blurRadius: 8,
+              offset: const Offset(0, 3)),
         ],
       ),
       child: Column(
@@ -491,7 +525,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                   color: Colors.white.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.handshake_rounded, color: Colors.white, size: 18),
+                child: const Icon(Icons.handshake_rounded,
+                    color: Colors.white, size: 18),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -501,12 +536,15 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                     Text(
                       'Encontre fornecedores',
                       style: GoogleFonts.poppins(
-                          color: Colors.white, fontSize: 14, fontWeight: FontWeight.w700),
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700),
                     ),
                     Text(
                       'Tudo para a sua festa.',
                       style: GoogleFonts.poppins(
-                          color: Colors.white.withValues(alpha: 0.8), fontSize: 10),
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 10),
                     ),
                   ],
                 ),
@@ -540,8 +578,10 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
         style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
         decoration: InputDecoration(
           hintText: 'Buscar buffet, decoração...',
-          hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
-          prefixIcon: Icon(Icons.search_rounded, color: primary.withValues(alpha: 0.8), size: 16),
+          hintStyle:
+              GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
+          prefixIcon: Icon(Icons.search_rounded,
+              color: primary.withValues(alpha: 0.8), size: 16),
           suffixIcon: termoBusca.trim().isEmpty
               ? null
               : IconButton(
@@ -553,7 +593,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                   },
                 ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 11),
         ),
       ),
     );
@@ -563,46 +604,46 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     final categorias = controllerLocalizacao.categorias.toList();
 
     return SizedBox(
-        height: _CategoriasHeaderDelegateBuilder.extent,
-        child: ColoredBox(
-          color: const Color(0xFFF8FAFC).withValues(alpha: 0.98),
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            separatorBuilder: (_, __) => const SizedBox(width: 6),
-            itemCount: categorias.length + 1,
-            itemBuilder: (context, index) {
-              if (index == 0) {
-                return _NeedChip(
-                  label: 'Todos',
-                  icon: Icons.grid_view_rounded,
-                  selected: categoriaSelecionada == null,
-                  primary: primary,
-                  onTap: () {
-                    setState(() => categoriaSelecionada = null);
-                  },
-                );
-              }
-              final c = categorias[index - 1];
+      height: _CategoriasHeaderDelegateBuilder.extent,
+      child: ColoredBox(
+        color: const Color(0xFFF8FAFC).withValues(alpha: 0.98),
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          separatorBuilder: (_, __) => const SizedBox(width: 6),
+          itemCount: categorias.length + 1,
+          itemBuilder: (context, index) {
+            if (index == 0) {
               return _NeedChip(
-                label: c.nome,
-                icon: Biblioteca.iconePorCategoria(c.nome),
-                selected: categoriaSelecionada?.id == c.id,
+                label: 'Todos',
+                icon: Icons.grid_view_rounded,
+                selected: categoriaSelecionada == null,
                 primary: primary,
-                iconColor: Biblioteca.corPorCategoria(c.nome),
-                onTap: () async {
-                  setState(
-                      () => categoriaSelecionada = (categoriaSelecionada?.id == c.id) ? null : c);
-                  if (categoriaSelecionada != null) {
-                    await controllerLocalizacao.buscarServicosPorCategoria(c.id);
-                  }
+                onTap: () {
+                  setState(() => categoriaSelecionada = null);
                 },
               );
-            },
-          ),
+            }
+            final c = categorias[index - 1];
+            return _NeedChip(
+              label: c.nome,
+              icon: Biblioteca.iconePorCategoria(c.nome),
+              selected: categoriaSelecionada?.id == c.id,
+              primary: primary,
+              iconColor: Biblioteca.corPorCategoria(c.nome),
+              onTap: () async {
+                setState(() => categoriaSelecionada =
+                    (categoriaSelecionada?.id == c.id) ? null : c);
+                if (categoriaSelecionada != null) {
+                  await controllerLocalizacao.buscarServicosPorCategoria(c.id);
+                }
+              },
+            );
+          },
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildConteudo({
@@ -627,19 +668,26 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
           _carrosselServicos(primary),
         ],
         if (fornecedoresProximos.isNotEmpty) ...[
-          _SectionHeader(title: 'Perto de você', icon: Icons.near_me_rounded, color: primary),
-          _horizontalFornecedores(fornecedoresProximos.take(8).toList(), primary, gradient),
+          _SectionHeader(
+              title: 'Perto de você',
+              icon: Icons.near_me_rounded,
+              color: primary),
+          _horizontalFornecedores(
+              fornecedoresProximos.take(8).toList(), primary, gradient),
         ],
         _SectionHeader(
-            title: 'Todos os fornecedores', icon: Icons.storefront_rounded, color: primary),
+            title: 'Todos os fornecedores',
+            icon: Icons.storefront_rounded,
+            color: primary),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Column(
             children: fornecedoresFiltrados
                 .map((f) => _FornecedorListCard(
                       fornecedorDetalhado: f,
-                      media:
-                          controllerLocalizacao.mediasAvaliacoes[f.fornecedor.idFornecedor] ?? 0.0,
+                      media: controllerLocalizacao
+                              .mediasAvaliacoes[f.fornecedor.idFornecedor] ??
+                          0.0,
                       primary: primary,
                       categoriaSelecionada: categoriaSelecionada,
                       onTap: () => _abrirDetalheFornecedor(f),
@@ -651,8 +699,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     );
   }
 
-  Widget _horizontalFornecedores(
-      List<FornecedorDetalhadoDto> fornecedores, Color primary, LinearGradient gradient) {
+  Widget _horizontalFornecedores(List<FornecedorDetalhadoDto> fornecedores,
+      Color primary, LinearGradient gradient) {
     return SizedBox(
       height: 185, // Reduzido
       child: ListView.separated(
@@ -665,8 +713,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
           width: 175, // Cards mais estreitos
           child: _FornecedorPremiumCard(
             fornecedorDetalhado: fornecedores[index],
-            media: controllerLocalizacao
-                    .mediasAvaliacoes[fornecedores[index].fornecedor.idFornecedor] ??
+            media: controllerLocalizacao.mediasAvaliacoes[
+                    fornecedores[index].fornecedor.idFornecedor] ??
                 0.0,
             primary: primary,
             categoriaSelecionada: categoriaSelecionada,
@@ -688,13 +736,16 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
       ),
       child: Row(
         children: [
-          Icon(Biblioteca.iconePorCategoria(categoriaSelecionada!.nome), color: primary, size: 16),
+          Icon(Biblioteca.iconePorCategoria(categoriaSelecionada!.nome),
+              color: primary, size: 16),
           const SizedBox(width: 6),
           Expanded(
             child: Text(
               categoriaSelecionada!.nome,
               style: GoogleFonts.poppins(
-                  fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1F2937)),
             ),
           ),
           InkWell(
@@ -712,25 +763,27 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     final lista = controllerLocalizacao.servicosPorCategoria.toList();
     if (lista.isEmpty) return const SizedBox.shrink();
     return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionHeader(
-              title: 'Serviços disponíveis', icon: Icons.room_service_rounded, color: primary),
-          SizedBox(
-            height: 140, // Reduzido de 180 para 140
-            child: PageView.builder(
-              controller: _servicosPageController,
-              physics: const BouncingScrollPhysics(),
-              itemCount: lista.length,
-              itemBuilder: (_, index) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: _cardServicoCarrossel(lista[index], primary),
-              ),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _SectionHeader(
+            title: 'Serviços disponíveis',
+            icon: Icons.room_service_rounded,
+            color: primary),
+        SizedBox(
+          height: 140, // Reduzido de 180 para 140
+          child: PageView.builder(
+            controller: _servicosPageController,
+            physics: const BouncingScrollPhysics(),
+            itemCount: lista.length,
+            itemBuilder: (_, index) => Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: _cardServicoCarrossel(lista[index], primary),
             ),
           ),
-          const SizedBox(height: 10),
-        ],
-      );
+        ),
+        const SizedBox(height: 10),
+      ],
+    );
   }
 
   Widget _cardServicoCarrossel(FornecedorServicoDetalhadoDto s, Color primary) {
@@ -755,7 +808,10 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Colors.black.withValues(alpha: 0.85)],
+                    colors: [
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.85)
+                    ],
                   ),
                 ),
               ),
@@ -780,13 +836,16 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
-                        color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700),
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700),
                   ),
                   Text(
                     s.nomeFornecedor ?? 'Fornecedor',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(color: Colors.white70, fontSize: 10),
+                    style: GoogleFonts.poppins(
+                        color: Colors.white70, fontSize: 10),
                   ),
                   const SizedBox(height: 4),
                   Row(
@@ -803,10 +862,12 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
                             foregroundColor: primary,
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
                           ),
                           child: const Text('Ver',
-                              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700)),
+                              style: TextStyle(
+                                  fontSize: 10, fontWeight: FontWeight.w700)),
                         ),
                       ),
                     ],
@@ -833,21 +894,24 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     final v = (s.precoPromocao ?? 0.0) > 0 ? s.precoPromocao! : s.preco;
     if (v <= 0) {
       return Text('Sob consulta',
-          style:
-              GoogleFonts.poppins(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700));
+          style: GoogleFonts.poppins(
+              color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700));
     }
     return Text('R\$ ${Biblioteca.formatarValorDecimal(v)}',
-        style: GoogleFonts.poppins(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700));
+        style: GoogleFonts.poppins(
+            color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700));
   }
 
-  Widget _loadingState(Color primary) =>
-      const Center(child: Padding(padding: EdgeInsets.all(40), child: CircularProgressIndicator()));
+  Widget _loadingState(Color primary) => const Center(
+      child: Padding(
+          padding: EdgeInsets.all(40), child: CircularProgressIndicator()));
 
   Widget _mensagemVazia(Color primary) => Center(
         child: Padding(
           padding: const EdgeInsets.all(40),
           child: Text("Nenhum fornecedor",
-              style: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500)),
+              style: GoogleFonts.poppins(
+                  fontSize: 13, color: Colors.grey.shade500)),
         ),
       );
 
@@ -855,7 +919,8 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
     Get.to(() => FornecedorDetalheScreen(
         fornecedorDetalhado: categoriaSelecionada != null
             ? f.copyWith(
-                categoriaId: categoriaSelecionada!.id, categoriaNome: categoriaSelecionada!.nome)
+                categoriaId: categoriaSelecionada!.id,
+                categoriaNome: categoriaSelecionada!.nome)
             : f,
         selecionouCategoria: categoriaSelecionada != null));
   }
@@ -879,8 +944,9 @@ class _IACardFornecedorCompacto extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final score = recomendacao.score.clamp(0, 100).toStringAsFixed(0);
-    final motivo =
-        recomendacao.motivos.isNotEmpty ? recomendacao.motivos.first : 'Compatível com seu evento';
+    final motivo = recomendacao.motivos.isNotEmpty
+        ? recomendacao.motivos.first
+        : 'Compatível com seu evento';
 
     return InkWell(
       onTap: onTap,
@@ -978,7 +1044,8 @@ class _NeedChip extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // Menor
+        padding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 6), // Menor
         decoration: BoxDecoration(
           color: selected ? primary : Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -994,7 +1061,9 @@ class _NeedChip extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: selected ? Colors.white : iconColor ?? primary, size: 12),
+            Icon(icon,
+                color: selected ? Colors.white : iconColor ?? primary,
+                size: 12),
             const SizedBox(width: 4),
             Text(label,
                 style: GoogleFonts.poppins(
@@ -1012,7 +1081,8 @@ class _SectionHeader extends StatelessWidget {
   final String title;
   final IconData icon;
   final Color color;
-  const _SectionHeader({required this.title, required this.icon, required this.color});
+  const _SectionHeader(
+      {required this.title, required this.icon, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -1024,7 +1094,9 @@ class _SectionHeader extends StatelessWidget {
           const SizedBox(width: 6),
           Text(title,
               style: GoogleFonts.poppins(
-                  fontSize: 13, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937))),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1F2937))),
         ],
       ),
     );
@@ -1071,7 +1143,8 @@ class _FornecedorPremiumCard extends StatelessWidget {
               height: 85, // Imagem mantida mais fina
               width: double.infinity,
               child: ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(14)),
                 child: Stack(
                   children: [
                     Positioned.fill(
@@ -1083,8 +1156,11 @@ class _FornecedorPremiumCard extends StatelessWidget {
                             child: const Icon(Icons.store, color: Colors.grey)),
                       ),
                     ),
-                    Positioned.fill(child: Container(color: Colors.black.withValues(alpha: 0.25))),
-                    Positioned(top: 6, right: 6, child: _RatingBadge(media: media)),
+                    Positioned.fill(
+                        child: Container(
+                            color: Colors.black.withValues(alpha: 0.25))),
+                    Positioned(
+                        top: 6, right: 6, child: _RatingBadge(media: media)),
                     Positioned(
                       bottom: 6,
                       left: 8,
@@ -1094,7 +1170,9 @@ class _FornecedorPremiumCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
-                            color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],
@@ -1110,9 +1188,12 @@ class _FornecedorPremiumCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      categoriaSelecionada?.nome ?? fornecedorDetalhado.categoriaNome,
+                      categoriaSelecionada?.nome ??
+                          fornecedorDetalhado.categoriaNome,
                       style: GoogleFonts.poppins(
-                          color: primary, fontSize: 9, fontWeight: FontWeight.w600),
+                          color: primary,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600),
                     ),
                     const SizedBox(height: 2),
 
@@ -1123,7 +1204,9 @@ class _FornecedorPremiumCard extends StatelessWidget {
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
-                            fontSize: 10, color: Colors.grey.shade600, height: 1.2),
+                            fontSize: 10,
+                            color: Colors.grey.shade600,
+                            height: 1.2),
                       ),
                     ),
 
@@ -1132,7 +1215,8 @@ class _FornecedorPremiumCard extends StatelessWidget {
                     if (fornecedorDetalhado.distanciaKm != null)
                       Row(
                         children: [
-                          Icon(Icons.place, size: 10, color: Colors.grey.shade400),
+                          Icon(Icons.place,
+                              size: 10, color: Colors.grey.shade400),
                           const SizedBox(width: 4),
                           Text(
                             '${fornecedorDetalhado.distanciaKm!.toStringAsFixed(1)} km',
@@ -1200,7 +1284,8 @@ class _FornecedorListCard extends StatelessWidget {
                     width: 54,
                     height: 54,
                     color: Colors.grey.shade100,
-                    child: const Icon(Icons.store, size: 20, color: Colors.grey)),
+                    child:
+                        const Icon(Icons.store, size: 20, color: Colors.grey)),
               ),
             ),
             const SizedBox(width: 10),
@@ -1213,22 +1298,29 @@ class _FornecedorListCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
-                        fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937)),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1F2937)),
                   ),
                   Text(
-                    categoriaSelecionada?.nome ?? fornecedorDetalhado.categoriaNome,
+                    categoriaSelecionada?.nome ??
+                        fornecedorDetalhado.categoriaNome,
                     style: GoogleFonts.poppins(
-                        fontSize: 9, color: primary, fontWeight: FontWeight.w600),
+                        fontSize: 9,
+                        color: primary,
+                        fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 2),
                   if (fornecedorDetalhado.distanciaKm != null)
                     Row(
                       children: [
-                        Icon(Icons.place, size: 10, color: Colors.grey.shade400),
+                        Icon(Icons.place,
+                            size: 10, color: Colors.grey.shade400),
                         const SizedBox(width: 4),
                         Text(
                           '${fornecedorDetalhado.distanciaKm!.toStringAsFixed(1)} km',
-                          style: GoogleFonts.poppins(fontSize: 9, color: Colors.grey.shade500),
+                          style: GoogleFonts.poppins(
+                              fontSize: 9, color: Colors.grey.shade500),
                         ),
                       ],
                     ),
@@ -1261,7 +1353,8 @@ class _RatingBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(h ? Icons.star_rounded : Icons.fiber_new,
-              size: 10, color: h ? Colors.amber.shade400 : Colors.amber.shade700),
+              size: 10,
+              color: h ? Colors.amber.shade400 : Colors.amber.shade700),
           const SizedBox(width: 2),
           Text(
             h ? media.toStringAsFixed(1) : 'Novo',
@@ -1297,7 +1390,9 @@ class _GlassBadge extends StatelessWidget {
           const SizedBox(width: 4),
           Text(label,
               style: GoogleFonts.poppins(
-                  color: Colors.white, fontSize: 8, fontWeight: FontWeight.w600)),
+                  color: Colors.white,
+                  fontSize: 8,
+                  fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -1318,7 +1413,8 @@ class _CategoriasHeaderDelegateBuilder extends SliverPersistentHeaderDelegate {
   double get maxExtent => extent;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     return SizedBox.expand(child: child);
   }
 

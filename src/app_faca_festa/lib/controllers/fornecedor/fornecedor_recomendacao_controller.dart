@@ -1,31 +1,21 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
+import '../../domain/usecases/gerenciar_fornecedor_recomendacoes.dart';
 
 class FornecedorRecomendacaoController extends GetxController {
-  static FornecedorRecomendacaoController get to {
-    if (Get.isRegistered<FornecedorRecomendacaoController>()) {
-      return Get.find<FornecedorRecomendacaoController>();
-    }
-    return Get.put(FornecedorRecomendacaoController(), permanent: true);
-  }
-
   FornecedorRecomendacaoController({
-    FirebaseFirestore? firestore,
-    FirebaseFunctions? functions,
-  })  : _db = firestore ?? FirebaseFirestore.instance,
-        _functions = functions ?? FirebaseFunctions.instanceFor(region: 'southamerica-east1');
+    required GerenciarFornecedorRecomendacoes recomendacoesFornecedor,
+  }) : _recomendacoesFornecedor = recomendacoesFornecedor;
 
-  final FirebaseFirestore _db;
-  final FirebaseFunctions _functions;
+  final GerenciarFornecedorRecomendacoes _recomendacoesFornecedor;
 
   final RxBool carregando = false.obs;
   final RxBool gerando = false.obs;
   final RxString erro = ''.obs;
-  final RxList<FornecedorRecomendacaoModel> recomendacoes = <FornecedorRecomendacaoModel>[].obs;
+  final RxList<FornecedorRecomendacaoModel> recomendacoes =
+      <FornecedorRecomendacaoModel>[].obs;
 
   String? _eventoCarregado;
   String? _usuarioCarregado;
@@ -50,13 +40,16 @@ class FornecedorRecomendacaoController extends GetxController {
       return;
     }
 
-    final mesmoContexto = _eventoCarregado == idEvento && _usuarioCarregado == idUsuario;
+    final mesmoContexto =
+        _eventoCarregado == idEvento && _usuarioCarregado == idUsuario;
 
     if (!forcar && mesmoContexto && recomendacoes.isNotEmpty) {
       return;
     }
 
-    if (!forcar && mesmoContexto && _geracaoTentadaPorEvento.contains(idEvento)) {
+    if (!forcar &&
+        mesmoContexto &&
+        _geracaoTentadaPorEvento.contains(idEvento)) {
       return;
     }
 
@@ -118,40 +111,11 @@ class FornecedorRecomendacaoController extends GetxController {
         'id_evento=$idEvento | id_usuario=$idUsuario',
       );
 
-      QuerySnapshot<Map<String, dynamic>> snapshot;
-
-      try {
-        snapshot = await _db
-            .collection('fornecedor_recomendacoes')
-            .where('id_evento', isEqualTo: idEvento)
-            .where('id_usuario', isEqualTo: idUsuario)
-            .orderBy('score', descending: true)
-            .limit(limite)
-            .get();
-      } catch (e) {
-        debugPrint(
-          '⚠️ [FornecedorRecomendacao] Falha na consulta com orderBy. '
-          'Tentando sem ordenação no servidor. Erro: $e',
-        );
-
-        snapshot = await _db
-            .collection('fornecedor_recomendacoes')
-            .where('id_evento', isEqualTo: idEvento)
-            .where('id_usuario', isEqualTo: idUsuario)
-            .limit(limite)
-            .get();
-      }
-
-      final lista = snapshot.docs
-          .map(
-            (doc) => FornecedorRecomendacaoModel.fromMap(
-              doc.data(),
-              documentId: doc.id,
-            ),
-          )
-          .toList();
-
-      lista.sort((a, b) => b.score.compareTo(a.score));
+      final lista = await _recomendacoesFornecedor.carregarRecomendacoesSalvas(
+        idEvento: idEvento,
+        idUsuario: idUsuario,
+        limite: limite,
+      );
 
       debugPrint(
         '✅ [FornecedorRecomendacao] ${lista.length} recomendações salvas carregadas.',
@@ -185,41 +149,17 @@ class FornecedorRecomendacaoController extends GetxController {
         'idEvento=$idEvento | limite=$limite | modoDemo=$modoDemo',
       );
 
-      final callable = _functions.httpsCallable(
-        'recomendarFornecedoresParaEvento',
-        options: HttpsCallableOptions(
-          timeout: const Duration(seconds: 60),
-        ),
+      final lista = await _recomendacoesFornecedor.gerarRecomendacoes(
+        idEvento: idEvento,
+        limite: limite,
+        modoDemo: modoDemo,
       );
-
-      final result = await callable.call({
-        'idEvento': idEvento,
-        'limite': limite,
-        'modoDemo': modoDemo,
-      });
-
-      final data = Map<String, dynamic>.from(result.data as Map);
-      final listaRaw = data['recomendacoes'] as List? ?? const [];
-
-      final lista = listaRaw
-          .map(
-            (item) => FornecedorRecomendacaoModel.fromMap(
-              Map<String, dynamic>.from(item as Map),
-            ),
-          )
-          .toList();
 
       debugPrint(
         '✅ [FornecedorRecomendacao] IA retornou ${lista.length} recomendações.',
       );
 
       recomendacoes.assignAll(lista);
-    } on FirebaseFunctionsException catch (e, s) {
-      erro.value = e.message ?? 'Erro ao gerar recomendações.';
-
-      debugPrint(
-        '❌ [FornecedorRecomendacao] Function: ${e.code} | ${e.message}\n$s',
-      );
     } catch (e, s) {
       erro.value = 'Erro ao gerar recomendações.';
       debugPrint('❌ [FornecedorRecomendacao] gerarRecomendacoes: $e\n$s');
@@ -252,29 +192,20 @@ class FornecedorRecomendacaoController extends GetxController {
     String? tipoEventoNome,
     String? cidade,
   }) async {
-    if (idEvento.trim().isEmpty || idFornecedor.trim().isEmpty || acao.trim().isEmpty) {
+    if (idEvento.trim().isEmpty ||
+        idFornecedor.trim().isEmpty ||
+        acao.trim().isEmpty) {
       return;
     }
 
     try {
-      final callable = _functions.httpsCallable(
-        'registrarInteracaoFornecedor',
-        options: HttpsCallableOptions(
-          timeout: const Duration(seconds: 30),
-        ),
-      );
-
-      await callable.call({
-        'idEvento': idEvento,
-        'idFornecedor': idFornecedor,
-        'acao': acao,
-        'tipoEventoId': tipoEventoId,
-        'tipoEventoNome': tipoEventoNome,
-        'cidade': cidade,
-      });
-    } on FirebaseFunctionsException catch (e, s) {
-      debugPrint(
-        '❌ [FornecedorInteracao] Function: ${e.code} | ${e.message}\n$s',
+      await _recomendacoesFornecedor.registrarInteracao(
+        idEvento: idEvento,
+        idFornecedor: idFornecedor,
+        acao: acao,
+        tipoEventoId: tipoEventoId,
+        tipoEventoNome: tipoEventoNome,
+        cidade: cidade,
       );
     } catch (e, s) {
       debugPrint('❌ [FornecedorInteracao] registrarInteracao: $e\n$s');
