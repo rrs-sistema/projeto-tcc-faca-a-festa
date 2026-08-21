@@ -70,6 +70,7 @@ import 'app/bootstrap/ranking_bootstrap.dart';
 import 'app/bootstrap/servico_produto_bootstrap.dart';
 import 'app/bootstrap/autenticacao_bootstrap.dart';
 import 'app/bootstrap/comunidade_bootstrap.dart';
+import 'app/bootstrap/uf_cidade_bootstrap.dart';
 import 'app/middleware/papel_middleware.dart';
 import 'domain/repositories/catalogo_servico_repository.dart';
 import 'domain/repositories/evento_repository.dart';
@@ -377,6 +378,7 @@ void _registerControllers() {
   ComunidadeBootstrap.register();
   AvaliacaoServicoBootstrap.register();
   RankingBootstrap.register();
+  UfCidadeBootstrap.register();
   ServicoProdutoBootstrap.register();
   AdminDashboardBootstrap.register();
   EventosAdminBootstrap.register();

@@ -1,9 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+
+import '../domain/usecases/gerenciar_ufs_cidades.dart';
 
 class UFCidadeController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  UFCidadeController({required GerenciarUfsCidades ufsCidades})
+      : _ufsCidades = ufsCidades;
+
+  final GerenciarUfsCidades _ufsCidades;
 
   /// Listas reativas
   var estados = <Map<String, dynamic>>[].obs;
@@ -24,15 +28,7 @@ class UFCidadeController extends GetxController {
   Future<void> carregarEstados() async {
     try {
       carregando.value = true;
-      final snapshot = await _db.collection('estado').orderBy('nome').get();
-      estados.value = snapshot.docs.map((d) {
-        final data = d.data();
-        return {
-          'id': d.id,
-          'nome': data['nome'],
-          'uf': data['uf'],
-        };
-      }).toList();
+      estados.value = await _ufsCidades.carregarEstados();
     } catch (e) {
       if (kDebugMode) {
         print('Erro ao carregar estados: $e');
@@ -46,18 +42,7 @@ class UFCidadeController extends GetxController {
   Future<void> carregarCidades(String idEstado) async {
     try {
       carregando.value = true;
-      final snapshot =
-          await _db.collection('estado').doc(idEstado).collection('cidades').orderBy('nome').get();
-
-      cidades.value = snapshot.docs.map((d) {
-        final data = d.data();
-        return {
-          'id': d.id,
-          'nome': data['nome'],
-          'uf': data['uf'],
-          'id_cidade': data['id_cidade'],
-        };
-      }).toList();
+      cidades.value = await _ufsCidades.carregarCidades(idEstado);
     } catch (e) {
       if (kDebugMode) {
         print('Erro ao carregar cidades: $e');

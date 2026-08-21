@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../controllers/uf_cidade_controller.dart';
+import './../../../app/bootstrap/uf_cidade_bootstrap.dart';
 import './../../../data/models/model.dart';
 import './../../../data/services/endereco/buscar_cep_google_service.dart';
 
@@ -13,7 +13,7 @@ class EnderecoSectionController {
   final numeroController = TextEditingController();
   final complementoController = TextEditingController();
   final bairroController = TextEditingController();
-  final ufCidadeController = Get.put(UFCidadeController());
+  final ufCidadeController = UfCidadeBootstrap.findController();
   final nomeCidadeController = TextEditingController();
   final ufController = TextEditingController();
   final numeroFocusNode = FocusNode();
@@ -68,7 +68,8 @@ class EnderecoSectionController {
     String? cepInformado,
     bool forcar = false,
   }) async {
-    final cep = (cepInformado ?? cepController.text).replaceAll(RegExp(r'\D'), '');
+    final cep =
+        (cepInformado ?? cepController.text).replaceAll(RegExp(r'\D'), '');
     if (cep.length != 8) {
       mensagemCep.value = '';
       if (forcar) {
