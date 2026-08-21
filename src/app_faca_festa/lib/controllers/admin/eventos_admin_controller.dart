@@ -1,11 +1,15 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/admin/evento_com_tipo_model.dart';
+import '../../domain/usecases/gerenciar_eventos_admin.dart';
 
 class EventosAdminController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  EventosAdminController({required GerenciarEventosAdmin eventosAdmin})
+      : _eventosAdmin = eventosAdmin;
+
+  final GerenciarEventosAdmin _eventosAdmin;
+
   final eventos = <EventoComTipoModel>[].obs;
   final busca = ''.obs;
   final carregando = false.obs;
@@ -29,40 +33,7 @@ class EventosAdminController extends GetxController {
       carregando.value = true;
       erro.value = '';
 
-      // 🔹 Passo 1: buscar eventos
-      final eventosSnap = await _db.collection('evento').get();
-
-      final List<EventoComTipoModel> listaEventos = [];
-
-      // 🔹 Passo 2: buscar tipo de evento para cada registro
-      for (var doc in eventosSnap.docs) {
-        final data = doc.data();
-        final idTipoEvento =
-            (data['id_tipo_evento'] ?? data['idTipoEvento'] ?? '').toString();
-
-        String nomeTipo = 'Tipo não informado';
-        if (idTipoEvento.isNotEmpty) {
-          final tipoDoc = await _db.collection('tipo_evento').doc(idTipoEvento).get();
-          if (tipoDoc.exists) {
-            nomeTipo = (tipoDoc.data()?['nome'] ?? nomeTipo).toString();
-          } else {
-            final tipoSnap = await _db
-                .collection('tipo_evento')
-                .where('id_tipo_evento', isEqualTo: idTipoEvento)
-                .limit(1)
-                .get();
-            if (tipoSnap.docs.isNotEmpty) {
-              nomeTipo = tipoSnap.docs.first.data()['nome'] ?? nomeTipo;
-            }
-          }
-        }
-
-        // Monta o modelo unificado
-        final evento = EventoComTipoModel.fromMap(data, doc.id, nomeTipo);
-        listaEventos.add(evento);
-      }
-
-      eventos.value = listaEventos;
+      eventos.value = await _eventosAdmin.listarEventosComTipo();
     } catch (e) {
       erro.value = 'Erro ao carregar eventos: $e';
     } finally {
@@ -70,11 +41,11 @@ class EventosAdminController extends GetxController {
     }
   }
 
-  void acaoEvento(String acao, EventoComTipoModel evento) {
+  Future<void> acaoEvento(String acao, EventoComTipoModel evento) async {
     switch (acao) {
       case 'aprovar':
-        _db.collection('evento').doc(evento.id).update({'aprovado': true});
-        Get.snackbar(
+        await _eventosAdmin.aprovarEvento(evento.id);
+        _mostrarSnackbar(
           'Evento aprovado',
           '${evento.nome} foi aprovado com sucesso!',
           backgroundColor: Colors.green.shade700,
@@ -93,7 +64,7 @@ class EventosAdminController extends GetxController {
           onConfirm: () async {
             await excluirEvento(evento.id);
             Get.back();
-            Get.snackbar(
+            _mostrarSnackbar(
               'Excluído',
               'Evento removido com sucesso.',
               backgroundColor: Colors.red.shade400,
@@ -109,7 +80,24 @@ class EventosAdminController extends GetxController {
   }
 
   Future<void> excluirEvento(String id) async {
-    await _db.collection('evento').doc(id).delete();
+    await _eventosAdmin.excluirEvento(id);
     eventos.removeWhere((e) => e.id == id);
+  }
+
+  void _mostrarSnackbar(
+    String titulo,
+    String mensagem, {
+    Color? backgroundColor,
+    Color? colorText,
+  }) {
+    if (Get.testMode) return;
+    if (Get.context == null && Get.overlayContext == null) return;
+
+    Get.snackbar(
+      titulo,
+      mensagem,
+      backgroundColor: backgroundColor,
+      colorText: colorText,
+    );
   }
 }

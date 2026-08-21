@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import './../../../app/bootstrap/eventos_admin_bootstrap.dart';
 import './../../../controllers/admin/eventos_admin_controller.dart';
 import './../../../data/models/admin/evento_com_tipo_model.dart';
 import '../../../controllers/tema/admin_theme.dart';
@@ -12,15 +13,13 @@ import '../../widgets/admin/admin_kit.dart';
 class EventosAdminListScreen extends StatelessWidget {
   EventosAdminListScreen({super.key}) {
     Future.microtask(() {
-      if (Get.isRegistered<EventosAdminController>()) {
-        Get.find<EventosAdminController>().carregarEventosComTipo();
-      }
+      EventosAdminBootstrap.findController().carregarEventosComTipo();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<EventosAdminController>();
+    final controller = EventosAdminBootstrap.findController();
     final themeController = Get.find<EventThemeController>();
 
     return Theme(
@@ -92,7 +91,8 @@ class EventosAdminListScreen extends StatelessWidget {
                     title: controller.eventos.isEmpty
                         ? 'Nenhum evento cadastrado'
                         : 'Nenhum evento nesta busca',
-                    message: 'Os eventos criados pelos organizadores aparecem aqui.',
+                    message:
+                        'Os eventos criados pelos organizadores aparecem aqui.',
                   );
                 }
 
@@ -127,8 +127,9 @@ class _EventoAdminCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dataFormatada =
-        evento.data != null ? DateFormat('dd/MM/yyyy').format(evento.data!) : 'Indefinida';
+    final dataFormatada = evento.data != null
+        ? DateFormat('dd/MM/yyyy').format(evento.data!)
+        : 'Indefinida';
 
     return AdminCard(
       child: Row(
@@ -143,8 +144,12 @@ class _EventoAdminCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              evento.emCurso ? Icons.event_available_rounded : Icons.event_note_rounded,
-              color: evento.emCurso ? AdminPalette.success : Colors.orange.shade700,
+              evento.emCurso
+                  ? Icons.event_available_rounded
+                  : Icons.event_note_rounded,
+              color: evento.emCurso
+                  ? AdminPalette.success
+                  : Colors.orange.shade700,
             ),
           ),
           const SizedBox(width: 14),
@@ -167,12 +172,15 @@ class _EventoAdminCard extends StatelessWidget {
                       ),
                     ),
                     PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500, size: 20),
+                      icon: Icon(Icons.more_vert_rounded,
+                          color: Colors.grey.shade500, size: 20),
                       onSelected: (v) => controller.acaoEvento(v, evento),
                       itemBuilder: (_) => [
                         if (!evento.aprovado)
-                          const PopupMenuItem(value: 'aprovar', child: Text('Aprovar')),
-                        const PopupMenuItem(value: 'excluir', child: Text('Excluir')),
+                          const PopupMenuItem(
+                              value: 'aprovar', child: Text('Aprovar')),
+                        const PopupMenuItem(
+                            value: 'excluir', child: Text('Excluir')),
                       ],
                     ),
                   ],
@@ -183,15 +191,21 @@ class _EventoAdminCard extends StatelessWidget {
                   children: [
                     AdminStatusChip(
                       label: evento.statusLabel,
-                      color: evento.emCurso ? AdminPalette.success : AdminPalette.warning,
+                      color: evento.emCurso
+                          ? AdminPalette.success
+                          : AdminPalette.warning,
                     ),
-                    AdminMetricChip(icon: Icons.category_outlined, label: evento.tipoNome),
+                    AdminMetricChip(
+                        icon: Icons.category_outlined, label: evento.tipoNome),
                     AdminMetricChip(
                       icon: Icons.location_on_outlined,
                       label: evento.cidade ?? 'Cidade não cadastrada',
                     ),
-                    AdminMetricChip(icon: Icons.person_outline, label: evento.organizador),
-                    AdminMetricChip(icon: Icons.calendar_month_outlined, label: dataFormatada),
+                    AdminMetricChip(
+                        icon: Icons.person_outline, label: evento.organizador),
+                    AdminMetricChip(
+                        icon: Icons.calendar_month_outlined,
+                        label: dataFormatada),
                     if (evento.totalConvidados > 0)
                       AdminMetricChip(
                         icon: Icons.groups_outlined,

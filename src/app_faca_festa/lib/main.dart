@@ -33,7 +33,6 @@ import './controllers/admin/orcamentos_admin_controller.dart';
 import './controllers/contacao/solicitacoes_controller.dart';
 import './controllers/servico/servico_foto_controller.dart';
 import './presentation/pages/convidado/convidado_page.dart';
-import './controllers/admin/eventos_admin_controller.dart';
 import './presentation/pages/login/register_screen.dart';
 import './presentation/pages/login/forgot_password_screen.dart';
 import './presentation/pages/login/totp_setup_screen.dart';
@@ -63,6 +62,7 @@ import 'data/repositories/i_calculadora_festa_ai_service.dart';
 import 'data/repositories/sugestao_base_festa_repository.dart';
 import 'app/bindings/gift_binding.dart';
 import 'app/bootstrap/admin_dashboard_bootstrap.dart';
+import 'app/bootstrap/eventos_admin_bootstrap.dart';
 import 'app/bootstrap/gift_offline_bootstrap.dart';
 import 'app/bootstrap/evento_bootstrap.dart';
 import 'app/bootstrap/convidado_bootstrap.dart';
@@ -375,6 +375,7 @@ void _registerControllers() {
   PerfilUsuarioBootstrap.register();
   ServicoProdutoBootstrap.register();
   AdminDashboardBootstrap.register();
+  EventosAdminBootstrap.register();
   Get.lazyPut<AppController>(() => AppController(), fenix: true);
   EventoBootstrap.register();
   Get.put(EventThemeController(), permanent: true);
@@ -410,7 +411,6 @@ void _registerControllers() {
     ),
     permanent: true,
   );
-  Get.put(EventosAdminController(), permanent: true);
   Get.put(OrcamentosAdminController(), permanent: true);
   Get.put(CotacaoController(), permanent: true);
   Get.put(SolicitacoesController(), permanent: true);
