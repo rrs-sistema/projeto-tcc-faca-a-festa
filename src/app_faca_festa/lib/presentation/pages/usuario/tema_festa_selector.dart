@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../app/bootstrap/tema_festa_bootstrap.dart';
 import '../../../controllers/evento_cadastro_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/tema/tema_festa_controller.dart';
 import '../../../core/utils/form_validators.dart';
 import '../../../data/models/evento/tema_festa_model.dart';
 import '../../widgets/custom_input_field.dart';
@@ -23,19 +23,18 @@ class TemaFestaSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cadastro = Get.find<EventoCadastroController>();
-    final temasController = Get.isRegistered<TemaFestaController>()
-        ? Get.find<TemaFestaController>()
-        : Get.put(TemaFestaController());
+    final temasController = TemaFestaBootstrap.findController();
 
     if (temasController.temas.isEmpty && !temasController.carregando.value) {
       temasController.carregar();
     }
 
     return Obx(() {
-      final lista =
-          temasController.temasParaTipo(cadastro.tipoEventoSelecionado.value?.nome);
+      final lista = temasController
+          .temasParaTipo(cadastro.tipoEventoSelecionado.value?.nome);
       final idAtual = cadastro.idTema.value;
-      final outro = cadastro.temaLivre.value || idAtual == TemaFestaModel.slugOutro;
+      final outro =
+          cadastro.temaLivre.value || idAtual == TemaFestaModel.slugOutro;
       final selecionado = outro
           ? null
           : lista.firstWhereOrNull((tema) => tema.idTema == idAtual);
@@ -70,7 +69,8 @@ class TemaFestaSelector extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0xFFCBD5E1)),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                 child: Row(
                   children: [
                     Container(
@@ -79,7 +79,9 @@ class TemaFestaSelector extends StatelessWidget {
                       decoration: BoxDecoration(
                         gradient: selecionado?.gradient,
                         color: selecionado == null
-                            ? (outro ? const Color(0xFF64748B) : const Color(0xFFE2E8F0))
+                            ? (outro
+                                ? const Color(0xFF64748B)
+                                : const Color(0xFFE2E8F0))
                             : null,
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -89,7 +91,9 @@ class TemaFestaSelector extends StatelessWidget {
                         fallback: Center(
                           child: Icon(
                             selecionado?.iconData ??
-                                (outro ? Icons.edit_rounded : Icons.palette_outlined),
+                                (outro
+                                    ? Icons.edit_rounded
+                                    : Icons.palette_outlined),
                             color: selecionado != null || outro
                                 ? Colors.white
                                 : const Color(0xFF64748B),
@@ -104,7 +108,10 @@ class TemaFestaSelector extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            selecionado?.nome ?? (outro ? 'Outro' : 'Toque para escolher o tema'),
+                            selecionado?.nome ??
+                                (outro
+                                    ? 'Outro'
+                                    : 'Toque para escolher o tema'),
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               fontWeight: FontWeight.w600,
@@ -114,12 +121,15 @@ class TemaFestaSelector extends StatelessWidget {
                           Text(
                             () {
                               final dress = cadastro.dressCode.value.trim();
-                              if (selecionado?.descricao?.trim().isNotEmpty == true) {
+                              if (selecionado?.descricao?.trim().isNotEmpty ==
+                                  true) {
                                 return dress.isNotEmpty
                                     ? '${selecionado!.descricao} · Traje: $dress'
                                     : selecionado!.descricao!;
                               }
-                              if (outro) return 'Descreva o tema no campo abaixo';
+                              if (outro) {
+                                return 'Descreva o tema no campo abaixo';
+                              }
                               if (dress.isNotEmpty) return 'Traje: $dress';
                               return '${lista.length} temas para este tipo de festa';
                             }(),
@@ -133,7 +143,8 @@ class TemaFestaSelector extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Icon(Icons.keyboard_arrow_up_rounded, color: Color(0xFF64748B)),
+                    const Icon(Icons.keyboard_arrow_up_rounded,
+                        color: Color(0xFF64748B)),
                   ],
                 ),
               ),
@@ -157,7 +168,8 @@ class TemaFestaSelector extends StatelessWidget {
               padding: const EdgeInsets.only(top: 6),
               child: Text(
                 'Selecione um tema',
-                style: GoogleFonts.poppins(fontSize: 11, color: Colors.red.shade600),
+                style: GoogleFonts.poppins(
+                    fontSize: 11, color: Colors.red.shade600),
               ),
             ),
         ],
@@ -247,8 +259,9 @@ class TemaFestaSelector extends StatelessWidget {
                             if (theme.papelPermiteTemaDaFesta) {
                               theme.aplicarTemaFesta(
                                 tema,
-                                nomeTipo:
-                                    cadastro.tipoEventoSelecionado.value?.nome ?? '',
+                                nomeTipo: cadastro
+                                        .tipoEventoSelecionado.value?.nome ??
+                                    '',
                               );
                             }
                             Navigator.pop(sheetContext);
@@ -313,7 +326,9 @@ class _TemaOpcaoTile extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: selecionado ? const Color(0xFF0F172A) : const Color(0xFFE2E8F0),
+                color: selecionado
+                    ? const Color(0xFF0F172A)
+                    : const Color(0xFFE2E8F0),
                 width: selecionado ? 1.6 : 1,
               ),
             ),
@@ -337,7 +352,8 @@ class _TemaOpcaoTile extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -366,7 +382,8 @@ class _TemaOpcaoTile extends StatelessWidget {
                 if (selecionado)
                   const Padding(
                     padding: EdgeInsets.only(right: 12),
-                    child: Icon(Icons.check_circle_rounded, color: Color(0xFF0F172A)),
+                    child: Icon(Icons.check_circle_rounded,
+                        color: Color(0xFF0F172A)),
                   ),
               ],
             ),

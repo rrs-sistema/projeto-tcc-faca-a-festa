@@ -1,6 +1,3 @@
-import 'dart:convert';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
@@ -9,17 +6,15 @@ import 'package:image_picker/image_picker.dart';
 import '../../data/models/evento/tema_festa_model.dart';
 import '../../data/seeds/tema_festa_seed.dart';
 import '../../data/services/functions/callable_https_client.dart';
+import '../../domain/usecases/gerenciar_temas_festa.dart';
 import 'event_theme_controller.dart';
 
 class TemaFestaController extends GetxController {
   TemaFestaController({
-    FirebaseFirestore? firestore,
-    CallableHttpsClient? httpsClient,
-  })  : _db = firestore ?? FirebaseFirestore.instance,
-        _https = httpsClient ?? CallableHttpsClient();
+    required GerenciarTemasFesta temasFesta,
+  }) : _temasFesta = temasFesta;
 
-  final FirebaseFirestore _db;
-  final CallableHttpsClient _https;
+  final GerenciarTemasFesta _temasFesta;
 
   final temas = <TemaFestaModel>[].obs;
   final carregando = false.obs;
@@ -27,9 +22,6 @@ class TemaFestaController extends GetxController {
   final erro = ''.obs;
   final busca = ''.obs;
   final filtroCategoria = 'todos'.obs;
-
-  CollectionReference<Map<String, dynamic>> get _colecao =>
-      _db.collection(TemaFestaModel.colecao);
 
   List<TemaFestaModel> get temasAtivos {
     final lista = temas.where((tema) => tema.ativo).toList();
@@ -43,10 +35,8 @@ class TemaFestaController extends GetxController {
     return temas.where((tema) {
       if (categoria != 'todos' && tema.categoria != categoria) return false;
       if (termo.isEmpty) return true;
-      final tipos = tema.tiposEvento
-          .map(TemaFestaTipos.rotulo)
-          .join(' ')
-          .toLowerCase();
+      final tipos =
+          tema.tiposEvento.map(TemaFestaTipos.rotulo).join(' ').toLowerCase();
       return tema.nome.toLowerCase().contains(termo) ||
           (tema.descricao ?? '').toLowerCase().contains(termo) ||
           tipos.contains(termo);
@@ -66,11 +56,7 @@ class TemaFestaController extends GetxController {
     try {
       carregando.value = true;
       erro.value = '';
-      final snapshot = await _colecao.get();
-      final lista = snapshot.docs
-          .map((doc) => TemaFestaModel.fromMap(doc.data(), id: doc.id))
-          .toList()
-        ..sort((a, b) => a.ordem.compareTo(b.ordem));
+      final lista = await _temasFesta.carregar();
       temas.assignAll(lista);
 
       if (popularSeVazio && lista.isEmpty) {
@@ -90,9 +76,7 @@ class TemaFestaController extends GetxController {
     final local = temas.firstWhereOrNull((tema) => tema.idTema == id);
     if (local != null) return local;
     try {
-      final doc = await _colecao.doc(id).get();
-      if (!doc.exists || doc.data() == null) return null;
-      return TemaFestaModel.fromMap(doc.data()!, id: doc.id);
+      return _temasFesta.buscarPorId(id);
     } catch (e, s) {
       debugPrint('[TemaFestaController] Erro ao buscar $id: $e\n$s');
       return null;
@@ -102,7 +86,7 @@ class TemaFestaController extends GetxController {
   Future<void> salvar(TemaFestaModel tema) async {
     salvando.value = true;
     try {
-      await _colecao.doc(tema.idTema).set(tema.toMap(), SetOptions(merge: true));
+      await _temasFesta.salvar(tema);
       final index = temas.indexWhere((item) => item.idTema == tema.idTema);
       if (index >= 0) {
         temas[index] = tema;
@@ -124,7 +108,7 @@ class TemaFestaController extends GetxController {
     if ((atual?.imagemCapaUrl ?? '').trim().isNotEmpty) {
       await removerCapaStorage(idTema: idTema);
     }
-    await _colecao.doc(idTema).delete();
+    await _temasFesta.excluir(idTema);
     temas.removeWhere((tema) => tema.idTema == idTema);
   }
 
@@ -151,16 +135,8 @@ class TemaFestaController extends GetxController {
     if (id.isEmpty || bytes.isEmpty) return null;
     try {
       EasyLoading.show(status: 'Enviando capa...');
-      final resultado = await _https.call(
-        'enviarCapaTemaFesta',
-        {
-          'idTema': id,
-          'bytesBase64': base64Encode(bytes),
-        },
-        const Duration(seconds: 60),
-      );
-      final url = resultado['url']?.toString().trim() ?? '';
-      if (url.isEmpty) {
+      final url = await _temasFesta.enviarCapa(idTema: id, bytes: bytes);
+      if ((url ?? '').isEmpty) {
         EasyLoading.showError('Não foi possível enviar a capa.');
         return null;
       }
@@ -186,25 +162,17 @@ class TemaFestaController extends GetxController {
     final id = (idTema ?? '').trim();
     if (id.isEmpty) return;
     try {
-      await _https.call('removerCapaTemaFesta', {'idTema': id});
+      await _temasFesta.removerCapaStorage(idTema: id);
     } catch (e, s) {
       debugPrint('[TemaFestaController] Capa já ausente no Storage: $e\n$s');
     }
   }
 
   Future<void> popularTemasIniciais() async {
-    final batch = _db.batch();
-    for (final tema in temasFestaIniciais) {
-      final existente =
-          temas.firstWhereOrNull((item) => item.idTema == tema.idTema);
-      final mapa = Map<String, dynamic>.from(tema.toMap());
-      final capaAtual = (existente?.imagemCapaUrl ?? '').trim();
-      if (capaAtual.isNotEmpty) {
-        mapa['imagem_capa_url'] = capaAtual;
-      }
-      batch.set(_colecao.doc(tema.idTema), mapa, SetOptions(merge: true));
-    }
-    await batch.commit();
+    await _temasFesta.popularTemasIniciais(
+      temasIniciais: temasFestaIniciais,
+      temasExistentes: temas,
+    );
     await carregar();
   }
 }

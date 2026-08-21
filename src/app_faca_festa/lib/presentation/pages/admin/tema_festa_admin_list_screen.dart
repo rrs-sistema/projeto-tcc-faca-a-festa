@@ -3,6 +3,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../../app/bootstrap/tema_festa_bootstrap.dart';
 import '../../../controllers/tema/admin_theme.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../controllers/tema/tema_festa_controller.dart';
@@ -19,9 +20,7 @@ class TemaFestaAdminListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.isRegistered<TemaFestaController>()
-        ? Get.find<TemaFestaController>()
-        : Get.put(TemaFestaController());
+    final controller = TemaFestaBootstrap.findController();
     final theme = Get.find<EventThemeController>();
 
     if (controller.temas.isEmpty && !controller.carregando.value) {
@@ -36,7 +35,8 @@ class TemaFestaAdminListScreen extends StatelessWidget {
           automaticallyImplyLeading: false,
           leading: IconButton(
             tooltip: 'Voltar',
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: Colors.white),
             onPressed: () => Get.back(),
           ),
           title: Text(
@@ -48,7 +48,8 @@ class TemaFestaAdminListScreen extends StatelessWidget {
             ),
           ),
           centerTitle: true,
-          flexibleSpace: Container(decoration: BoxDecoration(gradient: theme.adminGradient)),
+          flexibleSpace: Container(
+              decoration: BoxDecoration(gradient: theme.adminGradient)),
           actions: [
             PopupMenuButton<String>(
               tooltip: 'Mais ações',
@@ -168,7 +169,8 @@ class TemaFestaAdminListScreen extends StatelessWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.palette_outlined, size: 48, color: Colors.grey.shade300),
+                        Icon(Icons.palette_outlined,
+                            size: 48, color: Colors.grey.shade300),
                         const SizedBox(height: 12),
                         Text(
                           controller.temas.isEmpty
@@ -205,8 +207,10 @@ class TemaFestaAdminListScreen extends StatelessWidget {
                       ),
                       child: _TemaFestaCard(
                         tema: tema,
-                        onTap: () => showTemaFestaFormBottomSheet(context, tema: tema),
-                        onDelete: () => _confirmarExclusao(context, controller, tema),
+                        onTap: () =>
+                            showTemaFestaFormBottomSheet(context, tema: tema),
+                        onDelete: () =>
+                            _confirmarExclusao(context, controller, tema),
                       ),
                     );
                   },
@@ -228,7 +232,8 @@ class TemaFestaAdminListScreen extends StatelessWidget {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Excluir tema'),
-        content: Text('Deseja excluir "${tema.nome}"? Eventos que já usam este tema não serão alterados.'),
+        content: Text(
+            'Deseja excluir "${tema.nome}"? Eventos que já usam este tema não serão alterados.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -285,11 +290,13 @@ class _TemaFestaCard extends StatelessWidget {
                   height: 92,
                   decoration: BoxDecoration(
                     gradient: tema.gradient,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(15)),
                   ),
                   child: TemaCapaImagem(
                     url: tema.capaEfetiva,
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(15)),
                     fallback: DecoratedBox(
                       decoration: BoxDecoration(gradient: tema.gradient),
                     ),
@@ -384,7 +391,8 @@ class _TemaFestaCard extends StatelessWidget {
                                         ),
                                         decoration: BoxDecoration(
                                           color: const Color(0xFFF1F5F9),
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                         ),
                                         child: Text(
                                           tipo,
@@ -404,7 +412,8 @@ class _TemaFestaCard extends StatelessWidget {
                       IconButton(
                         tooltip: 'Excluir',
                         onPressed: onDelete,
-                        icon: const Icon(Icons.delete_outline_rounded, size: 20),
+                        icon:
+                            const Icon(Icons.delete_outline_rounded, size: 20),
                         color: const Color(0xFF94A3B8),
                       ),
                     ],
