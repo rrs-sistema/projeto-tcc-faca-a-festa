@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:developer' as developer;
 
+import '../../../domain/repositories/calculadora_itens_base_repository_contract.dart';
 import '../../models/calculadora/calculadora_evento_item_model.dart';
 import '../../models/calculadora/calculadora_item_base_model.dart';
 
-class CalculadoraItensBaseRepository {
+class CalculadoraItensBaseRepository
+    implements CalculadoraItensBaseRepositoryContract {
   static const String collectionItensBase = 'calculadora_itens_base';
   static const String collectionEventoItens = 'calculadora_evento_itens';
 
@@ -28,10 +30,51 @@ class CalculadoraItensBaseRepository {
     return _firestore.collection(collectionEventoItens);
   }
 
+  @override
+  Future<List<CalculadoraItemBaseModel>> listarItensBase() async {
+    try {
+      final snapshot = await _itensBaseRef.orderBy(fieldOrdem).get();
+
+      return _mapTodosItensBase(snapshot);
+    } on FirebaseException catch (error, stackTrace) {
+      _logError(
+        method: 'listarItensBase',
+        error: error,
+        stackTrace: stackTrace,
+      );
+
+      final snapshot = await _itensBaseRef.get();
+
+      return _mapTodosItensBase(snapshot);
+    }
+  }
+
+  @override
+  Future<List<CalculadoraEventoItemModel>> listarItensEvento() async {
+    try {
+      final snapshot = await _eventoItensRef.orderBy(fieldOrdem).get();
+
+      return _mapTodosEventoItens(snapshot);
+    } on FirebaseException catch (error, stackTrace) {
+      _logError(
+        method: 'listarItensEvento',
+        error: error,
+        stackTrace: stackTrace,
+      );
+
+      final snapshot = await _eventoItensRef.get();
+
+      return _mapTodosEventoItens(snapshot);
+    }
+  }
+
+  @override
   Future<List<CalculadoraItemBaseModel>> listarItensBaseAtivos() async {
     try {
-      final snapshot =
-          await _itensBaseRef.where(fieldAtivo, isEqualTo: true).orderBy(fieldOrdem).get();
+      final snapshot = await _itensBaseRef
+          .where(fieldAtivo, isEqualTo: true)
+          .orderBy(fieldOrdem)
+          .get();
 
       return _mapItensBase(snapshot);
     } on FirebaseException catch (error, stackTrace) {
@@ -57,10 +100,13 @@ class CalculadoraItensBaseRepository {
     }
   }
 
+  @override
   Future<List<CalculadoraEventoItemModel>> listarItensEventoAtivos() async {
     try {
-      final snapshot =
-          await _eventoItensRef.where(fieldAtivo, isEqualTo: true).orderBy(fieldOrdem).get();
+      final snapshot = await _eventoItensRef
+          .where(fieldAtivo, isEqualTo: true)
+          .orderBy(fieldOrdem)
+          .get();
 
       return _mapEventoItens(snapshot);
     } on FirebaseException catch (error, stackTrace) {
@@ -86,6 +132,7 @@ class CalculadoraItensBaseRepository {
     }
   }
 
+  @override
   Future<List<CalculadoraEventoItemModel>> buscarItensPorTipoEvento({
     required String tipoEvento,
     String? perfilFesta,
@@ -138,6 +185,7 @@ class CalculadoraItensBaseRepository {
     }
   }
 
+  @override
   Future<List<CalculadoraEventoItemModel>> buscarItensPorTipoEventoComFallback({
     required String tipoEvento,
     String? perfilFesta,
@@ -166,6 +214,7 @@ class CalculadoraItensBaseRepository {
     return <CalculadoraEventoItemModel>[];
   }
 
+  @override
   Future<CalculadoraEventoItemModel?> buscarItemEventoPorId(String id) async {
     final documentId = id.trim();
 
@@ -192,6 +241,7 @@ class CalculadoraItensBaseRepository {
     }
   }
 
+  @override
   Future<void> salvarItemBase(CalculadoraItemBaseModel item) async {
     final documentId = item.id.trim();
 
@@ -221,6 +271,7 @@ class CalculadoraItensBaseRepository {
     }
   }
 
+  @override
   Future<void> salvarItemEvento(CalculadoraEventoItemModel item) async {
     final documentId = item.id.trim();
 
@@ -252,6 +303,36 @@ class CalculadoraItensBaseRepository {
     }
   }
 
+  @override
+  Future<void> ativarDesativarItemBase(
+    String id,
+    bool ativo,
+  ) async {
+    final documentId = id.trim();
+
+    if (documentId.isEmpty) {
+      throw ArgumentError(
+        'Não é possível ativar/desativar um item base sem id.',
+      );
+    }
+
+    try {
+      await _itensBaseRef.doc(documentId).update({
+        fieldAtivo: ativo,
+        fieldUpdatedAt: Timestamp.fromDate(DateTime.now()),
+      });
+    } catch (error, stackTrace) {
+      _logError(
+        method: 'ativarDesativarItemBase',
+        error: error,
+        stackTrace: stackTrace,
+      );
+
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> ativarDesativarItemEvento(
     String id,
     bool ativo,
@@ -280,9 +361,11 @@ class CalculadoraItensBaseRepository {
     }
   }
 
-  Future<List<CalculadoraItemBaseModel>> _listarItensBaseAtivosFallbackLocalSort() async {
+  Future<List<CalculadoraItemBaseModel>>
+      _listarItensBaseAtivosFallbackLocalSort() async {
     try {
-      final snapshot = await _itensBaseRef.where(fieldAtivo, isEqualTo: true).get();
+      final snapshot =
+          await _itensBaseRef.where(fieldAtivo, isEqualTo: true).get();
 
       return _mapItensBase(snapshot);
     } catch (error, stackTrace) {
@@ -296,9 +379,11 @@ class CalculadoraItensBaseRepository {
     }
   }
 
-  Future<List<CalculadoraEventoItemModel>> _listarItensEventoAtivosFallbackLocalSort() async {
+  Future<List<CalculadoraEventoItemModel>>
+      _listarItensEventoAtivosFallbackLocalSort() async {
     try {
-      final snapshot = await _eventoItensRef.where(fieldAtivo, isEqualTo: true).get();
+      final snapshot =
+          await _eventoItensRef.where(fieldAtivo, isEqualTo: true).get();
 
       return _mapEventoItens(snapshot);
     } catch (error, stackTrace) {
@@ -312,7 +397,8 @@ class CalculadoraItensBaseRepository {
     }
   }
 
-  Future<List<CalculadoraEventoItemModel>> _buscarItensPorTipoEventoFallbackLocalFilter({
+  Future<List<CalculadoraEventoItemModel>>
+      _buscarItensPorTipoEventoFallbackLocalFilter({
     required String tipoEventoKey,
     required String perfilFestaKey,
   }) async {
@@ -346,7 +432,8 @@ class CalculadoraItensBaseRepository {
     }
   }
 
-  Future<List<CalculadoraItemBaseModel>> _listarTodosItensBaseFiltrandoLocal() async {
+  Future<List<CalculadoraItemBaseModel>>
+      _listarTodosItensBaseFiltrandoLocal() async {
     try {
       final snapshot = await _itensBaseRef.get();
 
@@ -369,7 +456,8 @@ class CalculadoraItensBaseRepository {
     }
   }
 
-  Future<List<CalculadoraEventoItemModel>> _listarTodosItensEventoFiltrandoLocal() async {
+  Future<List<CalculadoraEventoItemModel>>
+      _listarTodosItensEventoFiltrandoLocal() async {
     try {
       final snapshot = await _eventoItensRef.get();
 
@@ -418,13 +506,36 @@ class CalculadoraItensBaseRepository {
     return itens;
   }
 
+  List<CalculadoraItemBaseModel> _mapTodosItensBase(
+    QuerySnapshot<Map<String, dynamic>> snapshot,
+  ) {
+    final itens =
+        snapshot.docs.map(CalculadoraItemBaseModel.fromFirestore).toList();
+
+    _ordenarItensBase(itens);
+
+    return itens;
+  }
+
+  List<CalculadoraEventoItemModel> _mapTodosEventoItens(
+    QuerySnapshot<Map<String, dynamic>> snapshot,
+  ) {
+    final itens =
+        snapshot.docs.map(CalculadoraEventoItemModel.fromFirestore).toList();
+
+    _ordenarEventoItens(itens);
+
+    return itens;
+  }
+
   List<CalculadoraEventoItemModel> _filtrarEventoItensLocalmente({
     required List<CalculadoraEventoItemModel> itens,
     required String tipoEventoKey,
     required String perfilFestaKey,
   }) {
     final filtrados = itens.where((item) {
-      final mesmoTipoEvento = _normalizarChave(item.tipoEvento) == tipoEventoKey;
+      final mesmoTipoEvento =
+          _normalizarChave(item.tipoEvento) == tipoEventoKey;
 
       if (!mesmoTipoEvento) {
         return false;

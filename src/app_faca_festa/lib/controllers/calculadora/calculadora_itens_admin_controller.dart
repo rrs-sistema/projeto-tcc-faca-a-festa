@@ -1,31 +1,30 @@
 import 'dart:developer' as developer;
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/calculadora/calculadora_evento_item_model.dart';
 import '../../data/models/calculadora/calculadora_item_base_model.dart';
-import '../../data/repositories/calculadora/calculadora_itens_base_repository.dart';
-
+import '../../domain/repositories/calculadora_itens_base_repository_contract.dart';
 
 class CalculadoraItensAdminController extends GetxController {
-  final CalculadoraItensBaseRepository repository;
-  final FirebaseFirestore firestore;
+  final CalculadoraItensBaseRepositoryContract repository;
 
   CalculadoraItensAdminController({
-    CalculadoraItensBaseRepository? repository,
-    FirebaseFirestore? firestore,
-  })  : firestore = firestore ?? FirebaseFirestore.instance,
-        repository = repository ?? CalculadoraItensBaseRepository();
+    required this.repository,
+  });
 
   final RxBool loading = false.obs;
   final RxBool saving = false.obs;
 
-  final RxList<CalculadoraItemBaseModel> itensBase = <CalculadoraItemBaseModel>[].obs;
-  final RxList<CalculadoraEventoItemModel> itensEvento = <CalculadoraEventoItemModel>[].obs;
+  final RxList<CalculadoraItemBaseModel> itensBase =
+      <CalculadoraItemBaseModel>[].obs;
+  final RxList<CalculadoraEventoItemModel> itensEvento =
+      <CalculadoraEventoItemModel>[].obs;
 
-  final Rxn<CalculadoraItemBaseModel> itemBaseSelecionado = Rxn<CalculadoraItemBaseModel>();
-  final Rxn<CalculadoraEventoItemModel> itemEventoSelecionado = Rxn<CalculadoraEventoItemModel>();
+  final Rxn<CalculadoraItemBaseModel> itemBaseSelecionado =
+      Rxn<CalculadoraItemBaseModel>();
+  final Rxn<CalculadoraEventoItemModel> itemEventoSelecionado =
+      Rxn<CalculadoraEventoItemModel>();
 
   final RxString erro = ''.obs;
 
@@ -78,14 +77,6 @@ class CalculadoraItensAdminController extends GetxController {
     'pacote',
   ];
 
-  CollectionReference<Map<String, dynamic>> get _itensBaseRef {
-    return firestore.collection(CalculadoraItemBaseModel.collectionName);
-  }
-
-  CollectionReference<Map<String, dynamic>> get _itensEventoRef {
-    return firestore.collection(CalculadoraEventoItemModel.collectionName);
-  }
-
   @override
   void onInit() {
     super.onInit();
@@ -113,17 +104,7 @@ class CalculadoraItensAdminController extends GetxController {
     if (showLoading) loading.value = true;
 
     try {
-      final snapshot = await _itensBaseRef.orderBy('ordem').get();
-      final itens = snapshot.docs.map(CalculadoraItemBaseModel.fromFirestore).toList();
-
-      _ordenarItensBase(itens);
-      itensBase.assignAll(itens);
-    } on FirebaseException catch (error, stackTrace) {
-      _logError('carregarItensBase', error, stackTrace);
-
-      final snapshot = await _itensBaseRef.get();
-      final itens = snapshot.docs.map(CalculadoraItemBaseModel.fromFirestore).toList();
-
+      final itens = await repository.listarItensBase();
       _ordenarItensBase(itens);
       itensBase.assignAll(itens);
     } catch (error, stackTrace) {
@@ -138,17 +119,7 @@ class CalculadoraItensAdminController extends GetxController {
     if (showLoading) loading.value = true;
 
     try {
-      final snapshot = await _itensEventoRef.orderBy('ordem').get();
-      final itens = snapshot.docs.map(CalculadoraEventoItemModel.fromFirestore).toList();
-
-      _ordenarItensEvento(itens);
-      itensEvento.assignAll(itens);
-    } on FirebaseException catch (error, stackTrace) {
-      _logError('carregarItensEvento', error, stackTrace);
-
-      final snapshot = await _itensEventoRef.get();
-      final itens = snapshot.docs.map(CalculadoraEventoItemModel.fromFirestore).toList();
-
+      final itens = await repository.listarItensEvento();
       _ordenarItensEvento(itens);
       itensEvento.assignAll(itens);
     } catch (error, stackTrace) {
@@ -203,10 +174,7 @@ class CalculadoraItensAdminController extends GetxController {
     erro.value = '';
 
     try {
-      await _itensBaseRef.doc(item.id).update({
-        'ativo': ativo,
-        'updated_at': Timestamp.fromDate(DateTime.now()),
-      });
+      await repository.ativarDesativarItemBase(item.id, ativo);
 
       final index = itensBase.indexWhere((element) => element.id == item.id);
       if (index >= 0) {
@@ -316,7 +284,8 @@ class CalculadoraItensAdminController extends GetxController {
     final status = filtroStatusBase.value.trim().toLowerCase();
 
     final filtrados = itensBase.where((item) {
-      if (categoria.isNotEmpty && item.categoriaPadrao.trim().toLowerCase() != categoria) {
+      if (categoria.isNotEmpty &&
+          item.categoriaPadrao.trim().toLowerCase() != categoria) {
         return false;
       }
 
@@ -329,7 +298,9 @@ class CalculadoraItensAdminController extends GetxController {
       final tipo = normalizarChave(item.tipoItem);
       final tags = item.tags.map(normalizarChave).join(' ');
 
-      return nome.contains(busca) || tipo.contains(busca) || tags.contains(busca);
+      return nome.contains(busca) ||
+          tipo.contains(busca) ||
+          tags.contains(busca);
     }).toList();
 
     _ordenarItensBase(filtrados);
@@ -348,11 +319,13 @@ class CalculadoraItensAdminController extends GetxController {
         return false;
       }
 
-      if (categoria.isNotEmpty && item.categoria.trim().toLowerCase() != categoria) {
+      if (categoria.isNotEmpty &&
+          item.categoria.trim().toLowerCase() != categoria) {
         return false;
       }
 
-      if (perfil.isNotEmpty && !item.perfisFesta.any((value) => value.trim() == perfil)) {
+      if (perfil.isNotEmpty &&
+          !item.perfisFesta.any((value) => value.trim() == perfil)) {
         return false;
       }
 
@@ -365,7 +338,9 @@ class CalculadoraItensAdminController extends GetxController {
       final base = normalizarChave(item.idItemBase);
       final observacao = normalizarChave(item.observacao);
 
-      return nome.contains(busca) || base.contains(busca) || observacao.contains(busca);
+      return nome.contains(busca) ||
+          base.contains(busca) ||
+          observacao.contains(busca);
     }).toList();
 
     _ordenarItensEvento(filtrados);
@@ -487,6 +462,8 @@ class CalculadoraItensAdminController extends GetxController {
   }
 
   void _showSuccess(String message) {
+    if (Get.testMode) return;
+
     Get.snackbar(
       'Calculadora',
       message,
@@ -496,6 +473,8 @@ class CalculadoraItensAdminController extends GetxController {
   }
 
   void _showError(String message) {
+    if (Get.testMode) return;
+
     Get.snackbar(
       'Atenção',
       message,
