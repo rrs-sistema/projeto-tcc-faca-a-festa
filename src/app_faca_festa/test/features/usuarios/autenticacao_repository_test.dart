@@ -10,6 +10,7 @@ void main() {
       emailUsuarioAtual: 'atual@email.com',
       nomeUsuarioAtual: 'Atual',
       fotoUsuarioAtual: 'https://example.com/foto.jpg',
+      contaAtualTemLoginComSenha: true,
     );
     final repository = AutenticacaoRepositoryImpl(remote);
 
@@ -22,6 +23,7 @@ void main() {
     expect(repository.emailUsuarioAtual, 'atual@email.com');
     expect(repository.nomeUsuarioAtual, 'Atual');
     expect(repository.fotoUsuarioAtual, 'https://example.com/foto.jpg');
+    expect(repository.contaAtualTemLoginComSenha, isTrue);
     expect(idCriado, 'usuario-criado');
     expect(remote.email, 'ana@email.com');
     expect(remote.senha, 'segredo');
@@ -154,6 +156,7 @@ class _AutenticacaoRemoteFake implements AutenticacaoRemoteDatasource {
     this.emailUsuarioAtual,
     this.nomeUsuarioAtual,
     this.fotoUsuarioAtual,
+    this.contaAtualTemLoginComSenha = false,
     this.erro,
     this.googleCancelado = false,
     this.sessoes = const [],
@@ -167,6 +170,8 @@ class _AutenticacaoRemoteFake implements AutenticacaoRemoteDatasource {
   final String? nomeUsuarioAtual;
   @override
   final String? fotoUsuarioAtual;
+  @override
+  final bool contaAtualTemLoginComSenha;
   final AutenticacaoRemoteException? erro;
   final bool googleCancelado;
   final List<SessaoUsuarioRemote?> sessoes;

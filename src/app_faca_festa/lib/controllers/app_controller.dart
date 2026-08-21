@@ -1,6 +1,5 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
@@ -827,9 +826,7 @@ class AppController extends GetxController {
   }
 
   bool _contaTemLoginComSenha() {
-    final providers =
-        FirebaseAuth.instance.currentUser?.providerData ?? const [];
-    return providers.any((provider) => provider.providerId == 'password');
+    return autenticacaoRepository.contaAtualTemLoginComSenha;
   }
 
   bool _rotaTotp(String rota) =>

@@ -39,6 +39,8 @@ abstract interface class AutenticacaoRepository {
 
   bool get sessaoAnonima;
 
+  bool get contaAtualTemLoginComSenha;
+
   /// Conta só do convite (anônimo ou token customizado, sem e-mail/Google).
   bool get sessaoVisitanteConvite;
 

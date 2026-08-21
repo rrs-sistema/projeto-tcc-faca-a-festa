@@ -31,6 +31,8 @@ abstract interface class AutenticacaoRemoteDatasource {
 
   bool get sessaoAnonima;
 
+  bool get contaAtualTemLoginComSenha;
+
   bool get sessaoVisitanteConvite;
 
   Future<void> entrarAnonimamente();
@@ -84,6 +86,12 @@ class FirebaseAutenticacaoRemoteDatasource
 
   @override
   bool get sessaoAnonima => auth.currentUser?.isAnonymous == true;
+
+  @override
+  bool get contaAtualTemLoginComSenha {
+    final providers = auth.currentUser?.providerData ?? const <UserInfo>[];
+    return providers.any((provider) => provider.providerId == 'password');
+  }
 
   @override
   bool get sessaoVisitanteConvite {

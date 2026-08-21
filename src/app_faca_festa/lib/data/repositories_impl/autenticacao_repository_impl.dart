@@ -32,6 +32,9 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
   bool get sessaoAnonima => remote.sessaoAnonima;
 
   @override
+  bool get contaAtualTemLoginComSenha => remote.contaAtualTemLoginComSenha;
+
+  @override
   bool get sessaoVisitanteConvite => remote.sessaoVisitanteConvite;
 
   @override
