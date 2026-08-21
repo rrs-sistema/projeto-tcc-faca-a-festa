@@ -37,7 +37,6 @@ import './controllers/tema/event_theme_controller.dart';
 import './controllers/tema/tema_festa_controller.dart';
 import './controllers/contacao/cotacao_controller.dart';
 import './controllers/evento_cadastro_controller.dart';
-import './controllers/orcamento_gasto_controller.dart';
 import './presentation/pages/login/login_screen.dart';
 import 'controllers/usuario/usuario_controller.dart';
 
@@ -62,6 +61,7 @@ import 'app/bootstrap/eventos_admin_bootstrap.dart';
 import 'app/bootstrap/gift_offline_bootstrap.dart';
 import 'app/bootstrap/orcamentos_admin_bootstrap.dart';
 import 'app/bootstrap/orcamento_bootstrap.dart';
+import 'app/bootstrap/orcamento_gasto_bootstrap.dart';
 import 'app/bootstrap/evento_bootstrap.dart';
 import 'app/bootstrap/convidado_bootstrap.dart';
 import 'app/bootstrap/perfil_usuario_bootstrap.dart';
@@ -385,6 +385,7 @@ void _registerControllers() {
   EventosAdminBootstrap.register();
   OrcamentosAdminBootstrap.register();
   OrcamentoBootstrap.register();
+  OrcamentoGastoBootstrap.register();
   AdminTerritorioBootstrap.register();
   Get.lazyPut<AppController>(() => AppController(), fenix: true);
   EventoBootstrap.register();
@@ -395,7 +396,6 @@ void _registerControllers() {
     permanent: true,
   ).carregarTiposEvento();
   Get.put(FornecedorController(), permanent: true);
-  Get.put(OrcamentoGastoController(), permanent: true);
   Get.lazyPut<CatalogoServicoRemoteDatasource>(
     () => CatalogoServicoRemoteDatasource(),
     fenix: true,

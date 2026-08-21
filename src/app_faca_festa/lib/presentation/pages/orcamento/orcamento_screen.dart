@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/bootstrap/orcamento_gasto_bootstrap.dart';
 import '../../../app/bootstrap/orcamento_bootstrap.dart';
 import '../../../data/models/avaliacao/avaliacao_model.dart';
 import './../../../controllers/orcamento_gasto_controller.dart';
@@ -122,10 +123,8 @@ class OrcamentoScreen extends StatelessWidget {
                             orcamento.idServicoFornecido!.isNotEmpty;
 
                     if (!temFornecedor) {
-                      final gastoC = Get.put(
-                        OrcamentoGastoController(),
+                      final gastoC = OrcamentoGastoBootstrap.putController(
                         tag: orcamento.idOrcamento,
-                        permanent: false,
                       );
 
                       gastoC.escutarGastos(orcamento.idOrcamento);
@@ -610,7 +609,7 @@ class OrcamentoScreen extends StatelessWidget {
 
   Future<void> _confirmarExcluirGasto(
       BuildContext context, String idOrcamento, String idGasto) async {
-    final gastoController = Get.put(OrcamentoGastoController(), tag: idGasto);
+    final gastoController = OrcamentoGastoBootstrap.putController(tag: idGasto);
     await Biblioteca.showConfirmDialog(
       context,
       title: 'Excluindo gasto!',
@@ -632,7 +631,8 @@ Future<void> _showAddGastoDialog(
   required String categoria,
 }) async {
   final themeController = Get.find<EventThemeController>();
-  final gastoController = Get.put(OrcamentoGastoController(), tag: idOrcamento);
+  final gastoController =
+      OrcamentoGastoBootstrap.putController(tag: idOrcamento);
 
   final nomeCtrl = TextEditingController();
   final custoCtrl = TextEditingController();
