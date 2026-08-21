@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
@@ -8,10 +7,16 @@ import '../domain/repositories/autenticacao_repository.dart';
 import '../domain/repositories/perfil_usuario_repository.dart';
 
 class LoginController extends GetxController {
-  final AutenticacaoRepository _autenticacaoRepository =
-      Get.find<AutenticacaoRepository>();
-  final PerfilUsuarioRepository _perfilRepository =
-      Get.find<PerfilUsuarioRepository>();
+  LoginController({
+    AutenticacaoRepository? autenticacaoRepository,
+    PerfilUsuarioRepository? perfilRepository,
+  })  : _autenticacaoRepository =
+            autenticacaoRepository ?? Get.find<AutenticacaoRepository>(),
+        _perfilRepository =
+            perfilRepository ?? Get.find<PerfilUsuarioRepository>();
+
+  final AutenticacaoRepository _autenticacaoRepository;
+  final PerfilUsuarioRepository _perfilRepository;
 
   var email = ''.obs;
   var senha = ''.obs;
@@ -81,8 +86,7 @@ class LoginController extends GetxController {
     final usuario = await _perfilRepository.buscarUsuario(idUsuario);
     if (usuario != null) return;
 
-    final firebaseUser = FirebaseAuth.instance.currentUser;
-    final nome = firebaseUser?.displayName?.trim() ?? '';
+    final nome = _autenticacaoRepository.nomeUsuarioAtual?.trim() ?? '';
     final email = _autenticacaoRepository.emailUsuarioAtual ?? '';
 
     final tipo = _tipoPerfilInicial();
@@ -93,7 +97,7 @@ class LoginController extends GetxController {
           nome: nome.isNotEmpty ? nome : 'Convidado',
           email: email,
           tipo: tipo,
-          fotoPerfilUrl: firebaseUser?.photoURL,
+          fotoPerfilUrl: _autenticacaoRepository.fotoUsuarioAtual,
           ativo: true,
           dataCadastro: DateTime.now(),
         ),

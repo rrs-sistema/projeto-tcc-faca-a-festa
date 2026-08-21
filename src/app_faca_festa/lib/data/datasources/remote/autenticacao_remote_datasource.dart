@@ -23,6 +23,10 @@ abstract interface class AutenticacaoRemoteDatasource {
 
   String? get emailUsuarioAtual;
 
+  String? get nomeUsuarioAtual;
+
+  String? get fotoUsuarioAtual;
+
   Stream<SessaoUsuarioRemote?> observarSessao();
 
   bool get sessaoAnonima;
@@ -61,6 +65,12 @@ class FirebaseAutenticacaoRemoteDatasource
 
   @override
   String? get emailUsuarioAtual => auth.currentUser?.email;
+
+  @override
+  String? get nomeUsuarioAtual => auth.currentUser?.displayName;
+
+  @override
+  String? get fotoUsuarioAtual => auth.currentUser?.photoURL;
 
   @override
   Stream<SessaoUsuarioRemote?> observarSessao() => auth.authStateChanges().map(

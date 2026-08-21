@@ -31,6 +31,10 @@ abstract interface class AutenticacaoRepository {
 
   String? get emailUsuarioAtual;
 
+  String? get nomeUsuarioAtual;
+
+  String? get fotoUsuarioAtual;
+
   Stream<SessaoUsuario?> observarSessao();
 
   bool get sessaoAnonima;

@@ -13,6 +13,12 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
   String? get emailUsuarioAtual => remote.emailUsuarioAtual;
 
   @override
+  String? get nomeUsuarioAtual => remote.nomeUsuarioAtual;
+
+  @override
+  String? get fotoUsuarioAtual => remote.fotoUsuarioAtual;
+
+  @override
   Stream<SessaoUsuario?> observarSessao() => remote.observarSessao().map(
         (sessao) => sessao == null
             ? null
