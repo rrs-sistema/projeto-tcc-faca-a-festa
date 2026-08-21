@@ -14,10 +14,10 @@ import './../presentation/pages/fornecedor/fornecedor_home_screen.dart';
 import './../presentation/pages/admin/admin_dashboard_screen.dart';
 import './../presentation/pages/welcome/welcome_event_screen.dart';
 import './../presentation/pages/home_event_screen.dart';
-import './avaliacao/avaliacao_servico_controller.dart';
 import './../data/models/DTO/servico_cotado_dto.dart';
 import './convidado/convidado_controller.dart';
 import './contacao/cotacao_controller.dart';
+import '../app/bootstrap/avaliacao_servico_bootstrap.dart';
 import '../app/bootstrap/servico_produto_bootstrap.dart';
 import 'fornecedor/fornecedor_controller.dart';
 import './orcamento_controller.dart';
@@ -79,7 +79,7 @@ class AppController extends GetxController {
   final cotacaoController = Get.put(CotacaoController());
   final fornecedorController = Get.put(FornecedorController());
   final tarefaController = Get.find<TarefaController>();
-  final avaliacaoController = Get.put(AvaliacaoServicoController());
+  final avaliacaoController = AvaliacaoServicoBootstrap.findController();
   final servicoController = ServicoProdutoBootstrap.findController();
   final themeController = Get.put(EventThemeController());
 

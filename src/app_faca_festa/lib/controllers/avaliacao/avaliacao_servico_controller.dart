@@ -1,21 +1,31 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import './../../data/models/model.dart';
+import '../../domain/usecases/gerenciar_avaliacoes_servico.dart';
 
 class AvaliacaoServicoController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  AvaliacaoServicoController({
+    required GerenciarAvaliacoesServico avaliacoes,
+  }) : _avaliacoes = avaliacoes;
+
+  final GerenciarAvaliacoesServico _avaliacoes;
+  StreamSubscription<List<Map<String, dynamic>>>? _avaliacoesServicoSub;
+  StreamSubscription<List<Map<String, dynamic>>>? _avaliacoesFornecedorSub;
 
   // ======================================================
   // 🔹 1. Avaliações do SERVIÇO
   // ======================================================
-  final RxList<Map<String, dynamic>> avaliacoesServico = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> avaliacoesServico =
+      <Map<String, dynamic>>[].obs;
   final RxDouble mediaServico = 0.0.obs;
 
   // ======================================================
   // 🔹 2. Avaliações do FORNECEDOR
   // ======================================================
-  final RxList<Map<String, dynamic>> avaliacoesFornecedor = <Map<String, dynamic>>[].obs;
+  final RxList<Map<String, dynamic>> avaliacoesFornecedor =
+      <Map<String, dynamic>>[].obs;
   final RxDouble mediaFornecedor = 0.0.obs;
 
   /// Controle se o organizador pode avaliar ou não
@@ -29,17 +39,14 @@ class AvaliacaoServicoController extends GetxController {
     required String idFornecedor,
     required String idServico,
   }) async {
-    final idFornecedorServico = '${idFornecedor}_$idServico';
-
-    final ref = _db
-        .collection('fornecedor_servico')
-        .doc(idFornecedorServico)
-        .collection('avaliacoes')
-        .orderBy('data', descending: true);
-
-    ref.snapshots().listen((snapshot) {
-      avaliacoesServico.value = snapshot.docs.map((doc) => doc.data()).toList();
-
+    await _avaliacoesServicoSub?.cancel();
+    _avaliacoesServicoSub = _avaliacoes
+        .observarAvaliacoesServico(
+      idFornecedor: idFornecedor,
+      idServico: idServico,
+    )
+        .listen((lista) {
+      avaliacoesServico.value = lista;
       _calcularMediaServico();
     });
   }
@@ -62,22 +69,10 @@ class AvaliacaoServicoController extends GetxController {
     required String idFornecedor,
     required String idServico,
   }) async {
-    final idFornecedorServico = '${idFornecedor}_$idServico';
-
-    final snap = await _db
-        .collection('fornecedor_servico')
-        .doc(idFornecedorServico)
-        .collection('avaliacoes')
-        .get();
-
-    if (snap.docs.isEmpty) return 0;
-
-    double soma = 0;
-    for (var d in snap.docs) {
-      soma += (d['nota'] ?? 0);
-    }
-
-    return soma / snap.docs.length;
+    return _avaliacoes.getMediaServico(
+      idFornecedor: idFornecedor,
+      idServico: idServico,
+    );
   }
 
   Future<void> adicionarAvaliacaoServico({
@@ -90,26 +85,16 @@ class AvaliacaoServicoController extends GetxController {
     String? idEvento,
     String? nomeEvento,
   }) async {
-    final idFornecedorServico = '${idFornecedor}_$idServico';
-
-    final ref = _db
-        .collection('fornecedor_servico')
-        .doc(idFornecedorServico)
-        .collection('avaliacoes')
-        .doc();
-
-    await ref.set({
-      'id': ref.id,
-      'id_fornecedor': idFornecedor,
-      'id_servico': idServico,
-      'id_cliente': idCliente,
-      'nome_cliente': nomeCliente,
-      'nota': nota,
-      'comentario': comentario,
-      'data': Timestamp.now(),
-      'id_evento': idEvento,
-      'nome_evento': nomeEvento,
-    });
+    await _avaliacoes.adicionarAvaliacaoServico(
+      idFornecedor: idFornecedor,
+      idServico: idServico,
+      idCliente: idCliente,
+      nomeCliente: nomeCliente,
+      nota: nota,
+      comentario: comentario,
+      idEvento: idEvento,
+      nomeEvento: nomeEvento,
+    );
   }
 
   // ======================================================
@@ -117,15 +102,10 @@ class AvaliacaoServicoController extends GetxController {
   //    /fornecedor/{idFornecedor}/avaliacoes
   // ======================================================
   Future<void> carregarAvaliacoesFornecedor(String idFornecedor) async {
-    final ref = _db
-        .collection('fornecedor')
-        .doc(idFornecedor)
-        .collection('avaliacoes')
-        .orderBy('data', descending: true);
-
-    ref.snapshots().listen((snapshot) {
-      avaliacoesFornecedor.value = snapshot.docs.map((doc) => doc.data()).toList();
-
+    await _avaliacoesFornecedorSub?.cancel();
+    _avaliacoesFornecedorSub =
+        _avaliacoes.observarAvaliacoesFornecedor(idFornecedor).listen((lista) {
+      avaliacoesFornecedor.value = lista;
       _calcularMediaFornecedor();
     });
   }
@@ -153,19 +133,15 @@ class AvaliacaoServicoController extends GetxController {
     String? idEvento,
     String? nomeEvento,
   }) async {
-    final ref = _db.collection('fornecedor').doc(idFornecedor).collection('avaliacoes').doc();
-
-    await ref.set({
-      'id': ref.id,
-      'id_fornecedor': idFornecedor,
-      'id_cliente': idCliente,
-      'nome_cliente': nomeCliente,
-      'nota': nota,
-      'comentario': comentario,
-      'data': Timestamp.now(),
-      'id_evento': idEvento,
-      'nome_evento': nomeEvento,
-    });
+    await _avaliacoes.adicionarAvaliacaoFornecedor(
+      idFornecedor: idFornecedor,
+      idCliente: idCliente,
+      nomeCliente: nomeCliente,
+      nota: nota,
+      comentario: comentario,
+      idEvento: idEvento,
+      nomeEvento: nomeEvento,
+    );
   }
 
   // ======================================================
@@ -177,34 +153,11 @@ class AvaliacaoServicoController extends GetxController {
     required String idEvento,
     required String idUsuario,
   }) async {
-    // Mesmo código anterior...
-    final avaliacao = await _db
-        .collection('avaliacao_fornecedor')
-        .where('id_evento', isEqualTo: idEvento)
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .where('id_usuario', isEqualTo: idUsuario)
-        .limit(1)
-        .get();
-
-    if (avaliacao.docs.isNotEmpty) return false;
-
-    final cotacoes = await _db.collection('cotacao').where('id_evento', isEqualTo: idEvento).get();
-
-    for (var c in cotacoes.docs) {
-      final fornecedorSnap = await c.reference.collection('fornecedores').doc(idFornecedor).get();
-
-      if (fornecedorSnap.exists) return true;
-    }
-
-    final orcamentos = await _db
-        .collection('orcamento')
-        .where('id_evento', isEqualTo: idEvento)
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .get();
-
-    if (orcamentos.docs.isNotEmpty) return true;
-
-    return false;
+    return _avaliacoes.podeAvaliarFornecedor(
+      idFornecedor: idFornecedor,
+      idEvento: idEvento,
+      idUsuario: idUsuario,
+    );
   }
 
   Future<bool> podeAvaliarCotacao({
@@ -212,17 +165,11 @@ class AvaliacaoServicoController extends GetxController {
     required String idEvento,
     required String idUsuario,
   }) async {
-    final jaAvaliou = await _db
-        .collection('avaliacao_fornecedor')
-        .where('id_evento', isEqualTo: idEvento)
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .where('id_usuario', isEqualTo: idUsuario)
-        .limit(1)
-        .get();
-
-    if (jaAvaliou.docs.isNotEmpty) return false;
-
-    return true;
+    return _avaliacoes.podeAvaliarCotacao(
+      idFornecedor: idFornecedor,
+      idEvento: idEvento,
+      idUsuario: idUsuario,
+    );
   }
 
   // ======================================================
@@ -255,5 +202,12 @@ class AvaliacaoServicoController extends GetxController {
         return "🥉 Bronze";
     }
     return null;
+  }
+
+  @override
+  void onClose() {
+    _avaliacoesServicoSub?.cancel();
+    _avaliacoesFornecedorSub?.cancel();
+    super.onClose();
   }
 }
