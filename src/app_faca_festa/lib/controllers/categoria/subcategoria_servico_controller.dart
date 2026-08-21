@@ -3,135 +3,165 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import './../../data/models/servico_produto/subcategoria_servico_model.dart';
+import 'categoria_servico_controller.dart';
 
 class SubcategoriaServicoController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  // 🔹 Listas observáveis
   final subcategorias = <SubcategoriaServicoModel>[].obs;
   final todasSubcategorias = <SubcategoriaServicoModel>[].obs;
   final subcategoriasFiltradas = <SubcategoriaServicoModel>[].obs;
-  RxMap<String, List<SubcategoriaServicoModel>> subcategoriasPorCategoria =
+  final RxMap<String, List<SubcategoriaServicoModel>> subcategoriasPorCategoria =
       <String, List<SubcategoriaServicoModel>>{}.obs;
+  final contagemServicos = <String, int>{}.obs;
+  final busca = ''.obs;
+  final categoriaAtualId = ''.obs;
+
+  final carregando = false.obs;
+  final erro = ''.obs;
 
   @override
   void onInit() {
     super.onInit();
+    carregarTodasSubcategoria();
+  }
 
-    Future.delayed(Duration.zero, () {
-      carregarTodasSubcategoria();
+  List<SubcategoriaServicoModel> get visiveis {
+    final termo = busca.value.trim().toLowerCase();
+    var lista = subcategoriasFiltradas.toList();
+    if (termo.isNotEmpty) {
+      lista = lista.where((s) {
+        return s.nome.toLowerCase().contains(termo) ||
+            (s.descricao ?? '').toLowerCase().contains(termo);
+      }).toList();
+    }
+    lista.sort((a, b) {
+      if (a.ordem != b.ordem) return a.ordem.compareTo(b.ordem);
+      return a.nome.toLowerCase().compareTo(b.nome.toLowerCase());
     });
+    return lista;
+  }
+
+  int get totalAtivas => subcategoriasFiltradas.where((s) => s.ativo).length;
+
+  int servicosDe(String idSubcategoria) => contagemServicos[idSubcategoria] ?? 0;
+
+  SubcategoriaServicoModel _deDoc(QueryDocumentSnapshot<Map<String, dynamic>> d) {
+    return SubcategoriaServicoModel.fromMap(d.data(), documentId: d.id);
   }
 
   Future<void> carregarTodasSubcategoria() async {
     try {
       final snap = await _db.collection('subcategoria_servico').get();
-
-      final lista = snap.docs.map((d) {
-        final data = d.data();
-        data['id'] = d.id;
-        return SubcategoriaServicoModel.fromMap(data);
-      }).toList();
-
+      final lista = snap.docs.map(_deDoc).toList();
       todasSubcategorias.assignAll(lista);
     } catch (_) {}
   }
 
-  // 🔹 Estados
-  final carregando = false.obs;
-  final erro = ''.obs;
-
-  /// 🔹 Carrega subcategorias de uma categoria e atualiza o mapa
+  /// Carrega subcategorias de uma categoria e atualiza o mapa.
+  /// Também preenche [subcategoriasFiltradas], usado pela tela admin.
   Future<void> carregarSubcategoriasPorCategoria(String idCategoria) async {
-    try {
-      final snap = await _db
-          .collection('subcategoria_servico')
-          .where('id_categoria', isEqualTo: idCategoria)
-          .get();
-
-      final lista = snap.docs.map((d) {
-        final data = d.data();
-        data['id'] = d.id;
-        return SubcategoriaServicoModel.fromMap(data);
-      }).toList();
-
-      subcategorias.assignAll(lista); // mantém compatibilidade
-      subcategoriasPorCategoria[idCategoria] = lista; // ✅ novo mapeamento
-    } catch (e) {
-      if (kDebugMode) {
-        print('Erro ao carregar subcategorias da categoria $idCategoria: $e');
-      }
-    }
+    await carregarSubcategorias(idCategoria);
   }
 
-  // ================================================================
-  // 🔹 Carrega todas as subcategorias ou filtra por categoria
-  // ================================================================
   Future<void> carregarSubcategorias([String? idCategoria]) async {
     try {
       carregando.value = true;
       erro.value = '';
-
-      Query query = _db.collection('subcategoria_servico');
       if (idCategoria != null) {
-        query = query.where('id_categoria', isEqualTo: idCategoria);
+        categoriaAtualId.value = idCategoria;
       }
 
-      final snapshot = await query.get();
+      final snap = await _db.collection('subcategoria_servico').get();
+      final todas = snap.docs.map(_deDoc).toList();
+      todasSubcategorias.assignAll(todas);
 
-      final lista = snapshot.docs.map((d) {
-        return SubcategoriaServicoModel.fromMap(d.data() as Map<String, dynamic>);
-      }).toList();
+      List<SubcategoriaServicoModel> lista = todas;
+      if (idCategoria != null && idCategoria.isNotEmpty) {
+        lista = todas.where((s) => s.idCategoria == idCategoria).toList();
+      }
 
       subcategorias.assignAll(lista);
-
-      // 🔹 Se foi passada uma categoria, mantém também a lista filtrada
       if (idCategoria != null) {
         subcategoriasFiltradas.assignAll(lista);
+        subcategoriasPorCategoria[idCategoria] = lista;
+      } else {
+        subcategoriasFiltradas.assignAll(lista);
       }
+
+      await _atualizarContagensServicos(lista.map((s) => s.id).toList());
     } catch (e) {
       erro.value = e.toString();
+      if (kDebugMode) {
+        print('Erro ao carregar subcategorias: $e');
+      }
     } finally {
       carregando.value = false;
     }
   }
 
-  // ================================================================
-  // 🔹 Salvar ou atualizar subcategoria
-  // ================================================================
+  Future<void> _atualizarContagensServicos(List<String> ids) async {
+    if (ids.isEmpty) {
+      contagemServicos.clear();
+      return;
+    }
+    try {
+      final snap = await _db.collection('servico_produto').get();
+      final map = <String, int>{};
+      for (final id in ids) {
+        map[id] = 0;
+      }
+      for (final d in snap.docs) {
+        final data = d.data();
+        final idSub = (data['id_subcategoria'] ?? data['idSubcategoria'] ?? '').toString();
+        if (map.containsKey(idSub)) {
+          map[idSub] = (map[idSub] ?? 0) + 1;
+        }
+      }
+      contagemServicos.assignAll(map);
+    } catch (_) {}
+  }
+
   Future<void> salvarSubcategoria(SubcategoriaServicoModel model) async {
     try {
-      await _db.collection('subcategoria_servico').doc(model.id).set(model.toMap());
-      await carregarSubcategoriasPorCategoria(model.idCategoria);
+      await _db
+          .collection('subcategoria_servico')
+          .doc(model.id)
+          .set(model.toMap(), SetOptions(merge: true));
+      await carregarSubcategorias(model.idCategoria);
+      await _sincronizarContagemCategorias();
     } catch (e) {
       erro.value = 'Erro ao salvar subcategoria: $e';
     }
   }
 
-  // ================================================================
-  // 🔹 Atualizar status (ativo/inativo)
-  // ================================================================
   Future<void> atualizarStatus(SubcategoriaServicoModel model, bool ativo) async {
     try {
-      await _db.collection('subcategoria_servico').doc(model.id).update({'ativo': ativo});
-      await carregarSubcategoriasPorCategoria(model.idCategoria);
+      await _db.collection('subcategoria_servico').doc(model.id).update({
+        'ativo': ativo,
+        'data_atualizacao': FieldValue.serverTimestamp(),
+      });
+      await carregarSubcategorias(model.idCategoria);
     } catch (e) {
       erro.value = 'Erro ao atualizar status: $e';
     }
   }
 
-  // ================================================================
-  // 🔹 Excluir subcategoria
-  // ================================================================
   Future<void> excluirSubcategoria(String id) async {
     try {
       await _db.collection('subcategoria_servico').doc(id).delete();
-
-      // Remove localmente também, sem precisar refazer a consulta
       subcategorias.removeWhere((s) => s.id == id);
       subcategoriasFiltradas.removeWhere((s) => s.id == id);
+      todasSubcategorias.removeWhere((s) => s.id == id);
+      await _sincronizarContagemCategorias();
     } catch (e) {
       erro.value = 'Erro ao excluir subcategoria: $e';
+    }
+  }
+
+  Future<void> _sincronizarContagemCategorias() async {
+    if (Get.isRegistered<CategoriaServicoController>()) {
+      await Get.find<CategoriaServicoController>().carregarCategorias();
     }
   }
 }

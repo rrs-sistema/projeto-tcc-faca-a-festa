@@ -5,6 +5,7 @@
 
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -86,6 +87,10 @@ class FornecedorController extends GetxController {
   final RxBool aptoParaOperar = false.obs;
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
+
+  int get totalAptos => fornecedores.where((f) => f.ativo && f.aptoParaOperar).length;
+  int get totalPendentes => fornecedores.where((f) => f.ativo && !f.aptoParaOperar).length;
+  int get totalInativos => fornecedores.where((f) => !f.ativo).length;
   late AppController appController; // 🔹 Define, mas sem inicializar aqui
 
   final filtroNome = ''.obs;
@@ -157,6 +162,8 @@ class FornecedorController extends GetxController {
     subCategorias.clear();
     categoriasServico.clear();
     subcategoriasServico.clear();
+    await _fornecedorSubscription?.cancel();
+    _fornecedorSubscription = null;
     await _solicitacoesSub?.cancel();
     await _fornecedorCotacoesSub?.cancel();
     await _servicosFornecedorSub?.cancel();
@@ -171,6 +178,7 @@ class FornecedorController extends GetxController {
     mensagensNaoLidas.value = 0;
     _limparDadosAi();
     fornecedor.value = null;
+    aptoParaOperar.value = false;
   }
 
   @override
@@ -267,9 +275,18 @@ class FornecedorController extends GetxController {
         .listen((snapshot) {
       if (snapshot.docs.isNotEmpty) {
         final data = snapshot.docs.first.data();
-        fornecedor.value = FornecedorModel.fromMap(data);
-        print('✅ Fornecedor atualizado: ${fornecedor.value!.razaoSocial}');
-        carregarAiFornecedorComDadosAtuais();
+        final atualizado = FornecedorModel.fromMap(
+          data,
+          documentId: snapshot.docs.first.id,
+        );
+        fornecedor.value = atualizado;
+        aptoParaOperar.value = atualizado.aptoParaOperar;
+        print('✅ Fornecedor atualizado: ${atualizado.razaoSocial}');
+        if (atualizado.aptoParaOperar) {
+          carregarAiFornecedorComDadosAtuais();
+        } else {
+          _limparDadosAi();
+        }
       } else {
         print('⚠️ Nenhum fornecedor ativo encontrado.');
         fornecedor.value = null;
@@ -342,18 +359,32 @@ class FornecedorController extends GetxController {
     }
   }
 
-  /// 🔹 Faz upload de imagem para o Firebase Storage e retorna a URL pública
-  Future<String> uploadBanner(File imageFile, {Uint8List? bytesWeb}) async {
+  /// 🔹 Faz upload de imagem para o Firebase Storage e retorna a URL pública.
+  /// Exige usuário autenticado (regras de `banners_fornecedores`).
+  Future<String> uploadBanner(
+    File imageFile, {
+    Uint8List? bytesWeb,
+    String? uid,
+  }) async {
+    final userId = uid ?? FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null || userId.isEmpty) {
+      throw Exception(
+        'É preciso estar autenticado para enviar o banner.',
+      );
+    }
+
     try {
+      final nomeArquivo = imageFile.path.split(RegExp(r'[\\/]')).last;
       final String fileName =
-          'banners_fornecedores/${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+          'banners_fornecedores/$userId/${DateTime.now().millisecondsSinceEpoch}_$nomeArquivo';
       final Reference ref = _storage.ref().child(fileName);
 
-      final UploadTask uploadTask = ref.putFile(imageFile);
-      final TaskSnapshot snapshot = await uploadTask.whenComplete(() => null);
+      final UploadTask uploadTask = bytesWeb != null
+          ? ref.putData(bytesWeb)
+          : ref.putFile(imageFile);
+      final TaskSnapshot snapshot = await uploadTask;
 
-      final String downloadUrl = await snapshot.ref.getDownloadURL();
-      return downloadUrl;
+      return await snapshot.ref.getDownloadURL();
     } catch (e) {
       throw Exception("Erro ao enviar banner: $e");
     }
@@ -368,8 +399,9 @@ class FornecedorController extends GetxController {
       // 🔸 Fornecedores
       // ================================
       final fornecedoresSnap = await _db.collection('fornecedor').get();
-      final listaFornecedores =
-          fornecedoresSnap.docs.map((d) => FornecedorModel.fromMap(d.data())).toList();
+      final listaFornecedores = fornecedoresSnap.docs
+          .map((d) => FornecedorModel.fromMap(d.data(), documentId: d.id))
+          .toList();
 
       // ✅ ORDENAR: aprovados > pendentes > desativados, e nome A-Z
       listaFornecedores.sort((a, b) {
@@ -415,15 +447,16 @@ class FornecedorController extends GetxController {
       final catServSnap = await _db.collection('categoria_servico').get();
       categoriasServico.value = catServSnap.docs
           .map((d) => {
-                'id': d['id'],
-                'nome': d['nome'],
-                'descricao': d['descricao'],
-                'ativo': d['ativo'],
+                'id': d.data()['id'] ?? d.id,
+                'nome': d.data()['nome'],
+                'descricao': d.data()['descricao'],
+                'ativo': d.data()['ativo'],
               })
           .toList();
 
-      categorias.value =
-          catServSnap.docs.map((d) => CategoriaServicoModel.fromMap(d.data())).toList();
+      categorias.value = catServSnap.docs
+          .map((d) => CategoriaServicoModel.fromMap(d.data(), documentId: d.id))
+          .toList();
 
       // ================================
       // 🔸 Subcategorias
@@ -431,16 +464,17 @@ class FornecedorController extends GetxController {
       final subcatSnap = await _db.collection('subcategoria_servico').get();
       subcategoriasServico.value = subcatSnap.docs
           .map((d) => {
-                'id': d['id'],
-                'nome': d['nome'],
-                'id_categoria': d['id_categoria'],
-                'descricao': d['descricao'],
-                'ativo': d['ativo'],
+                'id': d.data()['id'] ?? d.id,
+                'nome': d.data()['nome'],
+                'id_categoria': d.data()['id_categoria'] ?? d.data()['idCategoria'],
+                'descricao': d.data()['descricao'],
+                'ativo': d.data()['ativo'],
               })
           .toList();
 
-      subCategorias.value =
-          subcatSnap.docs.map((d) => SubcategoriaServicoModel.fromMap(d.data())).toList();
+      subCategorias.value = subcatSnap.docs
+          .map((d) => SubcategoriaServicoModel.fromMap(d.data(), documentId: d.id))
+          .toList();
 
       final servicosSnap = await _db.collection('fornecedor_servico').get();
 
@@ -554,6 +588,23 @@ class FornecedorController extends GetxController {
     return resultado;
   }
 
+  String cidadeDoFornecedor(FornecedorModel f) {
+    return enderecos.firstWhereOrNull((e) => e.idUsuario == f.idUsuario)?.nomeCidade ?? '';
+  }
+
+  List<String> nomesCategoriasDoFornecedor(FornecedorModel f) {
+    return categoriasFornecedor
+        .where((c) => c.idFornecedor == f.idFornecedor)
+        .map((c) => (c.nomeCategoria ?? '').trim())
+        .where((n) => n.isNotEmpty)
+        .toSet()
+        .toList();
+  }
+
+  int servicosDoFornecedor(FornecedorModel f) {
+    return allServicosFornecedor.where((s) => s.idFornecedor == f.idFornecedor).length;
+  }
+
   void ordenarFornecedores() {
     final lista = [...fornecedores];
     switch (ordenacaoSelecionada.value) {
@@ -576,16 +627,8 @@ class FornecedorController extends GetxController {
   // =============================================================
   // 🔸 Aprovação e desativação
   // =============================================================
-  Future<void> aprovarFornecedor(String idFornecedor) async {
-    try {
-      await _db.collection('fornecedor').doc(idFornecedor).update({'apto_para_operar': true});
-      final f = fornecedores.firstWhereOrNull((x) => x.idFornecedor == idFornecedor);
-      if (f != null) {
-        fornecedores[fornecedores.indexOf(f)] = f.copyWith(aptoParaOperar: true);
-      }
-    } catch (e) {
-      debugPrint('❌ Erro ao aprovar fornecedor $idFornecedor: $e');
-    }
+  Future<bool> aprovarFornecedor(String idFornecedor) {
+    return _definirAptoParaOperar(idFornecedor, true);
   }
 
   Future<void> desativarFornecedor(String idFornecedor) async {
@@ -597,15 +640,33 @@ class FornecedorController extends GetxController {
     }
   }
 
-  Future<void> reprovarFornecedor(String idFornecedor) async {
+  Future<bool> reprovarFornecedor(String idFornecedor) {
+    return _definirAptoParaOperar(idFornecedor, false);
+  }
+
+  Future<bool> _definirAptoParaOperar(String idFornecedor, bool apto) async {
     try {
-      await _db.collection('fornecedor').doc(idFornecedor).update({'apto_para_operar': false});
-      final f = fornecedores.firstWhereOrNull((x) => x.idFornecedor == idFornecedor);
-      if (f != null) {
-        fornecedores[fornecedores.indexOf(f)] = f.copyWith(aptoParaOperar: false);
+      final id = idFornecedor.trim();
+      if (id.isEmpty) {
+        debugPrint('❌ idFornecedor vazio ao atualizar apto_para_operar');
+        return false;
       }
+
+      await _db.collection('fornecedor').doc(id).update({
+        'apto_para_operar': apto,
+      });
+
+      final i = fornecedores.indexWhere(
+        (x) => x.idFornecedor == id || x.idUsuario == id,
+      );
+      if (i >= 0) {
+        fornecedores[i] = fornecedores[i].copyWith(aptoParaOperar: apto);
+      }
+      fornecedores.refresh();
+      return true;
     } catch (e) {
-      debugPrint('❌ Erro ao reprovar fornecedor $idFornecedor: $e');
+      debugPrint('❌ Erro ao atualizar apto_para_operar de $idFornecedor: $e');
+      return false;
     }
   }
 

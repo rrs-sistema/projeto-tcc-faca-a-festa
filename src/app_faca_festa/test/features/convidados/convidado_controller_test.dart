@@ -1,5 +1,6 @@
 import 'package:app_faca_festa/controllers/convidado/convidado_controller.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/repositories/convidado_repository.dart';
 import 'package:app_faca_festa/domain/repositories/presente_reservation_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -34,8 +35,8 @@ void main() {
   });
 
   test('event listener delegates, sorts and exposes domain entities', () async {
-    final zelia = _convidado(nome: 'Zélia');
-    final ana = _convidado(nome: 'Ana');
+    final zelia = _convidado(id: 'convidado-zelia', nome: 'Zélia');
+    final ana = _convidado(id: 'convidado-ana', nome: 'Ana');
     repository.convidados = [zelia, ana];
 
     await controller.escutarConvidados('evento-1');
@@ -43,6 +44,16 @@ void main() {
 
     expect(repository.eventoObservado, 'evento-1');
     expect(controller.convidados.map((item) => item.nome), ['Ana', 'Zélia']);
+    expect(controller.carregando.value, isFalse);
+  });
+
+  test('adicionarConvidado shows the guest in the list immediately', () async {
+    final ana = _convidado(id: 'convidado-ana', nome: 'Ana');
+
+    await controller.adicionarConvidado(ana);
+
+    expect(repository.convidadoSalvo?.idConvidado, 'convidado-ana');
+    expect(controller.convidados.map((item) => item.nome), ['Ana']);
     expect(controller.carregando.value, isFalse);
   });
 
@@ -66,6 +77,36 @@ void main() {
     expect(repository.status, StatusConvidado.confirmado);
     expect(repository.dataResposta, isNotNull);
   });
+
+  test('invite links persist the token without claiming WhatsApp or SMS delivery',
+      () async {
+    final convidado = _convidado(nome: 'Ana');
+
+    final preparados = await controller.garantirLinksConvite([convidado]);
+
+    expect(repository.tokensConvite, {'convidado-1': 'convidado-1'});
+    expect(preparados.single.tokenParaLink, 'convidado-1');
+    expect(
+      controller.urlConvite(preparados.single, origem: 'https://faca-a-festa.web.app'),
+      'https://faca-a-festa.web.app/#/convite/convidado-1',
+    );
+    expect(
+      controller.textoCompartilhamento(
+        convidados: preparados,
+        evento: _evento(),
+        origem: 'https://faca-a-festa.web.app',
+      ),
+      contains('/#/convite/convidado-1'),
+    );
+    expect(
+      controller.textoCompartilhamento(
+        convidados: preparados,
+        evento: _evento(),
+        origem: 'https://faca-a-festa.web.app',
+      ),
+      isNot(contains('WhatsApp')),
+    );
+  });
 }
 
 class _PresenteReservationRepositoryFake
@@ -80,15 +121,27 @@ class _PresenteReservationRepositoryFake
   }) async {}
 }
 
-Convidado _convidado({required String nome}) {
+Convidado _convidado({required String nome, String id = 'convidado-1'}) {
   final now = DateTime(2026, 8, 14);
   return Convidado(
-    idConvidado: 'convidado-1',
+    idConvidado: id,
     idEvento: 'evento-1',
     nome: nome,
     contato: '44999999999',
+    conviteToken: id,
     dataCadastro: now,
     dataAtualizacao: now,
+  );
+}
+
+Evento _evento() {
+  return Evento(
+    idEvento: 'evento-1',
+    idTipoEvento: 'tipo-1',
+    idUsuario: 'organizador-1',
+    nomeEvento: 'Festa da Ana',
+    localEvento: 'Salão',
+    data: DateTime(2026, 9, 1),
   );
 }
 
@@ -108,8 +161,7 @@ class _ConvidadoRepositoryFake implements ConvidadoRepository {
     totalAtualizados: 0,
     totalIgnorados: 0,
   );
-  List<String>? idsConvites;
-  String? tipoEnvio;
+  Map<String, String> tokensConvite = {};
 
   @override
   Future<Convidado?> buscarPorId(String idConvidado) async {
@@ -157,11 +209,7 @@ class _ConvidadoRepositoryFake implements ConvidadoRepository {
   }
 
   @override
-  Future<void> marcarConvitesEnviados(
-    List<String> idsConvidados,
-    String tipoEnvio,
-  ) async {
-    idsConvites = idsConvidados;
-    this.tipoEnvio = tipoEnvio;
+  Future<void> garantirTokensConvite(Map<String, String> tokensPorId) async {
+    tokensConvite = Map<String, String>.from(tokensPorId);
   }
 }

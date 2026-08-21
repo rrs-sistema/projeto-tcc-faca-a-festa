@@ -1,24 +1,38 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
+import './../../core/utils/convite_link.dart';
+import './../../data/services/convite/enviar_convites_por_email_service.dart';
 import './../../domain/entities/convidado.dart';
 import './../../domain/entities/evento.dart';
 import './../../domain/repositories/convidado_repository.dart';
 import './../../domain/repositories/grupo_convidado_repository.dart';
 import './../../domain/repositories/presente_reservation_repository.dart';
 import './grupo_convidado_controller.dart';
-import './../evento_controller.dart';
 
 class ConvidadoController extends GetxController {
   ConvidadoController({
     required ConvidadoRepository repository,
     required PresenteReservationRepository presenteReservationRepository,
+    EnviarConvitesPorEmailService? conviteEmailService,
   })  : _repository = repository,
-        _presenteReservationRepository = presenteReservationRepository;
+        _presenteReservationRepository = presenteReservationRepository,
+        _conviteEmailService = conviteEmailService;
 
   final ConvidadoRepository _repository;
   final PresenteReservationRepository _presenteReservationRepository;
+  final EnviarConvitesPorEmailService? _conviteEmailService;
+
+  EnviarConvitesPorEmailService get _emailService {
+    final injetado = _conviteEmailService;
+    if (injetado != null) return injetado;
+    if (Get.isRegistered<EnviarConvitesPorEmailService>()) {
+      return Get.find<EnviarConvitesPorEmailService>();
+    }
+    return Get.put(EnviarConvitesPorEmailService(), permanent: true);
+  }
 
   // 🔹 Lista completa de convidados do evento atual
   final RxList<Convidado> convidados = <Convidado>[].obs;
@@ -50,6 +64,7 @@ class ConvidadoController extends GetxController {
   final Rx<Convidado?> convidadoAtual = Rx<Convidado?>(null);
 
   StreamSubscription? _convidadosSub;
+  final Map<String, Convidado> _convidadosPendentes = {};
 
 // =============================================================
 // 🔹 Lista temporária de novos convidados (somente em memória)
@@ -152,16 +167,12 @@ class ConvidadoController extends GetxController {
   /// 🔹 Persiste todos os convidados novos
   Future<void> enviarNovosConvidados(Evento evento) async {
     if (novosConvidados.isEmpty) return;
+    if (evento.idEvento.trim().isEmpty) return;
 
     try {
       carregando.value = true;
-      final eventoController = Get.find<EventoController>();
-      final tipoEvento =
-          eventoController.tipoEventoAtualEntidade?.nome ?? evento.nomeEvento;
-
       for (final c in novosConvidados) {
-        await _repository.salvar(c);
-        enviarConviteAoAdicionar(c, evento, tipoEvento);
+        await _repository.salvar(c.comTokenConvite());
       }
       novosConvidados.clear();
     } catch (e) {
@@ -181,6 +192,9 @@ class ConvidadoController extends GetxController {
     final idEventoLimpo = idEvento.trim();
 
     if (idEventoLimpo.isEmpty) {
+      await _convidadosSub?.cancel();
+      _convidadosSub = null;
+      _convidadosPendentes.clear();
       convidados.clear();
       idEventoAtual.value = '';
       return;
@@ -193,18 +207,13 @@ class ConvidadoController extends GetxController {
     await _convidadosSub?.cancel();
 
     idEventoAtual.value = idEventoLimpo;
+    _convidadosPendentes.clear();
     carregando.value = true;
     erro.value = '';
 
     _convidadosSub = _repository.observarPorEvento(idEventoLimpo).listen(
       (resultado) {
-        final lista = resultado.toList();
-
-        lista.sort(
-          (a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()),
-        );
-
-        convidados.assignAll(lista);
+        _publicarConvidados(resultado.toList());
         carregando.value = false;
       },
       onError: (e) {
@@ -216,76 +225,201 @@ class ConvidadoController extends GetxController {
 
   Future<void> adicionarConvidado(Convidado model) async {
     try {
-      carregando.value = true;
       erro.value = '';
-
-      await _repository.salvar(model);
+      final salvo = model.comTokenConvite();
+      await _repository.salvar(salvo);
+      _mesclarConvidadoLocal(salvo);
     } catch (e) {
       erro.value = 'Erro ao salvar convidado: $e';
       rethrow;
-    } finally {
-      carregando.value = false;
     }
   }
 
   Future<void> atualizarConvidado(Convidado model) async {
     try {
-      carregando.value = true;
       erro.value = '';
-
       await _repository.salvar(model);
+      _mesclarConvidadoLocal(model);
     } catch (e) {
       erro.value = 'Erro ao atualizar convidado: $e';
       rethrow;
-    } finally {
-      carregando.value = false;
     }
   }
 
   Future<void> excluirConvidado(String idConvidado) async {
     try {
       await _repository.excluir(idConvidado);
+      _convidadosPendentes.remove(idConvidado);
+      convidados.removeWhere((c) => c.idConvidado == idConvidado);
     } catch (e) {
       erro.value = 'Erro ao excluir convidado: $e';
       rethrow;
     }
   }
 
-  Future<void> enviarConvitesSelecionados({
-    required List<Convidado> convidadosSelecionados,
-    required Evento evento,
-    required String tipoEnvio,
-  }) async {
-    if (convidadosSelecionados.isEmpty) return;
+  void _mesclarConvidadoLocal(Convidado model) {
+    final id = model.idConvidado.trim();
+    if (id.isEmpty) return;
+    _convidadosPendentes[id] = model;
+    _publicarConvidados(convidados.toList());
+  }
+
+  void _publicarConvidados(List<Convidado> remoto) {
+    final porId = <String, Convidado>{};
+    for (final convidado in remoto) {
+      final id = convidado.idConvidado.trim();
+      if (id.isEmpty) continue;
+      final pendente = _convidadosPendentes[id];
+      if (pendente != null && _pendenteMaisRecente(pendente, convidado)) {
+        porId[id] = pendente;
+      } else {
+        porId[id] = convidado;
+        _convidadosPendentes.remove(id);
+      }
+    }
+    for (final pendente in _convidadosPendentes.values) {
+      porId.putIfAbsent(pendente.idConvidado, () => pendente);
+    }
+    final lista = porId.values.toList()
+      ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
+    convidados.assignAll(lista);
+  }
+
+  bool _pendenteMaisRecente(Convidado pendente, Convidado remoto) {
+    return pendente.dataAtualizacao.isAfter(remoto.dataAtualizacao);
+  }
+
+  /// Persiste o token de cada convidado e devolve a lista pronta para copiar/compartilhar.
+  Future<List<Convidado>> garantirLinksConvite(
+    List<Convidado> convidadosSelecionados,
+  ) async {
+    if (convidadosSelecionados.isEmpty) return const [];
 
     try {
-      carregando.value = true;
       erro.value = '';
 
-      final eventoController = Get.find<EventoController>();
-      final tipoEvento =
-          eventoController.tipoEventoAtualEntidade?.nome ?? evento.nomeEvento;
+      final comToken = convidadosSelecionados
+          .map((convidado) => convidado.comTokenConvite())
+          .toList(growable: false);
 
-      for (final convidado in convidadosSelecionados) {
-        await enviarConviteAoAdicionar(
-          convidado,
-          evento,
-          tipoEvento,
-        );
+      final tokensPorId = <String, String>{};
+      for (final convidado in comToken) {
+        final id = convidado.idConvidado.trim();
+        if (id.isEmpty) continue;
+        tokensPorId[id] = convidado.tokenParaLink;
       }
 
-      await _repository.marcarConvitesEnviados(
-        convidadosSelecionados
-            .map((convidado) => convidado.idConvidado)
-            .toList(growable: false),
-        tipoEnvio,
-      );
+      await _repository.garantirTokensConvite(tokensPorId);
+      return comToken;
     } catch (e) {
-      erro.value = 'Erro ao enviar convites: $e';
+      erro.value = 'Erro ao gerar links de convite: $e';
       rethrow;
-    } finally {
-      carregando.value = false;
     }
+  }
+
+  Future<ResultadoEnvioConviteEmail> enviarConvitesPorEmail(
+    List<Convidado> selecionados,
+  ) async {
+    final idEvento = idEventoAtual.value.trim();
+    if (idEvento.isEmpty) {
+      throw const EnviarConvitesPorEmailException(
+        'failed-precondition',
+        'Nenhum evento selecionado.',
+      );
+    }
+
+    final comEmail = selecionados
+        .where((convidado) =>
+            convidado.temEmail && convidado.idConvidado.trim().isNotEmpty)
+        .toList(growable: false);
+    final semEmail = selecionados
+        .where((convidado) => !convidado.temEmail)
+        .map((convidado) => convidado.idConvidado)
+        .where((id) => id.trim().isNotEmpty)
+        .toList(growable: false);
+
+    if (comEmail.isEmpty) {
+      return ResultadoEnvioConviteEmail(
+        enviados: 0,
+        semEmail: semEmail,
+        falhas: const [],
+      );
+    }
+
+    await garantirLinksConvite(comEmail);
+    final resultado = await _emailService.enviar(
+      idEvento: idEvento,
+      idsConvidados: comEmail
+          .map((convidado) => convidado.idConvidado.trim())
+          .toList(growable: false),
+    );
+    return ResultadoEnvioConviteEmail(
+      enviados: resultado.enviados,
+      semEmail: {...semEmail, ...resultado.semEmail}.toList(),
+      falhas: resultado.falhas,
+    );
+  }
+
+  String origemPublicaConvite() {
+    if (kIsWeb) {
+      final origin = Uri.base.origin;
+      if (origin.isNotEmpty &&
+          !origin.contains('localhost') &&
+          !origin.contains('127.0.0.1')) {
+        return origin;
+      }
+    }
+    return ConviteLink.origemPublicaPadrao;
+  }
+
+  String urlConvite(Convidado convidado, {String? origem}) {
+    return ConviteLink.url(
+      convidado.tokenParaLink,
+      origem: origem ?? origemPublicaConvite(),
+    );
+  }
+
+  String textoCompartilhamento({
+    required List<Convidado> convidados,
+    required Evento evento,
+    String? origem,
+  }) {
+    final origemLink = origem ?? origemPublicaConvite();
+    final nomeEvento = evento.nomeEvento.trim().isEmpty
+        ? 'o evento'
+        : evento.nomeEvento.trim();
+    final mensagem = evento.mensagemConvidado?.trim();
+
+    if (convidados.length == 1) {
+      final convidado = convidados.first;
+      final buffer = StringBuffer()
+        ..writeln('Olá, ${convidado.nome.trim()}!')
+        ..writeln()
+        ..writeln('Você foi convidado(a) para $nomeEvento.');
+      if (mensagem != null && mensagem.isNotEmpty) {
+        buffer
+          ..writeln()
+          ..writeln(mensagem);
+      }
+      buffer
+        ..writeln()
+        ..writeln('Abra seu convite:')
+        ..write(urlConvite(convidado, origem: origemLink));
+      return buffer.toString();
+    }
+
+    final buffer = StringBuffer()
+      ..writeln('Convites para $nomeEvento')
+      ..writeln();
+    if (mensagem != null && mensagem.isNotEmpty) {
+      buffer
+        ..writeln(mensagem)
+        ..writeln();
+    }
+    for (final convidado in convidados) {
+      buffer.writeln('${convidado.nome.trim()}: ${urlConvite(convidado, origem: origemLink)}');
+    }
+    return buffer.toString().trim();
   }
 
   @override
@@ -299,6 +433,7 @@ class ConvidadoController extends GetxController {
     _convidadosSub = null;
 
     convidados.clear();
+    _convidadosPendentes.clear();
     novosConvidados.clear();
     idEventoAtual.value = '';
     termoBusca.value = '';
@@ -482,8 +617,9 @@ class ConvidadoController extends GetxController {
   /// =============================================================
   List<Convidado> get listaFiltrada {
     final termo = termoBusca.value.toLowerCase();
-    if (termo.isEmpty) return convidados;
-    return convidados
+    final lista = List<Convidado>.from(convidados);
+    if (termo.isEmpty) return lista;
+    return lista
         .where((c) =>
             c.nome.toLowerCase().contains(termo) ||
             (c.email?.toLowerCase().contains(termo) ?? false))

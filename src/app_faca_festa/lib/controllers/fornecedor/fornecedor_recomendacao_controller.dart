@@ -115,7 +115,7 @@ class FornecedorRecomendacaoController extends GetxController {
 
       debugPrint(
         '🔎 [FornecedorRecomendacao] Buscando recomendações salvas | '
-        'eventoId=$idEvento | usuarioId=$idUsuario',
+        'id_evento=$idEvento | id_usuario=$idUsuario',
       );
 
       QuerySnapshot<Map<String, dynamic>> snapshot;
@@ -123,47 +123,23 @@ class FornecedorRecomendacaoController extends GetxController {
       try {
         snapshot = await _db
             .collection('fornecedor_recomendacoes')
-            .where('eventoId', isEqualTo: idEvento)
-            .where('usuarioId', isEqualTo: idUsuario)
+            .where('id_evento', isEqualTo: idEvento)
+            .where('id_usuario', isEqualTo: idUsuario)
             .orderBy('score', descending: true)
             .limit(limite)
             .get();
       } catch (e) {
         debugPrint(
-          '⚠️ [FornecedorRecomendacao] Falha na consulta camelCase. '
-          'Tentando consulta sem orderBy. Erro: $e',
+          '⚠️ [FornecedorRecomendacao] Falha na consulta com orderBy. '
+          'Tentando sem ordenação no servidor. Erro: $e',
         );
 
         snapshot = await _db
             .collection('fornecedor_recomendacoes')
-            .where('eventoId', isEqualTo: idEvento)
-            .where('usuarioId', isEqualTo: idUsuario)
+            .where('id_evento', isEqualTo: idEvento)
+            .where('id_usuario', isEqualTo: idUsuario)
             .limit(limite)
             .get();
-      }
-
-      if (snapshot.docs.isEmpty) {
-        debugPrint(
-          '⚠️ [FornecedorRecomendacao] Nenhuma recomendação encontrada em camelCase. '
-          'Tentando compatibilidade com snake_case.',
-        );
-
-        try {
-          snapshot = await _db
-              .collection('fornecedor_recomendacoes')
-              .where('id_evento', isEqualTo: idEvento)
-              .where('id_usuario', isEqualTo: idUsuario)
-              .orderBy('score', descending: true)
-              .limit(limite)
-              .get();
-        } catch (_) {
-          snapshot = await _db
-              .collection('fornecedor_recomendacoes')
-              .where('id_evento', isEqualTo: idEvento)
-              .where('id_usuario', isEqualTo: idUsuario)
-              .limit(limite)
-              .get();
-        }
       }
 
       final lista = snapshot.docs

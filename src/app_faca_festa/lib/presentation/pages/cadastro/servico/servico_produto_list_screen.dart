@@ -7,6 +7,8 @@ import 'package:get/get.dart';
 
 import '../../../../controllers/avaliacao/avaliacao_servico_controller.dart';
 import '../../../widgets/festa_app_bar.dart';
+import '../../../widgets/admin/admin_kit.dart';
+import '../../../../controllers/tema/admin_theme.dart';
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../../controllers/servico/servico_foto_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
@@ -95,37 +97,68 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
   Widget build(BuildContext context) {
     final primary = theme.primaryColor.value;
     final medidas = {'U': 'Unidade', 'H': 'Hora', 'D': 'Diária', 'P': 'Pacote'};
+    final isAdmin = appController.usuarioLogado.value?.tipo == 'A';
+
+    final addAction = IconButton(
+      icon: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
+      onPressed: () {
+        if (appController.usuarioLogado.value?.tipo == 'F') {
+          fotoController.fotos.clear();
+          fotoController.fotos.refresh();
+          showFornecedorServicoBottomSheet(
+            context,
+            widget.fornecedorId ?? '',
+            vinculo: null,
+          );
+        } else {
+          showServicoProdutoBottomSheet(context);
+        }
+      },
+      tooltip: 'Adicionar novo serviço',
+    );
+
+    final catalogoAdmin = isAdmin && widget.fornecedorId == null;
+    final adminActions = <Widget>[
+      addAction,
+      if (catalogoAdmin)
+        PopupMenuButton<String>(
+          tooltip: 'Mais ações',
+          icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+          onSelected: (value) async {
+            if (value == 'popular') {
+              await _popularCatalogoServicos(context);
+            }
+          },
+          itemBuilder: (_) => const [
+            PopupMenuItem(
+              value: 'popular',
+              child: Text('Popular catálogo de festas'),
+            ),
+          ],
+        ),
+    ];
 
     return Scaffold(
-      appBar: FestaAppBar(
-        titulo: 'Serviços e Produtos',
-        acoes: [
-          Container(
-            margin: const EdgeInsets.only(right: 8),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.25),
-              shape: BoxShape.circle,
+      backgroundColor: isAdmin ? AdminPalette.surface : null,
+      appBar: isAdmin
+          ? AdminBackAppBar(
+              title: 'Serviços e Produtos',
+              subtitle: widget.fornecedorId == null ? 'Catálogo da plataforma' : 'Catálogo do fornecedor',
+              actions: adminActions,
+            )
+          : FestaAppBar(
+              titulo: 'Serviços e Produtos',
+              acoes: [
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.25),
+                    shape: BoxShape.circle,
+                  ),
+                  child: addAction,
+                )
+              ],
             ),
-            child: IconButton(
-              icon: const Icon(Icons.add_rounded, color: Colors.white, size: 22),
-              onPressed: () {
-                if (appController.usuarioLogado.value?.tipo == 'F') {
-                  fotoController.fotos.clear();
-                  fotoController.fotos.refresh();
-                  showFornecedorServicoBottomSheet(
-                    context,
-                    widget.fornecedorId ?? '',
-                    vinculo: null,
-                  );
-                } else {
-                  showServicoProdutoBottomSheet(context);
-                }
-              },
-              tooltip: 'Adicionar novo serviço',
-            ),
-          )
-        ],
-      ),
       body: Obx(() {
         if (controller.carregando.value) {
           return const Center(child: CircularProgressIndicator());
@@ -367,12 +400,56 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
             ),
             const SizedBox(height: 6),
             Text(
-              'Adicione um novo serviço clicando no botão acima.',
+              widget.fornecedorId == null
+                  ? 'Popule o catálogo de festas ou adicione um serviço.'
+                  : 'Adicione um novo serviço clicando no botão acima.',
               style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13),
+              textAlign: TextAlign.center,
             ),
+            if (appController.usuarioLogado.value?.tipo == 'A' && widget.fornecedorId == null) ...[
+              const SizedBox(height: 18),
+              FilledButton.icon(
+                onPressed: () => _popularCatalogoServicos(context),
+                icon: const Icon(Icons.auto_awesome_rounded),
+                label: Text(
+                  'Popular catálogo de festas',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
           ],
         ),
       );
+
+  Future<void> _popularCatalogoServicos(BuildContext context) async {
+    final ok = await confirmarAcaoAdmin(
+      context,
+      titulo: 'Popular catálogo de serviços',
+      mensagem:
+          'Isso grava produtos e serviços reais do mercado de festas em todas as subcategorias. '
+          'Itens já cadastrados são atualizados sem perder os vínculos de fornecedores.',
+      confirmar: 'Popular catálogo',
+      cor: AdminPalette.primary,
+    );
+    if (!ok) return;
+    try {
+      EasyLoading.show(status: 'Gravando catálogo...');
+      final total = await controller.popularCatalogoInicial();
+      EasyLoading.dismiss();
+      Get.snackbar(
+        'Catálogo de serviços',
+        '$total produtos e serviços gravados.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      EasyLoading.dismiss();
+      Get.snackbar(
+        'Erro ao popular catálogo',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
 
   Widget _buildServicoCard(
     BuildContext context,

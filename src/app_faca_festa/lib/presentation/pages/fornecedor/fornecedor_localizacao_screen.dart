@@ -1,19 +1,18 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
 
-import '../../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
-import './../../../../data/models/servico_produto/categoria_servico_model.dart';
-import './../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import '../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
 import './../../../controllers/fornecedor/fornecedor_recomendacao_controller.dart';
-import './../../../controllers/evento_controller.dart';
+import './../../../../data/models/servico_produto/categoria_servico_model.dart';
+import '../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
+import '../../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
+import './../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
+import './../../../controllers/evento_controller.dart';
 import './cotacao/servico_detalhe_screen.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../widgets/festa_app_bar.dart';
@@ -47,11 +46,6 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   @override
   void initState() {
     super.initState();
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
-    ));
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(_carregarRecomendacoesIA());
     });
@@ -75,8 +69,10 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
       final fornecedoresBase = _baseFornecedores();
       final fornecedoresFiltrados = _aplicarFiltros(fornecedoresBase);
-      final fornecedoresProximos = _aplicarFiltros(controllerLocalizacao.fornecedoresProximos);
-      final fornecedoresDestaque = _aplicarFiltros(controllerLocalizacao.fornecedoresDestaque);
+      final fornecedoresProximos =
+          _aplicarFiltros(controllerLocalizacao.fornecedoresProximos.toList());
+      final fornecedoresDestaque =
+          _aplicarFiltros(controllerLocalizacao.fornecedoresDestaque.toList());
       final recomendados = _recomendados(fornecedoresFiltrados, fornecedoresDestaque);
 
       return Scaffold(
@@ -193,12 +189,12 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
       return const SizedBox.shrink();
     }
 
-    return Obx(() {
-      final loading =
-          recomendacaoController.carregando.value || recomendacaoController.gerando.value;
-      final recomendacoes = recomendacaoController.recomendacoes.take(5).toList();
+    // Sem Obx aninhado: o Obx da tela já observa estes Rx.
+    final loading =
+        recomendacaoController.carregando.value || recomendacaoController.gerando.value;
+    final recomendacoes = recomendacaoController.recomendacoes.take(5).toList();
 
-      return Container(
+    return Container(
         margin: const EdgeInsets.fromLTRB(12, 8, 12, 6),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
@@ -366,7 +362,6 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
           ],
         ),
       );
-    });
   }
 
   Future<void> _abrirFornecedorRecomendadoIA(
@@ -428,7 +423,7 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
 
   List<FornecedorDetalhadoDto> _aplicarFiltros(List<FornecedorDetalhadoDto> lista) {
     final termo = termoBusca.trim().toLowerCase();
-    var resultado = lista;
+    var resultado = List<FornecedorDetalhadoDto>.from(lista);
     if (categoriaSelecionada != null) {
       final idCategoria = categoriaSelecionada!.id;
       final nomeCategoria = categoriaSelecionada!.nome.trim().toLowerCase();
@@ -565,10 +560,9 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   }
 
   Widget _menuCategorias(Color primary, LinearGradient gradient) {
-    return Obx(() {
-      final categorias = controllerLocalizacao.categorias;
+    final categorias = controllerLocalizacao.categorias.toList();
 
-      return SizedBox(
+    return SizedBox(
         height: _CategoriasHeaderDelegateBuilder.extent,
         child: ColoredBox(
           color: const Color(0xFFF8FAFC).withValues(alpha: 0.98),
@@ -609,7 +603,6 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
           ),
         ),
       );
-    });
   }
 
   Widget _buildConteudo({
@@ -716,10 +709,9 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
   }
 
   Widget _carrosselServicos(Color primary) {
-    return Obx(() {
-      final lista = controllerLocalizacao.servicosPorCategoria.toList();
-      if (lista.isEmpty) return const SizedBox.shrink();
-      return Column(
+    final lista = controllerLocalizacao.servicosPorCategoria.toList();
+    if (lista.isEmpty) return const SizedBox.shrink();
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(
@@ -739,7 +731,6 @@ class _FornecedorLocalizacaoScreenState extends State<FornecedorLocalizacaoScree
           const SizedBox(height: 10),
         ],
       );
-    });
   }
 
   Widget _cardServicoCarrossel(FornecedorServicoDetalhadoDto s, Color primary) {

@@ -9,6 +9,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/models/evento/inspiracao_model.dart';
+import '../../data/models/fornecedor/fornecedor_model.dart';
 
 class InspiracaoController extends GetxController {
   static const String _colecaoInspiracoes = 'inspiracoes';
@@ -23,6 +24,7 @@ class InspiracaoController extends GetxController {
 
   final RxList<Map<String, dynamic>> tarefasInspiracaoEvento = <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> orcamentosInspiracaoEvento = <Map<String, dynamic>>[].obs;
+  final RxList<FornecedorModel> fornecedoresRelacionados = <FornecedorModel>[].obs;
 
   final RxSet<String> referenciasSalvasIds = <String>{}.obs;
   final RxSet<String> favoritasIds = <String>{}.obs;
@@ -112,10 +114,17 @@ class InspiracaoController extends GetxController {
                   favorito: favoritasIds.contains(insp.id) || insp.favorito,
                 ),
               )
-              .toList();
+              .toList()
+            ..sort((a, b) {
+              if (a.destaque != b.destaque) {
+                return a.destaque ? -1 : 1;
+              }
+              return a.titulo.toLowerCase().compareTo(b.titulo.toLowerCase());
+            });
 
           todasInspiracoes.assignAll(lista);
           _aplicarFiltroAtual();
+          unawaited(_carregarFornecedoresRelacionados());
 
           loading.value = false;
 
@@ -204,6 +213,70 @@ class InspiracaoController extends GetxController {
       print('🏷️ Categoria selecionada: ${categoriaSelecionada.value}');
       print('🎯 Inspirações filtradas: ${filtradas.length}');
     }
+  }
+
+  FornecedorModel? fornecedorRelacionadoPorId(String id) {
+    final alvo = id.trim();
+    if (alvo.isEmpty) return null;
+    for (final fornecedor in fornecedoresRelacionados) {
+      if (fornecedor.idFornecedor == alvo) return fornecedor;
+    }
+    return null;
+  }
+
+  List<FornecedorModel> fornecedoresDaInspiracao(InspiracaoModel inspiracao) {
+    final lista = <FornecedorModel>[];
+    final vistos = <String>{};
+    for (final raw in inspiracao.fornecedoresRelacionados) {
+      final fornecedor = fornecedorRelacionadoPorId(raw);
+      if (fornecedor == null) continue;
+      if (!vistos.add(fornecedor.idFornecedor)) continue;
+      lista.add(fornecedor);
+    }
+    return lista;
+  }
+
+  List<FornecedorModel> fornecedoresDasInspiracoesFiltradas() {
+    final lista = <FornecedorModel>[];
+    final vistos = <String>{};
+    for (final inspiracao in inspiracoesFiltradas) {
+      for (final fornecedor in fornecedoresDaInspiracao(inspiracao)) {
+        if (!vistos.add(fornecedor.idFornecedor)) continue;
+        lista.add(fornecedor);
+      }
+    }
+    return lista;
+  }
+
+  Future<void> _carregarFornecedoresRelacionados() async {
+    final ids = <String>{};
+    for (final inspiracao in todasInspiracoes) {
+      for (final raw in inspiracao.fornecedoresRelacionados) {
+        final id = raw.trim();
+        if (id.isNotEmpty) ids.add(id);
+      }
+    }
+
+    if (ids.isEmpty) {
+      fornecedoresRelacionados.clear();
+      return;
+    }
+
+    final lista = <FornecedorModel>[];
+    for (final id in ids) {
+      try {
+        final doc = await FirebaseFirestore.instance.collection('fornecedor').doc(id).get();
+        final data = doc.data();
+        if (!doc.exists || data == null) continue;
+        lista.add(FornecedorModel.fromMap(data, documentId: doc.id));
+      } catch (e) {
+        if (kDebugMode) {
+          print('⚠️ Fornecedor $id não carregado para inspiração: $e');
+        }
+      }
+    }
+
+    fornecedoresRelacionados.assignAll(lista);
   }
 
   Future<void> salvarInspiracaoNoEvento(

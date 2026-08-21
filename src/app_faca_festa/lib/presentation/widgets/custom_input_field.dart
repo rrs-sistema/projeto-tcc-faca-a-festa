@@ -6,6 +6,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../controllers/tema/event_theme_controller.dart';
+import './../../core/utils/form_masks.dart';
+import './../../core/utils/form_validators.dart';
 
 enum InputType {
   text,
@@ -13,6 +15,8 @@ enum InputType {
   password,
   phone,
   number,
+  cpf,
+  cnpj,
   cpfCnpj,
   money,
   multiline,
@@ -117,14 +121,31 @@ class _CustomInputFieldState extends State<CustomInputField> {
         break;
       case InputType.phone:
         finalKeyboardType = TextInputType.phone;
-        maskFormatter = MaskTextInputFormatter(mask: '(##) #####-####');
+        maskFormatter = FormMasks.telefone();
         break;
       case InputType.number:
         finalKeyboardType = TextInputType.number;
         break;
+      case InputType.cpf:
+        finalKeyboardType = TextInputType.number;
+        maskFormatter = MaskTextInputFormatter(
+          mask: '###.###.###-##',
+          filter: {'#': RegExp(r'[0-9]')},
+        );
+        break;
+      case InputType.cnpj:
+        finalKeyboardType = TextInputType.number;
+        maskFormatter = MaskTextInputFormatter(
+          mask: '##.###.###/####-##',
+          filter: {'#': RegExp(r'[0-9]')},
+        );
+        break;
       case InputType.cpfCnpj:
         finalKeyboardType = TextInputType.number;
-        maskFormatter = MaskTextInputFormatter(mask: '###.###.###-##');
+        maskFormatter = MaskTextInputFormatter(
+          mask: '###.###.###-##',
+          filter: {'#': RegExp(r'[0-9]')},
+        );
         break;
       case InputType.money:
         finalKeyboardType = TextInputType.number;
@@ -173,19 +194,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
             child: TextFormField(
               controller: widget.controller,
 
-              // Lógica de validação inteligente:
-              // 1. Usa o validator customizado se houver.
-              // 2. Se não houver e for isRequired, usa validação padrão.
-              // 3. Se não houver e não for isRequired, retorna nulo (sem validação).
-              validator: widget.validator ??
-                  (widget.isRequired
-                      ? (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return 'Campo obrigatório';
-                          }
-                          return null;
-                        }
-                      : null),
+              validator: widget.validator ?? _validarPorTipo,
 
               readOnly: widget.readOnly,
               enabled: widget.enabled,
@@ -195,7 +204,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
               maxLines: widget.maxLines ?? (widget.type == InputType.multiline ? 4 : 1),
               obscureText: widget.type == InputType.password ? !showPassword : widget.obscureText,
               keyboardType: finalKeyboardType,
-              onChanged: widget.onChanged,
+              onChanged: _onChanged,
               cursorColor: iconColor,
               inputFormatters: [
                 if (maskFormatter != null) maskFormatter!,
@@ -244,6 +253,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
                 focusedBorder: border.copyWith(
                   borderSide: BorderSide(color: iconColor, width: 1.5),
                 ),
+                errorMaxLines: 3,
                 errorBorder: border.copyWith(
                   borderSide: const BorderSide(color: Colors.redAccent, width: 1.3),
                 ),
@@ -256,5 +266,50 @@ class _CustomInputFieldState extends State<CustomInputField> {
         ],
       ),
     );
+  }
+
+  void _onChanged(String value) {
+    if (widget.type == InputType.cpfCnpj && maskFormatter != null) {
+      final digitos = value.replaceAll(RegExp(r'\D'), '');
+      final novaMascara =
+          digitos.length > 11 ? '##.###.###/####-##' : '###.###.###-##';
+      if (maskFormatter!.getMask() != novaMascara) {
+        maskFormatter!.updateMask(mask: novaMascara);
+      }
+    }
+    if (widget.type == InputType.phone && maskFormatter != null) {
+      FormMasks.atualizarTelefone(
+        maskFormatter!,
+        value,
+        controller: widget.controller,
+      );
+    }
+    widget.onChanged?.call(value);
+  }
+
+  String? _validarPorTipo(String? value) {
+    switch (widget.type) {
+      case InputType.email:
+        return FormValidators.email(value, obrigatorio: widget.isRequired);
+      case InputType.password:
+        return FormValidators.senha(value, obrigatorio: widget.isRequired);
+      case InputType.phone:
+        return FormValidators.telefone(value, obrigatorio: widget.isRequired);
+      case InputType.cep:
+        return FormValidators.cep(value, obrigatorio: widget.isRequired);
+      case InputType.cpf:
+        return FormValidators.cpf(value, obrigatorio: widget.isRequired);
+      case InputType.cnpj:
+        return FormValidators.cnpj(value, obrigatorio: widget.isRequired);
+      case InputType.cpfCnpj:
+        return FormValidators.cpfOuCnpj(value, obrigatorio: widget.isRequired);
+      default:
+        return widget.isRequired
+            ? FormValidators.obrigatorio(
+                value,
+                campo: widget.label.toLowerCase(),
+              )
+            : null;
+    }
   }
 }

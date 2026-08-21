@@ -204,4 +204,20 @@ class _AutenticacaoRemoteFake implements AutenticacaoRemoteDatasource {
     if (erro != null) throw erro!;
     return 'usuario-criado';
   }
+
+  @override
+  bool get sessaoAnonima => false;
+
+  @override
+  bool get sessaoVisitanteConvite => false;
+
+  @override
+  Future<void> entrarAnonimamente() async {
+    if (erro != null) throw erro!;
+  }
+
+  @override
+  Future<void> entrarComTokenCustomizado(String token) async {
+    if (erro != null) throw erro!;
+  }
 }

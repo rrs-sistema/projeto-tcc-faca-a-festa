@@ -3,13 +3,18 @@
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
+import './../../../core/utils/form_masks.dart';
+import './../../../core/utils/form_validators.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
+import './../../../controllers/tema/tema_festa_controller.dart';
 import './../../../controllers/evento_cadastro_controller.dart';
 import './../endereco/endereco_section.dart';
 import './evento_preview_titulo_widget.dart';
+import './tema_festa_selector.dart';
 import './../../../data/models/model.dart';
 import '../calculadora/calculadora_festa_screen.dart';
 
@@ -22,6 +27,9 @@ Future<void> showCadastroEventoBottomSheet(
   EasyLoading.show(status: 'A carregar informações...');
 
   await controller.carregarTiposEvento();
+  if (Get.isRegistered<TemaFestaController>()) {
+    await Get.find<TemaFestaController>().carregar();
+  }
 
   if (eventoParaEdicao != null) {
     controller.carregarEvento(eventoParaEdicao);
@@ -30,6 +38,7 @@ Future<void> showCadastroEventoBottomSheet(
   }
 
   final primary = theme.primaryColor.value;
+  final dinheiroMask = FormMasks.dinheiro();
 
   final tipoNormalizado = controller.tipoEventoSelecionado.value?.nome
           .toLowerCase()
@@ -124,6 +133,7 @@ Future<void> showCadastroEventoBottomSheet(
                     ),
                     child: Form(
                       key: controller.formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -133,7 +143,13 @@ Future<void> showCadastroEventoBottomSheet(
                                 corPrincipal: primary,
                               )),
                           const SizedBox(height: 10),
-                          ..._buildCamposPorTipo(primary, controller, eventoParaEdicao, context),
+                          ..._buildCamposPorTipo(
+                            primary,
+                            controller,
+                            eventoParaEdicao,
+                            context,
+                            dinheiroMask,
+                          ),
                           const SizedBox(height: 10),
                           _buildAcoes(primary, controller),
                         ],
@@ -158,11 +174,13 @@ List<Widget> _buildCamposPorTipo(
   EventoCadastroController controller,
   EventoModel? eventoParaEdicao,
   BuildContext context,
+  TextInputFormatter dinheiroMask,
 ) {
   final tipoNormalizado = controller.tipoEventoSelecionado.value?.nome
       .toLowerCase()
       .replaceAll(RegExp(r'[^a-zá-úà-ùãõâêîôûç\s]'), '')
       .trim();
+  final tokenTipo = controller.tokenTipoEvento;
 
   return [
     _SectionCard(
@@ -174,7 +192,7 @@ List<Widget> _buildCamposPorTipo(
             label: "Título do evento",
             icon: Icons.celebration_rounded,
             controller: controller.nomeEvento,
-            validator: (v) => v == null || v.trim().isEmpty ? "Obrigatório" : null,
+            validator: (v) => FormValidators.titulo(v, campo: 'o título do evento'),
             onChanged: (p0) {
               controller.nomeEventoPreview.value = p0;
               controller.atualizarPreview();
@@ -186,9 +204,14 @@ List<Widget> _buildCamposPorTipo(
               label: "Nome do(a) aniversariante",
               icon: Icons.cake_rounded,
               controller: controller.nomePessoalPrincipal,
-              validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+              validator: (v) => FormValidators.nomePessoa(
+                v,
+                campo: 'o nome do(a) aniversariante',
+              ),
               onChanged: (_) => controller.atualizarPreview(),
             ),
+            const SizedBox(height: 10),
+            TemaFestaSelector(primary: primary, obrigatorio: true),
           ],
           if (tipoNormalizado == 'formatura' || tipoNormalizado == 'eventoformatura') ...[
             const SizedBox(height: 8),
@@ -196,27 +219,45 @@ List<Widget> _buildCamposPorTipo(
               label: "Nome do(a) formando(a)",
               icon: Icons.school_rounded,
               controller: controller.nomePessoalPrincipal,
-              validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+              validator: (v) => FormValidators.nomePessoa(
+                v,
+                campo: 'o nome do(a) formando(a)',
+              ),
               onChanged: (_) => controller.atualizarPreview(),
             ),
+            const SizedBox(height: 10),
+            TemaFestaSelector(primary: primary),
           ],
-          if (tipoNormalizado == 'corporativo' || tipoNormalizado == 'eventocorporativo') ...[
+          if (tokenTipo.contains('corporativo')) ...[
             const SizedBox(height: 8),
             _CompactInputField(
               label: "Empresa ou setor",
               icon: Icons.business_rounded,
               controller: controller.nomePessoalPrincipal,
-              validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+              validator: (v) => FormValidators.titulo(
+                v,
+                campo: 'a empresa ou setor',
+                minimo: 2,
+              ),
               onChanged: (_) => controller.atualizarPreview(),
             ),
+            const SizedBox(height: 10),
+            TemaFestaSelector(primary: primary),
           ],
-          if (tipoNormalizado == 'festainfantil') ...[
+          if (tokenTipo.contains('cha')) ...[
+            const SizedBox(height: 10),
+            TemaFestaSelector(primary: primary),
+          ],
+          if (tipoNormalizado == 'festainfantil' || tipoNormalizado == 'festa infantil') ...[
             const SizedBox(height: 8),
             _CompactInputField(
               label: "Nome da criança",
               icon: Icons.child_care_rounded,
               controller: controller.nomeNoiva, // reaproveitado do modelo
-              validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+              validator: (v) => FormValidators.nomePessoa(
+                v,
+                campo: 'o nome da criança',
+              ),
               onChanged: (_) => controller.atualizarPreview(),
             ),
             const SizedBox(height: 8),
@@ -224,27 +265,20 @@ List<Widget> _buildCamposPorTipo(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  flex: 1,
                   child: _CompactInputField(
                     label: "Idade",
                     icon: Icons.cake_rounded,
                     controller: controller.idade,
                     keyboardType: TextInputType.number,
-                    onChanged: (_) => controller.atualizarPreview(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 2,
-                  child: _CompactInputField(
-                    label: "Tema",
-                    icon: Icons.star_rounded,
-                    controller: controller.tema,
+                    inputFormatters: FormMasks.inteiro(maxDigits: 3),
+                    validator: (v) => FormValidators.idade(v, obrigatorio: true, maximo: 17),
                     onChanged: (_) => controller.atualizarPreview(),
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            TemaFestaSelector(primary: primary, obrigatorio: true),
           ],
         ],
       ),
@@ -265,7 +299,10 @@ List<Widget> _buildCamposPorTipo(
                     label: "Nome da noiva(o)",
                     icon: Icons.female_rounded,
                     controller: controller.nomeNoiva,
-                    validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                    validator: (v) => FormValidators.nomePessoa(
+                      v,
+                      campo: 'o nome da noiva(o)',
+                    ),
                     onChanged: (_) => controller.atualizarPreview(),
                   ),
                 ),
@@ -275,7 +312,10 @@ List<Widget> _buildCamposPorTipo(
                     label: "Nome do noivo(a)",
                     icon: Icons.male_rounded,
                     controller: controller.parceiro,
-                    validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                    validator: (v) => FormValidators.nomePessoa(
+                      v,
+                      campo: 'o nome do noivo(a)',
+                    ),
                     onChanged: (_) => controller.atualizarPreview(),
                   ),
                 ),
@@ -321,7 +361,8 @@ List<Widget> _buildCamposPorTipo(
                               child: Text('Ao ar livre', overflow: TextOverflow.ellipsis)),
                         ],
                         onChanged: (v) => controller.tipoCerimonia.value = v ?? '',
-                        validator: (v) => v == null || v.isEmpty ? "Obrigatório" : null,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Selecione o tipo de cerimônia' : null,
                       )),
                 ),
                 const SizedBox(width: 8),
@@ -369,11 +410,14 @@ List<Widget> _buildCamposPorTipo(
                               child: Text('Minimalista', overflow: TextOverflow.ellipsis)),
                         ],
                         onChanged: (v) => controller.estiloCasamento.value = v ?? '',
-                        validator: (v) => v == null || v.isEmpty ? "Obrigatório" : null,
+                        validator: (v) =>
+                            v == null || v.isEmpty ? 'Selecione o estilo do casamento' : null,
                       )),
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            TemaFestaSelector(primary: primary),
             const SizedBox(height: 10),
             _buildCampoPadrinhos(primary, controller),
           ],
@@ -409,7 +453,7 @@ List<Widget> _buildCamposPorTipo(
                       controller.dataFesta.text = DateFormat('dd/MM/yyyy', 'pt_BR').format(picked);
                     }
                   },
-                  validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                  validator: (v) => FormValidators.data(v, campo: 'a data do evento'),
                 ),
               ),
               const SizedBox(width: 8),
@@ -429,7 +473,7 @@ List<Widget> _buildCamposPorTipo(
                           "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
                     }
                   },
-                  validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                  validator: (v) => FormValidators.hora(v, campo: 'a hora do evento'),
                 ),
               ),
             ],
@@ -440,6 +484,12 @@ List<Widget> _buildCamposPorTipo(
             icon: Icons.attach_money_rounded,
             controller: controller.custoEstimado,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [dinheiroMask],
+            validator: (v) => FormValidators.dinheiro(
+              v,
+              campo: 'o custo estimado',
+              maiorQue: 1,
+            ),
             onChanged: (v) => controller.atualizarPreview(),
           ),
         ],
@@ -591,6 +641,21 @@ Widget _buildSecaoConvidadosEstimados(Color primary, EventoCadastroController co
                 icon: Icons.person_rounded,
                 controller: controller.totalAdultos,
                 keyboardType: TextInputType.number,
+                inputFormatters: FormMasks.inteiro(maxDigits: 5),
+                validator: (v) {
+                  final erro = FormValidators.inteiroNaoNegativo(
+                    v,
+                    campo: 'os adultos',
+                  );
+                  if (erro != null) return erro;
+                  final total = _parseIntText(controller.totalAdultos.text) +
+                      _parseIntText(controller.totalCriancas.text) +
+                      _parseIntText(controller.totalBebes.text);
+                  if (total < 1) {
+                    return 'Informe pelo menos 1 convidado';
+                  }
+                  return null;
+                },
                 onChanged: (_) => atualizarTotal(),
               ),
             ),
@@ -601,6 +666,11 @@ Widget _buildSecaoConvidadosEstimados(Color primary, EventoCadastroController co
                 icon: Icons.child_care_rounded,
                 controller: controller.totalCriancas,
                 keyboardType: TextInputType.number,
+                inputFormatters: FormMasks.inteiro(maxDigits: 5),
+                validator: (v) => FormValidators.inteiroNaoNegativo(
+                  v,
+                  campo: 'as crianças',
+                ),
                 onChanged: (_) => atualizarTotal(),
               ),
             ),
@@ -611,6 +681,11 @@ Widget _buildSecaoConvidadosEstimados(Color primary, EventoCadastroController co
                 icon: Icons.baby_changing_station_rounded,
                 controller: controller.totalBebes,
                 keyboardType: TextInputType.number,
+                inputFormatters: FormMasks.inteiro(maxDigits: 5),
+                validator: (v) => FormValidators.inteiroNaoNegativo(
+                  v,
+                  campo: 'os bebês',
+                ),
                 onChanged: (_) => atualizarTotal(),
               ),
             ),
@@ -725,9 +800,15 @@ Widget _buildAcoes(Color primary, EventoCadastroController controller) {
               onPressed: salvando
                   ? null
                   : () async {
+                      final valido =
+                          controller.formKey.currentState?.validate() ?? false;
+                      if (!valido) return;
                       EasyLoading.show(status: 'A processar...');
-                      await controller.salvarEvento();
-                      EasyLoading.dismiss();
+                      try {
+                        await controller.salvarEvento();
+                      } finally {
+                        EasyLoading.dismiss();
+                      }
                     },
               icon: salvando
                   ? const SizedBox(
@@ -758,9 +839,8 @@ class _SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Widget child;
-  final Widget? trailing;
 
-  const _SectionCard({required this.title, required this.icon, required this.child, this.trailing});
+  const _SectionCard({required this.title, required this.icon, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -794,7 +874,6 @@ class _SectionCard extends StatelessWidget {
                   ),
                 ),
               ),
-              if (trailing != null) trailing!,
             ],
           ),
           const SizedBox(height: 8),
@@ -815,6 +894,7 @@ class _CompactInputField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final TextInputType? keyboardType;
   final FormFieldValidator<String>? validator;
+  final List<TextInputFormatter>? inputFormatters;
 
   const _CompactInputField({
     required this.controller,
@@ -826,6 +906,7 @@ class _CompactInputField extends StatelessWidget {
     this.onChanged,
     this.keyboardType,
     this.validator,
+    this.inputFormatters,
   });
 
   @override
@@ -838,6 +919,7 @@ class _CompactInputField extends StatelessWidget {
       keyboardType: keyboardType,
       onChanged: onChanged,
       validator: validator,
+      inputFormatters: inputFormatters,
       style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
       decoration: InputDecoration(
         labelText: label,
@@ -849,6 +931,7 @@ class _CompactInputField extends StatelessWidget {
         filled: true,
         fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
         errorStyle: const TextStyle(fontSize: 9, height: 0.8),
+        errorMaxLines: 2,
       ),
     );
   }

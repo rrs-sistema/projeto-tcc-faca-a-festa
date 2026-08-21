@@ -37,9 +37,9 @@ class _EstatisticasTabState extends State<EstatisticasTab> with SingleTickerProv
     final EventThemeController? eventTheme =
         Get.isRegistered<EventThemeController>() ? Get.find<EventThemeController>() : null;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: Obx(() {
+    return ColoredBox(
+      color: const Color(0xFFF8FAFC),
+      child: Obx(() {
         final primary = eventTheme?.primaryColor.value ?? const Color(0xFF0F766E);
         final total = convidadoController.totalConvidados;
         final confirmados = convidadoController.totalConfirmados;

@@ -10,6 +10,7 @@ import './../data/models/endereco/endereco_usuario.dart';
 import '../domain/entities/evento.dart';
 import '../domain/entities/tipo_evento.dart';
 import '../domain/repositories/evento_repository.dart';
+import '../data/models/evento/tema_festa_model.dart';
 
 class EventoCadastroController extends GetxController {
   EventoCadastroController({required EventoRepository repository})
@@ -53,6 +54,9 @@ class EventoCadastroController extends GetxController {
 
   final tipoCerimonia = ''.obs;
   final estiloCasamento = ''.obs;
+  final idTema = ''.obs;
+  final temaLivre = false.obs;
+  final dressCode = ''.obs;
 
   final dataFesta = TextEditingController();
   final horaFesta = TextEditingController();
@@ -134,6 +138,47 @@ class EventoCadastroController extends GetxController {
     }
   }
 
+  String get tokenTipoEvento =>
+      TemaFestaModel.normalizarTipo(tipoEventoSelecionado.value?.nome ?? '');
+
+  bool get exibeSeletorTemaFesta {
+    final token = tokenTipoEvento;
+    return token.contains('aniversario') ||
+        token.contains('infantil') ||
+        token.contains('formatura') ||
+        token.contains('cha') ||
+        token.contains('casamento') ||
+        token.contains('corporativo');
+  }
+
+  bool get temaFestaObrigatorio {
+    final token = tokenTipoEvento;
+    return token.contains('aniversario') || token.contains('infantil');
+  }
+
+  void selecionarTemaFesta(TemaFestaModel? tema, {bool outro = false}) {
+    if (outro || tema?.slug == TemaFestaModel.slugOutro) {
+      idTema.value = TemaFestaModel.slugOutro;
+      temaLivre.value = true;
+      dressCode.value = '';
+      return;
+    }
+
+    temaLivre.value = false;
+    if (tema == null) {
+      idTema.value = '';
+      dressCode.value = '';
+      return;
+    }
+
+    idTema.value = tema.idTema;
+    this.tema.text = tema.nome;
+    final dress = (tema.dressCodeSugerido ?? '').trim();
+    if (dress.isNotEmpty) {
+      dressCode.value = dress;
+    }
+  }
+
 // ===============================
 // 🔹 ATUALIZAR PRÉ-VISUALIZAÇÃO DO EVENTO
 // ===============================
@@ -199,6 +244,12 @@ class EventoCadastroController extends GetxController {
     bebe.text = evento.nomeBebe ?? '';
     tipoCerimonia.value = evento.tipoCerimonia ?? '';
     estiloCasamento.value = evento.estiloCasamento ?? '';
+    idTema.value = evento.idTema ?? '';
+    dressCode.value = evento.dressCode ?? '';
+    temaLivre.value = (evento.idTema == null ||
+            evento.idTema!.trim().isEmpty ||
+            evento.idTema == TemaFestaModel.slugOutro) &&
+        (evento.tema ?? '').trim().isNotEmpty;
     dataFesta.text = DateFormat('dd/MM/yyyy', 'pt_BR').format(evento.data);
     horaFesta.text = evento.hora ?? '';
     padrinhos.assignAll(evento.padrinhos ?? []);
@@ -345,6 +396,21 @@ class EventoCadastroController extends GetxController {
       return;
     }
 
+    if (temaFestaObrigatorio) {
+      final temaInformado = tema.text.trim();
+      final escolheuCatalogo = idTema.value.isNotEmpty &&
+          idTema.value != TemaFestaModel.slugOutro;
+      if (!escolheuCatalogo && temaInformado.length < 2) {
+        Get.snackbar(
+          'Atenção',
+          'Selecione o tema da festa.',
+          backgroundColor: Colors.orange.shade600,
+          colorText: Colors.white,
+        );
+        return;
+      }
+    }
+
     // ✅ VALIDAÇÃO DO CUSTO ESTIMADO
     double valor = 0.0;
     if (custoEstimado.text.isNotEmpty) {
@@ -442,7 +508,9 @@ class EventoCadastroController extends GetxController {
         ativo: true,
         status: StatusEvento.planejamento,
         descricao: descricao.text,
-        tema: tema.text,
+        tema: tema.text.trim().isEmpty ? null : tema.text.trim(),
+        idTema: idTema.value.trim().isEmpty ? null : idTema.value.trim(),
+        dressCode: dressCode.value.trim().isEmpty ? null : dressCode.value.trim(),
         tipoCerimonia: tipoCerimonia.value,
         estiloCasamento: estiloCasamento.value,
         padrinhos: padrinhos.toList(),
@@ -464,14 +532,14 @@ class EventoCadastroController extends GetxController {
       await _repository.salvar(evento);
       _log('Evento ${evento.idEvento} gravado com sucesso.');
 
+      final criandoNovo = idEvento.value.isEmpty;
+      await app.ativarEventoOrganizador(evento);
       carregando.value = false;
-      Get.back();
 
-      await Future.delayed(const Duration(milliseconds: 350));
-
-      await app.buscarUltimoEvento(user.idUsuario);
-      if (idEvento.value.isEmpty) {
-        Get.offAllNamed('/splash', arguments: {'novoEvento': true});
+      if (criandoNovo) {
+        app.abrirHomeOrganizador();
+      } else {
+        Get.back();
       }
     } catch (e, st) {
       carregando.value = false;
@@ -501,6 +569,9 @@ class EventoCadastroController extends GetxController {
     tema.clear();
     tipoCerimonia.value = '';
     estiloCasamento.value = '';
+    idTema.value = '';
+    temaLivre.value = false;
+    dressCode.value = '';
     dataFesta.clear();
     horaFesta.clear();
     cidade.clear();

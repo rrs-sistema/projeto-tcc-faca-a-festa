@@ -4,10 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/usuario/usuario_controller.dart';
+import '../../../controllers/tema/admin_theme.dart';
 import '../endereco/endereco_section.dart';
 import '../endereco/endereco_section_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../data/models/model.dart';
+import '../../widgets/admin/admin_kit.dart';
 import '../../widgets/custom_input_field.dart';
 
 class UsuariosAdminListScreen extends StatelessWidget {
@@ -23,29 +25,16 @@ class UsuariosAdminListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.put(UsuarioController());
     final themeController = Get.find<EventThemeController>();
-    final gradient = themeController.gradient.value;
-    final primary = themeController.primaryColor.value;
+    final primary = AdminPalette.primary;
 
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          tooltip: 'Voltar',
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        title: Text(
-          'Contas e Acessos',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontSize: 16,
-          ),
-        ),
-        centerTitle: true,
-        flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
+    return Theme(
+      data: themeController.adminThemeData,
+      child: Scaffold(
+      appBar: AdminBackAppBar(
+        title: 'Contas e Acessos',
+        subtitle: 'Usuários da plataforma',
       ),
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: AdminPalette.surface,
       floatingActionButton: FloatingActionButton.extended(
         backgroundColor: Colors.grey.shade900,
         elevation: 2,
@@ -65,25 +54,10 @@ class UsuariosAdminListScreen extends StatelessWidget {
           // 🔍 Campo de busca Moderno
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: TextField(
-                controller: controller.buscaCtrl,
-                onChanged: controller.filtrarUsuarios,
-                style: GoogleFonts.poppins(fontSize: 14),
-                decoration: InputDecoration(
-                  hintText: 'Buscar por nome ou e-mail...',
-                  hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
-                  prefixIcon: Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                ),
-              ),
+            child: AdminSearchField(
+              controller: controller.buscaCtrl,
+              hint: 'Buscar por nome ou e-mail...',
+              onChanged: controller.filtrarUsuarios,
             ),
           ),
 
@@ -266,6 +240,7 @@ class UsuariosAdminListScreen extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 

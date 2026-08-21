@@ -1,10 +1,10 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
 
-import './../../controllers/tema/event_theme_controller.dart';
 import './../../controllers/app_controller.dart';
+import './festa_app_bar.dart';
 
 class Splash extends StatefulWidget {
   const Splash({super.key});
@@ -18,7 +18,6 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
   late Animation<double> _fadeAnimation;
 
   final appController = Get.find<AppController>();
-  final themeController = Get.find<EventThemeController>();
 
   @override
   void initState() {
@@ -63,8 +62,10 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
       end: Alignment.bottomRight,
     );
 
-    return Scaffold(
-      body: AnimatedBuilder(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: FestaSystemUi.fundoClaro,
+      child: Scaffold(
+        body: AnimatedBuilder(
         animation: _fadeAnimation,
         builder: (context, child) => Opacity(
           opacity: _fadeAnimation.value,
@@ -82,22 +83,20 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
                   height: 180,
                   repeat: true,
                   fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.celebration_rounded,
+                    size: 88,
+                    color: Colors.white,
+                  ),
                 ),
                 const SizedBox(height: 30),
-                Text(
+                const Text(
                   "Faça a Festa",
-                  style: GoogleFonts.poppins(
+                  style: TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.w800,
                     color: Colors.white,
                     letterSpacing: 1.2,
-                    shadows: [
-                      Shadow(
-                        color: Colors.black.withValues(alpha: 0.2),
-                        offset: const Offset(2, 2),
-                        blurRadius: 4,
-                      )
-                    ],
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -109,7 +108,7 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
                         : appController.carregando.value
                             ? "Carregando seus dados..."
                             : "Preparando sua experiência...",
-                    style: GoogleFonts.poppins(
+                    style: TextStyle(
                       fontSize: 15,
                       color: Colors.white.withValues(alpha: 0.9),
                       fontWeight: FontWeight.w500,
@@ -122,10 +121,10 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
                   strokeWidth: 3,
                 ),
                 const SizedBox(height: 20),
-                Text(
+                const Text(
                   "Carregando o seu evento...",
-                  style: GoogleFonts.poppins(
-                    color: Colors.white.withValues(alpha: 0.9),
+                  style: TextStyle(
+                    color: Colors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
                   ),
@@ -134,6 +133,7 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
             ),
           ),
         ),
+      ),
       ),
     );
   }

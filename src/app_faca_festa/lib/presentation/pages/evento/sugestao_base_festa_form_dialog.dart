@@ -103,8 +103,8 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
     // Em alguns aparelhos/rotas o ModalBottomSheet já reduz a área útil quando
     // o teclado abre. Somar esse padding fora do conteúdo causa o efeito de a
     // tela "subir" demais e gera overflow no Column principal.
-    // A solução segura é deixar o BottomSheet ancorado e tornar TODO o conteúdo
-    // rolável, adicionando espaço extra no final do scroll quando o teclado está aberto.
+    // A solução segura é deixar o BottomSheet ancorado e tornar o conteúdo
+    // inteiro rolável, com espaço extra no final do scroll quando o teclado está aberto.
     final dialogMaxHeight = math.min(
       screenHeight - media.padding.top - 16,
       760.0,

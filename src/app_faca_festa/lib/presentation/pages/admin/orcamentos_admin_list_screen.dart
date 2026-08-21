@@ -7,7 +7,9 @@ import 'package:get/get.dart';
 
 import './../../../controllers/admin/orcamentos_admin_controller.dart';
 import './../../../data/models/admin/orcamento_admin_model.dart';
+import '../../../controllers/tema/admin_theme.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
+import '../../widgets/admin/admin_kit.dart';
 
 class OrcamentosAdminListScreen extends StatelessWidget {
   OrcamentosAdminListScreen({super.key}) {
@@ -22,52 +24,52 @@ class OrcamentosAdminListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<OrcamentosAdminController>();
     final themeController = Get.find<EventThemeController>();
-    final gradient = themeController.gradient.value;
 
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          tooltip: 'Voltar',
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        title: Text(
-          'Gestão de Orçamentos',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontSize: 16,
-          ),
-        ),
-        centerTitle: true,
-        flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
+    return Theme(
+      data: themeController.adminThemeData,
+      child: Scaffold(
+      appBar: AdminBackAppBar(
+        title: 'Gestão de Orçamentos',
+        subtitle: 'Por evento e categoria',
       ),
-      backgroundColor: Colors.grey.shade50,
-      body: Obx(() {
+      backgroundColor: AdminPalette.surface,
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            child: AdminSearchField(
+              hint: 'Buscar evento, categoria, cidade ou status',
+              onChanged: (v) => controller.busca.value = v,
+            ),
+          ),
+          Expanded(
+            child: Obx(() {
         if (controller.carregando.value) {
           return const Center(child: CircularProgressIndicator());
         }
 
         if (controller.erro.isNotEmpty) {
-          return Center(
-            child: Text(
-              'Erro: ${controller.erro.value}',
-              style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 14),
-            ),
+          return AdminEmptyState(
+            icon: Icons.error_outline_rounded,
+            title: 'Não foi possível carregar os orçamentos',
+            message: controller.erro.value,
+            actionLabel: 'Tentar de novo',
+            onAction: controller.carregarOrcamentosComEventoDetalhes,
           );
         }
 
-        if (controller.orcamentos.isEmpty) {
-          return Center(
-            child: Text(
-              'Nenhum orçamento encontrado.',
-              style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade500),
-            ),
+        final filtrados = controller.orcamentosFiltrados;
+        if (filtrados.isEmpty) {
+          return AdminEmptyState(
+            icon: Icons.request_quote_outlined,
+            title: controller.orcamentos.isEmpty
+                ? 'Nenhum orçamento encontrado'
+                : 'Nenhum orçamento nesta busca',
+            message: 'Os orçamentos dos eventos aparecem agrupados aqui.',
           );
         }
 
-        final grupos = groupBy(controller.orcamentos, (OrcamentoAdminModel o) => o.eventoNome);
+        final grupos = groupBy(filtrados, (OrcamentoAdminModel o) => o.eventoNome);
 
         return RefreshIndicator(
           onRefresh: controller.carregarOrcamentosComEventoDetalhes,
@@ -92,7 +94,11 @@ class OrcamentosAdminListScreen extends StatelessWidget {
             }).toList(),
           ),
         );
-      }),
+            }),
+          ),
+        ],
+      ),
+    ),
     );
   }
 

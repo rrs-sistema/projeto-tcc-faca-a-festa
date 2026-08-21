@@ -5,6 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../controllers/inspiracao/inspiracao_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../data/models/model.dart';
+import '../../../data/models/DTO/fornecedor_detalhado_dto.dart';
+import '../fornecedor/fornecedor_detalhe_screen.dart';
+import '../fornecedor/fornecedor_localizacao_screen.dart';
 
 class InspiracaoDetalheScreen extends StatelessWidget {
   final InspiracaoModel inspiracao;
@@ -122,6 +125,7 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                 physics: const BouncingScrollPhysics(),
                 child: Obx(() {
                   final atual = _resolverInspiracaoAtual(inspiracaoController, inspiracao);
+                  inspiracaoController.fornecedoresRelacionados.length;
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -214,6 +218,7 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 20),
                       ],
+                      _fornecedoresRelacionados(inspiracaoController, atual, primary),
                       _buildAcoesPlanejamento(
                           controller: inspiracaoController, inspiracao: atual, primary: primary),
                       const SizedBox(height: 30),
@@ -333,11 +338,9 @@ class InspiracaoDetalheScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 TextButton.icon(
-                  onPressed: () => Get.toNamed('/fornecedores', arguments: {
-                    'categoria': inspiracao.categoria,
-                    'inspiracaoId': inspiracao.id,
-                    'titulo': inspiracao.titulo
-                  }),
+                  onPressed: () => Get.to(
+                    () => const FornecedorLocalizacaoScreen(showLeading: true),
+                  ),
                   icon: Icon(Icons.storefront_rounded, size: 16, color: primary),
                   label: Text('Fornecedores',
                       style: GoogleFonts.poppins(
@@ -357,6 +360,101 @@ class InspiracaoDetalheScreen extends StatelessWidget {
         ),
       );
     });
+  }
+
+  Widget _fornecedoresRelacionados(
+    InspiracaoController controller,
+    InspiracaoModel inspiracao,
+    Color primary,
+  ) {
+    final fornecedores = controller.fornecedoresDaInspiracao(inspiracao);
+    if (fornecedores.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('Fornecedores desta ideia'),
+        const SizedBox(height: 10),
+        SizedBox(
+          height: 118,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: fornecedores.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (_, index) {
+              final fornecedor = fornecedores[index];
+              final url = (fornecedor.bannerUrl ?? '').trim();
+              return GestureDetector(
+                onTap: () => Get.to(
+                  () => FornecedorDetalheScreen(
+                    selecionouCategoria: false,
+                    fornecedorDetalhado: FornecedorDetalhadoDto(
+                      fornecedor: fornecedor,
+                      categoriaId: _categoriaId(fornecedor),
+                      categoriaNome: _categoriaNome(fornecedor),
+                    ),
+                  ),
+                ),
+                child: SizedBox(
+                  width: 118,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(14),
+                        child: SizedBox(
+                          height: 78,
+                          width: 118,
+                          child: url.isEmpty
+                              ? Container(
+                                  color: primary.withValues(alpha: 0.08),
+                                  child: Icon(Icons.storefront_rounded, color: primary, size: 26),
+                                )
+                              : Image.network(
+                                  url,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: Colors.grey.shade200,
+                                    child: const Icon(Icons.storefront_rounded, color: Colors.grey),
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        fornecedor.razaoSocial,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          height: 1.15,
+                          color: const Color(0xFF1F2937),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  String _categoriaId(FornecedorModel fornecedor) {
+    if (fornecedor.categorias.isEmpty) return '';
+    final raw = fornecedor.categorias.first;
+    return (raw['idCategoria'] ?? raw['id_categoria'] ?? '').toString();
+  }
+
+  String _categoriaNome(FornecedorModel fornecedor) {
+    if (fornecedor.categorias.isEmpty) return '';
+    final raw = fornecedor.categorias.first;
+    return (raw['nomeCategoria'] ?? raw['nome_categoria'] ?? '').toString();
   }
 
   Widget _descriptionCard(String descricao) {

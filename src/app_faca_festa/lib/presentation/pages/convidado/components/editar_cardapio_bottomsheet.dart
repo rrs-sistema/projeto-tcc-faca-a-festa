@@ -307,6 +307,16 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
       );
       await controller.atualizarCardapio(atualizado);
       Get.back();
+    } catch (_) {
+      Get.snackbar(
+        'Não foi possível atualizar o cardápio',
+        'Verifique se você é o organizador deste evento e tente novamente.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+      );
     } finally {
       if (mounted) setState(() => _salvando = false);
     }
@@ -352,11 +362,6 @@ class _Header extends StatelessWidget {
                       color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
             ],
           ),
-        ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: () => Get.back<void>(),
-          icon: const Icon(Icons.close, size: 22),
         ),
       ],
     );

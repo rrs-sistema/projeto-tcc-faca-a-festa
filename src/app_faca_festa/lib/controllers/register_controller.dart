@@ -1,12 +1,12 @@
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:email_validator/email_validator.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:br_validators/br_validators.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'dart:io';
 
+import '../core/utils/form_validators.dart';
 import '../domain/repositories/autenticacao_repository.dart';
 import './../presentation/pages/endereco/endereco_section_controller.dart';
 import '../data/models/servico_produto/fornecedor_categoria_model.dart';
@@ -14,6 +14,7 @@ import '../data/models/servico_produto/subcategoria_servico_model.dart';
 import '../data/models/servico_produto/categoria_servico_model.dart';
 import './../data/models/model.dart';
 import 'app_controller.dart';
+import 'fornecedor/fornecedor_controller.dart';
 
 class RegisterController extends GetxController {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -55,9 +56,11 @@ class RegisterController extends GetxController {
   var senha = ''.obs;
   var cnpj = ''.obs;
   var telefone = ''.obs;
+  var descricao = ''.obs;
   var categoriaSelecionada = ''.obs;
   var subcategoriaSelecionada = ''.obs;
   String? bannerUrl;
+  File? bannerFile;
 
   var carregando = false.obs;
   RxBool exibirSenha = false.obs;
@@ -76,6 +79,8 @@ class RegisterController extends GetxController {
     super.onInit();
     _log(
         'onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=${Get.arguments}');
+    final token = _tokenConviteEntrada();
+    if (token != null) appController.guardarTokenConvite(token);
     _log(
         'tipoCadastroInicial=$tipoCadastroAtual | cadastroComoConvidado=$cadastroComoConvidado');
   }
@@ -99,14 +104,13 @@ class RegisterController extends GetxController {
     final manual = cadastroConvidadoManual.value;
     final porTipo = tipoCadastroAtual == 'C';
     final porArgumentos = _argumentsIndicamConvidado(Get.arguments);
-    final porRota = _normalizeTexto(Get.currentRoute).contains('convidado');
 
-    final resultado = manual || porTipo || porArgumentos || porRota;
+    final resultado = manual || porTipo || porArgumentos;
 
     _log(
       'cadastroComoConvidado => $resultado | '
       'manual=$manual | porTipo=$porTipo | tipo=$tipoCadastroAtual | '
-      'porArgumentos=$porArgumentos | porRota=$porRota | route=${Get.currentRoute} | args=${Get.arguments}',
+      'porArgumentos=$porArgumentos | route=${Get.currentRoute} | args=${Get.arguments}',
     );
 
     return resultado;
@@ -128,11 +132,15 @@ class RegisterController extends GetxController {
 
     final tipo = tipoCadastroAtual;
     final cadastroConvidado = cadastroComoConvidado;
+    final tokenConvite = _tokenConviteEntrada();
+
+    if (!_podeProsseguirCadastroConvidado(cadastroConvidado, tokenConvite)) {
+      return;
+    }
 
     // Se a tela/argumentos indicarem cadastro de convidado, o tipo efetivo deve
     // ser C mesmo que Get.arguments['tipo'] não tenha vindo corretamente.
     final tipoEfetivo = cadastroConvidado ? 'C' : tipo;
-    final tokenConvite = _tokenConviteEntrada();
 
     final enderecoAntesDoUid = enderecoController.value.toModel('');
     final enderecoFoiInformado =
@@ -157,12 +165,11 @@ class RegisterController extends GetxController {
       EasyLoading.show(status: 'Criando cadastro...');
       appController.marcarLoginComSenha();
 
-      final credencial = await _auth.createUserWithEmailAndPassword(
+      final uid = await _autenticacaoRepository.criarUsuario(
         email: email.value.trim(),
-        password: senha.value.trim(),
+        senha: senha.value.trim(),
       );
 
-      final uid = credencial.user!.uid;
       final endereco = enderecoAntesDoUid.copyWith(idUsuario: uid);
 
       _log(
@@ -186,6 +193,10 @@ class RegisterController extends GetxController {
 
       await _db.collection('usuarios').doc(uid).set(usuarioMap);
       _log('Documento usuarios/$uid salvo com tipo=$tipoEfetivo.');
+
+      if (tipoEfetivo == 'F') {
+        await _enviarBannerAposAutenticacao(uid);
+      }
 
       if (deveSalvarEndereco) {
         await _db
@@ -211,7 +222,7 @@ class RegisterController extends GetxController {
           ativo: true,
           bannerUrl: bannerUrl,
           cnpj: cnpj.value.trim(),
-          descricao: '',
+          descricao: descricao.value.trim(),
           dataCadastro: DateTime.now(),
           tipoEventoIds: tipoEventoIds.toList(growable: false),
           tipoEventoSlugs: tipoEventoSlugs.toList(growable: false),
@@ -257,8 +268,20 @@ class RegisterController extends GetxController {
       );
 
       EasyLoading.dismiss();
+      appController.acessoPorLink.value = false;
+      if (tipoEfetivo == 'C') {
+        _log('Convidado autenticado; vinculando UID e indo à área do convite.');
+        await appController.redirecionarConvidadoAposLogin(
+          novoUsuario,
+          token: tokenConvite,
+        );
+        return;
+      }
       _log('Navegando para /splash para autenticador TOTP e roteamento.');
       Get.offAllNamed('/splash');
+    } on AutenticacaoException catch (e) {
+      _log('AutenticacaoException: code=${e.codigo}');
+      _showError(_traduzErro(e.codigo));
     } on FirebaseAuthException catch (e) {
       _log('FirebaseAuthException: code=${e.code} | message=${e.message}');
       _showError(_traduzErro(e.code));
@@ -277,8 +300,11 @@ class RegisterController extends GetxController {
     if (carregando.value) return;
     final tipo = tipoCadastroAtual;
     final cadastroConvidado = cadastroComoConvidado;
-    final tipoEfetivo = cadastroConvidado ? 'C' : tipo;
     final tokenConvite = _tokenConviteEntrada();
+    if (!_podeProsseguirCadastroConvidado(cadastroConvidado, tokenConvite)) {
+      return;
+    }
+    final tipoEfetivo = cadastroConvidado ? 'C' : tipo;
 
     final enderecoAntesDoUid = enderecoController.value.toModel('');
     final enderecoFoiInformado =
@@ -350,6 +376,7 @@ class RegisterController extends GetxController {
       }
 
       if (tipoEfetivo == 'F') {
+        await _enviarBannerAposAutenticacao(uid);
         await _salvarDadosFornecedorGoogle(
           uid: uid,
           email: emailGoogle,
@@ -375,6 +402,7 @@ class RegisterController extends GetxController {
       });
 
       if (tipoEfetivo == 'C') {
+        appController.acessoPorLink.value = false;
         await appController.redirecionarConvidadoAposLogin(usuario,
             token: tokenConvite);
       } else {
@@ -413,6 +441,29 @@ class RegisterController extends GetxController {
     );
   }
 
+  Future<void> _enviarBannerAposAutenticacao(String uid) async {
+    final arquivo = bannerFile;
+    if (arquivo == null) return;
+
+    try {
+      EasyLoading.show(status: 'Enviando banner...');
+      final fornecedorController = Get.isRegistered<FornecedorController>()
+          ? Get.find<FornecedorController>()
+          : Get.put(FornecedorController());
+      bannerUrl = await fornecedorController.uploadBanner(arquivo, uid: uid);
+      _log('Banner enviado para o fornecedor $uid.');
+    } catch (e, s) {
+      _log('Banner não enviado após autenticação: $e');
+      _log('StackTrace: $s');
+      Get.snackbar(
+        'Banner',
+        'O cadastro segue sem a imagem. Você pode adicioná-la depois no perfil.',
+        backgroundColor: Colors.orange.shade700,
+        colorText: Colors.white,
+      );
+    }
+  }
+
   Future<void> _salvarDadosFornecedorGoogle({
     required String uid,
     required String email,
@@ -427,7 +478,7 @@ class RegisterController extends GetxController {
       ativo: true,
       bannerUrl: bannerUrl,
       cnpj: cnpj.value.trim(),
-      descricao: '',
+      descricao: descricao.value.trim(),
       dataCadastro: DateTime.now(),
       tipoEventoIds: tipoEventoIds.toList(growable: false),
       tipoEventoSlugs: tipoEventoSlugs.toList(growable: false),
@@ -607,20 +658,18 @@ class RegisterController extends GetxController {
     // ------------------------------
     // 🔹 Validações comuns
     // ------------------------------
-    if (!_validarNomeCompleto()) {
+    if (_falhou(FormValidators.nomeCompleto(nome.value))) {
       _log('FALHA validação: nome completo inválido.');
       return false;
     }
 
-    if (!EmailValidator.validate(email.value.trim())) {
+    if (_falhou(FormValidators.email(email.value))) {
       _log('FALHA validação: e-mail inválido.');
-      _showError('Digite um e-mail válido (ex: contato@email.com)');
       return false;
     }
 
-    if (senha.value.trim().length < 6) {
-      _log('FALHA validação: senha com menos de 6 caracteres.');
-      _showError('A senha deve ter pelo menos 6 caracteres');
+    if (_falhou(FormValidators.senha(senha.value))) {
+      _log('FALHA validação: senha inválida.');
       return false;
     }
 
@@ -628,27 +677,23 @@ class RegisterController extends GetxController {
     // 🔹 Validações específicas para Fornecedor
     // ------------------------------
     if (tipo == 'F') {
-      if (razaoSocial.value.trim().isEmpty) {
-        _log('FALHA fornecedor: razão social vazia.');
-        _showError('Informe a razão social da sua empresa');
+      if (_falhou(FormValidators.razaoSocial(razaoSocial.value))) {
+        _log('FALHA fornecedor: razão social inválida.');
         return false;
       }
 
-      if (telefone.value.trim().length < 8) {
+      if (_falhou(FormValidators.telefone(telefone.value))) {
         _log('FALHA fornecedor: telefone inválido.');
-        _showError('Informe um telefone de contato válido');
         return false;
       }
 
-      if (cnpj.value.trim().isEmpty) {
-        _log('FALHA fornecedor: CNPJ vazio.');
-        _showError('Informe o CNPJ da sua empresa');
-        return false;
-      }
-
-      if (!BRValidators.validateCNPJ(cnpj.value.trim())) {
+      if (_falhou(FormValidators.cnpj(cnpj.value))) {
         _log('FALHA fornecedor: CNPJ inválido.');
-        _showError('CNPJ inválido. Verifique e tente novamente.');
+        return false;
+      }
+
+      if (_falhou(FormValidators.descricaoServicos(descricao.value))) {
+        _log('FALHA fornecedor: descrição inválida.');
         return false;
       }
 
@@ -704,30 +749,29 @@ class RegisterController extends GetxController {
     String tipo,
     EnderecoUsuarioModel endereco,
   ) {
-    if (!_validarNomeCompleto(tipo == 'F'
-        ? 'Informe o nome completo do responsável'
-        : 'Informe seu nome completo (nome e sobrenome)')) {
+    if (_falhou(FormValidators.nomeCompleto(
+      nome.value,
+      campo: tipo == 'F'
+          ? 'o nome completo do responsável'
+          : 'seu nome completo (nome e sobrenome)',
+    ))) {
       return false;
     }
 
     if (tipo == 'F') {
-      if (razaoSocial.value.trim().isEmpty) {
-        _showError('Informe a razão social da sua empresa');
+      if (_falhou(FormValidators.razaoSocial(razaoSocial.value))) {
         return false;
       }
 
-      if (telefone.value.trim().length < 8) {
-        _showError('Informe um telefone de contato válido');
+      if (_falhou(FormValidators.telefone(telefone.value))) {
         return false;
       }
 
-      if (cnpj.value.trim().isEmpty) {
-        _showError('Informe o CNPJ da sua empresa');
+      if (_falhou(FormValidators.cnpj(cnpj.value))) {
         return false;
       }
 
-      if (!BRValidators.validateCNPJ(cnpj.value.trim())) {
-        _showError('CNPJ inválido. Verifique e tente novamente.');
+      if (_falhou(FormValidators.descricaoServicos(descricao.value))) {
         return false;
       }
 
@@ -755,58 +799,30 @@ class RegisterController extends GetxController {
   }
 
   bool _validarCamposEndereco(EnderecoUsuarioModel endereco) {
-    if (endereco.cep.trim().isEmpty) {
-      _log('FALHA endereço: CEP vazio.');
-      _showError('Informe o CEP');
-      return false;
-    }
-    if (endereco.logradouro.trim().isEmpty) {
-      _log('FALHA endereço: logradouro vazio.');
-      _showError('Informe o endereço completo');
-      return false;
-    }
-    if (endereco.numero.trim().isEmpty) {
-      _log('FALHA endereço: número vazio.');
-      _showError('Informe o número do endereço');
-      return false;
-    }
-    if (endereco.bairro == null || endereco.bairro!.trim().isEmpty) {
-      _log('FALHA endereço: bairro vazio.');
-      _showError('Informe o bairro');
-      return false;
-    }
-    if (endereco.uf == null || endereco.uf!.trim().isEmpty) {
-      _log('FALHA endereço: UF vazia.');
-      _showError('Informe o estado (UF)');
-      return false;
-    }
-    if (endereco.nomeCidade == null || endereco.nomeCidade!.trim().isEmpty) {
-      _log('FALHA endereço: cidade vazia.');
-      _showError('Informe a cidade');
-      return false;
+    final erros = <String?>[
+      FormValidators.cep(endereco.cep),
+      FormValidators.logradouro(endereco.logradouro),
+      FormValidators.numeroEndereco(endereco.numero),
+      FormValidators.bairro(endereco.bairro),
+      FormValidators.uf(endereco.uf),
+      FormValidators.cidade(endereco.nomeCidade),
+    ];
+
+    for (final erro in erros) {
+      if (erro != null) {
+        _log('FALHA endereço: $erro');
+        _showError(erro);
+        return false;
+      }
     }
 
     _log('Endereço validado com sucesso.');
     return true;
   }
 
-  bool _validarNomeCompleto(
-      [String mensagem = 'Informe seu nome completo (nome e sobrenome)']) {
-    final nomeLimpo = nome.value.trim();
-    if (nomeLimpo.isEmpty) {
-      _showError(mensagem);
-      return false;
-    }
-
-    final partes = nomeLimpo
-        .split(RegExp(r'\s+'))
-        .where((parte) => parte.isNotEmpty)
-        .toList();
-    if (partes.length < 2) {
-      _showError(mensagem);
-      return false;
-    }
-
+  bool _falhou(String? erro) {
+    if (erro == null) return false;
+    _showError(erro);
     return true;
   }
 
@@ -818,6 +834,20 @@ class RegisterController extends GetxController {
         (endereco.complemento?.trim().isNotEmpty ?? false) ||
         (endereco.bairro?.trim().isNotEmpty ?? false) ||
         (endereco.nomeCidade?.trim().isNotEmpty ?? false);
+  }
+
+  bool _podeProsseguirCadastroConvidado(
+    bool cadastroConvidado,
+    String? tokenConvite,
+  ) {
+    if (!cadastroConvidado) return true;
+    if (tokenConvite != null && tokenConvite.trim().isNotEmpty) return true;
+
+    _log('BLOQUEADO: cadastro tipo C sem token de convite.');
+    _showError(
+      'Para se cadastrar como convidado, abra o link enviado pelo organizador.',
+    );
+    return false;
   }
 
   bool _argumentsIndicamConvidado(dynamic args) {
@@ -878,16 +908,13 @@ class RegisterController extends GetxController {
           args['convite_token'] ??
           args['token_convite'];
       final tokenArgs = raw?.toString().trim() ?? '';
-      if (tokenArgs.isNotEmpty) return tokenArgs;
+      if (tokenArgs.isNotEmpty) {
+        appController.guardarTokenConvite(tokenArgs);
+        return tokenArgs;
+      }
     }
 
-    final tokenApp = appController.conviteToken.value.trim();
-    if (tokenApp.isNotEmpty) return tokenApp;
-
-    final tokenUrl = appController.obterTokenConvite()?.trim() ?? '';
-    if (tokenUrl.isNotEmpty) return tokenUrl;
-
-    return null;
+    return appController.tokenConviteAtual();
   }
 
   void _logEndereco(EnderecoUsuarioModel endereco, {required String origem}) {

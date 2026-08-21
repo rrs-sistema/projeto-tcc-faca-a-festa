@@ -12,8 +12,10 @@ import '../../../data/models/evento/calculadora_festa_item_model.dart';
 import '../../../controllers/convidado/cardapio_controller.dart';
 import '../../../domain/repositories/cardapio_repository.dart';
 import '../../../data/models/evento/calculadora_festa_model.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../controllers/evento_controller.dart';
 import '../../../data/models/evento/perfil_festa_model.dart';
+import '../../widgets/festa_app_bar.dart';
 import 'minhas_simulacoes_calculadora_bottom_sheet.dart';
 import 'calculadora_item_icon_helper.dart';
 
@@ -50,6 +52,7 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
   late final FornecedorMigracaoAdminController controllerTest;
   late final EventoController eventoController;
   late final CardapioController cardapioController;
+  late final EventThemeController themeController;
 
   final TextEditingController adultosCtrl = TextEditingController();
   final TextEditingController criancasCtrl = TextEditingController();
@@ -67,6 +70,7 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
         : Get.put(CalculadoraFestaController());
 
     eventoController = Get.find<EventoController>();
+    themeController = Get.find<EventThemeController>();
 
     cardapioController = Get.isRegistered<CardapioController>()
         ? Get.find<CardapioController>()
@@ -269,83 +273,77 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).primaryColor;
+    return Obx(() {
+      final primary = themeController.primaryColor.value;
+      final gradient = themeController.gradient.value;
+      final onPrimary = themeController.onPrimaryColor.value;
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: const Color(0xFF111827),
-        toolbarHeight: 48, // AppBar mais fina
-        title: Text(
-          'Calculadora Inteligente',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 16),
-        ),
-        actions: [
-          IconButton(
-            tooltip: 'Minhas simulações',
-            onPressed: _abrirMinhasSimulacoes,
-            icon: const Icon(Icons.history_rounded, size: 22),
-          ),
-        ],
-      ),
-      body: Obx(() {
-        if (calculadoraController.loading.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        return RefreshIndicator(
-          onRefresh: _prepararCalculadora,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(
-                6, 10, 6, 80), // Margens laterais reduzidas
-            children: [
-              _buildHero(primary),
-              const SizedBox(height: 10), // Espaçamentos gerais reduzidos
-              _buildSimulacoesCard(primary),
-              const SizedBox(height: 10),
-              _buildBaseCalculoCard(primary),
-              const SizedBox(height: 10),
-              _buildPerfilFestaCard(primary),
-              const SizedBox(height: 10),
-              _buildTotaisCard(primary),
-              const SizedBox(height: 10),
-              _buildDuracaoCard(primary),
-              const SizedBox(height: 10),
-              if (calculadoraController.analisandoIA.value ||
-                  calculadoraController.analiseIA.value != null) ...[
-                _buildAssistenteIACard(primary),
-                const SizedBox(height: 10),
-              ],
-              _buildResultadoCard(primary),
-              const SizedBox(height: 10),
-              _buildCardapioCard(primary),
-              const SizedBox(height: 12),
-              _buildAcoes(primary),
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: FestaSystemUi.fundoEscuro,
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF8FAFC),
+          appBar: FestaAppBar(
+            altura: 70,
+            titulo: 'Calculadora Inteligente',
+            acoes: [
+              IconButton(
+                tooltip: 'Minhas simulações',
+                onPressed: _abrirMinhasSimulacoes,
+                icon: Icon(
+                  Icons.history_rounded,
+                  size: 22,
+                  color: onPrimary,
+                ),
+              ),
             ],
           ),
-        );
-      }),
-    );
+          body: calculadoraController.loading.value
+              ? Center(child: CircularProgressIndicator(color: primary))
+              : RefreshIndicator(
+                  color: primary,
+                  onRefresh: _prepararCalculadora,
+                  child: ListView(
+                    padding: const EdgeInsets.fromLTRB(6, 10, 6, 80),
+                    children: [
+                      _buildHero(primary, gradient),
+                      const SizedBox(height: 10),
+                      _buildSimulacoesCard(primary),
+                      const SizedBox(height: 10),
+                      _buildBaseCalculoCard(primary),
+                      const SizedBox(height: 10),
+                      _buildPerfilFestaCard(primary),
+                      const SizedBox(height: 10),
+                      _buildTotaisCard(primary),
+                      const SizedBox(height: 10),
+                      _buildDuracaoCard(primary),
+                      const SizedBox(height: 10),
+                      if (calculadoraController.analisandoIA.value ||
+                          calculadoraController.analiseIA.value != null) ...[
+                        _buildAssistenteIACard(primary),
+                        const SizedBox(height: 10),
+                      ],
+                      _buildResultadoCard(primary),
+                      const SizedBox(height: 10),
+                      _buildCardapioCard(primary),
+                      const SizedBox(height: 12),
+                      _buildAcoes(primary),
+                    ],
+                  ),
+                ),
+        ),
+      );
+    });
   }
 
-  Widget _buildHero(Color primary) {
+  Widget _buildHero(Color primary, LinearGradient gradient) {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            primary.withValues(alpha: 0.92),
-            primary.withValues(alpha: 0.62)
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        gradient: gradient,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: primary.withValues(alpha: 0.2),
+            color: primary.withValues(alpha: 0.22),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -792,7 +790,7 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
               label: analise?.statusOrcamento ?? 'Pronta',
               color: analise?.acimaDoOrcamento == true
                   ? Colors.orange
-                  : Colors.teal,
+                  : primary,
             ),
       child: analisando && analise == null
           ? Column(
@@ -863,11 +861,19 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
             decoration: InputDecoration(
               labelText: 'Destino',
               labelStyle: GoogleFonts.poppins(fontSize: 12),
-              prefixIcon: const Icon(Icons.restaurant_rounded, size: 18),
+              prefixIcon: Icon(
+                Icons.restaurant_rounded,
+                size: 18,
+                color: primary,
+              ),
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
               border:
                   OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+                borderSide: BorderSide(color: primary),
+              ),
               filled: true,
               fillColor: Colors.grey.shade50,
             ),
@@ -988,7 +994,11 @@ class _SectionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: Theme.of(context).primaryColor),
+              Icon(
+                icon,
+                size: 18,
+                color: Get.find<EventThemeController>().primaryColor.value,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -1028,6 +1038,8 @@ class _NumberField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Get.find<EventThemeController>().primaryColor.value;
+
     return SizedBox(
       height: 40, // Altura restrita do TextField
       child: TextField(
@@ -1040,11 +1052,15 @@ class _NumberField extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           labelStyle: GoogleFonts.poppins(fontSize: 11),
-          prefixIcon: Icon(icon, size: 16),
+          prefixIcon: Icon(icon, size: 16, color: primary),
           isDense: true,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: primary),
+          ),
           filled: true,
           fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,
         ),
@@ -1091,7 +1107,7 @@ class _AnaliseIACompacta extends StatelessWidget {
               child: _IndicadorIA(
                 label: 'Conforto',
                 value: _formatPercent(data.indiceConforto),
-                color: Colors.teal,
+                color: primary,
               ),
             ),
             const SizedBox(width: 6),
@@ -1195,7 +1211,7 @@ class _AnaliseIACompacta extends StatelessWidget {
       case PrioridadeSugestaoCalculadoraIA.media:
         return Colors.blueGrey;
       case PrioridadeSugestaoCalculadoraIA.baixa:
-        return Colors.teal;
+        return Get.find<EventThemeController>().primaryColor.value;
     }
   }
 
@@ -1311,7 +1327,7 @@ class _AnaliseIADetalhesSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).primaryColor;
+    final primary = Get.find<EventThemeController>().primaryColor.value;
     final topSugestoes = analise.sugestoes.take(5).toList();
 
     return Container(
@@ -1364,7 +1380,7 @@ class _AnaliseIADetalhesSheet extends StatelessWidget {
                         label: 'Conforto',
                         value: _AnaliseIACompacta._formatPercent(
                             analise.indiceConforto),
-                        color: Colors.teal,
+                        color: primary,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -1533,9 +1549,10 @@ class _ResultadoItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Get.find<EventThemeController>().primaryColor.value;
     final Color color = item.adicionadoAoCardapio
-        ? Colors.teal
-        : Theme.of(context).primaryColor;
+        ? Color.lerp(primary, const Color(0xFF059669), 0.35) ?? primary
+        : primary;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),

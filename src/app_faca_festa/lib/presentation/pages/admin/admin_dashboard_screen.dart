@@ -1,211 +1,271 @@
-import 'package:app_faca_festa/controllers/tema/admin_theme.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
-import './../cadastro/fornecedor/territorio/admin_territorio_screen.dart';
-import './../cadastro/fornecedor/fornecedores_admin_list_screen.dart';
-import './../cadastro/categoria/categoria_servico_list_screen.dart';
-import './../cadastro/servico/servico_produto_list_screen.dart';
+import '../../../controllers/admin/admin_dashboard_controller.dart';
+import '../../../controllers/app_controller.dart';
 import '../../../controllers/servico/servico_produto_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/app_controller.dart';
-import './../../widgets/confetti_background.dart';
-import './orcamentos_admin_list_screen.dart';
-import './usuarios_admin_list_screen.dart';
+import '../../../controllers/tema/admin_theme.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
+import '../../widgets/admin/admin_kit.dart';
+import '../cadastro/categoria/categoria_servico_list_screen.dart';
+import '../cadastro/fornecedor/fornecedores_admin_list_screen.dart';
+import '../cadastro/fornecedor/territorio/admin_territorio_screen.dart';
+import '../cadastro/servico/servico_produto_list_screen.dart';
 import './eventos_admin_list_screen.dart';
+import './orcamentos_admin_list_screen.dart';
+import './tema_festa_admin_list_screen.dart';
+import './usuarios_admin_list_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final controller = Get.isRegistered<AdminDashboardController>()
+        ? Get.find<AdminDashboardController>()
+        : Get.put(AdminDashboardController());
     final theme = Get.find<EventThemeController>();
-    final accent = theme.primaryColor.value;
 
-    final items = [
-      _AdminItem('Categorias', Icons.category_rounded,
-          () => Get.to(() => const CategoriaServicoListScreen()),
-          count: 12, subtitle: "Tipos de serviço"),
-      _AdminItem('Serviços / Produtos', Icons.design_services_rounded, () async {
-        final c = Get.put(ServicoProdutoController());
-        await c.toggleListenerAdmin();
-        Get.to(() => const ServicoProdutoListScreen());
-      }, count: 78, subtitle: "Catálogo ativo"),
-      _AdminItem('Fornecedores', Icons.store_rounded,
-          () => Get.to(() => const FornecedoresAdminListScreen()),
-          count: 134, subtitle: "Cadastrados"),
-      _AdminItem(
-          'Usuários', Icons.people_alt_rounded, () => Get.to(() => UsuariosAdminListScreen()),
-          count: 580, subtitle: "Acessos ativos"),
-      _AdminItem('Eventos', Icons.event_available_rounded,
-          () => Get.to(() => EventosAdminListScreen()),
-          count: 24, subtitle: "Ativos"),
-      _AdminItem('Orçamentos', Icons.request_quote_rounded,
-          () => Get.to(() => OrcamentosAdminListScreen()),
-          count: 48, subtitle: "Em andamento"),
-      _AdminItem('Territórios', Icons.map_rounded, () => Get.to(() => AdminTerritorioScreen()),
-          count: 15, subtitle: "Coberturas"),
-    ];
+    return Theme(
+      data: theme.adminThemeData,
+      child: Scaffold(
+        backgroundColor: AdminPalette.surface,
+        appBar: AppBar(
+          automaticallyImplyLeading: false,
+          elevation: 0,
+          toolbarHeight: 92,
+          flexibleSpace:
+              Container(decoration: const BoxDecoration(gradient: AdminPalette.appBarGradient)),
+          title: Column(
+            children: [
+              Text(
+                'Painel Administrativo',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w500,
+                  letterSpacing: 1.1,
+                ),
+              ),
+              Text(
+                'Faça a Festa',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 22,
+                  color: Colors.white,
+                  letterSpacing: -0.4,
+                ),
+              ),
+              Text(
+                'Gestão operacional da plataforma',
+                style: GoogleFonts.poppins(fontSize: 12, color: Colors.white70),
+              ),
+            ],
+          ),
+          centerTitle: true,
+          actions: [
+            IconButton(
+              tooltip: 'Atualizar indicadores',
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              onPressed: controller.carregar,
+            ),
+            IconButton(
+              tooltip: 'Sair',
+              icon: const Icon(Icons.logout_rounded, color: Colors.white),
+              onPressed: () => Get.find<AppController>().logout(),
+            ),
+          ],
+        ),
+        body: Obx(() {
+          final s = controller.stats.value;
+          final items = [
+            _AdminItem(
+              title: 'Categorias',
+              subtitle: s.categoriasAtivas > 0
+                  ? '${s.categoriasAtivas} ativas · ${s.subcategorias} subcategorias'
+                  : 'Tipos de serviço',
+              icon: Icons.category_rounded,
+              count: s.categorias,
+              color: const Color(0xFF0F766E),
+              onTap: () async {
+                await Get.to(() => const CategoriaServicoListScreen());
+                controller.carregar();
+              },
+            ),
+            _AdminItem(
+              title: 'Serviços / Produtos',
+              subtitle: 'Catálogo ativo',
+              icon: Icons.design_services_rounded,
+              count: s.servicos,
+              color: const Color(0xFF0369A1),
+              onTap: () async {
+                final c = Get.put(ServicoProdutoController());
+                await c.toggleListenerAdmin();
+                await Get.to(() => const ServicoProdutoListScreen());
+                controller.carregar();
+              },
+            ),
+            _AdminItem(
+              title: 'Fornecedores',
+              subtitle: s.fornecedoresPendentes > 0
+                  ? '${s.fornecedoresAptos} aptos · ${s.fornecedoresPendentes} em análise'
+                  : '${s.fornecedoresAptos} aptos para operar',
+              icon: Icons.store_rounded,
+              count: s.fornecedores,
+              color: const Color(0xFF15803D),
+              badge: s.fornecedoresPendentes,
+              onTap: () async {
+                await Get.to(() => const FornecedoresAdminListScreen());
+                controller.carregar();
+              },
+            ),
+            _AdminItem(
+              title: 'Usuários',
+              subtitle: '${s.usuariosAtivos} acessos ativos',
+              icon: Icons.people_alt_rounded,
+              count: s.usuarios,
+              color: const Color(0xFFC2410C),
+              onTap: () async {
+                await Get.to(() => UsuariosAdminListScreen());
+                controller.carregar();
+              },
+            ),
+            _AdminItem(
+              title: 'Eventos',
+              subtitle: '${s.eventosAtivos} em curso',
+              icon: Icons.event_available_rounded,
+              count: s.eventos,
+              color: const Color(0xFF7C3AED),
+              onTap: () async {
+                await Get.to(() => EventosAdminListScreen());
+                controller.carregar();
+              },
+            ),
+            _AdminItem(
+              title: 'Temas da festa',
+              subtitle: 'Catálogo visual',
+              icon: Icons.palette_rounded,
+              count: s.temas,
+              color: const Color(0xFFDB2777),
+              onTap: () async {
+                await Get.to(() => const TemaFestaAdminListScreen());
+                controller.carregar();
+              },
+            ),
+            _AdminItem(
+              title: 'Orçamentos',
+              subtitle: '${s.orcamentosAbertos} em andamento',
+              icon: Icons.request_quote_rounded,
+              count: s.orcamentos,
+              color: const Color(0xFF6D28D9),
+              onTap: () async {
+                await Get.to(() => OrcamentosAdminListScreen());
+                controller.carregar();
+              },
+            ),
+            _AdminItem(
+              title: 'Territórios',
+              subtitle: 'Áreas de cobertura',
+              icon: Icons.map_rounded,
+              count: s.territorios,
+              color: const Color(0xFF0E7490),
+              onTap: () async {
+                await Get.to(() => AdminTerritorioScreen());
+                controller.carregar();
+              },
+            ),
+          ];
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.grey.shade900,
-        icon: const Icon(Icons.add_location_alt_rounded, color: Colors.white, size: 20),
-        label: Text("Novo Território",
-            style: GoogleFonts.poppins(
-                fontWeight: FontWeight.w600, color: Colors.white, fontSize: 13)),
-        onPressed: () => Get.to(() => AdminTerritorioScreen()),
-      ),
-      appBar: PreferredSize(
-        preferredSize: const Size.fromHeight(110),
-        child: Obx(() => AppBar(
-              elevation: 0,
-              backgroundColor: Colors.transparent,
-              flexibleSpace: Container(
-                decoration: BoxDecoration(gradient: theme.adminGradient),
-                child: SafeArea(
-                  bottom: false,
-                  child: Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'Painel Administrativo',
-                            style: GoogleFonts.poppins(
-                              fontSize: 14,
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w500,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                          Text(
-                            'Faça a Festa',
-                            style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 24,
-                              color: Colors.white,
-                              letterSpacing: -0.5,
-                            ),
-                          ),
-                          Flexible(
-                            child: Text(
-                              'Gestão de categorias, fornecedores e territórios',
-                              textAlign: TextAlign.center,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 13,
-                                color: Colors.white70,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.1),
+          return RefreshIndicator(
+            color: AdminPalette.primary,
+            onRefresh: controller.carregar,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 28),
+              children: [
+                if (controller.erro.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      controller.erro.value,
+                      style: GoogleFonts.poppins(color: AdminPalette.danger, fontSize: 12),
                     ),
                   ),
-                ),
-              ),
-              centerTitle: true,
-              actions: [
-                IconButton(
-                    tooltip: 'Trocar Tema',
-                    icon: const Icon(Icons.palette_outlined, color: Colors.white),
-                    onPressed: () => theme.mostrarSeletorDeTema(context)),
-                IconButton(
-                    tooltip: 'Sair',
-                    icon: const Icon(Icons.logout_rounded, color: Colors.white),
-                    onPressed: () => Get.find<AppController>().logout()),
-              ],
-            )),
-      ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: ConfettiBackground(seconds: 600),
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.grey.shade50,
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _HeaderStats(accent: accent),
-                    const SizedBox(height: 24),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        physics: const BouncingScrollPhysics(),
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final width = constraints.maxWidth;
-                            final crossAxisCount = width < 600
-                                ? 2
-                                : width < 1000
-                                    ? 3
-                                    : 4;
-                            final aspectRatio = width < 600 ? 1.2 : 1.3;
-
-                            return GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: items.length,
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: crossAxisCount,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                                childAspectRatio: aspectRatio,
-                              ),
-                              itemBuilder: (context, i) => _AdminCard(
-                                item: items[i],
-                                accent: accent,
-                              )
-                                  .animate(delay: (i * 40).ms)
-                                  .fadeIn(duration: 400.ms)
-                                  .slideY(begin: 0.1),
-                            );
-                          },
-                        ),
-                      ),
+                _HeaderStats(stats: s, loading: controller.carregando.value),
+                const SizedBox(height: 8),
+                if (controller.atualizadoEm.value != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16, left: 4),
+                    child: Text(
+                      'Atualizado às ${DateFormat('HH:mm').format(controller.atualizadoEm.value!)}',
+                      style: GoogleFonts.poppins(fontSize: 11, color: AdminPalette.muted),
                     ),
-                  ],
+                  )
+                else
+                  const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final width = constraints.maxWidth;
+                    final crossAxisCount = width < 600
+                        ? 2
+                        : width < 1000
+                            ? 3
+                            : 4;
+                    final aspectRatio = width < 600 ? 1.12 : 1.28;
+                    return GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: items.length,
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: crossAxisCount,
+                        crossAxisSpacing: 14,
+                        mainAxisSpacing: 14,
+                        childAspectRatio: aspectRatio,
+                      ),
+                      itemBuilder: (context, i) => _AdminCard(item: items[i])
+                          .animate(delay: (i * 35).ms)
+                          .fadeIn(duration: 350.ms)
+                          .slideY(begin: 0.08),
+                    );
+                  },
                 ),
-              ),
+              ],
             ),
-          ),
-        ],
+          );
+        }),
       ),
     );
   }
 }
 
 class _HeaderStats extends StatelessWidget {
-  final Color accent;
-  const _HeaderStats({required this.accent});
+  final AdminDashboardStats stats;
+  final bool loading;
+  const _HeaderStats({required this.stats, required this.loading});
 
   @override
   Widget build(BuildContext context) {
-    final stats = [
-      _StatCardData('Eventos Ativos', Icons.event_note_rounded, 24, const Color(0xFF1976D2)),
+    final items = [
+      _StatCardData('Eventos ativos', Icons.event_note_rounded, stats.eventosAtivos,
+          const Color(0xFF7C3AED)),
+      _StatCardData('Fornecedores', Icons.store_mall_directory_rounded, stats.fornecedores,
+          const Color(0xFF15803D)),
       _StatCardData(
-          'Fornecedores', Icons.store_mall_directory_rounded, 134, const Color(0xFF388E3C)),
-      _StatCardData('Usuários', Icons.people_alt_rounded, 580, const Color(0xFFF57C00)),
-      _StatCardData('Orçamentos', Icons.request_quote_rounded, 48, const Color(0xFF6A1B9A)),
+          'Usuários', Icons.people_alt_rounded, stats.usuarios, const Color(0xFFC2410C)),
+      _StatCardData('Orçamentos abertos', Icons.request_quote_rounded, stats.orcamentosAbertos,
+          const Color(0xFF6D28D9)),
     ];
 
     return SizedBox(
-      height: 90,
+      height: 96,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
-        itemCount: stats.length,
+        itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, i) => _StatCard(stat: stats[i]),
+        itemBuilder: (context, i) => _StatCard(stat: items[i], loading: loading),
       ),
     );
   }
@@ -213,25 +273,15 @@ class _HeaderStats extends StatelessWidget {
 
 class _StatCard extends StatelessWidget {
   final _StatCardData stat;
-  const _StatCard({required this.stat});
+  final bool loading;
+  const _StatCard({required this.stat, required this.loading});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 170,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: Colors.white,
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          )
-        ],
-      ),
-      padding: const EdgeInsets.all(12),
+      width: 176,
+      decoration: adminCardDecoration(),
+      padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -240,34 +290,41 @@ class _StatCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.all(6),
+                padding: const EdgeInsets.all(7),
                 decoration: BoxDecoration(
-                  color: stat.color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  color: stat.color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(stat.icon, color: stat.color, size: 18),
               ),
-              TweenAnimationBuilder<int>(
-                tween: IntTween(begin: 0, end: stat.value),
-                duration: NumDurationExtensions(1).seconds,
-                builder: (context, val, _) => Text(
-                  "$val",
-                  style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade900,
+              if (loading)
+                const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              else
+                TweenAnimationBuilder<int>(
+                  tween: IntTween(begin: 0, end: stat.value),
+                  duration: 700.ms,
+                  builder: (context, val, _) => Text(
+                    '$val',
+                    style: GoogleFonts.poppins(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w800,
+                      color: AdminPalette.ink,
+                    ),
                   ),
                 ),
-              ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             stat.title,
             style: GoogleFonts.poppins(
               fontSize: 12,
-              color: Colors.grey.shade600,
-              fontWeight: FontWeight.w500,
+              color: AdminPalette.muted,
+              fontWeight: FontWeight.w600,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -280,8 +337,7 @@ class _StatCard extends StatelessWidget {
 
 class _AdminCard extends StatefulWidget {
   final _AdminItem item;
-  final Color accent;
-  const _AdminCard({required this.item, required this.accent});
+  const _AdminCard({required this.item});
 
   @override
   State<_AdminCard> createState() => _AdminCardState();
@@ -299,21 +355,8 @@ class _AdminCardState extends State<_AdminCard> {
         onTap: widget.item.onTap,
         borderRadius: BorderRadius.circular(16),
         child: AnimatedContainer(
-          duration: 200.ms,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-                color: hovered ? widget.accent.withValues(alpha: 0.5) : Colors.grey.shade200),
-            boxShadow: [
-              if (hovered)
-                BoxShadow(
-                  color: widget.accent.withValues(alpha: 0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
-                ),
-            ],
-          ),
+          duration: 180.ms,
+          decoration: adminCardDecoration(highlighted: hovered),
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -325,20 +368,40 @@ class _AdminCardState extends State<_AdminCard> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: widget.accent.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
+                      color: widget.item.color.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(widget.item.icon, size: 24, color: widget.accent),
+                    child: Icon(widget.item.icon, size: 22, color: widget.item.color),
                   ),
-                  if (widget.item.count != null)
-                    Text(
-                      "${widget.item.count}",
-                      style: GoogleFonts.poppins(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade900,
+                  Row(
+                    children: [
+                      if (widget.item.badge != null && widget.item.badge! > 0)
+                        Container(
+                          margin: const EdgeInsets.only(right: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AdminPalette.warning.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            '${widget.item.badge}',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: AdminPalette.warning,
+                            ),
+                          ),
+                        ),
+                      Text(
+                        '${widget.item.count}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: AdminPalette.ink,
+                        ),
                       ),
-                    ),
+                    ],
+                  ),
                 ],
               ),
               Column(
@@ -350,21 +413,17 @@ class _AdminCardState extends State<_AdminCard> {
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
                       fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade900,
+                      fontWeight: FontWeight.w700,
+                      color: AdminPalette.ink,
                     ),
                   ),
                   const SizedBox(height: 2),
-                  if (widget.item.subtitle != null)
-                    Text(
-                      widget.item.subtitle!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
+                  Text(
+                    widget.item.subtitle,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(fontSize: 11, color: AdminPalette.muted, height: 1.3),
+                  ),
                 ],
               ),
             ],
@@ -385,9 +444,19 @@ class _StatCardData {
 
 class _AdminItem {
   final String title;
+  final String subtitle;
   final IconData icon;
+  final int count;
+  final Color color;
+  final int? badge;
   final VoidCallback onTap;
-  final int? count;
-  final String? subtitle;
-  _AdminItem(this.title, this.icon, this.onTap, {this.count, this.subtitle});
+  _AdminItem({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.count,
+    required this.color,
+    required this.onTap,
+    this.badge,
+  });
 }

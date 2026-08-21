@@ -64,6 +64,8 @@ dependencies:
   cloud_functions: ^6.3.1
   firebase_app_check: ^0.4.4+1
   google_sign_in: ^7.1.1
+  share_plus: ^10.1.4
+  flutter_contacts: ^1.1.9+2
 
 dev_dependencies:
   flutter_test:

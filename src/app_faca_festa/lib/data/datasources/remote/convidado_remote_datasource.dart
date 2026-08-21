@@ -30,9 +30,24 @@ class ConvidadoRemoteDatasource {
   }
 
   Future<ConvidadoModel?> buscarPorToken(String token) async {
-    final document = await _convidados.doc(token).get();
-    if (!document.exists || document.data() == null) return null;
-    return ConvidadoModel.fromMap(document.data()!);
+    final tokenLimpo = token.trim();
+    if (tokenLimpo.isEmpty) return null;
+
+    final document = await _convidados.doc(tokenLimpo).get();
+    if (document.exists && document.data() != null) {
+      return ConvidadoModel.fromMap(document.data()!);
+    }
+
+    for (final campo in const ['convite_token', 'token_convite', 'token']) {
+      final snapshot = await _convidados
+          .where(campo, isEqualTo: tokenLimpo)
+          .limit(1)
+          .get();
+      if (snapshot.docs.isNotEmpty) {
+        return ConvidadoModel.fromMap(snapshot.docs.first.data());
+      }
+    }
+    return null;
   }
 
   Stream<List<ConvidadoModel>> observarPorEvento(String idEvento) {
@@ -111,25 +126,28 @@ class ConvidadoRemoteDatasource {
     );
   }
 
-  Future<void> marcarConvitesEnviados(
-    List<String> idsConvidados,
-    String tipoEnvio,
-  ) async {
-    final batch = firestore.batch();
+  Future<void> garantirTokensConvite(Map<String, String> tokensPorId) async {
+    if (tokensPorId.isEmpty) return;
 
-    for (final idConvidado in idsConvidados) {
+    final batch = firestore.batch();
+    var adicionou = false;
+    tokensPorId.forEach((idConvidado, token) {
+      final id = idConvidado.trim();
+      final tokenLimpo = token.trim();
+      if (id.isEmpty || tokenLimpo.isEmpty) return;
+
       batch.set(
-        _convidados.doc(idConvidado),
+        _convidados.doc(id),
         {
-          'convite_enviado': true,
-          'canal_ultimo_convite': tipoEnvio,
-          'data_envio_convite': FieldValue.serverTimestamp(),
+          'convite_token': tokenLimpo,
           'data_atualizacao': FieldValue.serverTimestamp(),
         },
         SetOptions(merge: true),
       );
-    }
+      adicionou = true;
+    });
 
+    if (!adicionou) return;
     await batch.commit();
   }
 }

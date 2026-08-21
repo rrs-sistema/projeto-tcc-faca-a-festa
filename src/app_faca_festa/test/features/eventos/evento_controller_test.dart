@@ -1,4 +1,5 @@
 import 'package:app_faca_festa/controllers/evento_controller.dart';
+import 'package:app_faca_festa/data/local/evento_ativo_store.dart';
 import 'package:app_faca_festa/data/models/evento/evento_model.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
@@ -219,16 +220,135 @@ void main() {
     expect(controller.eventoAtual.value, isNull);
     expect(controller.tipoEventoAtual.value, isNull);
   });
+
+  test('list by user activates the nearest upcoming event', () async {
+    final longe = _evento(
+      id: 'evento-longe',
+      nome: 'Festa distante',
+      data: DateTime(2028, 12, 20),
+      cadastro: DateTime(2026, 8, 1),
+    );
+    final perto = _evento(
+      id: 'evento-perto',
+      nome: 'Festa próxima',
+      data: DateTime(2026, 9, 1),
+      cadastro: DateTime(2026, 1, 1),
+    );
+    repository.eventos = [longe, perto];
+
+    await controller.carregarEventosDoUsuario('usuario-1');
+
+    expect(repository.usuarioListado, 'usuario-1');
+    expect(controller.eventoAtual.value?.idEvento, 'evento-perto');
+    expect(sessionCoordinator.eventoInicializado?.idEvento, 'evento-perto');
+  });
+
+  test('list by user prefers the nearest event over a stored one', () async {
+    controller.onClose();
+    final store = MemoriaEventoAtivoStore();
+    controller = EventoController(
+      repository: repository,
+      sessionCoordinator: sessionCoordinator,
+      eventoAtivoStore: store,
+    );
+    final longe = _evento(
+      id: 'evento-longe',
+      nome: 'Festa distante',
+      data: DateTime(2028, 12, 20),
+      cadastro: DateTime(2026, 8, 1),
+    );
+    final perto = _evento(
+      id: 'evento-perto',
+      nome: 'Festa próxima',
+      data: DateTime(2026, 9, 1),
+      cadastro: DateTime(2026, 3, 1),
+    );
+    repository.eventos = [longe, perto];
+    store.salvar('usuario-1', 'evento-longe');
+
+    await controller.carregarEventosDoUsuario('usuario-1');
+
+    expect(controller.eventoAtual.value?.idEvento, 'evento-perto');
+    expect(sessionCoordinator.eventoInicializado, same(perto));
+  });
+
+  test('nearest upcoming event prefers a future date over a past one', () {
+    final passado = _evento(
+      id: 'evento-passado',
+      data: DateTime(2025, 1, 10),
+    );
+    final futuro = _evento(
+      id: 'evento-futuro',
+      data: DateTime(2027, 6, 30),
+    );
+
+    final escolhido = EventoController.eventoMaisProximo([passado, futuro]);
+
+    expect(escolhido.idEvento, 'evento-futuro');
+  });
+
+  test('list by user with no events leaves the session empty', () async {
+    repository.eventos = const [];
+
+    await controller.carregarEventosDoUsuario('usuario-1');
+
+    expect(controller.eventoAtual.value, isNull);
+    expect(controller.eventosDoUsuario, isEmpty);
+    expect(sessionCoordinator.eventoInicializado, isNull);
+  });
+
+  test('selecting another event cancels the previous session', () async {
+    final primeiro = _evento(id: 'evento-1', nome: 'Primeiro');
+    final segundo = _evento(id: 'evento-2', nome: 'Segundo');
+    repository.evento = primeiro;
+
+    await controller.buscarUltimoEvento('usuario-1');
+    await controller.selecionarEvento(segundo);
+
+    expect(controller.eventoAtual.value?.idEvento, 'evento-2');
+    expect(sessionCoordinator.eventoInicializado, same(segundo));
+    expect(sessionCoordinator.cancelamentos, 2);
+  });
+
+  test('selecting the current event does not reinitialize modules', () async {
+    final evento = _evento();
+    repository.evento = evento;
+
+    await controller.buscarUltimoEvento('usuario-1');
+    final cancelamentos = sessionCoordinator.cancelamentos;
+
+    await controller.selecionarEvento(evento);
+
+    expect(sessionCoordinator.cancelamentos, cancelamentos);
+    expect(controller.eventoAtual.value, same(evento));
+  });
+
+  test('empty user list does not clear a freshly selected event', () async {
+    final evento = _evento(id: 'evento-novo', nome: 'Formatura do Rivaldo');
+    await controller.selecionarEvento(evento);
+    repository.eventos = const [];
+
+    await controller.carregarEventosDoUsuario('usuario-1');
+
+    expect(controller.eventoAtual.value?.idEvento, 'evento-novo');
+    expect(controller.eventoAtual.value?.nomeEvento, 'Formatura do Rivaldo');
+  });
 }
 
-EventoModel _evento() {
+EventoModel _evento({
+  String id = 'evento-1',
+  String nome = 'Festa',
+  DateTime? data,
+  DateTime? cadastro,
+}) {
   return EventoModel(
-    idEvento: 'evento-1',
+    idEvento: id,
     idTipoEvento: 'tipo-1',
     idUsuario: 'usuario-1',
-    nomeEvento: 'Festa',
+    nomeEvento: nome,
     localEvento: 'Salão',
-    data: DateTime(2026, 12, 20),
+    data: data ?? DateTime(2026, 12, 20),
+    dataCadastro: cadastro,
   );
 }
 
@@ -313,7 +433,7 @@ class _EventoSessionCoordinatorFake implements EventoSessionCoordinator {
   final temasAplicados = <String>[];
 
   @override
-  void aplicarTema(String nomeTipoEvento) {
+  void aplicarTema(String nomeTipoEvento, {Evento? evento}) {
     temasAplicados.add(nomeTipoEvento);
   }
 

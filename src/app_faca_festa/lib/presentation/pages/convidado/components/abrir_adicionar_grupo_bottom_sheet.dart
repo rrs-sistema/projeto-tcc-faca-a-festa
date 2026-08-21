@@ -4,19 +4,20 @@ import 'package:get/get.dart';
 import './../../../../controllers/convidado/grupo_convidado_controller.dart';
 import './../../../../data/models/convidado/grupo_convidado_model.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
+import 'show_cadastro_bottom_sheet.dart';
 
 Future<void> abrirAdicionarGrupoBottomSheet({
   required BuildContext context,
   required String idEvento,
   required GrupoConvidadoController controller,
+  GrupoConvidado? grupo,
 }) {
-  return showModalBottomSheet<void>(
+  return showCadastroBottomSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     builder: (context) => _AdicionarGrupoFormContent(
       idEvento: idEvento,
       controller: controller,
+      grupo: grupo,
     ),
   );
 }
@@ -24,10 +25,12 @@ Future<void> abrirAdicionarGrupoBottomSheet({
 class _AdicionarGrupoFormContent extends StatefulWidget {
   final String idEvento;
   final GrupoConvidadoController controller;
+  final GrupoConvidado? grupo;
 
   const _AdicionarGrupoFormContent({
     required this.idEvento,
     required this.controller,
+    this.grupo,
   });
 
   @override
@@ -70,16 +73,27 @@ class _AdicionarGrupoFormContentState
     'work': Icons.work_rounded,
   };
 
+  bool get _editando => widget.grupo != null;
+
   @override
   void initState() {
     super.initState();
     final theme = Get.find<EventThemeController>();
-    _nomeCtrl = TextEditingController();
+    final grupo = widget.grupo;
+    _nomeCtrl = TextEditingController(text: grupo?.nome ?? '');
     _numeroMesaCtrl = TextEditingController();
-    _descCtrl = TextEditingController();
-    _corSelecionada = theme.primaryColor.value.toHex();
-    if (!cores.contains(_corSelecionada)) cores[0] = _corSelecionada;
-    _iconeSelecionado = 'group';
+    _descCtrl = TextEditingController(text: grupo?.descricao ?? '');
+    _corSelecionada = (grupo?.corHex ?? theme.primaryColor.value.toHex())
+        .trim()
+        .toUpperCase();
+    if (_corSelecionada.isEmpty) {
+      _corSelecionada = theme.primaryColor.value.toHex();
+    }
+    if (!cores.any((hex) => hex.toUpperCase() == _corSelecionada)) {
+      cores.insert(0, _corSelecionada);
+    }
+    final icone = (grupo?.icone ?? 'group').trim();
+    _iconeSelecionado = icones.containsKey(icone) ? icone : 'group';
   }
 
   @override
@@ -128,9 +142,13 @@ class _AdicionarGrupoFormContentState
                     ),
                     const SizedBox(height: 14),
                     _Header(
-                      title: 'Novo Grupo',
-                      subtitle: 'Organize seus convidados',
-                      icon: Icons.group_add_rounded,
+                      title: _editando ? 'Editar grupo' : 'Novo grupo',
+                      subtitle: _editando
+                          ? 'Atualize nome, cor e ícone'
+                          : 'Organize seus convidados',
+                      icon: _editando
+                          ? Icons.edit_rounded
+                          : Icons.group_add_rounded,
                       color: primaryColor,
                     ),
                     const SizedBox(height: 10),
@@ -188,6 +206,7 @@ class _AdicionarGrupoFormContentState
                       isSaving: _salvando,
                       onSubmit: _salvar,
                       primaryColor: primaryColor,
+                      submitLabel: _editando ? 'Salvar alterações' : 'Salvar',
                     ),
                   ],
                 ),
@@ -201,7 +220,7 @@ class _AdicionarGrupoFormContentState
 
   Widget _buildColorOption(String hex) {
     final color = Color(int.parse(hex.replaceAll('#', '0xff')));
-    final selected = _corSelecionada == hex;
+    final selected = _corSelecionada.toUpperCase() == hex.toUpperCase();
     return GestureDetector(
       onTap: () => setState(() => _corSelecionada = hex),
       child: AnimatedContainer(
@@ -284,23 +303,58 @@ class _AdicionarGrupoFormContentState
 
     try {
       final agora = DateTime.now();
-      final novo = GrupoConvidado(
-        idGrupo: DateTime.now().millisecondsSinceEpoch.toString(),
-        idEvento: widget.idEvento,
-        nome: _nomeCtrl.text.trim(),
-        descricao: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
-        icone: _iconeSelecionado,
-        corHex: _corSelecionada,
-        totalConvidados: 0,
-        totalAdultos: 0,
-        totalCriancas: 0,
-        totalBebes: 0,
-        totalConfirmados: 0,
-        dataCadastro: agora,
-        dataAtualizacao: agora,
+      final descricao =
+          _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim();
+      final existente = widget.grupo;
+
+      if (existente != null) {
+        final atualizado = GrupoConvidado(
+          idGrupo: existente.idGrupo,
+          idEvento: existente.idEvento,
+          nome: _nomeCtrl.text.trim(),
+          descricao: descricao,
+          icone: _iconeSelecionado,
+          corHex: _corSelecionada,
+          totalConvidados: existente.totalConvidados,
+          totalAdultos: existente.totalAdultos,
+          totalCriancas: existente.totalCriancas,
+          totalBebes: existente.totalBebes,
+          totalConfirmados: existente.totalConfirmados,
+          dataCadastro: existente.dataCadastro,
+          dataAtualizacao: agora,
+        );
+        await widget.controller.atualizarGrupo(atualizado);
+      } else {
+        final novo = GrupoConvidado(
+          idGrupo: DateTime.now().millisecondsSinceEpoch.toString(),
+          idEvento: widget.idEvento,
+          nome: _nomeCtrl.text.trim(),
+          descricao: descricao,
+          icone: _iconeSelecionado,
+          corHex: _corSelecionada,
+          totalConvidados: 0,
+          totalAdultos: 0,
+          totalCriancas: 0,
+          totalBebes: 0,
+          totalConfirmados: 0,
+          dataCadastro: agora,
+          dataAtualizacao: agora,
+        );
+        await widget.controller.adicionarGrupo(novo);
+      }
+      if (mounted) Get.back<void>();
+    } catch (e) {
+      Get.snackbar(
+        _editando
+            ? 'Não foi possível atualizar o grupo'
+            : 'Não foi possível salvar o grupo',
+        'Verifique se você é o organizador deste evento e tente novamente.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade600,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
       );
-      await widget.controller.adicionarGrupo(novo);
-      Get.back();
     } finally {
       if (mounted) setState(() => _salvando = false);
     }
@@ -349,11 +403,6 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: () => Get.back<void>(),
-          icon: const Icon(Icons.close, size: 22),
-        ),
       ],
     );
   }
@@ -363,10 +412,12 @@ class _FooterActions extends StatelessWidget {
   final bool isSaving;
   final VoidCallback onSubmit;
   final Color primaryColor;
+  final String submitLabel;
   const _FooterActions(
       {required this.isSaving,
       required this.onSubmit,
-      required this.primaryColor});
+      required this.primaryColor,
+      this.submitLabel = 'Salvar'});
 
   @override
   Widget build(BuildContext context) {
@@ -394,7 +445,7 @@ class _FooterActions extends StatelessWidget {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white))
                 : const Icon(Icons.save_outlined, size: 16),
-            label: Text(isSaving ? 'Salvando...' : 'Salvar',
+            label: Text(isSaving ? 'Salvando...' : submitLabel,
                 style: const TextStyle(fontSize: 13)),
             style: FilledButton.styleFrom(
                 backgroundColor: primaryColor,

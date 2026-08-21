@@ -15,12 +15,14 @@ import './controllers/categoria/subcategoria_servico_controller.dart';
 import './presentation/pages/fornecedor/fornecedor_home_screen.dart';
 import './presentation/modules/gifts/gerenciar_presentes_page.dart';
 import './controllers/categoria/categoria_servico_controller.dart';
+import './presentation/pages/convidado/convite_nao_encontrado_screen.dart';
 import './presentation/pages/convidado/convite_redirect_page.dart';
+import 'core/utils/convite_link.dart';
 import 'controllers/avaliacao/avaliacao_servico_controller.dart';
 import './presentation/pages/fornecedor/orcamentos_screen.dart';
 import './presentation/pages/welcome/welcome_event_screen.dart';
 import './presentation/pages/admin/admin_dashboard_screen.dart';
-import './presentation/pages/login/guest_register_screen.dart';
+import './controllers/admin/admin_dashboard_controller.dart';
 import './controllers/admin/admin_territorio_controller.dart';
 import 'controllers/calculadora/calculadora_itens_admin_controller.dart';
 import 'controllers/calculadora/calculadora_festa_controller.dart';
@@ -37,6 +39,7 @@ import './presentation/pages/login/forgot_password_screen.dart';
 import './presentation/pages/login/totp_setup_screen.dart';
 import './presentation/pages/login/totp_verify_screen.dart';
 import './controllers/tema/event_theme_controller.dart';
+import './controllers/tema/tema_festa_controller.dart';
 import './controllers/contacao/cotacao_controller.dart';
 import './controllers/evento_cadastro_controller.dart';
 import './controllers/orcamento_gasto_controller.dart';
@@ -71,29 +74,37 @@ import 'domain/repositories/evento_repository.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  await FirebaseAppCheck.instance.activate(
-    providerWeb: kDebugMode
-        ? WebDebugProvider()
-        : ReCaptchaV3Provider('6LcKnYstAAAAAM8kfpp132CwtRGEER1BrRTLiI8H'),
-    providerAndroid:
-        kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
-    providerApple:
-        kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
-  );
-
-  await GetStorage.init();
-
   try {
-    await GiftOfflineBootstrap.initialize();
-  } catch (e) {
-    debugPrint('⚠️ Falha ao iniciar banco local: $e');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(const Duration(seconds: 10));
+  } catch (e, s) {
+    debugPrint('⚠️ Firebase.initializeApp: $e\n$s');
   }
 
-  await initializeDateFormatting('pt_BR', null);
+  unawaited(_ativarAppCheck());
+
+  try {
+    await GetStorage.init().timeout(const Duration(seconds: 4));
+  } catch (e) {
+    debugPrint('⚠️ GetStorage.init: $e');
+  }
+
+  if (!kIsWeb) {
+    try {
+      await GiftOfflineBootstrap.initialize()
+          .timeout(const Duration(seconds: 5));
+    } catch (e) {
+      debugPrint('⚠️ Falha ao iniciar banco local: $e');
+    }
+  }
+
+  try {
+    await initializeDateFormatting('pt_BR', null)
+        .timeout(const Duration(seconds: 3));
+  } catch (e) {
+    debugPrint('⚠️ initializeDateFormatting: $e');
+  }
 
   if (!kIsWeb) {
     await initLocalNotifications();
@@ -105,6 +116,37 @@ Future<void> main() async {
   _registerControllers();
 
   runApp(const FacaFestaApp());
+}
+
+Future<void> _ativarAppCheck() async {
+  try {
+    await FirebaseAppCheck.instance
+        .activate(
+          providerWeb: kDebugMode
+              ? WebDebugProvider()
+              : ReCaptchaV3Provider(
+                  '6LcKnYstAAAAAM8kfpp132CwtRGEER1BrRTLiI8H',
+                ),
+          providerAndroid: kDebugMode
+              ? AndroidDebugProvider()
+              : AndroidPlayIntegrityProvider(),
+          providerApple:
+              kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
+        )
+        .timeout(const Duration(seconds: 8));
+  } catch (e) {
+    debugPrint('⚠️ App Check indisponível, seguindo sem ele: $e');
+  }
+}
+
+String rotaInicial() {
+  if (kIsWeb) {
+    final token = ConviteLink.tokenDaUrl();
+    if (token != null && token.isNotEmpty) {
+      return '/convite/${Uri.encodeComponent(token)}';
+    }
+  }
+  return '/splash';
 }
 
 Future<void> main001() async {
@@ -156,6 +198,18 @@ Future<void> main001() async {
   runApp(const FacaFestaApp());
 }
 
+class EntradaAppPage extends StatelessWidget {
+  const EntradaAppPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    if (ConviteLink.tokenDaUrl() != null) {
+      return const ConviteRedirectPage();
+    }
+    return const Splash();
+  }
+}
+
 class FacaFestaApp extends StatelessWidget {
   const FacaFestaApp({super.key});
 
@@ -173,11 +227,15 @@ class FacaFestaApp extends StatelessWidget {
         Locale('pt', 'BR'),
         Locale('en', 'US'),
       ],
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.pink),
-        useMaterial3: true,
+      theme: EventThemeController.montarThemeData(
+        const Color(0xFF009688),
+        const Color(0xFFE0F2F1),
       ),
-      initialRoute: '/splash',
+      initialRoute: rotaInicial(),
+      unknownRoute: GetPage(
+        name: '/notfound',
+        page: () => const EntradaAppPage(),
+      ),
       getPages: [
         GetPage(
           name: '/HomeEventScreen',
@@ -211,8 +269,6 @@ class FacaFestaApp extends StatelessWidget {
           middlewares: [PapelMiddleware(tiposPermitidos: const ['A'])],
         ),
         GetPage(
-            name: '/registerGuest', page: () => const GuestRegisterScreen()),
-        GetPage(
           name: '/convidadosPage',
           page: () => const ConvidadosPage(),
           middlewares: [PapelMiddleware(tiposPermitidos: const ['O'])],
@@ -238,7 +294,14 @@ class FacaFestaApp extends StatelessWidget {
           },
         ),
         */
-        // 🔥 NOVA ROTA DE CONVITE
+        GetPage(
+          name: '/',
+          page: () => const EntradaAppPage(),
+        ),
+        GetPage(
+          name: '/convite',
+          page: () => const ConviteRedirectPage(),
+        ),
         GetPage(
           name: '/convite/:token',
           page: () => const ConviteRedirectPage(),
@@ -252,10 +315,14 @@ class FacaFestaApp extends StatelessWidget {
 
         GetPage(
           name: '/fornecedor',
-          page: () => FornecedorHomeScreen(),
+          page: () => const FornecedorHomeScreen(),
           middlewares: [PapelMiddleware(tiposPermitidos: const ['F'])],
         ),
 
+        GetPage(
+          name: '/conviteNaoEncontrado',
+          page: () => const ConviteNaoEncontradoScreen(),
+        ),
         GetPage(
           name: '/areaconvidado',
           page: () {
@@ -269,10 +336,11 @@ class FacaFestaApp extends StatelessWidget {
         ),
       ],
       builder: (context, child) {
+        final page = child ?? const EntradaAppPage();
         try {
-          return EasyLoading.init()(context, child);
+          return EasyLoading.init()(context, page);
         } catch (_) {
-          return child ?? const SizedBox();
+          return page;
         }
       },
     );
@@ -286,6 +354,7 @@ void _registerControllers() {
   Get.lazyPut<AppController>(() => AppController(), fenix: true);
   EventoBootstrap.register();
   Get.put(EventThemeController(), permanent: true);
+  Get.put(TemaFestaController(), permanent: true);
   Get.put(OrcamentoController(), permanent: true);
   Get.put(
     EventoCadastroController(repository: Get.find<EventoRepository>()),
@@ -295,6 +364,7 @@ void _registerControllers() {
   Get.put(OrcamentoGastoController(), permanent: true);
   Get.put(CategoriaServicoController(), permanent: true);
   Get.put(SubcategoriaServicoController(), permanent: true);
+  Get.put(AdminDashboardController(), permanent: true);
   Get.put(EventosAdminController(), permanent: true);
   Get.put(OrcamentosAdminController(), permanent: true);
   Get.put(CotacaoController(), permanent: true);
@@ -372,11 +442,11 @@ void configLoading() {
     ..loadingStyle = EasyLoadingStyle.light
     ..indicatorSize = 45
     ..radius = 10
-    ..progressColor = Colors.yellow
-    ..backgroundColor = Colors.pink.shade100
-    ..indicatorColor = Colors.pinkAccent
-    ..textColor = Colors.pink.shade800
-    ..maskColor = Colors.pink.withValues(alpha: 0.2)
+    ..progressColor = const Color(0xFF009688)
+    ..backgroundColor = const Color(0xFFE0F2F1)
+    ..indicatorColor = const Color(0xFF009688)
+    ..textColor = const Color(0xFF00695C)
+    ..maskColor = const Color(0xFF009688).withValues(alpha: 0.2)
     ..userInteractions = false
     ..dismissOnTap = false;
 }

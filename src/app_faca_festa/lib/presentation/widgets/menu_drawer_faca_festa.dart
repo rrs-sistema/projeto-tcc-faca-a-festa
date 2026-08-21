@@ -9,9 +9,8 @@ import '../../controllers/usuario/usuario_controller.dart';
 import '../pages/calculadora/calculadora_itens_admin_page.dart';
 import '../pages/inspiracao/inspiracao_admin_page.dart';
 import '../pages/inspiracao/minhas_referencias_evento_screen.dart';
-import './../pages/usuario/cadastro_evento_bottom_sheet.dart';
+import './../pages/evento/seletor_evento_bottom_sheet.dart';
 import './../../controllers/tema/event_theme_controller.dart';
-import './../../controllers/evento_cadastro_controller.dart';
 import './../pages/usuario/edit_usuario_screen.dart';
 import './../../controllers/evento_controller.dart';
 import './../../controllers/app_controller.dart';
@@ -24,7 +23,6 @@ class MenuDrawerFacaFesta extends StatelessWidget {
 
   final themeController = Get.find<EventThemeController>();
   final appController = Get.find<AppController>();
-  final eventoCadastroController = Get.find<EventoCadastroController>();
   final eventoController = Get.find<EventoController>();
   final usuarioController = Get.find<UsuarioController>();
   final inspiracaoController = Get.find<InspiracaoController>();
@@ -38,6 +36,9 @@ class MenuDrawerFacaFesta extends StatelessWidget {
       final tituloCabecalho = themeController.tituloCabecalho.value;
       final evento = eventoController.eventoAtualEntidade;
       final eventoTitulo = _resolverTituloEvento(evento, tituloCabecalho);
+      final nomeUsuario =
+          appController.usuarioLogado.value?.nome.split(' ').first ??
+              'Organizador';
 
       return Drawer(
         width: _drawerWidth(context),
@@ -49,7 +50,7 @@ class MenuDrawerFacaFesta extends StatelessWidget {
               gradient: gradient,
               primary: primary,
               icon: icon,
-              titulo: tituloCabecalho,
+              titulo: 'Olá, $nomeUsuario 👋',
               eventoTitulo: eventoTitulo,
             ),
             Expanded(
@@ -61,10 +62,12 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                     Icons.event_note_rounded,
                     'Meu Evento',
                     subtitle: evento == null
-                        ? 'Cadastre ou edite seu evento'
-                        : eventoTitulo,
+                        ? 'Cadastre ou escolha um evento'
+                        : eventoController.eventosDoUsuario.length > 1
+                            ? '$eventoTitulo • ${eventoController.eventosDoUsuario.length} eventos'
+                            : eventoTitulo,
                     color: primary,
-                    onTap: () => _abrirMeuEvento(evento),
+                    onTap: _abrirSeletorEvento,
                   ),
                   _menuItem(
                     Icons.person_outline_rounded,
@@ -433,7 +436,13 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                 foregroundColor: primary,
                 onPressed: saindo
                     ? null
-                    : () => themeController.mostrarSeletorDeTema(context),
+                    : () {
+                        Get.snackbar(
+                          'Tema da festa',
+                          'O visual segue o tema escolhido no cadastro do evento.',
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      },
               ),
             ),
             const SizedBox(width: 8),
@@ -521,27 +530,13 @@ class MenuDrawerFacaFesta extends StatelessWidget {
     );
   }
 
-  void _abrirMeuEvento(dynamic evento) {
-    try {
-      if (evento == null) {
-        EasyLoading.showInfo('Nenhum evento selecionado para edição.');
-        return;
-      }
-
-      Get.back();
-      EasyLoading.show(status: 'Carregando informações...');
-      eventoCadastroController.carregarEvento(evento);
-
-      Future.delayed(const Duration(milliseconds: 200), () {
-        EasyLoading.dismiss();
-        showCadastroEventoBottomSheet(
-          Get.context!,
-          eventoParaEdicao: evento,
-        );
-      });
-    } catch (_) {
-      EasyLoading.dismiss();
-    }
+  void _abrirSeletorEvento() {
+    Get.back();
+    Future.delayed(const Duration(milliseconds: 160), () {
+      final context = Get.context;
+      if (context == null) return;
+      showSeletorEventoBottomSheet(context);
+    });
   }
 
   Future<void> _abrirCalculadoraItensAdmin() async {

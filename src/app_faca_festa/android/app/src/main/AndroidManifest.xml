@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES"/>
+    <uses-permission android:name="android.permission.READ_CONTACTS"/>
 
     <!-- 🔍 Consultas externas (necessário para abrir URLs, mapas, etc.) -->
     <queries>
@@ -20,6 +21,10 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="tel" />
         </intent>        
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="text/plain" />
+        </intent>
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />

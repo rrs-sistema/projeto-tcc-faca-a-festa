@@ -16,6 +16,12 @@ export {
     confirmarEmailMfa,
     verificarEmailMfa,
 } from "./functions/auth/emailMfa";
+export { abrirConvitePorToken } from "./functions/convite/abrirConvitePorToken";
+export { enviarConvitesPorEmail } from "./functions/convite/enviarConvitesPorEmail";
+export {
+  enviarCapaTemaFesta,
+  removerCapaTemaFesta,
+} from "./functions/tema/enviarCapaTemaFesta";
 
 
 export {

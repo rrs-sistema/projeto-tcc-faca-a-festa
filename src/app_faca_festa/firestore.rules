@@ -69,6 +69,38 @@ service cloud.firestore {
         && request.resource.data.id_evento == resource.data.id_evento;
     }
 
+    function conviteClaim(data) {
+      return signedIn()
+        && request.auth.token.papel == 'C'
+        && request.auth.token.conviteToken is string
+        && request.auth.token.conviteToken.size() >= 16
+        && data.convite_token is string
+        && data.convite_token == request.auth.token.conviteToken;
+    }
+
+    function rsvpDoConvite() {
+      return conviteClaim(resource.data)
+        && request.resource.data.id_evento == resource.data.id_evento
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['id_usuario', 'idUsuario', 'id_evento', 'id_convidado', 'convite_token']);
+    }
+
+    function reservaPresenteDoConvite(eventoId) {
+      return signedIn()
+        && request.auth.token.papel == 'C'
+        && request.auth.token.idEvento == eventoId
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['reservado_por', 'id_convidado', 'data_reserva']);
+    }
+
+    function convidadoComContaReal(idConvidado) {
+      return signedIn()
+        && idConvidado is string
+        && idConvidado.size() > 0
+        && exists(/databases/$(database)/documents/convidado/$(idConvidado))
+        && get(/databases/$(database)/documents/convidado/$(idConvidado)).data.id_usuario == uid();
+    }
+
     match /usuarios/{userId} {
       allow read: if isAdmin() || (signedIn() && uid() == userId);
       allow create: if isAdmin() || (signedIn() && uid() == userId);
@@ -83,7 +115,25 @@ service cloud.firestore {
       }
     }
 
+    // collectionGroup('enderecos') exige regra no ID da coleção, não só no caminho aninhado.
+    match /{path=**}/enderecos/{enderecoId} {
+      allow read: if isAdmin();
+    }
+
+    match /{path=**}/fornecedores/{docId} {
+      allow read: if signedIn();
+    }
+
+    match /{path=**}/mensagens/{docId} {
+      allow read: if signedIn();
+    }
+
     match /tipo_evento/{id} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /tema_festa/{id} {
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -139,6 +189,14 @@ service cloud.firestore {
         || (isTipo('O') && request.resource.data.id_usuario == uid());
       allow delete: if isAdmin() || eventoDono(eventoId);
 
+      match /presentes/{presenteId} {
+        allow read: if signedIn();
+        allow create, delete: if isAdmin() || eventoDono(eventoId);
+        allow update: if isAdmin()
+          || eventoDono(eventoId)
+          || reservaPresenteDoConvite(eventoId);
+      }
+
       match /{subcolecao}/{docId} {
         allow read: if signedIn();
         allow write: if isAdmin() || eventoDono(eventoId);
@@ -150,50 +208,72 @@ service cloud.firestore {
       }
     }
 
+    // list/get separados: OR com convite/e-mail faz a query por id_evento
+    // falhar inteira (PERMISSION_DENIED), mesmo para o dono do evento.
     match /convidado/{id} {
-      allow read: if isAdmin()
+      allow list: if isAdmin()
+        || eventoDono(resource.data.id_evento)
+        || (signedIn() && campoIdUsuario(resource.data));
+      allow get: if isAdmin()
         || eventoDono(resource.data.id_evento)
         || (signedIn() && campoIdUsuario(resource.data))
-        || conviteDoEmail(resource.data);
-      allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
-      allow update, delete: if isAdmin()
-        || eventoDono(resource.data.id_evento)
-        || (signedIn() && campoIdUsuario(resource.data))
-        || podeVincularConvitePeloEmail();
-    }
-
-    match /convidados/{id} {
-      allow read: if isAdmin()
-        || eventoDono(resource.data.id_evento)
-        || (signedIn() && campoIdUsuario(resource.data))
-        || conviteDoEmail(resource.data);
+        || conviteDoEmail(resource.data)
+        || conviteClaim(resource.data);
       allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
       allow update: if isAdmin()
         || eventoDono(resource.data.id_evento)
         || (signedIn() && campoIdUsuario(resource.data))
-        || podeVincularConvitePeloEmail();
+        || podeVincularConvitePeloEmail()
+        || rsvpDoConvite();
+      allow delete: if isAdmin()
+        || eventoDono(resource.data.id_evento)
+        || (signedIn() && campoIdUsuario(resource.data));
+    }
+
+    match /convidados/{id} {
+      allow list: if isAdmin()
+        || eventoDono(resource.data.id_evento)
+        || (signedIn() && campoIdUsuario(resource.data));
+      allow get: if isAdmin()
+        || eventoDono(resource.data.id_evento)
+        || (signedIn() && campoIdUsuario(resource.data))
+        || conviteDoEmail(resource.data)
+        || conviteClaim(resource.data);
+      allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
+      allow update: if isAdmin()
+        || eventoDono(resource.data.id_evento)
+        || (signedIn() && campoIdUsuario(resource.data))
+        || podeVincularConvitePeloEmail()
+        || rsvpDoConvite();
       allow delete: if isAdmin() || eventoDono(resource.data.id_evento);
     }
 
     match /grupos_convidado/{id} {
       allow read: if signedIn();
-      allow write: if isAdmin() || eventoDono(resource.data.id_evento);
+      allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
+      allow update, delete: if isAdmin() || eventoDono(resource.data.id_evento);
     }
 
     match /tarefa/{id} {
       allow read: if signedIn();
-      allow write: if isAdmin()
+      allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
+      allow update: if isAdmin()
         || eventoDono(resource.data.id_evento)
-        || (signedIn() && resource.data.id_responsavel == uid());
+        || (convidadoComContaReal(resource.data.id_responsavel)
+            && request.resource.data.id_responsavel == resource.data.id_responsavel
+            && request.resource.data.id_evento == resource.data.id_evento);
+      allow delete: if isAdmin() || eventoDono(resource.data.id_evento);
     }
 
     match /cardapios/{id} {
       allow read: if signedIn();
-      allow write: if isAdmin() || eventoDono(resource.data.id_evento);
+      allow create: if isAdmin() || eventoDono(request.resource.data.id_evento);
+      allow update, delete: if isAdmin() || eventoDono(resource.data.id_evento);
 
       match /itens/{itemId} {
         allow read: if signedIn();
-        allow write: if isAdmin() || eventoDono(get(/databases/$(database)/documents/cardapios/$(id)).data.id_evento);
+        allow write: if isAdmin()
+          || eventoDono(get(/databases/$(database)/documents/cardapios/$(id)).data.id_evento);
       }
     }
 

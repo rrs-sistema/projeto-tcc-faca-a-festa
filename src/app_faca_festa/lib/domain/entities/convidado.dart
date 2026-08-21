@@ -80,6 +80,11 @@ class Convidado {
   final DateTime? dataResposta;
   final DateTime dataCadastro;
   final DateTime dataAtualizacao;
+  final String conviteToken;
+  final String? idUsuario;
+  final String? conviteStatus;
+  final String? emailUsuario;
+  final String? emailNormalizado;
 
   const Convidado({
     required this.idConvidado,
@@ -99,12 +104,92 @@ class Convidado {
     this.dataResposta,
     required this.dataCadastro,
     required this.dataAtualizacao,
+    this.conviteToken = '',
+    this.idUsuario,
+    this.conviteStatus,
+    this.emailUsuario,
+    this.emailNormalizado,
   });
 
   bool get adulto => tipoConvidado == TipoConvidado.adulto;
   bool get crianca => tipoConvidado == TipoConvidado.crianca;
   bool get bebe => tipoConvidado == TipoConvidado.bebe;
   bool get confirmado => status == StatusConvidado.confirmado;
+
+  /// Token usado em `/convite/{token}`. Cai no id do convidado se o campo ainda não existir.
+  String get tokenParaLink {
+    final token = conviteToken.trim();
+    return token.isNotEmpty ? token : idConvidado.trim();
+  }
+
+  bool get temLinkGerado => tokenParaLink.isNotEmpty;
+
+  bool get temEmail {
+    return _pareceEmail(email) ||
+        _pareceEmail(emailUsuario) ||
+        _pareceEmail(emailNormalizado);
+  }
+
+  bool get contaVinculada {
+    final uid = idUsuario?.trim() ?? '';
+    if (uid.isNotEmpty) return true;
+    return _conviteVinculado;
+  }
+
+  bool get _conviteVinculado =>
+      (conviteStatus ?? '').trim().toLowerCase() == 'vinculado';
+
+  /// E-mail gravado na vinculação da conta (não o e-mail do convite).
+  String get emailDaConta {
+    final daConta = normalizarEmail(emailUsuario);
+    if (daConta.isNotEmpty) return daConta;
+    return normalizarEmail(emailNormalizado);
+  }
+
+  /// Convite + conta (e-mail/Google). Auth anônimo não preenche esses campos.
+  String get emailNormalizadoEfetivo {
+    final daConta = emailDaConta;
+    if (daConta.isNotEmpty) return daConta;
+    return normalizarEmail(email);
+  }
+
+  /// Só conta real (e-mail/Google) pode ser responsável de tarefa.
+  /// Auth anônimo não grava `id_usuario` nem `email_usuario`.
+  bool get podeSerResponsavelTarefa {
+    if ((idUsuario?.trim() ?? '').isNotEmpty) return true;
+    if (_conviteVinculado) return true;
+    return _pareceEmail(emailUsuario) || _pareceEmail(emailNormalizado);
+  }
+
+  bool mesmoIdentificador(Convidado outro) {
+    if (idConvidado.trim().isNotEmpty &&
+        idConvidado.trim() == outro.idConvidado.trim()) {
+      return true;
+    }
+    final uid = idUsuario?.trim() ?? '';
+    final outroUid = outro.idUsuario?.trim() ?? '';
+    if (uid.isNotEmpty && uid == outroUid) return true;
+    final email = emailNormalizadoEfetivo;
+    final outroEmail = outro.emailNormalizadoEfetivo;
+    return email.isNotEmpty && email == outroEmail;
+  }
+
+  static String normalizarEmail(String? value) =>
+      (value ?? '').trim().toLowerCase();
+
+  static bool _pareceEmail(String? value) {
+    final texto = (value ?? '').trim();
+    return texto.contains('@') && texto.contains('.');
+  }
+
+  Convidado comTokenConvite() {
+    final token = tokenParaLink;
+    if (token.isEmpty || conviteToken.trim() == token) return this;
+    return copyWith(
+      conviteToken: token,
+      conviteStatus: contaVinculada ? 'vinculado' : 'link_gerado',
+    );
+  }
 
   Convidado copyWith({
     String? idConvidado,
@@ -124,6 +209,11 @@ class Convidado {
     DateTime? dataResposta,
     DateTime? dataCadastro,
     DateTime? dataAtualizacao,
+    String? conviteToken,
+    String? idUsuario,
+    String? conviteStatus,
+    String? emailUsuario,
+    String? emailNormalizado,
   }) {
     return Convidado(
       idConvidado: idConvidado ?? this.idConvidado,
@@ -143,6 +233,11 @@ class Convidado {
       dataResposta: dataResposta ?? this.dataResposta,
       dataCadastro: dataCadastro ?? this.dataCadastro,
       dataAtualizacao: dataAtualizacao ?? this.dataAtualizacao,
+      conviteToken: conviteToken ?? this.conviteToken,
+      idUsuario: idUsuario ?? this.idUsuario,
+      conviteStatus: conviteStatus ?? this.conviteStatus,
+      emailUsuario: emailUsuario ?? this.emailUsuario,
+      emailNormalizado: emailNormalizado ?? this.emailNormalizado,
     );
   }
 }

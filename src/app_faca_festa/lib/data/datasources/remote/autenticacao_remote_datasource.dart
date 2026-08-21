@@ -25,6 +25,14 @@ abstract interface class AutenticacaoRemoteDatasource {
 
   Stream<SessaoUsuarioRemote?> observarSessao();
 
+  bool get sessaoAnonima;
+
+  bool get sessaoVisitanteConvite;
+
+  Future<void> entrarAnonimamente();
+
+  Future<void> entrarComTokenCustomizado(String token);
+
   Future<void> entrar({
     required String email,
     required String senha,
@@ -63,6 +71,36 @@ class FirebaseAutenticacaoRemoteDatasource
                 email: usuario.email,
               ),
       );
+
+  @override
+  bool get sessaoAnonima => auth.currentUser?.isAnonymous == true;
+
+  @override
+  bool get sessaoVisitanteConvite {
+    final usuario = auth.currentUser;
+    if (usuario == null) return false;
+    if (usuario.isAnonymous) return true;
+    return usuario.providerData.isEmpty;
+  }
+
+  @override
+  Future<void> entrarAnonimamente() async {
+    try {
+      if (auth.currentUser != null) return;
+      await auth.signInAnonymously();
+    } on FirebaseAuthException catch (erro) {
+      throw AutenticacaoRemoteException(erro.code);
+    }
+  }
+
+  @override
+  Future<void> entrarComTokenCustomizado(String token) async {
+    try {
+      await auth.signInWithCustomToken(token);
+    } on FirebaseAuthException catch (erro) {
+      throw AutenticacaoRemoteException(erro.code);
+    }
+  }
 
   @override
   Future<void> entrar({
@@ -141,6 +179,20 @@ class FirebaseAutenticacaoRemoteDatasource
     final provider = GoogleAuthProvider()
       ..addScope('email')
       ..addScope('profile');
+    final atual = auth.currentUser;
+    if (atual != null && atual.isAnonymous) {
+      try {
+        await atual.linkWithPopup(provider);
+        return true;
+      } on FirebaseAuthException catch (erro) {
+        if (erro.code == 'credential-already-in-use' &&
+            erro.credential != null) {
+          await auth.signInWithCredential(erro.credential!);
+          return true;
+        }
+        rethrow;
+      }
+    }
     await auth.signInWithPopup(provider);
     return true;
   }
@@ -156,7 +208,7 @@ class FirebaseAutenticacaoRemoteDatasource
         throw const AutenticacaoRemoteException('google-token-not-found');
       }
 
-      await auth.signInWithCredential(
+      await _aplicarCredencialGoogle(
         GoogleAuthProvider.credential(idToken: idToken),
       );
       return true;
@@ -177,6 +229,20 @@ class FirebaseAutenticacaoRemoteDatasource
       final provider = GoogleAuthProvider()
         ..addScope('email')
         ..addScope('profile');
+      final atual = auth.currentUser;
+      if (atual != null && atual.isAnonymous) {
+        try {
+          await atual.linkWithProvider(provider);
+          return true;
+        } on FirebaseAuthException catch (erro) {
+          if (erro.code == 'credential-already-in-use' &&
+              erro.credential != null) {
+            await auth.signInWithCredential(erro.credential!);
+            return true;
+          }
+          rethrow;
+        }
+      }
       await auth.signInWithProvider(provider);
       return true;
     } on FirebaseAuthException catch (erro) {
@@ -190,6 +256,23 @@ class FirebaseAutenticacaoRemoteDatasource
       }
       rethrow;
     }
+  }
+
+  Future<void> _aplicarCredencialGoogle(AuthCredential credencial) async {
+    final atual = auth.currentUser;
+    if (atual != null && atual.isAnonymous) {
+      try {
+        await atual.linkWithCredential(credencial);
+        return;
+      } on FirebaseAuthException catch (erro) {
+        if (erro.code == 'credential-already-in-use') {
+          await auth.signInWithCredential(credencial);
+          return;
+        }
+        rethrow;
+      }
+    }
+    await auth.signInWithCredential(credencial);
   }
 
   bool _googleNativoFoiCancelado(GoogleSignInException erro) {
@@ -212,6 +295,13 @@ class FirebaseAutenticacaoRemoteDatasource
     required String senha,
   }) async {
     try {
+      final atual = auth.currentUser;
+      if (atual != null && atual.isAnonymous) {
+        final vinculada = await atual.linkWithCredential(
+          EmailAuthProvider.credential(email: email, password: senha),
+        );
+        return vinculada.user!.uid;
+      }
       final credencial = await auth.createUserWithEmailAndPassword(
         email: email,
         password: senha,

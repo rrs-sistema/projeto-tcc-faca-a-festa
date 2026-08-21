@@ -102,6 +102,12 @@ class GrupoConvidadoController extends GetxController {
     String idGrupo, {
     bool desvincularConvidados = true,
   }) async {
+    if (convidadosDoGrupo(idGrupo).isNotEmpty) {
+      erro.value =
+          'Não é possível excluir um grupo que ainda possui convidados.';
+      throw StateError(erro.value);
+    }
+
     await _executarPersistencia(
       mensagemErro: 'Erro ao excluir grupo',
       acao: () => _repository.excluirGrupo(

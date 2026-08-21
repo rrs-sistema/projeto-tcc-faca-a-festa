@@ -23,6 +23,30 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
       );
 
   @override
+  bool get sessaoAnonima => remote.sessaoAnonima;
+
+  @override
+  bool get sessaoVisitanteConvite => remote.sessaoVisitanteConvite;
+
+  @override
+  Future<void> entrarAnonimamente() async {
+    try {
+      await remote.entrarAnonimamente();
+    } on AutenticacaoRemoteException catch (erro) {
+      throw AutenticacaoException(erro.codigo);
+    }
+  }
+
+  @override
+  Future<void> entrarComTokenCustomizado(String token) async {
+    try {
+      await remote.entrarComTokenCustomizado(token);
+    } on AutenticacaoRemoteException catch (erro) {
+      throw AutenticacaoException(erro.codigo);
+    }
+  }
+
+  @override
   Future<void> entrar({
     required String email,
     required String senha,

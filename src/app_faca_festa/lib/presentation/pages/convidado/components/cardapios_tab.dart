@@ -11,6 +11,7 @@ import './add_item_cardapio_bottom_sheet.dart';
 import './cadastro_cardapio_bottom_sheet.dart';
 import './editar_item_cardapio_bottom_sheet.dart';
 import './editar_cardapio_bottomsheet.dart';
+import './show_cadastro_bottom_sheet.dart';
 
 class CardapiosTab extends StatelessWidget {
   const CardapiosTab({super.key});
@@ -20,9 +21,9 @@ class CardapiosTab extends StatelessWidget {
     final controller = Get.find<CardapioController>();
     final theme = Get.find<EventThemeController>();
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: Obx(() {
+    return ColoredBox(
+      color: const Color(0xFFF8FAFC),
+      child: Obx(() {
         final primary = theme.primaryColor.value;
         if (controller.carregando.value) {
           return Center(child: CircularProgressIndicator(color: primary));
@@ -894,36 +895,32 @@ int _totalItensConfirmados(CardapioController c) {
 
 void abrirEditarItemCardapio(
     BuildContext context, String idCardapio, CardapioItem item) {
-  showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) =>
-          EditarItemCardapioBottomSheet(idCardapio: idCardapio, item: item));
+  showCadastroBottomSheet(
+    context: context,
+    builder: (_) =>
+        EditarItemCardapioBottomSheet(idCardapio: idCardapio, item: item),
+  );
 }
 
 void abrirCadastroCardapio(BuildContext context, String idEvento) {
-  showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => CadastroCardapioBottomSheet(idEvento: idEvento));
+  showCadastroBottomSheet(
+    context: context,
+    builder: (_) => CadastroCardapioBottomSheet(idEvento: idEvento),
+  );
 }
 
 void abrirAdicionarItemCardapio(
     BuildContext context, String idEvento, String idCardapio) {
-  showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => AddItemCardapioBottomSheet(
-          idEvento: idEvento, idCardapio: idCardapio));
+  showCadastroBottomSheet(
+    context: context,
+    builder: (_) => AddItemCardapioBottomSheet(
+        idEvento: idEvento, idCardapio: idCardapio),
+  );
 }
 
 void abrirEditarCardapio(BuildContext context, Cardapio cardapio) {
-  showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => EditarCardapioBottomSheet(cardapio: cardapio));
+  showCadastroBottomSheet(
+    context: context,
+    builder: (_) => EditarCardapioBottomSheet(cardapio: cardapio),
+  );
 }

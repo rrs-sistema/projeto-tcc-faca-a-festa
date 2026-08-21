@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../controllers/inspiracao/inspiracao_admin_controller.dart';
+import '../../widgets/admin/admin_kit.dart';
 import './../../../data/models/model.dart';
 import 'inspiracao_admin_form_page.dart';
 
@@ -80,6 +82,21 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
               onPressed: controller.loading.value ? null : () => controller.recarregar(),
               icon: const Icon(Icons.refresh_rounded, size: 20), // Ícone menor
             ),
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'Mais ações',
+            icon: const Icon(Icons.more_vert_rounded, size: 20),
+            onSelected: (value) async {
+              if (value == 'popular') {
+                await _popularCatalogo(context, controller);
+              }
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'popular',
+                child: Text('Popular catálogo de festas'),
+              ),
+            ],
           ),
         ],
       ),
@@ -633,6 +650,41 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
       case InspiracaoAdminController.statusTodos:
       default:
         return 'Todas';
+    }
+  }
+
+  Future<void> _popularCatalogo(
+    BuildContext context,
+    InspiracaoAdminController controller,
+  ) async {
+    final ok = await confirmarAcaoAdmin(
+      context,
+      titulo: 'Popular catálogo de festas',
+      mensagem:
+          'Isso grava inspirações com base nos temas, categorias e fornecedores já cadastrados. '
+          'Itens existentes com o mesmo ID são atualizados; extra não é apagado. '
+          'Todas entram publicadas para aparecer na tela do usuário.',
+      confirmar: 'Popular catálogo',
+      cor: _primary,
+    );
+    if (!ok) return;
+
+    try {
+      EasyLoading.show(status: 'Gravando inspirações...');
+      final total = await controller.popularCatalogoInicial();
+      EasyLoading.dismiss();
+      Get.snackbar(
+        'Catálogo de inspirações',
+        '$total ideias gravadas e publicadas.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      EasyLoading.dismiss();
+      Get.snackbar(
+        'Erro ao popular catálogo',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
 }

@@ -10,6 +10,9 @@ import '../../../controllers/inspiracao/inspiracao_controller.dart';
 import './../../../domain/entities/tipo_evento.dart';
 import './../../widgets/confetti_background.dart';
 import './../../../data/models/model.dart' hide TipoEvento;
+import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
+import '../fornecedor/fornecedor_detalhe_screen.dart';
+import '../fornecedor/fornecedor_localizacao_screen.dart';
 import './inspiracao_detalhe_screen.dart';
 import './minhas_referencias_evento_screen.dart';
 
@@ -520,46 +523,178 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
   }
 
   Widget _fornecedoresSugeridos(Color primary) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: InkWell(
-        onTap: () => Get.toNamed('/fornecedores'),
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: primary.withValues(alpha: 0.05),
+    return Obx(() {
+      final fornecedores = controller.fornecedoresDasInspiracoesFiltradas();
+      if (fornecedores.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: InkWell(
+            onTap: _abrirListaFornecedores,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: primary.withValues(alpha: 0.2)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration:
-                    BoxDecoration(color: primary.withValues(alpha: 0.1), shape: BoxShape.circle),
-                child: Icon(Icons.storefront_rounded, color: primary, size: 22),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.05),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: primary.withValues(alpha: 0.2)),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text("Encontre quem faz",
-                        style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 13,
-                            color: const Color(0xFF1F2937))),
-                    Text("Fornecedores que realizam essas ideias.",
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade700)),
-                  ],
-                ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration:
+                        BoxDecoration(color: primary.withValues(alpha: 0.1), shape: BoxShape.circle),
+                    child: Icon(Icons.storefront_rounded, color: primary, size: 22),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("Encontre quem faz",
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                                color: const Color(0xFF1F2937))),
+                        Text("Fornecedores que realizam essas ideias.",
+                            style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade700)),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right_rounded, color: primary, size: 20),
+                ],
               ),
-              Icon(Icons.chevron_right_rounded, color: primary, size: 20),
-            ],
+            ),
           ),
+        );
+      }
+
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(0, 4, 0, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Quem realiza essas ideias',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 13,
+                        color: const Color(0xFF1F2937),
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _abrirListaFornecedores,
+                    child: Text(
+                      'Ver todos',
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 118,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: fornecedores.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                itemBuilder: (_, index) {
+                  final fornecedor = fornecedores[index];
+                  return _cardFornecedorBanner(fornecedor, primary);
+                },
+              ),
+            ),
+          ],
+        ),
+      );
+    });
+  }
+
+  Widget _cardFornecedorBanner(FornecedorModel fornecedor, Color primary) {
+    final url = (fornecedor.bannerUrl ?? '').trim();
+    return GestureDetector(
+      onTap: () => _abrirFornecedor(fornecedor),
+      child: SizedBox(
+        width: 118,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: SizedBox(
+                height: 78,
+                width: 118,
+                child: url.isEmpty
+                    ? Container(
+                        color: primary.withValues(alpha: 0.08),
+                        child: Icon(Icons.storefront_rounded, color: primary, size: 26),
+                      )
+                    : Image.network(
+                        url,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          color: Colors.grey.shade200,
+                          child: const Icon(Icons.storefront_rounded, color: Colors.grey),
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              fornecedor.razaoSocial,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.poppins(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                height: 1.15,
+                color: const Color(0xFF1F2937),
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  void _abrirListaFornecedores() {
+    Get.to(() => const FornecedorLocalizacaoScreen(showLeading: true));
+  }
+
+  void _abrirFornecedor(FornecedorModel fornecedor) {
+    Get.to(
+      () => FornecedorDetalheScreen(
+        selecionouCategoria: false,
+        fornecedorDetalhado: FornecedorDetalhadoDto(
+          fornecedor: fornecedor,
+          categoriaId: _categoriaFornecedorId(fornecedor),
+          categoriaNome: _categoriaFornecedorNome(fornecedor),
+        ),
+      ),
+    );
+  }
+
+  String _categoriaFornecedorId(FornecedorModel fornecedor) {
+    if (fornecedor.categorias.isEmpty) return '';
+    final raw = fornecedor.categorias.first;
+    return (raw['idCategoria'] ?? raw['id_categoria'] ?? '').toString();
+  }
+
+  String _categoriaFornecedorNome(FornecedorModel fornecedor) {
+    if (fornecedor.categorias.isEmpty) return '';
+    final raw = fornecedor.categorias.first;
+    return (raw['nomeCategoria'] ?? raw['nome_categoria'] ?? '').toString();
   }
 }

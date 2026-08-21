@@ -1,132 +1,193 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import './../../../../data/models/servico_produto/categoria_servico_model.dart';
-import './../../../../controllers/categoria/categoria_servico_controller.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
+import '../../../../controllers/categoria/categoria_servico_controller.dart';
+import '../../../../controllers/tema/admin_theme.dart';
+import '../../../../data/models/servico_produto/categoria_servico_model.dart';
+import '../../../widgets/admin/admin_kit.dart';
 
 Future<void> showCategoriaServicoBottomSheet(
   BuildContext context, [
   CategoriaServicoModel? categoria,
 ]) async {
-  final themeController = Get.find<EventThemeController>();
   final controller = Get.find<CategoriaServicoController>();
   final nomeCtrl = TextEditingController(text: categoria?.nome ?? '');
   final descCtrl = TextEditingController(text: categoria?.descricao ?? '');
-  final primary = themeController.primaryColor.value;
+  final ordemCtrl = TextEditingController(text: '${categoria?.ordem ?? 0}');
+  final ativo = (categoria?.ativo ?? true).obs;
+  final icone = (categoria?.icone ?? 'category').obs;
+  final salvando = false.obs;
 
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.white,
     shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
     ),
-    builder: (_) => DraggableScrollableSheet(
-      initialChildSize: 0.6,
-      minChildSize: 0.4,
-      maxChildSize: 0.95,
-      expand: false,
-      builder: (context, scrollController) {
+    builder: (_) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Obx(() {
         return SingleChildScrollView(
-          controller: scrollController,
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-            left: 20,
-            right: 20,
-            top: 24,
-          ),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Center(
                 child: Container(
-                  width: 60,
-                  height: 6,
+                  width: 48,
+                  height: 5,
                   decoration: BoxDecoration(
                     color: Colors.grey.shade300,
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
               Text(
-                categoria == null ? 'Nova Categoria' : 'Editar Categoria',
+                categoria == null ? 'Nova categoria' : 'Editar categoria',
                 style: GoogleFonts.poppins(
                   fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: primary,
+                  fontWeight: FontWeight.w800,
+                  color: AdminPalette.ink,
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 6),
+              Text(
+                'Organize o catálogo visível para clientes e fornecedores.',
+                style: GoogleFonts.poppins(fontSize: 12.5, color: AdminPalette.muted),
+              ),
+              const SizedBox(height: 20),
               TextField(
                 controller: nomeCtrl,
-                decoration: InputDecoration(
-                  labelText: 'Nome da categoria',
-                  prefixIcon: const Icon(Icons.category_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                textCapitalization: TextCapitalization.sentences,
+                decoration: adminInputDecoration(
+                  label: 'Nome da categoria',
+                  icon: Icons.category_outlined,
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: descCtrl,
+                maxLines: 4,
+                maxLength: 180,
+                decoration: adminInputDecoration(
+                  label: 'Descrição',
+                  icon: Icons.notes_outlined,
+                  hint: 'O que esta categoria cobre no evento',
+                ),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: ordemCtrl,
+                keyboardType: TextInputType.number,
+                decoration: adminInputDecoration(
+                  label: 'Ordem de exibição',
+                  icon: Icons.format_list_numbered_rounded,
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: descCtrl,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  labelText: 'Descrição',
-                  prefixIcon: const Icon(Icons.notes_outlined),
-                  border: OutlineInputBorder(
+              Text('Ícone', style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: CategoriaIcones.catalogo.entries.map((e) {
+                  final selecionado = icone.value == e.key;
+                  return InkWell(
+                    onTap: () => icone.value = e.key,
                     borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 160),
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: selecionado
+                            ? AdminPalette.primary
+                            : AdminPalette.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: selecionado ? AdminPalette.primary : AdminPalette.border,
+                        ),
+                      ),
+                      child: Icon(
+                        e.value,
+                        color: selecionado ? Colors.white : AdminPalette.primary,
+                        size: 20,
+                      ),
                     ),
-                    backgroundColor: primary,
-                  ),
-                  icon: const Icon(Icons.save),
-                  label: const Text('Salvar', style: TextStyle(fontSize: 16)),
-                  onPressed: () async {
-                    final model = CategoriaServicoModel(
-                      id: categoria?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-                      nome: nomeCtrl.text,
-                      descricao: descCtrl.text,
-                    );
-                    await controller.salvarCategoria(model);
-                    Get.back();
-                  },
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              SwitchListTile.adaptive(
+                contentPadding: EdgeInsets.zero,
+                value: ativo.value,
+                onChanged: (v) => ativo.value = v,
+                title: Text('Categoria ativa', style: GoogleFonts.poppins(fontSize: 14)),
+                subtitle: Text(
+                  'Inativas deixam de aparecer no cadastro de fornecedores.',
+                  style: GoogleFonts.poppins(fontSize: 12, color: AdminPalette.muted),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 12),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
-                  icon: const Icon(Icons.close_rounded),
-                  label: const Text('Sair', style: TextStyle(fontSize: 16)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey.shade200,
-                    foregroundColor: Colors.grey.shade800,
+                child: FilledButton.icon(
+                  onPressed: salvando.value
+                      ? null
+                      : () async {
+                          if (nomeCtrl.text.trim().isEmpty) {
+                            Get.snackbar(
+                              'Campo obrigatório',
+                              'Informe o nome da categoria.',
+                              snackPosition: SnackPosition.BOTTOM,
+                            );
+                            return;
+                          }
+                          salvando.value = true;
+                          final model = CategoriaServicoModel(
+                            id: categoria?.id ??
+                                DateTime.now().millisecondsSinceEpoch.toString(),
+                            nome: nomeCtrl.text.trim(),
+                            descricao: descCtrl.text.trim(),
+                            ativo: ativo.value,
+                            ordem: int.tryParse(ordemCtrl.text.trim()) ?? 0,
+                            icone: icone.value,
+                            dataCadastro: categoria?.dataCadastro ?? DateTime.now(),
+                          );
+                          await controller.salvarCategoria(model);
+                          salvando.value = false;
+                          Get.back();
+                        },
+                  icon: salvando.value
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                        )
+                      : const Icon(Icons.save_rounded),
+                  label: Text('Salvar', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AdminPalette.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                    elevation: 0,
                   ),
-                  onPressed: () => Get.back(),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Get.back(),
+                  child: Text('Cancelar', style: GoogleFonts.poppins(color: AdminPalette.muted)),
+                ),
+              ),
             ],
           ),
         );
-      },
+      }),
     ),
   );
 }

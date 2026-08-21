@@ -14,6 +14,8 @@ import './../../../controllers/evento_controller.dart';
 import './../../dialogs/enviar_avaliacao_dialog.dart';
 import './../../../controllers/app_controller.dart';
 import './../../../core/utils/biblioteca.dart';
+import './../../../core/utils/form_masks.dart';
+import './../../../core/utils/form_validators.dart';
 import './../../widgets/festa_app_bar.dart';
 import './../../../data/models/model.dart';
 
@@ -634,6 +636,9 @@ Future<void> _showAddGastoDialog(
   final nomeCtrl = TextEditingController();
   final custoCtrl = TextEditingController();
   final pagoCtrl = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  final dinheiroCusto = FormMasks.dinheiro();
+  final dinheiroPago = FormMasks.dinheiro();
   final RxBool salvando = false.obs;
 
   final primary = themeController.primaryColor.value;
@@ -646,21 +651,9 @@ Future<void> _showAddGastoDialog(
 
   Future<void> salvarGasto(BuildContext modalContext) async {
     if (salvando.value) return;
+    if (!(formKey.currentState?.validate() ?? false)) return;
 
     final descricao = nomeCtrl.text.trim();
-
-    if (descricao.isEmpty) {
-      Get.snackbar(
-        'Campo obrigatório',
-        'Descreva onde o valor foi destinado.',
-        backgroundColor: Colors.redAccent.shade200,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
-        borderRadius: 12,
-      );
-      return;
-    }
 
     try {
       salvando.value = true;
@@ -669,8 +662,8 @@ Future<void> _showAddGastoDialog(
       final result = await gastoController.adicionarGasto(
         idOrcamento: idOrcamento,
         nome: descricao,
-        custo: Biblioteca.toDouble(custoCtrl.text),
-        pago: Biblioteca.toDouble(pagoCtrl.text),
+        custo: FormValidators.parseDinheiro(custoCtrl.text),
+        pago: FormValidators.parseDinheiro(pagoCtrl.text),
       );
 
       EasyLoading.dismiss();
@@ -849,6 +842,8 @@ Future<void> _showAddGastoDialog(
     TextCapitalization textCapitalization = TextCapitalization.none,
     TextInputAction textInputAction = TextInputAction.next,
     int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -863,12 +858,14 @@ Future<void> _showAddGastoDialog(
           )
         ],
       ),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
         textCapitalization: textCapitalization,
         textInputAction: textInputAction,
         maxLines: maxLines,
+        inputFormatters: inputFormatters,
+        validator: validator,
         style: GoogleFonts.poppins(
             color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
@@ -902,6 +899,16 @@ Future<void> _showAddGastoDialog(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(color: primary, width: 1.2),
           ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Colors.redAccent),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+          ),
+          errorStyle: const TextStyle(fontSize: 11, height: 0.9),
+          errorMaxLines: 2,
         ),
       ),
     );
@@ -930,7 +937,10 @@ Future<void> _showAddGastoDialog(
                 children: [
                   buildHeader(),
                   Expanded(
-                    child: ListView(
+                    child: Form(
+                      key: formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: ListView(
                       controller: controllerScroll,
                       padding: EdgeInsets.fromLTRB(
                         16,
@@ -950,23 +960,50 @@ Future<void> _showAddGastoDialog(
                           icon: Icons.edit_note_rounded,
                           textCapitalization: TextCapitalization.sentences,
                           maxLines: 2,
+                          validator: (v) => FormValidators.descricao(
+                            v,
+                            campo: 'a descrição do gasto',
+                            obrigatorio: true,
+                            minimo: 3,
+                          ),
                         ),
                         buildTextField(
                           controller: custoCtrl,
                           label: 'Custo total (R\$)',
-                          hint: '0,00',
+                          hint: 'R\$ 0,00',
                           icon: Icons.attach_money_rounded,
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
+                          inputFormatters: [dinheiroCusto],
+                          validator: (v) => FormValidators.dinheiro(
+                            v,
+                            campo: 'o custo total',
+                          ),
                         ),
                         buildTextField(
                           controller: pagoCtrl,
                           label: 'Valor pago (R\$)',
-                          hint: '0,00',
+                          hint: 'R\$ 0,00',
                           icon: Icons.payments_rounded,
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
                           textInputAction: TextInputAction.done,
+                          inputFormatters: [dinheiroPago],
+                          validator: (v) {
+                            final erro = FormValidators.dinheiro(
+                              v,
+                              obrigatorio: false,
+                              campo: 'o valor pago',
+                            );
+                            if (erro != null) return erro;
+                            final pago = FormValidators.parseDinheiro(v);
+                            final custo =
+                                FormValidators.parseDinheiro(custoCtrl.text);
+                            if (pago > custo && custo > 0) {
+                              return 'O valor pago não pode ser maior que o custo';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 20),
                         Obx(() {
@@ -1033,6 +1070,7 @@ Future<void> _showAddGastoDialog(
                         ),
                         const SizedBox(height: 35),
                       ],
+                    ),
                     ),
                   ),
                 ],
@@ -1159,6 +1197,8 @@ Future<void> showAddOrcamentoBottomSheet(
 
   final nomeCtrl = TextEditingController();
   final custoEstimadoCtrl = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  final dinheiroMask = FormMasks.dinheiro();
   final RxBool salvando = false.obs;
 
   final primary = themeController.primaryColor.value;
@@ -1171,39 +1211,14 @@ Future<void> showAddOrcamentoBottomSheet(
 
   Future<void> salvarOrcamento(BuildContext modalContext) async {
     if (salvando.value) return;
+    if (!(formKey.currentState?.validate() ?? false)) return;
 
     final descricao = nomeCtrl.text.trim();
     final custoTexto = custoEstimadoCtrl.text.trim();
 
-    if (descricao.isEmpty) {
-      Get.snackbar(
-        'Atenção',
-        'Informe a descrição do gasto.',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
-        borderRadius: 12,
-      );
-      return;
-    }
-
-    if (custoTexto.isEmpty) {
-      Get.snackbar(
-        'Atenção',
-        'Informe o custo estimado.',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.BOTTOM,
-        margin: const EdgeInsets.all(12),
-        borderRadius: 12,
-      );
-      return;
-    }
-
     try {
       salvando.value = true;
-      final double custo = Biblioteca.toDouble(custoTexto);
+      final double custo = FormValidators.parseDinheiro(custoTexto);
 
       final resultado =
           await orcamentoController.validarCriacaoOrcamento(custo);
@@ -1392,6 +1407,8 @@ Future<void> showAddOrcamentoBottomSheet(
     TextCapitalization textCapitalization = TextCapitalization.none,
     TextInputAction textInputAction = TextInputAction.next,
     int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -1406,12 +1423,14 @@ Future<void> showAddOrcamentoBottomSheet(
           )
         ],
       ),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
         textCapitalization: textCapitalization,
         textInputAction: textInputAction,
         maxLines: maxLines,
+        inputFormatters: inputFormatters,
+        validator: validator,
         style: GoogleFonts.poppins(
             color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
@@ -1445,6 +1464,16 @@ Future<void> showAddOrcamentoBottomSheet(
             borderRadius: BorderRadius.circular(14),
             borderSide: BorderSide(color: primary, width: 1.2),
           ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Colors.redAccent),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+          ),
+          errorStyle: const TextStyle(fontSize: 11, height: 0.9),
+          errorMaxLines: 2,
         ),
       ),
     );
@@ -1473,7 +1502,10 @@ Future<void> showAddOrcamentoBottomSheet(
                 children: [
                   buildHeader(),
                   Expanded(
-                    child: ListView(
+                    child: Form(
+                      key: formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: ListView(
                       controller: controllerScroll,
                       padding: EdgeInsets.fromLTRB(
                         16,
@@ -1493,15 +1525,26 @@ Future<void> showAddOrcamentoBottomSheet(
                           icon: Icons.category_outlined,
                           textCapitalization: TextCapitalization.sentences,
                           maxLines: 2,
+                          validator: (v) => FormValidators.descricao(
+                            v,
+                            campo: 'a descrição do gasto',
+                            obrigatorio: true,
+                            minimo: 3,
+                          ),
                         ),
                         buildTextField(
                           controller: custoEstimadoCtrl,
                           label: 'Custo estimado (R\$)',
-                          hint: '0,00',
+                          hint: 'R\$ 0,00',
                           icon: Icons.savings_outlined,
                           keyboardType: const TextInputType.numberWithOptions(
                               decimal: true),
                           textInputAction: TextInputAction.done,
+                          inputFormatters: [dinheiroMask],
+                          validator: (v) => FormValidators.dinheiro(
+                            v,
+                            campo: 'o custo estimado',
+                          ),
                         ),
                         const SizedBox(height: 20),
                         Obx(() {
@@ -1568,6 +1611,7 @@ Future<void> showAddOrcamentoBottomSheet(
                         ),
                         const SizedBox(height: 35),
                       ],
+                    ),
                     ),
                   ),
                 ],

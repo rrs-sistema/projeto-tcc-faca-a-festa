@@ -50,9 +50,13 @@ class TarefasScreen extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.add_task_outlined, color: Colors.white),
               onPressed: () async {
+                await tarefaController.carregarUsuarios();
                 await showTarefaDialog(
                   context: context,
-                  usuarios: tarefaController.usuarios,
+                  usuarios: [
+                    ...convidadoController.convidados,
+                    ...tarefaController.usuarios,
+                  ],
                   onSave: (titulo, descricao, data, usuario) async {
                     await tarefaController.adicionarTarefa(
                         nome: titulo,
@@ -268,6 +272,8 @@ class _TarefaCard extends StatelessWidget {
             SlidableAction(
               onPressed: (_) async {
                 final tarefaController = Get.find<TarefaController>();
+                final convidadoController = Get.find<ConvidadoController>();
+                await tarefaController.carregarUsuarios();
                 await showTarefaDialog(
                   context: context,
                   idEvento: tarefa.idEvento,
@@ -275,7 +281,10 @@ class _TarefaCard extends StatelessWidget {
                   descricaoInicial: tarefa.descricao,
                   dataInicial: tarefa.dataPrevista,
                   responsavelInicial: tarefa.responsavel,
-                  usuarios: tarefaController.usuarios,
+                  usuarios: [
+                    ...convidadoController.convidados,
+                    ...tarefaController.usuarios,
+                  ],
                   isEdit: true,
                   onSave: (titulo, descricao, data, usuario) async {
                     await tarefaController.editarTarefa(
@@ -283,6 +292,8 @@ class _TarefaCard extends StatelessWidget {
                         titulo: titulo,
                         descricao: descricao,
                         dataPrevista: data,
+                        idResponsavel: usuario.idConvidado,
+                        responsavel: usuario,
                       ),
                     );
                   },

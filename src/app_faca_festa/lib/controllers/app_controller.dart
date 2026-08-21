@@ -4,12 +4,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
-import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
 import './../presentation/pages/convidado/area/area_convidado_home_screen.dart';
 import './../presentation/pages/convidado/convite_nao_encontrado_screen.dart';
+import './../presentation/pages/fornecedor/fornecedor_aguardando_aprovacao_screen.dart';
 import './../presentation/pages/fornecedor/fornecedor_home_screen.dart';
 import './../presentation/pages/admin/admin_dashboard_screen.dart';
 import './../presentation/pages/welcome/welcome_event_screen.dart';
@@ -22,6 +22,8 @@ import 'servico/servico_produto_controller.dart';
 import 'fornecedor/fornecedor_controller.dart';
 import './orcamento_controller.dart';
 import './../data/models/model.dart';
+import './../core/utils/convite_link.dart';
+import './../data/services/convite/abrir_convite_por_token_service.dart';
 import './../domain/repositories/convite_convidado_repository.dart';
 import './../domain/repositories/autenticacao_repository.dart';
 import './../domain/repositories/perfil_usuario_repository.dart';
@@ -51,10 +53,12 @@ class AppController extends GetxController {
   bool conviteProcessado = false;
   String conviteTokenProcessado = '';
   RxString conviteToken = ''.obs;
+  final RxBool acessoPorLink = false.obs;
   final RxBool carregando = false.obs;
   final RxBool encerrandoSessao = false.obs;
   StreamSubscription<SessaoUsuario?>? _sessaoSub;
   bool _processandoSessao = false;
+  bool _sessaoPendente = false;
   bool totpVerificadoNestaSessao = false;
   bool devMode = true;
 
@@ -66,6 +70,7 @@ class AppController extends GetxController {
   final conviteConvidadoRepository = Get.find<ConviteConvidadoRepository>();
   final autenticacaoRepository = Get.find<AutenticacaoRepository>();
   final perfilUsuarioRepository = Get.find<PerfilUsuarioRepository>();
+  final _abrirConvitePorTokenService = AbrirConvitePorTokenService();
 
   // ✅ Injeção de controladores auxiliares
   final convidadoController = Get.find<ConvidadoController>();
@@ -82,9 +87,8 @@ class AppController extends GetxController {
   void onInit() {
     super.onInit();
 
-    // Quando o app é aberto por um link /convite/{token}, não abrimos a área
-    // do convidado de forma anônima. Guardamos o token para vincular ao UID
-    // assim que o usuário fizer login/cadastro como convidado.
+    // O token do link é a credencial. Auth anônimo + callable abrem a área
+    // sem cadastro; id_usuario só é gravado depois de conta real.
     final token = obterTokenConvite();
     if (token != null && token.isNotEmpty) {
       conviteToken.value = token;
@@ -112,8 +116,6 @@ class AppController extends GetxController {
         return null;
       }
 
-      await buscarUltimoEvento(idUsuario);
-
       // 🔹 2️⃣ Busca subcoleção de endereços
       final enderecos =
           await perfilUsuarioRepository.listarEnderecos(idUsuario);
@@ -131,6 +133,23 @@ class AppController extends GetxController {
 
   Future<void> buscarUltimoEvento(String idUsuario) async {
     await eventoController.buscarUltimoEvento(idUsuario);
+  }
+
+  Future<void> ativarEventoOrganizador(Evento evento) async {
+    await eventoController.selecionarEvento(evento);
+    unawaited(eventoController.carregarEventosDoUsuario(evento.idUsuario));
+  }
+
+  /// Home do evento sem passar pelo splash (evita corrida de sessão).
+  void abrirHomeOrganizador() {
+    carregando.value = false;
+    if (Get.currentRoute == '/HomeEventScreen') return;
+    Get.offAll(
+      () => const HomeEventScreen(),
+      routeName: '/HomeEventScreen',
+      transition: Transition.fadeIn,
+      duration: const Duration(milliseconds: 450),
+    );
   }
 
   void iniciarSessao() {
@@ -165,7 +184,10 @@ class AppController extends GetxController {
 
   Future<void> _processarSessao(SessaoUsuario? user) async {
     if (_processandoSessao) {
-      debugPrint('$_logTag Validação de sessão já em andamento. Ignorando.');
+      _sessaoPendente = true;
+      debugPrint(
+        '$_logTag Validação de sessão já em andamento. Nova tentativa será reprocessada.',
+      );
       return;
     }
     _processandoSessao = true;
@@ -173,25 +195,30 @@ class AppController extends GetxController {
     try {
       await Future.delayed(
           const Duration(milliseconds: 300)); // ✅ pequeno delay
-      // 🔥 verifica token de convite primeiro
       final token = _tokenConviteAtual();
+
+      if (acessoPorLink.value &&
+          (user == null ||
+              autenticacaoRepository.sessaoAnonima ||
+              autenticacaoRepository.sessaoVisitanteConvite)) {
+        debugPrint(
+            '$_logTag Visita por convite em andamento. Sem redirecionar.');
+        return;
+      }
+
+      if (acessoPorLink.value &&
+          user != null &&
+          !autenticacaoRepository.sessaoAnonima &&
+          !autenticacaoRepository.sessaoVisitanteConvite) {
+        acessoPorLink.value = false;
+      }
 
       if (user == null) {
         _limparEstadoTotp();
-        if (token != null && token.isNotEmpty && !conviteProcessado) {
+        if (token != null && token.isNotEmpty) {
           conviteToken.value = token;
           debugPrint(
-              '$_logTag Convidado acessando via convite sem sessão: $token');
-
-          // Mantém o convidado no fluxo de autenticação. O token será vinculado
-          // depois do login/cadastro.
-          if (Get.currentRoute != '/role') {
-            Get.offAllNamed('/role', arguments: {
-              'tipo': 'C',
-              'convidado': true,
-              'conviteToken': token,
-            });
-          }
+              '$_logTag Token de convite pendente; a tela de convite conduz: $token');
           return;
         }
 
@@ -203,10 +230,22 @@ class AppController extends GetxController {
         return;
       }
 
-      if (!_rotaTotp(Get.currentRoute) &&
-          (Get.currentRoute.isEmpty || Get.currentRoute != '/splash')) {
+      if (autenticacaoRepository.sessaoAnonima ||
+          autenticacaoRepository.sessaoVisitanteConvite) {
+        debugPrint('$_logTag Sessão de convite; aguardando área do convidado.');
+        return;
+      }
+
+      final rotaAtual = Get.currentRoute;
+      final noConvite = rotaAtual.startsWith('/convite');
+      if (!noConvite &&
+          !_rotaTotp(rotaAtual) &&
+          !_rotaDestinoEstavel(rotaAtual) &&
+          (rotaAtual.isEmpty || rotaAtual != '/splash')) {
         Future.microtask(() {
           if (_rotaTotp(Get.currentRoute)) return;
+          if (Get.currentRoute.startsWith('/convite')) return;
+          if (_rotaDestinoEstavel(Get.currentRoute)) return;
           Get.offAllNamed('/splash');
         });
       }
@@ -254,6 +293,7 @@ class AppController extends GetxController {
         }
 
         final usuario = _aplicarPerfil(perfil);
+        themeController.definirPapelSessao(usuario.tipo);
 
         Widget destino;
 
@@ -262,39 +302,7 @@ class AppController extends GetxController {
         // ----------------------------------------------------------
         switch (usuario.tipo) {
           case 'F': // 🧑‍🔧 Fornecedor
-            final fornecedorDoc =
-                await _db.collection('fornecedor').doc(usuario.idUsuario).get();
-
-            if (fornecedorDoc.exists && fornecedorDoc.data() != null) {
-              final fornecedor = FornecedorModel.fromMap(fornecedorDoc.data()!);
-
-              // 🔥 Atualiza Token FCM no login
-              await atualizarFcmTokenFornecedor(usuario.idUsuario);
-
-              if (!fornecedor.aptoParaOperar) {
-                Get.snackbar(
-                  "Em análise",
-                  "Seu cadastro ainda não foi aprovado pelo administrador.",
-                  backgroundColor: Colors.orange.shade400,
-                  colorText: Colors.white,
-                  snackPosition: SnackPosition.TOP,
-                );
-              }
-              fornecedorController.fornecedor.value = fornecedor;
-
-              fornecedorController.ouvirMensagensNaoLidas(fornecedor.idUsuario);
-              fornecedorController
-                  .iniciarListenerFornecedor(fornecedor.idUsuario);
-              fornecedorController
-                  .escutarSolicitacoesPendentes(fornecedor.idUsuario);
-
-              orcamentoController.escutarOrcamentos(fornecedor.idUsuario);
-              avaliacaoController
-                  .carregarAvaliacoesFornecedor(fornecedor.idUsuario);
-              servicoController.carregarServicosComDetalhesOtimizado(
-                  idFornecedor: fornecedor.idUsuario);
-            }
-            destino = FornecedorHomeScreen();
+            destino = await _resolverDestinoFornecedor(usuario.idUsuario);
             break;
 
           case 'C': // 🎁 Convidado
@@ -302,47 +310,26 @@ class AppController extends GetxController {
             break;
 
           case 'A': // 🛠️ Administrador
+            themeController.aplicarTemaProduto();
             servicoController.carregarServicosComDetalhesOtimizado();
             destino = const AdminDashboardScreen();
             break;
 
           default: // 🎉 Organizador
-            await eventoController.buscarUltimoEvento(usuario.idUsuario);
+            await eventoController.carregarEventosDoUsuario(usuario.idUsuario);
             final evento = eventoController.eventoAtualEntidade;
 
             if (evento != null) {
               debugPrint(
-                  '🔹 Carregando dados do evento ${evento.nomeEvento}...');
-              fornecedorController.carregarServicosPorEvento(evento.idEvento);
-              await orcamentoController
-                  .carregarOrcamentosDoEvento(evento.idEvento);
+                  '🔹 Evento ativo: ${evento.nomeEvento} (${evento.idEvento})');
               cotacaoController.ouvirMinhasCotacoes();
-
-              debugPrint(
-                  '✅ Evento ${evento.nomeEvento} carregado com sucesso!');
               destino = HomeEventScreen();
             } else {
               contaIncompleta.value = true;
-              Lottie.asset(
-                'assets/animations/confetti_background.json',
-                width: 180,
-                height: 180,
-                repeat: true,
-                fit: BoxFit.contain,
-              );
-              Get.snackbar(
-                "🎉 Falta escolher o tipo de evento!",
-                "Seu cadastro foi concluído com sucesso. Agora, selecione o tipo de evento para continuarmos o planejamento.",
-                backgroundColor: Colors.orange.shade400,
-                colorText: Colors.white,
-                snackPosition: SnackPosition.BOTTOM,
-                margin: const EdgeInsets.all(12),
-                borderRadius: 14,
-                icon:
-                    const Icon(Icons.celebration_rounded, color: Colors.white),
-                duration: const Duration(seconds: 10),
-              );
-
+              if (Get.currentRoute == '/welcome') {
+                carregando.value = false;
+                return;
+              }
               destino = const WelcomeEventScreen();
             }
             break;
@@ -351,6 +338,7 @@ class AppController extends GetxController {
         carregando.value = false;
         Get.offAll(
           () => destino,
+          routeName: _nomeRotaDestino(destino),
           transition: Transition.fadeIn,
           duration: const Duration(milliseconds: 550),
         );
@@ -367,6 +355,16 @@ class AppController extends GetxController {
       }
     } finally {
       _processandoSessao = false;
+      if (_sessaoPendente) {
+        _sessaoPendente = false;
+        final idUsuario = autenticacaoRepository.idUsuarioAtual;
+        unawaited(_processarSessao(idUsuario == null
+            ? null
+            : SessaoUsuario(
+                idUsuario: idUsuario,
+                email: autenticacaoRepository.emailUsuarioAtual,
+              )));
+      }
     }
   }
 
@@ -386,13 +384,22 @@ class AppController extends GetxController {
   }
 
   String? obterTokenConvite() {
-    // return 'be6133cb-9450-4e87-8282-e7df2d037581';
-    final uri = Uri.base;
-    if (uri.pathSegments.contains('convite')) {
-      final token = uri.pathSegments.last.trim();
-      return token.isEmpty ? null : token;
-    }
-    return null;
+    return ConviteLink.tokenDaUrl();
+  }
+
+  /// Token do link `/convite/:token` (URL ou memória). Credencial do convidado.
+  String? tokenConviteAtual() => _tokenConviteAtual();
+
+  /// Há convite pendente: o login/cadastro Google deve criar tipo C, não O.
+  bool get fluxoConviteAtivo {
+    final token = _tokenConviteAtual();
+    return token != null && token.isNotEmpty;
+  }
+
+  void guardarTokenConvite(String token) {
+    final tokenLimpo = token.trim();
+    if (tokenLimpo.isEmpty) return;
+    conviteToken.value = tokenLimpo;
   }
 
   String? _tokenConviteAtual() {
@@ -406,11 +413,8 @@ class AppController extends GetxController {
     return tokenMemoria.isEmpty ? null : tokenMemoria;
   }
 
-  /// Abre um convite de forma segura.
-  ///
-  /// Se o usuário ainda não estiver autenticado, o token fica guardado e o app
-  /// segue para o fluxo de login/cadastro como convidado. Depois que a conta é
-  /// criada, o token é vinculado ao UID do Firebase Auth.
+  /// Abre o convite. Sem conta real, entra como visitante (auth anônimo).
+  /// Conta tipo C vincula o token ao UID. Outros papéis são recusados.
   Future<void> abrirConvite(String token) async {
     final tokenLimpo = token.trim();
     if (tokenLimpo.isEmpty) return;
@@ -418,41 +422,84 @@ class AppController extends GetxController {
     conviteToken.value = tokenLimpo;
     conviteProcessado = false;
     conviteTokenProcessado = '';
+
     final idUsuario = autenticacaoRepository.idUsuarioAtual;
+    final anonimo = autenticacaoRepository.sessaoAnonima;
 
-    if (idUsuario == null) {
-      conviteProcessado = false;
-      debugPrint(
-          '$_logTag Convite guardado aguardando autenticação: $tokenLimpo');
-      Get.offAllNamed('/role', arguments: {
-        'tipo': 'C',
-        'convidado': true,
-        'conviteToken': tokenLimpo,
-      });
+    if (idUsuario != null && !anonimo) {
+      final usuario = await obterUsuario(idUsuario);
+      if (usuario == null) {
+        await _abrirConviteComoVisitante(tokenLimpo);
+        return;
+      }
+
+      if (usuario.tipo != 'C') {
+        Get.snackbar(
+          'Convite de convidado',
+          'Este link deve ser acessado por uma conta de convidado.',
+          backgroundColor: Colors.orange.shade600,
+          colorText: Colors.white,
+        );
+        return;
+      }
+
+      acessoPorLink.value = false;
+      await redirecionarConvidadoAposLogin(usuario, token: tokenLimpo);
       return;
     }
 
-    final usuario = await obterUsuario(idUsuario);
-    if (usuario == null) {
-      Get.offAllNamed('/role', arguments: {
-        'tipo': 'C',
-        'convidado': true,
-        'conviteToken': tokenLimpo,
-      });
-      return;
-    }
+    await _abrirConviteComoVisitante(tokenLimpo);
+  }
 
-    if (usuario.tipo != 'C') {
+  Future<void> _abrirConviteComoVisitante(String token) async {
+    acessoPorLink.value = true;
+    try {
+      if (autenticacaoRepository.idUsuarioAtual == null) {
+        await autenticacaoRepository.entrarAnonimamente();
+      }
+
+      final resultado = await _abrirConvitePorTokenService.abrir(token);
+      final convidado = ConvidadoModel.fromMap(resultado.convidado);
+      final evento = EventoModel.fromMap(resultado.evento);
+      if (convidado.idConvidado.isEmpty || evento.idEvento.isEmpty) {
+        throw const AbrirConvitePorTokenException('not-found');
+      }
+
+      eventoController.eventoAtual.value = evento;
+      await eventoController.buscarTipoEvento(evento.idTipoEvento);
+      await themeController.aplicarParaEvento(
+        evento,
+        fallbackNomeTipo: eventoController.tipoEventoAtualEntidade?.nome,
+      );
+
+      conviteProcessado = true;
+      conviteTokenProcessado = token;
+      convidadoController.convidadoAtual.value = convidado;
+
+      Get.offAll(
+        () => AreaConvidadoHomeScreen(convidado: convidado, evento: evento),
+        routeName: '/areaconvidado',
+        transition: Transition.fadeIn,
+        duration: const Duration(milliseconds: 550),
+      );
+    } on AutenticacaoException catch (e) {
+      acessoPorLink.value = false;
+      debugPrint('$_logTag Auth ao abrir convite: ${e.codigo}');
       Get.snackbar(
-        'Convite de convidado',
-        'Este link deve ser acessado por uma conta de convidado.',
-        backgroundColor: Colors.orange.shade600,
+        'Convite',
+        e.codigo == 'operation-not-allowed' ||
+                e.codigo == 'admin-restricted-operation'
+            ? 'Acesso pelo link está temporariamente indisponível.'
+            : 'Não foi possível abrir o convite. Tente novamente.',
+        backgroundColor: Colors.orange.shade700,
         colorText: Colors.white,
       );
-      return;
+      Get.offAllNamed('/conviteNaoEncontrado');
+    } catch (e, s) {
+      acessoPorLink.value = false;
+      debugPrint('$_logTag Erro ao abrir convite como visitante: $e\n$s');
+      Get.offAllNamed('/conviteNaoEncontrado');
     }
-
-    await redirecionarConvidadoAposLogin(usuario, token: tokenLimpo);
   }
 
   /// Usado também pelo cadastro: depois de criar uma conta do tipo convidado,
@@ -465,13 +512,14 @@ class AppController extends GetxController {
       carregando.value = false;
       Get.offAll(
         () => destino,
+        routeName: _nomeRotaDestino(destino),
         transition: Transition.fadeIn,
         duration: const Duration(milliseconds: 550),
       );
     } catch (e, s) {
       carregando.value = false;
       debugPrint('$_logTag Erro ao redirecionar convidado: $e\n$s');
-      Get.offAll(() => const ConviteNaoEncontradoScreen());
+      Get.offAllNamed('/conviteNaoEncontrado');
     }
   }
 
@@ -515,8 +563,12 @@ class AppController extends GetxController {
       return const ConviteNaoEncontradoScreen();
     }
 
+    eventoController.eventoAtual.value = evento;
     await eventoController.buscarTipoEvento(evento.idTipoEvento);
-    await themeController.aplicarTemaPorId(evento.idTipoEvento);
+    await themeController.aplicarParaEvento(
+      evento,
+      fallbackNomeTipo: eventoController.tipoEventoAtualEntidade?.nome,
+    );
 
     return AreaConvidadoHomeScreen(convidado: convidado, evento: evento);
   }
@@ -568,6 +620,81 @@ class AppController extends GetxController {
       colorText: Colors.white,
     );
   }
+
+  Future<Widget> _resolverDestinoFornecedor(String idUsuario) async {
+    final fornecedorDoc =
+        await _db.collection('fornecedor').doc(idUsuario).get();
+
+    if (!fornecedorDoc.exists || fornecedorDoc.data() == null) {
+      fornecedorController.fornecedor.value = null;
+      fornecedorController.aptoParaOperar.value = false;
+      return const FornecedorAguardandoAprovacaoScreen();
+    }
+
+    final fornecedor = FornecedorModel.fromMap(
+      fornecedorDoc.data()!,
+      documentId: fornecedorDoc.id,
+    );
+    fornecedorController.fornecedor.value = fornecedor;
+    fornecedorController.aptoParaOperar.value = fornecedor.aptoParaOperar;
+
+    if (!fornecedor.aptoParaOperar) {
+      return const FornecedorAguardandoAprovacaoScreen();
+    }
+
+    await _iniciarPainelOperacionalFornecedor(fornecedor);
+    themeController.aplicarTemaProduto();
+    return const FornecedorHomeScreen();
+  }
+
+  Future<void> _iniciarPainelOperacionalFornecedor(
+    FornecedorModel fornecedor,
+  ) async {
+    await atualizarFcmTokenFornecedor(fornecedor.idUsuario);
+
+    fornecedorController.ouvirMensagensNaoLidas(fornecedor.idUsuario);
+    fornecedorController.iniciarListenerFornecedor(fornecedor.idUsuario);
+    fornecedorController.escutarSolicitacoesPendentes(fornecedor.idUsuario);
+
+    orcamentoController.escutarOrcamentos(fornecedor.idUsuario);
+    avaliacaoController.carregarAvaliacoesFornecedor(fornecedor.idUsuario);
+    servicoController.carregarServicosComDetalhesOtimizado(
+      idFornecedor: fornecedor.idUsuario,
+    );
+  }
+
+  /// Recarrega o cadastro do fornecedor logado. Se o admin já aprovou
+  /// (`apto_para_operar`), abre a home operacional nesta sessão.
+  Future<void> verificarAprovacaoFornecedorPendente() async {
+    final usuario = usuarioLogado.value;
+    if (usuario == null || usuario.tipo != 'F') return;
+    if (carregando.value) return;
+
+    carregando.value = true;
+    try {
+      final destino = await _resolverDestinoFornecedor(usuario.idUsuario);
+      if (fornecedorController.aptoParaOperar.value) {
+        Get.offAll(
+          () => destino,
+          routeName: _nomeRotaDestino(destino),
+          transition: Transition.fadeIn,
+          duration: const Duration(milliseconds: 450),
+        );
+        return;
+      }
+
+      Get.snackbar(
+        'Em análise',
+        'Seu cadastro ainda não foi aprovado pelo administrador.',
+        backgroundColor: Colors.orange.shade400,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.TOP,
+      );
+    } finally {
+      carregando.value = false;
+    }
+  }
+
   // ------------------------------------------------------------
   // 🔹 Logout
   // ------------------------------------------------------------
@@ -601,7 +728,10 @@ class AppController extends GetxController {
       conviteProcessado = false;
       conviteTokenProcessado = '';
       conviteToken.value = '';
+      acessoPorLink.value = false;
       _limparEstadoTotp();
+      themeController.definirPapelSessao(null);
+      themeController.aplicarTemaProduto();
       Get.offAllNamed('/role');
       _monitorarSessao();
     } finally {
@@ -697,6 +827,29 @@ class AppController extends GetxController {
 
   bool _rotaTotp(String rota) =>
       rota == '/loginTotp' || rota == '/loginTotpSetup';
+
+  bool _rotaDestinoEstavel(String rota) {
+    return rota == '/HomeEventScreen' ||
+        rota == '/welcome' ||
+        rota == '/fornecedor' ||
+        rota == '/admin' ||
+        rota == '/areaconvidado' ||
+        rota.startsWith('/areaconvidado') ||
+        rota == '/conviteNaoEncontrado';
+  }
+
+  String? _nomeRotaDestino(Widget destino) {
+    if (destino is HomeEventScreen) return '/HomeEventScreen';
+    if (destino is WelcomeEventScreen) return '/welcome';
+    if (destino is FornecedorHomeScreen ||
+        destino is FornecedorAguardandoAprovacaoScreen) {
+      return '/fornecedor';
+    }
+    if (destino is AdminDashboardScreen) return '/admin';
+    if (destino is AreaConvidadoHomeScreen) return '/areaconvidado';
+    if (destino is ConviteNaoEncontradoScreen) return '/conviteNaoEncontrado';
+    return null;
+  }
 
   void _limparEstadoTotp() {
     totpVerificadoNestaSessao = false;

@@ -5,6 +5,48 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../controllers/tema/event_theme_controller.dart';
 
+/// Contraste da barra de status (hora, sinal, bateria).
+/// Android: [SystemUiOverlayStyle.statusBarIconBrightness]
+/// iOS: [SystemUiOverlayStyle.statusBarBrightness] descreve o fundo.
+abstract final class FestaSystemUi {
+  static const fundoEscuro = SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    statusBarBrightness: Brightness.dark,
+    systemStatusBarContrastEnforced: false,
+    systemNavigationBarColor: Colors.white,
+    systemNavigationBarIconBrightness: Brightness.dark,
+    systemNavigationBarContrastEnforced: false,
+  );
+
+  static const fundoClaro = SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.dark,
+    statusBarBrightness: Brightness.light,
+    systemStatusBarContrastEnforced: false,
+    systemNavigationBarColor: Colors.white,
+    systemNavigationBarIconBrightness: Brightness.dark,
+    systemNavigationBarContrastEnforced: false,
+  );
+
+  /// Barra de status pintada com a cor do tema do evento.
+  static SystemUiOverlayStyle sobreCor(
+    Color fundo, {
+    required bool iconesClaros,
+  }) {
+    return SystemUiOverlayStyle(
+      statusBarColor: fundo,
+      statusBarIconBrightness:
+          iconesClaros ? Brightness.light : Brightness.dark,
+      statusBarBrightness: iconesClaros ? Brightness.dark : Brightness.light,
+      systemStatusBarContrastEnforced: false,
+      systemNavigationBarColor: Colors.white,
+      systemNavigationBarIconBrightness: Brightness.dark,
+      systemNavigationBarContrastEnforced: false,
+    );
+  }
+}
+
 /// ===============================================================
 /// 🎀 APP BAR TEMATIZADA - "FAÇA A FESTA"
 /// ---------------------------------------------------------------
@@ -37,14 +79,10 @@ class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final themeController = Get.find<EventThemeController>();
     final gradiente = themeController.gradient.value;
-    // ✅ Ajuste do contraste da barra de status
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
-    ));
 
-    return ClipRRect(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: FestaSystemUi.fundoEscuro,
+      child: ClipRRect(
       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(20)),
       child: Stack(
         children: [
@@ -64,6 +102,7 @@ class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
             automaticallyImplyLeading: false,
             elevation: 0,
             backgroundColor: Colors.transparent,
+            systemOverlayStyle: FestaSystemUi.fundoEscuro,
             centerTitle: true,
             titleSpacing: 0,
             title: Padding(
@@ -134,6 +173,7 @@ class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }

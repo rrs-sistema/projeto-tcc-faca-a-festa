@@ -1,7 +1,6 @@
 import 'package:app_faca_festa/controllers/contacao/cotacao_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:animate_do/animate_do.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,6 +20,7 @@ import './../../controllers/evento_controller.dart';
 import './../../domain/entities/tipo_evento.dart';
 import './../widgets/menu_drawer_faca_festa.dart';
 import './../widgets/festa_bottom_bar.dart';
+import './../widgets/festa_app_bar.dart';
 import './components/build_animated_header.dart';
 import './../../controllers/app_controller.dart';
 import './fornecedor/painel_cotacao_page.dart';
@@ -63,20 +63,22 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   Widget build(BuildContext context) {
     isCelular = Biblioteca.isCelular(context);
 
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      statusBarBrightness: Brightness.light,
-    ));
+    return Obx(() {
+      final overlay = _currentIndex == 0
+          ? FestaSystemUi.sobreCor(
+              theme.primaryColor.value,
+              iconesClaros: theme.onPrimaryColor.value.computeLuminance() > 0.5,
+            )
+          : FestaSystemUi.fundoEscuro;
 
-    return Scaffold(
-      key: _scaffoldKey,
-      backgroundColor: const Color(0xFFF8FAFC),
-      endDrawerEnableOpenDragGesture: false,
-      endDrawer: MenuDrawerFacaFesta(onLogout: appController.logoutFornecedor),
-      body: SafeArea(
-        bottom: false,
-        child: PageView(
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: overlay,
+      child: Scaffold(
+        key: _scaffoldKey,
+        backgroundColor: const Color(0xFFF8FAFC),
+        endDrawerEnableOpenDragGesture: false,
+        endDrawer: MenuDrawerFacaFesta(onLogout: appController.logoutFornecedor),
+        body: PageView(
           controller: pageController,
           physics: const NeverScrollableScrollPhysics(),
           onPageChanged: (i) {
@@ -88,8 +90,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             _buildInspiration(theme),
           ],
         ),
-      ),
-      bottomNavigationBar: FestaBottomBar(
+        bottomNavigationBar: FestaBottomBar(
         currentIndex: _currentIndex,
         items: const [
           FestaNavItem(
@@ -124,61 +125,66 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
           }
         },
       ),
+      ),
     );
+    });
   }
 
   Widget _buildHome(EventThemeController theme) {
-    final eventoModel = eventoController.eventoAtualEntidade!;
-    final tipoEventoModel = eventoController.tipoEventoAtualEntidade;
-    final nomeUsuario = appController.usuarioLogado.value?.nome.split(' ').first ?? 'Organizador';
+    return Obx(() {
+      theme.primaryColor.value;
+      theme.secondaryColor.value;
+      final eventoModel = eventoController.eventoAtualEntidade;
+      if (eventoModel == null) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-    return Column(
-      children: [
-        buildAnimatedHeader(),
-        Expanded(
-          child: CustomScrollView(
-            controller: _scrollControllerHome,
-            slivers: [
-              SliverPersistentHeader(
-                pinned: true,
-                floating: false,
-                delegate: ContadorEventoHeaderDelegate(
-                  scrollController: _scrollControllerHome,
-                  child: ContadorEventoScreen(
-                    dataEvento: eventoModel.data,
-                    tipoEvento: tipoEventoModel?.nome ?? eventoModel.nomeEvento,
+      final tipoEventoModel = eventoController.tipoEventoAtualEntidade;
+
+      final overlay = FestaSystemUi.sobreCor(
+        theme.primaryColor.value,
+        iconesClaros: theme.onPrimaryColor.value.computeLuminance() > 0.5,
+      );
+
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: overlay,
+        child: Column(
+        children: [
+          buildAnimatedHeader(context),
+          Expanded(
+            child: CustomScrollView(
+              controller: _scrollControllerHome,
+              slivers: [
+                SliverPersistentHeader(
+                  pinned: true,
+                  floating: false,
+                  delegate: ContadorEventoHeaderDelegate(
                     scrollController: _scrollControllerHome,
-                  ),
-                ),
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-                  child: Text(
-                    'Olá, $nomeUsuario 👋',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF1F2937),
+                    child: ContadorEventoScreen(
+                      key: ValueKey('contador-${eventoModel.idEvento}'),
+                      dataEvento: eventoModel.data,
+                      tipoEvento: tipoEventoModel?.nome ?? eventoModel.nomeEvento,
+                      scrollController: _scrollControllerHome,
                     ),
                   ),
                 ),
-              ),
-              _buildDashboardOverview(theme),
-              _buildQuickActions(theme),
-              _buildUpcomingTasks(tarefaController, theme),
-              _buildBudgetChart(
-                eventoController,
-                orcamentoController.totalCustoEstimado,
-                theme,
-              ),
-              _buildSuppliersCarousel(fornecedorController, theme),
-              const SliverToBoxAdapter(child: SizedBox(height: 100)),
-            ],
+                _buildDashboardOverview(theme),
+                _buildQuickActions(theme),
+                _buildUpcomingTasks(tarefaController, theme),
+                _buildBudgetChart(
+                  eventoController,
+                  orcamentoController.totalCustoEstimado,
+                  theme,
+                ),
+                _buildSuppliersCarousel(fornecedorController, theme),
+                const SliverToBoxAdapter(child: SizedBox(height: 100)),
+              ],
+            ),
           ),
+        ],
         ),
-      ],
-    );
+      );
+    });
   }
 
   // 🔹 Dashboard Unificado e Compacto
@@ -187,11 +193,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     final eventoModel = eventoController.eventoAtualEntidade!;
 
     return SliverToBoxAdapter(
-      child: FadeInUp(
-        duration: const Duration(milliseconds: 600),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          padding: const EdgeInsets.all(16),
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(16, 6, 16, 0),
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -222,6 +226,10 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             final totTar = tarefaController.pendentes + tarefaController.concluidas;
             final progTar = totTar > 0 ? concl / totTar : 0.0;
 
+          final secundaria = theme.secondaryColor.value;
+          final destaqueOrcamento =
+              secundaria.computeLuminance() < 0.18 ? Color.lerp(cor, secundaria, 0.4)! : secundaria;
+
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -229,33 +237,42 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                   title: 'Convidados',
                   value: '$conf/$totConv',
                   progress: progConv,
-                  color: Colors.pinkAccent,
+                color: cor,
+                  onTap: () => Get.to(() => const ConvidadosPage()),
                 ),
                 _MiniCircularIndicator(
                   title: 'Orçamento',
                   value: '${(progOrc * 100).toStringAsFixed(0)}%',
                   progress: progOrc,
-                  color: cor,
+                color: destaqueOrcamento,
+                  onTap: () => Get.to(() => const OrcamentoScreen()),
                 ),
                 _MiniCircularIndicator(
                   title: 'Tarefas',
                   value: '$concl/$totTar',
                   progress: progTar,
-                  color: Colors.orangeAccent,
+                color: Color.lerp(cor, destaqueOrcamento, 0.45)!,
+                  onTap: () => Get.to(() => TarefasScreen()),
                 ),
               ],
             );
-          }),
-        ),
+        }),
       ),
     );
   }
 
   Widget _buildInspiration(EventThemeController theme) {
-    return InspiracaoScreen(
-      tipoEvento: eventoController.tipoEventoAtualEntidade ??
-          const TipoEvento(idTipoEvento: '1', nome: 'Evento'),
-    );
+    return Obx(() {
+      final evento = eventoController.eventoAtualEntidade;
+      final tipo = eventoController.tipoEventoAtualEntidade ??
+          const TipoEvento(idTipoEvento: '1', nome: 'Evento');
+      return InspiracaoScreen(
+        key: ValueKey('inspiracao-${evento?.idEvento ?? 'sem-evento'}'),
+        tipoEvento: tipo,
+        eventoId: evento?.idEvento,
+        userId: appController.usuarioLogado.value?.idUsuario,
+      );
+    });
   }
 
 }
@@ -268,7 +285,7 @@ Widget _buildQuickActions(EventThemeController theme) {
 
   return SliverToBoxAdapter(
     child: Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
       child: Obx(() {
         final concluidas = tarefaController.concluidas;
         final totalTarefa = tarefaController.pendentes + tarefaController.concluidas;
@@ -280,42 +297,46 @@ Widget _buildQuickActions(EventThemeController theme) {
             : (evento?.totalConvidadosCalculado ?? 0);
         final orcamentoPlanejado = evento?.custoEstimado ?? 0.0;
 
+        final primaria = theme.primaryColor.value;
+        final secundaria = theme.secondaryColor.value;
+        final media = Color.lerp(primaria, secundaria, 0.4)!;
+        final destaque = secundaria.computeLuminance() < 0.18 ? media : secundaria;
         final itens = [
           {
             'icon': Icons.people_alt_rounded,
             'label': 'Convidados',
-            'color': Colors.pinkAccent,
+            'color': primaria,
             'val': "$totalConvidadosHome"
           },
           {
             'icon': Icons.payments_rounded,
             'label': 'Orçamento',
-            'color': Colors.tealAccent.shade700,
+            'color': destaque,
             'val':
                 "R\$ ${Biblioteca.formatarValorDecimal(orcamentoPlanejado)}"
           },
           {
             'icon': Icons.storefront_rounded,
             'label': 'Cotações',
-            'color': Colors.orangeAccent,
+            'color': media,
             'val': "${cotacaoController.totalCount.value}"
           },
           {
             'icon': Icons.check_circle_outline,
             'label': 'Tarefas',
-            'color': Colors.blueAccent,
+            'color': primaria,
             'val': "${(progress * 100).toStringAsFixed(0)}%"
           },
           {
             'icon': Icons.calculate_rounded,
             'label': 'Calculadora',
-            'color': Colors.deepPurpleAccent,
+            'color': destaque,
             'val': "Abrir"
           },
           {
             'icon': Icons.auto_awesome_rounded,
             'label': 'IA Fornecedores',
-            'color': Colors.amber.shade700,
+            'color': media,
             'val': "Recomendar"
           },
         ];
@@ -326,9 +347,9 @@ Widget _buildQuickActions(EventThemeController theme) {
           itemCount: itens.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: 2.2, // 🔹 Bem mais horizontal e compacto
+            crossAxisSpacing: 8,
+            mainAxisSpacing: 8,
+            childAspectRatio: 2.45,
           ),
           itemBuilder: (context, i) {
             final item = itens[i];
@@ -402,39 +423,52 @@ class _MiniCircularIndicator extends StatelessWidget {
   final String value;
   final double progress;
   final Color color;
+  final VoidCallback? onTap;
 
-  const _MiniCircularIndicator(
-      {required this.title, required this.value, required this.progress, required this.color});
+  const _MiniCircularIndicator({
+    required this.title,
+    required this.value,
+    required this.progress,
+    required this.color,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        SizedBox(
-          height: 48,
-          width: 48,
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: 5,
-                  color: color,
-                  backgroundColor: color.withValues(alpha: 0.15)),
-              Center(
-                  child: Text(value,
-                      style: GoogleFonts.poppins(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: const Color(0xFF1F2937)))),
-            ],
-          ),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(
+          children: [
+            SizedBox(
+              height: 48,
+              width: 48,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  CircularProgressIndicator(
+                      value: progress,
+                      strokeWidth: 5,
+                      color: color,
+                      backgroundColor: color.withValues(alpha: 0.15)),
+                  Center(
+                      child: Text(value,
+                          style: GoogleFonts.poppins(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF1F2937)))),
+                ],
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(title,
+                style: GoogleFonts.poppins(
+                    fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          ],
         ),
-        const SizedBox(height: 8),
-        Text(title,
-            style: GoogleFonts.poppins(
-                fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
-      ],
+      ),
     );
   }
 }
@@ -446,9 +480,9 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   ContadorEventoHeaderDelegate({required this.child, required this.scrollController});
 
   @override
-  double get minExtent => 70;
+  double get minExtent => 76;
   @override
-  double get maxExtent => 80;
+  double get maxExtent => 76;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
@@ -461,7 +495,7 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
             ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
             : [],
       ),
-      child: SafeArea(bottom: false, child: Center(child: child)),
+      child: Center(child: child),
     );
   }
 

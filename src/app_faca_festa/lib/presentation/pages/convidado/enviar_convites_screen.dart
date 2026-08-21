@@ -1,12 +1,16 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import './../../../controllers/convidado/convidado_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/evento_controller.dart';
-import './components/abrir_adicionar_convidado.dart';
+import './../../../controllers/tema/event_theme_controller.dart';
+import './../../../core/utils/convite_compartilhar.dart';
 import './../../../data/models/model.dart';
+import './../../../data/services/convite/enviar_convites_por_email_service.dart';
+import './components/abrir_adicionar_convidado.dart';
 
 class EnviarConvitesScreen extends StatefulWidget {
   const EnviarConvitesScreen({super.key});
@@ -52,7 +56,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Enviar convites',
+              'Convites',
               style: GoogleFonts.playfairDisplay(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -60,7 +64,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
               ),
             ),
             Text(
-              'Selecione e envie',
+              'Copiar e compartilhar o link',
               style: GoogleFonts.poppins(
                 color: Colors.white.withValues(alpha: 0.88),
                 fontSize: 11,
@@ -168,7 +172,8 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                               fontSize: 14,
                               fontWeight: FontWeight.w800,
                               color: const Color(0xFF111827))),
-                      Text('Selecione e envie em lote.',
+                      Text(
+                          'Copie, compartilhe ou envie o link por e-mail. O convidado abre e entra na área.',
                           style: GoogleFonts.poppins(
                               fontSize: 11, color: const Color(0xFF6B7280))),
                     ],
@@ -213,7 +218,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
           textInputAction: TextInputAction.search,
           style: const TextStyle(fontSize: 13),
           decoration: InputDecoration(
-            hintText: 'Buscar para envio...',
+            hintText: 'Buscar convidado...',
             hintStyle:
                 GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade500),
             prefixIcon: Icon(Icons.search_rounded, color: primary, size: 20),
@@ -325,6 +330,8 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                   selected: selecionado,
                   primary: primary,
                   onTap: () => _toggleSelecionado(convidado),
+                  onCopiar: () => _copiarLinks([convidado]),
+                  onCompartilhar: () => _compartilharLinks([convidado]),
                 ),
               );
             });
@@ -392,12 +399,14 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                                       const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12))),
-                              icon: const Icon(Icons.email_outlined, size: 16),
-                              label: Text('E-mail',
+                              icon: const Icon(Icons.link_rounded, size: 16),
+                              label: Text('Copiar link',
                                   style: GoogleFonts.poppins(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 13)),
-                              onPressed: () => _confirmarEnvio('por E-mail'),
+                              onPressed: () => _copiarLinks(
+                                _selecionados.values.toList(growable: false),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 10),
@@ -410,15 +419,40 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                                       const EdgeInsets.symmetric(vertical: 12),
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12))),
-                              icon: const Icon(Icons.sms_outlined, size: 16),
-                              label: Text('SMS',
+                              icon: const Icon(Icons.share_rounded, size: 16),
+                              label: Text('Compartilhar',
                                   style: GoogleFonts.poppins(
                                       fontWeight: FontWeight.w800,
                                       fontSize: 13)),
-                              onPressed: () => _confirmarEnvio('por SMS'),
+                              onPressed: () => _compartilharLinks(
+                                _selecionados.values.toList(growable: false),
+                              ),
                             ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            foregroundColor: primary,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          icon: const Icon(Icons.email_outlined, size: 16),
+                          label: Text(
+                            'Enviar por e-mail',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13,
+                            ),
+                          ),
+                          onPressed: _confirmarEnvioEmail,
+                        ),
                       ),
                     ],
                   ),
@@ -476,60 +510,193 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
     _selecionados.refresh();
   }
 
-  Future<void> _confirmarEnvio(String tipo) async {
-    if (_selecionados.isEmpty) return;
-    final confirmar = await Get.dialog<bool>(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-        title: Text('Enviar $tipo?',
-            style:
-                GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 16)),
-        content: Text(
-            'Deseja enviar convites para ${_selecionados.length} convidados?',
-            style: GoogleFonts.poppins(fontSize: 13)),
-        actions: [
-          TextButton(
-              onPressed: () => Get.back(result: false),
-              child: const Text('Cancelar')),
-          ElevatedButton.icon(
-            style: ElevatedButton.styleFrom(
-                backgroundColor: themeController.primaryColor.value,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12))),
-            onPressed: () => Get.back(result: true),
-            icon: const Icon(Icons.send_rounded, size: 16),
-            label: const Text('Enviar'),
-          ),
-        ],
-      ),
-    );
-    if (confirmar == true) await _executarEnvio(tipo);
+  Future<List<Convidado>> _prepararConvites(List<Convidado> convidados) async {
+    if (convidados.isEmpty) return const [];
+    return convidadoController.garantirLinksConvite(convidados);
   }
 
-  Future<void> _executarEnvio(String tipo) async {
+  Future<void> _copiarLinks(List<Convidado> convidados) async {
     final evento = eventoController.eventoAtualEntidade;
     if (evento == null || evento.idEvento.trim().isEmpty) return;
     try {
-      await convidadoController.enviarConvitesSelecionados(
-        convidadosSelecionados: _selecionados.values.toList(growable: false),
+      final preparados = await _prepararConvites(convidados);
+      if (preparados.isEmpty) return;
+
+      final texto = convidadoController.textoCompartilhamento(
+        convidados: preparados,
         evento: evento,
-        tipoEnvio: tipo,
       );
+      await Clipboard.setData(ClipboardData(text: texto));
       Get.snackbar(
-          'Convites enviados!', 'Os convites foram disparados com sucesso.',
+        preparados.length == 1 ? 'Link copiado' : 'Links copiados',
+        'Cole e envie pelo canal que preferir. O convidado abre o link, autentica e entra na área.',
+        backgroundColor: themeController.primaryColor.value,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+      );
+    } catch (e) {
+      Get.snackbar(
+        'Erro',
+        'Não foi possível copiar o link: $e',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+      );
+    }
+  }
+
+  Future<void> _compartilharLinks(List<Convidado> convidados) async {
+    final evento = eventoController.eventoAtualEntidade;
+    if (evento == null || evento.idEvento.trim().isEmpty) return;
+    try {
+      final preparados = await _prepararConvites(convidados);
+      if (preparados.isEmpty) return;
+
+      final texto = convidadoController.textoCompartilhamento(
+        convidados: preparados,
+        evento: evento,
+      );
+      final nomeEvento =
+          evento.nomeEvento.trim().isEmpty ? 'Convite' : 'Convite — ${evento.nomeEvento.trim()}';
+      final resultado = await compartilharTextoConvite(
+        texto: texto,
+        assunto: nomeEvento,
+      );
+      if (resultado == ResultadoCompartilhamento.copiou) {
+        Get.snackbar(
+          'Link copiado',
+          'O compartilhar nativo precisa de um restart do app. O texto do convite já foi copiado.',
           backgroundColor: themeController.primaryColor.value,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
           margin: const EdgeInsets.all(12),
-          borderRadius: 12);
-      _selecionados.clear();
+          borderRadius: 12,
+        );
+      }
     } catch (e) {
-      Get.snackbar('Erro', 'Não foi possível enviar: $e',
-          backgroundColor: Colors.redAccent,
+      Get.snackbar(
+        'Erro',
+        'Não foi possível abrir o compartilhamento: $e',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+      );
+    }
+  }
+
+  Future<void> _confirmarEnvioEmail() async {
+    final selecionados = _selecionados.values.toList(growable: false);
+    final comEmail = selecionados.where((item) => item.temEmail).length;
+    final semEmail = selecionados.length - comEmail;
+    if (comEmail == 0) {
+      Get.snackbar(
+        'Sem e-mail',
+        'Cadastre o e-mail dos convidados para enviar o convite.',
+        backgroundColor: Colors.orange.shade700,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+      );
+      return;
+    }
+
+    final confirmar = await Get.dialog<bool>(
+      AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'Enviar convites?',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 15),
+        ),
+        content: Text(
+          semEmail == 0
+              ? 'Vamos enviar o link do convite para $comEmail convidado(s) por e-mail.'
+              : 'Vamos enviar para $comEmail convidado(s). $semEmail sem e-mail serão ignorados.',
+          style: GoogleFonts.poppins(fontSize: 12, height: 1.4),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: themeController.primaryColor.value,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            onPressed: () => Get.back(result: true),
+            icon: const Icon(Icons.email_outlined, size: 16),
+            label: const Text('Enviar', style: TextStyle(fontSize: 12)),
+          ),
+        ],
+      ),
+    );
+    if (confirmar != true) return;
+
+    try {
+      EasyLoading.show(status: 'Enviando convites...');
+      final resultado =
+          await convidadoController.enviarConvitesPorEmail(selecionados);
+      EasyLoading.dismiss();
+
+      if (resultado.enviados == 0) {
+        Get.snackbar(
+          'Nenhum e-mail enviado',
+          'Os selecionados estão sem e-mail válido.',
+          backgroundColor: Colors.orange.shade700,
           colorText: Colors.white,
           snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(12));
+          margin: const EdgeInsets.all(12),
+        );
+        return;
+      }
+
+      final extra = <String>[];
+      if (resultado.semEmail.isNotEmpty) {
+        extra.add('${resultado.semEmail.length} sem e-mail');
+      }
+      if (resultado.falhas.isNotEmpty) {
+        extra.add('${resultado.falhas.length} falharam');
+      }
+      Get.snackbar(
+        resultado.enviados == 1
+            ? 'Convite enviado'
+            : '${resultado.enviados} convites enviados',
+        extra.isEmpty ? 'O link foi enviado por e-mail.' : extra.join(' · '),
+        backgroundColor: themeController.primaryColor.value,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+      );
+      _selecionados.clear();
+    } on EnviarConvitesPorEmailException catch (erro) {
+      EasyLoading.dismiss();
+      Get.snackbar(
+        'Não enviou',
+        erro.toString(),
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+      );
+    } catch (_) {
+      EasyLoading.dismiss();
+      Get.snackbar(
+        'Erro',
+        'Não foi possível enviar os convites.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+      );
     }
   }
 
@@ -554,12 +721,17 @@ class _InviteGuestCard extends StatelessWidget {
   final bool selected;
   final Color primary;
   final VoidCallback onTap;
-  const _InviteGuestCard(
-      {super.key,
-      required this.convidado,
-      required this.selected,
-      required this.primary,
-      required this.onTap});
+  final VoidCallback onCopiar;
+  final VoidCallback onCompartilhar;
+  const _InviteGuestCard({
+    super.key,
+    required this.convidado,
+    required this.selected,
+    required this.primary,
+    required this.onTap,
+    required this.onCopiar,
+    required this.onCompartilhar,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -653,10 +825,37 @@ class _InviteGuestCard extends StatelessWidget {
                             label: _getStatusLabel(convidado.status),
                             icon: _getStatusIcon(convidado.status),
                             color: statusColor),
+                        _InviteChip(
+                            label: convidado.contaVinculada ? 'Conta vinculada' : 'Link gerado',
+                            icon: convidado.contaVinculada
+                                ? Icons.verified_user_rounded
+                                : Icons.link_rounded,
+                            color: convidado.contaVinculada ? Colors.teal.shade700 : primary),
                       ],
                     ),
                   ],
                 ),
+              ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    tooltip: 'Copiar link',
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(Icons.copy_rounded, size: 18, color: Colors.grey.shade700),
+                    onPressed: onCopiar,
+                  ),
+                  IconButton(
+                    tooltip: 'Compartilhar',
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(Icons.share_rounded, size: 18, color: Colors.grey.shade700),
+                    onPressed: onCompartilhar,
+                  ),
+                ],
               ),
               Checkbox(
                   value: selected,
@@ -795,7 +994,7 @@ class _EmptyInviteState extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Cadastre convidados para enviar os convites do evento.',
+                      'Cadastre convidados para gerar o link e compartilhar.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: 11,
@@ -821,7 +1020,7 @@ class _EmptyInviteState extends StatelessWidget {
                           FocusManager.instance.primaryFocus?.unfocus();
                           await onAdd();
                         },
-                        icon: const Icon(Icons.add_rounded, size: 17),
+                        icon: const Icon(Icons.add_rounded, size: 17, color: Colors.white),
                         label: Text(
                           'Adicionar',
                           style: GoogleFonts.poppins(

@@ -9,9 +9,26 @@ import 'package:flutter/foundation.dart';
 class OrcamentosAdminController extends GetxController {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final orcamentos = <OrcamentoAdminModel>[].obs;
-  final detalhesVisiveis = <String, bool>{}.obs; // chave = nomeEvento
+  final detalhesVisiveis = <String, bool>{}.obs;
+  final busca = ''.obs;
   final carregando = false.obs;
   final erro = ''.obs;
+
+  List<OrcamentoAdminModel> get orcamentosFiltrados {
+    final termo = busca.value.trim().toLowerCase();
+    if (termo.isEmpty) return orcamentos.toList();
+    return orcamentos.where((o) {
+      return o.eventoNome.toLowerCase().contains(termo) ||
+          o.categoria.toLowerCase().contains(termo) ||
+          o.cidade.toLowerCase().contains(termo) ||
+          o.status.toLowerCase().contains(termo);
+    }).toList();
+  }
+
+  int get totalAbertos => orcamentos.where((o) {
+        final s = o.status.toLowerCase();
+        return s.contains('pendente') || s.contains('negocia');
+      }).length;
 
   // 🔹 Cache local
   final Map<String, String> _cacheCategorias = {};

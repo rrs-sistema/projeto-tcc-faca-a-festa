@@ -33,6 +33,15 @@ abstract interface class AutenticacaoRepository {
 
   Stream<SessaoUsuario?> observarSessao();
 
+  bool get sessaoAnonima;
+
+  /// Conta só do convite (anônimo ou token customizado, sem e-mail/Google).
+  bool get sessaoVisitanteConvite;
+
+  Future<void> entrarAnonimamente();
+
+  Future<void> entrarComTokenCustomizado(String token);
+
   Future<void> entrar({
     required String email,
     required String senha,

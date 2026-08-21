@@ -1,10 +1,10 @@
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 import 'controllers/evento_cadastro_controller.dart';
-import 'presentation/pages/login/login_screen.dart';
+import 'presentation/widgets/festa_app_bar.dart';
 
 class RoleSelectorScreen extends StatelessWidget {
   const RoleSelectorScreen({super.key});
@@ -12,8 +12,10 @@ class RoleSelectorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = Get.find<EventoCadastroController>();
-    return Scaffold(
-      body: Container(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: FestaSystemUi.fundoClaro,
+      child: Scaffold(
+        body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFFFFE4E1), Color(0xFFF8BBD0), Color(0xFFB3E5FC)],
@@ -28,7 +30,6 @@ class RoleSelectorScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 🎉 Logo / título
                   Text(
                     "🎊 Faça a Festa",
                     style: GoogleFonts.poppins(
@@ -40,7 +41,7 @@ class RoleSelectorScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    "Escolha como deseja participar do evento",
+                    "Escolha como deseja participar",
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       color: Colors.grey.shade700,
@@ -54,12 +55,9 @@ class RoleSelectorScreen extends StatelessWidget {
                     icon: Icons.event_available,
                     label: "Sou Organizador",
                     color: Colors.pinkAccent,
-                    onTap: () async {
+                    onTap: () {
                       controller.limpar(manterEndereco: false);
-                      EasyLoading.show(status: 'Processando...');
-                      await Future.delayed(const Duration(milliseconds: 300));
-                      Future.microtask(() => Get.toNamed('/register', arguments: {'tipo': 'O'}))
-                          .then((_) => EasyLoading.dismiss());
+                      Get.toNamed('/register', arguments: {'tipo': 'O'});
                     },
                   ),
 
@@ -69,66 +67,34 @@ class RoleSelectorScreen extends StatelessWidget {
                     icon: Icons.store_mall_directory,
                     label: "Sou Fornecedor",
                     color: Colors.green.shade600,
-                    onTap: () async {
+                    onTap: () {
                       controller.limpar(manterEndereco: false);
-                      EasyLoading.show(status: 'Processando...');
-                      await Future.delayed(const Duration(milliseconds: 300));
-                      await Get.toNamed('/register', arguments: {'tipo': 'F'});
-                      EasyLoading.dismiss();
-                    },
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  _buildRoleCard(
-                    icon: Icons.card_giftcard,
-                    label: "Sou Convidado",
-                    color: Colors.orange.shade700,
-                    onTap: () async {
-                      controller.limpar(manterEndereco: false);
-                      EasyLoading.show(status: 'Processando...');
-                      await Future.delayed(const Duration(milliseconds: 300));
-                      await Get.toNamed('/register', arguments: {'tipo': 'C'});
-                      EasyLoading.dismiss();
+                      Get.toNamed('/register', arguments: {'tipo': 'F'});
                     },
                   ),
 
                   const SizedBox(height: 50),
-                  // ✨ Rodapé
-                  Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 8),
-                        child: GestureDetector(
-                          onTap: () {
-                            Get.to(
-                              () => const LoginScreen(),
-                              transition: Transition.fadeIn,
-                              duration: const Duration(milliseconds: 500),
-                            );
-                          },
-                          child: RichText(
-                            text: TextSpan(
-                              text: "Já tem uma conta? ",
-                              style: GoogleFonts.poppins(
-                                color: Colors.black87,
-                                fontSize: 14,
-                              ),
-                              children: [
-                                TextSpan(
-                                  text: "Entrar aqui",
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.pink.shade800,
-                                    fontWeight: FontWeight.bold,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ],
+                  GestureDetector(
+                    onTap: () => Get.toNamed('/login'),
+                    child: RichText(
+                      text: TextSpan(
+                        text: "Já tem uma conta? ",
+                        style: GoogleFonts.poppins(
+                          color: Colors.black87,
+                          fontSize: 14,
+                        ),
+                        children: [
+                          TextSpan(
+                            text: "Entrar aqui",
+                            style: GoogleFonts.poppins(
+                              color: Colors.pink.shade800,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
 
                   const SizedBox(height: 40),
@@ -163,6 +129,7 @@ class RoleSelectorScreen extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

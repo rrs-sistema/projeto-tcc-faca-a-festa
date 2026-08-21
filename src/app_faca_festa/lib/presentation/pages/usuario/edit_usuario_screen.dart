@@ -1,8 +1,11 @@
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import './../../../core/utils/form_validators.dart';
 import './../../../controllers/usuario/endereco_usuario_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/usuario/usuario_controller.dart';
@@ -18,9 +21,13 @@ class EditUsuarioScreen extends StatefulWidget {
 class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
   final userController = Get.find<UsuarioController>();
   final enderecoController = Get.find<EnderecoUsuarioController>();
+  final _formKey = GlobalKey<FormState>();
+  var _autovalidateMode = AutovalidateMode.disabled;
 
   late TextEditingController nomeCtrl, emailCtrl, cpfCtrl;
   late TextEditingController cepCtrl, logCtrl, numCtrl, compCtrl, bairroCtrl, cidadeCtrl, ufCtrl;
+  late final MaskTextInputFormatter _cpfMask;
+  late final MaskTextInputFormatter _cepMask;
 
   @override
   void initState() {
@@ -30,15 +37,41 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
 
     nomeCtrl = TextEditingController(text: user.nome);
     emailCtrl = TextEditingController(text: user.email);
-    cpfCtrl = TextEditingController(text: user.cpf ?? '');
 
-    cepCtrl = TextEditingController(text: end.value?.cep ?? '');
+    _cpfMask = MaskTextInputFormatter(
+      mask: '###.###.###-##',
+      filter: {'#': RegExp(r'[0-9]')},
+      initialText: user.cpf ?? '',
+    );
+    cpfCtrl = TextEditingController(text: _cpfMask.getMaskedText());
+
+    _cepMask = MaskTextInputFormatter(
+      mask: '#####-###',
+      filter: {'#': RegExp(r'[0-9]')},
+      initialText: end.value?.cep ?? '',
+    );
+    cepCtrl = TextEditingController(text: _cepMask.getMaskedText());
     logCtrl = TextEditingController(text: end.value?.logradouro ?? '');
     numCtrl = TextEditingController(text: end.value?.numero ?? '');
     compCtrl = TextEditingController(text: end.value?.complemento ?? '');
     bairroCtrl = TextEditingController(text: end.value?.bairro ?? '');
     cidadeCtrl = TextEditingController(text: end.value?.nomeCidade ?? '');
     ufCtrl = TextEditingController(text: end.value?.uf ?? '');
+  }
+
+  @override
+  void dispose() {
+    nomeCtrl.dispose();
+    emailCtrl.dispose();
+    cpfCtrl.dispose();
+    cepCtrl.dispose();
+    logCtrl.dispose();
+    numCtrl.dispose();
+    compCtrl.dispose();
+    bairroCtrl.dispose();
+    cidadeCtrl.dispose();
+    ufCtrl.dispose();
+    super.dispose();
   }
 
   @override
@@ -52,7 +85,10 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
         titulo: 'Editar Perfil',
         automaticamenteImplyLeading: true,
       ),
-      body: ListView(
+      body: Form(
+        key: _formKey,
+        autovalidateMode: _autovalidateMode,
+        child: ListView(
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
         children: [
@@ -110,7 +146,11 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
             child: Column(
               children: [
                 _CompactField(
-                    label: "Nome completo", icon: Icons.person_rounded, controller: nomeCtrl),
+                  label: "Nome completo",
+                  icon: Icons.person_rounded,
+                  controller: nomeCtrl,
+                  validator: FormValidators.nomeCompleto,
+                ),
                 const SizedBox(height: 10),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,10 +167,13 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
                     Expanded(
                       flex: 2,
                       child: _CompactField(
-                          label: "CPF",
-                          icon: Icons.badge_rounded,
-                          controller: cpfCtrl,
-                          keyboardType: TextInputType.number),
+                        label: "CPF",
+                        icon: Icons.badge_rounded,
+                        controller: cpfCtrl,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [_cpfMask],
+                        validator: (v) => FormValidators.cpf(v, obrigatorio: false),
+                      ),
                     ),
                   ],
                 ),
@@ -154,19 +197,31 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
                     Expanded(
                         flex: 2,
                         child: _CompactField(
-                            label: "CEP",
-                            icon: Icons.pin_drop_rounded,
-                            controller: cepCtrl,
-                            keyboardType: TextInputType.number)),
+                          label: "CEP",
+                          icon: Icons.pin_drop_rounded,
+                          controller: cepCtrl,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [_cepMask],
+                          validator: FormValidators.cep,
+                        )),
                     const SizedBox(width: 8),
                     Expanded(
                         flex: 3,
                         child: _CompactField(
-                            label: "Bairro", icon: Icons.map_rounded, controller: bairroCtrl)),
+                          label: "Bairro",
+                          icon: Icons.map_rounded,
+                          controller: bairroCtrl,
+                          validator: FormValidators.bairro,
+                        )),
                   ],
                 ),
                 const SizedBox(height: 10),
-                _CompactField(label: "Logradouro", icon: Icons.home_rounded, controller: logCtrl),
+                _CompactField(
+                  label: "Logradouro",
+                  icon: Icons.home_rounded,
+                  controller: logCtrl,
+                  validator: FormValidators.logradouro,
+                ),
                 const SizedBox(height: 10),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,7 +229,11 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
                     Expanded(
                         flex: 1,
                         child: _CompactField(
-                            label: "Nº", icon: Icons.tag_rounded, controller: numCtrl)),
+                          label: "Nº",
+                          icon: Icons.tag_rounded,
+                          controller: numCtrl,
+                          validator: FormValidators.numeroEndereco,
+                        )),
                     const SizedBox(width: 8),
                     Expanded(
                         flex: 3,
@@ -191,17 +250,37 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
                     Expanded(
                         flex: 3,
                         child: _CompactField(
-                            label: "Cidade",
-                            icon: Icons.location_city_rounded,
-                            controller: cidadeCtrl)),
+                          label: "Cidade",
+                          icon: Icons.location_city_rounded,
+                          controller: cidadeCtrl,
+                          validator: FormValidators.cidade,
+                        )),
                     const SizedBox(width: 8),
                     Expanded(
                         flex: 1,
                         child: _CompactField(
-                            label: "UF",
-                            icon: Icons.flag_rounded,
-                            controller: ufCtrl,
-                            maxLength: 2)),
+                          label: "UF",
+                          icon: Icons.flag_rounded,
+                          controller: ufCtrl,
+                          maxLength: 2,
+                          textCapitalization: TextCapitalization.characters,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z]')),
+                            LengthLimitingTextInputFormatter(2),
+                          ],
+                          validator: FormValidators.uf,
+                          onChanged: (value) {
+                            final uf = value
+                                .replaceAll(RegExp(r'[^A-Za-z]'), '')
+                                .toUpperCase();
+                            if (uf != value) {
+                              ufCtrl.value = TextEditingValue(
+                                text: uf,
+                                selection: TextSelection.collapsed(offset: uf.length),
+                              );
+                            }
+                          },
+                        )),
                   ],
                 ),
               ],
@@ -247,14 +326,21 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
           ),
           const SizedBox(height: 30),
         ],
+        ),
       ),
     );
   }
 
   Future<void> _salvarPerfil() async {
+    setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
     EasyLoading.show(status: "Atualizando...");
     try {
-      await userController.salvarPerfil(nome: nomeCtrl.text.trim(), cpf: cpfCtrl.text.trim());
+      await userController.salvarPerfil(
+        nome: nomeCtrl.text.trim(),
+        cpf: FormValidators.somenteDigitos(cpfCtrl.text),
+      );
       final uid = userController.usuario.value!.idUsuario;
       await enderecoController.salvarEnderecoPrincipal(
         idUsuario: uid,
@@ -264,7 +350,7 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
         complemento: compCtrl.text.trim(),
         bairro: bairroCtrl.text.trim(),
         nomeCidade: cidadeCtrl.text.trim(),
-        uf: ufCtrl.text.trim(),
+        uf: ufCtrl.text.trim().toUpperCase(),
       );
       EasyLoading.showSuccess("Perfil atualizado!");
       Get.back();
@@ -335,6 +421,9 @@ class _CompactField extends StatelessWidget {
   final TextInputType? keyboardType;
   final int? maxLength;
   final String? Function(String?)? validator;
+  final List<TextInputFormatter>? inputFormatters;
+  final TextCapitalization textCapitalization;
+  final void Function(String)? onChanged;
 
   const _CompactField({
     required this.controller,
@@ -344,6 +433,9 @@ class _CompactField extends StatelessWidget {
     this.keyboardType,
     this.maxLength,
     this.validator,
+    this.inputFormatters,
+    this.textCapitalization = TextCapitalization.none,
+    this.onChanged,
   });
 
   @override
@@ -354,6 +446,9 @@ class _CompactField extends StatelessWidget {
       keyboardType: keyboardType,
       maxLength: maxLength,
       validator: validator,
+      inputFormatters: inputFormatters,
+      textCapitalization: textCapitalization,
+      onChanged: onChanged,
       style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.black87),
       decoration: InputDecoration(
         labelText: label,
@@ -371,6 +466,7 @@ class _CompactField extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide(color: Theme.of(context).primaryColor)),
         errorStyle: const TextStyle(fontSize: 10, height: 0.9),
+        errorMaxLines: 3,
         filled: true,
         fillColor: readOnly ? Colors.grey.shade100 : Colors.grey.shade50,
       ),

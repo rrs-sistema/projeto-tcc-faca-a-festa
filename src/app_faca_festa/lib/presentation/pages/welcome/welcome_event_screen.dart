@@ -14,6 +14,7 @@ import './../../../controllers/app_controller.dart';
 import './../../../domain/entities/tipo_evento.dart';
 import './../../../role_selector_screen.dart';
 import './../login/login_screen.dart';
+import './../../widgets/festa_app_bar.dart';
 
 class WelcomeEventScreen extends StatefulWidget {
   const WelcomeEventScreen({super.key});
@@ -53,15 +54,10 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ Ajuste do contraste da barra de status
-    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent, // mantém o topo translúcido
-      statusBarIconBrightness: Brightness.dark, // ícones escuros → use se o fundo for claro
-      statusBarBrightness: Brightness.light, // para iOS
-    ));
-
-    return Scaffold(
-      body: Stack(
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: FestaSystemUi.fundoClaro,
+      child: Scaffold(
+        body: Stack(
         children: [
           // 🎉 Fundo de boas-vindas
           Container(
@@ -193,16 +189,10 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
 
                                 final eventoAtual =
                                     eventoController.eventoAtualEntidade;
-                                if (eventoAtual != null) {
-                                  EasyLoading.show(status: 'Processando...');
-                                  await eventoController
-                                      .buscarUltimoEvento(eventoAtual.idUsuario);
-
-                                  await Future.delayed(Duration(milliseconds: 350));
-
+                                if (eventoAtual != null &&
+                                    Get.currentRoute != '/HomeEventScreen') {
                                   EasyLoading.dismiss();
-
-                                  Get.offAllNamed('/HomeEventScreen');
+                                  appController.abrirHomeOrganizador();
                                 }
                               },
                             );
@@ -230,7 +220,81 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
                         ),
                       ),
 
-                      if (!appController.contaIncompleta.value) ...[
+                      if (appController.usuarioLogado.value != null) ...[
+                        if (Navigator.of(context).canPop())
+                          GestureDetector(
+                            onTap: Get.back,
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.black87,
+                                    fontSize: 14,
+                                    height: 1.5,
+                                  ),
+                                  children: [
+                                    const TextSpan(text: "Já tem um evento? "),
+                                    TextSpan(
+                                      text: "Voltar ao planejamento",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.pink.shade700,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: TextDecoration.underline,
+                                        decorationThickness: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          )
+                        else
+                          GestureDetector(
+                            onTap: () async {
+                              Biblioteca.showConfirmDialog(
+                                context,
+                                title: 'Pergunta!',
+                                message: 'Deseja realmente sair dessa conta?',
+                                confirmLabel: 'Sim',
+                                color: themeController.primaryColor.value,
+                                onConfirm: () async {
+                                  await appController.logoutFornecedor();
+                                  return true;
+                                },
+                              );
+                            },
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: RichText(
+                                textAlign: TextAlign.center,
+                                text: TextSpan(
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.black87,
+                                    fontSize: 14,
+                                    height: 1.5,
+                                  ),
+                                  children: [
+                                    const TextSpan(
+                                        text:
+                                            "\nJá tem uma conta cadastrada nesse dispositivo\n\n"),
+                                    TextSpan(
+                                      text: "Sair da conta cadastrada?",
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.pink.shade700,
+                                        fontWeight: FontWeight.w700,
+                                        decoration: TextDecoration.underline,
+                                        decorationThickness: 1.5,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                      ] else if (!appController.contaIncompleta.value) ...[
                         GestureDetector(
                           onTap: () {
                             Get.to(
@@ -382,6 +446,7 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

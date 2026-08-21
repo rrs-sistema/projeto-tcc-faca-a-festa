@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../../controllers/evento_controller.dart';
 import '../../data/datasources/remote/evento_remote_ds.dart';
+import '../../data/local/evento_ativo_store.dart';
 import '../../data/repositories_impl/evento_repository_impl.dart';
 import '../../domain/repositories/evento_repository.dart';
 import '../../presentation/coordinators/evento_session_coordinator.dart';
@@ -36,6 +37,7 @@ abstract final class EventoBootstrap {
         EventoController(
           repository: Get.find<EventoRepository>(),
           sessionCoordinator: Get.find<EventoSessionCoordinator>(),
+          eventoAtivoStore: GetStorageEventoAtivoStore(),
         ),
         permanent: true,
       );

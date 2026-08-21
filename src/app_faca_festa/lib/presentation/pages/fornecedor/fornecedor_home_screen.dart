@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'fornecedor_aguardando_aprovacao_screen.dart';
 import './sections/avaliacoes_section.dart';
 import './sections/header_section.dart';
 import './sections/insights_section.dart';
@@ -69,6 +70,7 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
     // no próximo frame. Esse pequeno retry evita cair no snackbar sem tentar rolar.
     if (sectionContext == null) {
       await Future<void>.delayed(const Duration(milliseconds: 80));
+      if (!mounted) return;
       sectionContext = key.currentContext;
     }
 
@@ -82,6 +84,8 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
       return;
     }
 
+    if (!sectionContext.mounted) return;
+
     await Scrollable.ensureVisible(
       sectionContext,
       duration: const Duration(milliseconds: 560),
@@ -93,23 +97,26 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
-        statusBarBrightness: Brightness.light,
-        systemNavigationBarColor: Color(0xFFF6F7FB),
-        systemNavigationBarIconBrightness: Brightness.dark,
-      ),
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF6F7FB),
-        body: SafeArea(
-          bottom: false,
-          child: Obx(() {
-            final fornecedor = controller.fornecedor.value;
-            final apto = fornecedor?.aptoParaOperar ?? false;
+    return Obx(() {
+      final fornecedor = controller.fornecedor.value;
+      final apto = fornecedor?.aptoParaOperar ?? false;
+      if (!apto) {
+        return const FornecedorAguardandoAprovacaoScreen();
+      }
 
-            return RefreshIndicator(
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          statusBarBrightness: Brightness.light,
+          systemNavigationBarColor: Color(0xFFF6F7FB),
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF6F7FB),
+          body: SafeArea(
+            bottom: false,
+            child: RefreshIndicator(
               onRefresh: () async {
                 await controller.atualizarEstatisticasFornecedor();
                 final atual = controller.fornecedor.value;
@@ -147,41 +154,34 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                                 children: [
                                   const HeaderSection(),
                                   const SizedBox(height: 12),
-                                  if (fornecedor != null && apto) ...[
-                                    _ProximaAcaoInteligenteSection(
-                                      onAbrirCotacoes: _scrollToCotacoes,
-                                      onAbrirCatalogo: _scrollToCatalogo,
-                                      onAbrirAvaliacoes: _scrollToAvaliacoes,
-                                      onAbrirInsights: _scrollToInsights,
-                                    ),
-                                    const SizedBox(height: 12),
-                                    const ResumoSection(),
-                                    const SizedBox(height: 12),
-                                    Container(
-                                      key: _cotacoesKey,
-                                      child: const SolicitacoesSection(),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Container(
-                                      key: _catalogoKey,
-                                      child: const PerfilSection(),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Container(
-                                      key: _avaliacoesKey,
-                                      child: const AvaliacoesSection(),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Container(
-                                      key: _insightsKey,
-                                      child: const InsightsSection(),
-                                    ),
-                                  ] else ...[
-                                    _AguardandoAprovacaoCard(
-                                      carregando: controller.carregando.value,
-                                      temFornecedor: fornecedor != null,
-                                    ),
-                                  ],
+                                  _ProximaAcaoInteligenteSection(
+                                    onAbrirCotacoes: _scrollToCotacoes,
+                                    onAbrirCatalogo: _scrollToCatalogo,
+                                    onAbrirAvaliacoes: _scrollToAvaliacoes,
+                                    onAbrirInsights: _scrollToInsights,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const ResumoSection(),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    key: _cotacoesKey,
+                                    child: const SolicitacoesSection(),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    key: _catalogoKey,
+                                    child: const PerfilSection(),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    key: _avaliacoesKey,
+                                    child: const AvaliacoesSection(),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    key: _insightsKey,
+                                    child: const InsightsSection(),
+                                  ),
                                 ],
                               ),
                             ),
@@ -192,11 +192,11 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                   );
                 },
               ),
-            );
-          }),
+            ),
+          ),
         ),
-      ),
-    );
+      );
+    });
   }
 }
 
@@ -486,89 +486,6 @@ class _Pill extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w800,
         ),
-      ),
-    );
-  }
-}
-
-class _AguardandoAprovacaoCard extends StatelessWidget {
-  final bool carregando;
-  final bool temFornecedor;
-
-  const _AguardandoAprovacaoCard({
-    required this.carregando,
-    required this.temFornecedor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final titulo = carregando
-        ? 'Carregando painel do fornecedor'
-        : temFornecedor
-            ? 'Cadastro em análise'
-            : 'Perfil de fornecedor não localizado';
-    final mensagem = carregando
-        ? 'Estamos validando suas informações para montar o painel inteligente.'
-        : temFornecedor
-            ? 'Assim que o cadastro for aprovado, o painel será liberado com cotações, catálogo, reputação e insights.'
-            : 'Entre novamente com uma conta de fornecedor ou finalize o cadastro para acessar esta área.';
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFFFD7A8)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF3E2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Icon(
-              carregando ? Icons.sync_rounded : Icons.verified_user_outlined,
-              color: const Color(0xFFB86500),
-              size: 26,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  titulo,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: const Color(0xFF202124),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  mensagem,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.5,
-                    color: const Color(0xFF6B7280),
-                    height: 1.45,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

@@ -1,10 +1,10 @@
 import 'dart:ui';
 
-import 'package:app_faca_festa/role_selector_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import './../../../controllers/app_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/login_controller.dart';
 import './../../widgets/custom_input_field.dart';
@@ -267,7 +267,19 @@ class LoginScreen extends StatelessWidget {
 
                     // 🔗 Cadastro
                     GestureDetector(
-                      onTap: () => Get.to(() => const RoleSelectorScreen()),
+                      onTap: () {
+                        final app = Get.find<AppController>();
+                        final token = app.tokenConviteAtual()?.trim() ?? '';
+                        if (token.isNotEmpty) {
+                          Get.toNamed('/register', arguments: {
+                            'tipo': 'C',
+                            'convidado': true,
+                            'conviteToken': token,
+                          });
+                          return;
+                        }
+                        Get.toNamed('/role');
+                      },
                       child: RichText(
                         text: TextSpan(
                           text: "Ainda não tem uma conta? ",

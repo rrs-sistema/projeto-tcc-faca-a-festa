@@ -141,14 +141,19 @@ void abrirDialogCadastrarPresente(
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
+    isDismissible: false,
+    enableDrag: false,
     useSafeArea: true,
     backgroundColor: Colors.transparent,
     builder: (modalContext) {
-      return DraggableScrollableSheet(
+      return PopScope(
+        canPop: false,
+        child: DraggableScrollableSheet(
         initialChildSize: 0.92,
         minChildSize: 0.62,
         maxChildSize: 0.97,
         expand: false,
+        shouldCloseOnMinExtent: false,
         builder: (_, scrollController) {
           return ClipRRect(
             borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
@@ -275,6 +280,7 @@ void abrirDialogCadastrarPresente(
             ),
           );
         },
+        ),
       );
     },
   ).whenComplete(disposeControllers);

@@ -5,10 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../core/utils/biblioteca.dart';
+import '../../../../../controllers/tema/admin_theme.dart';
 import './../../../../../controllers/admin/admin_territorio_controller.dart';
 import './../../../../../controllers/tema/event_theme_controller.dart';
 import '../../../../../controllers/fornecedor/fornecedor_controller.dart';
 import '../../../../../data/models/model.dart';
+import '../../../../widgets/admin/admin_kit.dart';
 
 class AdminTerritorioScreen extends StatelessWidget {
   final controller = Get.put(AdminTerritorioController());
@@ -27,16 +29,14 @@ class AdminTerritorioScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Get.find<EventThemeController>();
-    final cor = theme.primaryColor.value;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Gerenciar Territórios',
-          style: GoogleFonts.poppins(color: Colors.white),
-          selectionColor: Colors.white,
-        ),
-        backgroundColor: cor,
+    return Theme(
+      data: theme.adminThemeData,
+      child: Scaffold(
+      backgroundColor: AdminPalette.surface,
+      appBar: AdminBackAppBar(
+        title: 'Gerenciar Territórios',
+        subtitle: 'Cobertura dos fornecedores',
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
@@ -47,7 +47,7 @@ class AdminTerritorioScreen extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _abrirDialogTerritorio(context),
-        backgroundColor: cor,
+        backgroundColor: AdminPalette.dark,
         icon: const Icon(Icons.add_location_alt_rounded, color: Colors.white),
         label: const Text(
           "Novo Território",
@@ -79,11 +79,10 @@ class AdminTerritorioScreen extends StatelessWidget {
                     child: Obx(() {
                       final lista = controller.territorios;
                       if (lista.isEmpty) {
-                        return Center(
-                          child: Text(
-                            "Nenhum território cadastrado",
-                            style: GoogleFonts.poppins(),
-                          ),
+                        return const AdminEmptyState(
+                          icon: Icons.map_outlined,
+                          title: 'Nenhum território cadastrado',
+                          message: 'Defina a área de cobertura de cada fornecedor.',
                         );
                       }
 
@@ -202,6 +201,7 @@ class AdminTerritorioScreen extends StatelessWidget {
           ),
         ],
       ),
+    ),
     );
   }
 

@@ -9,7 +9,6 @@ import './../../../controllers/tema/event_theme_controller.dart';
 import './components/abrir_adicionar_grupo_bottom_sheet.dart';
 import './../../../controllers/evento_controller.dart';
 import './../../../domain/entities/evento.dart';
-import './../../../data/models/model.dart';
 import './../../../controllers/app_controller.dart';
 import './area/lista_convidados_screen.dart';
 import './enviar_convites_screen.dart';
@@ -82,20 +81,14 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
-      ),
-    );
-
     return Obx(() {
       final primary = themeController.primaryColor.value;
       final usuarioLogado = appController.usuarioLogado.value;
       final podeGerenciar = usuarioLogado != null && usuarioLogado.tipo != 'C';
 
-      return Scaffold(
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: FestaSystemUi.fundoEscuro,
+        child: Scaffold(
         backgroundColor: const Color(0xFFF6F7FB),
         appBar: FestaAppBar(
           titulo: 'Central de Convites',
@@ -107,7 +100,7 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
               onPressed: _abrirListaConvidados,
             ),
             IconButton(
-              tooltip: 'Enviar convites',
+              tooltip: 'Copiar e compartilhar convites',
               icon: const Icon(Icons.mark_email_read_rounded, color: Colors.white),
               onPressed: _abrirEnvioConvites,
             ),
@@ -139,11 +132,21 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
                   padding: EdgeInsets.zero,
                   indicatorSize: TabBarIndicatorSize.tab,
                   dividerColor: Colors.transparent,
+                  splashFactory: NoSplash.splashFactory,
+                  overlayColor: const WidgetStatePropertyAll(Colors.transparent),
                   splashBorderRadius: BorderRadius.circular(14),
+                  onTap: (_) => HapticFeedback.selectionClick(),
                   indicator: BoxDecoration(
                     color: primary.withValues(alpha: 0.13),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(color: primary.withValues(alpha: 0.16)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: primary.withValues(alpha: 0.10),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                   labelColor: primary,
                   unselectedLabelColor: const Color(0xFF6B7280),
@@ -166,57 +169,21 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
             ),
           ),
         ),
-        body: Column(
-          children: [
-            _buildConvitesDashboard(context, primary, podeGerenciar),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: const [
-                  GruposTab(),
-                  CardapiosTab(),
-                  MesasTab(),
-                  EstatisticasTab(),
-                ],
-              ),
-            ),
+        body: TabBarView(
+          controller: _tabController,
+          physics: const NeverScrollableScrollPhysics(),
+          children: const [
+            GruposTab(),
+            CardapiosTab(),
+            MesasTab(),
+            EstatisticasTab(),
           ],
         ),
         floatingActionButton:
             podeGerenciar ? _buildFloatingActionButton(primary) : const SizedBox.shrink(),
+      ),
       );
     });
-  }
-
-  Widget _buildConvitesDashboard(
-    BuildContext context,
-    Color primary,
-    bool podeGerenciar,
-  ) {
-    return Container(
-      margin: const EdgeInsets.fromLTRB(12, 10, 12, 6),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.black.withValues(alpha: 0.05),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.045),
-            blurRadius: 14,
-            offset: const Offset(0, 7),
-          ),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // mantenha aqui o restante do seu layout atual
-        ],
-      ),
-    );
   }
 
   Widget _buildFloatingActionButton(Color primary) {

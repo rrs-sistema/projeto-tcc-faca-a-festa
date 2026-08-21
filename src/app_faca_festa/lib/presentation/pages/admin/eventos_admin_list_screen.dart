@@ -1,10 +1,13 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import './../../../controllers/admin/eventos_admin_controller.dart';
 import './../../../data/models/admin/evento_com_tipo_model.dart';
+import '../../../controllers/tema/admin_theme.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
+import '../../widgets/admin/admin_kit.dart';
 
 class EventosAdminListScreen extends StatelessWidget {
   EventosAdminListScreen({super.key}) {
@@ -19,187 +22,185 @@ class EventosAdminListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.find<EventosAdminController>();
     final themeController = Get.find<EventThemeController>();
-    final gradient = themeController.gradient.value;
 
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          tooltip: 'Voltar',
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-          onPressed: () => Get.back(),
-        ),
-        title: Text(
-          'Gestão de Eventos',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontSize: 16,
-          ),
-        ),
-        centerTitle: true,
-        flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
-      ),
-      backgroundColor: Colors.grey.shade50,
-      body: Obx(() {
-        if (controller.carregando.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        if (controller.erro.isNotEmpty) {
-          return Center(
-            child: Text(
-              controller.erro.value,
-              style: GoogleFonts.poppins(color: Colors.red.shade700, fontSize: 14),
+    return Theme(
+      data: themeController.adminThemeData,
+      child: Scaffold(
+        backgroundColor: AdminPalette.surface,
+        appBar: AdminBackAppBar(
+          title: 'Gestão de Eventos',
+          subtitle: 'Acompanhamento da operação',
+          actions: [
+            IconButton(
+              tooltip: 'Atualizar',
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              onPressed: controller.carregarEventosComTipo,
             ),
-          );
-        }
-
-        if (controller.eventos.isEmpty) {
-          return Center(
-            child: Text(
-              'Nenhum evento cadastrado ainda.',
-              style: GoogleFonts.poppins(fontSize: 14, color: Colors.grey.shade500),
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: controller.carregarEventosComTipo,
-          child: ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            itemCount: controller.eventos.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) {
-              final e = controller.eventos[i];
-              return _buildEventoCard(context, e, controller);
-            },
-          ),
-        );
-      }),
-    );
-  }
-
-  Widget _buildEventoCard(
-    BuildContext context,
-    EventoComTipoModel e,
-    EventosAdminController controller,
-  ) {
-    final aprovado = e.aprovado;
-    final dataFormatada =
-        e.data != null ? '${e.data!.day}/${e.data!.month}/${e.data!.year}' : 'Indefinida';
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        body: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: aprovado ? Colors.green.shade50 : Colors.orange.shade50,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                aprovado ? Icons.verified_rounded : Icons.pending_actions_rounded,
-                color: aprovado ? Colors.green.shade600 : Colors.orange.shade600,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          e.nome,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                            color: Colors.grey.shade900,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                  AdminSearchField(
+                    hint: 'Buscar por nome, tipo, cidade ou organizador',
+                    onChanged: (v) => controller.busca.value = v,
+                  ),
+                  const SizedBox(height: 12),
+                  Obx(() {
+                    return Row(
+                      children: [
+                        AdminSummaryChip(
+                          label: 'Total',
+                          value: '${controller.eventos.length}',
+                          color: AdminPalette.primary,
+                          icon: Icons.event_rounded,
                         ),
-                      ),
-                      PopupMenuButton<String>(
-                        icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500, size: 20),
-                        padding: EdgeInsets.zero,
-                        onSelected: (v) => controller.acaoEvento(v, e),
-                        itemBuilder: (_) => [
-                          if (!aprovado)
-                            PopupMenuItem(
-                                value: 'aprovar',
-                                child: Text('Aprovar', style: GoogleFonts.poppins(fontSize: 13))),
-                          PopupMenuItem(
-                              value: 'editar',
-                              child: Text('Editar', style: GoogleFonts.poppins(fontSize: 13))),
-                          PopupMenuItem(
-                              value: 'excluir',
-                              child: Text('Excluir',
-                                  style: GoogleFonts.poppins(fontSize: 13, color: Colors.red))),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-
-                  // 🔹 Uso do WRAP protege o layout contra o RenderFlex Overflow
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      _buildInfoChip(Icons.category_outlined, e.tipoNome),
-                      _buildInfoChip(
-                          Icons.location_on_outlined, e.cidade ?? 'Cidade não cadastrada'),
-                      _buildInfoChip(Icons.person_outline, e.organizador),
-                      _buildInfoChip(Icons.calendar_month_outlined, dataFormatada),
-                    ],
-                  ),
+                        const SizedBox(width: 8),
+                        AdminSummaryChip(
+                          label: 'Em curso',
+                          value: '${controller.totalAtivos}',
+                          color: AdminPalette.success,
+                          icon: Icons.play_circle_outline_rounded,
+                        ),
+                      ],
+                    );
+                  }),
                 ],
               ),
+            ),
+            Expanded(
+              child: Obx(() {
+                if (controller.carregando.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (controller.erro.isNotEmpty) {
+                  return AdminEmptyState(
+                    icon: Icons.error_outline_rounded,
+                    title: 'Não foi possível carregar os eventos',
+                    message: controller.erro.value,
+                    actionLabel: 'Tentar de novo',
+                    onAction: controller.carregarEventosComTipo,
+                  );
+                }
+                final lista = controller.eventosFiltrados;
+                if (lista.isEmpty) {
+                  return AdminEmptyState(
+                    icon: Icons.event_busy_rounded,
+                    title: controller.eventos.isEmpty
+                        ? 'Nenhum evento cadastrado'
+                        : 'Nenhum evento nesta busca',
+                    message: 'Os eventos criados pelos organizadores aparecem aqui.',
+                  );
+                }
+
+                return RefreshIndicator(
+                  color: AdminPalette.primary,
+                  onRefresh: controller.carregarEventosComTipo,
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    itemCount: lista.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (_, i) => _EventoAdminCard(
+                      evento: lista[i],
+                      controller: controller,
+                    ),
+                  ),
+                );
+              }),
             ),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildInfoChip(IconData icon, String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
+class _EventoAdminCard extends StatelessWidget {
+  final EventoComTipoModel evento;
+  final EventosAdminController controller;
+
+  const _EventoAdminCard({required this.evento, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    final dataFormatada =
+        evento.data != null ? DateFormat('dd/MM/yyyy').format(evento.data!) : 'Indefinida';
+
+    return AdminCard(
       child: Row(
-        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 12, color: Colors.grey.shade600),
-          const SizedBox(width: 4),
-          Text(
-            text,
-            style: GoogleFonts.poppins(
-                fontSize: 11, color: Colors.grey.shade700, fontWeight: FontWeight.w500),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: evento.emCurso
+                  ? AdminPalette.success.withValues(alpha: 0.1)
+                  : Colors.orange.shade50,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(
+              evento.emCurso ? Icons.event_available_rounded : Icons.event_note_rounded,
+              color: evento.emCurso ? AdminPalette.success : Colors.orange.shade700,
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        evento.nome,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: AdminPalette.ink,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    PopupMenuButton<String>(
+                      icon: Icon(Icons.more_vert_rounded, color: Colors.grey.shade500, size: 20),
+                      onSelected: (v) => controller.acaoEvento(v, evento),
+                      itemBuilder: (_) => [
+                        if (!evento.aprovado)
+                          const PopupMenuItem(value: 'aprovar', child: Text('Aprovar')),
+                        const PopupMenuItem(value: 'excluir', child: Text('Excluir')),
+                      ],
+                    ),
+                  ],
+                ),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    AdminStatusChip(
+                      label: evento.statusLabel,
+                      color: evento.emCurso ? AdminPalette.success : AdminPalette.warning,
+                    ),
+                    AdminMetricChip(icon: Icons.category_outlined, label: evento.tipoNome),
+                    AdminMetricChip(
+                      icon: Icons.location_on_outlined,
+                      label: evento.cidade ?? 'Cidade não cadastrada',
+                    ),
+                    AdminMetricChip(icon: Icons.person_outline, label: evento.organizador),
+                    AdminMetricChip(icon: Icons.calendar_month_outlined, label: dataFormatada),
+                    if (evento.totalConvidados > 0)
+                      AdminMetricChip(
+                        icon: Icons.groups_outlined,
+                        label: '${evento.totalConvidados} convidados',
+                      ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),

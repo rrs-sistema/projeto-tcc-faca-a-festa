@@ -170,10 +170,7 @@ class _ConvidadoRepositoryFake implements ConvidadoRepository {
   Future<void> excluir(String idConvidado) async {}
 
   @override
-  Future<void> marcarConvitesEnviados(
-    List<String> idsConvidados,
-    String tipoEnvio,
-  ) async {}
+  Future<void> garantirTokensConvite(Map<String, String> tokensPorId) async {}
 
   @override
   Future<MigracaoTipoConvidadoResultado> migrarTiposLegados() async =>

@@ -38,5 +38,10 @@ service firebase.storage {
       allow read: if signedIn();
       allow write: if isAdmin();
     }
+
+    match /temas/{temaId}/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

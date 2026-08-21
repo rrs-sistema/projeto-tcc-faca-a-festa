@@ -1,140 +1,170 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../controllers/tema/event_theme_controller.dart';
 import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import '../../../../controllers/tema/admin_theme.dart';
+import '../../../../controllers/tema/event_theme_controller.dart';
 import './../../../../core/utils/biblioteca.dart';
+import '../../../widgets/admin/admin_kit.dart';
 import './components/fornecedor_list_tile.dart';
 
-class FornecedoresAdminListScreen extends StatelessWidget {
+class FornecedoresAdminListScreen extends StatefulWidget {
   const FornecedoresAdminListScreen({super.key});
 
   @override
+  State<FornecedoresAdminListScreen> createState() => _FornecedoresAdminListScreenState();
+}
+
+class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScreen> {
+  late final FornecedorController controller;
+  final buscaCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.isRegistered<FornecedorController>()
+        ? Get.find<FornecedorController>()
+        : Get.put(FornecedorController());
+    buscaCtrl.text = controller.filtroNome.value;
+    controller.carregarTodosFornecedores();
+  }
+
+  @override
+  void dispose() {
+    buscaCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(FornecedorController());
     final theme = Get.find<EventThemeController>();
     final bool isCelular = Biblioteca.isCelular(context);
 
-    // 🔹 Carrega todos os fornecedores ao abrir a tela
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      controller.carregarTodosFornecedores();
-    });
-
-    return Obx(() {
-      final gradient = theme.gradient.value;
-
-      return Scaffold(
-          appBar: AppBar(
-            automaticallyImplyLeading: false,
-            leading: IconButton(
-              tooltip: 'Voltar',
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-              onPressed: () => Get.back(),
+    return Theme(
+      data: theme.adminThemeData,
+      child: Scaffold(
+        backgroundColor: AdminPalette.surface,
+        appBar: AdminBackAppBar(
+          title: 'Gestão de Fornecedores',
+          subtitle: 'Aprovação, catálogo e cobertura',
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+              tooltip: 'Atualizar lista',
+              onPressed: controller.carregarTodosFornecedores,
             ),
-            title: Text(
-              'Gestão de Fornecedores',
-              style: GoogleFonts.poppins(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+            IconButton(
+              icon: const Icon(Icons.filter_alt_outlined, color: Colors.white),
+              tooltip: 'Filtros',
+              onPressed: () => _abrirFiltroBottomSheet(context, controller),
             ),
-            centerTitle: true,
-            flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-                tooltip: 'Atualizar lista',
-                onPressed: controller.carregarTodosFornecedores,
-              ),
-              IconButton(
-                icon: const Icon(Icons.filter_alt_outlined, color: Colors.white),
-                tooltip: 'Filtros',
-                onPressed: () => _abrirFiltroBottomSheet(context, controller),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.grey.shade100,
-          body: Obx(() {
-            final fornecedores = controller.fornecedoresFiltrados;
-            final primary = theme.primaryColor.value;
-
-            return Column(
-              children: [
-                // 🔹 Barra de ordenação
-                Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          ],
+        ),
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Column(
+                children: [
+                  AdminSearchField(
+                    controller: buscaCtrl,
+                    hint: 'Buscar por nome, e-mail ou descrição',
+                    onChanged: (v) => controller.filtroNome.value = v,
+                    onClear: () {
+                      buscaCtrl.clear();
+                      controller.filtroNome.value = '';
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  Obx(() {
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          AdminSummaryChip(
+                            label: 'Total',
+                            value: '${controller.fornecedores.length}',
+                            color: AdminPalette.primary,
+                            icon: Icons.storefront_rounded,
+                            onTap: () {
+                              controller.filtroAprovado.value = null;
+                              controller.filtroAtivo.value = null;
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          AdminSummaryChip(
+                            label: 'Aptos',
+                            value: '${controller.totalAptos}',
+                            color: AdminPalette.success,
+                            icon: Icons.verified_rounded,
+                            onTap: () {
+                              controller.filtroAtivo.value = true;
+                              controller.filtroAprovado.value = true;
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          AdminSummaryChip(
+                            label: 'Em análise',
+                            value: '${controller.totalPendentes}',
+                            color: AdminPalette.warning,
+                            icon: Icons.pending_actions_rounded,
+                            onTap: () {
+                              controller.filtroAtivo.value = true;
+                              controller.filtroAprovado.value = false;
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          AdminSummaryChip(
+                            label: 'Inativos',
+                            value: '${controller.totalInativos}',
+                            color: AdminPalette.danger,
+                            icon: Icons.block_rounded,
+                            onTap: () {
+                              controller.filtroAprovado.value = null;
+                              controller.filtroAtivo.value = false;
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 12),
+                  Obx(() {
+                    return Row(
                       children: [
-                        Row(
-                          children: [
-                            Icon(Icons.sort_rounded, color: primary, size: 22),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Ordenar por:',
-                              style: GoogleFonts.poppins(
-                                fontSize: 15,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
+                        Icon(Icons.sort_rounded, color: AdminPalette.primary, size: 20),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Ordenar',
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AdminPalette.ink,
+                          ),
                         ),
-                        const SizedBox(width: 8), // 🔹 espaço de respiro
-                        Flexible(
-                          // ⬅️ permite o dropdown reduzir se faltar espaço
+                        const SizedBox(width: 12),
+                        Expanded(
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: primary.withValues(alpha: 0.3)),
+                              border: Border.all(color: AdminPalette.border),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
-                                isExpanded:
-                                    true, // ⬅️ faz o dropdown ocupar toda a largura disponível
+                                isExpanded: true,
                                 value: controller.ordenacaoSelecionada.value,
-                                icon: Icon(Icons.arrow_drop_down_rounded, color: primary, size: 26),
-                                dropdownColor: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                style: GoogleFonts.poppins(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade800,
-                                ),
                                 items: const [
                                   DropdownMenuItem(
                                     value: 'status',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.verified_rounded, color: Colors.green, size: 18),
-                                        SizedBox(width: 6),
-                                        Text('Status (aprovados primeiro)'),
-                                      ],
-                                    ),
+                                    child: Text('Status (aprovados primeiro)'),
                                   ),
-                                  DropdownMenuItem(
-                                    value: 'nome',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.sort_by_alpha_rounded,
-                                            color: Colors.indigo, size: 18),
-                                        SizedBox(width: 6),
-                                        Text('Nome A-Z'),
-                                      ],
-                                    ),
-                                  ),
+                                  DropdownMenuItem(value: 'nome', child: Text('Nome A-Z')),
                                   DropdownMenuItem(
                                     value: 'recentes',
-                                    child: Row(
-                                      children: [
-                                        Icon(Icons.schedule_rounded,
-                                            color: Colors.orange, size: 18),
-                                        SizedBox(width: 6),
-                                        Text('Mais recentes'),
-                                      ],
-                                    ),
+                                    child: Text('Mais recentes'),
                                   ),
                                 ],
                                 onChanged: (v) {
@@ -146,14 +176,47 @@ class FornecedoresAdminListScreen extends StatelessWidget {
                           ),
                         ),
                       ],
-                    )),
+                    );
+                  }),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Obx(() {
+                if (controller.carregando.value && controller.fornecedores.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (controller.erro.isNotEmpty && controller.fornecedores.isEmpty) {
+                  return AdminEmptyState(
+                    icon: Icons.error_outline_rounded,
+                    title: 'Falha ao carregar fornecedores',
+                    message: controller.erro.value,
+                    actionLabel: 'Tentar de novo',
+                    onAction: controller.carregarTodosFornecedores,
+                  );
+                }
 
-                const Divider(height: 1),
+                final fornecedores = controller.fornecedoresFiltrados;
+                if (fornecedores.isEmpty) {
+                  return AdminEmptyState(
+                    icon: Icons.store_mall_directory_outlined,
+                    title: controller.fornecedores.isEmpty
+                        ? 'Nenhum fornecedor cadastrado'
+                        : 'Nenhum fornecedor neste filtro',
+                    message: 'Ajuste a busca ou limpe os filtros para ver a base completa.',
+                    actionLabel: 'Limpar filtros',
+                    onAction: () {
+                      buscaCtrl.clear();
+                      controller.limparFiltros();
+                    },
+                  );
+                }
 
-                // 🔹 Lista de fornecedores
-                Expanded(
+                return RefreshIndicator(
+                  color: AdminPalette.primary,
+                  onRefresh: controller.carregarTodosFornecedores,
                   child: ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 80),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
                     itemCount: fornecedores.length,
                     itemBuilder: (_, i) {
                       final f = fornecedores[i];
@@ -161,15 +224,17 @@ class FornecedoresAdminListScreen extends StatelessWidget {
                         fornecedor: f,
                         controller: controller,
                         isCelular: isCelular,
-                        primary: primary,
+                        primary: AdminPalette.primary,
                       );
                     },
                   ),
-                ),
-              ],
-            );
-          }));
-    });
+                );
+              }),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _abrirFiltroBottomSheet(
@@ -183,11 +248,10 @@ class FornecedoresAdminListScreen extends StatelessWidget {
         .toList();
 
     final categorias = controller.categoriasServico
-        .where((c) => c['ativo'] == true)
+        .where((c) => c['ativo'] != false)
         .map((c) => {'id': c['id'], 'nome': c['nome']})
         .toList();
 
-    // 🔹 Valores iniciais
     String cidadeSelecionada = controller.filtroCidade.value ?? '';
     String categoriaSelecionada = controller.filtroCategoria.value ?? '';
     String subcategoriaSelecionada = '';
@@ -200,13 +264,12 @@ class FornecedoresAdminListScreen extends StatelessWidget {
     await showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       backgroundColor: Colors.white,
       isScrollControlled: true,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) {
-          // 🔹 Subcategorias filtradas
           final subcategorias = controller.subcategoriasServico
               .where((s) => s['id_categoria'] == categoriaSelecionada)
               .map((s) => {'id': s['id'], 'nome': s['nome']})
@@ -214,113 +277,87 @@ class FornecedoresAdminListScreen extends StatelessWidget {
 
           return Padding(
             padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              top: 24,
+              left: 20,
+              right: 20,
+              top: 20,
               bottom: MediaQuery.of(context).viewInsets.bottom + 24,
             ),
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.filter_alt_rounded, size: 36, color: Colors.deepPurple),
-                  const SizedBox(height: 12),
                   Text(
-                    'Filtros de Fornecedores',
-                    style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const Divider(),
-
-                  // 🔹 Nome
-                  TextField(
-                    controller: nomeCtrl,
-                    decoration: const InputDecoration(
-                      labelText: 'Buscar por nome',
-                      prefixIcon: Icon(Icons.search),
-                    ),
+                    'Filtros de fornecedores',
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 17),
                   ),
                   const SizedBox(height: 16),
-
-                  // 🔹 Cidade
+                  TextField(
+                    controller: nomeCtrl,
+                    decoration: adminInputDecoration(
+                      label: 'Buscar por nome',
+                      icon: Icons.search,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: cidadeSelecionada.isEmpty ? null : cidadeSelecionada,
                     items: cidades.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
                     onChanged: (v) => setState(() => cidadeSelecionada = v ?? ''),
-                    decoration: const InputDecoration(
-                      labelText: 'Cidade',
-                      prefixIcon: Icon(Icons.location_city_outlined),
+                    decoration: adminInputDecoration(
+                      label: 'Cidade',
+                      icon: Icons.location_city_outlined,
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // 🔹 Categoria principal
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: categoriaSelecionada.isEmpty ? null : categoriaSelecionada,
                     items: categorias
                         .map((c) => DropdownMenuItem<String>(
-                              value: c['id'] as String,
+                              value: c['id'] as String?,
                               child: Text(c['nome'] as String? ?? 'Sem nome'),
                             ))
                         .toList(),
                     onChanged: (v) => setState(() => categoriaSelecionada = v ?? ''),
-                    decoration: const InputDecoration(
-                      labelText: 'Categoria',
-                      prefixIcon: Icon(Icons.category_outlined),
+                    decoration: adminInputDecoration(
+                      label: 'Categoria',
+                      icon: Icons.category_outlined,
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // 🔹 Subcategoria (opcional)
-                  if (categoriaSelecionada.isNotEmpty)
+                  if (categoriaSelecionada.isNotEmpty) ...[
+                    const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
                       value: subcategoriaSelecionada.isEmpty ? null : subcategoriaSelecionada,
                       items: subcategorias
                           .map((s) => DropdownMenuItem<String>(
-                                value: s['id'] as String,
+                                value: s['id'] as String?,
                                 child: Text(s['nome'] as String? ?? ''),
                               ))
                           .toList(),
                       onChanged: (v) => setState(() => subcategoriaSelecionada = v ?? ''),
-                      decoration: const InputDecoration(
-                        labelText: 'Subcategoria',
-                        prefixIcon: Icon(Icons.label_important_outline_rounded),
+                      decoration: adminInputDecoration(
+                        label: 'Subcategoria',
+                        icon: Icons.label_important_outline_rounded,
                       ),
                     ),
-                  const SizedBox(height: 16),
-
-                  // 🔹 Status de aprovação
+                  ],
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: aprovado == null ? null : (aprovado! ? 'Aprovados' : 'Aguardando'),
                     items: const [
-                      DropdownMenuItem(
-                        value: 'Aprovados',
-                        child: Text('Aprovados para operar'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'Aguardando',
-                        child: Text('Aguardando aprovação'),
-                      ),
+                      DropdownMenuItem(value: 'Aprovados', child: Text('Aprovados para operar')),
+                      DropdownMenuItem(value: 'Aguardando', child: Text('Aguardando aprovação')),
                     ],
                     onChanged: (v) {
                       setState(() {
-                        if (v == null) {
-                          aprovado = null;
-                        } else {
-                          aprovado = (v == 'Aprovados');
-                        }
+                        aprovado = v == null ? null : v == 'Aprovados';
                       });
                     },
-                    decoration: const InputDecoration(
-                      labelText: 'Status de aprovação',
-                      prefixIcon: Icon(Icons.verified_outlined),
+                    decoration: adminInputDecoration(
+                      label: 'Status de aprovação',
+                      icon: Icons.verified_outlined,
                     ),
                   ),
-                  const SizedBox(height: 16),
-
-                  // 🔹 Status de atividade
+                  const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: ativo == null ? null : (ativo! ? 'Ativos' : 'Desativados'),
                     items: const [
@@ -329,29 +366,21 @@ class FornecedoresAdminListScreen extends StatelessWidget {
                     ],
                     onChanged: (v) {
                       setState(() {
-                        if (v == null) {
-                          ativo = null;
-                        } else {
-                          ativo = (v == 'Ativos');
-                        }
+                        ativo = v == null ? null : v == 'Ativos';
                       });
                     },
-                    decoration: const InputDecoration(
-                      labelText: 'Status de atividade',
-                      prefixIcon: Icon(Icons.power_settings_new_outlined),
+                    decoration: adminInputDecoration(
+                      label: 'Status de atividade',
+                      icon: Icons.power_settings_new_outlined,
                     ),
                   ),
-                  const SizedBox(height: 24),
-
-                  // 🔹 Botões
+                  const SizedBox(height: 20),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       TextButton.icon(
                         icon: const Icon(Icons.clear_all),
                         onPressed: () {
                           setState(() {
-                            // 🔹 Limpa os valores locais
                             nomeCtrl.clear();
                             cidadeSelecionada = '';
                             categoriaSelecionada = '';
@@ -359,13 +388,13 @@ class FornecedoresAdminListScreen extends StatelessWidget {
                             aprovado = null;
                             ativo = null;
                           });
-
-                          // 🔹 Limpa também os filtros do controller (mantém sincronia)
                           controller.limparFiltros();
                         },
                         label: const Text('Limpar'),
                       ),
-                      ElevatedButton.icon(
+                      const Spacer(),
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(backgroundColor: AdminPalette.primary),
                         icon: const Icon(Icons.check),
                         onPressed: () {
                           controller.aplicarFiltros(
@@ -377,13 +406,13 @@ class FornecedoresAdminListScreen extends StatelessWidget {
                             aprovado: aprovado,
                             ativo: ativo,
                           );
+                          buscaCtrl.text = nomeCtrl.text;
                           Navigator.pop(context);
                         },
                         label: const Text('Aplicar'),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
                 ],
               ),
             ),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
+import './../../../core/utils/form_validators.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/app_controller.dart';
 import './../../../data/models/model.dart';
@@ -28,7 +29,25 @@ Future<void> showTarefaDialog({
     text: DateFormat('dd/MM/yyyy').format(dataInicial ?? DateTime.now()),
   );
   DateTime dataSelecionada = dataInicial ?? DateTime.now();
-  Convidado? responsavelSelecionado = responsavelInicial;
+  final formKey = GlobalKey<FormState>();
+  var autovalidateMode = AutovalidateMode.disabled;
+  String? erroResponsavel;
+  final usuariosElegiveis = _deduplicarElegiveis(
+    usuarios.where((item) => item.podeSerResponsavelTarefa),
+  );
+  Convidado? responsavelSelecionado;
+  if (responsavelInicial != null) {
+    for (final item in usuariosElegiveis) {
+      if (item.mesmoIdentificador(responsavelInicial)) {
+        responsavelSelecionado = item;
+        break;
+      }
+    }
+    if (responsavelSelecionado == null &&
+        responsavelInicial.podeSerResponsavelTarefa) {
+      responsavelSelecionado = responsavelInicial;
+    }
+  }
 
   // 🔹 Trocado para showModalBottomSheet para seguir o padrão das outras telas
   await showModalBottomSheet<void>(
@@ -132,12 +151,21 @@ Future<void> showTarefaDialog({
                           const SizedBox(height: 16), // Espaçamento menor
 
                           // === Campos de formulário ===
+                          Form(
+                            key: formKey,
+                            autovalidateMode: autovalidateMode,
+                            child: Column(
+                              children: [
                           _buildInput(
                             context,
                             controller: tituloController,
                             label: 'Título da Tarefa',
                             icon: Icons.title_outlined,
                             color: primary,
+                            validator: (v) => FormValidators.titulo(
+                              v,
+                              campo: 'o título da tarefa',
+                            ),
                           ),
                           const SizedBox(height: 10),
                           _buildInput(
@@ -147,6 +175,10 @@ Future<void> showTarefaDialog({
                             icon: Icons.notes_outlined,
                             color: primary,
                             maxLines: 2, // Reduzido de 3 para 2
+                            validator: (v) => FormValidators.descricao(
+                              v,
+                              campo: 'a descrição da tarefa',
+                            ),
                           ),
                           const SizedBox(height: 10),
 
@@ -177,7 +209,14 @@ Future<void> showTarefaDialog({
                                 icon: Icons.calendar_today_outlined,
                                 color: primary,
                                 readOnly: true,
+                                validator: (v) => FormValidators.data(
+                                  v,
+                                  campo: 'a data prevista',
+                                ),
                               ),
+                            ),
+                          ),
+                              ],
                             ),
                           ),
 
@@ -187,7 +226,7 @@ Future<void> showTarefaDialog({
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'Responsável pela Tarefa',
+                              'Responsável pela Tarefa *',
                               style: TextStyle(
                                 fontSize: 13, // Reduzido
                                 fontWeight: FontWeight.w600,
@@ -198,14 +237,15 @@ Future<void> showTarefaDialog({
                           const SizedBox(height: 8),
 
                           // === Lista de usuários atualizada ===
-                          usuarios.isEmpty
+                          usuariosElegiveis.isEmpty
                               ? Column(
                                   children: [
                                     const Icon(Icons.group_outlined,
                                         size: 32, color: Colors.grey),
                                     const SizedBox(height: 6),
                                     Text(
-                                      'Nenhum usuário disponível 😅',
+                                      'Só convidados que já criaram conta no app\n(mesmo e-mail do convite) podem ser responsáveis.',
+                                      textAlign: TextAlign.center,
                                       style: TextStyle(
                                           color: Colors.grey.shade600,
                                           fontSize: 13),
@@ -218,22 +258,26 @@ Future<void> showTarefaDialog({
                                     scrollDirection: Axis.horizontal,
                                     padding: const EdgeInsets.symmetric(
                                         horizontal: 2),
-                                    itemCount: usuarios.length,
+                                    itemCount: usuariosElegiveis.length,
                                     separatorBuilder: (_, __) =>
                                         const SizedBox(width: 10),
                                     itemBuilder: (_, index) {
-                                      final usuario = usuarios[index];
+                                      final usuario = usuariosElegiveis[index];
                                       final selecionado =
-                                          responsavelSelecionado?.idConvidado ==
-                                              usuario.idConvidado;
+                                          responsavelSelecionado != null &&
+                                              usuario.mesmoIdentificador(
+                                                  responsavelSelecionado!);
 
-                                      final isOrganizador = usuario
-                                              .idConvidado ==
-                                          app.usuarioLogado.value?.idUsuario;
+                                      final isOrganizador = usuario.idConvidado ==
+                                              app.usuarioLogado.value?.idUsuario ||
+                                          usuario.idUsuario ==
+                                              app.usuarioLogado.value?.idUsuario;
 
                                       return GestureDetector(
-                                        onTap: () => setState(() =>
-                                            responsavelSelecionado = usuario),
+                                        onTap: () => setState(() {
+                                          responsavelSelecionado = usuario;
+                                          erroResponsavel = null;
+                                        }),
                                         child: _buildUserCard(
                                           usuario,
                                           selecionado,
@@ -245,6 +289,21 @@ Future<void> showTarefaDialog({
                                     },
                                   ),
                                 ),
+
+                          if (erroResponsavel != null) ...[
+                            const SizedBox(height: 8),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                erroResponsavel!,
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ],
 
                           const SizedBox(height: 18),
                           const Divider(height: 1, color: Colors.black12),
@@ -261,6 +320,17 @@ Future<void> showTarefaDialog({
                               responsavelSelecionado,
                               dataSelecionada,
                               onSave,
+                              formKey: formKey,
+                              onTriedSubmit: () {
+                                setState(() {
+                                  autovalidateMode =
+                                      AutovalidateMode.onUserInteraction;
+                                  erroResponsavel =
+                                      responsavelSelecionado == null
+                                          ? 'Selecione o responsável pela tarefa'
+                                          : null;
+                                });
+                              },
                             ),
                           ),
                         ],
@@ -384,22 +454,19 @@ Widget _buildMobileButtons(
   bool isEdit,
   Convidado? responsavelSelecionado,
   DateTime dataSelecionada,
-  void Function(String, String, DateTime, Convidado) onSave,
-) {
+  void Function(String, String, DateTime, Convidado) onSave, {
+  required GlobalKey<FormState> formKey,
+  required VoidCallback onTriedSubmit,
+}) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       // === BOTÃO PRINCIPAL ===
       ElevatedButton.icon(
         onPressed: () async {
-          if (tituloController.text.trim().isEmpty ||
-              responsavelSelecionado == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Preencha o título e selecione um responsável.'),
-                backgroundColor: Colors.redAccent,
-              ),
-            );
+          onTriedSubmit();
+          final formValido = formKey.currentState?.validate() ?? false;
+          if (!formValido || responsavelSelecionado == null) {
             return;
           }
 
@@ -484,11 +551,13 @@ Widget _buildInput(
   int maxLines = 1,
   String? hintText,
   bool readOnly = false,
+  String? Function(String?)? validator,
 }) {
-  return TextField(
+  return TextFormField(
     controller: controller,
     maxLines: maxLines,
     readOnly: readOnly,
+    validator: validator,
     style: const TextStyle(fontSize: 14), // Fonte interna menor
     decoration: InputDecoration(
       labelText: label,
@@ -509,8 +578,29 @@ Widget _buildInput(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: Colors.grey.shade300),
       ),
-      // 🔹 Aqui o segredo do campo fino: diminuir o padding interno
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+      ),
+      errorStyle: const TextStyle(fontSize: 11, height: 0.9),
+      errorMaxLines: 2,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
     ),
   );
+}
+
+List<Convidado> _deduplicarElegiveis(Iterable<Convidado> origem) {
+  final vistos = <String>{};
+  final resultado = <Convidado>[];
+  for (final item in origem) {
+    final id = item.idConvidado.trim();
+    final chave = id.isNotEmpty ? 'id:$id' : 'email:${item.emailNormalizadoEfetivo}';
+    if (chave.endsWith(':') || !vistos.add(chave)) continue;
+    resultado.add(item);
+  }
+  return resultado;
 }

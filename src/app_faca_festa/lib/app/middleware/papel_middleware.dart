@@ -14,8 +14,12 @@ class PapelMiddleware extends GetMiddleware {
       return const RouteSettings(name: '/splash');
     }
 
-    final usuario = Get.find<AppController>().usuarioLogado.value;
+    final app = Get.find<AppController>();
+    final usuario = app.usuarioLogado.value;
     if (usuario == null) {
+      final conviteVisitante = tiposPermitidos.contains('C') &&
+          (app.acessoPorLink.value || app.fluxoConviteAtivo);
+      if (conviteVisitante) return null;
       return const RouteSettings(name: '/splash');
     }
 
@@ -25,7 +29,11 @@ class PapelMiddleware extends GetMiddleware {
 
     final tipo = (usuario.tipo ?? '').trim();
     if (!tiposPermitidos.contains(tipo)) {
-      return const RouteSettings(name: '/splash');
+      final conviteVisitante = tiposPermitidos.contains('C') &&
+          (app.acessoPorLink.value || app.fluxoConviteAtivo);
+      if (!conviteVisitante) {
+        return const RouteSettings(name: '/splash');
+      }
     }
 
     return null;

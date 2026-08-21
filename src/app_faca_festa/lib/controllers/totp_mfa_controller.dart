@@ -3,17 +3,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 
+import '../data/services/functions/callable_https_client.dart';
 import 'app_controller.dart';
 
 class TotpMfaController extends GetxController {
   TotpMfaController({
     this.gerarQrNoInicio = false,
     FirebaseFunctions? functions,
-  }) : _functions = functions ??
-            FirebaseFunctions.instanceFor(region: 'southamerica-east1');
+    CallableHttpsClient? httpsClient,
+  })  : _functions = functions ??
+            FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
+        _httpsClient = httpsClient ?? CallableHttpsClient();
 
   final bool gerarQrNoInicio;
   final FirebaseFunctions _functions;
+  final CallableHttpsClient _httpsClient;
   final AppController appController = Get.find<AppController>();
 
   static const etapaEscolha = 'escolha';
@@ -64,16 +68,16 @@ class TotpMfaController extends GetxController {
   Future<void> iniciarCadastro() async {
     try {
       gerandoQr.value = true;
-      final callable = _functions.httpsCallable('iniciarTotpMfa');
-      final resultado = await callable.call();
-      final data = Map<String, dynamic>.from(resultado.data as Map);
+      final data = await _chamarFunction('iniciarTotpMfa');
       secret.value = (data['secret'] ?? '').toString();
       otpauthUrl.value = (data['otpauthUrl'] ?? '').toString();
       if (secret.value.isEmpty || otpauthUrl.value.isEmpty) {
         _mostrarErro('Não foi possível gerar o autenticador. Tente novamente.');
       }
     } on FirebaseFunctionsException catch (e) {
-      _mostrarErro(_traduzErro(e));
+      _mostrarErro(_traduzErro(e.code, e.message));
+    } on CallableHttpsException catch (e) {
+      _mostrarErro(_traduzErro(e.code, e.message));
     } catch (_) {
       _mostrarErro('Não foi possível gerar o QR Code. Tente novamente.');
     } finally {
@@ -85,9 +89,7 @@ class TotpMfaController extends GetxController {
     try {
       enviandoEmail.value = true;
       EasyLoading.show(status: 'Enviando código...');
-      final callable = _functions.httpsCallable('solicitarCodigoEmailMfa');
-      final resultado = await callable.call();
-      final data = Map<String, dynamic>.from(resultado.data as Map);
+      final data = await _chamarFunction('solicitarCodigoEmailMfa');
       emailMascarado.value = (data['emailMascarado'] ?? '').toString();
       EasyLoading.dismiss();
       _mostrarSucesso(
@@ -95,7 +97,10 @@ class TotpMfaController extends GetxController {
       );
     } on FirebaseFunctionsException catch (e) {
       EasyLoading.dismiss();
-      _mostrarErro(_traduzErro(e));
+      _mostrarErro(_traduzErro(e.code, e.message));
+    } on CallableHttpsException catch (e) {
+      EasyLoading.dismiss();
+      _mostrarErro(_traduzErro(e.code, e.message));
     } catch (_) {
       EasyLoading.dismiss();
       _mostrarErro('Não foi possível enviar o código. Tente novamente.');
@@ -130,14 +135,16 @@ class TotpMfaController extends GetxController {
     try {
       carregando.value = true;
       EasyLoading.show(status: 'Confirmando autenticador...');
-      final callable = _functions.httpsCallable('confirmarTotpMfa');
-      await callable.call({'codigo': codigoLimpo});
+      await _chamarFunction('confirmarTotpMfa', {'codigo': codigoLimpo});
       EasyLoading.dismiss();
       appController.marcarTotpVerificado();
       Get.offAllNamed('/splash');
     } on FirebaseFunctionsException catch (e) {
       EasyLoading.dismiss();
-      _mostrarErro(_traduzErro(e));
+      _mostrarErro(_traduzErro(e.code, e.message));
+    } on CallableHttpsException catch (e) {
+      EasyLoading.dismiss();
+      _mostrarErro(_traduzErro(e.code, e.message));
     } catch (_) {
       EasyLoading.dismiss();
       _mostrarErro('Não foi possível confirmar o código. Tente novamente.');
@@ -156,14 +163,16 @@ class TotpMfaController extends GetxController {
     try {
       carregando.value = true;
       EasyLoading.show(status: 'Confirmando e-mail...');
-      final callable = _functions.httpsCallable('confirmarEmailMfa');
-      await callable.call({'codigo': codigoLimpo});
+      await _chamarFunction('confirmarEmailMfa', {'codigo': codigoLimpo});
       EasyLoading.dismiss();
       appController.marcarTotpVerificado();
       Get.offAllNamed('/splash');
     } on FirebaseFunctionsException catch (e) {
       EasyLoading.dismiss();
-      _mostrarErro(_traduzErro(e));
+      _mostrarErro(_traduzErro(e.code, e.message));
+    } on CallableHttpsException catch (e) {
+      EasyLoading.dismiss();
+      _mostrarErro(_traduzErro(e.code, e.message));
     } catch (_) {
       EasyLoading.dismiss();
       _mostrarErro('Não foi possível confirmar o código. Tente novamente.');
@@ -182,14 +191,16 @@ class TotpMfaController extends GetxController {
     try {
       carregando.value = true;
       EasyLoading.show(status: 'Validando código...');
-      final callable = _functions.httpsCallable('verificarTotpMfa');
-      await callable.call({'codigo': codigoLimpo});
+      await _chamarFunction('verificarTotpMfa', {'codigo': codigoLimpo});
       EasyLoading.dismiss();
       appController.marcarTotpVerificado();
       Get.offAllNamed('/splash');
     } on FirebaseFunctionsException catch (e) {
       EasyLoading.dismiss();
-      _mostrarErro(_traduzErro(e));
+      _mostrarErro(_traduzErro(e.code, e.message));
+    } on CallableHttpsException catch (e) {
+      EasyLoading.dismiss();
+      _mostrarErro(_traduzErro(e.code, e.message));
     } catch (_) {
       EasyLoading.dismiss();
       _mostrarErro('Não foi possível validar o código. Tente novamente.');
@@ -208,14 +219,16 @@ class TotpMfaController extends GetxController {
     try {
       carregando.value = true;
       EasyLoading.show(status: 'Validando código...');
-      final callable = _functions.httpsCallable('verificarEmailMfa');
-      await callable.call({'codigo': codigoLimpo});
+      await _chamarFunction('verificarEmailMfa', {'codigo': codigoLimpo});
       EasyLoading.dismiss();
       appController.marcarTotpVerificado();
       Get.offAllNamed('/splash');
     } on FirebaseFunctionsException catch (e) {
       EasyLoading.dismiss();
-      _mostrarErro(_traduzErro(e));
+      _mostrarErro(_traduzErro(e.code, e.message));
+    } on CallableHttpsException catch (e) {
+      EasyLoading.dismiss();
+      _mostrarErro(_traduzErro(e.code, e.message));
     } catch (_) {
       EasyLoading.dismiss();
       _mostrarErro('Não foi possível validar o código. Tente novamente.');
@@ -230,12 +243,29 @@ class TotpMfaController extends GetxController {
 
   String _codigoLimpo() => codigo.value.replaceAll(RegExp(r'\D'), '');
 
-  String _traduzErro(FirebaseFunctionsException e) {
-    final mensagem = e.message?.trim();
-    if (mensagem != null && mensagem.isNotEmpty && e.code != 'internal') {
+  Future<Map<String, dynamic>> _chamarFunction(
+    String nome, [
+    Map<String, dynamic>? data,
+  ]) async {
+    if (CallableHttpsClient.necessarioNaPlataformaAtual) {
+      return _httpsClient.call(nome, data);
+    }
+    final callable = _functions.httpsCallable(nome);
+    final resultado = await callable.call(data);
+    final payload = resultado.data;
+    if (payload is Map<String, dynamic>) return payload;
+    if (payload is Map) {
+      return payload.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return const {};
+  }
+
+  String _traduzErro(String code, String? message) {
+    final mensagem = message?.trim();
+    if (mensagem != null && mensagem.isNotEmpty && code != 'internal') {
       return mensagem;
     }
-    switch (e.code) {
+    switch (code) {
       case 'unauthenticated':
         return 'Faça login para continuar.';
       case 'invalid-argument':

@@ -1,5 +1,4 @@
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
@@ -34,9 +33,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   void initState() {
     super.initState();
-    Future.delayed(const Duration(milliseconds: 500), () {
-      EasyLoading.dismiss();
-    });
+    final args = Get.arguments;
+    if (args is Map) {
+      final token = (args['conviteToken'] ??
+              args['tokenConvite'] ??
+              args['token'] ??
+              '')
+          .toString();
+      controller.appController.guardarTokenConvite(token);
+    }
+    final tipo = ((args is Map ? args['tipo'] : null) ?? 'O')
+        .toString()
+        .toUpperCase();
+    if (tipo == 'C' && !controller.appController.fluxoConviteAtivo) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        Get.offNamed('/login');
+        Get.snackbar(
+          'Convite necessário',
+          'Abra o link enviado pelo organizador para criar uma conta de convidado.',
+          backgroundColor: Colors.orange.shade700,
+          colorText: Colors.white,
+        );
+      });
+    }
   }
 
   @override
@@ -44,6 +64,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     
     final tipo = (Get.arguments?['tipo'] ?? 'O') as String;
     final isFornecedor = tipo == 'F';
+    final isConvidado = tipo == 'C';
     final theme = Get.find<EventThemeController>();
 
     // 🎨 Define o gradiente base
@@ -91,7 +112,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   // 🏆 Cabeçalho distinto para cada tipo
-                  isFornecedor ? buildHeaderFornecedor() : buildHeaderOrganizador(isFornecedor),
+                  isFornecedor
+                      ? buildHeaderFornecedor()
+                      : buildHeaderOrganizador(
+                          isFornecedor,
+                          isConvidado: isConvidado,
+                        ),
 
                   const SizedBox(height: 28),
 

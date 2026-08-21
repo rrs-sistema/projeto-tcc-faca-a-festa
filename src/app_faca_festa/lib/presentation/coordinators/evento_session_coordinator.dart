@@ -5,15 +5,18 @@ import 'package:get/get.dart';
 import '../../controllers/convidado/cardapio_controller.dart';
 import '../../controllers/convidado/convidado_controller.dart';
 import '../../controllers/convidado/grupo_convidado_controller.dart';
+import '../../controllers/calculadora/calculadora_festa_controller.dart';
+import '../../controllers/fornecedor/fornecedor_controller.dart';
 import '../../controllers/inspiracao/inspiracao_controller.dart';
 import '../../controllers/orcamento_controller.dart';
+import '../../controllers/orcamento_gasto_controller.dart';
 import '../../controllers/tarefa_controller.dart';
 import '../../controllers/tema/event_theme_controller.dart';
 import '../../controllers/usuario/usuario_controller.dart';
 import '../../domain/entities/evento.dart';
 
 abstract interface class EventoSessionCoordinator {
-  void aplicarTema(String nomeTipoEvento);
+  void aplicarTema(String nomeTipoEvento, {Evento? evento});
 
   Future<void> inicializarModulosRelacionados(Evento evento);
 
@@ -32,8 +35,19 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
   StreamSubscription<void>? _tarefasSub;
 
   @override
-  void aplicarTema(String nomeTipoEvento) {
-    Get.find<EventThemeController>().aplicarTemaPorNome(nomeTipoEvento);
+  void aplicarTema(String nomeTipoEvento, {Evento? evento}) {
+    final theme = Get.find<EventThemeController>();
+    if (evento != null) {
+      unawaited(
+        theme.aplicarParaEvento(evento, fallbackNomeTipo: nomeTipoEvento),
+      );
+      return;
+    }
+    if (!theme.papelPermiteTemaDaFesta) {
+      theme.aplicarTemaProduto();
+      return;
+    }
+    theme.aplicarTemaPorNome(nomeTipoEvento);
   }
 
   @override
@@ -78,6 +92,13 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
         )
         .asStream()
         .listen((_) {});
+
+    if (Get.isRegistered<FornecedorController>()) {
+      unawaited(
+        Get.find<FornecedorController>()
+            .carregarServicosPorEvento(evento.idEvento),
+      );
+    }
   }
 
   @override
@@ -111,6 +132,12 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
     }
     if (Get.isRegistered<InspiracaoController>()) {
       await Get.find<InspiracaoController>().encerrarEscutas();
+    }
+    if (Get.isRegistered<OrcamentoGastoController>()) {
+      await Get.find<OrcamentoGastoController>().encerrarEscutas();
+    }
+    if (Get.isRegistered<CalculadoraFestaController>()) {
+      Get.find<CalculadoraFestaController>().limpar();
     }
   }
 }

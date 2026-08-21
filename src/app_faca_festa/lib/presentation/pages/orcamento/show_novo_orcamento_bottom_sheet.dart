@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../controllers/orcamento_controller.dart';
-import '../../../core/utils/biblioteca.dart';
+import '../../../core/utils/form_masks.dart';
+import '../../../core/utils/form_validators.dart';
 import '../../../data/models/model.dart';
 
 Future<void> showNovoOrcamentoBottomSheet({
@@ -23,6 +25,8 @@ Future<void> showNovoOrcamentoBottomSheet({
 
   final anotacoesCtrl = TextEditingController();
   final valorEstimadoCtrl = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  final dinheiroMask = FormMasks.dinheiro();
 
   final primary = themeController.primaryColor.value;
   final gradient = themeController.gradient.value;
@@ -52,11 +56,12 @@ Future<void> showNovoOrcamentoBottomSheet({
 
   Future<void> salvarOrcamento(BuildContext modalContext) async {
     if (salvando.value) return;
+    if (!(formKey.currentState?.validate() ?? false)) return;
 
     try {
       salvando.value = true;
 
-      final valorDigitado = Biblioteca.toDouble(valorEstimadoCtrl.text);
+      final valorDigitado = FormValidators.parseDinheiro(valorEstimadoCtrl.text);
       final precoBase = servicoFornecedor.precoPromocao ?? servicoFornecedor.preco;
       final valorFinal = valorDigitado > 0 ? valorDigitado : precoBase;
 
@@ -204,6 +209,8 @@ Future<void> showNovoOrcamentoBottomSheet({
     TextCapitalization textCapitalization = TextCapitalization.none,
     TextInputAction textInputAction = TextInputAction.next,
     int maxLines = 1,
+    List<TextInputFormatter>? inputFormatters,
+    String? Function(String?)? validator,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -217,12 +224,14 @@ Future<void> showNovoOrcamentoBottomSheet({
               offset: const Offset(0, 4))
         ],
       ),
-      child: TextField(
+      child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
         textCapitalization: textCapitalization,
         textInputAction: textInputAction,
         maxLines: maxLines,
+        inputFormatters: inputFormatters,
+        validator: validator,
         style: GoogleFonts.poppins(color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           labelText: label,
@@ -230,7 +239,6 @@ Future<void> showNovoOrcamentoBottomSheet({
           labelStyle:
               GoogleFonts.poppins(color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
           hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
-          // Ajuste para o ícone não ficar no meio de campos com mais de uma linha
           prefixIcon: Column(
             mainAxisAlignment: maxLines > 1 ? MainAxisAlignment.start : MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
@@ -250,6 +258,14 @@ Future<void> showNovoOrcamentoBottomSheet({
           focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(color: primary, width: 1.2)),
+          errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Colors.redAccent)),
+          focusedErrorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Colors.redAccent, width: 1.2)),
+          errorStyle: const TextStyle(fontSize: 11, height: 0.9),
+          errorMaxLines: 2,
         ),
       ),
     );
@@ -344,7 +360,10 @@ Future<void> showNovoOrcamentoBottomSheet({
                 children: [
                   buildHeader(),
                   Expanded(
-                    child: ListView(
+                    child: Form(
+                      key: formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: ListView(
                       controller: controllerScroll,
                       padding: EdgeInsets.fromLTRB(
                           16, 16, 16, MediaQuery.of(modalContext).viewInsets.bottom + 16),
@@ -364,14 +383,25 @@ Future<void> showNovoOrcamentoBottomSheet({
                           textCapitalization: TextCapitalization.sentences,
                           maxLines: 3,
                           textInputAction: TextInputAction.newline,
+                          validator: (v) => FormValidators.descricao(
+                            v,
+                            campo: 'as observações',
+                            minimo: 5,
+                          ),
                         ),
                         buildTextField(
                           controller: valorEstimadoCtrl,
                           label: 'Valor estimado (opcional)',
-                          hint: 'Deixe em branco para usar o padrão',
+                          hint: 'R\$ 0,00',
                           icon: Icons.attach_money_rounded,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           textInputAction: TextInputAction.done,
+                          inputFormatters: [dinheiroMask],
+                          validator: (v) => FormValidators.dinheiro(
+                            v,
+                            obrigatorio: false,
+                            campo: 'o valor estimado',
+                          ),
                         ),
                         const SizedBox(height: 20),
                         Obx(() {
@@ -422,6 +452,7 @@ Future<void> showNovoOrcamentoBottomSheet({
                         ),
                         const SizedBox(height: 35),
                       ],
+                    ),
                     ),
                   ),
                 ],

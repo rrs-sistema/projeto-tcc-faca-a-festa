@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../controllers/calculadora/calculadora_festa_controller.dart';
+import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../data/models/evento/analise_calculadora_ia_model.dart';
 import '../../../data/models/evento/calculadora_festa_item_model.dart';
 import '../../../data/models/evento/calculadora_festa_model.dart';
@@ -33,64 +34,67 @@ class MinhasSimulacoesCalculadoraBottomSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final primary = theme.primaryColor;
+    final themeController = Get.find<EventThemeController>();
 
-    return Container(
-      // Altura reduzida para 80% para dar sensação de BottomSheet e não de tela cheia
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.80,
-      ),
-      decoration: const BoxDecoration(
-        color: Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _Header(controller: controller),
-          Expanded(
-            child: Obx(() {
-              if (controller.carregandoSimulacoes.value) {
-                return const Center(child: CircularProgressIndicator());
-              }
+    return Obx(() {
+      final primary = themeController.primaryColor.value;
+      final simulacoes = controller.simulacoesSalvas;
 
-              final simulacoes = controller.simulacoesSalvas;
-
-              if (simulacoes.isEmpty) {
-                return _EmptyState(
-                  primary: primary,
-                  onRefresh: controller.carregarSimulacoesSalvas,
-                );
-              }
-
-              return RefreshIndicator(
-                onRefresh: controller.carregarSimulacoesSalvas,
-                child: ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
-                  itemCount: simulacoes.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (_, index) {
-                    final simulacao = simulacoes[index];
-                    return _SimulacaoCard(
-                      controller: controller,
-                      simulacao: simulacao,
-                    );
-                  },
-                ),
+      final Widget body;
+      if (controller.carregandoSimulacoes.value) {
+        body = Center(child: CircularProgressIndicator(color: primary));
+      } else if (simulacoes.isEmpty) {
+        body = _EmptyState(
+          primary: primary,
+          onRefresh: controller.carregarSimulacoesSalvas,
+        );
+      } else {
+        body = RefreshIndicator(
+          color: primary,
+          onRefresh: controller.carregarSimulacoesSalvas,
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(14, 8, 14, 20),
+            itemCount: simulacoes.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemBuilder: (_, index) {
+              final simulacao = simulacoes[index];
+              return _SimulacaoCard(
+                controller: controller,
+                simulacao: simulacao,
               );
-            }),
+            },
           ),
-        ],
-      ),
-    );
+        );
+      }
+
+      return Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.80,
+        ),
+        decoration: const BoxDecoration(
+          color: Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _Header(controller: controller, primary: primary),
+            Expanded(child: body),
+          ],
+        ),
+      );
+    });
   }
 }
 
 class _Header extends StatelessWidget {
   final CalculadoraFestaController controller;
+  final Color primary;
 
-  const _Header({required this.controller});
+  const _Header({
+    required this.controller,
+    required this.primary,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -144,7 +148,7 @@ class _Header extends StatelessWidget {
                 IconButton(
                   visualDensity: VisualDensity.compact,
                   onPressed: controller.carregarSimulacoesSalvas,
-                  icon: const Icon(Icons.refresh_rounded, size: 20),
+                  icon: Icon(Icons.refresh_rounded, size: 20, color: primary),
                 ),
                 IconButton(
                   visualDensity: VisualDensity.compact,
@@ -171,8 +175,12 @@ class _SimulacaoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).primaryColor;
-    final statusColor = _statusColor(simulacao.statusSimulacao);
+    final themeController = Get.find<EventThemeController>();
+    final primary = themeController.primaryColor.value;
+    final statusColor = _statusColor(
+      simulacao.statusSimulacao,
+      primary: primary,
+    );
 
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -248,14 +256,17 @@ class _SimulacaoCard extends StatelessWidget {
     );
   }
 
-  static Color _statusColor(StatusSimulacaoCalculadora status) {
+  static Color _statusColor(
+    StatusSimulacaoCalculadora status, {
+    required Color primary,
+  }) {
     switch (status) {
       case StatusSimulacaoCalculadora.rascunho:
         return Colors.blueGrey;
       case StatusSimulacaoCalculadora.aprovada:
-        return Colors.teal;
+        return primary;
       case StatusSimulacaoCalculadora.convertidaOrcamento:
-        return Colors.deepPurple;
+        return Color.lerp(primary, const Color(0xFF111827), 0.28)!;
       case StatusSimulacaoCalculadora.cancelada:
         return Colors.redAccent;
     }
@@ -305,6 +316,7 @@ class _AnaliseIASimulacaoCompacta extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Get.find<EventThemeController>().primaryColor.value;
     final sugestao = analise.sugestoes.isNotEmpty ? analise.sugestoes.first : null;
     final resumo = analise.resumo.trim().isNotEmpty
         ? analise.resumo.trim()
@@ -318,13 +330,13 @@ class _AnaliseIASimulacaoCompacta extends StatelessWidget {
             _ChipInfo(
               icon: Icons.psychology_alt_rounded,
               label: 'IA',
-              color: Theme.of(context).primaryColor,
+              color: primary,
             ),
             const SizedBox(width: 6),
             _ChipInfo(
               icon: Icons.favorite_rounded,
               label: '${analise.indiceConforto.clamp(0, 100).round()}%',
-              color: Colors.teal,
+              color: primary,
             ),
             const SizedBox(width: 6),
             _ChipInfo(
@@ -425,7 +437,8 @@ class _AcoesSimulacao extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).primaryColor;
+    final themeController = Get.find<EventThemeController>();
+    final primary = themeController.primaryColor.value;
 
     return Obx(() {
       final convertendo = controller.convertendoOrcamento.value;
@@ -442,9 +455,9 @@ class _AcoesSimulacao extends StatelessWidget {
             child: ElevatedButton.icon(
               style: ElevatedButton.styleFrom(
                 backgroundColor: convertida
-                    ? Colors.deepPurple
+                    ? Color.lerp(primary, const Color(0xFF111827), 0.28)
                     : podeConverter
-                        ? Colors.teal
+                        ? primary
                         : Colors.blueGrey,
                 foregroundColor: Colors.white,
                 elevation: 0,
@@ -505,7 +518,7 @@ class _AcoesSimulacao extends StatelessWidget {
                     : () => controller.aprovarSimulacao(simulacao.idCalculo),
                 icon: Icon(
                   Icons.check_circle_outline,
-                  color: convertida || aprovada ? Colors.grey : Colors.teal,
+                  color: convertida || aprovada ? Colors.grey : primary,
                   size: 22,
                 ),
                 tooltip: 'Aprovar',

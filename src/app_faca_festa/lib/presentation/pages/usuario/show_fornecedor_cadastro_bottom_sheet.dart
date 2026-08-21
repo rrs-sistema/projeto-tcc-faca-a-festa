@@ -298,23 +298,17 @@ class _CompactField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final IconData icon;
-  final bool readOnly;
   final TextInputType? keyboardType;
   final int? maxLength;
   final String? Function(String?)? validator;
-  final VoidCallback? onTap;
-  final Function(String)? onChanged;
 
   const _CompactField({
     required this.controller,
     required this.label,
     required this.icon,
-    this.readOnly = false,
     this.keyboardType,
     this.maxLength,
     this.validator,
-    this.onTap,
-    this.onChanged,
   });
 
   @override
@@ -323,11 +317,8 @@ class _CompactField extends StatelessWidget {
       height: 44, // Altura restrita do padrão
       child: TextFormField(
         controller: controller,
-        readOnly: readOnly,
         keyboardType: keyboardType,
         maxLength: maxLength,
-        onTap: onTap,
-        onChanged: onChanged,
         style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           labelText: label,
@@ -345,7 +336,7 @@ class _CompactField extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               borderSide: BorderSide(color: Theme.of(context).primaryColor)),
           filled: true,
-          fillColor: readOnly ? Colors.grey.shade100 : Colors.grey.shade50,
+          fillColor: Colors.grey.shade50,
         ),
         validator: validator,
       ),

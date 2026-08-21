@@ -42,6 +42,7 @@ void main() {
         padrinhos: const ['A', 'B'],
         nomeAniversariante: 'Clara',
         idade: 30,
+        idTema: 'safari',
         tema: 'Flores',
         nomeResponsavel: 'Responsável',
         nomeGestante: 'Gestante',
@@ -66,6 +67,7 @@ void main() {
         nascimento,
       );
       expect(map['padrinhos'], ['A', 'B']);
+      expect(map['id_tema'], 'safari');
     });
 
     test('fromMap preserves fallbacks and numeric parsing', () {
@@ -204,6 +206,7 @@ const _firestoreKeys = {
   'padrinhos',
   'nome_aniversariante',
   'idade',
+  'id_tema',
   'tema',
   'nome_responsavel',
   'nome_gestante',

@@ -5,6 +5,7 @@ import 'dart:async';
 
 import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../../data/models/model.dart';
+import '../../data/seeds/servico_produto_seed.dart';
 
 class ServicoProdutoController extends GetxController {
   final _db = FirebaseFirestore.instance;
@@ -343,6 +344,51 @@ class ServicoProdutoController extends GetxController {
   Future<void> salvarServico(ServicoProdutoModel model) async {
     await _db.collection('servico_produto').doc(model.id).set(model.toMap());
     await carregarServicos();
+  }
+
+  /// Grava (merge) o catálogo padrão de serviços/produtos no Firestore.
+  /// Preserva IDs já usados por fornecedores, fotos e cotações.
+  Future<int> popularCatalogoInicial() async {
+    final existentes = await _db.collection('servico_produto').get();
+    final idsExistentes = existentes.docs.map((d) => d.id).toSet();
+    final agora = FieldValue.serverTimestamp();
+
+    WriteBatch lote = _db.batch();
+    var operacoes = 0;
+
+    Future<void> commitSeCheio() async {
+      if (operacoes >= 400) {
+        await lote.commit();
+        lote = _db.batch();
+        operacoes = 0;
+      }
+    }
+
+    for (final item in CatalogoServicoProduto.itens) {
+      await commitSeCheio();
+      lote.set(
+        _db.collection('servico_produto').doc(item.id),
+        {
+          'id': item.id,
+          'nome': item.nome,
+          'descricao': item.descricao,
+          'tipo_medida': item.tipoMedida,
+          'id_subcategoria': item.idSubcategoria,
+          'ativo': item.ativo,
+          if (!idsExistentes.contains(item.id)) 'data_cadastro': agora,
+          'data_atualizacao': agora,
+        },
+        SetOptions(merge: true),
+      );
+      operacoes++;
+    }
+    if (operacoes > 0) {
+      await lote.commit();
+    }
+
+    await carregarServicos();
+    await carregarServicosComDetalhesOtimizado();
+    return CatalogoServicoProduto.itens.length;
   }
 
   /// 🔄 Alterna automaticamente entre iniciar e parar o listener Admin

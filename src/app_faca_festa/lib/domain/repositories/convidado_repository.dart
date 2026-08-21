@@ -33,8 +33,6 @@ abstract interface class ConvidadoRepository {
 
   Future<MigracaoTipoConvidadoResultado> migrarTiposLegados();
 
-  Future<void> marcarConvitesEnviados(
-    List<String> idsConvidados,
-    String tipoEnvio,
-  );
+  /// Garante `convite_token` no documento. Não marca envio por SMS/WhatsApp.
+  Future<void> garantirTokensConvite(Map<String, String> tokensPorId);
 }

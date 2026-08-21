@@ -2,6 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import './../../../core/utils/form_validators.dart';
 import './../../widgets/custom_input_field.dart';
 import './endereco_section_controller.dart';
 
@@ -9,12 +10,14 @@ class EnderecoSection extends StatefulWidget {
   final Color cor;
   final String titulo;
   final EnderecoSectionController controller;
+  final bool camposObrigatorios;
 
   const EnderecoSection({
     super.key,
     required this.cor,
     required this.controller,
     required this.titulo,
+    this.camposObrigatorios = true,
   });
 
   @override
@@ -22,7 +25,13 @@ class EnderecoSection extends StatefulWidget {
 }
 
 class _EnderecoSectionState extends State<EnderecoSection> {
-  bool expandido = false;
+  late bool expandido;
+
+  @override
+  void initState() {
+    super.initState();
+    expandido = widget.camposObrigatorios;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +72,7 @@ class _EnderecoSectionState extends State<EnderecoSection> {
             color: cor,
             size: 26,
           ),
+          initiallyExpanded: widget.camposObrigatorios,
           onExpansionChanged: (value) => setState(() => expandido = value),
           children: [
             CustomInputField(
@@ -74,6 +84,7 @@ class _EnderecoSectionState extends State<EnderecoSection> {
               titleColor: cor,
               keyboardType: TextInputType.number,
               type: InputType.cep,
+              isRequired: widget.camposObrigatorios,
               suffixIcon: Obx(
                 () => c.consultandoCep.value
                     ? Padding(
@@ -100,6 +111,11 @@ class _EnderecoSectionState extends State<EnderecoSection> {
               controller: c.logradouroController,
               color: cor,
               titleColor: cor,
+              isRequired: widget.camposObrigatorios,
+              validator: (value) => FormValidators.logradouro(
+                value,
+                obrigatorio: widget.camposObrigatorios,
+              ),
             ),
             CustomInputField(
               label: "Número",
@@ -109,6 +125,11 @@ class _EnderecoSectionState extends State<EnderecoSection> {
               color: cor,
               titleColor: cor,
               keyboardType: TextInputType.text,
+              isRequired: widget.camposObrigatorios,
+              validator: (value) => FormValidators.numeroEndereco(
+                value,
+                obrigatorio: widget.camposObrigatorios,
+              ),
             ),
             CustomInputField(
               label: "Complemento",
@@ -123,6 +144,11 @@ class _EnderecoSectionState extends State<EnderecoSection> {
               controller: c.bairroController,
               color: cor,
               titleColor: cor,
+              isRequired: widget.camposObrigatorios,
+              validator: (value) => FormValidators.bairro(
+                value,
+                obrigatorio: widget.camposObrigatorios,
+              ),
             ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,6 +161,11 @@ class _EnderecoSectionState extends State<EnderecoSection> {
                     controller: c.nomeCidadeController,
                     color: cor,
                     titleColor: cor,
+                    isRequired: widget.camposObrigatorios,
+                    validator: (value) => FormValidators.cidade(
+                      value,
+                      obrigatorio: widget.camposObrigatorios,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -146,6 +177,12 @@ class _EnderecoSectionState extends State<EnderecoSection> {
                     controller: c.ufController,
                     color: cor,
                     titleColor: cor,
+                    maxLength: 2,
+                    isRequired: widget.camposObrigatorios,
+                    validator: (value) => FormValidators.uf(
+                      value,
+                      obrigatorio: widget.camposObrigatorios,
+                    ),
                     onChanged: (value) {
                       final uf = value
                           .replaceAll(RegExp(r'[^A-Za-z]'), '')

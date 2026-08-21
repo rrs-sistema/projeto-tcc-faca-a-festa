@@ -16,6 +16,7 @@ import '../../data/repositories_impl/cardapio_repository_impl.dart';
 import '../../data/repositories_impl/grupo_convidado_repository_impl.dart';
 import '../../data/repositories_impl/tarefa_repository_impl.dart';
 import '../../data/repositories_impl/presente_reservation_repository_impl.dart';
+import '../../data/services/convite/enviar_convites_por_email_service.dart';
 import '../../domain/repositories/convidado_repository.dart';
 import '../../domain/repositories/convite_convidado_repository.dart';
 import '../../domain/repositories/cardapio_repository.dart';
@@ -128,6 +129,13 @@ abstract final class ConvidadoBootstrap {
     if (!Get.isRegistered<PresenteReservationRepository>()) {
       Get.put<PresenteReservationRepository>(
         PresenteReservationRepositoryImpl(FirebaseFirestore.instance),
+        permanent: true,
+      );
+    }
+
+    if (!Get.isRegistered<EnviarConvitesPorEmailService>()) {
+      Get.put<EnviarConvitesPorEmailService>(
+        EnviarConvitesPorEmailService(),
         permanent: true,
       );
     }

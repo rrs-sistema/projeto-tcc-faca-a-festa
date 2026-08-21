@@ -7,21 +7,17 @@ import 'package:get/get.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import './../../../widgets/confetti_background.dart';
 
-Widget buildHeaderOrganizador(bool isFornecedor) {
+Widget buildHeaderOrganizador(bool isFornecedor, {bool isConvidado = false}) {
   final theme = Get.find<EventThemeController>();
 
   return Stack(
     alignment: Alignment.center,
     children: [
-      // 🎊 Fundo de confete — agora apenas um Positioned.fill
       Positioned.fill(
         child: ConfettiBackground(seconds: 45),
       ),
-
-      // 🌟 Conteúdo principal sobreposto
       Column(
         children: [
-          // ✨ Ícone flutuante com brilho
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
@@ -43,7 +39,11 @@ Widget buildHeaderOrganizador(bool isFornecedor) {
               ],
             ),
             child: Icon(
-              isFornecedor ? Icons.storefront_rounded : Icons.event_available_rounded,
+              isConvidado
+                  ? Icons.card_giftcard_rounded
+                  : isFornecedor
+                      ? Icons.storefront_rounded
+                      : Icons.event_available_rounded,
               color: Colors.white,
               size: 44,
             ),
@@ -56,7 +56,6 @@ Widget buildHeaderOrganizador(bool isFornecedor) {
 
           const SizedBox(height: 16),
 
-          // 💎 Título estilizado com gradiente
           ShaderMask(
             shaderCallback: (bounds) => LinearGradient(
               colors: [
@@ -80,7 +79,8 @@ Widget buildHeaderOrganizador(bool isFornecedor) {
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: theme.primaryColor.value.withValues(alpha: 0.4)),
+                border: Border.all(
+                    color: theme.primaryColor.value.withValues(alpha: 0.4)),
                 boxShadow: [
                   BoxShadow(
                     color: theme.primaryColor.value.withValues(alpha: 0.1),
@@ -91,7 +91,11 @@ Widget buildHeaderOrganizador(bool isFornecedor) {
               ),
               child: Center(
                 child: Text(
-                  isFornecedor ? 'Crie sua conta de Fornecedor' : 'Organize seu Evento dos Sonhos',
+                  isConvidado
+                      ? 'Cadastro de convidado'
+                      : isFornecedor
+                          ? 'Crie sua conta de Fornecedor'
+                          : 'Organize seu Evento dos Sonhos',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 18,
@@ -109,15 +113,19 @@ Widget buildHeaderOrganizador(bool isFornecedor) {
                 ),
               ),
             ),
-          ).animate().fadeIn(duration: 900.ms).slideY(begin: 0.4, curve: Curves.easeOutCubic),
+          ).animate().fadeIn(duration: 900.ms).slideY(
+                begin: 0.4,
+                curve: Curves.easeOutCubic,
+              ),
 
           const SizedBox(height: 8),
 
-          // 💬 Subtítulo motivacional
           Text(
-            isFornecedor
-                ? 'Mostre seu talento e receba novos pedidos!'
-                : 'Transforme cada detalhe em uma lembrança inesquecível!',
+            isConvidado
+                ? 'Crie sua conta para acessar o evento do convite.'
+                : isFornecedor
+                    ? 'Mostre seu talento e receba novos pedidos!'
+                    : 'Transforme cada detalhe em uma lembrança inesquecível!',
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               color: Colors.white.withValues(alpha: 0.9),
@@ -125,11 +133,13 @@ Widget buildHeaderOrganizador(bool isFornecedor) {
               fontWeight: FontWeight.w400,
               height: 1.4,
             ),
-          ).animate().fadeIn(duration: 1100.ms).slideY(begin: 0.3, curve: Curves.easeOutCubic),
+          ).animate().fadeIn(duration: 1100.ms).slideY(
+                begin: 0.3,
+                curve: Curves.easeOutCubic,
+              ),
 
           const SizedBox(height: 25),
 
-          // 🌈 Linha decorativa com brilho
           Container(
             height: 4,
             width: 100,
@@ -150,7 +160,9 @@ Widget buildHeaderOrganizador(bool isFornecedor) {
                 ),
               ],
             ),
-          ).animate().fadeIn(duration: 1000.ms).scale(begin: const Offset(0.6, 0.0)),
+          ).animate().fadeIn(duration: 1000.ms).scale(
+                begin: const Offset(0.6, 0.0),
+              ),
         ],
       ),
     ],

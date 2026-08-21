@@ -58,13 +58,16 @@ class FirebaseConviteConvidadoRemoteDatasource
     return _vincular(escolhido, uid: uid, email: email);
   }
 
-  Future<QueryDocumentSnapshot<Map<String, dynamic>>?> _buscarPorToken(
+  Future<DocumentSnapshot<Map<String, dynamic>>?> _buscarPorToken(
     String token,
   ) async {
     final tokenLimpo = token.trim();
     if (tokenLimpo.isEmpty) return null;
 
     for (final colecao in _colecoes) {
+      final porId = await firestore.collection(colecao).doc(tokenLimpo).get();
+      if (porId.exists && porId.data() != null) return porId;
+
       for (final campo in const ['convite_token', 'token_convite', 'token']) {
         final snapshot = await firestore
             .collection(colecao)
@@ -120,15 +123,21 @@ class FirebaseConviteConvidadoRemoteDatasource
   }
 
   Future<ConvidadoModel?> _vincular(
-    QueryDocumentSnapshot<Map<String, dynamic>> documento, {
+    DocumentSnapshot<Map<String, dynamic>> documento, {
     required String uid,
     required String email,
   }) async {
     final data = documento.data();
+    if (data == null) return null;
     final idUsuarioAtual = _campoTexto(data, const ['id_usuario', 'idUsuario']);
     if (idUsuarioAtual.isNotEmpty && idUsuarioAtual != uid) {
       throw const ConviteJaVinculadoException();
     }
+
+    final tokenExistente = _campoTexto(
+      data,
+      const ['convite_token', 'token_convite', 'token'],
+    );
 
     await documento.reference.set({
       'id_usuario': uid,
@@ -137,6 +146,7 @@ class FirebaseConviteConvidadoRemoteDatasource
       'convite_status': 'vinculado',
       'data_vinculo_usuario': FieldValue.serverTimestamp(),
       'data_ultimo_acesso': FieldValue.serverTimestamp(),
+      if (tokenExistente.isEmpty) 'convite_token': documento.id,
     }, SetOptions(merge: true));
 
     final atualizado = await documento.reference.get();

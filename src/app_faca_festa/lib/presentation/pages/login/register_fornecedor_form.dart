@@ -7,6 +7,7 @@ import 'dart:io';
 import './components/categoria_subcategoria_servico_section.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../controllers/fornecedor/fornecedor_controller.dart';
+import './../../../core/utils/form_validators.dart';
 import './../../../controllers/register_controller.dart';
 import './../../widgets/primary_action_button.dart';
 import './../../widgets/custom_input_field.dart';
@@ -34,6 +35,8 @@ class RegisterFornecedorForm extends StatefulWidget {
 
 class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
   final _formKey = GlobalKey<FormState>();
+  var _autovalidateMode = AutovalidateMode.disabled;
+  var _cadastroGoogle = false;
 
   late final TextEditingController nomeCtrl;
   late final TextEditingController razaoCtrl;
@@ -115,15 +118,36 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
     super.dispose();
   }
 
+  Future<void> _cadastrar({required bool comGoogle}) async {
+    setState(() {
+      _cadastroGoogle = comGoogle;
+      _autovalidateMode = AutovalidateMode.onUserInteraction;
+    });
+
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!_validarTiposEvento()) return;
+
+    final controller = widget.controller;
+    _aplicarTiposEventoNoController(controller);
+    controller.bannerFile = widget.bannerFile;
+
+    if (comGoogle) {
+      await controller.registrarComGoogle();
+      return;
+    }
+
+    await controller.registrarUsuario();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Get.find<EventThemeController>();
     final primary = theme.primaryColor.value;
     final controller = widget.controller;
-    final fornecedorController = widget.fornecedorController;
 
     return Form(
       key: _formKey,
+      autovalidateMode: _autovalidateMode,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -148,19 +172,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
             label: 'Cadastrar',
             color: primary,
             carregando: controller.carregando,
-            onPressed: () async {
-              if (!(_formKey.currentState?.validate() ?? false)) return;
-              if (!_validarTiposEvento()) return;
-
-              _aplicarTiposEventoNoController(controller);
-
-              if (widget.bannerFile != null) {
-                controller.bannerUrl =
-                    await fornecedorController.uploadBanner(widget.bannerFile!);
-              }
-
-              await controller.registrarUsuario();
-            },
+            onPressed: () => _cadastrar(comGoogle: false),
           ),
           const SizedBox(height: 16),
           Row(
@@ -182,7 +194,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
             ],
           ),
           const SizedBox(height: 16),
-          _botaoCadastrarGoogle(primary, controller, fornecedorController),
+          _botaoCadastrarGoogle(primary, controller),
           const SizedBox(height: 20),
           PrimaryActionButton(
             label: 'Cancelar/Sair',
@@ -205,6 +217,10 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
             controller: nomeCtrl,
             color: primary,
             isRequired: true,
+            validator: (v) => FormValidators.nomeCompleto(
+              v,
+              campo: 'o nome completo do responsável',
+            ),
             onChanged: (v) => controller.nome.value = v,
           ),
           const SizedBox(height: 10),
@@ -215,6 +231,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
             controller: razaoCtrl,
             color: primary,
             isRequired: true,
+            validator: FormValidators.razaoSocial,
             onChanged: (v) => controller.razaoSocial.value = v,
           ),
           const SizedBox(height: 10),
@@ -226,30 +243,26 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
             color: primary,
             type: InputType.email,
             isRequired: true,
+            validator: (v) => FormValidators.email(
+              v,
+              obrigatorio: !_cadastroGoogle,
+            ),
             onChanged: (v) => controller.email.value = v,
           ),
           const SizedBox(height: 10),
-          Obx(
-            () => CustomInputField(
-              label: 'Senha',
-              hintlabel: 'Informe a senha',
-              icon: Icons.lock_outline,
-              controller: senhaCtrl,
-              color: primary,
-              type: InputType.password,
-              isRequired: true,
-              obscureText: !controller.exibirSenha.value,
-              suffixIcon: IconButton(
-                icon: Icon(
-                  controller.exibirSenha.value
-                      ? Icons.visibility_off
-                      : Icons.visibility,
-                  color: primary.withValues(alpha: 0.8),
-                ),
-                onPressed: () => controller.exibirSenha.toggle(),
-              ),
-              onChanged: (v) => controller.senha.value = v,
+          CustomInputField(
+            label: 'Senha',
+            hintlabel: 'Informe a senha',
+            icon: Icons.lock_outline,
+            controller: senhaCtrl,
+            color: primary,
+            type: InputType.password,
+            isRequired: true,
+            validator: (v) => FormValidators.senha(
+              v,
+              obrigatorio: !_cadastroGoogle,
             ),
+            onChanged: (v) => controller.senha.value = v,
           ),
           const SizedBox(height: 10),
           Row(
@@ -258,14 +271,14 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
               Expanded(
                 child: CustomInputField(
                   label: 'CNPJ',
-                  hintlabel: 'Somente números',
+                  hintlabel: '00.000.000/0000-00',
                   icon: Icons.badge_outlined,
                   controller: cnpjCtrl,
                   color: primary,
-                  type: InputType.cpfCnpj,
-                  // Remove a máscara na hora de salvar, pegando apenas os dígitos
+                  type: InputType.cnpj,
+                  isRequired: true,
                   onChanged: (v) =>
-                      controller.cnpj.value = v.replaceAll(RegExp(r'\D'), ''),
+                      controller.cnpj.value = FormValidators.somenteDigitos(v),
                 ),
               ),
               const SizedBox(width: 10),
@@ -278,9 +291,8 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                   type: InputType.phone,
                   isRequired: true,
                   color: primary,
-                  // Remove a máscara na hora de salvar, pegando apenas os dígitos
                   onChanged: (v) => controller.telefone.value =
-                      v.replaceAll(RegExp(r'\D'), ''),
+                      FormValidators.somenteDigitos(v),
                 ),
               ),
             ],
@@ -294,6 +306,8 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
             color: primary,
             maxLength: 200,
             maxLines: 3,
+            validator: FormValidators.descricaoServicos,
+            onChanged: (v) => controller.descricao.value = v,
           ),
         ],
       );
@@ -301,7 +315,6 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
   Widget _botaoCadastrarGoogle(
     Color primary,
     RegisterController controller,
-    FornecedorController fornecedorController,
   ) =>
       Obx(
         () => SizedBox(
@@ -310,18 +323,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
           child: OutlinedButton.icon(
             onPressed: controller.carregando.value
                 ? null
-                : () async {
-                    if (!_validarTiposEvento()) return;
-
-                    _aplicarTiposEventoNoController(controller);
-
-                    if (widget.bannerFile != null) {
-                      controller.bannerUrl = await fornecedorController
-                          .uploadBanner(widget.bannerFile!);
-                    }
-
-                    await controller.registrarComGoogle();
-                  },
+                : () => _cadastrar(comGoogle: true),
             style: OutlinedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: primary,

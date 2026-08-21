@@ -51,6 +51,31 @@ void main() {
     expect(repository.grupoVinculado, same(grupo));
   });
 
+  test('does not delete a group that still has guests', () async {
+    await controller.escutarGrupos('evento-1');
+    repository.grupos.add([_grupo(nome: 'Família')]);
+    repository.convidados.add([
+      _convidado(nome: 'Ana', idGrupo: 'grupo-1'),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+
+    await expectLater(
+      controller.excluirGrupo('grupo-1'),
+      throwsA(isA<StateError>()),
+    );
+    expect(repository.grupoExcluido, isNull);
+  });
+
+  test('deletes an empty group', () async {
+    await controller.escutarGrupos('evento-1');
+    repository.grupos.add([_grupo(nome: 'Família')]);
+    repository.convidados.add(const []);
+    await Future<void>.delayed(Duration.zero);
+
+    await controller.excluirGrupo('grupo-1');
+    expect(repository.grupoExcluido, 'grupo-1');
+  });
+
   test('empty event clears state without opening repository streams', () async {
     controller.grupos.add(_grupo(nome: 'Família'));
     controller.convidados.add(_convidado(nome: 'Ana'));
@@ -79,6 +104,7 @@ Convidado _convidado({
   required String nome,
   String id = 'convidado-1',
   String? nomeGrupo,
+  String? idGrupo,
 }) {
   final data = DateTime(2026, 8, 14);
   return Convidado(
@@ -87,6 +113,7 @@ Convidado _convidado({
     nome: nome,
     contato: '44999999999',
     nomeGrupo: nomeGrupo,
+    idGrupo: idGrupo,
     dataCadastro: data,
     dataAtualizacao: data,
   );
@@ -101,6 +128,7 @@ class _GrupoConvidadoRepositoryFake implements GrupoConvidadoRepository {
   GrupoConvidado? grupoSalvo;
   Convidado? convidadoVinculado;
   GrupoConvidado? grupoVinculado;
+  String? grupoExcluido;
 
   Future<void> close() async {
     await grupos.close();
@@ -140,7 +168,9 @@ class _GrupoConvidadoRepositoryFake implements GrupoConvidadoRepository {
   Future<void> excluirGrupo(
     String idGrupo, {
     bool desvincularConvidados = true,
-  }) async {}
+  }) async {
+    grupoExcluido = idGrupo;
+  }
 
   @override
   Future<void> removerConvidadoDaMesa(Convidado convidado) async {}

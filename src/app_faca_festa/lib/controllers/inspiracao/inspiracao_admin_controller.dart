@@ -8,6 +8,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/models/model.dart';
+import '../../data/seeds/inspiracao_seed.dart';
 
 
 class ImagemGaleriaUploadPendente {
@@ -194,6 +195,53 @@ class InspiracaoAdminController extends GetxController {
 
   Future<void> recarregar() async {
     await escutarInspiracoes();
+  }
+
+  /// Grava (merge) o catálogo padrão da tela de Inspiração.
+  /// IDs `insp_*` são preservados; documentos extras não são apagados.
+  Future<int> popularCatalogoInicial() async {
+    final existentes = await _collection.get();
+    final idsExistentes = existentes.docs.map((d) => d.id).toSet();
+    final agora = FieldValue.serverTimestamp();
+    final operador = _resolverUsuarioId(null);
+
+    WriteBatch lote = _firestore.batch();
+    var operacoes = 0;
+
+    Future<void> commitSeCheio() async {
+      if (operacoes >= 400) {
+        await lote.commit();
+        lote = _firestore.batch();
+        operacoes = 0;
+      }
+    }
+
+    for (final item in CatalogoInspiracao.itens) {
+      await commitSeCheio();
+      final id = (item['id'] ?? '').toString();
+      if (id.isEmpty) continue;
+
+      final payload = Map<String, dynamic>.from(item)
+        ..['atualizadoEm'] = agora
+        ..['atualizadoPor'] = operador;
+
+      if (!idsExistentes.contains(id)) {
+        payload['criadoEm'] = agora;
+        payload['criadoPor'] = operador;
+      } else {
+        payload.remove('criadoEm');
+        payload.remove('criadoPor');
+      }
+
+      lote.set(_collection.doc(id), payload, SetOptions(merge: true));
+      operacoes++;
+    }
+
+    if (operacoes > 0) {
+      await lote.commit();
+    }
+
+    return CatalogoInspiracao.itens.length;
   }
 
   void atualizarBusca(String value) {

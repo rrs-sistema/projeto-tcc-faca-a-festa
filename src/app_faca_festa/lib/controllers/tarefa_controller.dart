@@ -5,9 +5,11 @@ import 'package:uuid/uuid.dart';
 
 import './../domain/entities/convidado.dart';
 import './../domain/entities/tarefa.dart';
+import './../domain/entities/usuario.dart';
 import './../domain/repositories/convidado_repository.dart';
 import './../domain/repositories/tarefa_repository.dart';
 import 'app_controller.dart';
+import 'convidado/convidado_controller.dart';
 import 'evento_controller.dart';
 
 class TarefaController extends GetxController {
@@ -25,6 +27,8 @@ class TarefaController extends GetxController {
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
   StreamSubscription<List<Tarefa>>? _tarefasSubscription;
+  StreamSubscription<List<Convidado>>? _convidadosSubscription;
+  String _idEventoUsuarios = '';
 
   EventoController get eventoController => Get.find<EventoController>();
 
@@ -64,40 +68,51 @@ class TarefaController extends GetxController {
 
   Future<void> carregarUsuarios() async {
     try {
-      carregando.value = true;
       erro.value = '';
-      usuarios.clear();
+      final idEvento = _idEventoAtual();
+      if (idEvento.isEmpty) {
+        usuarios.clear();
+        _idEventoUsuarios = '';
+        await _convidadosSubscription?.cancel();
+        _convidadosSubscription = null;
+        return;
+      }
 
-      final idEvento = eventoController.eventoAtualEntidade?.idEvento ?? '';
-      final lista = idEvento.isEmpty
-          ? <Convidado>[]
-          : await _convidadoRepository.observarPorEvento(idEvento).first;
-
-      final convidados = lista.toList();
-      final user = Get.find<AppController>().usuarioLogado.value;
-      if (user != null &&
-          !convidados.any((item) => item.idConvidado == user.idUsuario)) {
-        final agora = DateTime.now();
-        convidados.insert(
-          0,
-          Convidado(
-            idConvidado: user.idUsuario,
+      if (_idEventoUsuarios == idEvento && _convidadosSubscription != null) {
+        usuarios.assignAll(
+          _montarElegiveis(
+            [...usuarios, ..._convidadosDoEvento(idEvento)],
             idEvento: idEvento,
-            nome: user.nome,
-            contato: user.email,
-            email: user.email,
-            status: StatusConvidado.confirmado,
-            cuidadoEspecial: false,
-            dataCadastro: agora,
-            dataAtualizacao: agora,
           ),
         );
+        return;
       }
-      usuarios.assignAll(convidados);
+
+      await _convidadosSubscription?.cancel();
+      _idEventoUsuarios = idEvento;
+
+      final primeiro = Completer<void>();
+      _convidadosSubscription = _convidadoRepository
+          .observarPorEvento(idEvento)
+          .listen(
+        (lista) {
+          usuarios.assignAll(_montarElegiveis(lista, idEvento: idEvento));
+          if (!primeiro.isCompleted) primeiro.complete();
+        },
+        onError: (Object error, StackTrace stackTrace) {
+          erro.value = 'Erro ao carregar usuários: $error';
+          if (!primeiro.isCompleted) primeiro.complete();
+        },
+      );
+
+      await primeiro.future;
+      if (usuarios.isEmpty) {
+        usuarios.assignAll(
+          _montarElegiveis(_convidadosDoEvento(idEvento), idEvento: idEvento),
+        );
+      }
     } catch (e) {
       erro.value = 'Erro ao carregar usuários: $e';
-    } finally {
-      carregando.value = false;
     }
   }
 
@@ -178,16 +193,97 @@ class TarefaController extends GetxController {
   int get pendentes =>
       tarefas.where((t) => t.status != StatusTarefa.concluida).length;
 
+  String _idEventoAtual() {
+    final doEvento = eventoController.eventoAtualEntidade?.idEvento.trim() ?? '';
+    if (doEvento.isNotEmpty) return doEvento;
+    if (Get.isRegistered<ConvidadoController>()) {
+      return Get.find<ConvidadoController>().idEventoAtual.value.trim();
+    }
+    return '';
+  }
+
+  List<Convidado> _convidadosDoEvento(String idEvento) {
+    if (!Get.isRegistered<ConvidadoController>()) return const [];
+    final controller = Get.find<ConvidadoController>();
+    if (controller.idEventoAtual.value.trim() != idEvento) return const [];
+    return controller.convidados.toList();
+  }
+
+  List<Convidado> _montarElegiveis(
+    List<Convidado> convidados, {
+    String? idEvento,
+  }) {
+    final lista = [...convidados, ..._convidadosDoEvento(idEvento ?? '')];
+    _incluirOrganizador(lista, idEvento ?? '');
+
+    final vistos = <String>{};
+    final elegiveis = <Convidado>[];
+    for (final item in lista) {
+      if (!item.podeSerResponsavelTarefa) continue;
+      final chave = item.idConvidado.trim().isNotEmpty
+          ? 'id:${item.idConvidado.trim()}'
+          : 'email:${item.emailNormalizadoEfetivo}';
+      if (chave.endsWith(':') || !vistos.add(chave)) continue;
+      elegiveis.add(item);
+    }
+    return elegiveis;
+  }
+
+  void _incluirOrganizador(List<Convidado> convidados, String idEvento) {
+    if (!Get.isRegistered<AppController>()) return;
+    final user = Get.find<AppController>().usuarioLogado.value;
+    if (user == null || user.idUsuario.trim().isEmpty) return;
+    if (_jaRepresentaUsuario(convidados, user)) return;
+
+    final agora = DateTime.now();
+    convidados.insert(
+      0,
+      Convidado(
+        idConvidado: user.idUsuario,
+        idEvento: idEvento,
+        nome: user.nome,
+        contato: user.email,
+        email: user.email,
+        emailUsuario: user.email,
+        emailNormalizado: Convidado.normalizarEmail(user.email),
+        status: StatusConvidado.confirmado,
+        cuidadoEspecial: false,
+        dataCadastro: agora,
+        dataAtualizacao: agora,
+        idUsuario: user.idUsuario,
+        conviteStatus: 'vinculado',
+      ),
+    );
+  }
+
+  bool _jaRepresentaUsuario(List<Convidado> convidados, Usuario user) {
+    final uid = user.idUsuario.trim();
+    final email = Convidado.normalizarEmail(user.email);
+    return convidados.any((item) {
+      if (uid.isNotEmpty &&
+          (item.idConvidado.trim() == uid || item.idUsuario?.trim() == uid)) {
+        return true;
+      }
+      return email.isNotEmpty && item.emailDaConta == email;
+    });
+  }
+
   void reset() {
     unawaited(_tarefasSubscription?.cancel());
+    unawaited(_convidadosSubscription?.cancel());
     _tarefasSubscription = null;
+    _convidadosSubscription = null;
+    _idEventoUsuarios = '';
     tarefas.clear();
     usuarios.clear();
   }
 
   Future<void> encerrarEscutas() async {
     await _tarefasSubscription?.cancel();
+    await _convidadosSubscription?.cancel();
     _tarefasSubscription = null;
+    _convidadosSubscription = null;
+    _idEventoUsuarios = '';
     tarefas.clear();
     usuarios.clear();
   }
@@ -195,6 +291,7 @@ class TarefaController extends GetxController {
   @override
   void onClose() {
     unawaited(_tarefasSubscription?.cancel());
+    unawaited(_convidadosSubscription?.cancel());
     super.onClose();
   }
 }

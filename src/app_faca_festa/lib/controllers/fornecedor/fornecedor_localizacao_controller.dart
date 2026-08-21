@@ -120,7 +120,8 @@ class FornecedorLocalizacaoController extends GetxController {
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        debugPrint('⚠️ Serviço de localização desativado — fallback (Curitiba).');
+        debugPrint(
+            '⚠️ Serviço de localização desativado — fallback (Curitiba).');
         _aplicarFallbackCuritiba();
         return;
       }
@@ -132,33 +133,65 @@ class FornecedorLocalizacaoController extends GetxController {
 
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-        debugPrint('⚠️ Permissão negada — usando coordenadas padrão (Curitiba).');
+        debugPrint(
+            '⚠️ Permissão negada — usando coordenadas padrão (Curitiba).');
         _aplicarFallbackCuritiba();
         return;
       }
 
       final lastKnown = await Geolocator.getLastKnownPosition();
-      if (lastKnown != null && !forcar) {
-        userLatitude.value = lastKnown.latitude;
-        userLongitude.value = lastKnown.longitude;
+      if (lastKnown != null) {
+        _aplicarPosicao(lastKnown, origem: 'última conhecida');
+        if (!forcar) {
+          unawaited(_atualizarPosicaoAtualEmBackground());
+          return;
+        }
       }
 
-      final pos = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.medium,
-          timeLimit: Duration(seconds: 8),
-        ),
-      );
+      final pos = await _buscarPosicaoAtual();
+      if (pos != null) {
+        _aplicarPosicao(pos, origem: 'GPS');
+        return;
+      }
 
-      userLatitude.value = pos.latitude;
-      userLongitude.value = pos.longitude;
-      debugPrint('📍 Localização obtida: ${pos.latitude}, ${pos.longitude}');
-    } catch (e, s) {
-      debugPrint('❌ Erro ao obter localização: $e\n$s');
+      if (userLatitude.value == 0.0 && userLongitude.value == 0.0) {
+        debugPrint('⚠️ GPS não respondeu a tempo — usando Curitiba.');
+        _aplicarFallbackCuritiba();
+      }
+    } catch (e) {
+      debugPrint('⚠️ Não foi possível obter localização: $e');
       if (userLatitude.value == 0.0 && userLongitude.value == 0.0) {
         _aplicarFallbackCuritiba();
       }
     }
+  }
+
+  Future<void> _atualizarPosicaoAtualEmBackground() async {
+    final pos = await _buscarPosicaoAtual();
+    if (pos == null) return;
+    _aplicarPosicao(pos, origem: 'GPS');
+    if (_dadosCarregados) _reconstruirLista();
+  }
+
+  Future<Position?> _buscarPosicaoAtual() async {
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+          timeLimit: Duration(seconds: 5),
+        ),
+      );
+    } on TimeoutException {
+      debugPrint('⚠️ GPS atual não respondeu a tempo.');
+      return null;
+    }
+  }
+
+  void _aplicarPosicao(Position posicao, {required String origem}) {
+    userLatitude.value = posicao.latitude;
+    userLongitude.value = posicao.longitude;
+    debugPrint(
+        '📍 Localização ($origem): ${posicao.latitude}, ${posicao.longitude}');
   }
 
   void _aplicarFallbackCuritiba() {

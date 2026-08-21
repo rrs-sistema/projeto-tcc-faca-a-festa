@@ -25,13 +25,13 @@ class FestaCardsWidget extends StatelessWidget {
     final tarefaController = Get.find<TarefaController>();
     final convidadoController = Get.find<ConvidadoController>();
 
-    // ✅ NÃO envolve tudo em Obx
-    final corBase = themeController.primaryColor.value;
-    final temaAtivo = themeController.tituloCabecalho.value.toLowerCase();
+    return Obx(() {
+      final corBase = themeController.primaryColor.value;
+      final secundaria = themeController.secondaryColor.value;
+      final fundo = themeController.surfaceColor.value;
+      final paleta = _paletaDoTema(corBase, secundaria, fundo);
 
-    final paleta = _obterPaletaPorTema(temaAtivo, corBase);
-
-    return SizedBox(
+      return SizedBox(
       height: 165,
       child: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -144,109 +144,32 @@ class FestaCardsWidget extends StatelessWidget {
         },
       ),
     );
+    });
   }
 
-  List<_CardStyle> _obterPaletaPorTema(String temaAtivo, Color corBase) {
-    final Map<String, List<_CardStyle>> paletaPorTema = {
-      'casamento': [
-        _CardStyle(
-            bg: Colors.white,
-            text: Colors.pink.shade700,
-            icon: Icons.storefront_rounded),
-        _CardStyle(
-            bg: const Color(0xFFFFF3F7),
-            text: Colors.red.shade400,
-            icon: Icons.attach_money_rounded),
-        _CardStyle(
-            bg: const Color(0xFFFCE4EC),
-            text: Colors.pink.shade600,
-            icon: Icons.people_alt_rounded),
-        _CardStyle(
-            bg: const Color(0xFFFFEBEE),
-            text: Colors.red.shade300,
-            icon: Icons.check_circle_outline_rounded),
-      ],
-      'festa infantil': [
-        _CardStyle(
-            bg: Colors.white,
-            text: Colors.orange.shade700,
-            icon: Icons.storefront_rounded),
-        _CardStyle(
-            bg: const Color(0xFFFFF8E1),
-            text: Colors.orange.shade800,
-            icon: Icons.attach_money_rounded),
-        _CardStyle(
-            bg: const Color(0xFFFFECB3),
-            text: Colors.deepOrange.shade700,
-            icon: Icons.people_alt_rounded),
-        _CardStyle(
-            bg: const Color(0xFFFFF3E0),
-            text: Colors.amber.shade800,
-            icon: Icons.check_circle_outline_rounded),
-      ],
-      'chá de bebê': [
-        _CardStyle(
-            bg: Colors.white,
-            text: Colors.blue.shade600,
-            icon: Icons.storefront_rounded),
-        _CardStyle(
-            bg: const Color(0xFFE1F5FE),
-            text: Colors.blue.shade700,
-            icon: Icons.attach_money_rounded),
-        _CardStyle(
-            bg: const Color(0xFFB3E5FC),
-            text: Colors.blue.shade800,
-            icon: Icons.people_alt_rounded),
-        _CardStyle(
-            bg: const Color(0xFFE3F2FD),
-            text: Colors.lightBlue.shade700,
-            icon: Icons.check_circle_outline_rounded),
-      ],
-      'aniversário': [
-        _CardStyle(
-            bg: Colors.white,
-            text: Colors.deepPurple.shade600,
-            icon: Icons.storefront_rounded),
-        _CardStyle(
-            bg: const Color(0xFFF3E5F5),
-            text: Colors.purple.shade700,
-            icon: Icons.attach_money_rounded),
-        _CardStyle(
-            bg: const Color(0xFFEDE7F6),
-            text: Colors.deepPurple.shade700,
-            icon: Icons.people_alt_rounded),
-        _CardStyle(
-            bg: const Color(0xFFE1BEE7),
-            text: Colors.purple.shade800,
-            icon: Icons.check_circle_outline_rounded),
-      ],
-      'padrão': [
-        _CardStyle(
-            bg: Colors.white, text: corBase, icon: Icons.storefront_rounded),
-        _CardStyle(
-            bg: const Color(0xFFF1F8E9),
-            text: corBase,
-            icon: Icons.attach_money_rounded),
-        _CardStyle(
-            bg: const Color(0xFFE0F2F1),
-            text: corBase,
-            icon: Icons.people_alt_rounded),
-        _CardStyle(
-            bg: const Color(0xFFB2DFDB),
-            text: corBase,
-            icon: Icons.check_circle_outline_rounded),
-      ],
-    };
-
-    return temaAtivo.contains('casamento')
-        ? paletaPorTema['casamento']!
-        : temaAtivo.contains('infantil')
-            ? paletaPorTema['festa infantil']!
-            : temaAtivo.contains('bebê')
-                ? paletaPorTema['chá de bebê']!
-                : temaAtivo.contains('aniversário')
-                    ? paletaPorTema['aniversário']!
-                    : paletaPorTema['padrão']!;
+  List<_CardStyle> _paletaDoTema(Color primaria, Color secundaria, Color fundo) {
+    return [
+      _CardStyle(
+        bg: Colors.white,
+        text: primaria,
+        icon: Icons.storefront_rounded,
+      ),
+      _CardStyle(
+        bg: fundo,
+        text: primaria,
+        icon: Icons.attach_money_rounded,
+      ),
+      _CardStyle(
+        bg: Colors.white,
+        text: secundaria.computeLuminance() < 0.18 ? primaria : secundaria,
+        icon: Icons.people_alt_rounded,
+      ),
+      _CardStyle(
+        bg: fundo,
+        text: primaria,
+        icon: Icons.check_circle_outline_rounded,
+      ),
+    ];
   }
 }
 

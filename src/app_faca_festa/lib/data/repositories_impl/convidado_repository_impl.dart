@@ -57,10 +57,7 @@ class ConvidadoRepositoryImpl implements ConvidadoRepository {
   }
 
   @override
-  Future<void> marcarConvitesEnviados(
-    List<String> idsConvidados,
-    String tipoEnvio,
-  ) {
-    return remote.marcarConvitesEnviados(idsConvidados, tipoEnvio);
+  Future<void> garantirTokensConvite(Map<String, String> tokensPorId) {
+    return remote.garantirTokensConvite(tokensPorId);
   }
 }

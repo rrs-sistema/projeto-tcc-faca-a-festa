@@ -17,6 +17,14 @@ class LoginController extends GetxController {
   var senha = ''.obs;
   var carregando = false.obs;
 
+  @override
+  void onInit() {
+    super.onInit();
+    if (Get.isRegistered<AppController>()) {
+      _capturarTokenDosArgumentos(Get.find<AppController>());
+    }
+  }
+
   Future<void> login() async {
     if (email.value.isEmpty || senha.value.isEmpty) {
       EasyLoading.showError('Preencha todos os campos');
@@ -25,13 +33,16 @@ class LoginController extends GetxController {
 
     try {
       carregando.value = true;
-      Get.find<AppController>().marcarLoginComSenha();
+      final app = Get.find<AppController>();
+      _capturarTokenDosArgumentos(app);
+      app.marcarLoginComSenha();
       await _autenticacaoRepository.entrar(
         email: email.value.trim(),
         senha: senha.value.trim(),
       );
 
       await _garantirPerfilDoUsuario();
+      app.acessoPorLink.value = false;
       Get.offAllNamed('/splash');
     } on AutenticacaoException catch (e) {
       EasyLoading.showError(_traduzErro(e.codigo));
@@ -43,12 +54,15 @@ class LoginController extends GetxController {
   Future<void> loginComGoogle() async {
     try {
       carregando.value = true;
-      Get.find<AppController>().marcarLoginComGoogle();
+      final app = Get.find<AppController>();
+      _capturarTokenDosArgumentos(app);
+      app.marcarLoginComGoogle();
       final autenticou = await _autenticacaoRepository.entrarComGoogle();
       if (!autenticou) {
         return;
       }
       await _garantirPerfilDoUsuario();
+      app.acessoPorLink.value = false;
       Get.offAllNamed('/splash');
     } on AutenticacaoException catch (e) {
       if (e.foiCancelada) {
@@ -71,13 +85,14 @@ class LoginController extends GetxController {
     final nome = firebaseUser?.displayName?.trim() ?? '';
     final email = _autenticacaoRepository.emailUsuarioAtual ?? '';
 
-    if (nome.isNotEmpty) {
+    final tipo = _tipoPerfilInicial();
+    if (nome.isNotEmpty || tipo == 'C') {
       await _perfilRepository.salvarUsuario(
         Usuario(
           idUsuario: idUsuario,
-          nome: nome,
+          nome: nome.isNotEmpty ? nome : 'Convidado',
           email: email,
-          tipo: 'O',
+          tipo: tipo,
           fotoPerfilUrl: firebaseUser?.photoURL,
           ativo: true,
           dataCadastro: DateTime.now(),
@@ -90,6 +105,24 @@ class LoginController extends GetxController {
       idUsuario: idUsuario,
       email: _autenticacaoRepository.emailUsuarioAtual,
     );
+  }
+
+  /// Conta nova no fluxo de convite é tipo C. Sem token, Google não vira O
+  /// só porque o login não passou por `/register`.
+  String _tipoPerfilInicial() {
+    final app = Get.find<AppController>();
+    if (app.fluxoConviteAtivo) return 'C';
+    return 'O';
+  }
+
+  void _capturarTokenDosArgumentos(AppController app) {
+    final args = Get.arguments;
+    if (args is! Map) return;
+    final raw = args['conviteToken'] ??
+        args['tokenConvite'] ??
+        args['token'] ??
+        args['convite_token'];
+    app.guardarTokenConvite(raw?.toString() ?? '');
   }
 
   String _traduzErro(String code) {

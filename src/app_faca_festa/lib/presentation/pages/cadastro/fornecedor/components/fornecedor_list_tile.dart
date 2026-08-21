@@ -1,6 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -106,38 +107,65 @@ class FornecedorListTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 🔹 Nome e status
-        Row(
+        Text(
+          fornecedor.razaoSocial,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+            color: ativo ? Colors.black87 : Colors.grey.shade600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        if (!ativo)
+          _statusChip(
+            label: 'Desativado',
+            color: Colors.red.shade700,
+            background: Colors.red.shade50,
+            icon: Icons.block_rounded,
+          )
+        else if (aprovado)
+          _statusChip(
+            label: 'Apto para operar',
+            color: Colors.green.shade700,
+            background: Colors.green.shade50,
+            icon: Icons.verified_rounded,
+          )
+        else
+          _statusChip(
+            label: 'Aguardando aprovação',
+            color: Colors.orange.shade800,
+            background: Colors.orange.shade50,
+            icon: Icons.pending_actions_rounded,
+          ),
+        const SizedBox(height: 6),
+
+        Wrap(
+          spacing: 8,
+          runSpacing: 6,
           children: [
-            Expanded(
-              child: Text(
-                fornecedor.razaoSocial,
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                  color: ativo ? Colors.black87 : Colors.grey.shade600,
-                ),
-              ),
+            if (controller.cidadeDoFornecedor(fornecedor).isNotEmpty)
+              _miniChip(Icons.location_on_outlined, controller.cidadeDoFornecedor(fornecedor)),
+            _miniChip(
+              Icons.design_services_outlined,
+              '${controller.servicosDoFornecedor(fornecedor)} serviços',
             ),
-            const SizedBox(width: 4),
-            if (!ativo)
-              Tooltip(
-                message: 'Fornecedor desativado',
-                child: const Icon(Icons.block_rounded, color: Colors.redAccent, size: 20),
-              )
-            else if (aprovado)
-              Tooltip(
-                message: 'Fornecedor aprovado',
-                child: Icon(Icons.verified_rounded, color: Colors.green.shade600, size: 20),
-              )
-            else
-              Tooltip(
-                message: 'Aguardando aprovação',
-                child:
-                    const Icon(Icons.pending_actions_rounded, color: Colors.orangeAccent, size: 20),
+            if (fornecedor.totalAvaliacoes > 0)
+              _miniChip(
+                Icons.star_rounded,
+                '${fornecedor.mediaAvaliacoes.toStringAsFixed(1)} (${fornecedor.totalAvaliacoes})',
               ),
+            _miniChip(
+              Icons.calendar_today_outlined,
+              DateFormat('dd/MM/yyyy').format(fornecedor.dataCadastro),
+            ),
+            ...controller.nomesCategoriasDoFornecedor(fornecedor).take(3).map(
+                  (nome) => _miniChip(Icons.category_outlined, nome),
+                ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
 
         // 🔹 Descrição
         Text(
@@ -155,6 +183,29 @@ class FornecedorListTile extends StatelessWidget {
         const SizedBox(height: 4),
         _infoLine(Icons.phone, fornecedor.telefone),
         const SizedBox(height: 8),
+
+        if (!aprovado && ativo)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _confirmarAprovar(context),
+                icon: const Icon(Icons.check_circle_outline, size: 18),
+                label: Text(
+                  'Aprovar para operar',
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: Colors.green.shade700,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ),
 
         // 🔹 Ações
         SingleChildScrollView(
@@ -206,48 +257,17 @@ class FornecedorListTile extends StatelessWidget {
 
               const SizedBox(width: 10),
 
-              // 🔸 Aprovação e Ativação
-              if (!aprovado)
+              if (aprovado) ...[
                 _actionButton(
-                    icon: Icons.check_circle_outline,
-                    label: 'Aprovar',
-                    color: Colors.blue.shade800,
-                    bgColor: Colors.blue.shade50,
-                    borderColor: Colors.blue.shade300,
-                    onTap: () => Biblioteca.showConfirmDialog(
-                          context,
-                          title: 'Aprovar fornecedor!',
-                          message: 'Deseja realmente aprovar ${fornecedor.razaoSocial}?',
-                          confirmLabel: 'Aprovar',
-                          color: Colors.deepOrange,
-                          onConfirm: () async {
-                            await controller.aprovarFornecedor(fornecedor.idFornecedor);
-                            Get.snackbar('Sucesso', 'Fornecedor aprovado com sucesso!',
-                                backgroundColor: Colors.blue.shade600, colorText: Colors.white);
-                            return true;
-                          },
-                        ))
-              else
-                _actionButton(
-                    icon: Icons.cancel_outlined,
-                    label: 'Desaprovar',
-                    color: Colors.deepOrange,
-                    bgColor: Colors.orange.shade50,
-                    borderColor: Colors.orange.shade300,
-                    onTap: () => Biblioteca.showConfirmDialog(
-                          context,
-                          title: 'Desaprovar fornecedor!',
-                          message: 'Deseja remover a aprovação de ${fornecedor.razaoSocial}?',
-                          confirmLabel: 'Desativar',
-                          color: Colors.deepOrange,
-                          onConfirm: () async {
-                            await controller.reprovarFornecedor(fornecedor.idFornecedor);
-                            Get.snackbar('Alteração salva', 'Fornecedor marcado como não aprovado.',
-                                backgroundColor: Colors.orange.shade700, colorText: Colors.white);
-                            return true;
-                          },
-                        )),
-              const SizedBox(width: 10),
+                  icon: Icons.cancel_outlined,
+                  label: 'Reprovar',
+                  color: Colors.deepOrange,
+                  bgColor: Colors.orange.shade50,
+                  borderColor: Colors.orange.shade300,
+                  onTap: () => _confirmarReprovar(context),
+                ),
+                const SizedBox(width: 10),
+              ],
 
               if (ativo)
                 _actionButton(
@@ -317,6 +337,28 @@ class FornecedorListTile extends StatelessWidget {
     );
   }
 
+  Widget _miniChip(IconData icon, String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F7F8),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: primary),
+          const SizedBox(width: 4),
+          Text(
+            text,
+            style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _infoLine(IconData icon, String text) {
     return Row(
       children: [
@@ -331,6 +373,103 @@ class FornecedorListTile extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  Widget _statusChip({
+    required String label,
+    required Color color,
+    required Color background,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmarAprovar(BuildContext context) {
+    return Biblioteca.showConfirmDialog(
+      context,
+      title: 'Aprovar fornecedor',
+      message:
+          'Deseja aprovar ${fornecedor.razaoSocial} para operar? O próximo acesso do fornecedor abrirá a home operacional.',
+      confirmLabel: 'Aprovar',
+      color: Colors.green.shade700,
+      onConfirm: () async {
+        final ok = await controller.aprovarFornecedor(_idDocumento);
+        if (ok) {
+          Get.snackbar(
+            'Fornecedor aprovado',
+            '${fornecedor.razaoSocial} já pode operar no próximo login.',
+            backgroundColor: Colors.green.shade700,
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar(
+            'Não foi possível aprovar',
+            'Tente novamente em instantes.',
+            backgroundColor: Colors.redAccent,
+            colorText: Colors.white,
+          );
+        }
+        return ok;
+      },
+    );
+  }
+
+  Future<void> _confirmarReprovar(BuildContext context) {
+    return Biblioteca.showConfirmDialog(
+      context,
+      title: 'Reprovar fornecedor',
+      message:
+          'Remover a aprovação de ${fornecedor.razaoSocial}? O fornecedor deixará de acessar a home operacional.',
+      confirmLabel: 'Reprovar',
+      color: Colors.deepOrange,
+      onConfirm: () async {
+        final ok = await controller.reprovarFornecedor(_idDocumento);
+        if (ok) {
+          Get.snackbar(
+            'Aprovação removida',
+            '${fornecedor.razaoSocial} ficou em análise e não opera até nova aprovação.',
+            backgroundColor: Colors.orange.shade700,
+            colorText: Colors.white,
+          );
+        } else {
+          Get.snackbar(
+            'Não foi possível reprovar',
+            'Tente novamente em instantes.',
+            backgroundColor: Colors.redAccent,
+            colorText: Colors.white,
+          );
+        }
+        return ok;
+      },
+    );
+  }
+
+  String get _idDocumento {
+    final idFornecedor = fornecedor.idFornecedor.trim();
+    if (idFornecedor.isNotEmpty) return idFornecedor;
+    return fornecedor.idUsuario.trim();
   }
 
   Widget _actionButton({

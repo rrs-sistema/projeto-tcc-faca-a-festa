@@ -277,11 +277,6 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        IconButton(
-          visualDensity: VisualDensity.compact,
-          onPressed: () => Get.back<void>(),
-          icon: const Icon(Icons.close, size: 22),
-        ),
       ],
     );
   }

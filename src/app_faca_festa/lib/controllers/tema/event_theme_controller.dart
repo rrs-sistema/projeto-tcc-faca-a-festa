@@ -12,6 +12,8 @@ class EventThemeController extends GetxController {
   /// 🎨 Cores principais do tema
   final Rx<Color> primaryColor = const Color(0xFF009688).obs;
   final Rx<Color> secondaryColor = const Color(0xFFE0F2F1).obs;
+  final Rx<Color> surfaceColor = const Color(0xFFE8F5F4).obs;
+  final Rx<Color> onPrimaryColor = const Color(0xFFFFFFFF).obs;
   final Rx<LinearGradient> gradient = const LinearGradient(
     colors: [Color(0xFF009688), Color(0xFF4DB6AC)],
     begin: Alignment.topLeft,
@@ -20,10 +22,142 @@ class EventThemeController extends GetxController {
 
   /// 🌟 Ícone e título dinâmicos
   final Rx<IconData> icon = Icons.star.obs;
-  final RxString tituloCabecalho = "🎉 Sua Festa Incrível".obs;
+  final RxString tituloCabecalho = "Sua Festa Incrível".obs;
+  final RxnString papelSessao = RxnString();
+  final Rxn<TemaFestaModel> temaFestaAtual = Rxn<TemaFestaModel>();
+  final RxnString capaUrl = RxnString();
 
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final Map<String, String> _cacheTiposEvento = {};
+  final Map<String, TemaFestaModel> _cacheTemasFesta = {};
+
+  bool get temCapaTema {
+    final url = (capaUrl.value ?? '').trim();
+    return url.isNotEmpty;
+  }
+
+  void atualizarCacheTema(TemaFestaModel tema) {
+    _cacheTemasFesta[tema.idTema] = tema;
+    if (temaFestaAtual.value?.idTema == tema.idTema) {
+      aplicarTemaFesta(tema);
+    }
+  }
+
+  bool get papelPermiteTemaDaFesta {
+    final papel = (papelSessao.value ?? '').trim().toUpperCase();
+    if (papel.isEmpty) return true;
+    return papel == 'O' || papel == 'C';
+  }
+
+  void definirPapelSessao(String? papel) {
+    papelSessao.value = papel;
+    final tipo = (papel ?? '').trim().toUpperCase();
+    if (tipo == 'A' || tipo == 'F') {
+      aplicarTemaProduto();
+    }
+  }
+
+  void aplicarTemaProduto() {
+    temaFestaAtual.value = null;
+    _setTheme(
+      primary: const Color(0xFF009688),
+      secondary: const Color(0xFFE0F2F1),
+      gradient: const LinearGradient(
+        colors: [Color(0xFF009688), Color(0xFF4DB6AC)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      icone: Icons.star_rounded,
+      titulo: 'Faça a Festa',
+      capaUrl: null,
+    );
+  }
+
+  Future<void> aplicarParaEvento(
+    Evento evento, {
+    String? fallbackNomeTipo,
+  }) async {
+    if (!papelPermiteTemaDaFesta) {
+      aplicarTemaProduto();
+      return;
+    }
+
+    final idTema = (evento.idTema ?? '').trim();
+    if (idTema.isNotEmpty && idTema != TemaFestaModel.slugOutro) {
+      final aplicado = await aplicarTemaFestaPorId(
+        idTema,
+        nomeTipo: fallbackNomeTipo ?? '',
+      );
+      if (aplicado) return;
+    }
+
+    if ((fallbackNomeTipo ?? '').trim().isNotEmpty) {
+      aplicarTemaPorNome(fallbackNomeTipo!);
+      return;
+    }
+
+    await aplicarTemaPorId(evento.idTipoEvento);
+  }
+
+  Future<bool> aplicarTemaFestaPorId(
+    String idTema, {
+    String nomeTipo = '',
+  }) async {
+    try {
+      final cache = _cacheTemasFesta[idTema];
+      if (cache != null && (cache.capaEfetiva ?? '').trim().isNotEmpty) {
+        aplicarTemaFesta(cache, nomeTipo: nomeTipo);
+        return true;
+      }
+
+      final doc =
+          await _db.collection(TemaFestaModel.colecao).doc(idTema).get();
+      if (!doc.exists || doc.data() == null) return false;
+
+      final tema = TemaFestaModel.fromMap(doc.data()!, id: doc.id);
+      if (!tema.ativo) return false;
+      _cacheTemasFesta[idTema] = tema;
+      aplicarTemaFesta(tema, nomeTipo: nomeTipo);
+      return true;
+    } catch (e, s) {
+      debugPrint('[Theme] Erro ao aplicar tema da festa $idTema: $e\n$s');
+      return false;
+    }
+  }
+
+  void aplicarTemaFesta(TemaFestaModel tema, {String nomeTipo = ''}) {
+    temaFestaAtual.value = tema;
+    final tipo = nomeTipo.trim();
+    final titulo = tipo.isEmpty ? tema.nome : '${_tituloAmigavel(tipo)} · ${tema.nome}';
+    _setTheme(
+      primary: tema.primaryColor,
+      secondary: tema.secondaryColor,
+      gradient: tema.gradient,
+      icone: tema.iconData,
+      titulo: titulo,
+      capaUrl: tema.capaEfetiva,
+    );
+  }
+
+  String _tituloAmigavel(String nomeTipo) {
+    switch (TemaFestaModel.normalizarTipo(nomeTipo)) {
+      case 'casamento':
+        return 'Casamento';
+      case 'festa_infantil':
+        return 'Festa Infantil';
+      case 'cha_de_bebe':
+        return 'Chá de Bebê';
+      case 'aniversario':
+        return 'Aniversário';
+      case 'evento_corporativo':
+      case 'corporativo':
+        return 'Evento Corporativo';
+      case 'formatura':
+        return 'Formatura';
+      default:
+        return nomeTipo;
+    }
+  }
 
   // ======================================================
   // 🔹 1. Tema baseado no ID do tipo_evento (Firestore)
@@ -61,6 +195,7 @@ class EventThemeController extends GetxController {
   // 🔹 2. Tema baseado no nome (usado em todo o app)
   // ======================================================
   void aplicarTemaPorNome(String nomeTipoEvento) {
+    temaFestaAtual.value = null;
     final nome = nomeTipoEvento.replaceAll(RegExp(r'[^\w\sÀ-ú]'), '').trim().toLowerCase();
 
     debugPrint("🎯 [Theme] Aplicando tema por nome: '$nomeTipoEvento' → normalizado: '$nome'");
@@ -171,20 +306,78 @@ class EventThemeController extends GetxController {
   // ======================================================
   // 🔹 3. Atualiza tema completo (centralizado)
   // ======================================================
+  ThemeData get materialTheme =>
+      montarThemeData(primaryColor.value, secondaryColor.value);
+
+  static ThemeData montarThemeData(Color primary, Color secondary) {
+    final onPrimary = TemaFestaModel.contrasteSobre(primary);
+    final onSecondary = TemaFestaModel.contrasteSobre(secondary);
+    final surface = TemaFestaModel.misturarComBranco(primary, 0.92);
+    final scheme = ColorScheme.fromSeed(
+      seedColor: primary,
+      brightness: Brightness.light,
+    ).copyWith(
+      primary: primary,
+      onPrimary: onPrimary,
+      secondary: secondary,
+      onSecondary: onSecondary,
+      surface: surface,
+      onSurface: const Color(0xFF1F2937),
+    );
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: scheme,
+      fontFamily: GoogleFonts.poppins().fontFamily,
+      scaffoldBackgroundColor: surface,
+      appBarTheme: AppBarTheme(
+        backgroundColor: primary,
+        foregroundColor: onPrimary,
+        iconTheme: IconThemeData(color: onPrimary),
+      ),
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: primary,
+        foregroundColor: onPrimary,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: onPrimary,
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: primary,
+          foregroundColor: onPrimary,
+        ),
+      ),
+      progressIndicatorTheme: ProgressIndicatorThemeData(color: primary),
+      chipTheme: ChipThemeData(
+        selectedColor: primary,
+        checkmarkColor: onPrimary,
+        labelStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+      ),
+    );
+  }
+
   void _setTheme({
     required Color primary,
     required Color secondary,
     required LinearGradient gradient,
     required IconData icone,
     required String titulo,
+    String? capaUrl,
   }) {
     primaryColor.value = primary;
     secondaryColor.value = secondary;
+    surfaceColor.value = TemaFestaModel.misturarComBranco(primary, 0.92);
+    onPrimaryColor.value = TemaFestaModel.contrasteSobre(primary);
     this.gradient.value = gradient;
     icon.value = icone;
     tituloCabecalho.value = titulo;
+    final capa = (capaUrl ?? '').trim();
+    this.capaUrl.value = capa.isEmpty ? null : capa;
+    _aplicarThemeDataNoApp(primary, secondary);
 
-    // 📋 LOG: resumo visual do tema aplicado
     debugPrint(
       '''
 --------------------------------------------------------
@@ -196,6 +389,20 @@ class EventThemeController extends GetxController {
 --------------------------------------------------------
 ''',
     );
+  }
+
+  void _aplicarThemeDataNoApp(Color primary, Color secondary) {
+    final data = montarThemeData(primary, secondary);
+    void aplicar() {
+      if (Get.context == null) return;
+      Get.changeTheme(data);
+    }
+
+    if (Get.context == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => aplicar());
+    } else {
+      aplicar();
+    }
   }
 
   // ======================================================

@@ -1,0 +1,46 @@
+# Build artifacts
+*.apk
+*.aab
+*.ipa
+*.dSYM.zip
+build/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+
+# Android / Gradle
+.gradle/
+local.properties
+key.properties
+*.jks
+*.keystore
+
+# Node / temporary generated work
+node_modules/
+.codex_tmp/
+.firebase/
+
+# Local credentials and environments
+.env
+.env.*
+credenciais.json
+secrets/
+
+# IDE / OS
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+~$*
+*.bkp

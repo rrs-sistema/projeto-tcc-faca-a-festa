@@ -31,6 +31,11 @@ class ConvidadoModel extends Convidado {
     super.dataResposta,
     required super.dataCadastro,
     required super.dataAtualizacao,
+    super.conviteToken,
+    super.idUsuario,
+    super.conviteStatus,
+    super.emailUsuario,
+    super.emailNormalizado,
   });
 
   factory ConvidadoModel.fromEntity(Convidado convidado) {
@@ -52,6 +57,11 @@ class ConvidadoModel extends Convidado {
       dataResposta: convidado.dataResposta,
       dataCadastro: convidado.dataCadastro,
       dataAtualizacao: convidado.dataAtualizacao,
+      conviteToken: convidado.conviteToken,
+      idUsuario: convidado.idUsuario,
+      conviteStatus: convidado.conviteStatus,
+      emailUsuario: convidado.emailUsuario,
+      emailNormalizado: convidado.emailNormalizado,
     );
   }
 
@@ -77,6 +87,15 @@ class ConvidadoModel extends Convidado {
             dataResposta != null ? Timestamp.fromDate(dataResposta!) : null,
         'data_cadastro': Timestamp.fromDate(dataCadastro),
         'data_atualizacao': Timestamp.fromDate(dataAtualizacao),
+        'convite_token': tokenParaLink,
+        'convite_status': contaVinculada ? 'vinculado' : 'link_gerado',
+        if (idUsuario != null && idUsuario!.trim().isNotEmpty)
+          'id_usuario': idUsuario!.trim(),
+        if ((emailUsuario ?? '').trim().isNotEmpty)
+          'email_usuario': emailUsuario!.trim(),
+        if ((emailNormalizado ?? emailDaConta).trim().isNotEmpty)
+          'email_normalizado':
+              (emailNormalizado ?? emailDaConta).trim().toLowerCase(),
       };
     } catch (e) {
       if (kDebugMode) {
@@ -107,7 +126,9 @@ class ConvidadoModel extends Convidado {
             '',
         nome: map['nome']?.toString() ?? '',
         contato: map['contato']?.toString() ?? '',
-        email: map['email']?.toString(),
+        email: _primeiroTexto(map, const ['email', 'email_usuario']),
+        emailUsuario: _primeiroTexto(map, const ['email_usuario']),
+        emailNormalizado: _primeiroTexto(map, const ['email_normalizado']),
         status: StatusConvidado.fromString(map['status']),
         tipoConvidado: tipoConvidado,
         idGrupo: map['id_grupo']?.toString(),
@@ -123,6 +144,15 @@ class ConvidadoModel extends Convidado {
         dataResposta: parseDate(map['data_resposta']),
         dataCadastro: parseDate(map['data_cadastro']) ?? DateTime.now(),
         dataAtualizacao: parseDate(map['data_atualizacao']) ?? DateTime.now(),
+        conviteToken: _primeiroTexto(map, const [
+              'convite_token',
+              'token_convite',
+              'token',
+              'id_convidado',
+            ]) ??
+            '',
+        idUsuario: _primeiroTexto(map, const ['id_usuario', 'idUsuario']),
+        conviteStatus: _primeiroTexto(map, const ['convite_status']),
       );
     } catch (e) {
       if (kDebugMode) {
@@ -159,6 +189,11 @@ class ConvidadoModel extends Convidado {
     DateTime? dataResposta,
     DateTime? dataCadastro,
     DateTime? dataAtualizacao,
+    String? conviteToken,
+    String? idUsuario,
+    String? conviteStatus,
+    String? emailUsuario,
+    String? emailNormalizado,
   }) {
     return ConvidadoModel(
       idConvidado: idConvidado ?? this.idConvidado,
@@ -178,6 +213,21 @@ class ConvidadoModel extends Convidado {
       dataResposta: dataResposta ?? this.dataResposta,
       dataCadastro: dataCadastro ?? this.dataCadastro,
       dataAtualizacao: dataAtualizacao ?? DateTime.now(),
+      conviteToken: conviteToken ?? this.conviteToken,
+      idUsuario: idUsuario ?? this.idUsuario,
+      conviteStatus: conviteStatus ?? this.conviteStatus,
+      emailUsuario: emailUsuario ?? this.emailUsuario,
+      emailNormalizado: emailNormalizado ?? this.emailNormalizado,
     );
   }
+}
+
+String? _primeiroTexto(Map<String, dynamic> map, List<String> campos) {
+  for (final campo in campos) {
+    final valor = map[campo];
+    if (valor != null && valor.toString().trim().isNotEmpty) {
+      return valor.toString().trim();
+    }
+  }
+  return null;
 }

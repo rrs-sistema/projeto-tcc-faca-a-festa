@@ -66,6 +66,7 @@ class Evento {
   final List<String>? padrinhos;
   final String? nomeAniversariante;
   final int? idade;
+  final String? idTema;
   final String? tema;
   final String? nomeResponsavel;
   final String? nomeGestante;
@@ -110,6 +111,7 @@ class Evento {
     this.padrinhos,
     this.nomeAniversariante,
     this.idade,
+    this.idTema,
     this.tema,
     this.nomeResponsavel,
     this.nomeGestante,

@@ -185,7 +185,10 @@ class _SugestoesCatalogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = [...sugestoes.take(3), ...pendencias.take(2)].toSet().toList();
+    final items = <String>{
+      ...sugestoes.take(3),
+      ...pendencias.take(2),
+    }.toList();
 
     return Container(
       width: double.infinity,
