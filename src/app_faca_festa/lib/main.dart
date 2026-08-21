@@ -13,6 +13,7 @@ import 'dart:async';
 import './presentation/pages/convidado/area/area_convidado_home_screen.dart';
 import './controllers/categoria/subcategoria_servico_controller.dart';
 import './presentation/pages/fornecedor/fornecedor_home_screen.dart';
+import './presentation/pages/fornecedor/fornecedor_localizacao_screen.dart';
 import './presentation/modules/gifts/gerenciar_presentes_page.dart';
 import './controllers/categoria/categoria_servico_controller.dart';
 import './presentation/pages/convidado/convite_nao_encontrado_screen.dart';
@@ -56,6 +57,8 @@ import './controllers/app_controller.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
 import 'data/repositories/calculadora/calculadora_itens_base_repository.dart';
+import 'data/datasources/remote/catalogo_servico_remote_datasource.dart';
+import 'data/repositories_impl/catalogo_servico_repository_impl.dart';
 import 'data/repositories/evento/calculadora_festa_remote_ai_service.dart';
 import 'data/repositories/i_calculadora_festa_ai_service.dart';
 import 'data/repositories/sugestao_base_festa_repository.dart';
@@ -66,7 +69,9 @@ import 'app/bootstrap/convidado_bootstrap.dart';
 import 'app/bootstrap/perfil_usuario_bootstrap.dart';
 import 'app/bootstrap/autenticacao_bootstrap.dart';
 import 'app/middleware/papel_middleware.dart';
+import 'domain/repositories/catalogo_servico_repository.dart';
 import 'domain/repositories/evento_repository.dart';
+import 'domain/usecases/gerenciar_catalogo_servico.dart';
 
 // =============================================================
 //  MAIN
@@ -314,6 +319,12 @@ class FacaFestaApp extends StatelessWidget {
         ),
 
         GetPage(
+          name: '/fornecedores',
+          page: () => const FornecedorLocalizacaoScreen(showLeading: true),
+          middlewares: [PapelMiddleware(tiposPermitidos: const ['O'])],
+        ),
+
+        GetPage(
           name: '/fornecedor',
           page: () => const FornecedorHomeScreen(),
           middlewares: [PapelMiddleware(tiposPermitidos: const ['F'])],
@@ -362,8 +373,30 @@ void _registerControllers() {
   ).carregarTiposEvento();
   Get.put(FornecedorController(), permanent: true);
   Get.put(OrcamentoGastoController(), permanent: true);
-  Get.put(CategoriaServicoController(), permanent: true);
-  Get.put(SubcategoriaServicoController(), permanent: true);
+  Get.lazyPut<CatalogoServicoRemoteDatasource>(
+    () => CatalogoServicoRemoteDatasource(),
+    fenix: true,
+  );
+  Get.lazyPut<CatalogoServicoRepository>(
+    () => CatalogoServicoRepositoryImpl(
+      Get.find<CatalogoServicoRemoteDatasource>(),
+    ),
+    fenix: true,
+  );
+  Get.lazyPut<GerenciarCatalogoServico>(
+    () => GerenciarCatalogoServico(Get.find<CatalogoServicoRepository>()),
+    fenix: true,
+  );
+  Get.put(
+    CategoriaServicoController(catalogo: Get.find<GerenciarCatalogoServico>()),
+    permanent: true,
+  );
+  Get.put(
+    SubcategoriaServicoController(
+      catalogo: Get.find<GerenciarCatalogoServico>(),
+    ),
+    permanent: true,
+  );
   Get.put(AdminDashboardController(), permanent: true);
   Get.put(EventosAdminController(), permanent: true);
   Get.put(OrcamentosAdminController(), permanent: true);

@@ -37,9 +37,10 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
 
     // Após cadastrar um evento o usuário já está logado. Sem este passo o
     // splash fica eterno, porque o Auth não emite de novo só pela navegação.
+    // Também cobre unknownRoute (`/notfound`) e o GetPage `/`, que renderizam
+    // este widget sem o nome `/splash`.
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
-      if (Get.currentRoute != '/splash') return;
       appController.iniciarSessao();
     });
   }

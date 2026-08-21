@@ -7,12 +7,12 @@ import 'package:get/get.dart';
 
 import './../../../controllers/tema/event_theme_controller.dart';
 import '../../../controllers/inspiracao/inspiracao_controller.dart';
+import '../../../controllers/home_event_nav_controller.dart';
 import './../../../domain/entities/tipo_evento.dart';
 import './../../widgets/confetti_background.dart';
 import './../../../data/models/model.dart' hide TipoEvento;
 import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import '../fornecedor/fornecedor_detalhe_screen.dart';
-import '../fornecedor/fornecedor_localizacao_screen.dart';
 import './inspiracao_detalhe_screen.dart';
 import './minhas_referencias_evento_screen.dart';
 
@@ -670,7 +670,7 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
   }
 
   void _abrirListaFornecedores() {
-    Get.to(() => const FornecedorLocalizacaoScreen(showLeading: true));
+    HomeEventNavController.to.irParaFornecedores();
   }
 
   void _abrirFornecedor(FornecedorModel fornecedor) {

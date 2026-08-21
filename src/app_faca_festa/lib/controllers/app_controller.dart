@@ -241,11 +241,13 @@ class AppController extends GetxController {
       if (!noConvite &&
           !_rotaTotp(rotaAtual) &&
           !_rotaDestinoEstavel(rotaAtual) &&
+          !_usuarioJaNavegandoNaApp(rotaAtual) &&
           (rotaAtual.isEmpty || rotaAtual != '/splash')) {
         Future.microtask(() {
           if (_rotaTotp(Get.currentRoute)) return;
           if (Get.currentRoute.startsWith('/convite')) return;
           if (_rotaDestinoEstavel(Get.currentRoute)) return;
+          if (_usuarioJaNavegandoNaApp(Get.currentRoute)) return;
           Get.offAllNamed('/splash');
         });
       }
@@ -336,6 +338,11 @@ class AppController extends GetxController {
         }
 
         carregando.value = false;
+        final rotaDepois = Get.currentRoute;
+        if (_rotaDestinoEstavel(rotaDepois) ||
+            _usuarioJaNavegandoNaApp(rotaDepois)) {
+          return;
+        }
         Get.offAll(
           () => destino,
           routeName: _nomeRotaDestino(destino),
@@ -830,12 +837,33 @@ class AppController extends GetxController {
 
   bool _rotaDestinoEstavel(String rota) {
     return rota == '/HomeEventScreen' ||
+        rota.startsWith('/HomeEventScreen/') ||
         rota == '/welcome' ||
         rota == '/fornecedor' ||
+        rota == '/fornecedores' ||
         rota == '/admin' ||
         rota == '/areaconvidado' ||
         rota.startsWith('/areaconvidado') ||
         rota == '/conviteNaoEncontrado';
+  }
+
+  /// Subtelas abertas com Get.to() (ex.: lista de fornecedores) não são
+  /// `/HomeEventScreen`. Sem esta guarda, qualquer revalidação de sessão
+  /// manda o usuário de volta à splash e ela fica eterna.
+  bool _usuarioJaNavegandoNaApp(String rota) {
+    if (usuarioLogado.value == null) return false;
+    if (rota.isEmpty) return false;
+    if (rota == '/splash' ||
+        rota == '/' ||
+        rota == '/notfound' ||
+        rota == '/role' ||
+        rota == '/login' ||
+        rota == '/register' ||
+        rota == '/forgotPassword' ||
+        _rotaTotp(rota)) {
+      return false;
+    }
+    return true;
   }
 
   String? _nomeRotaDestino(Widget destino) {

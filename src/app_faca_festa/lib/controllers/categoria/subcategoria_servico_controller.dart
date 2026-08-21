@@ -1,17 +1,21 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import './../../data/models/servico_produto/subcategoria_servico_model.dart';
+import '../../domain/usecases/gerenciar_catalogo_servico.dart';
 import 'categoria_servico_controller.dart';
 
 class SubcategoriaServicoController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  SubcategoriaServicoController({required GerenciarCatalogoServico catalogo})
+      : _catalogo = catalogo;
+
+  final GerenciarCatalogoServico _catalogo;
 
   final subcategorias = <SubcategoriaServicoModel>[].obs;
   final todasSubcategorias = <SubcategoriaServicoModel>[].obs;
   final subcategoriasFiltradas = <SubcategoriaServicoModel>[].obs;
-  final RxMap<String, List<SubcategoriaServicoModel>> subcategoriasPorCategoria =
+  final RxMap<String, List<SubcategoriaServicoModel>>
+      subcategoriasPorCategoria =
       <String, List<SubcategoriaServicoModel>>{}.obs;
   final contagemServicos = <String, int>{}.obs;
   final busca = ''.obs;
@@ -44,16 +48,12 @@ class SubcategoriaServicoController extends GetxController {
 
   int get totalAtivas => subcategoriasFiltradas.where((s) => s.ativo).length;
 
-  int servicosDe(String idSubcategoria) => contagemServicos[idSubcategoria] ?? 0;
-
-  SubcategoriaServicoModel _deDoc(QueryDocumentSnapshot<Map<String, dynamic>> d) {
-    return SubcategoriaServicoModel.fromMap(d.data(), documentId: d.id);
-  }
+  int servicosDe(String idSubcategoria) =>
+      contagemServicos[idSubcategoria] ?? 0;
 
   Future<void> carregarTodasSubcategoria() async {
     try {
-      final snap = await _db.collection('subcategoria_servico').get();
-      final lista = snap.docs.map(_deDoc).toList();
+      final lista = await _catalogo.listarSubcategorias();
       todasSubcategorias.assignAll(lista);
     } catch (_) {}
   }
@@ -72,8 +72,7 @@ class SubcategoriaServicoController extends GetxController {
         categoriaAtualId.value = idCategoria;
       }
 
-      final snap = await _db.collection('subcategoria_servico').get();
-      final todas = snap.docs.map(_deDoc).toList();
+      final todas = await _catalogo.listarSubcategorias();
       todasSubcategorias.assignAll(todas);
 
       List<SubcategoriaServicoModel> lista = todas;
@@ -106,28 +105,15 @@ class SubcategoriaServicoController extends GetxController {
       return;
     }
     try {
-      final snap = await _db.collection('servico_produto').get();
-      final map = <String, int>{};
-      for (final id in ids) {
-        map[id] = 0;
-      }
-      for (final d in snap.docs) {
-        final data = d.data();
-        final idSub = (data['id_subcategoria'] ?? data['idSubcategoria'] ?? '').toString();
-        if (map.containsKey(idSub)) {
-          map[idSub] = (map[idSub] ?? 0) + 1;
-        }
-      }
-      contagemServicos.assignAll(map);
+      contagemServicos.assignAll(
+        await _catalogo.contarServicosPorSubcategoria(ids),
+      );
     } catch (_) {}
   }
 
   Future<void> salvarSubcategoria(SubcategoriaServicoModel model) async {
     try {
-      await _db
-          .collection('subcategoria_servico')
-          .doc(model.id)
-          .set(model.toMap(), SetOptions(merge: true));
+      await _catalogo.salvarSubcategoria(model);
       await carregarSubcategorias(model.idCategoria);
       await _sincronizarContagemCategorias();
     } catch (e) {
@@ -135,12 +121,10 @@ class SubcategoriaServicoController extends GetxController {
     }
   }
 
-  Future<void> atualizarStatus(SubcategoriaServicoModel model, bool ativo) async {
+  Future<void> atualizarStatus(
+      SubcategoriaServicoModel model, bool ativo) async {
     try {
-      await _db.collection('subcategoria_servico').doc(model.id).update({
-        'ativo': ativo,
-        'data_atualizacao': FieldValue.serverTimestamp(),
-      });
+      await _catalogo.atualizarStatusSubcategoria(model.id, ativo);
       await carregarSubcategorias(model.idCategoria);
     } catch (e) {
       erro.value = 'Erro ao atualizar status: $e';
@@ -149,7 +133,7 @@ class SubcategoriaServicoController extends GetxController {
 
   Future<void> excluirSubcategoria(String id) async {
     try {
-      await _db.collection('subcategoria_servico').doc(id).delete();
+      await _catalogo.excluirSubcategoria(id);
       subcategorias.removeWhere((s) => s.id == id);
       subcategoriasFiltradas.removeWhere((s) => s.id == id);
       todasSubcategorias.removeWhere((s) => s.id == id);

@@ -6,6 +6,7 @@ import '../../../../controllers/categoria/subcategoria_servico_controller.dart';
 import '../../../../controllers/tema/admin_theme.dart';
 import '../../../../controllers/tema/event_theme_controller.dart';
 import '../../../../data/models/servico_produto/categoria_servico_model.dart';
+import '../../../../domain/usecases/gerenciar_catalogo_servico.dart';
 import '../../../widgets/admin/admin_kit.dart';
 import './show_subcategoria_servico_bottom_sheet.dart';
 
@@ -15,10 +16,12 @@ class SubcategoriaServicoListScreen extends StatefulWidget {
   const SubcategoriaServicoListScreen({super.key, required this.categoria});
 
   @override
-  State<SubcategoriaServicoListScreen> createState() => _SubcategoriaServicoListScreenState();
+  State<SubcategoriaServicoListScreen> createState() =>
+      _SubcategoriaServicoListScreenState();
 }
 
-class _SubcategoriaServicoListScreenState extends State<SubcategoriaServicoListScreen> {
+class _SubcategoriaServicoListScreenState
+    extends State<SubcategoriaServicoListScreen> {
   late final SubcategoriaServicoController controller;
 
   @override
@@ -26,7 +29,11 @@ class _SubcategoriaServicoListScreenState extends State<SubcategoriaServicoListS
     super.initState();
     controller = Get.isRegistered<SubcategoriaServicoController>()
         ? Get.find<SubcategoriaServicoController>()
-        : Get.put(SubcategoriaServicoController());
+        : Get.put(
+            SubcategoriaServicoController(
+              catalogo: Get.find<GerenciarCatalogoServico>(),
+            ),
+          );
     controller.busca.value = '';
     controller.subcategoriasFiltradas.clear();
     controller.carregarSubcategorias(widget.categoria.id);
@@ -47,7 +54,8 @@ class _SubcategoriaServicoListScreenState extends State<SubcategoriaServicoListS
             IconButton(
               tooltip: 'Atualizar',
               icon: const Icon(Icons.refresh_rounded, color: Colors.white),
-              onPressed: () => controller.carregarSubcategorias(widget.categoria.id),
+              onPressed: () =>
+                  controller.carregarSubcategorias(widget.categoria.id),
             ),
           ],
         ),
@@ -55,9 +63,10 @@ class _SubcategoriaServicoListScreenState extends State<SubcategoriaServicoListS
           backgroundColor: AdminPalette.dark,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
-          label: Text('Nova subcategoria', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
-          onPressed: () =>
-              showSubcategoriaServicoBottomSheet(context, null, widget.categoria),
+          label: Text('Nova subcategoria',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          onPressed: () => showSubcategoriaServicoBottomSheet(
+              context, null, widget.categoria),
         ),
         body: Column(
           children: [
@@ -103,7 +112,8 @@ class _SubcategoriaServicoListScreenState extends State<SubcategoriaServicoListS
                     title: 'Não foi possível carregar',
                     message: controller.erro.value,
                     actionLabel: 'Tentar de novo',
-                    onAction: () => controller.carregarSubcategorias(widget.categoria.id),
+                    onAction: () =>
+                        controller.carregarSubcategorias(widget.categoria.id),
                   );
                 }
 
@@ -118,14 +128,15 @@ class _SubcategoriaServicoListScreenState extends State<SubcategoriaServicoListS
                         ? 'Cadastre subcategorias para detalhar os serviços de ${widget.categoria.nome}.'
                         : 'Tente outro termo.',
                     actionLabel: 'Nova subcategoria',
-                    onAction: () =>
-                        showSubcategoriaServicoBottomSheet(context, null, widget.categoria),
+                    onAction: () => showSubcategoriaServicoBottomSheet(
+                        context, null, widget.categoria),
                   );
                 }
 
                 return RefreshIndicator(
                   color: AdminPalette.primary,
-                  onRefresh: () => controller.carregarSubcategorias(widget.categoria.id),
+                  onRefresh: () =>
+                      controller.carregarSubcategorias(widget.categoria.id),
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                     itemCount: lista.length,
@@ -134,7 +145,8 @@ class _SubcategoriaServicoListScreenState extends State<SubcategoriaServicoListS
                       final s = lista[i];
                       final qtd = controller.servicosDe(s.id);
                       return AdminCard(
-                        onTap: () => showSubcategoriaServicoBottomSheet(context, s),
+                        onTap: () =>
+                            showSubcategoriaServicoBottomSheet(context, s),
                         onLongPress: () async {
                           final ok = await confirmarAcaoAdmin(
                             context,
@@ -149,10 +161,12 @@ class _SubcategoriaServicoListScreenState extends State<SubcategoriaServicoListS
                               width: 46,
                               height: 46,
                               decoration: BoxDecoration(
-                                color: AdminPalette.primary.withValues(alpha: 0.1),
+                                color:
+                                    AdminPalette.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              child: Icon(s.iconData, color: AdminPalette.primary),
+                              child:
+                                  Icon(s.iconData, color: AdminPalette.primary),
                             ),
                             const SizedBox(width: 14),
                             Expanded(
@@ -164,7 +178,9 @@ class _SubcategoriaServicoListScreenState extends State<SubcategoriaServicoListS
                                     style: GoogleFonts.poppins(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 15,
-                                      color: s.ativo ? AdminPalette.ink : AdminPalette.muted,
+                                      color: s.ativo
+                                          ? AdminPalette.ink
+                                          : AdminPalette.muted,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
@@ -185,7 +201,9 @@ class _SubcategoriaServicoListScreenState extends State<SubcategoriaServicoListS
                                     children: [
                                       AdminMetricChip(
                                         icon: Icons.design_services_outlined,
-                                        label: qtd == 1 ? '1 serviço' : '$qtd serviços',
+                                        label: qtd == 1
+                                            ? '1 serviço'
+                                            : '$qtd serviços',
                                       ),
                                       if (s.ativo)
                                         AdminStatusChip.success('Ativa')
@@ -198,7 +216,8 @@ class _SubcategoriaServicoListScreenState extends State<SubcategoriaServicoListS
                             ),
                             Switch.adaptive(
                               value: s.ativo,
-                              onChanged: (v) => controller.atualizarStatus(s, v),
+                              onChanged: (v) =>
+                                  controller.atualizarStatus(s, v),
                             ),
                           ],
                         ),

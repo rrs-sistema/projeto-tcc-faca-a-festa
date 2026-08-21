@@ -3,11 +3,11 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../controllers/inspiracao/inspiracao_controller.dart';
+import '../../../controllers/home_event_nav_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../data/models/model.dart';
 import '../../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import '../fornecedor/fornecedor_detalhe_screen.dart';
-import '../fornecedor/fornecedor_localizacao_screen.dart';
 
 class InspiracaoDetalheScreen extends StatelessWidget {
   final InspiracaoModel inspiracao;
@@ -338,9 +338,7 @@ class InspiracaoDetalheScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 TextButton.icon(
-                  onPressed: () => Get.to(
-                    () => const FornecedorLocalizacaoScreen(showLeading: true),
-                  ),
+                  onPressed: () => HomeEventNavController.to.irParaFornecedores(),
                   icon: Icon(Icons.storefront_rounded, size: 16, color: primary),
                   label: Text('Fornecedores',
                       style: GoogleFonts.poppins(

@@ -8,6 +8,7 @@ import '../../../../controllers/categoria/subcategoria_servico_controller.dart';
 import '../../../../controllers/tema/admin_theme.dart';
 import '../../../../controllers/tema/event_theme_controller.dart';
 import '../../../../data/models/servico_produto/categoria_servico_model.dart';
+import '../../../../domain/usecases/gerenciar_catalogo_servico.dart';
 import '../../../widgets/admin/admin_kit.dart';
 import './categoria_servico_bottom_sheet.dart';
 import './subcategoria_servico_list_screen.dart';
@@ -19,7 +20,11 @@ class CategoriaServicoListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final controller = Get.isRegistered<CategoriaServicoController>()
         ? Get.find<CategoriaServicoController>()
-        : Get.put(CategoriaServicoController());
+        : Get.put(
+            CategoriaServicoController(
+              catalogo: Get.find<GerenciarCatalogoServico>(),
+            ),
+          );
     final theme = Get.find<EventThemeController>();
 
     return Theme(
@@ -56,7 +61,8 @@ class CategoriaServicoListScreen extends StatelessWidget {
           backgroundColor: AdminPalette.dark,
           foregroundColor: Colors.white,
           icon: const Icon(Icons.add_rounded),
-          label: Text('Nova categoria', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          label: Text('Nova categoria',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
           onPressed: () => showCategoriaServicoBottomSheet(context),
         ),
         body: Column(
@@ -91,7 +97,8 @@ class CategoriaServicoListScreen extends StatelessWidget {
                         const SizedBox(width: 8),
                         AdminSummaryChip(
                           label: 'Inativas',
-                          value: '${controller.categorias.length - controller.totalAtivas}',
+                          value:
+                              '${controller.categorias.length - controller.totalAtivas}',
                           color: AdminPalette.muted,
                           icon: Icons.pause_circle_outline_rounded,
                           onTap: () => controller.filtroAtivo.value = false,
@@ -138,9 +145,10 @@ class CategoriaServicoListScreen extends StatelessWidget {
                       return _CategoriaAdminCard(
                         categoria: c,
                         subcategorias: controller.subcategoriasDe(c.id),
-                        onEditar: () => showCategoriaServicoBottomSheet(context, c),
-                        onSubcategorias: () =>
-                            Get.to(() => SubcategoriaServicoListScreen(categoria: c)),
+                        onEditar: () =>
+                            showCategoriaServicoBottomSheet(context, c),
+                        onSubcategorias: () => Get.to(
+                            () => SubcategoriaServicoListScreen(categoria: c)),
                         onToggle: (v) => controller.atualizarStatus(c, v),
                         onExcluir: () async {
                           final n = controller.subcategoriasDe(c.id);
@@ -186,7 +194,8 @@ Future<void> _popularCatalogo(
     EasyLoading.show(status: 'Gravando catálogo...');
     final resultado = await controller.popularCatalogoInicial();
     if (Get.isRegistered<SubcategoriaServicoController>()) {
-      await Get.find<SubcategoriaServicoController>().carregarTodasSubcategoria();
+      await Get.find<SubcategoriaServicoController>()
+          .carregarTodasSubcategoria();
     }
     EasyLoading.dismiss();
     Get.snackbar(
@@ -252,7 +261,9 @@ class _CategoriaAdminCard extends StatelessWidget {
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
-                          color: categoria.ativo ? AdminPalette.ink : AdminPalette.muted,
+                          color: categoria.ativo
+                              ? AdminPalette.ink
+                              : AdminPalette.muted,
                         ),
                       ),
                     ),
@@ -286,9 +297,11 @@ class _CategoriaAdminCard extends StatelessWidget {
                           : '$subcategorias subcategorias',
                     ),
                     if (!categoria.ativo)
-                      AdminStatusChip.neutral('Inativa', icon: Icons.pause_rounded)
+                      AdminStatusChip.neutral('Inativa',
+                          icon: Icons.pause_rounded)
                     else
-                      AdminStatusChip.success('Ativa', icon: Icons.check_rounded),
+                      AdminStatusChip.success('Ativa',
+                          icon: Icons.check_rounded),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -296,15 +309,19 @@ class _CategoriaAdminCard extends StatelessWidget {
                   children: [
                     TextButton.icon(
                       onPressed: onSubcategorias,
-                      icon: const Icon(Icons.subdirectory_arrow_right_rounded, size: 18),
-                      label: Text('Subcategorias', style: GoogleFonts.poppins(fontSize: 13)),
-                      style: TextButton.styleFrom(foregroundColor: AdminPalette.primary),
+                      icon: const Icon(Icons.subdirectory_arrow_right_rounded,
+                          size: 18),
+                      label: Text('Subcategorias',
+                          style: GoogleFonts.poppins(fontSize: 13)),
+                      style: TextButton.styleFrom(
+                          foregroundColor: AdminPalette.primary),
                     ),
                     const Spacer(),
                     IconButton(
                       tooltip: 'Excluir',
                       onPressed: onExcluir,
-                      icon: const Icon(Icons.delete_outline_rounded, color: AdminPalette.danger),
+                      icon: const Icon(Icons.delete_outline_rounded,
+                          color: AdminPalette.danger),
                     ),
                   ],
                 ),

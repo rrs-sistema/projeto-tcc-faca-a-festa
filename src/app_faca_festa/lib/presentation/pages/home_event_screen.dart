@@ -17,6 +17,7 @@ import './../../controllers/orcamento_controller.dart';
 import './fornecedor/fornecedor_detalhe_screen.dart';
 import './../../controllers/tarefa_controller.dart';
 import './../../controllers/evento_controller.dart';
+import './../../controllers/home_event_nav_controller.dart';
 import './../../domain/entities/tipo_evento.dart';
 import './../widgets/menu_drawer_faca_festa.dart';
 import './../widgets/festa_bottom_bar.dart';
@@ -57,6 +58,23 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   void initState() {
     super.initState();
     fornecedorController = FornecedorLocalizacaoController.to;
+    HomeEventNavController.to.vincular(_irParaAba);
+  }
+
+  @override
+  void dispose() {
+    HomeEventNavController.to.desvincular(_irParaAba);
+    super.dispose();
+  }
+
+  void _irParaAba(int index) {
+    if (!mounted) return;
+    if (_currentIndex != index) {
+      setState(() => _currentIndex = index);
+    }
+    if (pageController.hasClients) {
+      pageController.jumpToPage(index);
+    }
   }
 
   @override
@@ -362,7 +380,7 @@ Widget _buildQuickActions(EventThemeController theme) {
                 if (i == 2) Get.to(() => const PainelCotacaoPage());
                 if (i == 3) Get.to(() => TarefasScreen());
                 if (i == 4) Get.to(() => const CalculadoraFestaScreen());
-                if (i == 5) Get.to(() => const FornecedorLocalizacaoScreen(showLeading: true));
+                if (i == 5) HomeEventNavController.to.irParaFornecedores();
               },
               borderRadius: BorderRadius.circular(16),
               child: Container(
