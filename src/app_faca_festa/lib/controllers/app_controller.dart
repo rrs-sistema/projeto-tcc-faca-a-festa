@@ -18,7 +18,7 @@ import './avaliacao/avaliacao_servico_controller.dart';
 import './../data/models/DTO/servico_cotado_dto.dart';
 import './convidado/convidado_controller.dart';
 import './contacao/cotacao_controller.dart';
-import 'servico/servico_produto_controller.dart';
+import '../app/bootstrap/servico_produto_bootstrap.dart';
 import 'fornecedor/fornecedor_controller.dart';
 import './orcamento_controller.dart';
 import './../data/models/model.dart';
@@ -80,7 +80,7 @@ class AppController extends GetxController {
   final fornecedorController = Get.put(FornecedorController());
   final tarefaController = Get.find<TarefaController>();
   final avaliacaoController = Get.put(AvaliacaoServicoController());
-  final servicoController = Get.put(ServicoProdutoController());
+  final servicoController = ServicoProdutoBootstrap.findController();
   final themeController = Get.put(EventThemeController());
 
   @override

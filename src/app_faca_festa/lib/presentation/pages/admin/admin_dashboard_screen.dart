@@ -5,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../controllers/admin/admin_dashboard_controller.dart';
+import '../../../app/bootstrap/servico_produto_bootstrap.dart';
 import '../../../controllers/app_controller.dart';
-import '../../../controllers/servico/servico_produto_controller.dart';
 import '../../../controllers/tema/admin_theme.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../widgets/admin/admin_kit.dart';
@@ -37,8 +37,9 @@ class AdminDashboardScreen extends StatelessWidget {
           automaticallyImplyLeading: false,
           elevation: 0,
           toolbarHeight: 92,
-          flexibleSpace:
-              Container(decoration: const BoxDecoration(gradient: AdminPalette.appBarGradient)),
+          flexibleSpace: Container(
+              decoration:
+                  const BoxDecoration(gradient: AdminPalette.appBarGradient)),
           title: Column(
             children: [
               Text(
@@ -102,7 +103,7 @@ class AdminDashboardScreen extends StatelessWidget {
               count: s.servicos,
               color: const Color(0xFF0369A1),
               onTap: () async {
-                final c = Get.put(ServicoProdutoController());
+                final c = ServicoProdutoBootstrap.findController();
                 await c.toggleListenerAdmin();
                 await Get.to(() => const ServicoProdutoListScreen());
                 controller.carregar();
@@ -191,7 +192,8 @@ class AdminDashboardScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: Text(
                       controller.erro.value,
-                      style: GoogleFonts.poppins(color: AdminPalette.danger, fontSize: 12),
+                      style: GoogleFonts.poppins(
+                          color: AdminPalette.danger, fontSize: 12),
                     ),
                   ),
                 _HeaderStats(stats: s, loading: controller.carregando.value),
@@ -201,7 +203,8 @@ class AdminDashboardScreen extends StatelessWidget {
                     padding: const EdgeInsets.only(bottom: 16, left: 4),
                     child: Text(
                       'Atualizado às ${DateFormat('HH:mm').format(controller.atualizadoEm.value!)}',
-                      style: GoogleFonts.poppins(fontSize: 11, color: AdminPalette.muted),
+                      style: GoogleFonts.poppins(
+                          fontSize: 11, color: AdminPalette.muted),
                     ),
                   )
                 else
@@ -249,14 +252,14 @@ class _HeaderStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final items = [
-      _StatCardData('Eventos ativos', Icons.event_note_rounded, stats.eventosAtivos,
-          const Color(0xFF7C3AED)),
-      _StatCardData('Fornecedores', Icons.store_mall_directory_rounded, stats.fornecedores,
-          const Color(0xFF15803D)),
-      _StatCardData(
-          'Usuários', Icons.people_alt_rounded, stats.usuarios, const Color(0xFFC2410C)),
-      _StatCardData('Orçamentos abertos', Icons.request_quote_rounded, stats.orcamentosAbertos,
-          const Color(0xFF6D28D9)),
+      _StatCardData('Eventos ativos', Icons.event_note_rounded,
+          stats.eventosAtivos, const Color(0xFF7C3AED)),
+      _StatCardData('Fornecedores', Icons.store_mall_directory_rounded,
+          stats.fornecedores, const Color(0xFF15803D)),
+      _StatCardData('Usuários', Icons.people_alt_rounded, stats.usuarios,
+          const Color(0xFFC2410C)),
+      _StatCardData('Orçamentos abertos', Icons.request_quote_rounded,
+          stats.orcamentosAbertos, const Color(0xFF6D28D9)),
     ];
 
     return SizedBox(
@@ -265,7 +268,8 @@ class _HeaderStats extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         itemCount: items.length,
         separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, i) => _StatCard(stat: items[i], loading: loading),
+        itemBuilder: (context, i) =>
+            _StatCard(stat: items[i], loading: loading),
       ),
     );
   }
@@ -371,14 +375,16 @@ class _AdminCardState extends State<_AdminCard> {
                       color: widget.item.color.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(widget.item.icon, size: 22, color: widget.item.color),
+                    child: Icon(widget.item.icon,
+                        size: 22, color: widget.item.color),
                   ),
                   Row(
                     children: [
                       if (widget.item.badge != null && widget.item.badge! > 0)
                         Container(
                           margin: const EdgeInsets.only(right: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 3),
                           decoration: BoxDecoration(
                             color: AdminPalette.warning.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(999),
@@ -422,7 +428,8 @@ class _AdminCardState extends State<_AdminCard> {
                     widget.item.subtitle,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(fontSize: 11, color: AdminPalette.muted, height: 1.3),
+                    style: GoogleFonts.poppins(
+                        fontSize: 11, color: AdminPalette.muted, height: 1.3),
                   ),
                 ],
               ),

@@ -6,7 +6,7 @@ import 'package:get/get.dart';
 import 'dart:io';
 import 'dart:ui';
 
-import '../../../controllers/servico/servico_produto_controller.dart';
+import '../../../app/bootstrap/servico_produto_bootstrap.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../controllers/fornecedor/fornecedor_controller.dart';
 import './../../../controllers/register_controller.dart';
@@ -26,7 +26,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final controller = Get.put(RegisterController());
   final fornecedorController = Get.put(FornecedorController());
-  final servicoController = Get.put(ServicoProdutoController());
+  final servicoController = ServicoProdutoBootstrap.findController();
   final picker = ImagePicker();
   File? bannerFile;
 
@@ -35,16 +35,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.initState();
     final args = Get.arguments;
     if (args is Map) {
-      final token = (args['conviteToken'] ??
-              args['tokenConvite'] ??
-              args['token'] ??
-              '')
-          .toString();
+      final token =
+          (args['conviteToken'] ?? args['tokenConvite'] ?? args['token'] ?? '')
+              .toString();
       controller.appController.guardarTokenConvite(token);
     }
-    final tipo = ((args is Map ? args['tipo'] : null) ?? 'O')
-        .toString()
-        .toUpperCase();
+    final tipo =
+        ((args is Map ? args['tipo'] : null) ?? 'O').toString().toUpperCase();
     if (tipo == 'C' && !controller.appController.fluxoConviteAtivo) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -61,7 +58,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    
     final tipo = (Get.arguments?['tipo'] ?? 'O') as String;
     final isFornecedor = tipo == 'F';
     final isConvidado = tipo == 'C';
@@ -81,8 +77,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         : theme.gradient.value;
 
     // 🎨 Define cor base do vidro conforme o tipo
-    final glassColor =
-        isFornecedor ? Colors.black.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.08);
+    final glassColor = isFornecedor
+        ? Colors.black.withValues(alpha: 0.25)
+        : Colors.white.withValues(alpha: 0.08);
 
     // 🎨 Define cor do texto padrão
     final textColor = isFornecedor ? Colors.grey.shade200 : Colors.white;
@@ -124,7 +121,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   // 📋 Cartão translúcido adaptativo
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 20),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 20),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(24),
                       color: isFornecedor
@@ -148,10 +146,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             fornecedorController: fornecedorController,
                             picker: picker,
                             bannerFile: bannerFile,
-                            onImageSelected: (file) => setState(() => bannerFile = file),
+                            onImageSelected: (file) =>
+                                setState(() => bannerFile = file),
                           )
-                        : RegisterOrganizadorForm(controller: controller, tipo: tipo),
-                  ).animate().fadeIn(duration: 900.ms).slideY(begin: 0.3, curve: Curves.easeOut),
+                        : RegisterOrganizadorForm(
+                            controller: controller, tipo: tipo),
+                  )
+                      .animate()
+                      .fadeIn(duration: 900.ms)
+                      .slideY(begin: 0.3, curve: Curves.easeOut),
 
                   const SizedBox(height: 24),
 
@@ -169,7 +172,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           TextSpan(
                             text: "Entrar",
                             style: GoogleFonts.poppins(
-                              color: isFornecedor ? Colors.amber.shade300 : Colors.amber.shade200,
+                              color: isFornecedor
+                                  ? Colors.amber.shade300
+                                  : Colors.amber.shade200,
                               fontWeight: FontWeight.bold,
                               decoration: TextDecoration.underline,
                             ),

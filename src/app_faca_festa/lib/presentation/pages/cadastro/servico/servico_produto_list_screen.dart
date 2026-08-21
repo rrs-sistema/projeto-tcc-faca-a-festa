@@ -12,7 +12,7 @@ import '../../../../controllers/tema/admin_theme.dart';
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../../controllers/servico/servico_foto_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
-import '../../../../controllers/servico/servico_produto_controller.dart';
+import '../../../../app/bootstrap/servico_produto_bootstrap.dart';
 import './../fornecedor/fornecedor_servico_bottom_sheet.dart';
 import '../../../../controllers/fornecedor/fornecedor_controller.dart';
 import './../../../../controllers/app_controller.dart';
@@ -25,15 +25,16 @@ class ServicoProdutoListScreen extends StatefulWidget {
   const ServicoProdutoListScreen({super.key, this.fornecedorId});
 
   @override
-  State<ServicoProdutoListScreen> createState() => _ServicoProdutoListScreenState();
+  State<ServicoProdutoListScreen> createState() =>
+      _ServicoProdutoListScreenState();
 }
 
 class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
   final Map<String, double> _cacheMedias = {};
-  final controller = Get.put(ServicoProdutoController());
+  final controller = ServicoProdutoBootstrap.findController();
   final fornecedorController = Get.find<FornecedorController>();
   final fotoController = Get.put(ServicoFotoController());
-  final servicoController = Get.find<ServicoProdutoController>();
+  final servicoController = ServicoProdutoBootstrap.findController();
   final appController = Get.put(AppController());
 
   final theme = Get.find<EventThemeController>();
@@ -52,13 +53,15 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
 
     // 🔹 Sincroniza cabeçalho e corpo
     _scrollHeader.addListener(() {
-      if (_scrollBody.hasClients && _scrollBody.offset != _scrollHeader.offset) {
+      if (_scrollBody.hasClients &&
+          _scrollBody.offset != _scrollHeader.offset) {
         _scrollBody.jumpTo(_scrollHeader.offset);
       }
     });
 
     _scrollBody.addListener(() {
-      if (_scrollHeader.hasClients && _scrollHeader.offset != _scrollBody.offset) {
+      if (_scrollHeader.hasClients &&
+          _scrollHeader.offset != _scrollBody.offset) {
         _scrollHeader.jumpTo(_scrollBody.offset);
       }
     });
@@ -80,14 +83,17 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
     _sortColumnIndex.value = columnIndex;
     _sortAscending.value = ascending;
 
-    final listaOrdenada = List<FornecedorServicoDetalhadoDto>.from(controller.servicosFornecedor);
+    final listaOrdenada =
+        List<FornecedorServicoDetalhadoDto>.from(controller.servicosFornecedor);
     listaOrdenada.sort((a, b) {
       final aValue = getField(a);
       final bValue = getField(b);
       if (aValue == null && bValue == null) return 0;
       if (aValue == null) return ascending ? -1 : 1;
       if (bValue == null) return ascending ? 1 : -1;
-      return ascending ? Comparable.compare(aValue, bValue) : Comparable.compare(bValue, aValue);
+      return ascending
+          ? Comparable.compare(aValue, bValue)
+          : Comparable.compare(bValue, aValue);
     });
 
     controller.servicosFornecedor.value = listaOrdenada;
@@ -143,7 +149,9 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
       appBar: isAdmin
           ? AdminBackAppBar(
               title: 'Serviços e Produtos',
-              subtitle: widget.fornecedorId == null ? 'Catálogo da plataforma' : 'Catálogo do fornecedor',
+              subtitle: widget.fornecedorId == null
+                  ? 'Catálogo da plataforma'
+                  : 'Catálogo do fornecedor',
               actions: adminActions,
             )
           : FestaAppBar(
@@ -176,7 +184,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
           return Scrollbar(
             controller: _scrollBody,
             thumbVisibility: true,
-            notificationPredicate: (notif) => notif.metrics.axis == Axis.horizontal,
+            notificationPredicate: (notif) =>
+                notif.metrics.axis == Axis.horizontal,
             child: SingleChildScrollView(
               controller: _scrollBody,
               scrollDirection: Axis.horizontal,
@@ -192,7 +201,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                       child: Scrollbar(
                         controller: _scrollVertical,
                         thumbVisibility: true,
-                        notificationPredicate: (notif) => notif.metrics.axis == Axis.vertical,
+                        notificationPredicate: (notif) =>
+                            notif.metrics.axis == Axis.vertical,
                         child: SingleChildScrollView(
                           controller: _scrollVertical,
                           scrollDirection: Axis.vertical,
@@ -206,7 +216,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                               currentPage: _currentPage,
                               rowsPerPage: _rowsPerPage,
                               onEditar: (s) async {
-                                if (appController.usuarioLogado.value?.tipo == 'F') {
+                                if (appController.usuarioLogado.value?.tipo ==
+                                    'F') {
                                   fotoController.fotos.clear();
                                   await fotoController.carregarFotos(
                                       s.idFornecedor, s.idProdutoServico);
@@ -226,22 +237,29 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                                   );
                                 } else {
                                   final servico = controller.servicos
-                                      .firstWhereOrNull((p) => p.id == s.idProdutoServico);
-                                  showServicoProdutoBottomSheet(context, servico);
+                                      .firstWhereOrNull(
+                                          (p) => p.id == s.idProdutoServico);
+                                  showServicoProdutoBottomSheet(
+                                      context, servico);
                                 }
                               },
                               onExcluir: (s) async {
-                                if (appController.usuarioLogado.value?.tipo == 'F') {
+                                if (appController.usuarioLogado.value?.tipo ==
+                                    'F') {
                                   _confirmarExclusao(
                                     context: context,
                                     onConfirmar: () async {
-                                      EasyLoading.show(status: 'Processando...');
-                                      await servicoController.excluirVinculo(s.id, s.idFornecedor);
+                                      EasyLoading.show(
+                                          status: 'Processando...');
+                                      await servicoController.excluirVinculo(
+                                          s.id, s.idFornecedor);
 
                                       EasyLoading.dismiss();
                                     },
                                   );
-                                } else if (appController.usuarioLogado.value?.tipo == 'A') {
+                                } else if (appController
+                                        .usuarioLogado.value?.tipo ==
+                                    'A') {
                                   //controller.excluirServico(id);
                                 }
                               },
@@ -288,7 +306,10 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
       height: 48,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [primary.withValues(alpha: 0.9), primary.withValues(alpha: 0.7)],
+          colors: [
+            primary.withValues(alpha: 0.9),
+            primary.withValues(alpha: 0.7)
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -320,7 +341,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
             _headerCell(Icons.style_rounded, 'Subcategoria', 3,
                 width: subCategoriaWidth,
                 iconColor: Colors.purpleAccent,
-                onSort: (asc) => _sort((s) => s.nomeSubcategoria ?? '', 3, asc)),
+                onSort: (asc) =>
+                    _sort((s) => s.nomeSubcategoria ?? '', 3, asc)),
             _headerCell(Icons.straighten_rounded, 'Medida', 4,
                 width: medidaWidth, iconColor: Colors.orangeAccent),
             _headerCell(Icons.straighten_rounded, 'Preço', 4,
@@ -388,7 +410,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.design_services_outlined, color: primary.withValues(alpha: 0.6), size: 72),
+            Icon(Icons.design_services_outlined,
+                color: primary.withValues(alpha: 0.6), size: 72),
             const SizedBox(height: 14),
             Text(
               'Nenhum serviço cadastrado',
@@ -403,10 +426,12 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
               widget.fornecedorId == null
                   ? 'Popule o catálogo de festas ou adicione um serviço.'
                   : 'Adicione um novo serviço clicando no botão acima.',
-              style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 13),
+              style: GoogleFonts.poppins(
+                  color: Colors.grey.shade500, fontSize: 13),
               textAlign: TextAlign.center,
             ),
-            if (appController.usuarioLogado.value?.tipo == 'A' && widget.fornecedorId == null) ...[
+            if (appController.usuarioLogado.value?.tipo == 'A' &&
+                widget.fornecedorId == null) ...[
               const SizedBox(height: 18),
               FilledButton.icon(
                 onPressed: () => _popularCatalogoServicos(context),
@@ -499,7 +524,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
             ],
           ),
           child: ListTile(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
 
             // ● Mini Capa + Ícone
             leading: _buildLeadingImage(s, primary),
@@ -547,11 +573,12 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                   onTap: () async {
                     EasyLoading.show(status: 'Buscando as informações...');
 
-                    final servico =
-                        controller.servicos.firstWhereOrNull((p) => p.id == s.idProdutoServico);
+                    final servico = controller.servicos
+                        .firstWhereOrNull((p) => p.id == s.idProdutoServico);
 
                     fotoController.fotos.clear();
-                    await fotoController.carregarFotos(s.idFornecedor, s.idProdutoServico);
+                    await fotoController.carregarFotos(
+                        s.idFornecedor, s.idProdutoServico);
 
                     if (appController.usuarioLogado.value?.tipo == 'F') {
                       final vinculo = FornecedorProdutoServicoModel(
@@ -581,13 +608,15 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
                   color: Colors.redAccent,
                   onTap: () {
                     if (appController.usuarioLogado.value?.tipo == 'F') {
-                      final vinculoId = '${s.idFornecedor}_${s.idProdutoServico}';
+                      final vinculoId =
+                          '${s.idFornecedor}_${s.idProdutoServico}';
 
                       _confirmarExclusao(
                         context: context,
                         onConfirmar: () async {
                           EasyLoading.show(status: 'Processando...');
-                          await servicoController.excluirVinculo(vinculoId, s.idFornecedor);
+                          await servicoController.excluirVinculo(
+                              vinculoId, s.idFornecedor);
 
                           EasyLoading.dismiss();
                         },
@@ -618,7 +647,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
         final primary = Theme.of(ctx).colorScheme.primary;
 
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           title: Row(
             children: [
               Icon(Icons.help_outline_rounded, color: primary, size: 26),
@@ -634,7 +664,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
           ),
           content: Text(
             "Deseja realmente excluir este serviço?",
-            style: GoogleFonts.poppins(fontSize: 14.5, color: Colors.grey.shade700),
+            style: GoogleFonts.poppins(
+                fontSize: 14.5, color: Colors.grey.shade700),
           ),
           actionsPadding: const EdgeInsets.only(bottom: 8, right: 8),
           actions: [
@@ -655,7 +686,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: primary,
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -700,7 +732,8 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
           return Row(
             children: List.generate(
               5,
-              (_) => Icon(Icons.star_border_rounded, size: 16, color: Colors.grey.shade300),
+              (_) => Icon(Icons.star_border_rounded,
+                  size: 16, color: Colors.grey.shade300),
             ),
           );
         }
@@ -712,7 +745,9 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
             return Icon(
               i + 1 <= media
                   ? Icons.star_rounded
-                  : (i + 1 - media < 1 ? Icons.star_half_rounded : Icons.star_border_rounded),
+                  : (i + 1 - media < 1
+                      ? Icons.star_half_rounded
+                      : Icons.star_border_rounded),
               size: 16,
               color: Colors.amber.shade600,
             );
@@ -829,14 +864,19 @@ class ServicoDataTable extends StatelessWidget {
               final nome = (s.nomeServico ?? '').toLowerCase();
               final cat = (s.nomeCategoria ?? '').toLowerCase();
               final sub = (s.nomeSubcategoria ?? '').toLowerCase();
-              return nome.contains(termo) || cat.contains(termo) || sub.contains(termo);
+              return nome.contains(termo) ||
+                  cat.contains(termo) ||
+                  sub.contains(termo);
             }).toList();
 
-      final totalPages =
-          (servicosFiltrados.length / rowsPerPage.value).ceil().clamp(1, double.infinity).toInt();
-      final startIndex =
-          ((currentPage.value - 1) * rowsPerPage.value).clamp(0, servicosFiltrados.length);
-      final endIndex = (startIndex + rowsPerPage.value).clamp(0, servicosFiltrados.length);
+      final totalPages = (servicosFiltrados.length / rowsPerPage.value)
+          .ceil()
+          .clamp(1, double.infinity)
+          .toInt();
+      final startIndex = ((currentPage.value - 1) * rowsPerPage.value)
+          .clamp(0, servicosFiltrados.length);
+      final endIndex =
+          (startIndex + rowsPerPage.value).clamp(0, servicosFiltrados.length);
       final visibleServicos = servicosFiltrados.sublist(startIndex, endIndex);
 
       const numWidth = 60.0;
@@ -874,24 +914,27 @@ class ServicoDataTable extends StatelessWidget {
                   final tipo = medidas[s.tipoMedida] ?? s.tipoMedida ?? '-';
                   final isHovered = hoveredIndex.value == index;
                   final isSelected = selectedIndex.value == index;
-                  final Color baseColor =
-                      index.isEven ? Colors.white.withValues(alpha: 0.7) : Colors.grey.shade100;
+                  final Color baseColor = index.isEven
+                      ? Colors.white.withValues(alpha: 0.7)
+                      : Colors.grey.shade100;
                   final Color hoverColor = primary.withValues(alpha: 0.12);
                   final Color selectedColor = primary.withValues(alpha: 0.25);
 
                   return TableRow(
                     decoration: BoxDecoration(
-                      color: isSelected ? selectedColor : (isHovered ? hoverColor : baseColor),
+                      color: isSelected
+                          ? selectedColor
+                          : (isHovered ? hoverColor : baseColor),
                     ),
                     children: [
-                      _cell(index, hoveredIndex, selectedIndex, '${startIndex + index + 1}',
-                          TextAlign.center),
-                      _cell(index, hoveredIndex, selectedIndex, s.nomeServico ?? 'Sem nome',
-                          TextAlign.left),
-                      _cell(index, hoveredIndex, selectedIndex, s.nomeCategoria ?? '-',
-                          TextAlign.left),
-                      _cell(index, hoveredIndex, selectedIndex, s.nomeSubcategoria ?? '-',
-                          TextAlign.left),
+                      _cell(index, hoveredIndex, selectedIndex,
+                          '${startIndex + index + 1}', TextAlign.center),
+                      _cell(index, hoveredIndex, selectedIndex,
+                          s.nomeServico ?? 'Sem nome', TextAlign.left),
+                      _cell(index, hoveredIndex, selectedIndex,
+                          s.nomeCategoria ?? '-', TextAlign.left),
+                      _cell(index, hoveredIndex, selectedIndex,
+                          s.nomeSubcategoria ?? '-', TextAlign.left),
                       _cell(
                         index,
                         hoveredIndex,
@@ -906,12 +949,13 @@ class ServicoDataTable extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             IconButton(
-                              icon: const Icon(Icons.edit_rounded, color: Colors.blueAccent),
+                              icon: const Icon(Icons.edit_rounded,
+                                  color: Colors.blueAccent),
                               onPressed: () => onEditar(s),
                             ),
                             IconButton(
-                              icon:
-                                  const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
+                              icon: const Icon(Icons.delete_outline_rounded,
+                                  color: Colors.redAccent),
                               onPressed: () => onExcluir(s),
                             ),
                           ],
@@ -942,7 +986,8 @@ class ServicoDataTable extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(16),
@@ -975,7 +1020,8 @@ class ServicoDataTable extends StatelessWidget {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.search_rounded, color: Colors.grey, size: 20),
+                                const Icon(Icons.search_rounded,
+                                    color: Colors.grey, size: 20),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: TextField(
@@ -988,7 +1034,8 @@ class ServicoDataTable extends StatelessWidget {
                                       color: Colors.grey.shade900,
                                     ),
                                     decoration: InputDecoration(
-                                      hintText: 'Buscar serviço, categoria ou subcategoria...',
+                                      hintText:
+                                          'Buscar serviço, categoria ou subcategoria...',
                                       hintStyle: GoogleFonts.poppins(
                                         fontSize: 13,
                                         color: Colors.grey.shade500,
@@ -1024,14 +1071,18 @@ class ServicoDataTable extends StatelessWidget {
                               const SizedBox(width: 8),
                               Row(
                                 children: List.generate(totalPages, (index) {
-                                  final isActive = currentPage.value == index + 1;
+                                  final isActive =
+                                      currentPage.value == index + 1;
                                   return AnimatedContainer(
                                     duration: const Duration(milliseconds: 250),
-                                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 3),
                                     height: 8,
                                     width: isActive ? 24 : 8,
                                     decoration: BoxDecoration(
-                                      color: isActive ? primary : Colors.grey.shade300,
+                                      color: isActive
+                                          ? primary
+                                          : Colors.grey.shade300,
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                   );
@@ -1067,7 +1118,8 @@ class ServicoDataTable extends StatelessWidget {
     });
   }
 
-  Widget _cell(int index, RxInt hovered, RxInt selected, String text, TextAlign align) {
+  Widget _cell(
+      int index, RxInt hovered, RxInt selected, String text, TextAlign align) {
     return MouseRegion(
       onEnter: (_) => hovered.value = index,
       onExit: (_) => hovered.value = -1,
@@ -1117,7 +1169,8 @@ class ServicoDataTable extends StatelessWidget {
           color: enabled ? color.withValues(alpha: 0.12) : Colors.grey.shade200,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: enabled ? color.withValues(alpha: 0.4) : Colors.grey.shade300,
+            color:
+                enabled ? color.withValues(alpha: 0.4) : Colors.grey.shade300,
           ),
         ),
         child: Icon(

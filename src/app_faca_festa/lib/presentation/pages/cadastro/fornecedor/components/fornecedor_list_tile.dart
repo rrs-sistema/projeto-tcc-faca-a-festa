@@ -8,7 +8,7 @@ import 'package:get/get.dart';
 
 import '../../../../../core/utils/biblioteca.dart';
 import '../../../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
-import '../../../../../controllers/servico/servico_produto_controller.dart';
+import '../../../../../app/bootstrap/servico_produto_bootstrap.dart';
 import './../../../../../core/utils/no_sqflite_cache_manager.dart';
 import '../../../../../controllers/fornecedor/fornecedor_controller.dart';
 import './../../servico/servico_produto_list_screen.dart';
@@ -34,7 +34,8 @@ class FornecedorListTile extends StatelessWidget {
     final ativo = fornecedor.ativo;
     final aprovado = fornecedor.aptoParaOperar;
     final telefoneLimpo = fornecedor.telefone.replaceAll(RegExp(r'[^0-9]'), '');
-    final linkWhatsapp = 'https://wa.me/55$telefoneLimpo?text=Olá, ${fornecedor.razaoSocial}! 👋\n'
+    final linkWhatsapp =
+        'https://wa.me/55$telefoneLimpo?text=Olá, ${fornecedor.razaoSocial}! 👋\n'
         'Sou administrador do Faça a Festa e gostaria de conversar sobre seus serviços.';
 
     return AnimatedContainer(
@@ -102,7 +103,8 @@ class FornecedorListTile extends StatelessWidget {
         child: const Icon(Icons.image_rounded, color: Colors.white54, size: 32),
       );
 
-  Widget _buildInfo(BuildContext context, String linkWhatsapp, bool aprovado, bool ativo) {
+  Widget _buildInfo(
+      BuildContext context, String linkWhatsapp, bool aprovado, bool ativo) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -146,7 +148,8 @@ class FornecedorListTile extends StatelessWidget {
           runSpacing: 6,
           children: [
             if (controller.cidadeDoFornecedor(fornecedor).isNotEmpty)
-              _miniChip(Icons.location_on_outlined, controller.cidadeDoFornecedor(fornecedor)),
+              _miniChip(Icons.location_on_outlined,
+                  controller.cidadeDoFornecedor(fornecedor)),
             _miniChip(
               Icons.design_services_outlined,
               '${controller.servicosDoFornecedor(fornecedor)} serviços',
@@ -169,7 +172,9 @@ class FornecedorListTile extends StatelessWidget {
 
         // 🔹 Descrição
         Text(
-          fornecedor.descricao?.isNotEmpty == true ? fornecedor.descricao! : 'Sem descrição',
+          fornecedor.descricao?.isNotEmpty == true
+              ? fornecedor.descricao!
+              : 'Sem descrição',
           style: GoogleFonts.poppins(
             fontSize: 13,
             color: Colors.grey.shade700,
@@ -201,7 +206,8 @@ class FornecedorListTile extends StatelessWidget {
                   backgroundColor: Colors.green.shade700,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 10),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               ),
             ),
@@ -244,14 +250,16 @@ class FornecedorListTile extends StatelessWidget {
                 bgColor: Colors.indigo.shade50,
                 borderColor: Colors.indigo.shade300,
                 onTap: () async {
-                  final servicoProdutoController = Get.put(ServicoProdutoController());
+                  final servicoProdutoController =
+                      ServicoProdutoBootstrap.findController();
                   // 🔹 Chama apenas o carregamento se quiser pré-aquecer os dados
                   await servicoProdutoController.toggleListenerFornecedor(
                       idFornecedor: fornecedor.idFornecedor);
                   //await servicoProdutoController.buscarServicosDoFornecedorPeloAdmin(fornecedor.idFornecedor);
 
                   // 🔹 Abre a tela de lista de serviços (a mesma que o admin usa)
-                  Get.to(() => ServicoProdutoListScreen(fornecedorId: fornecedor.idFornecedor));
+                  Get.to(() => ServicoProdutoListScreen(
+                      fornecedorId: fornecedor.idFornecedor));
                 },
               ),
 
@@ -279,14 +287,17 @@ class FornecedorListTile extends StatelessWidget {
                   onTap: () => Biblioteca.showConfirmDialog(
                     context,
                     title: 'Desativar fornecedor!',
-                    message: 'Tem certeza que deseja desativar ${fornecedor.razaoSocial}?',
+                    message:
+                        'Tem certeza que deseja desativar ${fornecedor.razaoSocial}?',
                     confirmLabel: 'Desativar',
                     color: Colors.red,
                     onConfirm: () async {
-                      await controller.desativarFornecedor(fornecedor.idFornecedor);
-                      Get.snackbar(
-                          'Fornecedor desativado', 'O fornecedor foi desativado com sucesso.',
-                          backgroundColor: Colors.redAccent, colorText: Colors.white);
+                      await controller
+                          .desativarFornecedor(fornecedor.idFornecedor);
+                      Get.snackbar('Fornecedor desativado',
+                          'O fornecedor foi desativado com sucesso.',
+                          backgroundColor: Colors.redAccent,
+                          colorText: Colors.white);
                       return true;
                     },
                   ),
@@ -301,13 +312,17 @@ class FornecedorListTile extends StatelessWidget {
                   onTap: () => Biblioteca.showConfirmDialog(
                     context,
                     title: 'Ativar fornecedor!',
-                    message: 'Deseja reativar o fornecedor ${fornecedor.razaoSocial}?',
+                    message:
+                        'Deseja reativar o fornecedor ${fornecedor.razaoSocial}?',
                     confirmLabel: 'Ativar',
                     color: Colors.green,
                     onConfirm: () async {
-                      await controller.ativarFornecedor(fornecedor.idFornecedor);
-                      Get.snackbar('Fornecedor ativado', 'O fornecedor foi reativado com sucesso.',
-                          backgroundColor: Colors.green.shade700, colorText: Colors.white);
+                      await controller
+                          .ativarFornecedor(fornecedor.idFornecedor);
+                      Get.snackbar('Fornecedor ativado',
+                          'O fornecedor foi reativado com sucesso.',
+                          backgroundColor: Colors.green.shade700,
+                          colorText: Colors.white);
                       return true;
                     },
                   ),
@@ -322,10 +337,14 @@ class FornecedorListTile extends StatelessWidget {
                 bgColor: Colors.teal.shade50,
                 borderColor: Colors.teal.shade300,
                 onTap: () async {
-                  final fornecedorLocalizacaoController = FornecedorLocalizacaoController.to;
-                  final territorio = fornecedorLocalizacaoController.territoriosFornecedores
-                      .firstWhereOrNull((t) => t.idFornecedor == fornecedor.idFornecedor);
-                  await showAddTerritorioBottomSheet(context, fornecedor.idFornecedor,
+                  final fornecedorLocalizacaoController =
+                      FornecedorLocalizacaoController.to;
+                  final territorio = fornecedorLocalizacaoController
+                      .territoriosFornecedores
+                      .firstWhereOrNull(
+                          (t) => t.idFornecedor == fornecedor.idFornecedor);
+                  await showAddTerritorioBottomSheet(
+                      context, fornecedor.idFornecedor,
                       existente: territorio);
                 },
               ),
@@ -352,7 +371,8 @@ class FornecedorListTile extends StatelessWidget {
           const SizedBox(width: 4),
           Text(
             text,
-            style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
+            style:
+                GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -367,7 +387,8 @@ class FornecedorListTile extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
+            style:
+                GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600),
             overflow: TextOverflow.ellipsis,
           ),
         ),

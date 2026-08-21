@@ -1,22 +1,24 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
 import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../../data/models/model.dart';
-import '../../data/seeds/servico_produto_seed.dart';
+import '../../domain/usecases/gerenciar_servicos_produto.dart';
 
 class ServicoProdutoController extends GetxController {
-  final _db = FirebaseFirestore.instance;
+  ServicoProdutoController({required GerenciarServicosProduto servicos})
+      : _servicos = servicos;
+
+  final GerenciarServicosProduto _servicos;
 
   final RxList<ServicoProdutoModel> servicos = <ServicoProdutoModel>[].obs;
   final RxList<FornecedorServicoDetalhadoDto> servicosFornecedor =
       <FornecedorServicoDetalhadoDto>[].obs;
   final RxString erro = ''.obs;
 
-  StreamSubscription<QuerySnapshot>? _servicosSubscription;
-  StreamSubscription<QuerySnapshot>? _servicosAdminSubscription;
+  StreamSubscription<void>? _servicosSubscription;
+  StreamSubscription<void>? _servicosAdminSubscription;
 
   /// 🔄 Alterna automaticamente o listener por fornecedor
   Timer? _fornecedorTimeoutTimer;
@@ -47,217 +49,26 @@ class ServicoProdutoController extends GetxController {
 
     await _servicosSubscription?.cancel();
 
-    _servicosSubscription = _db
-        .collection('fornecedor_servico')
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .snapshots()
-        .listen((snapshot) async {
+    _servicosSubscription =
+        _servicos.observarVinculosFornecedor(idFornecedor).listen((_) async {
       debugPrint('♻️ Detectada mudança REAL-TIME → recarregando...');
       await carregarServicosComDetalhesOtimizado(idFornecedor: idFornecedor);
     });
   }
 
   /// 🔹 Carrega serviços com detalhes completos (modo ADMIN ou FORNECEDOR)
-  Future<void> carregarServicosComDetalhesOtimizado({String? idFornecedor}) async {
+  Future<void> carregarServicosComDetalhesOtimizado(
+      {String? idFornecedor}) async {
     try {
       carregando.value = true;
       servicosFornecedor.clear();
       erro.value = '';
 
-      // ===========================================================
-      // 1️⃣ MODO ADMIN — carrega TODOS os serviços do sistema
-      // ===========================================================
-      if (idFornecedor == null) {
-        debugPrint('📡 [SERVIÇOS] Modo ADMIN — carregando todos os serviços ativos');
-
-        final catSnap = await _db.collection('categoria_servico').get();
-        final subSnap = await _db.collection('subcategoria_servico').get();
-
-        final mapaCategorias = <String, String>{};
-        final mapaSubcategorias = <String, String>{};
-        final mapaSubParaCat = <String, String>{};
-
-        for (var c in catSnap.docs) {
-          mapaCategorias[c.id] = c.data()['nome'] ?? 'Sem nome';
-        }
-        for (var s in subSnap.docs) {
-          final data = s.data();
-          final idCat = data['id_categoria'] ?? '';
-          mapaSubcategorias[s.id] = data['nome'] ?? 'Sem nome';
-          mapaSubParaCat[s.id] = idCat;
-        }
-
-        final servSnap =
-            await _db.collection('servico_produto').where('ativo', isEqualTo: true).get();
-
-        final lista = servSnap.docs.map((d) {
-          final data = d.data();
-          final idSub = data['id_subcategoria'] ?? '';
-          final idCat = mapaSubParaCat[idSub] ?? '';
-
-          return FornecedorServicoDetalhadoDto(
-              id: d.id,
-              idFornecedor: '',
-              idProdutoServico: d.id,
-              idSubcategoria: idSub,
-              nomeServico: data['nome'] ?? 'Serviço sem nome',
-              descricaoServico: data['descricao'] ?? '',
-              tipoMedida: data['tipo_medida'] ?? 'U',
-              preco: 0.0,
-              precoPromocao: null,
-              nomeSubcategoria: mapaSubcategorias[idSub] ?? 'Sem subcategoria',
-              nomeCategoria: mapaCategorias[idCat] ?? 'Sem categoria',
-              imagemUrl: null,
-              ativo: data['ativo'] ?? true,
-              quantidade: 1);
-        }).toList();
-
-        servicosFornecedor.assignAll(lista);
-        debugPrint('🟢 [SERVIÇOS] Lista ADMIN carregada: ${lista.length} itens.');
-        return;
-      }
-
-      // ===========================================================
-      // 2️⃣ MODO FORNECEDOR — carrega SOMENTE serviços vinculados
-      // ===========================================================
-
-      // 🔸 Buscar categorias e subcategorias do fornecedor
-      final categoriaSnap = await _db
-          .collection('fornecedor_categoria')
-          .where('id_fornecedor', isEqualTo: idFornecedor)
-          .get();
-
-      if (categoriaSnap.docs.isEmpty) {
-        return;
-      }
-
-      final mapaCategorias = <String, String>{};
-      final mapaSubcategorias = <String, String>{};
-      final mapaSubParaCat = <String, String>{};
-
-      /// 🔥 IMPORTANTÍSSIMO → aqui vira SET para remover duplicados
-      final Set<String> subIds = {};
-
-      for (var catDoc in categoriaSnap.docs) {
-        final data = catDoc.data();
-        final idCat = data['id_categoria'] ?? '';
-        mapaCategorias[idCat] = data['nome_categoria'] ?? 'Sem nome';
-
-        final subs = (data['subcategorias'] as List?) ?? [];
-        for (var sub in subs) {
-          final idSub = sub['idSubcategoria'] ?? '';
-          final nomeSub = sub['nomeSubcategoria'] ?? '';
-
-          if (idSub.isNotEmpty) {
-            mapaSubcategorias[idSub] = nomeSub;
-            mapaSubParaCat[idSub] = idCat;
-            subIds.add(idSub);
-          }
-        }
-      }
-
-      if (subIds.isEmpty) {
-        return;
-      }
-
-      // ===========================================================
-      // 🔥 Criar função interna para dividir lista em chunks de 30
-      // ===========================================================
-      List<List<String>> dividirChunks(List<String> lista, int tamanho) {
-        final chunks = <List<String>>[];
-        for (var i = 0; i < lista.length; i += tamanho) {
-          chunks.add(lista.sublist(
-            i,
-            i + tamanho > lista.length ? lista.length : i + tamanho,
-          ));
-        }
-        return chunks;
-      }
-
-      final subIdsList = subIds.toList();
-      final chunks = dividirChunks(subIdsList, 30);
-
-      // ===========================================================
-      // 3️⃣ Buscar vínculos (preço, promoção, ativo)
-      // ===========================================================
-      final vinculosSnap = await _db
-          .collection('fornecedor_servico')
-          .where('id_fornecedor', isEqualTo: idFornecedor)
-          .get();
-
-      final vinculosMap = {
-        for (var doc in vinculosSnap.docs) doc.data()['id_produto_servico']: doc.data()
-      };
-
-      // ===========================================================
-      // 4️⃣ Buscar fotos
-      // ===========================================================
-      final fotosSnap = await _db
-          .collection('servico_foto')
-          .where('id_fornecedor', isEqualTo: idFornecedor)
-          .get();
-
-      final fotosMap = {
-        for (var doc in fotosSnap.docs) doc.data()['id_produto_servico']: doc.data()['url']
-      };
-
-      // ===========================================================
-      // 5️⃣ Buscar serviços — AGORA sem erro, em várias consultas
-      // ===========================================================
-      final List<QueryDocumentSnapshot> todosServicosDocs = [];
-
-      for (final chunk in chunks) {
-        final snap = await _db
-            .collection('servico_produto')
-            .where('id_subcategoria', whereIn: chunk)
-            .where('ativo', isEqualTo: true)
-            .get();
-
-        todosServicosDocs.addAll(snap.docs);
-      }
-
-      // ===========================================================
-      // 6️⃣ Montar lista final com detalhes
-      // ===========================================================
-      final lista = <FornecedorServicoDetalhadoDto>[];
-
-      for (var servDoc in todosServicosDocs) {
-        final data = servDoc.data() as Map<String, dynamic>?;
-        if (data == null) continue;
-
-        final idServico = servDoc.id;
-        final idSub = (data['id_subcategoria'] ?? '').toString();
-
-        final vinculo = vinculosMap[idServico];
-        if (vinculo == null) continue;
-
-        final preco = (vinculo['preco'] ?? 0).toDouble();
-        final precoPromocao = vinculo['preco_promocao'] != null
-            ? (vinculo['preco_promocao'] as num).toDouble()
-            : null;
-
-        final ativo = vinculo['ativo'] ?? true;
-        final imagemUrl = fotosMap[idServico];
-
-        lista.add(FornecedorServicoDetalhadoDto(
-            id: idServico,
-            idFornecedor: idFornecedor,
-            idProdutoServico: idServico,
-            idSubcategoria: idSub,
-            nomeServico: data['nome'] ?? 'Serviço sem nome',
-            descricaoServico: data['descricao'] ?? '',
-            tipoMedida: data['tipo_medida'] ?? 'U',
-            preco: preco,
-            precoPromocao: precoPromocao,
-            nomeSubcategoria: mapaSubcategorias[idSub] ?? 'Sem subcategoria',
-            nomeCategoria: mapaCategorias[mapaSubParaCat[idSub]] ?? 'Sem categoria',
-            imagemUrl: imagemUrl,
-            ativo: ativo,
-            quantidade: 1));
-      }
-
+      final lista = await _servicos.listarServicosComDetalhes(
+        idFornecedor: idFornecedor,
+      );
       servicosFornecedor.assignAll(lista);
-      debugPrint('🟢 [SERVIÇOS] Lista do fornecedor carregada: ${lista.length} itens.');
+      debugPrint('🟢 [SERVIÇOS] Lista carregada: ${lista.length} itens.');
     } catch (e, s) {
       erro.value = e.toString();
       servicosFornecedor.clear();
@@ -267,30 +78,27 @@ class ServicoProdutoController extends GetxController {
     }
   }
 
-  Future<List<ServicoProdutoModel>> carregarServicosPorSubcategoria(String idSubcategoria) async {
+  Future<List<ServicoProdutoModel>> carregarServicosPorSubcategoria(
+      String idSubcategoria) async {
     try {
       carregando.value = true;
-      debugPrint('🔹 [SERVIÇOS] Buscando serviços para subcategoria: $idSubcategoria');
+      debugPrint(
+          '🔹 [SERVIÇOS] Buscando serviços para subcategoria: $idSubcategoria');
 
-      final snap = await _db
-          .collection('servico_produto')
-          .where('id_subcategoria', isEqualTo: idSubcategoria)
-          .where('ativo', isEqualTo: true)
-          .get();
-
-      final lista = snap.docs.map((d) {
-        return ServicoProdutoModel.fromMap({...d.data(), 'id': d.id});
-      }).toList();
+      final lista =
+          await _servicos.listarServicosAtivosPorSubcategoria(idSubcategoria);
 
       servicosPorSubcategoria[idSubcategoria] = lista;
       servicos.assignAll(lista);
 
       debugPrint(
           '✅ [SERVIÇOS] ${lista.length} serviços encontrados para subcategoria $idSubcategoria');
-      debugPrint('📊 [SERVIÇOS MAP] Chaves atuais: ${servicosPorSubcategoria.keys.toList()}');
+      debugPrint(
+          '📊 [SERVIÇOS MAP] Chaves atuais: ${servicosPorSubcategoria.keys.toList()}');
       return lista;
     } catch (e) {
-      debugPrint('⚠️ [SERVIÇOS] Erro ao carregar serviços da subcategoria $idSubcategoria: $e');
+      debugPrint(
+          '⚠️ [SERVIÇOS] Erro ao carregar serviços da subcategoria $idSubcategoria: $e');
       return [];
     } finally {
       carregando.value = false;
@@ -311,10 +119,7 @@ class ServicoProdutoController extends GetxController {
   Future<void> carregarServicos() async {
     try {
       carregando.value = true;
-      final snapshot = await _db.collection('servico_produto').get();
-      servicos.assignAll(
-        snapshot.docs.map((doc) => ServicoProdutoModel.fromMap(doc.data())).toList(),
-      );
+      servicos.assignAll(await _servicos.listarServicos());
     } catch (e) {
       Get.snackbar('Erro', 'Falha ao carregar serviços: $e');
     } finally {
@@ -337,58 +142,22 @@ class ServicoProdutoController extends GetxController {
   }
 
   Future<void> excluirServico(String id) async {
-    await _db.collection('servico_produto').doc(id).delete();
+    await _servicos.excluirServico(id);
     await carregarServicos();
   }
 
   Future<void> salvarServico(ServicoProdutoModel model) async {
-    await _db.collection('servico_produto').doc(model.id).set(model.toMap());
+    await _servicos.salvarServico(model);
     await carregarServicos();
   }
 
   /// Grava (merge) o catálogo padrão de serviços/produtos no Firestore.
   /// Preserva IDs já usados por fornecedores, fotos e cotações.
   Future<int> popularCatalogoInicial() async {
-    final existentes = await _db.collection('servico_produto').get();
-    final idsExistentes = existentes.docs.map((d) => d.id).toSet();
-    final agora = FieldValue.serverTimestamp();
-
-    WriteBatch lote = _db.batch();
-    var operacoes = 0;
-
-    Future<void> commitSeCheio() async {
-      if (operacoes >= 400) {
-        await lote.commit();
-        lote = _db.batch();
-        operacoes = 0;
-      }
-    }
-
-    for (final item in CatalogoServicoProduto.itens) {
-      await commitSeCheio();
-      lote.set(
-        _db.collection('servico_produto').doc(item.id),
-        {
-          'id': item.id,
-          'nome': item.nome,
-          'descricao': item.descricao,
-          'tipo_medida': item.tipoMedida,
-          'id_subcategoria': item.idSubcategoria,
-          'ativo': item.ativo,
-          if (!idsExistentes.contains(item.id)) 'data_cadastro': agora,
-          'data_atualizacao': agora,
-        },
-        SetOptions(merge: true),
-      );
-      operacoes++;
-    }
-    if (operacoes > 0) {
-      await lote.commit();
-    }
-
+    final total = await _servicos.popularCatalogoInicial();
     await carregarServicos();
     await carregarServicosComDetalhesOtimizado();
-    return CatalogoServicoProduto.itens.length;
+    return total;
   }
 
   /// 🔄 Alterna automaticamente entre iniciar e parar o listener Admin
@@ -451,21 +220,9 @@ class ServicoProdutoController extends GetxController {
   }
 
   /// 🔍 Valida se o fornecedor realmente possui a subcategoria
-  Future<bool> validarSubcategoriaFornecedor(String idFornecedor, String idSubcat) async {
-    final snap = await _db
-        .collection('fornecedor_categoria')
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .get();
-
-    if (snap.docs.isEmpty) return false;
-
-    for (var doc in snap.docs) {
-      final subs = (doc.data()['subcategorias'] as List?) ?? [];
-      if (subs.any((s) => s['idSubcategoria'] == idSubcat)) {
-        return true;
-      }
-    }
-    return false;
+  Future<bool> validarSubcategoriaFornecedor(
+      String idFornecedor, String idSubcat) async {
+    return _servicos.validarSubcategoriaFornecedor(idFornecedor, idSubcat);
   }
 
   /// ============================================================
@@ -493,34 +250,27 @@ class ServicoProdutoController extends GetxController {
       }
 
       /// 2) SALVAR VÍNCULO
-      final String vinculoId = '${model.idFornecedor}_${model.idProdutoServico}';
+      await _servicos.salvarVinculo(model);
 
-      final Map<String, dynamic> data = model.toMap();
-      data['data_atualizacao'] = FieldValue.serverTimestamp();
-
-      await _db.collection('fornecedor_servico').doc(vinculoId).set(data, SetOptions(merge: true));
-
-      debugPrint('🟢 Vínculo salvo com sucesso → $vinculoId');
+      debugPrint('🟢 Vínculo salvo com sucesso');
 
       /// 3) RECARREGAR SERVIÇOS (SEMPRE)
       await carregarServicosComDetalhesOtimizado(
         idFornecedor: model.idFornecedor,
       );
 
-      Get.snackbar(
+      _mostrarSnackbar(
         'Sucesso',
         'Serviço vinculado ao fornecedor!',
-        snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.green.shade100,
         colorText: Colors.green.shade900,
       );
     } catch (e, s) {
       debugPrint('❌ Erro ao vincular serviço: $e\n$s');
       erro.value = e.toString();
-      Get.snackbar(
+      _mostrarSnackbar(
         'Erro',
         erro.value,
-        snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red.shade100,
         colorText: Colors.red.shade900,
       );
@@ -533,43 +283,31 @@ class ServicoProdutoController extends GetxController {
     String idFornecedor,
     String idSubcat,
   ) async {
-    final ref =
-        _db.collection('fornecedor_categoria').where('id_fornecedor', isEqualTo: idFornecedor);
-
-    final snap = await ref.get();
-
-    if (snap.docs.isEmpty) {
-      debugPrint('⚠ Nenhuma categoria principal encontrada para esse fornecedor.');
-      return;
-    }
-
-    for (var doc in snap.docs) {
-      final List subs = (doc.data()['subcategorias'] as List?) ?? [];
-
-      // Já existe → nada a fazer
-      if (subs.any((s) => s['idSubcategoria'] == idSubcat)) {
-        return;
-      }
-
-      final nova = {
-        'idSubcategoria': idSubcat,
-        'nomeSubcategoria': 'Subcategoria',
-      };
-
-      subs.add(nova);
-
-      await doc.reference.update({
-        'subcategorias': subs,
-      });
-
-      debugPrint("🟢 Subcategoria adicionada automaticamente ao fornecedor.");
-    }
+    await _servicos.adicionarSubcategoriaAoFornecedor(idFornecedor, idSubcat);
+    debugPrint("🟢 Subcategoria adicionada automaticamente ao fornecedor.");
   }
 
   Future<void> excluirVinculo(String id, String idFornecedor) async {
-    await _db.collection('fornecedor_servico').doc(id).delete();
+    await _servicos.excluirVinculo(id);
     await carregarServicosComDetalhesOtimizado(
       idFornecedor: idFornecedor,
+    );
+  }
+
+  void _mostrarSnackbar(
+    String titulo,
+    String mensagem, {
+    required Color backgroundColor,
+    required Color colorText,
+  }) {
+    if (Get.context == null) return;
+
+    Get.snackbar(
+      titulo,
+      mensagem,
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: backgroundColor,
+      colorText: colorText,
     );
   }
 }

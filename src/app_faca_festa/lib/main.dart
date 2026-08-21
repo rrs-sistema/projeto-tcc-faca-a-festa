@@ -67,6 +67,7 @@ import 'app/bootstrap/gift_offline_bootstrap.dart';
 import 'app/bootstrap/evento_bootstrap.dart';
 import 'app/bootstrap/convidado_bootstrap.dart';
 import 'app/bootstrap/perfil_usuario_bootstrap.dart';
+import 'app/bootstrap/servico_produto_bootstrap.dart';
 import 'app/bootstrap/autenticacao_bootstrap.dart';
 import 'app/middleware/papel_middleware.dart';
 import 'domain/repositories/catalogo_servico_repository.dart';
@@ -245,14 +246,18 @@ class FacaFestaApp extends StatelessWidget {
         GetPage(
           name: '/HomeEventScreen',
           page: () => const HomeEventScreen(),
-          middlewares: [PapelMiddleware(tiposPermitidos: const ['O'])],
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['O'])
+          ],
         ),
         GetPage(name: '/splash', page: () => const Splash()),
         GetPage(name: '/role', page: () => const RoleSelectorScreen()),
         GetPage(
           name: '/welcome',
           page: () => const WelcomeEventScreen(),
-          middlewares: [PapelMiddleware(tiposPermitidos: const ['O'])],
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['O'])
+          ],
         ),
         GetPage(name: '/login', page: () => const LoginScreen()),
         GetPage(
@@ -271,12 +276,16 @@ class FacaFestaApp extends StatelessWidget {
         GetPage(
           name: '/admin',
           page: () => const AdminDashboardScreen(),
-          middlewares: [PapelMiddleware(tiposPermitidos: const ['A'])],
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['A'])
+          ],
         ),
         GetPage(
           name: '/convidadosPage',
           page: () => const ConvidadosPage(),
-          middlewares: [PapelMiddleware(tiposPermitidos: const ['O'])],
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['O'])
+          ],
         ),
         GetPage(
           name: '/gerenciarPresentes',
@@ -311,25 +320,25 @@ class FacaFestaApp extends StatelessWidget {
           name: '/convite/:token',
           page: () => const ConviteRedirectPage(),
         ),
-
         GetPage(
           name: '/orcamentos',
           page: () => const OrcamentosScreen(),
           transition: Transition.cupertino,
         ),
-
         GetPage(
           name: '/fornecedores',
           page: () => const FornecedorLocalizacaoScreen(showLeading: true),
-          middlewares: [PapelMiddleware(tiposPermitidos: const ['O'])],
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['O'])
+          ],
         ),
-
         GetPage(
           name: '/fornecedor',
           page: () => const FornecedorHomeScreen(),
-          middlewares: [PapelMiddleware(tiposPermitidos: const ['F'])],
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['F'])
+          ],
         ),
-
         GetPage(
           name: '/conviteNaoEncontrado',
           page: () => const ConviteNaoEncontradoScreen(),
@@ -343,7 +352,9 @@ class FacaFestaApp extends StatelessWidget {
               evento: args?['evento'],
             );
           },
-          middlewares: [PapelMiddleware(tiposPermitidos: const ['C'])],
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['C'])
+          ],
         ),
       ],
       builder: (context, child) {
@@ -362,6 +373,7 @@ void _registerControllers() {
   AutenticacaoBootstrap.register();
   ConvidadoBootstrap.register();
   PerfilUsuarioBootstrap.register();
+  ServicoProdutoBootstrap.register();
   Get.lazyPut<AppController>(() => AppController(), fenix: true);
   EventoBootstrap.register();
   Get.put(EventThemeController(), permanent: true);
