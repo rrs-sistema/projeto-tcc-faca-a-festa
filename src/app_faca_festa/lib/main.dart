@@ -46,7 +46,6 @@ import 'core/services/push/notification_service.dart';
 import './presentation/pages/home_event_screen.dart';
 import 'controllers/fornecedor/fornecedor_controller.dart';
 import './controllers/orcamento_controller.dart';
-import 'controllers/ranking_controller.dart';
 import './presentation/widgets/splash.dart';
 import './controllers/app_controller.dart';
 import './role_selector_screen.dart';
@@ -67,6 +66,7 @@ import 'app/bootstrap/orcamentos_admin_bootstrap.dart';
 import 'app/bootstrap/evento_bootstrap.dart';
 import 'app/bootstrap/convidado_bootstrap.dart';
 import 'app/bootstrap/perfil_usuario_bootstrap.dart';
+import 'app/bootstrap/ranking_bootstrap.dart';
 import 'app/bootstrap/servico_produto_bootstrap.dart';
 import 'app/bootstrap/autenticacao_bootstrap.dart';
 import 'app/bootstrap/comunidade_bootstrap.dart';
@@ -376,6 +376,7 @@ void _registerControllers() {
   PerfilUsuarioBootstrap.register();
   ComunidadeBootstrap.register();
   AvaliacaoServicoBootstrap.register();
+  RankingBootstrap.register();
   ServicoProdutoBootstrap.register();
   AdminDashboardBootstrap.register();
   EventosAdminBootstrap.register();
@@ -421,7 +422,6 @@ void _registerControllers() {
   Get.put(ServicoFotoController(), permanent: true);
   Get.put(EnderecoUsuarioController(), permanent: true);
   Get.put(UsuarioController(), permanent: true);
-  Get.put(RankingController(), permanent: true);
   Get.put(InspiracaoController(), permanent: true);
   Get.put(CalculadoraFestaController(), permanent: true);
   Get.lazyPut<ICalculadoraFestaAIService>(

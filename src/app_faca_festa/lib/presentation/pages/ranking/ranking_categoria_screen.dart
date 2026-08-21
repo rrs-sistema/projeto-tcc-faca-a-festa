@@ -2,7 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/ranking_controller.dart';
+import '../../../app/bootstrap/ranking_bootstrap.dart';
 
 class RankingCategoriaScreen extends StatelessWidget {
   final String idSubcategoria;
@@ -14,7 +14,7 @@ class RankingCategoriaScreen extends StatelessWidget {
     required this.titulo,
   });
 
-  final controller = Get.put(RankingController());
+  final controller = RankingBootstrap.findController();
 
   @override
   Widget build(BuildContext context) {
