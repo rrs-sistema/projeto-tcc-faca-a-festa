@@ -5,7 +5,6 @@
 
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -28,11 +27,17 @@ import '../../data/models/fornecedor/avaliacao_servico_model.dart';
 import '../../data/services/fornecedor_ai_service.dart';
 import '../../data/services/fornecedor_ai_generativa_service.dart';
 import '../../data/models/model.dart';
+import '../../domain/repositories/autenticacao_repository.dart';
 import '../app_controller.dart';
 
 class FornecedorController extends GetxController {
+  FornecedorController({
+    AutenticacaoRepository? autenticacaoRepository,
+  }) : _autenticacaoRepository = autenticacaoRepository;
+
   final _db = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
+  final AutenticacaoRepository? _autenticacaoRepository;
 
   /// 🔹 Dados principais do fornecedor logado
   final Rx<FornecedorModel?> fornecedor = Rx<FornecedorModel?>(null);
@@ -49,14 +54,17 @@ class FornecedorController extends GetxController {
       <FornecedorProdutoServicoModel>[].obs;
 
   /// 🔹 Catálogo global (`servico_produto`)
-  final RxList<ServicoProdutoModel> catalogoServicos = <ServicoProdutoModel>[].obs;
+  final RxList<ServicoProdutoModel> catalogoServicos =
+      <ServicoProdutoModel>[].obs;
 
   /// 🔹 Fotos dos serviços (`servico_foto`)
   final RxList<ServicoFotoModel> fotosServico = <ServicoFotoModel>[].obs;
 
-  final RxList<CategoriaServicoModel> categorias = <CategoriaServicoModel>[].obs;
+  final RxList<CategoriaServicoModel> categorias =
+      <CategoriaServicoModel>[].obs;
 
-  final RxList<SubcategoriaServicoModel> subCategorias = <SubcategoriaServicoModel>[].obs;
+  final RxList<SubcategoriaServicoModel> subCategorias =
+      <SubcategoriaServicoModel>[].obs;
 
   final categoriasServico = <Map<String, dynamic>>[].obs;
   final subcategoriasServico = <Map<String, dynamic>>[].obs;
@@ -88,8 +96,10 @@ class FornecedorController extends GetxController {
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
 
-  int get totalAptos => fornecedores.where((f) => f.ativo && f.aptoParaOperar).length;
-  int get totalPendentes => fornecedores.where((f) => f.ativo && !f.aptoParaOperar).length;
+  int get totalAptos =>
+      fornecedores.where((f) => f.ativo && f.aptoParaOperar).length;
+  int get totalPendentes =>
+      fornecedores.where((f) => f.ativo && !f.aptoParaOperar).length;
   int get totalInativos => fornecedores.where((f) => !f.ativo).length;
   late AppController appController; // 🔹 Define, mas sem inicializar aqui
 
@@ -117,7 +127,8 @@ class FornecedorController extends GetxController {
       FornecedorAiGenerativaService();
 
   /// Cache local em memória por cotação. Não grava no Firestore.
-  final RxMap<String, SugestaoRespostaCotacaoAiModel> sugestoesRespostaCotacaoAi =
+  final RxMap<String, SugestaoRespostaCotacaoAiModel>
+      sugestoesRespostaCotacaoAi =
       <String, SugestaoRespostaCotacaoAiModel>{}.obs;
 
   /// Loading individual por cotação. Evita bloquear todos os cards.
@@ -126,17 +137,21 @@ class FornecedorController extends GetxController {
   /// Loading geral para algum painel que queira observar a geração.
   final RxBool isLoadingRespostaCotacaoAi = false.obs;
 
-  final Rxn<ProximaAcaoFornecedorModel> proximaAcaoFornecedor = Rxn<ProximaAcaoFornecedorModel>();
+  final Rxn<ProximaAcaoFornecedorModel> proximaAcaoFornecedor =
+      Rxn<ProximaAcaoFornecedorModel>();
 
-  final RxList<InsightFornecedorModel> insightsFornecedor = <InsightFornecedorModel>[].obs;
+  final RxList<InsightFornecedorModel> insightsFornecedor =
+      <InsightFornecedorModel>[].obs;
 
   /// Score calculado por cotação. Chave: idCotacao.
   final RxMap<String, ScoreCotacaoFornecedorModel> scoresCotacoes =
       <String, ScoreCotacaoFornecedorModel>{}.obs;
 
-  final Rxn<ResumoReputacaoFornecedorModel> resumoReputacao = Rxn<ResumoReputacaoFornecedorModel>();
+  final Rxn<ResumoReputacaoFornecedorModel> resumoReputacao =
+      Rxn<ResumoReputacaoFornecedorModel>();
 
-  final RxList<InsightFornecedorModel> alertasPerfil = <InsightFornecedorModel>[].obs;
+  final RxList<InsightFornecedorModel> alertasPerfil =
+      <InsightFornecedorModel>[].obs;
 
   final RxBool isLoadingAi = false.obs;
 
@@ -197,7 +212,8 @@ class FornecedorController extends GetxController {
   Future<void> ouvirMensagensNaoLidas(String idFornecedor) async {
     if (idFornecedor.trim().isEmpty) return;
 
-    debugPrint('\n📡 [MSG] Iniciando listener de mensagens NÃO lidas para $idFornecedor');
+    debugPrint(
+        '\n📡 [MSG] Iniciando listener de mensagens NÃO lidas para $idFornecedor');
 
     await _fornecedorCotacoesSub?.cancel();
     for (final listener in _mensagemListeners) {
@@ -236,8 +252,8 @@ class FornecedorController extends GetxController {
             .snapshots()
             .listen((msgSnap) {
           _mensagensNaoLidasPorCotacao[idCotacao] = msgSnap.docs.length;
-          mensagensNaoLidas.value =
-              _mensagensNaoLidasPorCotacao.values.fold<int>(0, (total, item) => total + item);
+          mensagensNaoLidas.value = _mensagensNaoLidasPorCotacao.values
+              .fold<int>(0, (total, item) => total + item);
         }, onError: (e) {
           debugPrint('❌ Erro ao escutar mensagens da cotação $idCotacao: $e');
         });
@@ -251,8 +267,8 @@ class FornecedorController extends GetxController {
       for (final idCotacao in removidas) {
         _mensagensNaoLidasPorCotacao.remove(idCotacao);
       }
-      mensagensNaoLidas.value =
-          _mensagensNaoLidasPorCotacao.values.fold<int>(0, (total, item) => total + item);
+      mensagensNaoLidas.value = _mensagensNaoLidasPorCotacao.values
+          .fold<int>(0, (total, item) => total + item);
     }, onError: (e) {
       debugPrint('❌ Erro ao escutar cotações do fornecedor para mensagens: $e');
     });
@@ -340,8 +356,9 @@ class FornecedorController extends GetxController {
           .get();
 
       // 4️⃣ Converter o resultado em lista de modelos
-      final servicos =
-          servSnap.docs.map((d) => ServicoProdutoModel.fromMap({'id': d.id, ...d.data()})).toList();
+      final servicos = servSnap.docs
+          .map((d) => ServicoProdutoModel.fromMap({'id': d.id, ...d.data()}))
+          .toList();
 
       return servicos;
     } catch (e, s) {
@@ -353,7 +370,10 @@ class FornecedorController extends GetxController {
   /// 🔹 Atualiza os dados de um fornecedor existente no Firestore
   Future<void> atualizarFornecedor(FornecedorModel fornecedor) async {
     try {
-      await _db.collection('fornecedor').doc(fornecedor.idFornecedor).update(fornecedor.toMap());
+      await _db
+          .collection('fornecedor')
+          .doc(fornecedor.idFornecedor)
+          .update(fornecedor.toMap());
     } catch (e) {
       throw Exception("Erro ao atualizar fornecedor: $e");
     }
@@ -366,7 +386,7 @@ class FornecedorController extends GetxController {
     Uint8List? bytesWeb,
     String? uid,
   }) async {
-    final userId = uid ?? FirebaseAuth.instance.currentUser?.uid;
+    final userId = uid ?? _idUsuarioAtual;
     if (userId == null || userId.isEmpty) {
       throw Exception(
         'É preciso estar autenticado para enviar o banner.',
@@ -379,15 +399,22 @@ class FornecedorController extends GetxController {
           'banners_fornecedores/$userId/${DateTime.now().millisecondsSinceEpoch}_$nomeArquivo';
       final Reference ref = _storage.ref().child(fileName);
 
-      final UploadTask uploadTask = bytesWeb != null
-          ? ref.putData(bytesWeb)
-          : ref.putFile(imageFile);
+      final UploadTask uploadTask =
+          bytesWeb != null ? ref.putData(bytesWeb) : ref.putFile(imageFile);
       final TaskSnapshot snapshot = await uploadTask;
 
       return await snapshot.ref.getDownloadURL();
     } catch (e) {
       throw Exception("Erro ao enviar banner: $e");
     }
+  }
+
+  String? get _idUsuarioAtual {
+    if (_autenticacaoRepository != null) {
+      return _autenticacaoRepository.idUsuarioAtual;
+    }
+    if (!Get.isRegistered<AutenticacaoRepository>()) return null;
+    return Get.find<AutenticacaoRepository>().idUsuarioAtual;
   }
 
   Future<void> carregarTodosFornecedores() async {
@@ -409,10 +436,13 @@ class FornecedorController extends GetxController {
         if (a.ativo != b.ativo) return b.ativo ? 1 : -1;
 
         // 2️⃣ Depois, aprovados primeiro
-        if (a.aptoParaOperar != b.aptoParaOperar) return b.aptoParaOperar ? 1 : -1;
+        if (a.aptoParaOperar != b.aptoParaOperar)
+          return b.aptoParaOperar ? 1 : -1;
 
         // 3️⃣ Por fim, ordem alfabética
-        return a.razaoSocial.toLowerCase().compareTo(b.razaoSocial.toLowerCase());
+        return a.razaoSocial
+            .toLowerCase()
+            .compareTo(b.razaoSocial.toLowerCase());
       });
 
       fornecedores.value = listaFornecedores;
@@ -427,8 +457,9 @@ class FornecedorController extends GetxController {
             : null;
         if (tipo == 'A') {
           final endSnap = await _db.collectionGroup('enderecos').get();
-          enderecos.value =
-              endSnap.docs.map((d) => EnderecoUsuarioModel.fromMap(d.data())).toList();
+          enderecos.value = endSnap.docs
+              .map((d) => EnderecoUsuarioModel.fromMap(d.data()))
+              .toList();
         }
       } catch (e) {
         debugPrint('❌ Erro ao carregar endereços via collectionGroup: $e');
@@ -438,8 +469,9 @@ class FornecedorController extends GetxController {
       // 🔸 Categorias do fornecedor
       // ================================
       final catSnap = await _db.collection('fornecedor_categoria').get();
-      categoriasFornecedor.value =
-          catSnap.docs.map((d) => FornecedorCategoriaModel.fromMap(d.data())).toList();
+      categoriasFornecedor.value = catSnap.docs
+          .map((d) => FornecedorCategoriaModel.fromMap(d.data()))
+          .toList();
 
       // ================================
       // 🔸 Categorias principais
@@ -466,14 +498,16 @@ class FornecedorController extends GetxController {
           .map((d) => {
                 'id': d.data()['id'] ?? d.id,
                 'nome': d.data()['nome'],
-                'id_categoria': d.data()['id_categoria'] ?? d.data()['idCategoria'],
+                'id_categoria':
+                    d.data()['id_categoria'] ?? d.data()['idCategoria'],
                 'descricao': d.data()['descricao'],
                 'ativo': d.data()['ativo'],
               })
           .toList();
 
       subCategorias.value = subcatSnap.docs
-          .map((d) => SubcategoriaServicoModel.fromMap(d.data(), documentId: d.id))
+          .map((d) =>
+              SubcategoriaServicoModel.fromMap(d.data(), documentId: d.id))
           .toList();
 
       final servicosSnap = await _db.collection('fornecedor_servico').get();
@@ -483,9 +517,12 @@ class FornecedorController extends GetxController {
         final idDoc = doc.id;
 
         // 🔹 Captura os dois padrões de campos (camelCase e snake_case)
-        final idFornecedor = data['id_fornecedor'] ?? data['idFornecedor'] ?? '';
-        final idProdutoServico = data['id_produto_servico'] ?? data['idProdutoServico'] ?? '';
-        final idSubcategoria = data['id_subcategoria'] ?? data['idSubcategoria'];
+        final idFornecedor =
+            data['id_fornecedor'] ?? data['idFornecedor'] ?? '';
+        final idProdutoServico =
+            data['id_produto_servico'] ?? data['idProdutoServico'] ?? '';
+        final idSubcategoria =
+            data['id_subcategoria'] ?? data['idSubcategoria'];
         final preco = (data['preco'] as num?)?.toDouble() ?? 0.0;
         final precoPromocao = (data['preco_promocao'] as num?)?.toDouble();
         final ativo = data['ativo'] ?? true;
@@ -498,7 +535,8 @@ class FornecedorController extends GetxController {
           preco: preco,
           precoPromocao: precoPromocao,
           ativo: ativo,
-          dataCadastro: FornecedorProdutoServicoModel.toDateTime(data['data_cadastro']),
+          dataCadastro:
+              FornecedorProdutoServicoModel.toDateTime(data['data_cadastro']),
         );
       }).toList();
 
@@ -558,30 +596,43 @@ class FornecedorController extends GetxController {
   List<FornecedorModel> get fornecedoresFiltrados {
     final resultado = fornecedores.where((f) {
       // 🔹 Busca endereço e categoria vinculados
-      final endereco = enderecos.firstWhereOrNull((e) => e.idUsuario == f.idUsuario);
+      final endereco =
+          enderecos.firstWhereOrNull((e) => e.idUsuario == f.idUsuario);
       final cat = categoriasFornecedor
           .firstWhereOrNull((c) => c.idFornecedor == f.idFornecedor)
           ?.idCategoria;
 
       // 🔹 Avalia filtros
       final matchNome = filtroNome.value.isEmpty ||
-          f.razaoSocial.toLowerCase().contains(filtroNome.value.toLowerCase()) ||
-          (f.descricao?.toLowerCase().contains(filtroNome.value.toLowerCase()) ?? false) ||
+          f.razaoSocial
+              .toLowerCase()
+              .contains(filtroNome.value.toLowerCase()) ||
+          (f.descricao
+                  ?.toLowerCase()
+                  .contains(filtroNome.value.toLowerCase()) ??
+              false) ||
           f.email.toLowerCase().contains(filtroNome.value.toLowerCase());
 
       final matchCidade = filtroCidade.value == null ||
-          (endereco?.nomeCidade?.toLowerCase().contains(filtroCidade.value!.toLowerCase()) ??
+          (endereco?.nomeCidade
+                  ?.toLowerCase()
+                  .contains(filtroCidade.value!.toLowerCase()) ??
               false);
 
-      final matchCategoria = filtroCategoria.value == null || cat == filtroCategoria.value;
+      final matchCategoria =
+          filtroCategoria.value == null || cat == filtroCategoria.value;
 
-      final matchStatusAprovacao =
-          filtroAprovado.value == null || f.aptoParaOperar == filtroAprovado.value;
+      final matchStatusAprovacao = filtroAprovado.value == null ||
+          f.aptoParaOperar == filtroAprovado.value;
 
-      final matchStatusAtivo = filtroAtivo.value == null || f.ativo == filtroAtivo.value;
+      final matchStatusAtivo =
+          filtroAtivo.value == null || f.ativo == filtroAtivo.value;
 
-      final passou =
-          matchNome && matchCidade && matchCategoria && matchStatusAprovacao && matchStatusAtivo;
+      final passou = matchNome &&
+          matchCidade &&
+          matchCategoria &&
+          matchStatusAprovacao &&
+          matchStatusAtivo;
 
       return passou;
     }).toList();
@@ -589,7 +640,10 @@ class FornecedorController extends GetxController {
   }
 
   String cidadeDoFornecedor(FornecedorModel f) {
-    return enderecos.firstWhereOrNull((e) => e.idUsuario == f.idUsuario)?.nomeCidade ?? '';
+    return enderecos
+            .firstWhereOrNull((e) => e.idUsuario == f.idUsuario)
+            ?.nomeCidade ??
+        '';
   }
 
   List<String> nomesCategoriasDoFornecedor(FornecedorModel f) {
@@ -602,14 +656,17 @@ class FornecedorController extends GetxController {
   }
 
   int servicosDoFornecedor(FornecedorModel f) {
-    return allServicosFornecedor.where((s) => s.idFornecedor == f.idFornecedor).length;
+    return allServicosFornecedor
+        .where((s) => s.idFornecedor == f.idFornecedor)
+        .length;
   }
 
   void ordenarFornecedores() {
     final lista = [...fornecedores];
     switch (ordenacaoSelecionada.value) {
       case 'nome':
-        lista.sort((a, b) => a.razaoSocial.toLowerCase().compareTo(b.razaoSocial.toLowerCase()));
+        lista.sort((a, b) =>
+            a.razaoSocial.toLowerCase().compareTo(b.razaoSocial.toLowerCase()));
         break;
       case 'recentes':
         lista.sort((a, b) => (b.dataCadastro).compareTo(a.dataCadastro));
@@ -617,8 +674,11 @@ class FornecedorController extends GetxController {
       default:
         lista.sort((a, b) {
           if (a.ativo != b.ativo) return b.ativo ? 1 : -1;
-          if (a.aptoParaOperar != b.aptoParaOperar) return b.aptoParaOperar ? 1 : -1;
-          return a.razaoSocial.toLowerCase().compareTo(b.razaoSocial.toLowerCase());
+          if (a.aptoParaOperar != b.aptoParaOperar)
+            return b.aptoParaOperar ? 1 : -1;
+          return a.razaoSocial
+              .toLowerCase()
+              .compareTo(b.razaoSocial.toLowerCase());
         });
     }
     fornecedores.assignAll(lista);
@@ -633,7 +693,10 @@ class FornecedorController extends GetxController {
 
   Future<void> desativarFornecedor(String idFornecedor) async {
     try {
-      await _db.collection('fornecedor').doc(idFornecedor).update({'ativo': false});
+      await _db
+          .collection('fornecedor')
+          .doc(idFornecedor)
+          .update({'ativo': false});
       fornecedores.removeWhere((f) => f.idFornecedor == idFornecedor);
     } catch (e) {
       debugPrint('❌ Erro ao desativar fornecedor $idFornecedor: $e');
@@ -672,8 +735,12 @@ class FornecedorController extends GetxController {
 
   Future<void> ativarFornecedor(String idFornecedor) async {
     try {
-      await _db.collection('fornecedor').doc(idFornecedor).update({'ativo': true});
-      final f = fornecedores.firstWhereOrNull((x) => x.idFornecedor == idFornecedor);
+      await _db
+          .collection('fornecedor')
+          .doc(idFornecedor)
+          .update({'ativo': true});
+      final f =
+          fornecedores.firstWhereOrNull((x) => x.idFornecedor == idFornecedor);
       if (f != null) {
         fornecedores[fornecedores.indexOf(f)] = f.copyWith(ativo: true);
       }
@@ -691,8 +758,10 @@ class FornecedorController extends GetxController {
       erro.value = '';
 
       // 🔹 Busca orçamentos relacionados
-      final orcamentosSnap =
-          await _db.collection('orcamento').where('id_evento', isEqualTo: idEvento).get();
+      final orcamentosSnap = await _db
+          .collection('orcamento')
+          .where('id_evento', isEqualTo: idEvento)
+          .get();
 
       if (orcamentosSnap.docs.isEmpty) {
         servicosFornecedor.clear();
@@ -748,7 +817,8 @@ class FornecedorController extends GetxController {
   // ==========================================================
   Future<void> escutarServicosFornecedor(String idFornecedor) async {
     if (idFornecedor.trim().isEmpty) return;
-    if (_servicosEscutandoId == idFornecedor && _servicosFornecedorSub != null) return;
+    if (_servicosEscutandoId == idFornecedor && _servicosFornecedorSub != null)
+      return;
 
     await _servicosFornecedorSub?.cancel();
     _servicosEscutandoId = idFornecedor;
@@ -767,8 +837,11 @@ class FornecedorController extends GetxController {
 
       servicosFornecedor.assignAll(lista);
 
-      final ids =
-          lista.map((e) => e.idProdutoServico).where((id) => id.trim().isNotEmpty).toSet().toList();
+      final ids = lista
+          .map((e) => e.idProdutoServico)
+          .where((id) => id.trim().isNotEmpty)
+          .toSet()
+          .toList();
 
       await carregarCatalogoServicos();
       await carregarFotosServicos(ids, idFornecedor);
@@ -885,7 +958,10 @@ class FornecedorController extends GetxController {
   // === 🔹 Carrega catálogo de serviços (coleção: servico_produto)
   // ==========================================================
   Future<void> carregarCatalogoServicos() async {
-    final snapshot = await _db.collection('servico_produto').where('ativo', isEqualTo: true).get();
+    final snapshot = await _db
+        .collection('servico_produto')
+        .where('ativo', isEqualTo: true)
+        .get();
 
     final lista = snapshot.docs.map((d) {
       return ServicoProdutoModel.fromMap({
@@ -900,8 +976,10 @@ class FornecedorController extends GetxController {
   // ==========================================================
   // === 🔹 Carrega fotos dos serviços
   // ==========================================================
-  Future<void> carregarFotosServicos(List<String> idsProdutoServico, String idFornecedor) async {
-    final idsUnicos = idsProdutoServico.where((id) => id.trim().isNotEmpty).toSet().toList();
+  Future<void> carregarFotosServicos(
+      List<String> idsProdutoServico, String idFornecedor) async {
+    final idsUnicos =
+        idsProdutoServico.where((id) => id.trim().isNotEmpty).toSet().toList();
 
     if (idsUnicos.isEmpty || idFornecedor.trim().isEmpty) {
       fotosServico.clear();
@@ -922,7 +1000,8 @@ class FornecedorController extends GetxController {
             .where('id_fornecedor', isEqualTo: idFornecedor)
             .get();
 
-        fotos.addAll(snapshot.docs.map((d) => ServicoFotoModel.fromMap(d.data())));
+        fotos.addAll(
+            snapshot.docs.map((d) => ServicoFotoModel.fromMap(d.data())));
       }
 
       fotosServico.assignAll(fotos);
@@ -950,7 +1029,8 @@ class FornecedorController extends GetxController {
     String acao = 'solicitar',
     String? idOrcamento,
   }) async {
-    final servicoProduto = buscarServicoPorId(servicoFornecedor.idProdutoServico);
+    final servicoProduto =
+        buscarServicoPorId(servicoFornecedor.idProdutoServico);
     if (servicoProduto == null) {
       Get.snackbar(
         "Serviço não encontrado",
@@ -1065,20 +1145,25 @@ class FornecedorController extends GetxController {
 
       final principal = lista.first;
       final idPrincipal = principal.id;
-      final dataPrincipal = Map<String, dynamic>.from(principal.data() as Map<String, dynamic>);
+      final dataPrincipal =
+          Map<String, dynamic>.from(principal.data() as Map<String, dynamic>);
       final subcategoriasPrincipais =
           List<Map<String, dynamic>>.from(dataPrincipal['subcategorias'] ?? []);
 
-      print('🧩 Unificando duplicatas para fornecedor_categoria [$idPrincipal]');
+      print(
+          '🧩 Unificando duplicatas para fornecedor_categoria [$idPrincipal]');
 
       // 🔹 Mescla subcategorias das duplicatas
       for (final duplicada in lista.skip(1)) {
-        final dataDup = Map<String, dynamic>.from(duplicada.data() as Map<String, dynamic>);
-        final subs = List<Map<String, dynamic>>.from(dataDup['subcategorias'] ?? []);
+        final dataDup =
+            Map<String, dynamic>.from(duplicada.data() as Map<String, dynamic>);
+        final subs =
+            List<Map<String, dynamic>>.from(dataDup['subcategorias'] ?? []);
 
         for (final sub in subs) {
           final idSub = sub['idSubcategoria'];
-          final jaExiste = subcategoriasPrincipais.any((s) => s['idSubcategoria'] == idSub);
+          final jaExiste =
+              subcategoriasPrincipais.any((s) => s['idSubcategoria'] == idSub);
           if (!jaExiste) {
             subcategoriasPrincipais.add(sub);
             print('   ➕ Subcategoria adicionada: ${sub['nomeSubcategoria']}');
@@ -1114,8 +1199,10 @@ class FornecedorController extends GetxController {
 
     try {
       // === 🔹 Solicitações pendentes / em negociação ===
-      final orcSnap =
-          await _db.collection('orcamento').where('id_fornecedor', isEqualTo: f.idFornecedor).get();
+      final orcSnap = await _db
+          .collection('orcamento')
+          .where('id_fornecedor', isEqualTo: f.idFornecedor)
+          .get();
 
       final pendentes = orcSnap.docs.where((d) {
         final status = d['status']?.toString().toLowerCase();
@@ -1129,8 +1216,8 @@ class FornecedorController extends GetxController {
           .where('id_fornecedor', isEqualTo: f.idFornecedor)
           .where('ativo', isEqualTo: true)
           .get();
-      servicosFornecedor
-          .assignAll(servSnap.docs.map((d) => FornecedorProdutoServicoModel.fromMap(d.data())));
+      servicosFornecedor.assignAll(servSnap.docs
+          .map((d) => FornecedorProdutoServicoModel.fromMap(d.data())));
 
       // === 🔹 Mensagens não lidas ===
       final msgSnap = await _db
@@ -1147,7 +1234,9 @@ class FornecedorController extends GetxController {
           .get();
 
       if (avalSnap.docs.isNotEmpty) {
-        final soma = avalSnap.docs.map((d) => (d['nota'] ?? 0).toDouble()).reduce((a, b) => a + b);
+        final soma = avalSnap.docs
+            .map((d) => (d['nota'] ?? 0).toDouble())
+            .reduce((a, b) => a + b);
         avaliacaoMedia.value = soma / avalSnap.docs.length;
       } else {
         avaliacaoMedia.value = 0;
@@ -1157,7 +1246,8 @@ class FornecedorController extends GetxController {
     }
   }
 
-  Future<List<Map<String, dynamic>>> buscarSolicitacoesPendentesDetalhadas() async {
+  Future<List<Map<String, dynamic>>>
+      buscarSolicitacoesPendentesDetalhadas() async {
     final f = fornecedor.value;
     if (f == null) return [];
 
@@ -1200,7 +1290,6 @@ class FornecedorController extends GetxController {
     return resultado;
   }
 
-
   // =============================================================
   // 🔸 IA GENERATIVA - resposta sugerida para cotação
   // =============================================================
@@ -1236,7 +1325,9 @@ class FornecedorController extends GetxController {
     }
 
     final cached = sugestoesRespostaCotacaoAi[idCotacao];
-    if (!forceRefresh && cached != null && cached.respostaSugerida.trim().isNotEmpty) {
+    if (!forceRefresh &&
+        cached != null &&
+        cached.respostaSugerida.trim().isNotEmpty) {
       return cached;
     }
 
@@ -1261,7 +1352,8 @@ class FornecedorController extends GetxController {
       final input = _montarCotacaoInputParaIa(solicitacao);
       final eventoCotacao = await _buscarEventoParaRespostaAi(input.idEvento);
 
-      final sugestao = await _fornecedorAiGenerativaService.gerarSugestaoRespostaCotacao(
+      final sugestao =
+          await _fornecedorAiGenerativaService.gerarSugestaoRespostaCotacao(
         fornecedor: fornecedorAtual,
         evento: eventoCotacao,
         cotacao: input,
@@ -1328,7 +1420,12 @@ class FornecedorController extends GetxController {
 
     final valorReferencia = _readCotacaoDouble(
       solicitacao,
-      const ['valorEstimadoTotal', 'valor_estimado_total', 'valorReferencia', 'valor_referencia'],
+      const [
+        'valorEstimadoTotal',
+        'valor_estimado_total',
+        'valorReferencia',
+        'valor_referencia'
+      ],
     );
 
     return FornecedorAiCotacaoInput(
@@ -1340,7 +1437,12 @@ class FornecedorController extends GetxController {
       idFornecedor: fornecedor.value?.idFornecedor,
       idOrganizador: _readCotacaoString(
         solicitacao,
-        const ['idUsuarioSolicitante', 'id_usuario_solicitante', 'idOrganizador', 'id_organizador'],
+        const [
+          'idUsuarioSolicitante',
+          'id_usuario_solicitante',
+          'idOrganizador',
+          'id_organizador'
+        ],
       ),
       categoriaSolicitada: categoria,
       subcategoriaSolicitada: subcategoria,
@@ -1826,9 +1928,12 @@ class FornecedorController extends GetxController {
       cotacoes.length.toString(),
       eventos.length.toString(),
       interacoes.length.toString(),
-      servicos.map((s) => '${s.id}:${s.ativo}:${s.preco}:${s.precoPromocao ?? ''}').join('|'),
+      servicos
+          .map((s) => '${s.id}:${s.ativo}:${s.preco}:${s.precoPromocao ?? ''}')
+          .join('|'),
       cotacoes
-          .map((c) => '${c.idCotacao}:${c.statusCotacao ?? ''}:${c.valorReferencia ?? ''}')
+          .map((c) =>
+              '${c.idCotacao}:${c.statusCotacao ?? ''}:${c.valorReferencia ?? ''}')
           .join('|'),
     ];
 
@@ -1865,7 +1970,8 @@ class FornecedorController extends GetxController {
     final scoreAtual = atual.score ?? 0;
     final scoreCandidata = candidata.score ?? 0;
 
-    if (candidata.prioridade == atual.prioridade && scoreCandidata > scoreAtual) {
+    if (candidata.prioridade == atual.prioridade &&
+        scoreCandidata > scoreAtual) {
       return candidata;
     }
 
@@ -1875,7 +1981,8 @@ class FornecedorController extends GetxController {
   List<InsightFornecedorModel> _ordenarInsights(
     List<InsightFornecedorModel> insights,
   ) {
-    final filtrados = insights.where((item) => item.titulo.trim().isNotEmpty).toList();
+    final filtrados =
+        insights.where((item) => item.titulo.trim().isNotEmpty).toList();
 
     filtrados.sort((a, b) {
       final prioridadeCompare = b.prioridade.compareTo(a.prioridade);
@@ -1920,7 +2027,8 @@ class FornecedorController extends GetxController {
     String idFornecedor,
     ResumoReputacaoFornecedorModel reputacao,
   ) {
-    final prioridade = reputacao.totalAvaliacoes < 5 || reputacao.mediaGeral < 4 ? 4 : 2;
+    final prioridade =
+        reputacao.totalAvaliacoes < 5 || reputacao.mediaGeral < 4 ? 4 : 2;
 
     return InsightFornecedorModel(
       idInsight: 'insight_reputacao_$idFornecedor',
@@ -1989,7 +2097,8 @@ class FornecedorController extends GetxController {
   FornecedorAiCotacaoInput? _cotacaoInputFromSolicitacaoMap(
     Map<String, dynamic> data,
   ) {
-    final idCotacao = (data['idCotacao'] ?? data['id_cotacao'] ?? '').toString();
+    final idCotacao =
+        (data['idCotacao'] ?? data['id_cotacao'] ?? '').toString();
 
     if (idCotacao.trim().isEmpty) return null;
 
@@ -1997,10 +2106,12 @@ class FornecedorController extends GetxController {
       idCotacao: idCotacao,
       idEvento: data['idEvento']?.toString() ?? data['id_evento']?.toString(),
       idFornecedor: fornecedor.value?.idFornecedor,
-      idOrganizador:
-          data['idUsuarioSolicitante']?.toString() ?? data['id_usuario_solicitante']?.toString(),
-      categoriaSolicitada: data['categoriaNome']?.toString() ?? data['categoria_nome']?.toString(),
-      mensagemCliente: data['descricao']?.toString() ?? data['observacao']?.toString(),
+      idOrganizador: data['idUsuarioSolicitante']?.toString() ??
+          data['id_usuario_solicitante']?.toString(),
+      categoriaSolicitada: data['categoriaNome']?.toString() ??
+          data['categoria_nome']?.toString(),
+      mensagemCliente:
+          data['descricao']?.toString() ?? data['observacao']?.toString(),
       statusCotacao: data['status']?.toString() ?? 'pendente',
       valorReferencia: _toDoubleOrNull(
         data['valorEstimadoTotal'] ?? data['valor_estimado_total'],
