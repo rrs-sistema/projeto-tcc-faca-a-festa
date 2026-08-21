@@ -1,12 +1,20 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
+
 import 'package:get/get.dart';
 
 import './../data/models/comunidade/comunidade_post_model.dart';
+import '../domain/usecases/gerenciar_comunidade.dart';
 
 class ComunidadeController extends GetxController {
+  ComunidadeController({required GerenciarComunidade comunidade})
+      : _comunidade = comunidade;
+
+  final GerenciarComunidade _comunidade;
+
   final posts = <ComunidadePostModel>[].obs;
   final loading = false.obs;
-  final _db = FirebaseFirestore.instance;
+
+  StreamSubscription<List<ComunidadePostModel>>? _postsSubscription;
 
   @override
   void onInit() {
@@ -15,26 +23,23 @@ class ComunidadeController extends GetxController {
   }
 
   void _carregarPosts() {
-    _db.collection('posts').orderBy('data', descending: true).snapshots().listen((snap) {
-      posts.value = snap.docs.map((d) => ComunidadePostModel.fromFirestore(d)).toList();
+    _postsSubscription?.cancel();
+    _postsSubscription = _comunidade.observarPosts().listen((lista) {
+      posts.value = lista;
     });
   }
 
   Future<void> adicionarPost(String texto, {String? imagem}) async {
-    await _db.collection('posts').add({
-      'autor': 'Usuário Atual',
-      'texto': texto,
-      'imagem': imagem,
-      'data': Timestamp.now(),
-      'curtidas': 0,
-    });
+    await _comunidade.adicionarPost(texto, imagem: imagem);
   }
 
   Future<void> adicionarComentario(String postId, String texto) async {
-    await _db.collection('posts').doc(postId).collection('comentarios').add({
-      'autor': 'Usuário Atual',
-      'texto': texto,
-      'data': Timestamp.now(),
-    });
+    await _comunidade.adicionarComentario(postId, texto);
+  }
+
+  @override
+  void onClose() {
+    _postsSubscription?.cancel();
+    super.onClose();
   }
 }
