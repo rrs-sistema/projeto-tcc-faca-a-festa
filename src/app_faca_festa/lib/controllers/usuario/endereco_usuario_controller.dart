@@ -1,14 +1,19 @@
 import '../../data/models/endereco/endereco.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:convert';
 
+import '../../domain/repositories/cep_repository.dart';
 import '../../domain/repositories/perfil_usuario_repository.dart';
 
 class EnderecoUsuarioController extends GetxController {
-  final PerfilUsuarioRepository _perfilRepository =
-      Get.find<PerfilUsuarioRepository>();
+  EnderecoUsuarioController({
+    required PerfilUsuarioRepository perfilRepository,
+    required CepRepository cepRepository,
+  })  : _perfilRepository = perfilRepository,
+        _cepRepository = cepRepository;
+
+  final PerfilUsuarioRepository _perfilRepository;
+  final CepRepository _cepRepository;
 
   final enderecoPrincipal = Rxn<EnderecoUsuarioModel>();
   final carregando = false.obs;
@@ -74,20 +79,24 @@ class EnderecoUsuarioController extends GetxController {
         uf: uf,
       );
 
-      Get.snackbar(
-        'Endereço atualizado',
-        'Seu endereço principal foi salvo com sucesso.',
-        backgroundColor: Colors.green.shade600,
-        colorText: Colors.white,
-      );
+      if (!Get.testMode) {
+        Get.snackbar(
+          'Endereço atualizado',
+          'Seu endereço principal foi salvo com sucesso.',
+          backgroundColor: Colors.green.shade600,
+          colorText: Colors.white,
+        );
+      }
     } catch (e) {
       debugPrint('❌ Erro ao salvar endereço principal: $e');
-      Get.snackbar(
-        'Erro',
-        'Falha ao salvar endereço.',
-        backgroundColor: Colors.red.shade700,
-        colorText: Colors.white,
-      );
+      if (!Get.testMode) {
+        Get.snackbar(
+          'Erro',
+          'Falha ao salvar endereço.',
+          backgroundColor: Colors.red.shade700,
+          colorText: Colors.white,
+        );
+      }
     } finally {
       carregando.value = false;
     }
@@ -96,16 +105,7 @@ class EnderecoUsuarioController extends GetxController {
   // 🔹 Busca dados do CEP usando ViaCEP
   Future<Map<String, dynamic>?> buscarCep(String cep) async {
     try {
-      final url = Uri.parse('https://viacep.com.br/ws/$cep/json/');
-      final response = await http.get(url);
-
-      if (response.statusCode != 200) return null;
-
-      final data = jsonDecode(response.body);
-
-      if (data['erro'] == true) return null;
-
-      return data;
+      return _cepRepository.buscarCep(cep);
     } catch (e) {
       debugPrint('❌ Erro ao buscar CEP: $e');
       return null;

@@ -46,6 +46,7 @@ import './controllers/app_controller.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
 import 'data/repositories/calculadora/calculadora_itens_base_repository.dart';
+import 'data/repositories/viacep_repository.dart';
 import 'data/datasources/remote/catalogo_servico_remote_datasource.dart';
 import 'data/repositories_impl/catalogo_servico_repository_impl.dart';
 import 'data/repositories/evento/calculadora_festa_remote_ai_service.dart';
@@ -74,7 +75,9 @@ import 'app/bootstrap/comunidade_bootstrap.dart';
 import 'app/bootstrap/uf_cidade_bootstrap.dart';
 import 'app/middleware/papel_middleware.dart';
 import 'domain/repositories/catalogo_servico_repository.dart';
+import 'domain/repositories/cep_repository.dart';
 import 'domain/repositories/evento_repository.dart';
+import 'domain/repositories/perfil_usuario_repository.dart';
 import 'domain/usecases/gerenciar_catalogo_servico.dart';
 import 'domain/usecases/gerenciar_temas_festa.dart';
 
@@ -431,7 +434,14 @@ void _registerControllers() {
     permanent: true,
   );
   Get.put(CotacaoController(), permanent: true);
-  Get.put(EnderecoUsuarioController(), permanent: true);
+  Get.lazyPut<CepRepository>(() => ViaCepRepository(), fenix: true);
+  Get.put(
+    EnderecoUsuarioController(
+      perfilRepository: Get.find<PerfilUsuarioRepository>(),
+      cepRepository: Get.find<CepRepository>(),
+    ),
+    permanent: true,
+  );
   Get.put(UsuarioController(), permanent: true);
   Get.put(InspiracaoController(), permanent: true);
   Get.put(CalculadoraFestaController(), permanent: true);
