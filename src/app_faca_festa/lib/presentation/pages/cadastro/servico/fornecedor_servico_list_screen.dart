@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/servico/servico_foto_controller.dart';
+import '../../../../app/bootstrap/servico_foto_bootstrap.dart';
 import './../../../../core/utils/no_sqflite_cache_manager.dart';
 import '../../../../controllers/tema/event_theme_controller.dart';
 import '../../../../controllers/fornecedor/fornecedor_controller.dart';
@@ -18,11 +18,13 @@ class FornecedorServicoListScreen extends StatefulWidget {
   const FornecedorServicoListScreen({super.key, required this.fornecedor});
 
   @override
-  State<FornecedorServicoListScreen> createState() => _FornecedorServicoListScreenState();
+  State<FornecedorServicoListScreen> createState() =>
+      _FornecedorServicoListScreenState();
 }
 
-class _FornecedorServicoListScreenState extends State<FornecedorServicoListScreen> {
-  final fotoController = Get.put(ServicoFotoController());
+class _FornecedorServicoListScreenState
+    extends State<FornecedorServicoListScreen> {
+  final fotoController = ServicoFotoBootstrap.findController();
   final controller = Get.put(FornecedorController());
   final theme = Get.find<EventThemeController>();
 
@@ -45,30 +47,34 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
         appBar: AppBar(
           elevation: 4,
           automaticallyImplyLeading: false,
-          flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
+          flexibleSpace:
+              Container(decoration: BoxDecoration(gradient: gradient)),
           title: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white),
                 onPressed: () => Navigator.pop(context),
               ),
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: CircleAvatar(
                   radius: 20,
-                  child:
-                      widget.fornecedor.bannerUrl != null && widget.fornecedor.bannerUrl!.isNotEmpty
-                          ? CachedNetworkImage(
-                              imageUrl: widget.fornecedor.bannerUrl!,
-                              cacheManager: AdaptiveCacheManager.instance,
-                              fit: BoxFit.cover,
-                              placeholder: (_, __) => Container(color: Colors.grey.shade300),
-                              errorWidget: (_, __, ___) => _bannerPlaceholder(primary),
-                              memCacheHeight: 250,
-                              memCacheWidth: 250,
-                              fadeInDuration: const Duration(milliseconds: 250),
-                            )
-                          : _bannerPlaceholder(primary),
+                  child: widget.fornecedor.bannerUrl != null &&
+                          widget.fornecedor.bannerUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: widget.fornecedor.bannerUrl!,
+                          cacheManager: AdaptiveCacheManager.instance,
+                          fit: BoxFit.cover,
+                          placeholder: (_, __) =>
+                              Container(color: Colors.grey.shade300),
+                          errorWidget: (_, __, ___) =>
+                              _bannerPlaceholder(primary),
+                          memCacheHeight: 250,
+                          memCacheWidth: 250,
+                          fadeInDuration: const Duration(milliseconds: 250),
+                        )
+                      : _bannerPlaceholder(primary),
                 ),
               ),
               const SizedBox(width: 12),
@@ -170,7 +176,8 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
                       await fotoController.carregarFotos(
                           widget.fornecedor.idFornecedor, s.idProdutoServico);
                       await EasyLoading.dismiss();
-                      FornecedorProdutoServicoModel vinculo = FornecedorProdutoServicoModel(
+                      FornecedorProdutoServicoModel vinculo =
+                          FornecedorProdutoServicoModel(
                         id: s.idProdutoServico,
                         idProdutoServico: s.idProdutoServico,
                         idFornecedor: s.idFornecedor,
@@ -191,8 +198,8 @@ class _FornecedorServicoListScreenState extends State<FornecedorServicoListScree
         }),
         floatingActionButton: FloatingActionButton(
           backgroundColor: primary,
-          onPressed: () =>
-              showFornecedorServicoBottomSheet(context, widget.fornecedor.idFornecedor),
+          onPressed: () => showFornecedorServicoBottomSheet(
+              context, widget.fornecedor.idFornecedor),
           child: const Icon(Icons.add),
         ),
       );

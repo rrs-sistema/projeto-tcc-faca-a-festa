@@ -10,8 +10,8 @@ import '../../../widgets/festa_app_bar.dart';
 import '../../../widgets/admin/admin_kit.dart';
 import '../../../../controllers/tema/admin_theme.dart';
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import './../../../../controllers/servico/servico_foto_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
+import '../../../../app/bootstrap/servico_foto_bootstrap.dart';
 import '../../../../app/bootstrap/servico_produto_bootstrap.dart';
 import './../fornecedor/fornecedor_servico_bottom_sheet.dart';
 import '../../../../controllers/fornecedor/fornecedor_controller.dart';
@@ -33,7 +33,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
   final Map<String, double> _cacheMedias = {};
   final controller = ServicoProdutoBootstrap.findController();
   final fornecedorController = Get.find<FornecedorController>();
-  final fotoController = Get.put(ServicoFotoController());
+  final fotoController = ServicoFotoBootstrap.findController();
   final servicoController = ServicoProdutoBootstrap.findController();
   final appController = Get.put(AppController());
 

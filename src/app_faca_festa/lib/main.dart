@@ -27,7 +27,6 @@ import 'controllers/calculadora/calculadora_festa_controller.dart';
 import 'controllers/inspiracao/inspiracao_controller.dart';
 import 'controllers/sugestao_base_festa_controller.dart';
 import 'controllers/usuario/endereco_usuario_controller.dart';
-import './controllers/servico/servico_foto_controller.dart';
 import './presentation/pages/convidado/convidado_page.dart';
 import './presentation/pages/login/register_screen.dart';
 import './presentation/pages/login/forgot_password_screen.dart';
@@ -66,6 +65,7 @@ import 'app/bootstrap/evento_bootstrap.dart';
 import 'app/bootstrap/convidado_bootstrap.dart';
 import 'app/bootstrap/perfil_usuario_bootstrap.dart';
 import 'app/bootstrap/ranking_bootstrap.dart';
+import 'app/bootstrap/servico_foto_bootstrap.dart';
 import 'app/bootstrap/servico_produto_bootstrap.dart';
 import 'app/bootstrap/solicitacoes_bootstrap.dart';
 import 'app/bootstrap/autenticacao_bootstrap.dart';
@@ -379,6 +379,7 @@ void _registerControllers() {
   AvaliacaoServicoBootstrap.register();
   RankingBootstrap.register();
   UfCidadeBootstrap.register();
+  ServicoFotoBootstrap.register();
   ServicoProdutoBootstrap.register();
   SolicitacoesBootstrap.register();
   AdminDashboardBootstrap.register();
@@ -421,7 +422,6 @@ void _registerControllers() {
     permanent: true,
   );
   Get.put(CotacaoController(), permanent: true);
-  Get.put(ServicoFotoController(), permanent: true);
   Get.put(EnderecoUsuarioController(), permanent: true);
   Get.put(UsuarioController(), permanent: true);
   Get.put(InspiracaoController(), permanent: true);

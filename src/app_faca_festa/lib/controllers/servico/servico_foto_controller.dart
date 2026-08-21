@@ -1,5 +1,3 @@
-import 'package:firebase_storage/firebase_storage.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -7,22 +5,30 @@ import 'package:get/get.dart';
 import 'dart:io';
 
 import '../../data/models/servico_produto/servico_foto_model.dart';
+import '../../domain/usecases/gerenciar_servico_fotos.dart';
 
 class ServicoFotoController extends GetxController {
+  ServicoFotoController({
+    required GerenciarServicoFotos fotosServico,
+    ImagePicker? picker,
+  })  : _fotosServico = fotosServico,
+        picker = picker ?? ImagePicker();
+
+  final GerenciarServicoFotos _fotosServico;
   final fotos = <ServicoFotoModel>[].obs;
-  final picker = ImagePicker();
+  final ImagePicker picker;
 
   // ============================================================
   // 🔹 Carrega fotos de um serviço específico
   // ============================================================
-  Future<void> carregarFotos(String idFornecedor, String idProdutoServico) async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('servico_foto')
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .where('id_produto_servico', isEqualTo: idProdutoServico)
-        .get();
-
-    fotos.value = snapshot.docs.map((d) => ServicoFotoModel.fromMap(d.data())).toList();
+  Future<void> carregarFotos(
+    String idFornecedor,
+    String idProdutoServico,
+  ) async {
+    fotos.value = await _fotosServico.carregarFotos(
+      idFornecedor: idFornecedor,
+      idProdutoServico: idProdutoServico,
+    );
   }
 
   // ============================================================
@@ -34,7 +40,10 @@ class ServicoFotoController extends GetxController {
   }) async {
     try {
       if (kIsWeb) {
-        Get.snackbar('Não suportado', 'Upload de imagem não disponível no navegador.');
+        _mostrarSnackbar(
+          'Não suportado',
+          'Upload de imagem não disponível no navegador.',
+        );
         return;
       }
 
@@ -44,37 +53,38 @@ class ServicoFotoController extends GetxController {
       final file = File(picked.path);
       final nomeArquivo = picked.name;
 
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('servicos')
-          .child(idFornecedor)
-          .child(idProdutoServico)
-          .child(nomeArquivo);
-
-      final uploadTask = await ref.putFile(file);
-      final downloadUrl = await uploadTask.ref.getDownloadURL();
-
-      final foto = ServicoFotoModel(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
+      final foto = await _fotosServico.adicionarFotoArquivo(
         idFornecedor: idFornecedor,
         idProdutoServico: idProdutoServico,
-        url: downloadUrl,
+        arquivo: file,
+        nomeArquivo: nomeArquivo,
       );
 
-      await FirebaseFirestore.instance.collection('servico_foto').doc(foto.id).set(foto.toMap());
       fotos.add(foto);
 
-      Get.snackbar('Sucesso', 'Imagem enviada com sucesso', backgroundColor: Colors.green.shade50);
+      _mostrarSnackbar(
+        'Sucesso',
+        'Imagem enviada com sucesso',
+        backgroundColor: Colors.green.shade50,
+      );
     } catch (e) {
-      Get.snackbar('Erro ao enviar', e.toString(), backgroundColor: Colors.red.shade100);
+      _mostrarSnackbar(
+        'Erro ao enviar',
+        e.toString(),
+        backgroundColor: Colors.red.shade100,
+      );
     }
   }
 
   Future<void> adicionarFotoDireto(ServicoFotoModel foto) async {
-    await FirebaseFirestore.instance.collection('servico_foto').doc(foto.id).set(foto.toMap());
+    await _fotosServico.adicionarFotoDireto(foto);
     fotos.add(foto);
-    Get.snackbar('Imagem adicionada', 'A URL foi vinculada com sucesso',
-        snackPosition: SnackPosition.BOTTOM, backgroundColor: Colors.green.shade50);
+    _mostrarSnackbar(
+      'Imagem adicionada',
+      'A URL foi vinculada com sucesso',
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.green.shade50,
+    );
   }
 
   // ============================================================
@@ -82,11 +92,7 @@ class ServicoFotoController extends GetxController {
   // ============================================================
   Future<void> removerFoto(ServicoFotoModel foto) async {
     try {
-      await FirebaseFirestore.instance.collection('servico_foto').doc(foto.id).delete();
-
-      // Apaga também do Storage
-      final ref = FirebaseStorage.instance.refFromURL(foto.url);
-      await ref.delete();
+      await _fotosServico.removerFoto(foto);
 
       fotos.remove(foto);
     } catch (e) {
@@ -94,5 +100,22 @@ class ServicoFotoController extends GetxController {
         print('Erro ao remover foto: $e');
       }
     }
+  }
+
+  void _mostrarSnackbar(
+    String titulo,
+    String mensagem, {
+    SnackPosition? snackPosition,
+    Color? backgroundColor,
+  }) {
+    if (Get.testMode) return;
+    if (Get.context == null && Get.overlayContext == null) return;
+
+    Get.snackbar(
+      titulo,
+      mensagem,
+      snackPosition: snackPosition,
+      backgroundColor: backgroundColor,
+    );
   }
 }

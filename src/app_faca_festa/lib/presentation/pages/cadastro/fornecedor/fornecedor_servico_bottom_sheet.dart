@@ -9,7 +9,7 @@ import './../../../../data/models/servico_produto/subcategoria_servico_model.dar
 import './../../../../controllers/categoria/subcategoria_servico_controller.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
 import './../../../../controllers/categoria/categoria_servico_controller.dart';
-import './../../../../controllers/servico/servico_foto_controller.dart';
+import '../../../../app/bootstrap/servico_foto_bootstrap.dart';
 import '../../../../data/models/servico_produto/servico_foto_model.dart';
 import '../../../../controllers/servico/servico_produto_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
@@ -27,13 +27,14 @@ Future<void> showFornecedorServicoBottomSheet(
   final categoriaController = Get.find<CategoriaServicoController>();
   final subcategoriaController = Get.find<SubcategoriaServicoController>();
   final servicoController = Get.find<ServicoProdutoController>();
-  final fotoController = Get.put(ServicoFotoController());
+  final fotoController = ServicoFotoBootstrap.findController();
 
   final primary = themeController.primaryColor.value;
 
-  final precoCtrl = TextEditingController(text: vinculo?.preco.toStringAsFixed(2) ?? '');
-  final promocaoCtrl =
-      TextEditingController(text: vinculo?.precoPromocao?.toStringAsFixed(2) ?? '');
+  final precoCtrl =
+      TextEditingController(text: vinculo?.preco.toStringAsFixed(2) ?? '');
+  final promocaoCtrl = TextEditingController(
+      text: vinculo?.precoPromocao?.toStringAsFixed(2) ?? '');
   final urlController = TextEditingController();
 
   final categoriaSelecionada = Rxn<CategoriaServicoModel>();
@@ -42,20 +43,24 @@ Future<void> showFornecedorServicoBottomSheet(
   final ativo = (vinculo?.ativo ?? true).obs;
 
   // --- Carregar listas
-  if (categoriaController.categorias.isEmpty) await categoriaController.carregarCategorias();
+  if (categoriaController.categorias.isEmpty) {
+    await categoriaController.carregarCategorias();
+  }
   if (subcategoriaController.subcategorias.isEmpty) {
     await subcategoriaController.carregarSubcategorias();
   }
-  if (servicoController.servicos.isEmpty) await servicoController.carregarServicos();
+  if (servicoController.servicos.isEmpty) {
+    await servicoController.carregarServicos();
+  }
 
   // --- Se edição, preencher
   if (vinculo != null) {
-    final servico =
-        servicoController.servicos.firstWhereOrNull((s) => s.id == vinculo.idProdutoServico);
-    final subcategoria = subcategoriaController.subcategorias
-        .firstWhereOrNull((s) => s.id == (servico?.idSubcategoria ?? vinculo.idSubcategoria));
-    final categoria =
-        categoriaController.categorias.firstWhereOrNull((c) => c.id == subcategoria?.idCategoria);
+    final servico = servicoController.servicos
+        .firstWhereOrNull((s) => s.id == vinculo.idProdutoServico);
+    final subcategoria = subcategoriaController.subcategorias.firstWhereOrNull(
+        (s) => s.id == (servico?.idSubcategoria ?? vinculo.idSubcategoria));
+    final categoria = categoriaController.categorias
+        .firstWhereOrNull((c) => c.id == subcategoria?.idCategoria);
     categoriaSelecionada.value = categoria;
     subcategoriaSelecionada.value = subcategoria;
     servicoSelecionado.value = servico;
@@ -106,9 +111,11 @@ Future<void> showFornecedorServicoBottomSheet(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(30)),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
                   child: Row(
                     children: [
                       Container(
@@ -124,10 +131,12 @@ Future<void> showFornecedorServicoBottomSheet(
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          TituloVinculoAnimado(isEdicao: vinculo != null, primary: primary),
+                          TituloVinculoAnimado(
+                              isEdicao: vinculo != null, primary: primary),
                           Text(
                             'Preencha os dados do serviço com atenção',
-                            style: GoogleFonts.poppins(color: Colors.white70, fontSize: 13),
+                            style: GoogleFonts.poppins(
+                                color: Colors.white70, fontSize: 13),
                           ),
                         ],
                       ),
@@ -142,7 +151,8 @@ Future<void> showFornecedorServicoBottomSheet(
                   value: categoriaSelecionada.value,
                   decoration: decor('Categoria', Icons.category_outlined),
                   items: categoriaController.categorias
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c.nome)))
+                      .map((c) =>
+                          DropdownMenuItem(value: c, child: Text(c.nome)))
                       .toList(),
                   onChanged: (val) async {
                     categoriaSelecionada.value = val;
@@ -152,7 +162,8 @@ Future<void> showFornecedorServicoBottomSheet(
                     servicoSelecionado.value = null;
 
                     if (val != null) {
-                      await subcategoriaController.carregarSubcategorias(val.id);
+                      await subcategoriaController
+                          .carregarSubcategorias(val.id);
                     }
                   },
                 ),
@@ -171,7 +182,8 @@ Future<void> showFornecedorServicoBottomSheet(
                         ? [] // sem itens
                         : subcategoriaController.subcategorias
                             .where((s) => s.idCategoria == categoria.id)
-                            .map((s) => DropdownMenuItem(value: s, child: Text(s.nome)))
+                            .map((s) =>
+                                DropdownMenuItem(value: s, child: Text(s.nome)))
                             .toList(),
 
                     onChanged: categoria == null
@@ -186,10 +198,13 @@ Future<void> showFornecedorServicoBottomSheet(
 
                 DropdownButtonFormField<ServicoProdutoModel>(
                   value: servicoSelecionado.value,
-                  decoration: decor('Serviço / Produto', Icons.work_outline_rounded),
+                  decoration:
+                      decor('Serviço / Produto', Icons.work_outline_rounded),
                   items: servicoController.servicos
-                      .where((s) => s.idSubcategoria == subcategoriaSelecionada.value?.id)
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s.nome)))
+                      .where((s) =>
+                          s.idSubcategoria == subcategoriaSelecionada.value?.id)
+                      .map((s) =>
+                          DropdownMenuItem(value: s, child: Text(s.nome)))
                       .toList(),
                   onChanged: (val) => servicoSelecionado.value = val,
                 ),
@@ -199,7 +214,8 @@ Future<void> showFornecedorServicoBottomSheet(
                 // --- Card de preços e status ---
                 Card(
                   elevation: 2,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16)),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Column(
@@ -224,7 +240,8 @@ Future<void> showFornecedorServicoBottomSheet(
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Serviço ativo', style: GoogleFonts.poppins(fontSize: 15)),
+                            Text('Serviço ativo',
+                                style: GoogleFonts.poppins(fontSize: 15)),
                             Switch(
                                 value: ativo.value,
                                 activeColor: primary,
@@ -241,7 +258,8 @@ Future<void> showFornecedorServicoBottomSheet(
                 // --- Imagens ---
                 if (servicoSelecionado.value != null) ...[
                   Text('Imagens do serviço',
-                      style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 16)),
+                      style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600, fontSize: 16)),
                   const SizedBox(height: 12),
                   Obx(() {
                     final fotos = fotoController.fotos;
@@ -253,9 +271,11 @@ Future<void> showFornecedorServicoBottomSheet(
                           color: Colors.grey.shade100,
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: Text('Nenhuma imagem ainda.\nAdicione fotos atrativas!',
+                        child: Text(
+                            'Nenhuma imagem ainda.\nAdicione fotos atrativas!',
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.poppins(color: Colors.grey.shade600)),
+                            style: GoogleFonts.poppins(
+                                color: Colors.grey.shade600)),
                       );
                     }
                     return SizedBox(
@@ -275,21 +295,24 @@ Future<void> showFornecedorServicoBottomSheet(
                                   ClipRRect(
                                     borderRadius: BorderRadius.circular(16),
                                     child: Image.network(f.url,
-                                        width: 130, height: 120, fit: BoxFit.cover),
+                                        width: 130,
+                                        height: 120,
+                                        fit: BoxFit.cover),
                                   ),
                                   Positioned(
                                     top: 6,
                                     right: 6,
                                     child: InkWell(
-                                      onTap: () => fotoController.removerFoto(f),
+                                      onTap: () =>
+                                          fotoController.removerFoto(f),
                                       child: Container(
                                         decoration: BoxDecoration(
                                           color: Colors.black45,
                                           shape: BoxShape.circle,
                                         ),
                                         padding: const EdgeInsets.all(4),
-                                        child:
-                                            const Icon(Icons.close, color: Colors.white, size: 16),
+                                        child: const Icon(Icons.close,
+                                            color: Colors.white, size: 16),
                                       ),
                                     ),
                                   ),
@@ -304,30 +327,36 @@ Future<void> showFornecedorServicoBottomSheet(
                   const SizedBox(height: 16),
                   TextField(
                     controller: urlController,
-                    decoration: decor('Cole o link da imagem (URL)', Icons.link_rounded),
+                    decoration: decor(
+                        'Cole o link da imagem (URL)', Icons.link_rounded),
                   ),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
                         child: ElevatedButton.icon(
-                          icon: const Icon(Icons.add_link_rounded, color: Colors.white),
+                          icon: const Icon(Icons.add_link_rounded,
+                              color: Colors.white),
                           label: const Text('Adicionar via URL',
                               style: TextStyle(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primary,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           onPressed: () async {
                             final url = urlController.text.trim();
                             if (url.isEmpty) {
-                              Get.snackbar('Atenção', 'Informe uma URL válida antes de salvar');
+                              Get.snackbar('Atenção',
+                                  'Informe uma URL válida antes de salvar');
                               return;
                             }
                             EasyLoading.show(status: 'Processando...');
                             final novaFoto = ServicoFotoModel(
-                              id: DateTime.now().millisecondsSinceEpoch.toString(),
+                              id: DateTime.now()
+                                  .millisecondsSinceEpoch
+                                  .toString(),
                               idProdutoServico: servicoSelecionado.value!.id,
                               idFornecedor: idFornecedor,
                               url: url,
@@ -342,12 +371,14 @@ Future<void> showFornecedorServicoBottomSheet(
                       const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton.icon(
-                          icon: const Icon(Icons.add_a_photo_outlined, color: Colors.white),
+                          icon: const Icon(Icons.add_a_photo_outlined,
+                              color: Colors.white),
                           label: const Text('Enviar do dispositivo',
                               style: TextStyle(color: Colors.white)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.indigo.shade400,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
                           onPressed: () async {
@@ -372,14 +403,17 @@ Future<void> showFornecedorServicoBottomSheet(
                     icon: const Icon(Icons.save_rounded, color: Colors.white),
                     label: const Text(
                       'Salvar',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
                       elevation: 3,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
                     ),
                     onPressed: () async {
                       if (servicoSelecionado.value == null) {
@@ -404,7 +438,8 @@ Future<void> showFornecedorServicoBottomSheet(
                       }
                       EasyLoading.show(status: 'Salvando as informações...');
                       final vinculoNovo = FornecedorProdutoServicoModel(
-                        id: vinculo?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+                        id: vinculo?.id ??
+                            DateTime.now().millisecondsSinceEpoch.toString(),
                         idProdutoServico: servicoSelecionado.value!.id,
                         idSubcategoria: subcategoriaSelecionada.value!.id,
                         idFornecedor: idFornecedor,
@@ -424,16 +459,20 @@ Future<void> showFornecedorServicoBottomSheet(
                 SizedBox(
                   width: double.infinity,
                   child: TextButton.icon(
-                    icon: const Icon(Icons.exit_to_app_rounded, color: Colors.white),
+                    icon: const Icon(Icons.exit_to_app_rounded,
+                        color: Colors.white),
                     label: const Text(
                       'Sair',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white),
                     ),
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.grey.shade400,
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
                       backgroundColor: Colors.grey.shade400,
                     ),
                     onPressed: () => Get.back(),
