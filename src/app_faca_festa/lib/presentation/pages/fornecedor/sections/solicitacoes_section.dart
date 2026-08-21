@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../app/bootstrap/solicitacoes_bootstrap.dart';
 import '../../../../controllers/fornecedor/fornecedor_controller.dart';
 import './../../../../controllers/contacao/solicitacoes_controller.dart';
 import '../../../../data/models/fornecedor_intelligence/sugestao_resposta_cotacao_ai_model.dart';
@@ -25,11 +26,13 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
   void initState() {
     super.initState();
     fornecedorController = Get.find<FornecedorController>();
-    solicitacoesController = Get.put(SolicitacoesController(), permanent: false);
+    solicitacoesController = SolicitacoesBootstrap.findController();
   }
 
   void _inicializarSeNecessario(String? idFornecedor) {
-    if (idFornecedor == null || idFornecedor.isEmpty || _fornecedorInicializado == idFornecedor) {
+    if (idFornecedor == null ||
+        idFornecedor.isEmpty ||
+        _fornecedorInicializado == idFornecedor) {
       return;
     }
 
@@ -64,14 +67,17 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
       }
 
       final lista = solicitacoesController.solicitacoes;
-      final quentes = fornecedorController.scoresCotacoes.values.where((s) => s.score >= 75).length;
+      final quentes = fornecedorController.scoresCotacoes.values
+          .where((s) => s.score >= 75)
+          .length;
 
       return _CotacoesShell(
         total: lista.length,
         quentes: quentes,
         onAtualizarIa: lista.isEmpty
             ? null
-            : () => fornecedorController.carregarAiDasSolicitacoesPendentes(forceRefresh: true),
+            : () => fornecedorController.carregarAiDasSolicitacoesPendentes(
+                forceRefresh: true),
         child: lista.isEmpty
             ? const _MensagemEstado(
                 icon: Icons.inbox_outlined,
@@ -93,7 +99,8 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
                       children: List.generate(lista.length, (index) {
                         return SizedBox(
                           width: itemWidth,
-                          child: _buildCotacaoCard(context, lista[index], index),
+                          child:
+                              _buildCotacaoCard(context, lista[index], index),
                         );
                       }),
                     );
@@ -115,9 +122,11 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
 
   Widget _buildCotacaoCard(BuildContext context, dynamic item, int index) {
     final idCotacao =
-        _readString(item, const ['idCotacao', 'id_cotacao', 'id']) ?? 'cotacao_$index';
+        _readString(item, const ['idCotacao', 'id_cotacao', 'id']) ??
+            'cotacao_$index';
     final score = fornecedorController.scoresCotacoes[idCotacao];
-    final isGerando = fornecedorController.isGerandoRespostaCotacaoAi(idCotacao);
+    final isGerando =
+        fornecedorController.isGerandoRespostaCotacaoAi(idCotacao);
 
     return _CotacaoInteligenteCard(
       solicitacao: item,
@@ -130,7 +139,8 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
       onGerarResposta: isGerando
           ? null
           : () async {
-              final sugestao = await fornecedorController.gerarRespostaCotacaoComIa(
+              final sugestao =
+                  await fornecedorController.gerarRespostaCotacaoComIa(
                 solicitacao: item,
                 forceRefresh: true,
               );
@@ -143,7 +153,8 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
   }
 
   void _abrirResponderCotacao(BuildContext context, dynamic solicitacao) {
-    final idCotacao = _readString(solicitacao, const ['id', 'idCotacao', 'id_cotacao']) ?? '';
+    final idCotacao =
+        _readString(solicitacao, const ['id', 'idCotacao', 'id_cotacao']) ?? '';
 
     if (idCotacao.trim().isEmpty) {
       Get.snackbar(
@@ -170,13 +181,23 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
           'Sem descrição',
       nomeSolicitante: _readString(
             solicitacao,
-            const ['nomeUsuarioSolicitante', 'nome_usuario_solicitante', 'nomeSolicitante', 'nome'],
+            const [
+              'nomeUsuarioSolicitante',
+              'nome_usuario_solicitante',
+              'nomeSolicitante',
+              'nome'
+            ],
           ) ??
           'Organizador',
       dataLimite: _formatarDataCotacao(
         _readDate(
           solicitacao,
-          const ['dataCadastro', 'data_cadastro', 'dataSolicitacao', 'data_solicitacao'],
+          const [
+            'dataCadastro',
+            'data_cadastro',
+            'dataSolicitacao',
+            'data_solicitacao'
+          ],
         ),
       ),
       ofertaDesejada: _readDouble(
@@ -233,16 +254,19 @@ class _RespostaCotacaoAiBottomSheet extends StatefulWidget {
   });
 
   @override
-  State<_RespostaCotacaoAiBottomSheet> createState() => _RespostaCotacaoAiBottomSheetState();
+  State<_RespostaCotacaoAiBottomSheet> createState() =>
+      _RespostaCotacaoAiBottomSheetState();
 }
 
-class _RespostaCotacaoAiBottomSheetState extends State<_RespostaCotacaoAiBottomSheet> {
+class _RespostaCotacaoAiBottomSheetState
+    extends State<_RespostaCotacaoAiBottomSheet> {
   late final TextEditingController _mensagemController;
 
   @override
   void initState() {
     super.initState();
-    _mensagemController = TextEditingController(text: widget.sugestao.respostaSugerida);
+    _mensagemController =
+        TextEditingController(text: widget.sugestao.respostaSugerida);
   }
 
   @override
@@ -294,10 +318,12 @@ class _RespostaCotacaoAiBottomSheetState extends State<_RespostaCotacaoAiBottomS
             return SingleChildScrollView(
               controller: widget.scrollController,
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: EdgeInsets.fromLTRB(horizontal, 10, horizontal, 18 + bottom),
+              padding:
+                  EdgeInsets.fromLTRB(horizontal, 10, horizontal, 18 + bottom),
               child: Center(
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: isWide ? 900 : double.infinity),
+                  constraints:
+                      BoxConstraints(maxWidth: isWide ? 900 : double.infinity),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -325,7 +351,8 @@ class _RespostaCotacaoAiBottomSheetState extends State<_RespostaCotacaoAiBottomS
                               icon: Icons.edit_note_rounded,
                               title: 'Resposta sugerida',
                               action: TextButton.icon(
-                                onPressed: () => _copiar(_mensagemController.text),
+                                onPressed: () =>
+                                    _copiar(_mensagemController.text),
                                 icon: const Icon(Icons.copy_rounded, size: 16),
                                 label: const Text('Copiar'),
                               ),
@@ -342,16 +369,18 @@ class _RespostaCotacaoAiBottomSheetState extends State<_RespostaCotacaoAiBottomS
                                 hintText: 'Edite a resposta antes de enviar...',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  borderSide: const BorderSide(
+                                      color: Color(0xFFE2E8F0)),
                                 ),
                                 enabledBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                                  borderSide: const BorderSide(
+                                      color: Color(0xFFE2E8F0)),
                                 ),
                                 focusedBorder: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(16),
-                                  borderSide:
-                                      const BorderSide(color: Color(0xFF6366F1), width: 1.4),
+                                  borderSide: const BorderSide(
+                                      color: Color(0xFF6366F1), width: 1.4),
                                 ),
                               ),
                               style: GoogleFonts.poppins(
@@ -378,7 +407,9 @@ class _RespostaCotacaoAiBottomSheetState extends State<_RespostaCotacaoAiBottomS
                           children: [
                             Expanded(child: _versaoCurtaCard(sugestao)),
                             const SizedBox(width: 10),
-                            Expanded(child: _confiancaCard(sugestao, confiancaColor)),
+                            Expanded(
+                                child:
+                                    _confiancaCard(sugestao, confiancaColor)),
                           ],
                         )
                       else ...[
@@ -397,14 +428,16 @@ class _RespostaCotacaoAiBottomSheetState extends State<_RespostaCotacaoAiBottomS
                             icon: const Icon(Icons.copy_rounded, size: 17),
                             label: Text(
                               'Copiar resposta',
-                              style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w800, fontSize: 12),
                             ),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF4F46E5),
                               side: const BorderSide(color: Color(0xFFC7D2FE)),
-                              shape:
-                                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 13, horizontal: 14),
                             ),
                           );
 
@@ -413,22 +446,28 @@ class _RespostaCotacaoAiBottomSheetState extends State<_RespostaCotacaoAiBottomS
                             icon: const Icon(Icons.reply_rounded, size: 17),
                             label: Text(
                               'Revisar e responder',
-                              style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w800, fontSize: 12),
                             ),
                             style: ElevatedButton.styleFrom(
                               elevation: 0,
                               backgroundColor: const Color(0xFF111827),
                               foregroundColor: Colors.white,
-                              shape:
-                                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                              padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 14),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14)),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 13, horizontal: 14),
                             ),
                           );
 
                           if (compact) {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [copiar, const SizedBox(height: 8), responder],
+                              children: [
+                                copiar,
+                                const SizedBox(height: 8),
+                                responder
+                              ],
                             );
                           }
 
@@ -471,8 +510,8 @@ class _RespostaCotacaoAiBottomSheetState extends State<_RespostaCotacaoAiBottomS
             sugestao.versaoCurta.trim().isEmpty
                 ? 'Sem versão curta disponível.'
                 : sugestao.versaoCurta,
-            style:
-                GoogleFonts.poppins(fontSize: 12.2, height: 1.42, color: const Color(0xFF334155)),
+            style: GoogleFonts.poppins(
+                fontSize: 12.2, height: 1.42, color: const Color(0xFF334155)),
           ),
         ],
       ),
@@ -524,7 +563,8 @@ class _RespostaCotacaoAiBottomSheetState extends State<_RespostaCotacaoAiBottomS
     );
   }
 
-  Widget _listasInfoResponsive(SugestaoRespostaCotacaoAiModel sugestao, bool isWide) {
+  Widget _listasInfoResponsive(
+      SugestaoRespostaCotacaoAiModel sugestao, bool isWide) {
     final cards = <Widget>[
       _InfoListCard(
         icon: Icons.fact_check_outlined,
@@ -597,7 +637,8 @@ class _BottomSheetHeader extends StatelessWidget {
   final String confianca;
   final Color confiancaColor;
 
-  const _BottomSheetHeader({required this.confianca, required this.confiancaColor});
+  const _BottomSheetHeader(
+      {required this.confianca, required this.confiancaColor});
 
   @override
   Widget build(BuildContext context) {
@@ -619,7 +660,8 @@ class _BottomSheetHeader extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(15),
             ),
-            child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 22),
+            child: const Icon(Icons.auto_awesome_rounded,
+                color: Colors.white, size: 22),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -718,8 +760,8 @@ class _CotacoesShell extends StatelessWidget {
                       color: const Color(0xFFEEF2FF),
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child:
-                        const Icon(Icons.receipt_long_rounded, color: Color(0xFF4F46E5), size: 20),
+                    child: const Icon(Icons.receipt_long_rounded,
+                        color: Color(0xFF4F46E5), size: 20),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -741,8 +783,8 @@ class _CotacoesShell extends StatelessWidget {
                           'Priorize oportunidades e responda com segurança.',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style:
-                              GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF6B7280)),
+                          style: GoogleFonts.poppins(
+                              fontSize: 11.5, color: const Color(0xFF6B7280)),
                         ),
                       ],
                     ),
@@ -770,12 +812,14 @@ class _CotacoesShell extends StatelessWidget {
                         icon: const Icon(Icons.auto_awesome_rounded, size: 15),
                         label: Text(
                           'Calcular IA',
-                          style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w800),
+                          style: GoogleFonts.poppins(
+                              fontSize: 11, fontWeight: FontWeight.w800),
                         ),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: const Color(0xFF4F46E5),
                           side: const BorderSide(color: Color(0xFFC7D2FE)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(11)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(11)),
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                         ),
                       ),
@@ -792,7 +836,11 @@ class _CotacoesShell extends StatelessWidget {
 
               return Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [Expanded(child: header), const SizedBox(width: 12), chips],
+                children: [
+                  Expanded(child: header),
+                  const SizedBox(width: 12),
+                  chips
+                ],
               );
             },
           ),
@@ -836,7 +884,12 @@ class _CotacaoInteligenteCard extends StatelessWidget {
         'Cotação';
     final solicitante = _readString(
           solicitacao,
-          const ['nomeUsuarioSolicitante', 'nome_usuario_solicitante', 'nomeSolicitante', 'nome'],
+          const [
+            'nomeUsuarioSolicitante',
+            'nome_usuario_solicitante',
+            'nomeSolicitante',
+            'nome'
+          ],
         ) ??
         'Organizador';
     final descricao = _readString(
@@ -846,7 +899,12 @@ class _CotacaoInteligenteCard extends StatelessWidget {
         'Solicitação aguardando resposta.';
     final valor = _readDouble(
       solicitacao,
-      const ['valorEstimadoTotal', 'valor_estimado_total', 'valorReferencia', 'valor_referencia'],
+      const [
+        'valorEstimadoTotal',
+        'valor_estimado_total',
+        'valorReferencia',
+        'valor_referencia'
+      ],
     );
 
     final color = _scoreColor(score);
@@ -951,7 +1009,9 @@ class _CotacaoInteligenteCard extends StatelessWidget {
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
-                  children: reasons.map((r) => _ReasonPill(text: r, color: color)).toList(),
+                  children: reasons
+                      .map((r) => _ReasonPill(text: r, color: color))
+                      .toList(),
                 ),
               ],
               const SizedBox(height: 10),
@@ -1024,7 +1084,8 @@ class _CompactActionButton extends StatelessWidget {
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w900),
+            style:
+                GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w900),
           ),
         ),
       ],
@@ -1038,7 +1099,8 @@ class _CompactActionButton extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF4F46E5),
                 side: const BorderSide(color: Color(0xFFC7D2FE)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(horizontal: 10),
               ),
               child: child,
@@ -1049,7 +1111,8 @@ class _CompactActionButton extends StatelessWidget {
                 elevation: 0,
                 backgroundColor: const Color(0xFF111827),
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
               child: child,
@@ -1066,7 +1129,8 @@ class _ScoreBadge extends StatelessWidget {
   final String? nivel;
   final Color color;
 
-  const _ScoreBadge({required this.score, required this.nivel, required this.color});
+  const _ScoreBadge(
+      {required this.score, required this.nivel, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -1085,7 +1149,8 @@ class _ScoreBadge extends StatelessWidget {
             score,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w900, color: color),
+            style: GoogleFonts.poppins(
+                fontSize: 14, fontWeight: FontWeight.w900, color: color),
           ),
           const SizedBox(height: 1),
           Text(
@@ -1279,7 +1344,8 @@ class _InfoListCard extends StatelessWidget {
           if (lista.isEmpty)
             Text(
               empty,
-              style: GoogleFonts.poppins(fontSize: 11.5, color: const Color(0xFF64748B)),
+              style: GoogleFonts.poppins(
+                  fontSize: 11.5, color: const Color(0xFF64748B)),
             )
           else
             ...lista.map(
@@ -1292,7 +1358,8 @@ class _InfoListCard extends StatelessWidget {
                       width: 5,
                       height: 5,
                       margin: const EdgeInsets.only(top: 6),
-                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                      decoration:
+                          BoxDecoration(color: color, shape: BoxShape.circle),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -1427,7 +1494,11 @@ double? _readDouble(dynamic source, List<String> keys) {
 
   if (value is num) return value.toDouble();
   if (value is String) {
-    final normalized = value.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim();
+    final normalized = value
+        .replaceAll('R\$', '')
+        .replaceAll('.', '')
+        .replaceAll(',', '.')
+        .trim();
     return double.tryParse(normalized);
   }
 

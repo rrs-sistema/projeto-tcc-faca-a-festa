@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
@@ -6,78 +5,38 @@ import 'dart:async';
 
 import '../app_controller.dart';
 import './../../data/models/model.dart';
+import '../../data/datasources/remote/solicitacoes_remote_datasource.dart';
+import '../../domain/usecases/gerenciar_solicitacoes.dart';
 
 class SolicitacoesController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  SolicitacoesController({
+    required GerenciarSolicitacoes solicitacoesFornecedor,
+    String Function()? nomeUsuarioAtual,
+  })  : _solicitacoesFornecedor = solicitacoesFornecedor,
+        _nomeUsuarioAtual = nomeUsuarioAtual;
+
+  final GerenciarSolicitacoes _solicitacoesFornecedor;
+  final String Function()? _nomeUsuarioAtual;
 
   final solicitacoes = <CotacaoModel>[].obs;
   final carregando = false.obs;
   final erro = ''.obs;
 
   bool _streamAtiva = false;
+  StreamSubscription<List<CotacaoModel>>? _solicitacoesSub;
 
   void inicializar(String idFornecedor) {
     if (_streamAtiva) return; // evita múltiplas ligações
     _streamAtiva = true;
 
     carregando.value = true;
-    solicitacoes.bindStream(_streamSolicitacoes(idFornecedor));
-  }
-
-  Stream<List<CotacaoModel>> _streamSolicitacoes(String idFornecedor) {
-    return _db.collection('cotacao').snapshots().asyncMap<List<CotacaoModel>>((snapshot) async {
-      final resultado = <CotacaoModel>[];
-
-      if (snapshot.docs.isEmpty) {
-        Future.microtask(() => carregando.value = false);
-        return [];
-      }
-
-      for (final cotacaoDoc in snapshot.docs) {
-        final cotacaoData = cotacaoDoc.data();
-        final cotacao = CotacaoModel.fromMap(cotacaoData, cotacaoDoc.id);
-
-        final fornecedoresSnap = await cotacaoDoc.reference
-            .collection('fornecedores')
-            .where('id_fornecedor', isEqualTo: idFornecedor)
-            .get();
-
-        if (fornecedoresSnap.docs.isEmpty) continue;
-
-        //final fornecData = FornecedorCotacaoModel.fromMap(fornecedoresSnap.docs.first.data());
-
-        final servicosSnap = await cotacaoDoc.reference.collection('servicos').get();
-        final servicos = servicosSnap.docs.map((s) {
-          final data = s.data();
-          return {
-            'nome': data['nome_produto_servico'] ?? '',
-            'quantidade': data['quantidade'] ?? 0,
-            'valor_estimado': (data['valor_estimado'] as num?)?.toDouble() ?? 0.0,
-          };
-        }).toList();
-
-        resultado.add(
-          CotacaoModel(
-              id: cotacao.id,
-              idEvento: cotacao.idEvento,
-              idUsuarioSolicitante: cotacao.idUsuarioSolicitante,
-              nomeUsuarioSolicitante: cotacao.nomeUsuarioSolicitante,
-              dataCadastro: cotacao.dataCadastro,
-              status: cotacao.status,
-              valorEstimadoTotal: cotacao.valorEstimadoTotal,
-              descricao: cotacao.descricao,
-              categoriaNome: cotacao.categoriaNome,
-              fornecedores: [],
-              servicos: servicos),
-        );
-      }
-
-      resultado.sort((a, b) => b.dataCadastro.compareTo(a.dataCadastro));
-
-      Future.microtask(() => carregando.value = false);
-
-      return resultado.take(5).toList();
-    }).handleError((e) {
+    _solicitacoesSub?.cancel();
+    _solicitacoesSub = _solicitacoesFornecedor
+        .observarSolicitacoesFornecedor(idFornecedor)
+        .listen((lista) {
+      solicitacoes.assignAll(lista);
+      carregando.value = false;
+    }, onError: (e) {
       erro.value = 'Erro no stream: $e';
       carregando.value = false;
     });
@@ -85,65 +44,34 @@ class SolicitacoesController extends GetxController {
 
   Future<void> cancelarCotacao(String idCotacao) async {
     try {
-      final cotacaoRef = _db.collection('cotacao').doc(idCotacao);
-      final cotacaoDoc = await cotacaoRef.get();
+      final canceladoPor = _nomeUsuarioAtual?.call() ??
+          Get.find<AppController>().usuarioLogado.value?.nome ??
+          'Desconhecido';
 
-      if (!cotacaoDoc.exists) {
-        erro.value = 'Cotação não encontrada.';
-        return;
-      }
-
-      final data = cotacaoDoc.data()!;
-      final statusAtual = data['status'] ?? 'pendente';
-
-      if (statusAtual != 'pendente' && statusAtual != 'aguardando') {
-        erro.value = 'A cotação não pode ser cancelada, pois já foi $statusAtual.';
-        return;
-      }
-
-      // 🔹 1️⃣ Atualiza todos os fornecedores primeiro
-      final fornecedoresSnap = await cotacaoRef.collection('fornecedores').get();
-
-      if (fornecedoresSnap.docs.isEmpty) {
-        erro.value = 'Nenhum fornecedor encontrado para esta cotação.';
-        return;
-      }
-
-      final batchFornecedores = _db.batch();
-
-      for (final doc in fornecedoresSnap.docs) {
-        batchFornecedores.update(doc.reference, {
-          'status': 'cancelada',
-          'data_cancelamento': FieldValue.serverTimestamp(),
-        });
-      }
-
-      await batchFornecedores.commit();
-      debugPrint('✅ Fornecedores cancelados com sucesso.');
-
-      // 🔹 Aguarda um tick para o stream captar as mudanças dos fornecedores
-      await Future.delayed(const Duration(milliseconds: 800));
-
-      // 🔹 2️⃣ Agora atualiza o documento principal da cotação
-      await cotacaoRef.update({
-        'status': 'cancelada',
-        'data_cancelamento': FieldValue.serverTimestamp(),
-        'cancelado_por': Get.find<AppController>().usuarioLogado.value?.nome ?? 'Desconhecido',
-      });
+      await _solicitacoesFornecedor.cancelarCotacao(
+        idCotacao: idCotacao,
+        canceladoPor: canceladoPor,
+      );
 
       debugPrint('🟥 Cotação $idCotacao cancelada completamente.');
 
-      Get.snackbar(
+      _mostrarSnackbar(
         'Cotação cancelada',
         'A cotação e todos os fornecedores vinculados foram cancelados.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: Colors.red.shade700,
         colorText: Colors.white,
       );
+    } on SolicitacaoNaoEncontradaException {
+      erro.value = 'Cotação não encontrada.';
+    } on SolicitacaoNaoCancelavelException catch (e) {
+      erro.value = 'A cotação não pode ser cancelada, pois já foi ${e.status}.';
+    } on SolicitacaoSemFornecedorException {
+      erro.value = 'Nenhum fornecedor encontrado para esta cotação.';
     } catch (e, s) {
       erro.value = 'Erro ao cancelar cotação.';
       debugPrint('❌ Erro ao cancelar cotação: $e\n$s');
-      Get.snackbar(
+      _mostrarSnackbar(
         'Erro',
         'Não foi possível cancelar a cotação.',
         snackPosition: SnackPosition.BOTTOM,
@@ -155,5 +83,30 @@ class SolicitacoesController extends GetxController {
 
   String formatarData(DateTime data) {
     return DateFormat('dd/MM/yyyy HH:mm').format(data);
+  }
+
+  void _mostrarSnackbar(
+    String titulo,
+    String mensagem, {
+    SnackPosition? snackPosition,
+    Color? backgroundColor,
+    Color? colorText,
+  }) {
+    if (Get.testMode) return;
+    if (Get.context == null && Get.overlayContext == null) return;
+
+    Get.snackbar(
+      titulo,
+      mensagem,
+      snackPosition: snackPosition,
+      backgroundColor: backgroundColor,
+      colorText: colorText,
+    );
+  }
+
+  @override
+  void onClose() {
+    _solicitacoesSub?.cancel();
+    super.onClose();
   }
 }
