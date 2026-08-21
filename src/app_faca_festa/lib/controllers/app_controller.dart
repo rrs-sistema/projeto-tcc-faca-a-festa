@@ -17,10 +17,10 @@ import './../presentation/pages/home_event_screen.dart';
 import './../data/models/DTO/servico_cotado_dto.dart';
 import './convidado/convidado_controller.dart';
 import './contacao/cotacao_controller.dart';
+import '../app/bootstrap/orcamento_bootstrap.dart';
 import '../app/bootstrap/avaliacao_servico_bootstrap.dart';
 import '../app/bootstrap/servico_produto_bootstrap.dart';
 import 'fornecedor/fornecedor_controller.dart';
-import './orcamento_controller.dart';
 import './../data/models/model.dart';
 import './../core/utils/convite_link.dart';
 import './../data/services/convite/abrir_convite_por_token_service.dart';
@@ -75,7 +75,7 @@ class AppController extends GetxController {
   // ✅ Injeção de controladores auxiliares
   final convidadoController = Get.find<ConvidadoController>();
   final eventoController = Get.find<EventoController>();
-  final orcamentoController = Get.put(OrcamentoController());
+  final orcamentoController = OrcamentoBootstrap.findController();
   final cotacaoController = Get.put(CotacaoController());
   final fornecedorController = Get.put(FornecedorController());
   final tarefaController = Get.find<TarefaController>();

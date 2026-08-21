@@ -44,7 +44,6 @@ import 'controllers/usuario/usuario_controller.dart';
 import 'core/services/push/notification_service.dart';
 import './presentation/pages/home_event_screen.dart';
 import 'controllers/fornecedor/fornecedor_controller.dart';
-import './controllers/orcamento_controller.dart';
 import './presentation/widgets/splash.dart';
 import './controllers/app_controller.dart';
 import './role_selector_screen.dart';
@@ -62,6 +61,7 @@ import 'app/bootstrap/admin_dashboard_bootstrap.dart';
 import 'app/bootstrap/eventos_admin_bootstrap.dart';
 import 'app/bootstrap/gift_offline_bootstrap.dart';
 import 'app/bootstrap/orcamentos_admin_bootstrap.dart';
+import 'app/bootstrap/orcamento_bootstrap.dart';
 import 'app/bootstrap/evento_bootstrap.dart';
 import 'app/bootstrap/convidado_bootstrap.dart';
 import 'app/bootstrap/perfil_usuario_bootstrap.dart';
@@ -384,12 +384,12 @@ void _registerControllers() {
   AdminDashboardBootstrap.register();
   EventosAdminBootstrap.register();
   OrcamentosAdminBootstrap.register();
+  OrcamentoBootstrap.register();
   AdminTerritorioBootstrap.register();
   Get.lazyPut<AppController>(() => AppController(), fenix: true);
   EventoBootstrap.register();
   Get.put(EventThemeController(), permanent: true);
   Get.put(TemaFestaController(), permanent: true);
-  Get.put(OrcamentoController(), permanent: true);
   Get.put(
     EventoCadastroController(repository: Get.find<EventoRepository>()),
     permanent: true,

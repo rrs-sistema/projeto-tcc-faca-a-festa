@@ -1,18 +1,21 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
 import './../data/models/model.dart';
+import './../domain/usecases/gerenciar_orcamentos.dart';
 import 'evento_controller.dart';
 import 'orcamento_gasto_controller.dart';
 
 class OrcamentoController extends GetxController {
-  final _db = FirebaseFirestore.instance;
+  OrcamentoController({required GerenciarOrcamentos orcamentos})
+      : _orcamentos = orcamentos;
+
+  final GerenciarOrcamentos _orcamentos;
 
   final RxList<OrcamentoModel> orcamentos = <OrcamentoModel>[].obs;
   final RxBool carregando = false.obs;
-  StreamSubscription? _orcamentoSubscription;
+  StreamSubscription<List<OrcamentoModel>>? _orcamentoSubscription;
 
   /// 🔥 Total geral (pago) usado no resumo financeiro
   final RxDouble totalPagoGeral = 0.0.obs;
@@ -30,15 +33,8 @@ class OrcamentoController extends GetxController {
       carregando.value = true;
       await _orcamentoSubscription?.cancel();
 
-      _orcamentoSubscription = _db
-          .collection('orcamento')
-          .where('id_evento', isEqualTo: idEvento)
-          .snapshots()
-          .listen((snapshot) {
-        final lista = snapshot.docs
-            .map((doc) => OrcamentoModel.fromMap(doc.data(), docId: doc.id))
-            .toList();
-
+      _orcamentoSubscription =
+          _orcamentos.observarOrcamentosDoEvento(idEvento).listen((lista) {
         orcamentos.assignAll(lista);
         _atualizarContagens();
 
@@ -64,15 +60,9 @@ class OrcamentoController extends GetxController {
       carregando.value = true;
       _orcamentoSubscription?.cancel();
 
-      _orcamentoSubscription = _db
-          .collection('orcamento')
-          .where('id_fornecedor', isEqualTo: idFornecedor)
-          .snapshots()
-          .listen((snapshot) {
-        final lista = snapshot.docs
-            .map((doc) => OrcamentoModel.fromMap(doc.data(), docId: doc.id))
-            .toList();
-
+      _orcamentoSubscription = _orcamentos
+          .observarOrcamentosDoFornecedor(idFornecedor)
+          .listen((lista) {
         orcamentos.assignAll(lista);
         _atualizarContagens();
 
@@ -175,16 +165,11 @@ class OrcamentoController extends GetxController {
   /// ===========================================================
   Future<void> criarOrcamento(OrcamentoModel model) async {
     try {
-      await _db
-          .collection('orcamento')
-          .doc(model.idOrcamento)
-          .set(model.toMap());
+      await _orcamentos.criarOrcamento(model);
     } catch (e) {
-      Get.snackbar(
+      _mostrarSnackbar(
         "Erro",
         "Falha ao salvar orçamento: $e",
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
       );
     }
   }
@@ -199,15 +184,12 @@ class OrcamentoController extends GetxController {
     bool fechar = false,
   }) async {
     try {
-      final status = fechar ? 'fechado' : 'em_negociacao';
-
-      await _db.collection('orcamento').doc(idOrcamento).update({
-        'custo_estimado': custoEstimado,
-        'anotacoes': anotacoes,
-        'status': status,
-        'orcamento_fechado': fechar,
-        if (fechar) 'data_fechamento': FieldValue.serverTimestamp(),
-      });
+      await _orcamentos.responderOrcamento(
+        idOrcamento: idOrcamento,
+        custoEstimado: custoEstimado,
+        anotacoes: anotacoes,
+        fechar: fechar,
+      );
 
       // Atualizar resumo ao fechar orçamento
       calcularTotalPagoGeral();
@@ -221,16 +203,14 @@ class OrcamentoController extends GetxController {
   /// ===========================================================
   Future<void> excluirOrcamento(String idOrcamento) async {
     try {
-      await _db.collection('orcamento').doc(idOrcamento).delete();
+      await _orcamentos.excluirOrcamento(idOrcamento);
       orcamentos.removeWhere((o) => o.idOrcamento == idOrcamento);
 
       calcularTotalPagoGeral();
     } catch (e) {
-      Get.snackbar(
+      _mostrarSnackbar(
         'Erro',
         'Falha ao excluir o orçamento. Tente novamente.',
-        backgroundColor: Colors.redAccent,
-        colorText: Colors.white,
       );
     }
   }
@@ -266,5 +246,17 @@ class OrcamentoController extends GetxController {
     totalCount.value = 0;
     contratadosCount.value = 0;
     totalCustoEstimado.value = 0;
+  }
+
+  void _mostrarSnackbar(String titulo, String mensagem) {
+    if (Get.testMode) return;
+    if (Get.context == null && Get.overlayContext == null) return;
+
+    Get.snackbar(
+      titulo,
+      mensagem,
+      backgroundColor: Colors.redAccent,
+      colorText: Colors.white,
+    );
   }
 }

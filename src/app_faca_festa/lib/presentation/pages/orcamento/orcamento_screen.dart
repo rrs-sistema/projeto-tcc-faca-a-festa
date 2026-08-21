@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../app/bootstrap/orcamento_bootstrap.dart';
 import '../../../data/models/avaliacao/avaliacao_model.dart';
 import './../../../controllers/orcamento_gasto_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
@@ -31,7 +32,7 @@ class OrcamentoScreen extends StatelessWidget {
     ));
 
     final themeController = Get.find<EventThemeController>();
-    final orcamentoController = Get.put(OrcamentoController());
+    final orcamentoController = OrcamentoBootstrap.findController();
     final eventoController = Get.find<EventoController>();
 
     final idEvento = eventoController.eventoAtualEntidade?.idEvento ?? '';
@@ -941,136 +942,137 @@ Future<void> _showAddGastoDialog(
                       key: formKey,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
                       child: ListView(
-                      controller: controllerScroll,
-                      padding: EdgeInsets.fromLTRB(
-                        16,
-                        16,
-                        16,
-                        MediaQuery.of(modalContext).viewInsets.bottom + 16,
-                      ),
-                      children: [
-                        buildSectionTitle(
-                          icon: Icons.edit_note_rounded,
-                          title: 'Detalhes do Pagamento',
+                        controller: controllerScroll,
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          16,
+                          16,
+                          MediaQuery.of(modalContext).viewInsets.bottom + 16,
                         ),
-                        buildTextField(
-                          controller: nomeCtrl,
-                          label: 'Descrição do gasto',
-                          hint: 'Onde o valor será destinado',
-                          icon: Icons.edit_note_rounded,
-                          textCapitalization: TextCapitalization.sentences,
-                          maxLines: 2,
-                          validator: (v) => FormValidators.descricao(
-                            v,
-                            campo: 'a descrição do gasto',
-                            obrigatorio: true,
-                            minimo: 3,
+                        children: [
+                          buildSectionTitle(
+                            icon: Icons.edit_note_rounded,
+                            title: 'Detalhes do Pagamento',
                           ),
-                        ),
-                        buildTextField(
-                          controller: custoCtrl,
-                          label: 'Custo total (R\$)',
-                          hint: 'R\$ 0,00',
-                          icon: Icons.attach_money_rounded,
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
-                          inputFormatters: [dinheiroCusto],
-                          validator: (v) => FormValidators.dinheiro(
-                            v,
-                            campo: 'o custo total',
-                          ),
-                        ),
-                        buildTextField(
-                          controller: pagoCtrl,
-                          label: 'Valor pago (R\$)',
-                          hint: 'R\$ 0,00',
-                          icon: Icons.payments_rounded,
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
-                          textInputAction: TextInputAction.done,
-                          inputFormatters: [dinheiroPago],
-                          validator: (v) {
-                            final erro = FormValidators.dinheiro(
+                          buildTextField(
+                            controller: nomeCtrl,
+                            label: 'Descrição do gasto',
+                            hint: 'Onde o valor será destinado',
+                            icon: Icons.edit_note_rounded,
+                            textCapitalization: TextCapitalization.sentences,
+                            maxLines: 2,
+                            validator: (v) => FormValidators.descricao(
                               v,
-                              obrigatorio: false,
-                              campo: 'o valor pago',
+                              campo: 'a descrição do gasto',
+                              obrigatorio: true,
+                              minimo: 3,
+                            ),
+                          ),
+                          buildTextField(
+                            controller: custoCtrl,
+                            label: 'Custo total (R\$)',
+                            hint: 'R\$ 0,00',
+                            icon: Icons.attach_money_rounded,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            inputFormatters: [dinheiroCusto],
+                            validator: (v) => FormValidators.dinheiro(
+                              v,
+                              campo: 'o custo total',
+                            ),
+                          ),
+                          buildTextField(
+                            controller: pagoCtrl,
+                            label: 'Valor pago (R\$)',
+                            hint: 'R\$ 0,00',
+                            icon: Icons.payments_rounded,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            textInputAction: TextInputAction.done,
+                            inputFormatters: [dinheiroPago],
+                            validator: (v) {
+                              final erro = FormValidators.dinheiro(
+                                v,
+                                obrigatorio: false,
+                                campo: 'o valor pago',
+                              );
+                              if (erro != null) return erro;
+                              final pago = FormValidators.parseDinheiro(v);
+                              final custo =
+                                  FormValidators.parseDinheiro(custoCtrl.text);
+                              if (pago > custo && custo > 0) {
+                                return 'O valor pago não pode ser maior que o custo';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 20),
+                          Obx(() {
+                            final isSaving = salvando.value;
+                            return SizedBox(
+                              width: double.infinity,
+                              height: 44,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primary,
+                                  disabledBackgroundColor:
+                                      primary.withValues(alpha: 0.45),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: isSaving
+                                    ? null
+                                    : () => salvarGasto(modalContext),
+                                icon: isSaving
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white),
+                                      )
+                                    : const Icon(
+                                        Icons.check_circle_outline_rounded,
+                                        color: Colors.white,
+                                        size: 18),
+                                label: Text(
+                                  isSaving ? 'Salvando...' : 'Salvar gasto',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
                             );
-                            if (erro != null) return erro;
-                            final pago = FormValidators.parseDinheiro(v);
-                            final custo =
-                                FormValidators.parseDinheiro(custoCtrl.text);
-                            if (pago > custo && custo > 0) {
-                              return 'O valor pago não pode ser maior que o custo';
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 20),
-                        Obx(() {
-                          final isSaving = salvando.value;
-                          return SizedBox(
+                          }),
+                          const SizedBox(height: 6),
+                          SizedBox(
                             width: double.infinity,
                             height: 44,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primary,
-                                disabledBackgroundColor:
-                                    primary.withValues(alpha: 0.45),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                Navigator.of(modalContext).pop();
+                              },
+                              icon: const Icon(Icons.close_rounded, size: 18),
+                              label: Text(
+                                'Cancelar',
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w700, fontSize: 13),
+                              ),
+                              style: TextButton.styleFrom(
+                                foregroundColor: textMuted,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
-                              onPressed: isSaving
-                                  ? null
-                                  : () => salvarGasto(modalContext),
-                              icon: isSaving
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2, color: Colors.white),
-                                    )
-                                  : const Icon(
-                                      Icons.check_circle_outline_rounded,
-                                      color: Colors.white,
-                                      size: 18),
-                              label: Text(
-                                isSaving ? 'Salvando...' : 'Salvar gasto',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 6),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 44,
-                          child: TextButton.icon(
-                            onPressed: () {
-                              FocusManager.instance.primaryFocus?.unfocus();
-                              Navigator.of(modalContext).pop();
-                            },
-                            icon: const Icon(Icons.close_rounded, size: 18),
-                            label: Text(
-                              'Cancelar',
-                              style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w700, fontSize: 13),
-                            ),
-                            style: TextButton.styleFrom(
-                              foregroundColor: textMuted,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 35),
-                      ],
-                    ),
+                          const SizedBox(height: 35),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -1506,112 +1508,113 @@ Future<void> showAddOrcamentoBottomSheet(
                       key: formKey,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
                       child: ListView(
-                      controller: controllerScroll,
-                      padding: EdgeInsets.fromLTRB(
-                        16,
-                        16,
-                        16,
-                        MediaQuery.of(modalContext).viewInsets.bottom + 16,
-                      ),
-                      children: [
-                        buildSectionTitle(
-                          icon: Icons.edit_note_rounded,
-                          title: 'Detalhes do Orçamento',
+                        controller: controllerScroll,
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          16,
+                          16,
+                          MediaQuery.of(modalContext).viewInsets.bottom + 16,
                         ),
-                        buildTextField(
-                          controller: nomeCtrl,
-                          label: 'Descrição do gasto',
-                          hint: 'Ex: Decoração, DJ, Bebidas...',
-                          icon: Icons.category_outlined,
-                          textCapitalization: TextCapitalization.sentences,
-                          maxLines: 2,
-                          validator: (v) => FormValidators.descricao(
-                            v,
-                            campo: 'a descrição do gasto',
-                            obrigatorio: true,
-                            minimo: 3,
+                        children: [
+                          buildSectionTitle(
+                            icon: Icons.edit_note_rounded,
+                            title: 'Detalhes do Orçamento',
                           ),
-                        ),
-                        buildTextField(
-                          controller: custoEstimadoCtrl,
-                          label: 'Custo estimado (R\$)',
-                          hint: 'R\$ 0,00',
-                          icon: Icons.savings_outlined,
-                          keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true),
-                          textInputAction: TextInputAction.done,
-                          inputFormatters: [dinheiroMask],
-                          validator: (v) => FormValidators.dinheiro(
-                            v,
-                            campo: 'o custo estimado',
+                          buildTextField(
+                            controller: nomeCtrl,
+                            label: 'Descrição do gasto',
+                            hint: 'Ex: Decoração, DJ, Bebidas...',
+                            icon: Icons.category_outlined,
+                            textCapitalization: TextCapitalization.sentences,
+                            maxLines: 2,
+                            validator: (v) => FormValidators.descricao(
+                              v,
+                              campo: 'a descrição do gasto',
+                              obrigatorio: true,
+                              minimo: 3,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        Obx(() {
-                          final isSaving = salvando.value;
-                          return SizedBox(
+                          buildTextField(
+                            controller: custoEstimadoCtrl,
+                            label: 'Custo estimado (R\$)',
+                            hint: 'R\$ 0,00',
+                            icon: Icons.savings_outlined,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            textInputAction: TextInputAction.done,
+                            inputFormatters: [dinheiroMask],
+                            validator: (v) => FormValidators.dinheiro(
+                              v,
+                              campo: 'o custo estimado',
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Obx(() {
+                            final isSaving = salvando.value;
+                            return SizedBox(
+                              width: double.infinity,
+                              height: 44,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: primary,
+                                  disabledBackgroundColor:
+                                      primary.withValues(alpha: 0.45),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                onPressed: isSaving
+                                    ? null
+                                    : () => salvarOrcamento(modalContext),
+                                icon: isSaving
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white),
+                                      )
+                                    : const Icon(
+                                        Icons.check_circle_outline_rounded,
+                                        color: Colors.white,
+                                        size: 18),
+                                label: Text(
+                                  isSaving ? 'Salvando...' : 'Salvar orçamento',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 6),
+                          SizedBox(
                             width: double.infinity,
                             height: 44,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: primary,
-                                disabledBackgroundColor:
-                                    primary.withValues(alpha: 0.45),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                Navigator.of(modalContext).pop();
+                              },
+                              icon: const Icon(Icons.close_rounded, size: 18),
+                              label: Text(
+                                'Cancelar',
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w700, fontSize: 13),
+                              ),
+                              style: TextButton.styleFrom(
+                                foregroundColor: textMuted,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
-                              onPressed: isSaving
-                                  ? null
-                                  : () => salvarOrcamento(modalContext),
-                              icon: isSaving
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2, color: Colors.white),
-                                    )
-                                  : const Icon(
-                                      Icons.check_circle_outline_rounded,
-                                      color: Colors.white,
-                                      size: 18),
-                              label: Text(
-                                isSaving ? 'Salvando...' : 'Salvar orçamento',
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                        const SizedBox(height: 6),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 44,
-                          child: TextButton.icon(
-                            onPressed: () {
-                              FocusManager.instance.primaryFocus?.unfocus();
-                              Navigator.of(modalContext).pop();
-                            },
-                            icon: const Icon(Icons.close_rounded, size: 18),
-                            label: Text(
-                              'Cancelar',
-                              style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w700, fontSize: 13),
-                            ),
-                            style: TextButton.styleFrom(
-                              foregroundColor: textMuted,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 35),
-                      ],
-                    ),
+                          const SizedBox(height: 35),
+                        ],
+                      ),
                     ),
                   ),
                 ],
