@@ -1,6 +1,5 @@
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -17,7 +16,6 @@ import 'app_controller.dart';
 import 'fornecedor/fornecedor_controller.dart';
 
 class RegisterController extends GetxController {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final AutenticacaoRepository _autenticacaoRepository =
       Get.find<AutenticacaoRepository>();
@@ -173,7 +171,7 @@ class RegisterController extends GetxController {
       final endereco = enderecoAntesDoUid.copyWith(idUsuario: uid);
 
       _log(
-          'Usuário criado no FirebaseAuth: uid=$uid | tipo=$tipo | tipoEfetivo=$tipoEfetivo');
+          'Usuário criado na autenticação: uid=$uid | tipo=$tipo | tipoEfetivo=$tipoEfetivo');
       _logEndereco(endereco, origem: 'registrarUsuario após uid');
 
       final novoUsuario = UsuarioModel(
@@ -282,9 +280,6 @@ class RegisterController extends GetxController {
     } on AutenticacaoException catch (e) {
       _log('AutenticacaoException: code=${e.codigo}');
       _showError(_traduzErro(e.codigo));
-    } on FirebaseAuthException catch (e) {
-      _log('FirebaseAuthException: code=${e.code} | message=${e.message}');
-      _showError(_traduzErro(e.code));
     } catch (e, s) {
       _log('Erro ao salvar: $e');
       _log('StackTrace: $s');
@@ -325,21 +320,18 @@ class RegisterController extends GetxController {
         return;
       }
 
-      final firebaseUser = _auth.currentUser;
-      final uid = firebaseUser?.uid;
+      final uid = _autenticacaoRepository.idUsuarioAtual;
       if (uid == null) {
         _showError('Não foi possível identificar sua conta Google.');
         return;
       }
 
       final usuarioExistente = await _db.collection('usuarios').doc(uid).get();
-      final emailGoogle = firebaseUser?.email ??
-          _autenticacaoRepository.emailUsuarioAtual ??
-          '';
+      final emailGoogle = _autenticacaoRepository.emailUsuarioAtual ?? '';
       final nomeInformado = nome.value.trim();
       final nomeGoogle = nomeInformado.isNotEmpty
           ? nomeInformado
-          : (firebaseUser?.displayName?.trim() ?? '');
+          : (_autenticacaoRepository.nomeUsuarioAtual?.trim() ?? '');
 
       if (!usuarioExistente.exists) {
         final novoUsuario = UsuarioModel(
@@ -348,7 +340,7 @@ class RegisterController extends GetxController {
           email: emailGoogle,
           tipo: tipoEfetivo,
           ativo: true,
-          fotoPerfilUrl: firebaseUser?.photoURL,
+          fotoPerfilUrl: _autenticacaoRepository.fotoUsuarioAtual,
           cidade: _texto(enderecoAntesDoUid.nomeCidade),
           uf: _texto(enderecoAntesDoUid.uf),
           dataCadastro: DateTime.now(),
@@ -398,7 +390,7 @@ class RegisterController extends GetxController {
         'email': usuarioExistente.data()?['email'] ?? emailGoogle,
         'tipo': usuarioExistente.data()?['tipo'] ?? tipoEfetivo,
         'foto_perfil_url': usuarioExistente.data()?['foto_perfil_url'] ??
-            firebaseUser?.photoURL,
+            _autenticacaoRepository.fotoUsuarioAtual,
       });
 
       if (tipoEfetivo == 'C') {
