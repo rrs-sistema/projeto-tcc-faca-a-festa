@@ -76,6 +76,7 @@ import 'app/middleware/papel_middleware.dart';
 import 'domain/repositories/catalogo_servico_repository.dart';
 import 'domain/repositories/evento_repository.dart';
 import 'domain/usecases/gerenciar_catalogo_servico.dart';
+import 'domain/usecases/gerenciar_temas_festa.dart';
 
 // =============================================================
 //  MAIN
@@ -393,7 +394,13 @@ void _registerControllers() {
   AdminTerritorioBootstrap.register();
   Get.lazyPut<AppController>(() => AppController(), fenix: true);
   EventoBootstrap.register();
-  Get.put(EventThemeController(), permanent: true);
+  Get.put(
+    EventThemeController(
+      temasFesta: Get.find<GerenciarTemasFesta>(),
+      eventoRepository: Get.find<EventoRepository>(),
+    ),
+    permanent: true,
+  );
   Get.put(
     EventoCadastroController(repository: Get.find<EventoRepository>()),
     permanent: true,

@@ -1,11 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../data/models/evento/evento.dart';
+import '../../domain/repositories/evento_repository.dart';
+import '../../domain/usecases/gerenciar_temas_festa.dart';
 
 class EventThemeController extends GetxController {
-  EventThemeController() {
+  EventThemeController({
+    GerenciarTemasFesta? temasFesta,
+    EventoRepository? eventoRepository,
+  })  : _temasFesta = temasFesta,
+        _eventoRepository = eventoRepository {
     debugPrint("🎯 [ThemeController] Instância única ativa.");
   }
 
@@ -27,9 +32,26 @@ class EventThemeController extends GetxController {
   final Rxn<TemaFestaModel> temaFestaAtual = Rxn<TemaFestaModel>();
   final RxnString capaUrl = RxnString();
 
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final GerenciarTemasFesta? _temasFesta;
+  final EventoRepository? _eventoRepository;
   final Map<String, String> _cacheTiposEvento = {};
   final Map<String, TemaFestaModel> _cacheTemasFesta = {};
+
+  GerenciarTemasFesta? get _temasFestaService {
+    if (_temasFesta != null) return _temasFesta;
+    if (Get.isRegistered<GerenciarTemasFesta>()) {
+      return Get.find<GerenciarTemasFesta>();
+    }
+    return null;
+  }
+
+  EventoRepository? get _eventosRepository {
+    if (_eventoRepository != null) return _eventoRepository;
+    if (Get.isRegistered<EventoRepository>()) {
+      return Get.find<EventoRepository>();
+    }
+    return null;
+  }
 
   bool get temCapaTema {
     final url = (capaUrl.value ?? '').trim();
@@ -110,12 +132,13 @@ class EventThemeController extends GetxController {
         return true;
       }
 
-      final doc =
-          await _db.collection(TemaFestaModel.colecao).doc(idTema).get();
-      if (!doc.exists || doc.data() == null) return false;
+      final service = _temasFestaService;
+      if (service == null) return false;
 
-      final tema = TemaFestaModel.fromMap(doc.data()!, id: doc.id);
+      final tema = await service.buscarPorId(idTema);
+      if (tema == null) return false;
       if (!tema.ativo) return false;
+
       _cacheTemasFesta[idTema] = tema;
       aplicarTemaFesta(tema, nomeTipo: nomeTipo);
       return true;
@@ -128,7 +151,8 @@ class EventThemeController extends GetxController {
   void aplicarTemaFesta(TemaFestaModel tema, {String nomeTipo = ''}) {
     temaFestaAtual.value = tema;
     final tipo = nomeTipo.trim();
-    final titulo = tipo.isEmpty ? tema.nome : '${_tituloAmigavel(tipo)} · ${tema.nome}';
+    final titulo =
+        tipo.isEmpty ? tema.nome : '${_tituloAmigavel(tipo)} · ${tema.nome}';
     _setTheme(
       primary: tema.primaryColor,
       secondary: tema.secondaryColor,
@@ -173,14 +197,15 @@ class EventThemeController extends GetxController {
         return;
       }
 
-      final doc = await _db.collection('tipo_evento').doc(idTipoEvento).get();
-      if (!doc.exists) {
-        debugPrint("⚠️ [Theme] Documento não encontrado. Aplicando tema padrão.");
+      final repository = _eventosRepository;
+      final tipo = await repository?.buscarTipoPorId(idTipoEvento);
+      if (tipo == null) {
+        debugPrint(
+            "⚠️ [Theme] Documento não encontrado. Aplicando tema padrão.");
         aplicarTemaPorNome("Padrão");
         return;
       }
 
-      final tipo = TipoEventoModel.fromMap(doc.data()!);
       _cacheTiposEvento[idTipoEvento] = tipo.nome;
 
       debugPrint("📘 [Theme] Tipo carregado do Firestore: ${tipo.nome}");
@@ -196,9 +221,13 @@ class EventThemeController extends GetxController {
   // ======================================================
   void aplicarTemaPorNome(String nomeTipoEvento) {
     temaFestaAtual.value = null;
-    final nome = nomeTipoEvento.replaceAll(RegExp(r'[^\w\sÀ-ú]'), '').trim().toLowerCase();
+    final nome = nomeTipoEvento
+        .replaceAll(RegExp(r'[^\w\sÀ-ú]'), '')
+        .trim()
+        .toLowerCase();
 
-    debugPrint("🎯 [Theme] Aplicando tema por nome: '$nomeTipoEvento' → normalizado: '$nome'");
+    debugPrint(
+        "🎯 [Theme] Aplicando tema por nome: '$nomeTipoEvento' → normalizado: '$nome'");
 
     switch (nome) {
       case 'casamento':
@@ -392,6 +421,8 @@ class EventThemeController extends GetxController {
   }
 
   void _aplicarThemeDataNoApp(Color primary, Color secondary) {
+    if (Get.testMode) return;
+
     final data = montarThemeData(primary, secondary);
     void aplicar() {
       if (Get.context == null) return;
@@ -503,7 +534,8 @@ class EventThemeController extends GetxController {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  Icon(Icons.color_lens_rounded, color: primaryColor.value, size: 28),
+                  Icon(Icons.color_lens_rounded,
+                      color: primaryColor.value, size: 28),
                 ],
               ),
 
@@ -516,7 +548,8 @@ class EventThemeController extends GetxController {
                   child: InkWell(
                     borderRadius: BorderRadius.circular(16),
                     onTap: () {
-                      aplicarTemaPorNome((tema['nome'] as String).toLowerCase());
+                      aplicarTemaPorNome(
+                          (tema['nome'] as String).toLowerCase());
                       Navigator.pop(context);
                     },
                     child: Container(
@@ -554,7 +587,8 @@ class EventThemeController extends GetxController {
                             ),
                           ),
 
-                          Icon(Icons.chevron_right_rounded, color: Colors.grey.shade600),
+                          Icon(Icons.chevron_right_rounded,
+                              color: Colors.grey.shade600),
                         ],
                       ),
                     ),

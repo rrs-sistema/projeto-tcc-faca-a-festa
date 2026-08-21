@@ -61,6 +61,17 @@ class EventoRemoteDatasource {
   }
 
   Future<TipoEventoModel?> buscarTipoPorId(String idTipoEvento) async {
+    final document =
+        await firestore.collection('tipo_evento').doc(idTipoEvento).get();
+
+    if (document.exists && document.data() != null) {
+      final data = document.data()!;
+      return TipoEventoModel.fromMap({
+        ...data,
+        'id_tipo_evento': data['id_tipo_evento'] ?? document.id,
+      });
+    }
+
     final snapshot = await firestore
         .collection('tipo_evento')
         .where('id_tipo_evento', isEqualTo: idTipoEvento)
