@@ -5,7 +5,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../controllers/admin/orcamentos_admin_controller.dart';
+import './../../../app/bootstrap/orcamentos_admin_bootstrap.dart';
 import './../../../data/models/admin/orcamento_admin_model.dart';
 import '../../../controllers/tema/admin_theme.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
@@ -14,91 +14,93 @@ import '../../widgets/admin/admin_kit.dart';
 class OrcamentosAdminListScreen extends StatelessWidget {
   OrcamentosAdminListScreen({super.key}) {
     Future.microtask(() {
-      if (Get.isRegistered<OrcamentosAdminController>()) {
-        Get.find<OrcamentosAdminController>().carregarOrcamentosComEventoDetalhes();
-      }
+      OrcamentosAdminBootstrap.findController()
+          .carregarOrcamentosComEventoDetalhes();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.find<OrcamentosAdminController>();
+    final controller = OrcamentosAdminBootstrap.findController();
     final themeController = Get.find<EventThemeController>();
 
     return Theme(
       data: themeController.adminThemeData,
       child: Scaffold(
-      appBar: AdminBackAppBar(
-        title: 'Gestão de Orçamentos',
-        subtitle: 'Por evento e categoria',
-      ),
-      backgroundColor: AdminPalette.surface,
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: AdminSearchField(
-              hint: 'Buscar evento, categoria, cidade ou status',
-              onChanged: (v) => controller.busca.value = v,
+        appBar: AdminBackAppBar(
+          title: 'Gestão de Orçamentos',
+          subtitle: 'Por evento e categoria',
+        ),
+        backgroundColor: AdminPalette.surface,
+        body: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: AdminSearchField(
+                hint: 'Buscar evento, categoria, cidade ou status',
+                onChanged: (v) => controller.busca.value = v,
+              ),
             ),
-          ),
-          Expanded(
-            child: Obx(() {
-        if (controller.carregando.value) {
-          return const Center(child: CircularProgressIndicator());
-        }
+            Expanded(
+              child: Obx(() {
+                if (controller.carregando.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
 
-        if (controller.erro.isNotEmpty) {
-          return AdminEmptyState(
-            icon: Icons.error_outline_rounded,
-            title: 'Não foi possível carregar os orçamentos',
-            message: controller.erro.value,
-            actionLabel: 'Tentar de novo',
-            onAction: controller.carregarOrcamentosComEventoDetalhes,
-          );
-        }
+                if (controller.erro.isNotEmpty) {
+                  return AdminEmptyState(
+                    icon: Icons.error_outline_rounded,
+                    title: 'Não foi possível carregar os orçamentos',
+                    message: controller.erro.value,
+                    actionLabel: 'Tentar de novo',
+                    onAction: controller.carregarOrcamentosComEventoDetalhes,
+                  );
+                }
 
-        final filtrados = controller.orcamentosFiltrados;
-        if (filtrados.isEmpty) {
-          return AdminEmptyState(
-            icon: Icons.request_quote_outlined,
-            title: controller.orcamentos.isEmpty
-                ? 'Nenhum orçamento encontrado'
-                : 'Nenhum orçamento nesta busca',
-            message: 'Os orçamentos dos eventos aparecem agrupados aqui.',
-          );
-        }
+                final filtrados = controller.orcamentosFiltrados;
+                if (filtrados.isEmpty) {
+                  return AdminEmptyState(
+                    icon: Icons.request_quote_outlined,
+                    title: controller.orcamentos.isEmpty
+                        ? 'Nenhum orçamento encontrado'
+                        : 'Nenhum orçamento nesta busca',
+                    message:
+                        'Os orçamentos dos eventos aparecem agrupados aqui.',
+                  );
+                }
 
-        final grupos = groupBy(filtrados, (OrcamentoAdminModel o) => o.eventoNome);
+                final grupos =
+                    groupBy(filtrados, (OrcamentoAdminModel o) => o.eventoNome);
 
-        return RefreshIndicator(
-          onRefresh: controller.carregarOrcamentosComEventoDetalhes,
-          child: ListView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            children: grupos.entries.map((entry) {
-              final nomeEvento = entry.key;
-              final lista = entry.value;
+                return RefreshIndicator(
+                  onRefresh: controller.carregarOrcamentosComEventoDetalhes,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 16),
+                    children: grupos.entries.map((entry) {
+                      final nomeEvento = entry.key;
+                      final lista = entry.value;
 
-              final tipoEvento = lista.first.tipoEvento;
-              final cidade = lista.first.cidade;
-              final dataEvento = lista.first.dataEvento;
+                      final tipoEvento = lista.first.tipoEvento;
+                      final cidade = lista.first.cidade;
+                      final dataEvento = lista.first.dataEvento;
 
-              return _buildEventoSection(
-                nomeEvento,
-                tipoEvento,
-                cidade,
-                dataEvento,
-                lista,
-              );
-            }).toList(),
-          ),
-        );
-            }),
-          ),
-        ],
+                      return _buildEventoSection(
+                        nomeEvento,
+                        tipoEvento,
+                        cidade,
+                        dataEvento,
+                        lista,
+                      );
+                    }).toList(),
+                  ),
+                );
+              }),
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
 
@@ -109,16 +111,18 @@ class OrcamentosAdminListScreen extends StatelessWidget {
     DateTime? dataEvento,
     List<OrcamentoAdminModel> orcamentos,
   ) {
-    final controller = Get.find<OrcamentosAdminController>();
+    final controller = OrcamentosAdminBootstrap.findController();
 
     final dataFormatada = dataEvento != null
         ? DateFormat("d MMM yyyy • HH:mm", 'pt_BR').format(dataEvento)
         : 'Indefinida';
 
-    final totalCotado = orcamentos.fold<double>(0, (s, o) => s + o.custoEstimado);
+    final totalCotado =
+        orcamentos.fold<double>(0, (s, o) => s + o.custoEstimado);
     final custoEventoGeral = orcamentos.first.custoTotalEvento;
-    final percentualOrcamento =
-        (custoEventoGeral > 0) ? ((totalCotado / custoEventoGeral) * 100).clamp(0, 100) : 0.0;
+    final percentualOrcamento = (custoEventoGeral > 0)
+        ? ((totalCotado / custoEventoGeral) * 100).clamp(0, 100)
+        : 0.0;
 
     controller.detalhesVisiveis.putIfAbsent(nomeEvento, () => false);
 
@@ -172,20 +176,20 @@ class OrcamentosAdminListScreen extends StatelessWidget {
                           runSpacing: 4,
                           children: [
                             Text(tipoEvento,
-                                style:
-                                    GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12, color: Colors.grey.shade600)),
                             Text('•',
-                                style:
-                                    GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400)),
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12, color: Colors.grey.shade400)),
                             Text(cidade.isEmpty ? "Local indefinido" : cidade,
-                                style:
-                                    GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12, color: Colors.grey.shade600)),
                             Text('•',
-                                style:
-                                    GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade400)),
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12, color: Colors.grey.shade400)),
                             Text(dataFormatada,
-                                style:
-                                    GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12, color: Colors.grey.shade600)),
                           ],
                         ),
                       ],
@@ -194,7 +198,9 @@ class OrcamentosAdminListScreen extends StatelessWidget {
                   IconButton(
                     tooltip: visivel ? 'Ocultar detalhes' : 'Ver detalhes',
                     icon: Icon(
-                      visivel ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                      visivel
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
                       color: Colors.grey.shade500,
                     ),
                     onPressed: () {
@@ -207,12 +213,17 @@ class OrcamentosAdminListScreen extends StatelessWidget {
               // === DETALHES (mostra/oculta) ===
               AnimatedCrossFade(
                 duration: const Duration(milliseconds: 300),
-                crossFadeState: visivel ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+                crossFadeState: visivel
+                    ? CrossFadeState.showFirst
+                    : CrossFadeState.showSecond,
                 firstChild: Column(
                   children: [
-                    const Divider(height: 24, thickness: 0.5, color: Color(0xFFEEEEEE)),
+                    const Divider(
+                        height: 24, thickness: 0.5, color: Color(0xFFEEEEEE)),
                     Column(
-                      children: orcamentos.map((o) => _buildOrcamentoItem(o)).toList(),
+                      children: orcamentos
+                          .map((o) => _buildOrcamentoItem(o))
+                          .toList(),
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -273,7 +284,8 @@ class OrcamentosAdminListScreen extends StatelessWidget {
                           const SizedBox(height: 6),
                           Text(
                             '${percentualOrcamento.toStringAsFixed(1)}% do orçamento planejado já foi comprometido.',
-                            style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500),
+                            style: GoogleFonts.poppins(
+                                fontSize: 11, color: Colors.grey.shade500),
                           ),
                         ],
                       ),
@@ -329,7 +341,9 @@ class OrcamentosAdminListScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: o.status == 'Fechado'
                       ? Colors.green.shade50
-                      : (o.status == 'Cancelado' ? Colors.red.shade50 : Colors.orange.shade50),
+                      : (o.status == 'Cancelado'
+                          ? Colors.red.shade50
+                          : Colors.orange.shade50),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -338,7 +352,9 @@ class OrcamentosAdminListScreen extends StatelessWidget {
                     fontSize: 10,
                     color: o.status == 'Fechado'
                         ? Colors.green.shade700
-                        : (o.status == 'Cancelado' ? Colors.red.shade700 : Colors.orange.shade700),
+                        : (o.status == 'Cancelado'
+                            ? Colors.red.shade700
+                            : Colors.orange.shade700),
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.5,
                   ),
@@ -351,9 +367,14 @@ class OrcamentosAdminListScreen extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: _valorItem('Estimado', o.custoEstimado, Colors.grey.shade800)),
-              Expanded(child: _valorItem('Pago', o.pago, Colors.green.shade700)),
-              Expanded(child: _valorItem('Pendente', o.pendente, Colors.red.shade600)),
+              Expanded(
+                  child: _valorItem(
+                      'Estimado', o.custoEstimado, Colors.grey.shade800)),
+              Expanded(
+                  child: _valorItem('Pago', o.pago, Colors.green.shade700)),
+              Expanded(
+                  child:
+                      _valorItem('Pendente', o.pendente, Colors.red.shade600)),
             ],
           ),
           const SizedBox(height: 12),
