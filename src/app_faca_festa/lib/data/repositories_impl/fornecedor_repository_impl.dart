@@ -13,6 +13,11 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
   }
 
   @override
+  Stream<FornecedorModel?> observarFornecedorAtivo(String idFornecedor) {
+    return remote.observarFornecedorAtivo(idFornecedor);
+  }
+
+  @override
   Future<void> atualizarFornecedor(FornecedorModel fornecedor) {
     return remote.atualizarFornecedor(fornecedor);
   }

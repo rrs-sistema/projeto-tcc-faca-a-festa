@@ -72,7 +72,7 @@ class FornecedorController extends GetxController {
 
   final categoriasServico = <Map<String, dynamic>>[].obs;
   final subcategoriasServico = <Map<String, dynamic>>[].obs;
-  StreamSubscription<QuerySnapshot>? _fornecedorSubscription;
+  StreamSubscription<FornecedorModel?>? _fornecedorSubscription;
 
   //tempoMedioResposta
 
@@ -280,25 +280,15 @@ class FornecedorController extends GetxController {
 
   /// 🟢 Inicia o listener do fornecedor logado
   void iniciarListenerFornecedor(String idFornecedor) {
-    final db = FirebaseFirestore.instance;
-
     print('📡 Iniciando listener para fornecedor $idFornecedor...');
 
     // Cancela qualquer listener anterior
     _fornecedorSubscription?.cancel();
 
-    _fornecedorSubscription = db
-        .collection('fornecedor')
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .where('ativo', isEqualTo: true)
-        .snapshots()
-        .listen((snapshot) {
-      if (snapshot.docs.isNotEmpty) {
-        final data = snapshot.docs.first.data();
-        final atualizado = FornecedorModel.fromMap(
-          data,
-          documentId: snapshot.docs.first.id,
-        );
+    _fornecedorSubscription = _fornecedores
+        .observarFornecedorAtivo(idFornecedor)
+        .listen((atualizado) {
+      if (atualizado != null) {
         fornecedor.value = atualizado;
         aptoParaOperar.value = atualizado.aptoParaOperar;
         print('✅ Fornecedor atualizado: ${atualizado.razaoSocial}');

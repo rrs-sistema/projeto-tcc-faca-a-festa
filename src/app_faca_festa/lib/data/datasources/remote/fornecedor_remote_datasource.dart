@@ -5,6 +5,8 @@ import '../../models/fornecedor/fornecedor_model.dart';
 abstract interface class FornecedorRemoteDatasource {
   Future<FornecedorModel?> buscarPorUsuario(String idUsuario);
 
+  Stream<FornecedorModel?> observarFornecedorAtivo(String idFornecedor);
+
   Future<void> atualizarFornecedor(FornecedorModel fornecedor);
 
   Future<void> atualizarStatusAtivo({
@@ -34,6 +36,20 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
     final data = doc.data();
     if (!doc.exists || data == null) return null;
     return FornecedorModel.fromMap(data, documentId: doc.id);
+  }
+
+  @override
+  Stream<FornecedorModel?> observarFornecedorAtivo(String idFornecedor) {
+    return firestore
+        .collection('fornecedor')
+        .where('id_fornecedor', isEqualTo: idFornecedor)
+        .where('ativo', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) {
+      if (snapshot.docs.isEmpty) return null;
+      final doc = snapshot.docs.first;
+      return FornecedorModel.fromMap(doc.data(), documentId: doc.id);
+    });
   }
 
   @override

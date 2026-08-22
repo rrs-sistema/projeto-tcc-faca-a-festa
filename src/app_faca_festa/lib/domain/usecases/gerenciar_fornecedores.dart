@@ -10,6 +10,10 @@ class GerenciarFornecedores {
     return repository.buscarPorUsuario(idUsuario);
   }
 
+  Stream<FornecedorModel?> observarFornecedorAtivo(String idFornecedor) {
+    return repository.observarFornecedorAtivo(idFornecedor);
+  }
+
   Future<void> atualizarFornecedor(FornecedorModel fornecedor) {
     return repository.atualizarFornecedor(fornecedor);
   }

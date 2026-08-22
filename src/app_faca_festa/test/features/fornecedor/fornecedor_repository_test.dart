@@ -15,6 +15,18 @@ void main() {
     expect(remote.idUsuarioBuscado, 'usuario-1');
   });
 
+  test('delega observacao de fornecedor ativo preservando id', () async {
+    final fornecedor = _fornecedor();
+    final remote = _FornecedorRemoteFake(fornecedorAtivo: fornecedor);
+    final repository = FornecedorRepositoryImpl(remote);
+
+    final resultado =
+        await repository.observarFornecedorAtivo('fornecedor-1').first;
+
+    expect(resultado, same(fornecedor));
+    expect(remote.idFornecedorObservado, 'fornecedor-1');
+  });
+
   test('delega atualizacao de token FCM preservando id e token', () async {
     final remote = _FornecedorRemoteFake();
     final repository = FornecedorRepositoryImpl(remote);
@@ -67,10 +79,12 @@ void main() {
 }
 
 class _FornecedorRemoteFake implements FornecedorRemoteDatasource {
-  _FornecedorRemoteFake({this.fornecedor});
+  _FornecedorRemoteFake({this.fornecedor, this.fornecedorAtivo});
 
   final FornecedorModel? fornecedor;
+  final FornecedorModel? fornecedorAtivo;
   String? idUsuarioBuscado;
+  String? idFornecedorObservado;
   String? idFornecedorToken;
   String? tokenFcm;
   FornecedorModel? fornecedorAtualizado;
@@ -83,6 +97,12 @@ class _FornecedorRemoteFake implements FornecedorRemoteDatasource {
   Future<FornecedorModel?> buscarPorUsuario(String idUsuario) async {
     idUsuarioBuscado = idUsuario;
     return fornecedor;
+  }
+
+  @override
+  Stream<FornecedorModel?> observarFornecedorAtivo(String idFornecedor) {
+    idFornecedorObservado = idFornecedor;
+    return Stream.value(fornecedorAtivo);
   }
 
   @override

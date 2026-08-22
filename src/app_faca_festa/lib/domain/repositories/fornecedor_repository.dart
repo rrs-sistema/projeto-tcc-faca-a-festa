@@ -3,6 +3,8 @@ import '../../data/models/fornecedor/fornecedor_model.dart';
 abstract interface class FornecedorRepository {
   Future<FornecedorModel?> buscarPorUsuario(String idUsuario);
 
+  Stream<FornecedorModel?> observarFornecedorAtivo(String idFornecedor);
+
   Future<void> atualizarFornecedor(FornecedorModel fornecedor);
 
   Future<void> atualizarStatusAtivo({
