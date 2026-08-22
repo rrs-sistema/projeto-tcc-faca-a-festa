@@ -74,6 +74,7 @@ import 'app/bootstrap/tema_festa_bootstrap.dart';
 import 'app/bootstrap/autenticacao_bootstrap.dart';
 import 'app/bootstrap/comunidade_bootstrap.dart';
 import 'app/bootstrap/cotacao_bootstrap.dart';
+import 'app/bootstrap/documento_bootstrap.dart';
 import 'app/bootstrap/uf_cidade_bootstrap.dart';
 import 'app/middleware/papel_middleware.dart';
 import 'domain/repositories/catalogo_servico_repository.dart';
@@ -380,6 +381,7 @@ class FacaFestaApp extends StatelessWidget {
 
 void _registerControllers() {
   AutenticacaoBootstrap.register();
+  DocumentoBootstrap.register();
   ConvidadoBootstrap.register();
   PerfilUsuarioBootstrap.register();
   FornecedorBootstrap.register();

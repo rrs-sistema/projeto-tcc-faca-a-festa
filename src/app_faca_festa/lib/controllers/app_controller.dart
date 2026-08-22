@@ -1,5 +1,4 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
@@ -20,6 +19,7 @@ import '../app/bootstrap/cotacao_bootstrap.dart';
 import '../app/bootstrap/orcamento_bootstrap.dart';
 import '../app/bootstrap/avaliacao_servico_bootstrap.dart';
 import '../app/bootstrap/servico_produto_bootstrap.dart';
+import '../domain/usecases/gerenciar_documentos.dart';
 import '../domain/usecases/gerenciar_fornecedores.dart';
 import 'fornecedor/fornecedor_controller.dart';
 import './../data/models/model.dart';
@@ -37,8 +37,6 @@ import 'fornecedor/fornecedor_localizacao_controller.dart';
 import 'tema/event_theme_controller.dart';
 
 class AppController extends GetxController {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-
   // Estado reativo do usuário
   final Rx<UsuarioModel?> usuarioLogado = Rx<UsuarioModel?>(null);
   final Rx<EnderecoUsuarioModel?> enderecoPrincipal =
@@ -71,6 +69,7 @@ class AppController extends GetxController {
   final conviteConvidadoRepository = Get.find<ConviteConvidadoRepository>();
   final autenticacaoRepository = Get.find<AutenticacaoRepository>();
   final perfilUsuarioRepository = Get.find<PerfilUsuarioRepository>();
+  final documentos = Get.find<GerenciarDocumentos>();
   final fornecedores = Get.find<GerenciarFornecedores>();
   final _abrirConvitePorTokenService = AbrirConvitePorTokenService();
 
@@ -924,7 +923,10 @@ class AppController extends GetxController {
   // 🔹 Utilitário genérico
   // ------------------------------------------------------------
   Future<void> excluirDocumento(String colecao, String idDocumento) async {
-    await _db.collection(colecao).doc(idDocumento).delete();
+    await documentos.excluirDocumento(
+      colecao: colecao,
+      idDocumento: idDocumento,
+    );
   }
 
   /// 🔹 Adiciona serviço à lista (evita duplicatas)
