@@ -14,6 +14,26 @@ class GerenciarFornecedores {
     return repository.atualizarFornecedor(fornecedor);
   }
 
+  Future<void> atualizarStatusAtivo({
+    required String idFornecedor,
+    required bool ativo,
+  }) {
+    return repository.atualizarStatusAtivo(
+      idFornecedor: idFornecedor,
+      ativo: ativo,
+    );
+  }
+
+  Future<void> atualizarAptoParaOperar({
+    required String idFornecedor,
+    required bool apto,
+  }) {
+    return repository.atualizarAptoParaOperar(
+      idFornecedor: idFornecedor,
+      apto: apto,
+    );
+  }
+
   Future<void> atualizarFcmToken({
     required String idFornecedor,
     required String token,

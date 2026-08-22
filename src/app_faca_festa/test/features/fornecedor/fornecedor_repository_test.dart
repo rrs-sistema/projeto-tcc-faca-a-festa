@@ -37,6 +37,33 @@ void main() {
 
     expect(remote.fornecedorAtualizado, same(fornecedor));
   });
+
+  test('delega atualizacao de status ativo preservando id e valor', () async {
+    final remote = _FornecedorRemoteFake();
+    final repository = FornecedorRepositoryImpl(remote);
+
+    await repository.atualizarStatusAtivo(
+      idFornecedor: 'fornecedor-1',
+      ativo: false,
+    );
+
+    expect(remote.idFornecedorStatusAtivo, 'fornecedor-1');
+    expect(remote.statusAtivo, isFalse);
+  });
+
+  test('delega atualizacao de aptidao operacional preservando id e valor',
+      () async {
+    final remote = _FornecedorRemoteFake();
+    final repository = FornecedorRepositoryImpl(remote);
+
+    await repository.atualizarAptoParaOperar(
+      idFornecedor: 'fornecedor-1',
+      apto: true,
+    );
+
+    expect(remote.idFornecedorApto, 'fornecedor-1');
+    expect(remote.aptoParaOperar, isTrue);
+  });
 }
 
 class _FornecedorRemoteFake implements FornecedorRemoteDatasource {
@@ -47,6 +74,10 @@ class _FornecedorRemoteFake implements FornecedorRemoteDatasource {
   String? idFornecedorToken;
   String? tokenFcm;
   FornecedorModel? fornecedorAtualizado;
+  String? idFornecedorStatusAtivo;
+  bool? statusAtivo;
+  String? idFornecedorApto;
+  bool? aptoParaOperar;
 
   @override
   Future<FornecedorModel?> buscarPorUsuario(String idUsuario) async {
@@ -57,6 +88,24 @@ class _FornecedorRemoteFake implements FornecedorRemoteDatasource {
   @override
   Future<void> atualizarFornecedor(FornecedorModel fornecedor) async {
     fornecedorAtualizado = fornecedor;
+  }
+
+  @override
+  Future<void> atualizarStatusAtivo({
+    required String idFornecedor,
+    required bool ativo,
+  }) async {
+    idFornecedorStatusAtivo = idFornecedor;
+    statusAtivo = ativo;
+  }
+
+  @override
+  Future<void> atualizarAptoParaOperar({
+    required String idFornecedor,
+    required bool apto,
+  }) async {
+    idFornecedorApto = idFornecedor;
+    aptoParaOperar = apto;
   }
 
   @override

@@ -18,6 +18,28 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
   }
 
   @override
+  Future<void> atualizarStatusAtivo({
+    required String idFornecedor,
+    required bool ativo,
+  }) {
+    return remote.atualizarStatusAtivo(
+      idFornecedor: idFornecedor,
+      ativo: ativo,
+    );
+  }
+
+  @override
+  Future<void> atualizarAptoParaOperar({
+    required String idFornecedor,
+    required bool apto,
+  }) {
+    return remote.atualizarAptoParaOperar(
+      idFornecedor: idFornecedor,
+      apto: apto,
+    );
+  }
+
+  @override
   Future<void> atualizarFcmToken({
     required String idFornecedor,
     required String token,

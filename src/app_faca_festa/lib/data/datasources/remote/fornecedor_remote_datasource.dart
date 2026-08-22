@@ -7,6 +7,16 @@ abstract interface class FornecedorRemoteDatasource {
 
   Future<void> atualizarFornecedor(FornecedorModel fornecedor);
 
+  Future<void> atualizarStatusAtivo({
+    required String idFornecedor,
+    required bool ativo,
+  });
+
+  Future<void> atualizarAptoParaOperar({
+    required String idFornecedor,
+    required bool apto,
+  });
+
   Future<void> atualizarFcmToken({
     required String idFornecedor,
     required String token,
@@ -32,6 +42,26 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
         .collection('fornecedor')
         .doc(fornecedor.idFornecedor)
         .update(fornecedor.toMap());
+  }
+
+  @override
+  Future<void> atualizarStatusAtivo({
+    required String idFornecedor,
+    required bool ativo,
+  }) {
+    return firestore.collection('fornecedor').doc(idFornecedor).update({
+      'ativo': ativo,
+    });
+  }
+
+  @override
+  Future<void> atualizarAptoParaOperar({
+    required String idFornecedor,
+    required bool apto,
+  }) {
+    return firestore.collection('fornecedor').doc(idFornecedor).update({
+      'apto_para_operar': apto,
+    });
   }
 
   @override

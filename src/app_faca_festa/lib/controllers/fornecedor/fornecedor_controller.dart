@@ -699,10 +699,10 @@ class FornecedorController extends GetxController {
 
   Future<void> desativarFornecedor(String idFornecedor) async {
     try {
-      await _db
-          .collection('fornecedor')
-          .doc(idFornecedor)
-          .update({'ativo': false});
+      await _fornecedores.atualizarStatusAtivo(
+        idFornecedor: idFornecedor,
+        ativo: false,
+      );
       fornecedores.removeWhere((f) => f.idFornecedor == idFornecedor);
     } catch (e) {
       debugPrint('❌ Erro ao desativar fornecedor $idFornecedor: $e');
@@ -721,9 +721,10 @@ class FornecedorController extends GetxController {
         return false;
       }
 
-      await _db.collection('fornecedor').doc(id).update({
-        'apto_para_operar': apto,
-      });
+      await _fornecedores.atualizarAptoParaOperar(
+        idFornecedor: id,
+        apto: apto,
+      );
 
       final i = fornecedores.indexWhere(
         (x) => x.idFornecedor == id || x.idUsuario == id,
@@ -741,10 +742,10 @@ class FornecedorController extends GetxController {
 
   Future<void> ativarFornecedor(String idFornecedor) async {
     try {
-      await _db
-          .collection('fornecedor')
-          .doc(idFornecedor)
-          .update({'ativo': true});
+      await _fornecedores.atualizarStatusAtivo(
+        idFornecedor: idFornecedor,
+        ativo: true,
+      );
       final f =
           fornecedores.firstWhereOrNull((x) => x.idFornecedor == idFornecedor);
       if (f != null) {
