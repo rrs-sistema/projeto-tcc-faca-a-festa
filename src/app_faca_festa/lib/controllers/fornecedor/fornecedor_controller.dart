@@ -921,18 +921,7 @@ class FornecedorController extends GetxController {
   // === 🔹 Carrega catálogo de serviços (coleção: servico_produto)
   // ==========================================================
   Future<void> carregarCatalogoServicos() async {
-    final snapshot = await _db
-        .collection('servico_produto')
-        .where('ativo', isEqualTo: true)
-        .get();
-
-    final lista = snapshot.docs.map((d) {
-      return ServicoProdutoModel.fromMap({
-        'id': d.id,
-        ...d.data(),
-      });
-    }).toList();
-
+    final lista = await _servicosProduto.listarServicosAtivos();
     catalogoServicos.assignAll(lista);
   }
 

@@ -12,6 +12,10 @@ class GerenciarServicosProduto {
     return repository.listarServicos();
   }
 
+  Future<List<ServicoProdutoModel>> listarServicosAtivos() {
+    return repository.listarServicosAtivos();
+  }
+
   Future<List<ServicoProdutoModel>> listarServicosAtivosPorSubcategoria(
     String idSubcategoria,
   ) {

@@ -18,6 +18,17 @@ class ServicoProdutoRemoteDatasource {
         .toList();
   }
 
+  Future<List<ServicoProdutoModel>> listarServicosAtivos() async {
+    final snapshot = await _db
+        .collection('servico_produto')
+        .where('ativo', isEqualTo: true)
+        .get();
+
+    return snapshot.docs.map((doc) {
+      return ServicoProdutoModel.fromMap({...doc.data(), 'id': doc.id});
+    }).toList();
+  }
+
   Future<List<ServicoProdutoModel>> listarServicosAtivosPorSubcategoria(
     String idSubcategoria,
   ) async {

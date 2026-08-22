@@ -106,6 +106,9 @@ class _ServicoProdutoRepositoryFake implements ServicoProdutoRepository {
   Future<List<ServicoProdutoModel>> listarServicos() async => servicos;
 
   @override
+  Future<List<ServicoProdutoModel>> listarServicosAtivos() async => servicos;
+
+  @override
   Future<List<ServicoProdutoModel>> listarServicosAtivosPorSubcategoria(
     String idSubcategoria,
   ) async {
