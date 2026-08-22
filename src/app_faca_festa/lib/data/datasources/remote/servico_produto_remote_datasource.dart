@@ -32,6 +32,51 @@ class ServicoProdutoRemoteDatasource {
     }).toList();
   }
 
+  Future<List<ServicoProdutoModel>> listarServicosAtivosPorCategoriasFornecedor(
+    String idFornecedor,
+  ) async {
+    final categoriaSnap = await _db
+        .collection('fornecedor_categoria')
+        .where('id_fornecedor', isEqualTo: idFornecedor)
+        .get();
+
+    if (categoriaSnap.docs.isEmpty) {
+      return <ServicoProdutoModel>[];
+    }
+
+    final subcategoriasIds = <String>{};
+    for (final doc in categoriaSnap.docs) {
+      final subs = (doc.data()['subcategorias'] as List?) ?? [];
+      for (final sub in subs) {
+        final idSubcategoria = sub['idSubcategoria']?.toString();
+        if (idSubcategoria != null && idSubcategoria.isNotEmpty) {
+          subcategoriasIds.add(idSubcategoria);
+        }
+      }
+    }
+
+    if (subcategoriasIds.isEmpty) {
+      return <ServicoProdutoModel>[];
+    }
+
+    final servicos = <ServicoProdutoModel>[];
+    for (final chunk in _dividirChunks(subcategoriasIds.toList(), 30)) {
+      final snap = await _db
+          .collection('servico_produto')
+          .where('id_subcategoria', whereIn: chunk)
+          .where('ativo', isEqualTo: true)
+          .get();
+
+      servicos.addAll(
+        snap.docs.map((doc) {
+          return ServicoProdutoModel.fromMap({...doc.data(), 'id': doc.id});
+        }),
+      );
+    }
+
+    return servicos;
+  }
+
   Future<List<FornecedorServicoDetalhadoDto>> listarServicosComDetalhes({
     String? idFornecedor,
   }) async {

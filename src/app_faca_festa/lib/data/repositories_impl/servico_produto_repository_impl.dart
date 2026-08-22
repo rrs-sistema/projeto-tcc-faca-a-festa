@@ -22,6 +22,12 @@ class ServicoProdutoRepositoryImpl implements ServicoProdutoRepository {
   }
 
   @override
+  Future<List<ServicoProdutoModel>> listarServicosAtivosPorCategoriasFornecedor(
+      String idFornecedor) {
+    return remote.listarServicosAtivosPorCategoriasFornecedor(idFornecedor);
+  }
+
+  @override
   Future<List<FornecedorServicoDetalhadoDto>> listarServicosComDetalhes({
     String? idFornecedor,
   }) {

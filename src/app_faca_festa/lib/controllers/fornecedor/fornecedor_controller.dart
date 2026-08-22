@@ -29,19 +29,23 @@ import '../../data/services/fornecedor_ai_generativa_service.dart';
 import '../../data/models/model.dart';
 import '../../domain/repositories/autenticacao_repository.dart';
 import '../../domain/usecases/gerenciar_fornecedores.dart';
+import '../../domain/usecases/gerenciar_servicos_produto.dart';
 import '../app_controller.dart';
 
 class FornecedorController extends GetxController {
   FornecedorController({
     AutenticacaoRepository? autenticacaoRepository,
     GerenciarFornecedores? gerenciarFornecedores,
+    GerenciarServicosProduto? gerenciarServicosProduto,
   })  : _autenticacaoRepository = autenticacaoRepository,
-        _gerenciarFornecedores = gerenciarFornecedores;
+        _gerenciarFornecedores = gerenciarFornecedores,
+        _gerenciarServicosProduto = gerenciarServicosProduto;
 
   final _db = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final AutenticacaoRepository? _autenticacaoRepository;
   final GerenciarFornecedores? _gerenciarFornecedores;
+  final GerenciarServicosProduto? _gerenciarServicosProduto;
 
   /// 🔹 Dados principais do fornecedor logado
   final Rx<FornecedorModel?> fornecedor = Rx<FornecedorModel?>(null);
@@ -317,44 +321,9 @@ class FornecedorController extends GetxController {
 
   Future<List<ServicoProdutoModel>> buscarServicosFornecedorPorCategorias(
       String idFornecedor) async {
-    final db = FirebaseFirestore.instance;
-
     try {
-      // 1️⃣ Buscar todas as categorias vinculadas ao fornecedor
-      final catSnap = await db
-          .collection('fornecedor_categoria')
-          .where('id_fornecedor', isEqualTo: idFornecedor)
-          .get();
-
-      if (catSnap.docs.isEmpty) return [];
-
-      // 2️⃣ Extrair todas as subcategorias (agora dentro do mesmo documento)
-      final List<String> subcategoriasIds = [];
-      for (var doc in catSnap.docs) {
-        final data = doc.data();
-        final subs = (data['subcategorias'] as List?)
-                ?.map((s) => s['idSubcategoria']?.toString())
-                .whereType<String>()
-                .toList() ??
-            [];
-        subcategoriasIds.addAll(subs);
-      }
-
-      if (subcategoriasIds.isEmpty) return [];
-
-      // 3️⃣ Buscar os serviços/produtos vinculados às subcategorias
-      final servSnap = await db
-          .collection('servico_produto')
-          .where('id_subcategoria', whereIn: subcategoriasIds)
-          .where('ativo', isEqualTo: true)
-          .get();
-
-      // 4️⃣ Converter o resultado em lista de modelos
-      final servicos = servSnap.docs
-          .map((d) => ServicoProdutoModel.fromMap({'id': d.id, ...d.data()}))
-          .toList();
-
-      return servicos;
+      return await _servicosProduto
+          .listarServicosAtivosPorCategoriasFornecedor(idFornecedor);
     } catch (e, s) {
       debugPrint('Erro ao buscar serviços do fornecedor: $e\n$s');
       return [];
@@ -411,6 +380,11 @@ class FornecedorController extends GetxController {
   GerenciarFornecedores get _fornecedores {
     if (_gerenciarFornecedores != null) return _gerenciarFornecedores;
     return Get.find<GerenciarFornecedores>();
+  }
+
+  GerenciarServicosProduto get _servicosProduto {
+    if (_gerenciarServicosProduto != null) return _gerenciarServicosProduto;
+    return Get.find<GerenciarServicosProduto>();
   }
 
   Future<void> carregarTodosFornecedores() async {

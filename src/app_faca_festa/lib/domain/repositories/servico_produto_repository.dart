@@ -9,6 +9,9 @@ abstract interface class ServicoProdutoRepository {
     String idSubcategoria,
   );
 
+  Future<List<ServicoProdutoModel>> listarServicosAtivosPorCategoriasFornecedor(
+      String idFornecedor);
+
   Future<List<FornecedorServicoDetalhadoDto>> listarServicosComDetalhes({
     String? idFornecedor,
   });
