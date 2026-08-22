@@ -15,6 +15,18 @@ void main() {
     expect(remote.idUsuarioBuscado, 'usuario-1');
   });
 
+  test('delega busca de fornecedor por campo id_usuario sem alterar o modelo',
+      () async {
+    final fornecedor = _fornecedor();
+    final remote = _FornecedorRemoteFake(fornecedorPorIdUsuario: fornecedor);
+    final repository = FornecedorRepositoryImpl(remote);
+
+    final resultado = await repository.buscarPorIdUsuario('usuario-1');
+
+    expect(resultado, same(fornecedor));
+    expect(remote.idUsuarioConsultadoPorCampo, 'usuario-1');
+  });
+
   test('delega observacao de fornecedor ativo preservando id', () async {
     final fornecedor = _fornecedor();
     final remote = _FornecedorRemoteFake(fornecedorAtivo: fornecedor);
@@ -79,11 +91,17 @@ void main() {
 }
 
 class _FornecedorRemoteFake implements FornecedorRemoteDatasource {
-  _FornecedorRemoteFake({this.fornecedor, this.fornecedorAtivo});
+  _FornecedorRemoteFake({
+    this.fornecedor,
+    this.fornecedorPorIdUsuario,
+    this.fornecedorAtivo,
+  });
 
   final FornecedorModel? fornecedor;
+  final FornecedorModel? fornecedorPorIdUsuario;
   final FornecedorModel? fornecedorAtivo;
   String? idUsuarioBuscado;
+  String? idUsuarioConsultadoPorCampo;
   String? idFornecedorObservado;
   String? idFornecedorToken;
   String? tokenFcm;
@@ -97,6 +115,12 @@ class _FornecedorRemoteFake implements FornecedorRemoteDatasource {
   Future<FornecedorModel?> buscarPorUsuario(String idUsuario) async {
     idUsuarioBuscado = idUsuario;
     return fornecedor;
+  }
+
+  @override
+  Future<FornecedorModel?> buscarPorIdUsuario(String idUsuario) async {
+    idUsuarioConsultadoPorCampo = idUsuario;
+    return fornecedorPorIdUsuario;
   }
 
   @override

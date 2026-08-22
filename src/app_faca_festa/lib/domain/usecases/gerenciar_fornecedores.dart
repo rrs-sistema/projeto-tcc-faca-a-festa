@@ -10,6 +10,10 @@ class GerenciarFornecedores {
     return repository.buscarPorUsuario(idUsuario);
   }
 
+  Future<FornecedorModel?> buscarPorIdUsuario(String idUsuario) {
+    return repository.buscarPorIdUsuario(idUsuario);
+  }
+
   Stream<FornecedorModel?> observarFornecedorAtivo(String idFornecedor) {
     return repository.observarFornecedorAtivo(idFornecedor);
   }

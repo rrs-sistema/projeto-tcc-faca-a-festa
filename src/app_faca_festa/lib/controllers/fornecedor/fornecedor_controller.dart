@@ -546,15 +546,7 @@ class FornecedorController extends GetxController {
 
   Future<FornecedorModel?> buscarFornecedor(String idUsuario) async {
     try {
-      final snapshot = await _db
-          .collection('fornecedor')
-          .where('id_usuario', isEqualTo: idUsuario)
-          .limit(1)
-          .get();
-      if (snapshot.docs.isNotEmpty) {
-        return FornecedorModel.fromMap(snapshot.docs.first.data());
-      }
-      return null;
+      return await _fornecedores.buscarPorIdUsuario(idUsuario);
     } catch (e) {
       debugPrint("❌ Erro ao buscar último evento: $e");
       return null;
