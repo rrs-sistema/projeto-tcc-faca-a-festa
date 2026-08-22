@@ -14,7 +14,6 @@ import './../presentation/pages/welcome/welcome_event_screen.dart';
 import './../presentation/pages/home_event_screen.dart';
 import './../data/models/DTO/servico_cotado_dto.dart';
 import './convidado/convidado_controller.dart';
-import './contacao/cotacao_controller.dart';
 import '../app/bootstrap/cotacao_bootstrap.dart';
 import '../app/bootstrap/orcamento_bootstrap.dart';
 import '../app/bootstrap/avaliacao_servico_bootstrap.dart';

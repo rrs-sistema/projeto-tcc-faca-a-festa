@@ -5,6 +5,8 @@ import '../../data/models/servico_produto/servico_produto_model.dart';
 abstract interface class ServicoProdutoRepository {
   Future<List<ServicoProdutoModel>> listarServicos();
 
+  Future<List<ServicoProdutoModel>> listarServicosAtivos();
+
   Future<List<ServicoProdutoModel>> listarServicosAtivosPorSubcategoria(
     String idSubcategoria,
   );

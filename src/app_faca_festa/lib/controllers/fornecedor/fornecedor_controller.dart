@@ -406,8 +406,9 @@ class FornecedorController extends GetxController {
         if (a.ativo != b.ativo) return b.ativo ? 1 : -1;
 
         // 2️⃣ Depois, aprovados primeiro
-        if (a.aptoParaOperar != b.aptoParaOperar)
+        if (a.aptoParaOperar != b.aptoParaOperar) {
           return b.aptoParaOperar ? 1 : -1;
+        }
 
         // 3️⃣ Por fim, ordem alfabética
         return a.razaoSocial
@@ -636,8 +637,9 @@ class FornecedorController extends GetxController {
       default:
         lista.sort((a, b) {
           if (a.ativo != b.ativo) return b.ativo ? 1 : -1;
-          if (a.aptoParaOperar != b.aptoParaOperar)
+          if (a.aptoParaOperar != b.aptoParaOperar) {
             return b.aptoParaOperar ? 1 : -1;
+          }
           return a.razaoSocial
               .toLowerCase()
               .compareTo(b.razaoSocial.toLowerCase());
@@ -780,8 +782,9 @@ class FornecedorController extends GetxController {
   // ==========================================================
   Future<void> escutarServicosFornecedor(String idFornecedor) async {
     if (idFornecedor.trim().isEmpty) return;
-    if (_servicosEscutandoId == idFornecedor && _servicosFornecedorSub != null)
+    if (_servicosEscutandoId == idFornecedor && _servicosFornecedorSub != null) {
       return;
+    }
 
     await _servicosFornecedorSub?.cancel();
     _servicosEscutandoId = idFornecedor;
@@ -921,18 +924,7 @@ class FornecedorController extends GetxController {
   // === 🔹 Carrega catálogo de serviços (coleção: servico_produto)
   // ==========================================================
   Future<void> carregarCatalogoServicos() async {
-    final snapshot = await _db
-        .collection('servico_produto')
-        .where('ativo', isEqualTo: true)
-        .get();
-
-    final lista = snapshot.docs.map((d) {
-      return ServicoProdutoModel.fromMap({
-        'id': d.id,
-        ...d.data(),
-      });
-    }).toList();
-
+    final lista = await _servicosProduto.listarServicosAtivos();
     catalogoServicos.assignAll(lista);
   }
 

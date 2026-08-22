@@ -15,6 +15,11 @@ class ServicoProdutoRepositoryImpl implements ServicoProdutoRepository {
   }
 
   @override
+  Future<List<ServicoProdutoModel>> listarServicosAtivos() {
+    return remote.listarServicosAtivos();
+  }
+
+  @override
   Future<List<ServicoProdutoModel>> listarServicosAtivosPorSubcategoria(
     String idSubcategoria,
   ) {
