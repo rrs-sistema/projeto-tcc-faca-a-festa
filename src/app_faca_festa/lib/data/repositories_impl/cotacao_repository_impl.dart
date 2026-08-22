@@ -1,10 +1,16 @@
 import '../../domain/repositories/cotacao_repository.dart';
 import '../datasources/remote/cotacao_remote_datasource.dart';
+import '../models/cotacao/cotacao_model.dart';
 
 class CotacaoRepositoryImpl implements CotacaoRepository {
   CotacaoRepositoryImpl(this.remote);
 
   final CotacaoRemoteDatasource remote;
+
+  @override
+  Stream<List<CotacaoModel>> observarMinhasCotacoes(String idUsuario) {
+    return remote.observarMinhasCotacoes(idUsuario);
+  }
 
   @override
   Future<String> confirmarFornecedorEscolhido({

@@ -1,9 +1,14 @@
+import '../../data/models/cotacao/cotacao_model.dart';
 import '../repositories/cotacao_repository.dart';
 
 class GerenciarCotacoes {
   GerenciarCotacoes(this.repository);
 
   final CotacaoRepository repository;
+
+  Stream<List<CotacaoModel>> observarMinhasCotacoes(String idUsuario) {
+    return repository.observarMinhasCotacoes(idUsuario);
+  }
 
   Future<String> confirmarFornecedorEscolhido({
     required String idCotacao,

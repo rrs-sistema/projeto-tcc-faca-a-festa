@@ -41,64 +41,15 @@ class CotacaoController extends GetxController {
     _cotacaoStream?.cancel();
     _cancelarSubStreams();
 
-    _cotacaoStream = FirebaseFirestore.instance
-        .collection('cotacao')
-        .where('id_usuario_solicitante', isEqualTo: idUsuario)
-        .orderBy('data_envio', descending: true)
-        .snapshots()
-        .listen((snapshot) async {
+    _cotacaoStream =
+        _gerenciarCotacoes.observarMinhasCotacoes(idUsuario).listen((lista) {
       try {
-        final List<CotacaoModel> lista = [];
-
-        for (final doc in snapshot.docs) {
-          final data = doc.data();
-
-          // 🔸 Soma os valores de todos os serviços de todos os fornecedores
-          double totalEstimado = 0.0;
-          try {
-            final fornecedoresSnap =
-                await doc.reference.collection('fornecedores').get();
-            for (final fornecedorDoc in fornecedoresSnap.docs) {
-              final servicosSnap =
-                  await fornecedorDoc.reference.collection('servicos').get();
-              for (final s in servicosSnap.docs) {
-                final d = s.data();
-                final valor = (d['valor_estimado'] ?? 0);
-                final qtd = (d['quantidade'] ?? 1);
-                if (valor is num && qtd is num) {
-                  totalEstimado += valor.toDouble() * qtd.toDouble();
-                }
-              }
-            }
-          } catch (e) {
-            debugPrint('⚠️ Erro ao somar serviços da cotação ${doc.id}: $e');
-          }
-
-          final cotacao = CotacaoModel(
-            id: doc.id,
-            idEvento: data['id_evento'],
-            idUsuarioSolicitante: data['id_usuario_solicitante'],
-            nomeUsuarioSolicitante: data['nome_usuario_solicitante'],
-            categoriaNome: data['categoria_nome'] ?? '',
-            descricao: data['observacao'] ?? data['descricao'],
-            dataLimiteResposta:
-                (data['data_limite_resposta'] as Timestamp?)?.toDate(),
-            dataCadastro:
-                (data['data_envio'] as Timestamp?)?.toDate() ?? DateTime.now(),
-            status: StatusCotacao.fromString(data['status']),
-            valorEstimadoTotal: totalEstimado,
-            fornecedores: [],
-            servicos: [],
-          );
-
-          if (!_subStreams.containsKey(doc.id)) {
-            _ouvirFornecedoresDaCotacao(doc.id);
-          }
-
-          lista.add(cotacao);
-        }
-
         cotacoes.assignAll(lista);
+        for (final cotacao in lista) {
+          if (!_subStreams.containsKey(cotacao.id)) {
+            _ouvirFornecedoresDaCotacao(cotacao.id);
+          }
+        }
         _atualizarContagens();
       } catch (e, s) {
         debugPrint('❌ Erro ao processar cotações: $e\n$s');
