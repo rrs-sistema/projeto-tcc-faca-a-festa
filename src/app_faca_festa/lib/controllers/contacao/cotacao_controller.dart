@@ -3,16 +3,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
-import 'package:uuid/uuid.dart';
 import 'dart:async';
 
-import '../../data/models/orcamento/orcamento_gasto_model.dart';
+import '../../domain/usecases/gerenciar_cotacoes.dart';
 import '../fornecedor/fornecedor_controller.dart';
 import '../orcamento_controller.dart';
 import './../../data/models/model.dart';
 import './../app_controller.dart';
 
 class CotacaoController extends GetxController {
+  CotacaoController({GerenciarCotacoes? gerenciarCotacoes})
+      : _gerenciarCotacoes = gerenciarCotacoes ?? Get.find<GerenciarCotacoes>();
+
+  final GerenciarCotacoes _gerenciarCotacoes;
   final cotacoes = <CotacaoModel>[].obs;
   final carregando = false.obs;
 
@@ -22,7 +25,8 @@ class CotacaoController extends GetxController {
   final RxInt contratadosCount = 0.obs;
 
   void _atualizarContagens() {
-    contratadosCount.value = cotacoes.where((o) => o.status == StatusCotacao.concluida).length;
+    contratadosCount.value =
+        cotacoes.where((o) => o.status == StatusCotacao.concluida).length;
     totalCount.value = cotacoes.length;
   }
 
@@ -52,9 +56,11 @@ class CotacaoController extends GetxController {
           // 🔸 Soma os valores de todos os serviços de todos os fornecedores
           double totalEstimado = 0.0;
           try {
-            final fornecedoresSnap = await doc.reference.collection('fornecedores').get();
+            final fornecedoresSnap =
+                await doc.reference.collection('fornecedores').get();
             for (final fornecedorDoc in fornecedoresSnap.docs) {
-              final servicosSnap = await fornecedorDoc.reference.collection('servicos').get();
+              final servicosSnap =
+                  await fornecedorDoc.reference.collection('servicos').get();
               for (final s in servicosSnap.docs) {
                 final d = s.data();
                 final valor = (d['valor_estimado'] ?? 0);
@@ -75,8 +81,10 @@ class CotacaoController extends GetxController {
             nomeUsuarioSolicitante: data['nome_usuario_solicitante'],
             categoriaNome: data['categoria_nome'] ?? '',
             descricao: data['observacao'] ?? data['descricao'],
-            dataLimiteResposta: (data['data_limite_resposta'] as Timestamp?)?.toDate(),
-            dataCadastro: (data['data_envio'] as Timestamp?)?.toDate() ?? DateTime.now(),
+            dataLimiteResposta:
+                (data['data_limite_resposta'] as Timestamp?)?.toDate(),
+            dataCadastro:
+                (data['data_envio'] as Timestamp?)?.toDate() ?? DateTime.now(),
             status: StatusCotacao.fromString(data['status']),
             valorEstimadoTotal: totalEstimado,
             fornecedores: [],
@@ -126,11 +134,12 @@ class CotacaoController extends GetxController {
       final cotacaoIndex = cotacoes.indexWhere((c) => c.id == idCotacao);
       if (cotacaoIndex != -1) {
         final cotacao = cotacoes[cotacaoIndex];
-        final temResposta =
-            respostas.any((r) => r['status'] == 'respondido' || r['status'] == 'respondida');
+        final temResposta = respostas.any(
+            (r) => r['status'] == 'respondido' || r['status'] == 'respondida');
 
         if (temResposta && cotacao.status != StatusCotacao.respondida) {
-          cotacoes[cotacaoIndex] = cotacao.copyWith(status: StatusCotacao.respondida);
+          cotacoes[cotacaoIndex] =
+              cotacao.copyWith(status: StatusCotacao.respondida);
           cotacoes.refresh();
 
           Get.snackbar(
@@ -152,107 +161,23 @@ class CotacaoController extends GetxController {
     _subStreams[idCotacao] = stream;
   }
 
-// ===============================================================
-// 🔹 Atualizado — busca serviços dentro do fornecedor + cria gasto inicial
-// ===============================================================
-  Future<void> confirmarFornecedorEscolhido(String idFornecedor, String idCotacao) async {
-    final db = FirebaseFirestore.instance;
-    final cotacaoRef = db.collection('cotacao').doc(idCotacao);
+  Future<void> confirmarFornecedorEscolhido(
+      String idFornecedor, String idCotacao) async {
     final fornecedorController = Get.find<FornecedorController>();
     final appController = Get.find<AppController>();
-    final fornecedor =
-        fornecedorController.fornecedores.firstWhere((f) => f.idFornecedor == idFornecedor);
+    final fornecedor = fornecedorController.fornecedores
+        .firstWhere((f) => f.idFornecedor == idFornecedor);
 
     try {
       EasyLoading.show(status: 'Fechando negócio... 🔒');
 
-      final cotacaoSnap = await cotacaoRef.get();
-      if (!cotacaoSnap.exists) throw Exception('Cotação não encontrada.');
-
-      final data = cotacaoSnap.data() as Map<String, dynamic>;
-      final idEvento = data['id_evento'];
-      final idUsuarioSolicitante = data['id_usuario_solicitante'];
-      final categoriaNome = data['categoria_nome'];
-
-      // 🔹 Busca apenas serviços do fornecedor escolhido
-      final servicosSnap = await cotacaoRef
-          .collection('fornecedores')
-          .doc(idFornecedor)
-          .collection('servicos')
-          .get();
-
-      String? idServicoContratado;
-      String? nomeServicoContratado;
-      double valorTotal = 0.0;
-      for (final s in servicosSnap.docs) {
-        final d = s.data();
-        final valor = (d['valor_estimado'] ?? 0).toDouble();
-        final qtd = (d['quantidade'] ?? 1).toDouble();
-        valorTotal += valor * qtd;
-        // Captura apenas o primeiro serviço
-        idServicoContratado ??= d['id_produto_servico'];
-        nomeServicoContratado ??= d['nome_produto_servico'];
-      }
-
-      // ===============================================================
-      // 🔹 Batch — atualiza cotação + fornecedores + cria orçamento
-      // ===============================================================
-      final fornecedoresSnap = await cotacaoRef.collection('fornecedores').get();
-      final batch = db.batch();
-
-      for (final f in fornecedoresSnap.docs) {
-        final id = f['id_fornecedor'];
-        batch.update(f.reference, {'status': id == idFornecedor ? 'fechado' : 'perdeuCotacao'});
-      }
-
-      batch.update(cotacaoRef, {
-        'status': StatusCotacao.concluida.firestoreValue,
-        'data_fechamento': Timestamp.now(),
-        'fechado_por': idUsuarioSolicitante,
-      });
-
-      // Criar documento de orçamento
-      final orcRef = db.collection('orcamento').doc();
-      final novo = OrcamentoModel(
-        idOrcamento: orcRef.id,
-        idEvento: idEvento,
+      final idEvento = await _gerenciarCotacoes.confirmarFornecedorEscolhido(
+        idCotacao: idCotacao,
         idFornecedor: idFornecedor,
         nomeFornecedor: fornecedor.razaoSocial,
-        custoEstimado: valorTotal,
         idSolicitante: appController.usuarioLogado.value?.idUsuario ?? '',
         nomeSolicitante: appController.usuarioLogado.value?.nome ?? '',
-        anotacoes: 'Orçamento gerado automaticamente após fechamento da cotação "$categoriaNome".',
-        status: StatusOrcamento.emNegociacao,
-        orcamentoFechado: false,
-        idServicoFornecido: '',
       );
-      batch.set(orcRef, novo.toMap());
-
-      await batch.commit();
-
-      // -------------------------------------------------------------
-      // Criar gasto inicial incluindo ID e nome do serviço real
-      // -------------------------------------------------------------
-      final gastoId = const Uuid().v4();
-      final gastoData = OrcamentoGastoModel(
-        idGasto: gastoId,
-        idOrcamento: orcRef.id,
-        nome: "Serviço contratado – $categoriaNome",
-        custo: valorTotal,
-        pago: 0,
-        idServicoContratado: idServicoContratado,
-        nomeServicoContratado: nomeServicoContratado,
-      ).toMap()
-        ..['id_servico'] = idServicoContratado
-        ..['nome_servico'] = nomeServicoContratado
-        ..['data_cadastro'] = Timestamp.now();
-
-      await db
-          .collection('orcamento')
-          .doc(orcRef.id)
-          .collection('orcamento_gasto')
-          .doc(gastoId)
-          .set(gastoData);
 
       // ===============================================================
       // 🔹 Finalização de UX

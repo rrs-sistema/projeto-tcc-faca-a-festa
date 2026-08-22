@@ -73,6 +73,7 @@ import 'app/bootstrap/solicitacoes_bootstrap.dart';
 import 'app/bootstrap/tema_festa_bootstrap.dart';
 import 'app/bootstrap/autenticacao_bootstrap.dart';
 import 'app/bootstrap/comunidade_bootstrap.dart';
+import 'app/bootstrap/cotacao_bootstrap.dart';
 import 'app/bootstrap/uf_cidade_bootstrap.dart';
 import 'app/middleware/papel_middleware.dart';
 import 'domain/repositories/catalogo_servico_repository.dart';
@@ -391,6 +392,7 @@ void _registerControllers() {
   ServicoProdutoBootstrap.register();
   TemaFestaBootstrap.register();
   SolicitacoesBootstrap.register();
+  CotacaoBootstrap.register();
   AdminDashboardBootstrap.register();
   EventosAdminBootstrap.register();
   OrcamentosAdminBootstrap.register();
