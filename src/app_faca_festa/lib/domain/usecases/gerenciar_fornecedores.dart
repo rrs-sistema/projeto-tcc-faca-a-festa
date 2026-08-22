@@ -10,6 +10,10 @@ class GerenciarFornecedores {
     return repository.buscarPorUsuario(idUsuario);
   }
 
+  Future<void> atualizarFornecedor(FornecedorModel fornecedor) {
+    return repository.atualizarFornecedor(fornecedor);
+  }
+
   Future<void> atualizarFcmToken({
     required String idFornecedor,
     required String token,

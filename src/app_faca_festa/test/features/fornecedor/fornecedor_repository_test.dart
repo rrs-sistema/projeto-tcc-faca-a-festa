@@ -27,6 +27,16 @@ void main() {
     expect(remote.idFornecedorToken, 'fornecedor-1');
     expect(remote.tokenFcm, 'token-fcm');
   });
+
+  test('delega atualizacao do fornecedor sem alterar o modelo', () async {
+    final fornecedor = _fornecedor();
+    final remote = _FornecedorRemoteFake();
+    final repository = FornecedorRepositoryImpl(remote);
+
+    await repository.atualizarFornecedor(fornecedor);
+
+    expect(remote.fornecedorAtualizado, same(fornecedor));
+  });
 }
 
 class _FornecedorRemoteFake implements FornecedorRemoteDatasource {
@@ -36,11 +46,17 @@ class _FornecedorRemoteFake implements FornecedorRemoteDatasource {
   String? idUsuarioBuscado;
   String? idFornecedorToken;
   String? tokenFcm;
+  FornecedorModel? fornecedorAtualizado;
 
   @override
   Future<FornecedorModel?> buscarPorUsuario(String idUsuario) async {
     idUsuarioBuscado = idUsuario;
     return fornecedor;
+  }
+
+  @override
+  Future<void> atualizarFornecedor(FornecedorModel fornecedor) async {
+    fornecedorAtualizado = fornecedor;
   }
 
   @override

@@ -13,6 +13,11 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
   }
 
   @override
+  Future<void> atualizarFornecedor(FornecedorModel fornecedor) {
+    return remote.atualizarFornecedor(fornecedor);
+  }
+
+  @override
   Future<void> atualizarFcmToken({
     required String idFornecedor,
     required String token,

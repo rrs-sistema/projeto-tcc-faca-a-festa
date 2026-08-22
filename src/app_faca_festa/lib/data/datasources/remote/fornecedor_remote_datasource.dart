@@ -5,6 +5,8 @@ import '../../models/fornecedor/fornecedor_model.dart';
 abstract interface class FornecedorRemoteDatasource {
   Future<FornecedorModel?> buscarPorUsuario(String idUsuario);
 
+  Future<void> atualizarFornecedor(FornecedorModel fornecedor);
+
   Future<void> atualizarFcmToken({
     required String idFornecedor,
     required String token,
@@ -22,6 +24,14 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
     final data = doc.data();
     if (!doc.exists || data == null) return null;
     return FornecedorModel.fromMap(data, documentId: doc.id);
+  }
+
+  @override
+  Future<void> atualizarFornecedor(FornecedorModel fornecedor) {
+    return firestore
+        .collection('fornecedor')
+        .doc(fornecedor.idFornecedor)
+        .update(fornecedor.toMap());
   }
 
   @override

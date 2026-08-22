@@ -28,16 +28,20 @@ import '../../data/services/fornecedor_ai_service.dart';
 import '../../data/services/fornecedor_ai_generativa_service.dart';
 import '../../data/models/model.dart';
 import '../../domain/repositories/autenticacao_repository.dart';
+import '../../domain/usecases/gerenciar_fornecedores.dart';
 import '../app_controller.dart';
 
 class FornecedorController extends GetxController {
   FornecedorController({
     AutenticacaoRepository? autenticacaoRepository,
-  }) : _autenticacaoRepository = autenticacaoRepository;
+    GerenciarFornecedores? gerenciarFornecedores,
+  })  : _autenticacaoRepository = autenticacaoRepository,
+        _gerenciarFornecedores = gerenciarFornecedores;
 
   final _db = FirebaseFirestore.instance;
   final FirebaseStorage _storage = FirebaseStorage.instance;
   final AutenticacaoRepository? _autenticacaoRepository;
+  final GerenciarFornecedores? _gerenciarFornecedores;
 
   /// 🔹 Dados principais do fornecedor logado
   final Rx<FornecedorModel?> fornecedor = Rx<FornecedorModel?>(null);
@@ -370,10 +374,7 @@ class FornecedorController extends GetxController {
   /// 🔹 Atualiza os dados de um fornecedor existente no Firestore
   Future<void> atualizarFornecedor(FornecedorModel fornecedor) async {
     try {
-      await _db
-          .collection('fornecedor')
-          .doc(fornecedor.idFornecedor)
-          .update(fornecedor.toMap());
+      await _fornecedores.atualizarFornecedor(fornecedor);
     } catch (e) {
       throw Exception("Erro ao atualizar fornecedor: $e");
     }
@@ -415,6 +416,11 @@ class FornecedorController extends GetxController {
     }
     if (!Get.isRegistered<AutenticacaoRepository>()) return null;
     return Get.find<AutenticacaoRepository>().idUsuarioAtual;
+  }
+
+  GerenciarFornecedores get _fornecedores {
+    if (_gerenciarFornecedores != null) return _gerenciarFornecedores;
+    return Get.find<GerenciarFornecedores>();
   }
 
   Future<void> carregarTodosFornecedores() async {
