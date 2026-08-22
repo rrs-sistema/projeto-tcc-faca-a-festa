@@ -39,17 +39,34 @@ void main() {
     expect(remote.idSolicitante, 'usuario-1');
     expect(remote.nomeSolicitante, 'Ana');
   });
+
+  test('delega observacao de resposta de fornecedor por cotacao', () async {
+    final remote = _CotacaoRemoteFake(
+      idEvento: 'evento-1',
+      cotacaoTemResposta: true,
+    );
+    final repository = CotacaoRepositoryImpl(remote);
+
+    final temResposta =
+        await repository.observarCotacaoTemResposta('cotacao-1').first;
+
+    expect(temResposta, isTrue);
+    expect(remote.idCotacaoObservada, 'cotacao-1');
+  });
 }
 
 class _CotacaoRemoteFake implements CotacaoRemoteDatasource {
   _CotacaoRemoteFake({
     required this.idEvento,
     this.cotacoes = const [],
+    this.cotacaoTemResposta = false,
   });
 
   final String idEvento;
   final List<CotacaoModel> cotacoes;
+  final bool cotacaoTemResposta;
   String? idUsuarioObservado;
+  String? idCotacaoObservada;
   String? idCotacao;
   String? idFornecedor;
   String? nomeFornecedor;
@@ -60,6 +77,12 @@ class _CotacaoRemoteFake implements CotacaoRemoteDatasource {
   Stream<List<CotacaoModel>> observarMinhasCotacoes(String idUsuario) {
     idUsuarioObservado = idUsuario;
     return Stream.value(cotacoes);
+  }
+
+  @override
+  Stream<bool> observarCotacaoTemResposta(String idCotacao) {
+    idCotacaoObservada = idCotacao;
+    return Stream.value(cotacaoTemResposta);
   }
 
   @override

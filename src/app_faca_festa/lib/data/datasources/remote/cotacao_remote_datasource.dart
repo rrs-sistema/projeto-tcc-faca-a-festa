@@ -7,6 +7,8 @@ import '../../models/model.dart';
 abstract interface class CotacaoRemoteDatasource {
   Stream<List<CotacaoModel>> observarMinhasCotacoes(String idUsuario);
 
+  Stream<bool> observarCotacaoTemResposta(String idCotacao);
+
   Future<String> confirmarFornecedorEscolhido({
     required String idCotacao,
     required String idFornecedor,
@@ -84,6 +86,21 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
     }
 
     return totalEstimado;
+  }
+
+  @override
+  Stream<bool> observarCotacaoTemResposta(String idCotacao) {
+    return _db
+        .collection('cotacao')
+        .doc(idCotacao)
+        .collection('fornecedores')
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.any((doc) {
+        final status = doc.data()['status'];
+        return status == 'respondido' || status == 'respondida';
+      });
+    });
   }
 
   @override

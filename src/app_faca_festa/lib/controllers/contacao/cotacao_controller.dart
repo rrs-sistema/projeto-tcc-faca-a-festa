@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
@@ -66,28 +65,12 @@ class CotacaoController extends GetxController {
   // 🔹 Escuta em tempo real os fornecedores dentro de cada cotação
   // ============================================================
   void _ouvirFornecedoresDaCotacao(String idCotacao) {
-    final stream = FirebaseFirestore.instance
-        .collection('cotacao')
-        .doc(idCotacao)
-        .collection('fornecedores')
-        .snapshots()
-        .listen((snapshot) {
-      final respostas = snapshot.docs.map((doc) {
-        final data = doc.data();
-        return {
-          'idFornecedor': data['id_fornecedor'],
-          'status': data['status'],
-          'data_resposta': (data['data_resposta'] as Timestamp?)?.toDate(),
-          'prazo_entrega': (data['prazo_entrega'] as Timestamp?)?.toDate(),
-        };
-      }).toList();
-
+    final stream = _gerenciarCotacoes
+        .observarCotacaoTemResposta(idCotacao)
+        .listen((temResposta) {
       final cotacaoIndex = cotacoes.indexWhere((c) => c.id == idCotacao);
       if (cotacaoIndex != -1) {
         final cotacao = cotacoes[cotacaoIndex];
-        final temResposta = respostas.any(
-            (r) => r['status'] == 'respondido' || r['status'] == 'respondida');
-
         if (temResposta && cotacao.status != StatusCotacao.respondida) {
           cotacoes[cotacaoIndex] =
               cotacao.copyWith(status: StatusCotacao.respondida);

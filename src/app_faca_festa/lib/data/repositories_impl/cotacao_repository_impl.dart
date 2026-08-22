@@ -13,6 +13,11 @@ class CotacaoRepositoryImpl implements CotacaoRepository {
   }
 
   @override
+  Stream<bool> observarCotacaoTemResposta(String idCotacao) {
+    return remote.observarCotacaoTemResposta(idCotacao);
+  }
+
+  @override
   Future<String> confirmarFornecedorEscolhido({
     required String idCotacao,
     required String idFornecedor,

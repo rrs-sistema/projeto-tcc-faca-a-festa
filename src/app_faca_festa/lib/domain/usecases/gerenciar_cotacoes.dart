@@ -10,6 +10,10 @@ class GerenciarCotacoes {
     return repository.observarMinhasCotacoes(idUsuario);
   }
 
+  Stream<bool> observarCotacaoTemResposta(String idCotacao) {
+    return repository.observarCotacaoTemResposta(idCotacao);
+  }
+
   Future<String> confirmarFornecedorEscolhido({
     required String idCotacao,
     required String idFornecedor,
