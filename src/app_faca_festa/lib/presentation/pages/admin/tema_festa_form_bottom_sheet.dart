@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 import '../../../controllers/tema/admin_theme.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../controllers/tema/tema_festa_controller.dart';
+import '../../../core/utils/form_validators.dart';
 import '../../../data/models/evento/tema_festa_model.dart';
 import '../../widgets/tema_capa_imagem.dart';
 
@@ -66,6 +67,8 @@ class TemaFestaFormSheet extends StatefulWidget {
 
 class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
   static const Color _dark = Color(0xFF1F2937);
+  final _formKey = GlobalKey<FormState>();
+  var _autovalidateMode = AutovalidateMode.disabled;
 
   late final TextEditingController _nomeCtrl;
   late final TextEditingController _descCtrl;
@@ -161,7 +164,10 @@ class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
             ),
           ),
           Expanded(
-            child: SingleChildScrollView(
+            child: Form(
+              key: _formKey,
+              autovalidateMode: _autovalidateMode,
+              child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
               child: Obx(() {
                 final primaria = TemaFestaModel.parseCor(_primariaHex.value);
@@ -188,13 +194,18 @@ class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
                     const SizedBox(height: 20),
                     _secao('Identidade'),
                     const SizedBox(height: 8),
-                    TextField(
+                    TextFormField(
                       controller: _nomeCtrl,
                       textCapitalization: TextCapitalization.sentences,
                       decoration: _input(
-                        'Nome do tema',
+                        'Nome do tema *',
                         hint: 'Ex.: Super-heróis',
                         icon: Icons.auto_awesome_rounded,
+                      ),
+                      validator: (v) => FormValidators.titulo(
+                        v,
+                        campo: 'o nome do tema',
+                        minimo: 2,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -314,50 +325,88 @@ class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: TemaFestaTipos.catalogo.map((tipo) {
-                        final selecionado = _tipos.contains(tipo);
-                        return FilterChip(
-                          label: Text(TemaFestaTipos.rotulo(tipo)),
-                          selected: selecionado,
-                          selectedColor: _dark,
-                          checkmarkColor: Colors.white,
-                          labelStyle: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: selecionado ? Colors.white : _dark,
-                          ),
-                          onSelected: (value) {
-                            if (value) {
-                              _tipos.add(tipo);
-                            } else {
-                              _tipos.remove(tipo);
-                            }
-                          },
+                    FormField<List<String>>(
+                      validator: (_) => FormValidators.selecao(
+                        _tipos,
+                        campo: 'pelo menos um tipo de evento',
+                      ),
+                      builder: (state) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: TemaFestaTipos.catalogo.map((tipo) {
+                                final selecionado = _tipos.contains(tipo);
+                                return FilterChip(
+                                  label: Text(TemaFestaTipos.rotulo(tipo)),
+                                  selected: selecionado,
+                                  selectedColor: _dark,
+                                  checkmarkColor: Colors.white,
+                                  labelStyle: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: selecionado ? Colors.white : _dark,
+                                  ),
+                                  onSelected: (value) {
+                                    if (value) {
+                                      _tipos.add(tipo);
+                                    } else {
+                                      _tipos.remove(tipo);
+                                    }
+                                    state.didChange(_tipos.toList());
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                            if (state.hasError)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: Text(
+                                  state.errorText!,
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.redAccent,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                          ],
                         );
-                      }).toList(),
+                      },
                     ),
                     const SizedBox(height: 18),
                     _secao('Textos'),
                     const SizedBox(height: 8),
-                    TextField(
+                    TextFormField(
                       controller: _dressCtrl,
                       decoration: _input(
-                        'Dress code sugerido',
+                        'Dress code sugerido (opcional)',
                         hint: 'Ex.: Fantasia de herói, cores primárias',
                         icon: Icons.checkroom_outlined,
                       ),
+                      validator: (v) => FormValidators.descricao(
+                        v,
+                        campo: 'o dress code',
+                        obrigatorio: false,
+                        minimo: 3,
+                        maximo: 120,
+                      ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    TextFormField(
                       controller: _descCtrl,
                       maxLines: 3,
                       decoration: _input(
-                        'Descrição',
+                        'Descrição (opcional)',
                         hint: 'Como a festa deve parecer para o organizador.',
                         icon: Icons.notes_outlined,
+                      ),
+                      validator: (v) => FormValidators.descricao(
+                        v,
+                        campo: 'a descrição',
+                        obrigatorio: false,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -410,6 +459,7 @@ class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
                 );
               }),
             ),
+            ),
           ),
         ],
       ),
@@ -417,15 +467,9 @@ class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
   }
 
   Future<void> _salvar(TemaFestaController controller) async {
+    setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     final nome = _nomeCtrl.text.trim();
-    if (nome.length < 2) {
-      Get.snackbar('Tema', 'Informe o nome do tema.');
-      return;
-    }
-    if (_tipos.isEmpty) {
-      Get.snackbar('Tema', 'Selecione pelo menos um tipo de evento.');
-      return;
-    }
     final slug = widget.tema?.slug ?? TemaFestaModel.slugify(nome);
     final id = widget.tema?.idTema ?? slug;
     final idTema = id.isEmpty ? const Uuid().v4() : id;

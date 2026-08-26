@@ -116,7 +116,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           isConvidado: isConvidado,
                         ),
 
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Campos com * são obrigatórios',
+                    style: GoogleFonts.poppins(
+                      color: textColor.withValues(alpha: 0.78),
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
 
                   // 📋 Cartão translúcido adaptativo
                   Container(

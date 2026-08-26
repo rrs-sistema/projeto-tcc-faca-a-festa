@@ -17,6 +17,12 @@ class FornecedorServicoDetalhadoDto {
   final String? tipoMedida;
   final bool ativo;
 
+  /// Preço exibido e cotado (promoção quando válida).
+  double get precoEfetivo {
+    if (precoPromocao != null && precoPromocao! > 0) return precoPromocao!;
+    return preco;
+  }
+
   FornecedorServicoDetalhadoDto({
     required this.id,
     required this.idFornecedor,

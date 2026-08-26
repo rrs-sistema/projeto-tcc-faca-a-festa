@@ -153,11 +153,16 @@ class AvaliacaoServicoController extends GetxController {
     required String idEvento,
     required String idUsuario,
   }) async {
-    return _avaliacoes.podeAvaliarFornecedor(
-      idFornecedor: idFornecedor,
-      idEvento: idEvento,
-      idUsuario: idUsuario,
-    );
+    try {
+      return await _avaliacoes.podeAvaliarFornecedor(
+        idFornecedor: idFornecedor,
+        idEvento: idEvento,
+        idUsuario: idUsuario,
+      );
+    } catch (e) {
+      permitidoAvaliarFornecedor.value = false;
+      return false;
+    }
   }
 
   Future<bool> podeAvaliarCotacao({

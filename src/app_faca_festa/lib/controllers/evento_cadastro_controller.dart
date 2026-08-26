@@ -57,6 +57,10 @@ class EventoCadastroController extends GetxController {
   final idTema = ''.obs;
   final temaLivre = false.obs;
   final dressCode = ''.obs;
+  /// Preserva a capa personalizada ao editar o evento (não é editada neste form).
+  String? _imagemCapaUrl;
+  /// Preserva o rótulo personalizado do banner ao editar o evento.
+  String? _rotuloBanner;
 
   final dataFesta = TextEditingController();
   final horaFesta = TextEditingController();
@@ -246,6 +250,8 @@ class EventoCadastroController extends GetxController {
     estiloCasamento.value = evento.estiloCasamento ?? '';
     idTema.value = evento.idTema ?? '';
     dressCode.value = evento.dressCode ?? '';
+    _imagemCapaUrl = evento.imagemCapaUrl;
+    _rotuloBanner = evento.rotuloBanner;
     temaLivre.value = (evento.idTema == null ||
             evento.idTema!.trim().isEmpty ||
             evento.idTema == TemaFestaModel.slugOutro) &&
@@ -510,6 +516,8 @@ class EventoCadastroController extends GetxController {
         descricao: descricao.text,
         tema: tema.text.trim().isEmpty ? null : tema.text.trim(),
         idTema: idTema.value.trim().isEmpty ? null : idTema.value.trim(),
+        imagemCapaUrl: _imagemCapaUrl,
+        rotuloBanner: _rotuloBanner,
         dressCode: dressCode.value.trim().isEmpty ? null : dressCode.value.trim(),
         tipoCerimonia: tipoCerimonia.value,
         estiloCasamento: estiloCasamento.value,
@@ -572,6 +580,8 @@ class EventoCadastroController extends GetxController {
     idTema.value = '';
     temaLivre.value = false;
     dressCode.value = '';
+    _imagemCapaUrl = null;
+    _rotuloBanner = null;
     dataFesta.clear();
     horaFesta.clear();
     cidade.clear();

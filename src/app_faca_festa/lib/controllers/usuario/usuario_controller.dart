@@ -5,6 +5,8 @@ import 'package:image_picker/image_picker.dart';
 
 import './../../presentation/pages/endereco/endereco_section_controller.dart';
 import './../../data/models/model.dart';
+import './../../data/services/auditoria/auditoria_app.dart';
+import './../../domain/entities/auditoria_evento.dart';
 import './../../domain/repositories/autenticacao_repository.dart';
 import './../../domain/repositories/foto_perfil_repository.dart';
 import './../../domain/repositories/perfil_usuario_repository.dart';
@@ -127,6 +129,17 @@ class UsuarioController extends GetxController {
       await _perfilRepository.salvarEndereco(endereco);
       usuarios.add(novo);
       filtrarUsuarios(buscaCtrl.text);
+      AuditoriaApp.registrar(
+        acao: 'USUARIO_CRIADO',
+        resumo: 'Nova conta cadastrada pelo administrador.',
+        entidadeTipo: 'usuario',
+        entidadeId: uid,
+        entidadeNome: novo.nome,
+        mudancas: [
+          AuditoriaMudanca(campo: 'Tipo', para: _labelTipo(novo.tipo)),
+          AuditoriaMudanca(campo: 'E-mail', para: novo.email),
+        ],
+      );
       Get.snackbar('Sucesso', 'Usuário cadastrado com sucesso!',
           backgroundColor: Colors.green.shade700, colorText: Colors.white);
     } on AutenticacaoException catch (e) {
@@ -211,37 +224,82 @@ class UsuarioController extends GetxController {
   }
 
   Future<void> tornarAdmin(String idUsuario) async {
-    await _perfilRepository.atualizarTipo(idUsuario, 'A');
     final user = usuarios.firstWhereOrNull((u) => u.idUsuario == idUsuario);
+    await _perfilRepository.atualizarTipo(idUsuario, 'A');
     if (user != null) {
       usuarios[usuarios.indexOf(user)] = user.copyWith(tipo: 'A');
       filtrarUsuarios(buscaCtrl.text);
     }
+    AuditoriaApp.registrar(
+      acao: 'USUARIO_TIPO_ALTERADO',
+      resumo: 'Usuário promovido a administrador.',
+      entidadeTipo: 'usuario',
+      entidadeId: idUsuario,
+      entidadeNome: user?.nome,
+      mudancas: [
+        AuditoriaMudanca(
+          campo: 'Papel',
+          de: _labelTipo(user?.tipo),
+          para: 'Administrador',
+        ),
+      ],
+    );
     Get.snackbar('Sucesso', 'Usuário promovido a administrador',
         backgroundColor: Colors.teal.shade600, colorText: Colors.white);
   }
 
   Future<void> removerAdmin(String idUsuario) async {
-    await _perfilRepository.atualizarTipo(idUsuario, 'O');
     final user = usuarios.firstWhereOrNull((u) => u.idUsuario == idUsuario);
+    await _perfilRepository.atualizarTipo(idUsuario, 'O');
     if (user != null) {
       usuarios[usuarios.indexOf(user)] = user.copyWith(tipo: 'O');
       filtrarUsuarios(buscaCtrl.text);
     }
+    AuditoriaApp.registrar(
+      acao: 'USUARIO_TIPO_ALTERADO',
+      resumo: 'Privilégio de administrador removido.',
+      entidadeTipo: 'usuario',
+      entidadeId: idUsuario,
+      entidadeNome: user?.nome,
+      mudancas: [
+        AuditoriaMudanca(
+          campo: 'Papel',
+          de: 'Administrador',
+          para: 'Organizador',
+        ),
+      ],
+    );
     Get.snackbar('Alteração salva', 'Usuário deixou de ser administrador',
         backgroundColor: Colors.orange.shade700, colorText: Colors.white);
   }
 
   Future<void> toggleAtivo(String idUsuario, bool novoStatus) async {
     try {
+      final user = usuarios.firstWhereOrNull((u) => u.idUsuario == idUsuario);
       await _perfilRepository.atualizarStatusAtivo(idUsuario, novoStatus);
 
-      final user = usuarios.firstWhereOrNull((u) => u.idUsuario == idUsuario);
       if (user != null) {
         final atualizado = user.copyWith(ativo: novoStatus);
         usuarios[usuarios.indexOf(user)] = atualizado;
         filtrarUsuarios(buscaCtrl.text);
       }
+
+      AuditoriaApp.registrar(
+        acao: 'USUARIO_STATUS_ALTERADO',
+        resumo: novoStatus
+            ? 'Conta reativada pelo administrador.'
+            : 'Conta desativada pelo administrador.',
+        entidadeTipo: 'usuario',
+        entidadeId: idUsuario,
+        entidadeNome: user?.nome,
+        mudancas: [
+          AuditoriaMudanca(
+            campo: 'Ativo',
+            de: user?.ativo == true ? 'sim' : 'não',
+            para: novoStatus ? 'sim' : 'não',
+          ),
+        ],
+      );
 
       if (novoStatus) {
         Get.snackbar(
@@ -280,6 +338,19 @@ class UsuarioController extends GetxController {
         return 'A senha deve ter pelo menos 6 caracteres';
       default:
         return 'Erro ao criar conta. Tente novamente.';
+    }
+  }
+
+  String _labelTipo(String? tipo) {
+    switch ((tipo ?? '').trim()) {
+      case 'A':
+        return 'Administrador';
+      case 'F':
+        return 'Fornecedor';
+      case 'O':
+        return 'Organizador';
+      default:
+        return tipo ?? '—';
     }
   }
 }

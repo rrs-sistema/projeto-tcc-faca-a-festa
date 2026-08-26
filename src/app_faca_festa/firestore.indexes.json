@@ -1,4 +1,70 @@
 {
-  "indexes": [],
-  "fieldOverrides": []
+  "indexes": [
+    {
+      "collectionGroup": "fornecedores",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "id_fornecedor", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "fornecedor_servico",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_fornecedor", "order": "ASCENDING" },
+        { "fieldPath": "id_produto_servico", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "orcamento",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_evento", "order": "ASCENDING" },
+        { "fieldPath": "id_fornecedor", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "avaliacao_fornecedor",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_evento", "order": "ASCENDING" },
+        { "fieldPath": "id_fornecedor", "order": "ASCENDING" },
+        { "fieldPath": "id_usuario", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "auditoria_eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_fornecedor", "order": "ASCENDING" },
+        { "fieldPath": "visivel_fornecedor", "order": "ASCENDING" },
+        { "fieldPath": "criado_em", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": [
+    {
+      "collectionGroup": "fornecedores",
+      "fieldPath": "id_fornecedor",
+      "indexes": [
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "DESCENDING",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "arrayConfig": "CONTAINS",
+          "queryScope": "COLLECTION"
+        },
+        {
+          "order": "ASCENDING",
+          "queryScope": "COLLECTION_GROUP"
+        }
+      ]
+    }
+  ]
 }

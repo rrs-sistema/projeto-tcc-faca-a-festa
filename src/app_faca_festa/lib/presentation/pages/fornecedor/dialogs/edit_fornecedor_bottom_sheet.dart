@@ -10,6 +10,7 @@ import 'dart:io' show File;
 import 'dart:typed_data';
 
 import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import '../../../../core/utils/form_validators.dart';
 import './../../../widgets/custom_input_field.dart';
 import './../../../../data/models/model.dart';
 
@@ -23,6 +24,8 @@ class EditFornecedorBottomSheet extends StatefulWidget {
 }
 
 class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
+  final _formKey = GlobalKey<FormState>();
+  var _autovalidateMode = AutovalidateMode.disabled;
   late TextEditingController _razaoCtrl;
   late TextEditingController _telefoneCtrl;
   late TextEditingController _emailCtrl;
@@ -73,6 +76,9 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
   }
 
   Future<void> _salvar() async {
+    setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
     final controller = Get.find<FornecedorController>();
     EasyLoading.show(status: 'Salvando...');
 
@@ -120,7 +126,10 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
           ),
         ],
       ),
-      child: SingleChildScrollView(
+      child: Form(
+        key: _formKey,
+        autovalidateMode: _autovalidateMode,
+        child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -167,10 +176,19 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
             const SizedBox(height: 20),
 
             // ===== CAMPOS =====
-            _campo("Razão Social", _razaoCtrl, Icons.business_rounded),
-            _campo("Telefone", _telefoneCtrl, Icons.phone_rounded),
-            _campo("E-mail", _emailCtrl, Icons.email_rounded),
-            _campo("Descrição", _descricaoCtrl, Icons.edit_note_rounded, maxLines: 6),
+            _campo("Razão Social", _razaoCtrl, Icons.business_rounded,
+                isRequired: true, validator: FormValidators.razaoSocial),
+            _campo("Telefone", _telefoneCtrl, Icons.phone_rounded,
+                type: InputType.phone, isRequired: true),
+            _campo("E-mail", _emailCtrl, Icons.email_rounded,
+                type: InputType.email, isRequired: true),
+            _campo(
+              "Descrição (opcional)",
+              _descricaoCtrl,
+              Icons.edit_note_rounded,
+              maxLines: 6,
+              validator: FormValidators.descricaoServicos,
+            ),
             const SizedBox(height: 16),
 
             // ===== BOTÃO SALVAR =====
@@ -198,6 +216,7 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
             const SizedBox(height: 16),
           ],
         ),
+      ),
       ),
     );
   }
@@ -257,7 +276,15 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
     );
   }
 
-  Widget _campo(String label, TextEditingController controller, IconData icon, {int maxLines = 1}) {
+  Widget _campo(
+    String label,
+    TextEditingController controller,
+    IconData icon, {
+    int maxLines = 1,
+    bool isRequired = false,
+    InputType type = InputType.text,
+    String? Function(String?)? validator,
+  }) {
     return CustomInputField(
       label: label,
       controller: controller,
@@ -265,6 +292,9 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
       color: null,
       readOnly: false,
       maxLines: maxLines,
+      type: type,
+      isRequired: isRequired,
+      validator: validator,
     );
   }
 }

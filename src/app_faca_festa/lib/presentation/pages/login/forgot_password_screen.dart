@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../controllers/password_reset_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
+import '../../../core/utils/form_validators.dart';
 import '../../widgets/custom_input_field.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
@@ -126,114 +127,197 @@ class ForgotPasswordScreen extends StatelessWidget {
   }
 }
 
-class _EmailStep extends StatelessWidget {
+class _EmailStep extends StatefulWidget {
   const _EmailStep({required this.controller, required this.primary});
 
   final PasswordResetController controller;
   final Color primary;
 
   @override
+  State<_EmailStep> createState() => _EmailStepState();
+}
+
+class _EmailStepState extends State<_EmailStep> {
+  final _formKey = GlobalKey<FormState>();
+  var _autovalidateMode = AutovalidateMode.disabled;
+  late final TextEditingController emailCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    emailCtrl = TextEditingController(text: widget.controller.email.value);
+  }
+
+  @override
+  void dispose() {
+    emailCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _enviar() async {
+    setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    await widget.controller.solicitarCodigo();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CustomInputField(
-          label: 'E-mail',
-          hintlabel: 'Digite seu e-mail cadastrado',
-          icon: Icons.email_outlined,
-          color: primary,
-          titleColor: primary,
-          type: InputType.email,
-          onChanged: (value) => controller.email.value = value,
-          controller: TextEditingController(text: controller.email.value),
-        ),
-        const SizedBox(height: 20),
-        _ActionButton(
-          label: 'Enviar código',
-          icon: Icons.mark_email_read_outlined,
-          primary: primary,
-          loading: controller.carregando.value,
-          onPressed: controller.solicitarCodigo,
-        ),
-      ],
+    return Form(
+      key: _formKey,
+      autovalidateMode: _autovalidateMode,
+      child: Column(
+        children: [
+          CustomInputField(
+            label: 'E-mail',
+            hintlabel: 'Digite seu e-mail cadastrado',
+            icon: Icons.email_outlined,
+            color: widget.primary,
+            titleColor: widget.primary,
+            type: InputType.email,
+            isRequired: true,
+            validator: FormValidators.email,
+            onChanged: (value) => widget.controller.email.value = value,
+            controller: emailCtrl,
+          ),
+          const SizedBox(height: 20),
+          _ActionButton(
+            label: 'Enviar código',
+            icon: Icons.mark_email_read_outlined,
+            primary: widget.primary,
+            loading: widget.controller.carregando.value,
+            onPressed: _enviar,
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _CodeStep extends StatelessWidget {
+class _CodeStep extends StatefulWidget {
   const _CodeStep({required this.controller, required this.primary});
 
   final PasswordResetController controller;
   final Color primary;
 
   @override
+  State<_CodeStep> createState() => _CodeStepState();
+}
+
+class _CodeStepState extends State<_CodeStep> {
+  final _formKey = GlobalKey<FormState>();
+  var _autovalidateMode = AutovalidateMode.disabled;
+  late final TextEditingController codigoCtrl;
+  late final TextEditingController senhaCtrl;
+  late final TextEditingController confirmarCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    codigoCtrl = TextEditingController(text: widget.controller.codigo.value);
+    senhaCtrl = TextEditingController(text: widget.controller.novaSenha.value);
+    confirmarCtrl =
+        TextEditingController(text: widget.controller.confirmarSenha.value);
+  }
+
+  @override
+  void dispose() {
+    codigoCtrl.dispose();
+    senhaCtrl.dispose();
+    confirmarCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _redefinir() async {
+    setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    await widget.controller.redefinirSenha();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        CustomInputField(
-          label: 'Código',
-          hintlabel: 'Digite o código de 6 dígitos',
-          icon: Icons.pin_outlined,
-          color: primary,
-          titleColor: primary,
-          onChanged: (value) => controller.codigo.value = value,
-          controller: TextEditingController(text: controller.codigo.value),
-        ),
-        const SizedBox(height: 12),
-        Obx(
-          () => CustomInputField(
-            label: 'Nova senha',
-            hintlabel: 'Digite a nova senha',
-            icon: Icons.lock_outline,
-            color: primary,
-            titleColor: primary,
-            type: InputType.password,
-            obscureText: !controller.exibirSenha.value,
-            suffixIcon: IconButton(
-              onPressed: () => controller.exibirSenha.toggle(),
-              icon: Icon(
-                controller.exibirSenha.value
-                    ? Icons.visibility_off
-                    : Icons.visibility,
-                color: primary,
+    return Form(
+      key: _formKey,
+      autovalidateMode: _autovalidateMode,
+      child: Column(
+        children: [
+          CustomInputField(
+            label: 'Código',
+            hintlabel: 'Digite o código de 6 dígitos',
+            icon: Icons.pin_outlined,
+            color: widget.primary,
+            titleColor: widget.primary,
+            type: InputType.number,
+            isRequired: true,
+            maxLength: 6,
+            validator: FormValidators.codigoVerificacao,
+            onChanged: (value) => widget.controller.codigo.value = value,
+            controller: codigoCtrl,
+          ),
+          const SizedBox(height: 12),
+          Obx(
+            () => CustomInputField(
+              label: 'Nova senha',
+              hintlabel: 'Mínimo 6 caracteres, com letra e número',
+              icon: Icons.lock_outline,
+              color: widget.primary,
+              titleColor: widget.primary,
+              type: InputType.password,
+              isRequired: true,
+              validator: FormValidators.senha,
+              obscureText: !widget.controller.exibirSenha.value,
+              suffixIcon: IconButton(
+                onPressed: () => widget.controller.exibirSenha.toggle(),
+                icon: Icon(
+                  widget.controller.exibirSenha.value
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                  color: widget.primary,
+                ),
               ),
+              onChanged: (value) => widget.controller.novaSenha.value = value,
+              controller: senhaCtrl,
             ),
-            onChanged: (value) => controller.novaSenha.value = value,
-            controller: TextEditingController(text: controller.novaSenha.value),
           ),
-        ),
-        const SizedBox(height: 12),
-        Obx(
-          () => CustomInputField(
-            label: 'Confirmar senha',
-            hintlabel: 'Repita a nova senha',
-            icon: Icons.lock_reset_outlined,
-            color: primary,
-            titleColor: primary,
-            type: InputType.password,
-            obscureText: !controller.exibirSenha.value,
-            onChanged: (value) => controller.confirmarSenha.value = value,
-            controller:
-                TextEditingController(text: controller.confirmarSenha.value),
+          const SizedBox(height: 12),
+          Obx(
+            () => CustomInputField(
+              label: 'Confirmar senha',
+              hintlabel: 'Repita a nova senha',
+              icon: Icons.lock_reset_outlined,
+              color: widget.primary,
+              titleColor: widget.primary,
+              type: InputType.password,
+              isRequired: true,
+              validator: (v) => FormValidators.confirmarSenha(
+                v,
+                senha: senhaCtrl.text,
+              ),
+              obscureText: !widget.controller.exibirSenha.value,
+              onChanged: (value) =>
+                  widget.controller.confirmarSenha.value = value,
+              controller: confirmarCtrl,
+            ),
           ),
-        ),
-        const SizedBox(height: 20),
-        _ActionButton(
-          label: 'Redefinir senha',
-          icon: Icons.check_circle_outline_rounded,
-          primary: primary,
-          loading: controller.carregando.value,
-          onPressed: controller.redefinirSenha,
-        ),
-        TextButton(
-          onPressed:
-              controller.carregando.value ? null : controller.voltarEtapaEmail,
-          child: Text(
-            'Usar outro e-mail',
-            style: GoogleFonts.poppins(
-                color: primary, fontWeight: FontWeight.w600),
+          const SizedBox(height: 20),
+          _ActionButton(
+            label: 'Redefinir senha',
+            icon: Icons.check_circle_outline_rounded,
+            primary: widget.primary,
+            loading: widget.controller.carregando.value,
+            onPressed: _redefinir,
           ),
-        ),
-      ],
+          TextButton(
+            onPressed: widget.controller.carregando.value
+                ? null
+                : widget.controller.voltarEtapaEmail,
+            child: Text(
+              'Usar outro e-mail',
+              style: GoogleFonts.poppins(
+                  color: widget.primary, fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

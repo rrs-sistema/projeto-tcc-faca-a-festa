@@ -101,7 +101,7 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
           const SizedBox(height: 15),
           CustomInputField(
             label: 'Senha',
-            hintlabel: 'Informe sua senha',
+            hintlabel: 'Mínimo 6 caracteres, com letra e número',
             icon: Icons.lock_outline,
             controller: senhaCtrl,
             color: Colors.white,

@@ -17,6 +17,16 @@ abstract interface class EventoRepository {
 
   Future<void> salvar(Evento evento);
 
+  Future<void> atualizarImagemCapa({
+    required String idEvento,
+    String? imagemCapaUrl,
+  });
+
+  Future<void> atualizarRotuloBanner({
+    required String idEvento,
+    String? rotuloBanner,
+  });
+
   Future<void> excluir(String idEvento);
 
   Stream<List<Evento>> listarPorUsuario(String idUsuario);

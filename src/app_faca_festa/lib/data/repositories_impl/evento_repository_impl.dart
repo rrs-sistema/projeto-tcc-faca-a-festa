@@ -47,6 +47,28 @@ class EventoRepositoryImpl implements EventoRepository {
   }
 
   @override
+  Future<void> atualizarImagemCapa({
+    required String idEvento,
+    String? imagemCapaUrl,
+  }) {
+    return remote.atualizarImagemCapa(
+      idEvento: idEvento,
+      imagemCapaUrl: imagemCapaUrl,
+    );
+  }
+
+  @override
+  Future<void> atualizarRotuloBanner({
+    required String idEvento,
+    String? rotuloBanner,
+  }) {
+    return remote.atualizarRotuloBanner(
+      idEvento: idEvento,
+      rotuloBanner: rotuloBanner,
+    );
+  }
+
+  @override
   Future<void> excluir(String idEvento) {
     return remote.excluir(idEvento);
   }

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import '../controllers/app_controller.dart';
+import '../core/utils/form_validators.dart';
 import '../domain/entities/usuario.dart';
 import '../domain/repositories/autenticacao_repository.dart';
 import '../domain/repositories/perfil_usuario_repository.dart';
@@ -31,8 +32,14 @@ class LoginController extends GetxController {
   }
 
   Future<void> login() async {
-    if (email.value.isEmpty || senha.value.isEmpty) {
-      EasyLoading.showError('Preencha todos os campos');
+    final erroEmail = FormValidators.email(email.value);
+    if (erroEmail != null) {
+      EasyLoading.showError(erroEmail);
+      return;
+    }
+    final erroSenha = FormValidators.senhaLogin(senha.value);
+    if (erroSenha != null) {
+      EasyLoading.showError(erroSenha);
       return;
     }
 

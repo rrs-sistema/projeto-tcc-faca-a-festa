@@ -68,6 +68,10 @@ class Evento {
   final int? idade;
   final String? idTema;
   final String? tema;
+  /// Capa personalizada do organizador; se vazia, usa a capa do tema.
+  final String? imagemCapaUrl;
+  /// Texto do topo do banner; se vazio, usa "tipo · tema".
+  final String? rotuloBanner;
   final String? nomeResponsavel;
   final String? nomeGestante;
   final String? nomeBebe;
@@ -113,6 +117,8 @@ class Evento {
     this.idade,
     this.idTema,
     this.tema,
+    this.imagemCapaUrl,
+    this.rotuloBanner,
     this.nomeResponsavel,
     this.nomeGestante,
     this.nomeBebe,
@@ -140,4 +146,16 @@ class Evento {
   }
 
   bool get possuiQuantidadePorTipo => totalConvidadosPorTipo > 0;
+
+  /// Texto exibido no topo do banner (personalizado ou tipo · tema).
+  String rotuloBannerEfetivo({String? nomeTipoEvento}) {
+    final personalizado = (rotuloBanner ?? '').trim();
+    if (personalizado.isNotEmpty) return personalizado;
+    final tipo = (nomeTipoEvento ?? '').trim();
+    final nomeTema = (tema ?? '').trim();
+    return [
+      tipo.isEmpty ? 'Faça a Festa' : tipo,
+      if (nomeTema.isNotEmpty) nomeTema,
+    ].join(' · ');
+  }
 }

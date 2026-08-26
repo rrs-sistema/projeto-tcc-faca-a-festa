@@ -12,23 +12,24 @@ class SolicitacoesRemoteDatasource {
     String idFornecedor,
   ) {
     return _db
-        .collection('cotacao')
+        .collectionGroup('fornecedores')
+        .where('id_fornecedor', isEqualTo: idFornecedor)
         .snapshots()
         .asyncMap<List<CotacaoModel>>((snapshot) async {
       final resultado = <CotacaoModel>[];
 
-      for (final cotacaoDoc in snapshot.docs) {
-        final cotacao = CotacaoModel.fromMap(cotacaoDoc.data(), cotacaoDoc.id);
+      for (final fornecedorDoc in snapshot.docs) {
+        final cotacaoRef = fornecedorDoc.reference.parent.parent;
+        if (cotacaoRef == null) continue;
 
-        final fornecedoresSnap = await cotacaoDoc.reference
-            .collection('fornecedores')
-            .where('id_fornecedor', isEqualTo: idFornecedor)
-            .get();
+        final cotacaoDoc = await cotacaoRef.get();
+        if (!cotacaoDoc.exists) continue;
 
-        if (fornecedoresSnap.docs.isEmpty) continue;
+        final cotacao =
+            CotacaoModel.fromMap(cotacaoDoc.data()!, cotacaoDoc.id);
 
         final servicosSnap =
-            await cotacaoDoc.reference.collection('servicos').get();
+            await fornecedorDoc.reference.collection('servicos').get();
         final servicos = servicosSnap.docs.map((doc) {
           final data = doc.data();
           return {
@@ -74,34 +75,57 @@ class SolicitacoesRemoteDatasource {
 
     final data = cotacaoDoc.data()!;
     final statusAtual = data['status'] ?? 'pendente';
+    final idSolicitante = (data['id_usuario_solicitante'] ?? '').toString();
 
-    if (statusAtual != 'pendente' && statusAtual != 'aguardando') {
+    if (statusAtual != 'pendente' &&
+        statusAtual != 'aguardando' &&
+        statusAtual != 'parcial' &&
+        statusAtual != 'respondida') {
       throw SolicitacaoNaoCancelavelException(statusAtual.toString());
     }
 
+    // Organizador cancela a cotação inteira; fornecedor só a própria participação.
+    final ehSolicitante = idSolicitante == canceladoPor;
     final fornecedoresSnap = await cotacaoRef.collection('fornecedores').get();
 
     if (fornecedoresSnap.docs.isEmpty) {
       throw const SolicitacaoSemFornecedorException();
     }
 
-    final batchFornecedores = _db.batch();
+    final batch = _db.batch();
 
-    for (final doc in fornecedoresSnap.docs) {
-      batchFornecedores.update(doc.reference, {
+    if (ehSolicitante) {
+      for (final doc in fornecedoresSnap.docs) {
+        batch.update(doc.reference, {
+          'status': 'cancelada',
+          'data_cancelamento': FieldValue.serverTimestamp(),
+        });
+      }
+      batch.update(cotacaoRef, {
         'status': 'cancelada',
+        'data_cancelamento': FieldValue.serverTimestamp(),
+        'cancelado_por': canceladoPor,
+      });
+    } else {
+      QueryDocumentSnapshot<Map<String, dynamic>>? meuDoc;
+      for (final doc in fornecedoresSnap.docs) {
+        final id = (doc.data()['id_fornecedor'] ?? doc.id).toString();
+        if (id == canceladoPor) {
+          meuDoc = doc;
+          break;
+        }
+      }
+      if (meuDoc == null) {
+        throw const SolicitacaoNaoEncontradaException();
+      }
+      batch.update(meuDoc.reference, {
+        'status': 'recusado',
+        'respondido': true,
         'data_cancelamento': FieldValue.serverTimestamp(),
       });
     }
 
-    await batchFornecedores.commit();
-    await Future.delayed(const Duration(milliseconds: 800));
-
-    await cotacaoRef.update({
-      'status': 'cancelada',
-      'data_cancelamento': FieldValue.serverTimestamp(),
-      'cancelado_por': canceladoPor,
-    });
+    await batch.commit();
   }
 }
 

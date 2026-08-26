@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 
+import '../core/utils/form_validators.dart';
+
 class PasswordResetController extends GetxController {
   final FirebaseFunctions _functions =
       FirebaseFunctions.instanceFor(region: 'southamerica-east1');
@@ -17,8 +19,9 @@ class PasswordResetController extends GetxController {
 
   Future<void> solicitarCodigo() async {
     final emailLimpo = email.value.trim().toLowerCase();
-    if (!_emailValido(emailLimpo)) {
-      _mostrarErro('Digite um e-mail válido.');
+    final erroEmail = FormValidators.email(emailLimpo);
+    if (erroEmail != null) {
+      _mostrarErro(erroEmail);
       return;
     }
 
@@ -52,23 +55,30 @@ class PasswordResetController extends GetxController {
     final senhaLimpa = novaSenha.value.trim();
     final confirmacaoLimpa = confirmarSenha.value.trim();
 
-    if (!_emailValido(emailLimpo)) {
-      _mostrarErro('Digite um e-mail válido.');
+    final erroEmail = FormValidators.email(emailLimpo);
+    if (erroEmail != null) {
+      _mostrarErro(erroEmail);
       return;
     }
 
-    if (codigoLimpo.length != 6) {
-      _mostrarErro('Informe o código de 6 dígitos.');
+    final erroCodigo = FormValidators.codigoVerificacao(codigoLimpo);
+    if (erroCodigo != null) {
+      _mostrarErro(erroCodigo);
       return;
     }
 
-    if (senhaLimpa.length < 6) {
-      _mostrarErro('A nova senha deve ter pelo menos 6 caracteres.');
+    final erroSenha = FormValidators.senha(senhaLimpa);
+    if (erroSenha != null) {
+      _mostrarErro(erroSenha);
       return;
     }
 
-    if (senhaLimpa != confirmacaoLimpa) {
-      _mostrarErro('As senhas não conferem.');
+    final erroConfirmacao = FormValidators.confirmarSenha(
+      confirmacaoLimpa,
+      senha: senhaLimpa,
+    );
+    if (erroConfirmacao != null) {
+      _mostrarErro(erroConfirmacao);
       return;
     }
 
@@ -104,10 +114,6 @@ class PasswordResetController extends GetxController {
     codigo.value = '';
     novaSenha.value = '';
     confirmarSenha.value = '';
-  }
-
-  bool _emailValido(String value) {
-    return RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value);
   }
 
   String _traduzErroFunctions(FirebaseFunctionsException e) {

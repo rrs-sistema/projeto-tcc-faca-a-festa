@@ -13,6 +13,7 @@ import 'dart:async';
 import './presentation/pages/convidado/area/area_convidado_home_screen.dart';
 import './controllers/categoria/subcategoria_servico_controller.dart';
 import './presentation/pages/fornecedor/fornecedor_home_screen.dart';
+import './presentation/pages/fornecedor/auditoria_fornecedor_screen.dart';
 import './presentation/pages/fornecedor/fornecedor_localizacao_screen.dart';
 import './presentation/modules/gifts/gerenciar_presentes_page.dart';
 import './controllers/categoria/categoria_servico_controller.dart';
@@ -22,6 +23,7 @@ import 'core/utils/convite_link.dart';
 import './presentation/pages/fornecedor/orcamentos_screen.dart';
 import './presentation/pages/welcome/welcome_event_screen.dart';
 import './presentation/pages/admin/admin_dashboard_screen.dart';
+import './presentation/pages/admin/auditoria_admin_screen.dart';
 import 'controllers/calculadora/calculadora_itens_admin_controller.dart';
 import 'controllers/calculadora/calculadora_festa_controller.dart';
 import 'controllers/inspiracao/inspiracao_controller.dart';
@@ -56,6 +58,7 @@ import 'app/bindings/gift_binding.dart';
 import 'app/bootstrap/avaliacao_servico_bootstrap.dart';
 import 'app/bootstrap/admin_territorio_bootstrap.dart';
 import 'app/bootstrap/admin_dashboard_bootstrap.dart';
+import 'app/bootstrap/auditoria_bootstrap.dart';
 import 'app/bootstrap/eventos_admin_bootstrap.dart';
 import 'app/bootstrap/gift_offline_bootstrap.dart';
 import 'app/bootstrap/orcamentos_admin_bootstrap.dart';
@@ -291,6 +294,13 @@ class FacaFestaApp extends StatelessWidget {
           ],
         ),
         GetPage(
+          name: '/admin/auditoria',
+          page: () => AuditoriaAdminScreen(),
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['A'])
+          ],
+        ),
+        GetPage(
           name: '/convidadosPage',
           page: () => const ConvidadosPage(),
           middlewares: [
@@ -350,6 +360,13 @@ class FacaFestaApp extends StatelessWidget {
           ],
         ),
         GetPage(
+          name: '/fornecedor/auditoria',
+          page: () => AuditoriaFornecedorScreen(),
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['F'])
+          ],
+        ),
+        GetPage(
           name: '/conviteNaoEncontrado',
           page: () => const ConviteNaoEncontradoScreen(),
         ),
@@ -396,6 +413,7 @@ void _registerControllers() {
   SolicitacoesBootstrap.register();
   CotacaoBootstrap.register();
   AdminDashboardBootstrap.register();
+  AuditoriaBootstrap.register();
   EventosAdminBootstrap.register();
   OrcamentosAdminBootstrap.register();
   OrcamentoBootstrap.register();

@@ -84,4 +84,16 @@ class _EventoRepositoryFake implements EventoRepository {
 
   @override
   Future<void> salvar(Evento evento) async {}
+
+  @override
+  Future<void> atualizarImagemCapa({
+    required String idEvento,
+    String? imagemCapaUrl,
+  }) async {}
+
+  @override
+  Future<void> atualizarRotuloBanner({
+    required String idEvento,
+    String? rotuloBanner,
+  }) async {}
 }

@@ -6,18 +6,46 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../controllers/totp_mfa_controller.dart';
+import '../../../core/utils/form_validators.dart';
 import '../../widgets/custom_input_field.dart';
 
-class TotpVerifyScreen extends StatelessWidget {
+class TotpVerifyScreen extends StatefulWidget {
   const TotpVerifyScreen({super.key});
 
   @override
+  State<TotpVerifyScreen> createState() => _TotpVerifyScreenState();
+}
+
+class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
+  final _formKey = GlobalKey<FormState>();
+  var _autovalidateMode = AutovalidateMode.disabled;
+  late final TotpMfaController controller;
+  late final TextEditingController codigoCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(TotpMfaController());
+    codigoCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    codigoCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _confirmar() async {
+    setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    await controller.verificarLogin();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(TotpMfaController());
     final theme = Get.find<EventThemeController>();
     final gradient = theme.gradient.value;
     final primary = theme.primaryColor.value;
-    final codigoCtrl = TextEditingController();
 
     return Scaffold(
       body: Stack(
@@ -68,7 +96,10 @@ class TotpVerifyScreen extends StatelessWidget {
                     final porEmail =
                         controller.metodoLogin.value == TotpMfaController.etapaEmail;
                     final destino = controller.emailMascarado.value;
-                    return Column(
+                    return Form(
+                      key: _formKey,
+                      autovalidateMode: _autovalidateMode,
+                      child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
@@ -113,8 +144,10 @@ class TotpVerifyScreen extends StatelessWidget {
                           color: primary,
                           titleColor: primary,
                           type: InputType.number,
+                          isRequired: true,
                           maxLength: 6,
                           keyboardType: TextInputType.number,
+                          validator: FormValidators.codigoVerificacao,
                           onChanged: (value) => controller.codigo.value = value,
                         ),
                         const SizedBox(height: 16),
@@ -124,7 +157,7 @@ class TotpVerifyScreen extends StatelessWidget {
                           child: ElevatedButton.icon(
                             onPressed: controller.carregando.value
                                 ? null
-                                : controller.verificarLogin,
+                                : _confirmar,
                             icon: const Icon(Icons.login_rounded,
                                 color: Colors.white),
                             label: Text(
@@ -166,6 +199,7 @@ class TotpVerifyScreen extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
                     );
                   }),
                 ),

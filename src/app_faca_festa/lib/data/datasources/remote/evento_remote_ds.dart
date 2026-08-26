@@ -100,6 +100,32 @@ class EventoRemoteDatasource {
     return _eventos.doc(evento.idEvento).set(evento.toMap());
   }
 
+  Future<void> atualizarImagemCapa({
+    required String idEvento,
+    String? imagemCapaUrl,
+  }) {
+    final url = (imagemCapaUrl ?? '').trim();
+    if (url.isEmpty) {
+      return _eventos.doc(idEvento).update({
+        'imagem_capa_url': FieldValue.delete(),
+      });
+    }
+    return _eventos.doc(idEvento).update({'imagem_capa_url': url});
+  }
+
+  Future<void> atualizarRotuloBanner({
+    required String idEvento,
+    String? rotuloBanner,
+  }) {
+    final texto = (rotuloBanner ?? '').trim();
+    if (texto.isEmpty) {
+      return _eventos.doc(idEvento).update({
+        'rotulo_banner': FieldValue.delete(),
+      });
+    }
+    return _eventos.doc(idEvento).update({'rotulo_banner': texto});
+  }
+
   Future<void> excluir(String idEvento) {
     return _eventos.doc(idEvento).delete();
   }

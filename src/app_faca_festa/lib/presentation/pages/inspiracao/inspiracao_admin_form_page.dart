@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../controllers/inspiracao/inspiracao_admin_controller.dart';
+import '../../../core/utils/form_validators.dart';
 import './../../../data/models/model.dart';
 
 class InspiracaoAdminFormPage extends StatefulWidget {
@@ -420,7 +421,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                     hint: 'Ex.: Mesa provençal rosa com dourado',
                                     icon: Icons.title_rounded,
                                     requiredField: true,
-                                    validator: _requiredValidator('Informe o título.'),
+                                    validator: (value) =>
+                                        FormValidators.titulo(value, campo: 'o título'),
                                   ),
                                   _buildTextField(
                                     controller: _categoriaController,
@@ -428,7 +430,10 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                     hint: 'Ex.: Decoração',
                                     icon: Icons.category_outlined,
                                     requiredField: true,
-                                    validator: _requiredValidator('Informe a categoria.'),
+                                    validator: (value) => FormValidators.obrigatorio(
+                                      value,
+                                      campo: 'a categoria',
+                                    ),
                                   ),
                                   _buildTextField(
                                     controller: _categoriaIdController,
@@ -474,6 +479,11 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 hint: 'https://...',
                                 icon: Icons.link_rounded,
                                 keyboardType: TextInputType.url,
+                                validator: (value) => FormValidators.url(
+                                  value,
+                                  obrigatorio: false,
+                                  campo: 'a URL da imagem',
+                                ),
                               ),
                               const SizedBox(height: 12),
                               _buildTextField(
@@ -1561,7 +1571,10 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                             hint: 'Ex.: Solicitar orçamento da decoração',
                             icon: Icons.task_alt_rounded,
                             requiredField: true,
-                            validator: _requiredValidator('Informe o título da tarefa.'),
+                            validator: (value) => FormValidators.titulo(
+                              value,
+                              campo: 'o título da tarefa',
+                            ),
                           ),
                           const SizedBox(height: 12),
                           _buildTextField(
@@ -1883,7 +1896,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 hint: 'Ex.: Painel temático',
                                 icon: Icons.shopping_bag_outlined,
                                 requiredField: true,
-                                validator: _requiredValidator('Informe o item.'),
+                                validator: (value) =>
+                                    FormValidators.titulo(value, campo: 'o item'),
                               ),
                             ],
                           ),
@@ -2963,15 +2977,6 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   bool _possuiImagemPrincipal() {
     return controller.possuiImagemPrincipalFormulario ||
         _imagemUrlController.text.trim().isNotEmpty;
-  }
-
-  String? Function(String?) _requiredValidator(String message) {
-    return (value) {
-      if ((value ?? '').trim().isEmpty) {
-        return message;
-      }
-      return null;
-    };
   }
 
   List<String> _parseStringList(String value) {

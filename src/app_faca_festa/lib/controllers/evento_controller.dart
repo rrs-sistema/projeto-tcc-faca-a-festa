@@ -2,8 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
+import 'package:firebase_storage/firebase_storage.dart';
+
 import '../data/local/evento_ativo_store.dart';
-import '../domain/entities/evento.dart';
+import '../data/models/evento/evento_model.dart';
 import '../domain/entities/tipo_evento.dart';
 import '../domain/repositories/evento_repository.dart';
 import '../presentation/coordinators/evento_session_coordinator.dart';
@@ -85,8 +87,10 @@ class EventoController extends GetxController {
       (eventoAtualizado) {
         if (eventoAtualizado != null) {
           final temaAnterior = eventoAtual.value?.idTema;
+          final capaAnterior = eventoAtual.value?.imagemCapaUrl;
           eventoAtual.value = eventoAtualizado;
-          if (temaAnterior != eventoAtualizado.idTema) {
+          if (temaAnterior != eventoAtualizado.idTema ||
+              capaAnterior != eventoAtualizado.imagemCapaUrl) {
             _sessionCoordinator.aplicarTema(
               tipoEventoAtualEntidade?.nome ?? '',
               evento: eventoAtualizado,
@@ -369,6 +373,116 @@ class EventoController extends GetxController {
 
   Future<void> excluirEvento(String idEvento) async {
     await _repository.excluir(idEvento);
+  }
+
+  /// Capa personalizada do organizador (sobrepõe a capa do tema).
+  Future<String?> enviarCapaEvento(List<int> bytes) async {
+    final evento = eventoAtual.value;
+    if (evento == null) return null;
+    final id = evento.idEvento.trim();
+    if (id.isEmpty || bytes.isEmpty) return null;
+    if (bytes.length > 1_500_000) {
+      debugPrint('[EventoController] Capa maior que 1,5 MB.');
+      return null;
+    }
+
+    try {
+      final storage = FirebaseStorage.instance;
+      final ref = storage.ref().child('eventos').child(id).child('capa.jpg');
+      final payload = Uint8List.fromList(bytes);
+      final contentType = _contentTypeCapa(payload);
+      await ref.putData(
+        payload,
+        SettableMetadata(contentType: contentType),
+      );
+      final url = await ref.getDownloadURL();
+      final urlComVersao =
+          '$url${url.contains('?') ? '&' : '?'}v=${DateTime.now().millisecondsSinceEpoch}';
+      await _repository.atualizarImagemCapa(
+        idEvento: id,
+        imagemCapaUrl: urlComVersao,
+      );
+      await _aplicarCapaLocal(urlComVersao);
+      return urlComVersao;
+    } catch (e, s) {
+      debugPrint('[EventoController] Erro ao enviar capa: $e\n$s');
+      return null;
+    }
+  }
+
+  Future<bool> removerCapaEvento() async {
+    final evento = eventoAtual.value;
+    if (evento == null) return false;
+    final id = evento.idEvento.trim();
+    if (id.isEmpty) return false;
+
+    try {
+      try {
+        await FirebaseStorage.instance
+            .ref()
+            .child('eventos')
+            .child(id)
+            .child('capa.jpg')
+            .delete();
+      } catch (e) {
+        debugPrint('[EventoController] Capa já ausente no Storage: $e');
+      }
+      await _repository.atualizarImagemCapa(idEvento: id, imagemCapaUrl: null);
+      await _aplicarCapaLocal(null);
+      return true;
+    } catch (e, s) {
+      debugPrint('[EventoController] Erro ao remover capa: $e\n$s');
+      return false;
+    }
+  }
+
+  Future<void> _aplicarCapaLocal(String? url) async {
+    final atual = eventoAtual.value;
+    if (atual == null) return;
+    final atualizado = EventoModel.fromEntity(atual).copyWith(
+      imagemCapaUrl: url,
+      limparImagemCapaUrl: url == null || url.trim().isEmpty,
+    );
+    eventoAtual.value = atualizado;
+    _sessionCoordinator.aplicarTema(
+      tipoEventoAtualEntidade?.nome ?? '',
+      evento: atualizado,
+    );
+  }
+
+  String _contentTypeCapa(Uint8List bytes) {
+    if (bytes.length >= 8 &&
+        bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47) {
+      return 'image/png';
+    }
+    return 'image/jpeg';
+  }
+
+  Future<bool> atualizarRotuloBanner(String? rotulo) async {
+    final evento = eventoAtual.value;
+    if (evento == null) return false;
+    final id = evento.idEvento.trim();
+    if (id.isEmpty) return false;
+
+    final texto = (rotulo ?? '').trim();
+    try {
+      await _repository.atualizarRotuloBanner(
+        idEvento: id,
+        rotuloBanner: texto.isEmpty ? null : texto,
+      );
+      final atualizado = EventoModel.fromEntity(evento).copyWith(
+        rotuloBanner: texto.isEmpty ? null : texto,
+        limparRotuloBanner: texto.isEmpty,
+      );
+      eventoAtual.value = atualizado;
+      return true;
+    } catch (e, s) {
+      debugPrint('[EventoController] Erro ao atualizar rótulo: $e\n$s');
+      return false;
+    }
   }
 
   /// =====================================================

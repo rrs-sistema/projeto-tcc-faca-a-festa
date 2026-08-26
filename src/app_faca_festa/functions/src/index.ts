@@ -22,7 +22,10 @@ export {
   enviarCapaTemaFesta,
   removerCapaTemaFesta,
 } from "./functions/tema/enviarCapaTemaFesta";
-
+export { registrarAuditoria } from "./functions/auditoria/registrarAuditoria";
+export { criarCotacao } from "./functions/cotacao/criarCotacao";
+export { responderCotacao } from "./functions/cotacao/responderCotacao";
+export { fecharCotacao } from "./functions/cotacao/fecharCotacao";
 
 export {
     recomendarFornecedoresParaEvento,

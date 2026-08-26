@@ -205,6 +205,7 @@ Future<void> showNovoOrcamentoBottomSheet({
     required String label,
     required IconData icon,
     String? hint,
+    String? helperText,
     TextInputType? keyboardType,
     TextCapitalization textCapitalization = TextCapitalization.none,
     TextInputAction textInputAction = TextInputAction.next,
@@ -236,6 +237,10 @@ Future<void> showNovoOrcamentoBottomSheet({
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
+          helperText: helperText,
+          helperMaxLines: 2,
+          helperStyle:
+              GoogleFonts.poppins(color: textMuted, fontSize: 10, fontWeight: FontWeight.w500),
           labelStyle:
               GoogleFonts.poppins(color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
           hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
@@ -378,7 +383,9 @@ Future<void> showNovoOrcamentoBottomSheet({
                             icon: Icons.edit_note_rounded, title: 'Valores e Observações'),
                         buildTextField(
                           controller: anotacoesCtrl,
-                          label: 'Observações / Detalhes adicionais',
+                          label: 'Observações (opcional)',
+                          hint: 'Detalhes, data ou preferências do pedido',
+                          helperText: 'Opcional. Se informar, use pelo menos 3 caracteres.',
                           icon: Icons.notes_outlined,
                           textCapitalization: TextCapitalization.sentences,
                           maxLines: 3,
@@ -386,13 +393,17 @@ Future<void> showNovoOrcamentoBottomSheet({
                           validator: (v) => FormValidators.descricao(
                             v,
                             campo: 'as observações',
-                            minimo: 5,
+                            obrigatorio: false,
+                            minimo: 3,
+                            maximo: 500,
                           ),
                         ),
                         buildTextField(
                           controller: valorEstimadoCtrl,
                           label: 'Valor estimado (opcional)',
                           hint: 'R\$ 0,00',
+                          helperText:
+                              'Se não informar, usamos o preço do serviço.',
                           icon: Icons.attach_money_rounded,
                           keyboardType: const TextInputType.numberWithOptions(decimal: true),
                           textInputAction: TextInputAction.done,

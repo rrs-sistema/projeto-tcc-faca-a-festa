@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 import 'dart:async';
 
 import './../data/models/model.dart';
+import './../data/services/auditoria/auditoria_app.dart';
+import './../domain/entities/auditoria_evento.dart';
 import './../domain/usecases/gerenciar_orcamentos.dart';
 import 'evento_controller.dart';
 import 'orcamento_gasto_controller.dart';
@@ -191,6 +193,28 @@ class OrcamentoController extends GetxController {
         fechar: fechar,
       );
 
+      final atual = orcamentos.firstWhereOrNull((o) => o.idOrcamento == idOrcamento);
+      AuditoriaApp.registrar(
+        acao: 'ORCAMENTO_RESPONDIDO',
+        resumo: fechar
+            ? 'Orçamento respondido e fechado.'
+            : 'Proposta de orçamento atualizada.',
+        entidadeTipo: 'orcamento',
+        entidadeId: idOrcamento,
+        entidadeNome: atual?.nomeFornecedor,
+        idFornecedor: atual?.idFornecedor,
+        idEvento: atual?.idEvento,
+        idOrcamento: idOrcamento,
+        mudancas: [
+          AuditoriaMudanca(
+            campo: 'Custo estimado',
+            para: custoEstimado.toStringAsFixed(2),
+          ),
+          if (fechar)
+            const AuditoriaMudanca(campo: 'Status', para: 'fechado'),
+        ],
+      );
+
       // Atualizar resumo ao fechar orçamento
       calcularTotalPagoGeral();
     } catch (e) {
@@ -204,7 +228,18 @@ class OrcamentoController extends GetxController {
   Future<void> excluirOrcamento(String idOrcamento) async {
     try {
       await _orcamentos.excluirOrcamento(idOrcamento);
+      final atual = orcamentos.firstWhereOrNull((o) => o.idOrcamento == idOrcamento);
       orcamentos.removeWhere((o) => o.idOrcamento == idOrcamento);
+      AuditoriaApp.registrar(
+        acao: 'ORCAMENTO_EXCLUIDO',
+        resumo: 'Orçamento excluído.',
+        entidadeTipo: 'orcamento',
+        entidadeId: idOrcamento,
+        entidadeNome: atual?.nomeFornecedor,
+        idFornecedor: atual?.idFornecedor,
+        idEvento: atual?.idEvento,
+        idOrcamento: idOrcamento,
+      );
 
       calcularTotalPagoGeral();
     } catch (e) {

@@ -392,15 +392,22 @@ InputDecoration adminInputDecoration({
   required String label,
   IconData? icon,
   String? hint,
+  String? helperText,
   int? maxLines,
+  bool obrigatorio = false,
 }) {
   return InputDecoration(
-    labelText: label,
+    labelText: obrigatorio ? '$label *' : label,
     hintText: hint,
+    helperText: helperText,
+    helperMaxLines: 2,
     prefixIcon: icon == null ? null : Icon(icon, color: AdminPalette.primary),
     filled: true,
     fillColor: AdminPalette.surface,
     labelStyle: GoogleFonts.poppins(fontSize: 13, color: AdminPalette.muted),
+    helperStyle: GoogleFonts.poppins(fontSize: 11, color: AdminPalette.muted),
+    errorMaxLines: 2,
+    errorStyle: GoogleFonts.poppins(fontSize: 11.5, height: 1.2),
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
@@ -409,6 +416,14 @@ InputDecoration adminInputDecoration({
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(14),
       borderSide: const BorderSide(color: AdminPalette.primary, width: 1.4),
+    ),
+    errorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Colors.redAccent),
+    ),
+    focusedErrorBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Colors.redAccent, width: 1.4),
     ),
   );
 }

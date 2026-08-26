@@ -4,6 +4,8 @@ import 'dart:async';
 
 import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../../data/models/model.dart';
+import '../../data/services/auditoria/auditoria_app.dart';
+import '../../domain/entities/auditoria_evento.dart';
 import '../../domain/usecases/gerenciar_servicos_produto.dart';
 
 class ServicoProdutoController extends GetxController {
@@ -142,12 +144,33 @@ class ServicoProdutoController extends GetxController {
   }
 
   Future<void> excluirServico(String id) async {
+    final atual = buscarPorId(id);
     await _servicos.excluirServico(id);
+    AuditoriaApp.registrar(
+      acao: 'SERVICO_CATALOGO_EXCLUIDO',
+      resumo: 'Serviço removido do catálogo da plataforma.',
+      entidadeTipo: 'servico_produto',
+      entidadeId: id,
+      entidadeNome: atual?.nome,
+    );
     await carregarServicos();
   }
 
   Future<void> salvarServico(ServicoProdutoModel model) async {
     await _servicos.salvarServico(model);
+    AuditoriaApp.registrar(
+      acao: 'SERVICO_CATALOGO_SALVO',
+      resumo: 'Serviço do catálogo salvo.',
+      entidadeTipo: 'servico_produto',
+      entidadeId: model.id,
+      entidadeNome: model.nome,
+      mudancas: [
+        AuditoriaMudanca(
+          campo: 'Ativo',
+          para: model.ativo ? 'sim' : 'não',
+        ),
+      ],
+    );
     await carregarServicos();
   }
 
@@ -253,6 +276,25 @@ class ServicoProdutoController extends GetxController {
       await _servicos.salvarVinculo(model);
 
       debugPrint('🟢 Vínculo salvo com sucesso');
+      AuditoriaApp.registrar(
+        acao: 'SERVICO_FORNECEDOR_SALVO',
+        resumo: 'Serviço do fornecedor publicado ou atualizado.',
+        entidadeTipo: 'fornecedor_servico',
+        entidadeId: model.id,
+        entidadeNome: model.idProdutoServico,
+        idFornecedor: model.idFornecedor,
+        idServico: model.idProdutoServico,
+        mudancas: [
+          AuditoriaMudanca(
+            campo: 'Preço',
+            para: model.preco.toStringAsFixed(2),
+          ),
+          AuditoriaMudanca(
+            campo: 'Ativo',
+            para: model.ativo ? 'sim' : 'não',
+          ),
+        ],
+      );
 
       /// 3) RECARREGAR SERVIÇOS (SEMPRE)
       await carregarServicosComDetalhesOtimizado(
@@ -289,6 +331,13 @@ class ServicoProdutoController extends GetxController {
 
   Future<void> excluirVinculo(String id, String idFornecedor) async {
     await _servicos.excluirVinculo(id);
+    AuditoriaApp.registrar(
+      acao: 'SERVICO_FORNECEDOR_EXCLUIDO',
+      resumo: 'Serviço removido do catálogo do fornecedor.',
+      entidadeTipo: 'fornecedor_servico',
+      entidadeId: id,
+      idFornecedor: idFornecedor,
+    );
     await carregarServicosComDetalhesOtimizado(
       idFornecedor: idFornecedor,
     );

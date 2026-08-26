@@ -80,6 +80,66 @@ void main() {
     expect(controller.primaryColor.value, const Color(0xFFE91E63));
     expect(controller.tituloCabecalho.value, contains('Casamento'));
   });
+
+  test('prefers organizer capa over theme capa', () async {
+    temaRepository.temas['tema-casamento'] = TemaFestaModel(
+      idTema: 'tema-casamento',
+      slug: 'tema-casamento',
+      nome: 'Romântico',
+      categoria: TemaFestaCategorias.criativo,
+      corPrimaria: '#E91E63',
+      corSecundaria: '#FCE4EC',
+      icone: 'favorite',
+      imagemCapaUrl: 'https://example.com/tema.jpg',
+    );
+
+    await controller.aplicarParaEvento(
+      Evento(
+        idEvento: 'ev-1',
+        idTipoEvento: 'tipo-casamento',
+        idUsuario: 'u-1',
+        nomeEvento: 'Casamento',
+        localEvento: 'Salão',
+        data: DateTime(2027, 1, 1),
+        idTema: 'tema-casamento',
+        imagemCapaUrl: 'https://example.com/evento.jpg',
+      ),
+      fallbackNomeTipo: 'Casamento',
+    );
+
+    expect(controller.capaUrl.value, 'https://example.com/evento.jpg');
+    expect(controller.temCapaEvento, isTrue);
+    expect(controller.capaTemaUrl.value, 'https://example.com/tema.jpg');
+  });
+
+  test('falls back to theme capa when event has none', () async {
+    temaRepository.temas['tema-casamento'] = TemaFestaModel(
+      idTema: 'tema-casamento',
+      slug: 'tema-casamento',
+      nome: 'Romântico',
+      categoria: TemaFestaCategorias.criativo,
+      corPrimaria: '#E91E63',
+      corSecundaria: '#FCE4EC',
+      icone: 'favorite',
+      imagemCapaUrl: 'https://example.com/tema.jpg',
+    );
+
+    await controller.aplicarParaEvento(
+      Evento(
+        idEvento: 'ev-2',
+        idTipoEvento: 'tipo-casamento',
+        idUsuario: 'u-1',
+        nomeEvento: 'Casamento',
+        localEvento: 'Salão',
+        data: DateTime(2027, 1, 1),
+        idTema: 'tema-casamento',
+      ),
+      fallbackNomeTipo: 'Casamento',
+    );
+
+    expect(controller.capaUrl.value, 'https://example.com/tema.jpg');
+    expect(controller.temCapaEvento, isFalse);
+  });
 }
 
 TemaFestaModel _tema({
@@ -182,6 +242,18 @@ class _EventoRepositoryFake implements EventoRepository {
 
   @override
   Future<void> salvar(Evento evento) async {}
+
+  @override
+  Future<void> atualizarImagemCapa({
+    required String idEvento,
+    String? imagemCapaUrl,
+  }) async {}
+
+  @override
+  Future<void> atualizarRotuloBanner({
+    required String idEvento,
+    String? rotuloBanner,
+  }) async {}
 
   @override
   Future<void> excluir(String idEvento) async {}

@@ -14,7 +14,7 @@ import '../../../../data/models/servico_produto/servico_foto_model.dart';
 import '../../../../controllers/servico/servico_produto_controller.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import './../../../widgets/custom_input_field.dart';
-import './../../../../core/utils/biblioteca.dart';
+import './../../../../core/utils/form_validators.dart';
 import './components/titulo_vinculo_animado.dart';
 import './../../../../data/models/model.dart';
 
@@ -23,26 +23,10 @@ Future<void> showFornecedorServicoBottomSheet(
   String idFornecedor, {
   FornecedorProdutoServicoModel? vinculo,
 }) async {
-  final themeController = Get.find<EventThemeController>();
   final categoriaController = Get.find<CategoriaServicoController>();
   final subcategoriaController = Get.find<SubcategoriaServicoController>();
   final servicoController = Get.find<ServicoProdutoController>();
-  final fotoController = ServicoFotoBootstrap.findController();
 
-  final primary = themeController.primaryColor.value;
-
-  final precoCtrl =
-      TextEditingController(text: vinculo?.preco.toStringAsFixed(2) ?? '');
-  final promocaoCtrl = TextEditingController(
-      text: vinculo?.precoPromocao?.toStringAsFixed(2) ?? '');
-  final urlController = TextEditingController();
-
-  final categoriaSelecionada = Rxn<CategoriaServicoModel>();
-  final subcategoriaSelecionada = Rxn<SubcategoriaServicoModel>();
-  final servicoSelecionado = Rxn<ServicoProdutoModel>();
-  final ativo = (vinculo?.ativo ?? true).obs;
-
-  // --- Carregar listas
   if (categoriaController.categorias.isEmpty) {
     await categoriaController.carregarCategorias();
   }
@@ -53,30 +37,7 @@ Future<void> showFornecedorServicoBottomSheet(
     await servicoController.carregarServicos();
   }
 
-  // --- Se edição, preencher
-  if (vinculo != null) {
-    final servico = servicoController.servicos
-        .firstWhereOrNull((s) => s.id == vinculo.idProdutoServico);
-    final subcategoria = subcategoriaController.subcategorias.firstWhereOrNull(
-        (s) => s.id == (servico?.idSubcategoria ?? vinculo.idSubcategoria));
-    final categoria = categoriaController.categorias
-        .firstWhereOrNull((c) => c.id == subcategoria?.idCategoria);
-    categoriaSelecionada.value = categoria;
-    subcategoriaSelecionada.value = subcategoria;
-    servicoSelecionado.value = servico;
-  }
-
-  InputDecoration decor(String label, IconData icon) => InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: primary),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide(color: primary, width: 1.6),
-        ),
-        filled: true,
-        fillColor: Colors.grey.shade50,
-      );
+  if (!context.mounted) return;
 
   await showModalBottomSheet(
     context: context,
@@ -85,13 +46,166 @@ Future<void> showFornecedorServicoBottomSheet(
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
     ),
-    builder: (_) => DraggableScrollableSheet(
+    builder: (_) => _FornecedorServicoSheet(
+      idFornecedor: idFornecedor,
+      vinculo: vinculo,
+    ),
+  );
+}
+
+class _FornecedorServicoSheet extends StatefulWidget {
+  const _FornecedorServicoSheet({
+    required this.idFornecedor,
+    this.vinculo,
+  });
+
+  final String idFornecedor;
+  final FornecedorProdutoServicoModel? vinculo;
+
+  @override
+  State<_FornecedorServicoSheet> createState() => _FornecedorServicoSheetState();
+}
+
+class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
+  final _formKey = GlobalKey<FormState>();
+  var _autovalidateMode = AutovalidateMode.disabled;
+
+  late final TextEditingController precoCtrl;
+  late final TextEditingController promocaoCtrl;
+  late final TextEditingController urlController;
+
+  CategoriaServicoModel? categoriaSelecionada;
+  SubcategoriaServicoModel? subcategoriaSelecionada;
+  ServicoProdutoModel? servicoSelecionado;
+  late bool ativo;
+  String? urlErro;
+
+  late final EventThemeController themeController;
+  late final CategoriaServicoController categoriaController;
+  late final SubcategoriaServicoController subcategoriaController;
+  late final ServicoProdutoController servicoController;
+  late final Color primary;
+
+  @override
+  void initState() {
+    super.initState();
+    themeController = Get.find<EventThemeController>();
+    categoriaController = Get.find<CategoriaServicoController>();
+    subcategoriaController = Get.find<SubcategoriaServicoController>();
+    servicoController = Get.find<ServicoProdutoController>();
+    primary = themeController.primaryColor.value;
+
+    final vinculo = widget.vinculo;
+    precoCtrl = TextEditingController(
+      text: vinculo?.preco.toStringAsFixed(2) ?? '',
+    );
+    promocaoCtrl = TextEditingController(
+      text: vinculo?.precoPromocao?.toStringAsFixed(2) ?? '',
+    );
+    urlController = TextEditingController();
+    ativo = vinculo?.ativo ?? true;
+
+    if (vinculo != null) {
+      final servico = servicoController.servicos
+          .firstWhereOrNull((s) => s.id == vinculo.idProdutoServico);
+      final subcategoria = subcategoriaController.subcategorias.firstWhereOrNull(
+          (s) => s.id == (servico?.idSubcategoria ?? vinculo.idSubcategoria));
+      final categoria = categoriaController.categorias
+          .firstWhereOrNull((c) => c.id == subcategoria?.idCategoria);
+      categoriaSelecionada = categoria;
+      subcategoriaSelecionada = subcategoria;
+      servicoSelecionado = servico;
+    }
+  }
+
+  @override
+  void dispose() {
+    precoCtrl.dispose();
+    promocaoCtrl.dispose();
+    urlController.dispose();
+    super.dispose();
+  }
+
+  InputDecoration _decor(String label, IconData icon, {bool obrigatorio = false}) {
+    return InputDecoration(
+      labelText: obrigatorio ? '$label *' : label,
+      prefixIcon: Icon(icon, color: primary),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: primary, width: 1.6),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Colors.redAccent),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Colors.redAccent, width: 1.6),
+      ),
+      errorMaxLines: 2,
+      filled: true,
+      fillColor: Colors.grey.shade50,
+    );
+  }
+
+  Future<void> _salvar() async {
+    setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    EasyLoading.show(status: 'Salvando as informações...');
+    final promo = FormValidators.parseDinheiro(promocaoCtrl.text);
+    final vinculoNovo = FornecedorProdutoServicoModel(
+      id: widget.vinculo?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      idProdutoServico: servicoSelecionado!.id,
+      idSubcategoria: subcategoriaSelecionada!.id,
+      idFornecedor: widget.idFornecedor,
+      preco: FormValidators.parseDinheiro(precoCtrl.text),
+      precoPromocao: promo > 0 ? promo : null,
+      ativo: ativo,
+    );
+
+    await servicoController.vincularServico(vinculoNovo);
+    EasyLoading.dismiss();
+    if (mounted) Navigator.pop(context);
+  }
+
+  Future<void> _adicionarFotoUrl() async {
+    final erro = FormValidators.url(
+      urlController.text,
+      obrigatorio: true,
+      campo: 'a URL da imagem',
+    );
+    setState(() => urlErro = erro);
+    if (erro != null || servicoSelecionado == null) return;
+
+    EasyLoading.show(status: 'Processando...');
+    final novaFoto = ServicoFotoModel(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      idProdutoServico: servicoSelecionado!.id,
+      idFornecedor: widget.idFornecedor,
+      url: urlController.text.trim(),
+      dataUpload: DateTime.now(),
+    );
+    await ServicoFotoBootstrap.findController().adicionarFotoDireto(novaFoto);
+    EasyLoading.dismiss();
+    urlController.clear();
+    setState(() => urlErro = null);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final fotoController = ServicoFotoBootstrap.findController();
+
+    return DraggableScrollableSheet(
       expand: false,
       initialChildSize: 0.85,
       maxChildSize: 0.95,
       builder: (context, scrollController) {
-        return Obx(() {
-          return SingleChildScrollView(
+        return Form(
+          key: _formKey,
+          autovalidateMode: _autovalidateMode,
+          child: SingleChildScrollView(
             controller: scrollController,
             padding: EdgeInsets.only(
               bottom: MediaQuery.of(context).viewInsets.bottom + 24,
@@ -102,7 +216,6 @@ Future<void> showFornecedorServicoBottomSheet(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // --- Gradiente topo ---
                 Container(
                   width: double.infinity,
                   decoration: BoxDecoration(
@@ -128,17 +241,20 @@ Future<void> showFornecedorServicoBottomSheet(
                             color: Colors.white, size: 26),
                       ),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          TituloVinculoAnimado(
-                              isEdicao: vinculo != null, primary: primary),
-                          Text(
-                            'Preencha os dados do serviço com atenção',
-                            style: GoogleFonts.poppins(
-                                color: Colors.white70, fontSize: 13),
-                          ),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            TituloVinculoAnimado(
+                                isEdicao: widget.vinculo != null,
+                                primary: primary),
+                            Text(
+                              'Campos com * são obrigatórios',
+                              style: GoogleFonts.poppins(
+                                  color: Colors.white70, fontSize: 13),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -146,72 +262,94 @@ Future<void> showFornecedorServicoBottomSheet(
 
                 const SizedBox(height: 24),
 
-                // --- Categoria / Subcategoria / Serviço ---
                 DropdownButtonFormField<CategoriaServicoModel>(
-                  value: categoriaSelecionada.value,
-                  decoration: decor('Categoria', Icons.category_outlined),
+                  value: categoriaSelecionada,
+                  decoration: _decor(
+                    'Categoria',
+                    Icons.category_outlined,
+                    obrigatorio: true,
+                  ),
                   items: categoriaController.categorias
                       .map((c) =>
                           DropdownMenuItem(value: c, child: Text(c.nome)))
                       .toList(),
+                  validator: (v) =>
+                      FormValidators.selecao(v, campo: 'a categoria'),
                   onChanged: (val) async {
-                    categoriaSelecionada.value = val;
-
-                    // limpa dependentes
-                    subcategoriaSelecionada.value = null;
-                    servicoSelecionado.value = null;
-
+                    setState(() {
+                      categoriaSelecionada = val;
+                      subcategoriaSelecionada = null;
+                      servicoSelecionado = null;
+                    });
                     if (val != null) {
-                      await subcategoriaController
-                          .carregarSubcategorias(val.id);
+                      await subcategoriaController.carregarSubcategorias(val.id);
+                      if (mounted) setState(() {});
                     }
                   },
                 ),
                 const SizedBox(height: 16),
 
-                Obx(() {
-                  final categoria = categoriaSelecionada.value;
-
-                  return DropdownButtonFormField<SubcategoriaServicoModel>(
-                    value: subcategoriaSelecionada.value,
-                    decoration: decor('Subcategoria', Icons.list_alt_outlined),
-
-                    // ✨ DESABILITA se nenhuma categoria foi escolhida
-                    isExpanded: true,
-                    items: categoria == null
-                        ? [] // sem itens
-                        : subcategoriaController.subcategorias
-                            .where((s) => s.idCategoria == categoria.id)
-                            .map((s) =>
-                                DropdownMenuItem(value: s, child: Text(s.nome)))
-                            .toList(),
-
-                    onChanged: categoria == null
-                        ? null // ❌ bloqueado
-                        : (val) {
-                            subcategoriaSelecionada.value = val;
-                            servicoSelecionado.value = null;
-                          },
-                  );
-                }),
+                DropdownButtonFormField<SubcategoriaServicoModel>(
+                  value: subcategoriaSelecionada,
+                  decoration: _decor(
+                    'Subcategoria',
+                    Icons.list_alt_outlined,
+                    obrigatorio: true,
+                  ),
+                  isExpanded: true,
+                  items: categoriaSelecionada == null
+                      ? const []
+                      : subcategoriaController.subcategorias
+                          .where((s) => s.idCategoria == categoriaSelecionada!.id)
+                          .map((s) =>
+                              DropdownMenuItem(value: s, child: Text(s.nome)))
+                          .toList(),
+                  validator: (v) {
+                    if (categoriaSelecionada == null) {
+                      return 'Selecione a categoria primeiro';
+                    }
+                    return FormValidators.selecao(v, campo: 'a subcategoria');
+                  },
+                  onChanged: categoriaSelecionada == null
+                      ? null
+                      : (val) {
+                          setState(() {
+                            subcategoriaSelecionada = val;
+                            servicoSelecionado = null;
+                          });
+                        },
+                ),
                 const SizedBox(height: 16),
 
                 DropdownButtonFormField<ServicoProdutoModel>(
-                  value: servicoSelecionado.value,
-                  decoration:
-                      decor('Serviço / Produto', Icons.work_outline_rounded),
+                  value: servicoSelecionado,
+                  decoration: _decor(
+                    'Serviço / Produto',
+                    Icons.work_outline_rounded,
+                    obrigatorio: true,
+                  ),
                   items: servicoController.servicos
                       .where((s) =>
-                          s.idSubcategoria == subcategoriaSelecionada.value?.id)
+                          s.idSubcategoria == subcategoriaSelecionada?.id)
                       .map((s) =>
                           DropdownMenuItem(value: s, child: Text(s.nome)))
                       .toList(),
-                  onChanged: (val) => servicoSelecionado.value = val,
+                  validator: (v) {
+                    if (subcategoriaSelecionada == null) {
+                      return 'Selecione a subcategoria primeiro';
+                    }
+                    return FormValidators.selecao(
+                      v,
+                      campo: 'o serviço / produto',
+                    );
+                  },
+                  onChanged: subcategoriaSelecionada == null
+                      ? null
+                      : (val) => setState(() => servicoSelecionado = val),
                 ),
 
                 const SizedBox(height: 24),
 
-                // --- Card de preços e status ---
                 Card(
                   elevation: 2,
                   shape: RoundedRectangleBorder(
@@ -221,20 +359,44 @@ Future<void> showFornecedorServicoBottomSheet(
                     child: Column(
                       children: [
                         CustomInputField(
-                          label: "Preço padrão (R\$)",
+                          label: 'Preço padrão (R\$)',
                           icon: Icons.attach_money_rounded,
                           controller: precoCtrl,
                           titleColor: primary,
                           type: InputType.money,
-                          onChanged: (_) {}, // opcional
+                          isRequired: true,
+                          validator: (v) => FormValidators.dinheiro(
+                            v,
+                            campo: 'o preço padrão',
+                          ),
+                          onChanged: (_) {
+                            if (_autovalidateMode ==
+                                AutovalidateMode.onUserInteraction) {
+                              _formKey.currentState?.validate();
+                            }
+                          },
                         ),
                         const SizedBox(height: 14),
                         CustomInputField(
-                          label: "Preço promocional (opcional)",
+                          label: 'Preço promocional (opcional)',
                           icon: Icons.local_offer_outlined,
                           controller: promocaoCtrl,
                           type: InputType.money,
                           titleColor: primary,
+                          validator: (v) => FormValidators.dinheiroPromocional(
+                            v,
+                            preco: precoCtrl.text,
+                          ),
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Se informado, deve ser maior que zero e menor que o preço padrão.',
+                            style: GoogleFonts.poppins(
+                              fontSize: 11.5,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
                         ),
                         const Divider(height: 28),
                         Row(
@@ -243,9 +405,10 @@ Future<void> showFornecedorServicoBottomSheet(
                             Text('Serviço ativo',
                                 style: GoogleFonts.poppins(fontSize: 15)),
                             Switch(
-                                value: ativo.value,
-                                activeColor: primary,
-                                onChanged: (v) => ativo.value = v),
+                              value: ativo,
+                              activeColor: primary,
+                              onChanged: (v) => setState(() => ativo = v),
+                            ),
                           ],
                         ),
                       ],
@@ -255,11 +418,12 @@ Future<void> showFornecedorServicoBottomSheet(
 
                 const SizedBox(height: 24),
 
-                // --- Imagens ---
-                if (servicoSelecionado.value != null) ...[
-                  Text('Imagens do serviço',
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600, fontSize: 16)),
+                if (servicoSelecionado != null) ...[
+                  Text(
+                    'Imagens do serviço (opcional)',
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600, fontSize: 16),
+                  ),
                   const SizedBox(height: 12),
                   Obx(() {
                     final fotos = fotoController.fotos;
@@ -306,7 +470,7 @@ Future<void> showFornecedorServicoBottomSheet(
                                       onTap: () =>
                                           fotoController.removerFoto(f),
                                       child: Container(
-                                        decoration: BoxDecoration(
+                                        decoration: const BoxDecoration(
                                           color: Colors.black45,
                                           shape: BoxShape.circle,
                                         ),
@@ -325,10 +489,19 @@ Future<void> showFornecedorServicoBottomSheet(
                     );
                   }),
                   const SizedBox(height: 16),
-                  TextField(
+                  TextFormField(
                     controller: urlController,
-                    decoration: decor(
-                        'Cole o link da imagem (URL)', Icons.link_rounded),
+                    keyboardType: TextInputType.url,
+                    decoration: _decor(
+                      'Cole o link da imagem (URL)',
+                      Icons.link_rounded,
+                    ).copyWith(
+                      errorText: urlErro,
+                      helperText: 'Opcional. Use um link http:// ou https://',
+                    ),
+                    onChanged: (_) {
+                      if (urlErro != null) setState(() => urlErro = null);
+                    },
                   ),
                   const SizedBox(height: 12),
                   Row(
@@ -345,27 +518,7 @@ Future<void> showFornecedorServicoBottomSheet(
                                 borderRadius: BorderRadius.circular(12)),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          onPressed: () async {
-                            final url = urlController.text.trim();
-                            if (url.isEmpty) {
-                              Get.snackbar('Atenção',
-                                  'Informe uma URL válida antes de salvar');
-                              return;
-                            }
-                            EasyLoading.show(status: 'Processando...');
-                            final novaFoto = ServicoFotoModel(
-                              id: DateTime.now()
-                                  .millisecondsSinceEpoch
-                                  .toString(),
-                              idProdutoServico: servicoSelecionado.value!.id,
-                              idFornecedor: idFornecedor,
-                              url: url,
-                              dataUpload: DateTime.now(),
-                            );
-                            await fotoController.adicionarFotoDireto(novaFoto);
-                            EasyLoading.dismiss();
-                            urlController.clear();
-                          },
+                          onPressed: _adicionarFotoUrl,
                         ),
                       ),
                       const SizedBox(width: 10),
@@ -384,8 +537,8 @@ Future<void> showFornecedorServicoBottomSheet(
                           onPressed: () async {
                             EasyLoading.show(status: 'Processando...');
                             await fotoController.adicionarFoto(
-                              idFornecedor: idFornecedor,
-                              idProdutoServico: servicoSelecionado.value!.id,
+                              idFornecedor: widget.idFornecedor,
+                              idProdutoServico: servicoSelecionado!.id,
                             );
                             EasyLoading.dismiss();
                           },
@@ -415,44 +568,7 @@ Future<void> showFornecedorServicoBottomSheet(
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14)),
                     ),
-                    onPressed: () async {
-                      if (servicoSelecionado.value == null) {
-                        Get.snackbar(
-                          'Atenção',
-                          'Selecione um serviço antes de salvar',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.red.shade100,
-                          colorText: Colors.black87,
-                        );
-                        return;
-                      }
-                      if (precoCtrl.value.text.isEmpty) {
-                        Get.snackbar(
-                          'Atenção',
-                          'Informe o preço do serviço antes de salvar',
-                          snackPosition: SnackPosition.BOTTOM,
-                          backgroundColor: Colors.red.shade100,
-                          colorText: Colors.black87,
-                        );
-                        return;
-                      }
-                      EasyLoading.show(status: 'Salvando as informações...');
-                      final vinculoNovo = FornecedorProdutoServicoModel(
-                        id: vinculo?.id ??
-                            DateTime.now().millisecondsSinceEpoch.toString(),
-                        idProdutoServico: servicoSelecionado.value!.id,
-                        idSubcategoria: subcategoriaSelecionada.value!.id,
-                        idFornecedor: idFornecedor,
-                        preco: Biblioteca.toDouble(precoCtrl.text),
-                        precoPromocao: Biblioteca.toDouble(promocaoCtrl.text),
-                        ativo: ativo.value,
-                      );
-
-                      await servicoController.vincularServico(vinculoNovo);
-                      EasyLoading.dismiss();
-
-                      Navigator.pop(context);
-                    },
+                    onPressed: _salvar,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -481,9 +597,9 @@ Future<void> showFornecedorServicoBottomSheet(
                 const SizedBox(height: 40),
               ],
             ),
-          );
-        });
+          ),
+        );
       },
-    ),
-  );
+    );
+  }
 }

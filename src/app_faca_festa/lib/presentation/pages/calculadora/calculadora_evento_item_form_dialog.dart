@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/calculadora/calculadora_itens_admin_controller.dart';
+import '../../../core/utils/form_validators.dart';
 import '../../../data/models/calculadora/calculadora_evento_item_model.dart';
 import '../../../data/models/calculadora/calculadora_item_base_model.dart';
 import 'calculadora_item_icon_helper.dart';
@@ -527,12 +528,7 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
       keyboardType: keyboardType,
       decoration: _decoration(label: label, icon: icon),
       validator: requiredField
-          ? (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Campo obrigatório';
-              }
-              return null;
-            }
+          ? (value) => FormValidators.titulo(value, campo: label.toLowerCase(), minimo: 2)
           : null,
     );
   }

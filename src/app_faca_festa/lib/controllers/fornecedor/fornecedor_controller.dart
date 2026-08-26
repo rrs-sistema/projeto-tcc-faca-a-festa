@@ -27,6 +27,8 @@ import '../../data/models/fornecedor/avaliacao_servico_model.dart';
 import '../../data/services/fornecedor_ai_service.dart';
 import '../../data/services/fornecedor_ai_generativa_service.dart';
 import '../../data/models/model.dart';
+import '../../data/services/auditoria/auditoria_app.dart';
+import '../../domain/entities/auditoria_evento.dart';
 import '../../domain/repositories/autenticacao_repository.dart';
 import '../../domain/usecases/gerenciar_fornecedores.dart';
 import '../../domain/usecases/gerenciar_servicos_produto.dart';
@@ -219,6 +221,7 @@ class FornecedorController extends GetxController {
 
   Future<void> ouvirMensagensNaoLidas(String idFornecedor) async {
     if (idFornecedor.trim().isEmpty) return;
+    if (!_usuarioLogadoEhFornecedor()) return;
 
     debugPrint(
         '\n📡 [MSG] Iniciando listener de mensagens NÃO lidas para $idFornecedor');
@@ -334,6 +337,14 @@ class FornecedorController extends GetxController {
   Future<void> atualizarFornecedor(FornecedorModel fornecedor) async {
     try {
       await _fornecedores.atualizarFornecedor(fornecedor);
+      AuditoriaApp.registrar(
+        acao: 'FORNECEDOR_EDITADO',
+        resumo: 'Perfil do fornecedor atualizado.',
+        entidadeTipo: 'fornecedor',
+        entidadeId: fornecedor.idFornecedor,
+        entidadeNome: fornecedor.razaoSocial,
+        idFornecedor: fornecedor.idFornecedor,
+      );
     } catch (e) {
       throw Exception("Erro ao atualizar fornecedor: $e");
     }
@@ -528,9 +539,18 @@ class FornecedorController extends GetxController {
     }
   }
 
+  bool _usuarioLogadoEhFornecedor() {
+    try {
+      return Get.find<AppController>().usuarioLogado.value?.tipo == 'F';
+    } catch (_) {
+      return false;
+    }
+  }
+
   /// 🔹 Escuta em tempo real todas as solicitações com status = 'aguardando'
   Future<void> escutarSolicitacoesPendentes(String? idFornecedor) async {
     if (idFornecedor == null) return;
+    if (!_usuarioLogadoEhFornecedor()) return;
 
     // Cancela a escuta anterior, se já existir
     await _solicitacoesSub?.cancel();
@@ -544,8 +564,9 @@ class FornecedorController extends GetxController {
           .where('status', isEqualTo: 'aguardando')
           .snapshots()
           .listen((snapshot) {
-        // 🔹 Atualiza automaticamente o valor reativo
         solicitacoesPendentes.value = snapshot.docs.length;
+      }, onError: (e) {
+        debugPrint('❌ Erro ao escutar solicitações pendentes: $e');
       });
     } catch (e, s) {
       debugPrint('❌ Erro ao escutar solicitações pendentes: $e\n$s');
@@ -657,11 +678,25 @@ class FornecedorController extends GetxController {
 
   Future<void> desativarFornecedor(String idFornecedor) async {
     try {
+      final atual = fornecedores.firstWhereOrNull(
+        (f) => f.idFornecedor == idFornecedor,
+      );
       await _fornecedores.atualizarStatusAtivo(
         idFornecedor: idFornecedor,
         ativo: false,
       );
       fornecedores.removeWhere((f) => f.idFornecedor == idFornecedor);
+      AuditoriaApp.registrar(
+        acao: 'FORNECEDOR_DESATIVADO',
+        resumo: 'Fornecedor desativado pelo administrador.',
+        entidadeTipo: 'fornecedor',
+        entidadeId: idFornecedor,
+        entidadeNome: atual?.razaoSocial,
+        idFornecedor: idFornecedor,
+        mudancas: const [
+          AuditoriaMudanca(campo: 'Ativo', de: 'sim', para: 'não'),
+        ],
+      );
     } catch (e) {
       debugPrint('❌ Erro ao desativar fornecedor $idFornecedor: $e');
     }
@@ -687,10 +722,28 @@ class FornecedorController extends GetxController {
       final i = fornecedores.indexWhere(
         (x) => x.idFornecedor == id || x.idUsuario == id,
       );
+      final nome = i >= 0 ? fornecedores[i].razaoSocial : null;
       if (i >= 0) {
         fornecedores[i] = fornecedores[i].copyWith(aptoParaOperar: apto);
       }
       fornecedores.refresh();
+      AuditoriaApp.registrar(
+        acao: apto ? 'FORNECEDOR_APROVADO' : 'FORNECEDOR_REPROVADO',
+        resumo: apto
+            ? 'Fornecedor liberado para operar na plataforma.'
+            : 'Fornecedor voltou para análise.',
+        entidadeTipo: 'fornecedor',
+        entidadeId: id,
+        entidadeNome: nome,
+        idFornecedor: id,
+        mudancas: [
+          AuditoriaMudanca(
+            campo: 'Apto para operar',
+            de: apto ? 'não' : 'sim',
+            para: apto ? 'sim' : 'não',
+          ),
+        ],
+      );
       return true;
     } catch (e) {
       debugPrint('❌ Erro ao atualizar apto_para_operar de $idFornecedor: $e');
@@ -709,6 +762,17 @@ class FornecedorController extends GetxController {
       if (f != null) {
         fornecedores[fornecedores.indexOf(f)] = f.copyWith(ativo: true);
       }
+      AuditoriaApp.registrar(
+        acao: 'FORNECEDOR_ATIVADO',
+        resumo: 'Fornecedor reativado pelo administrador.',
+        entidadeTipo: 'fornecedor',
+        entidadeId: idFornecedor,
+        entidadeNome: f?.razaoSocial,
+        idFornecedor: idFornecedor,
+        mudancas: const [
+          AuditoriaMudanca(campo: 'Ativo', de: 'não', para: 'sim'),
+        ],
+      );
     } catch (e) {
       debugPrint('❌ Erro ao ativar fornecedor $idFornecedor: $e');
     }
@@ -811,8 +875,6 @@ class FornecedorController extends GetxController {
 
       await carregarCatalogoServicos();
       await carregarFotosServicos(ids, idFornecedor);
-      await escutarSolicitacoesPendentes(idFornecedor);
-      await ouvirMensagensNaoLidas(idFornecedor);
     }, onError: (e, s) {
       erro.value = 'Erro ao escutar serviços do fornecedor';
       debugPrint('❌ Erro ao escutar serviços do fornecedor: $e\n$s');

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import './../../controllers/avaliacao/avaliacao_servico_controller.dart';
 import './../../controllers/tema/event_theme_controller.dart';
+import './../../core/utils/form_validators.dart';
 import './../../data/models/avaliacao/avaliacao_model.dart';
 import './../widgets/star_rating_widget.dart';
 
@@ -33,6 +34,8 @@ class EnviarAvaliacaoDialog extends StatefulWidget {
 }
 
 class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
+  final _formKey = GlobalKey<FormState>();
+  var _autovalidateMode = AutovalidateMode.disabled;
   double nota = 0;
   final comentarioCtrl = TextEditingController();
   final controller = Get.find<AvaliacaoServicoController>();
@@ -72,20 +75,8 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
 
     Future<void> enviarAvaliacao() async {
       if (salvando.value) return;
-
-      if (nota == 0) {
-        Get.snackbar(
-          "Avaliação necessária",
-          mensagemErroNota,
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(12),
-          borderRadius: 12,
-          icon: const Icon(Icons.error_outline_rounded, color: Colors.white),
-        );
-        return;
-      }
+      setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+      if (!(_formKey.currentState?.validate() ?? false)) return;
 
       try {
         salvando.value = true;
@@ -215,33 +206,55 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
 
             // === CONTEÚDO (Scrollable) ===
             Flexible(
-              child: SingleChildScrollView(
+              child: Form(
+                key: _formKey,
+                autovalidateMode: _autovalidateMode,
+                child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // === ESTRELAS ===
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: Column(
-                        children: [
-                          Text(
-                            "Sua Nota",
-                            style: GoogleFonts.poppins(
-                              color: textDark,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                            ),
+                    FormField<double>(
+                      validator: (_) => nota < 1 ? mensagemErroNota : null,
+                      builder: (state) {
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10),
+                          child: Column(
+                            children: [
+                              Text(
+                                'Sua nota *',
+                                style: GoogleFonts.poppins(
+                                  color: textDark,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              StarRatingWidget(
+                                rating: nota,
+                                onChanged: (v) {
+                                  setState(() => nota = v);
+                                  state.didChange(v);
+                                },
+                                size: 44,
+                              ),
+                              if (state.hasError) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  state.errorText!,
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.redAccent,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                          const SizedBox(height: 10),
-                          StarRatingWidget(
-                            rating: nota,
-                            onChanged: (v) => setState(() => nota = v),
-                            size: 44,
-                          ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 20),
@@ -259,10 +272,17 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                           )
                         ],
                       ),
-                      child: TextField(
+                      child: TextFormField(
                         controller: comentarioCtrl,
                         maxLines: 4,
                         textCapitalization: TextCapitalization.sentences,
+                        validator: (v) => FormValidators.descricao(
+                          v,
+                          campo: 'o comentário',
+                          obrigatorio: false,
+                          minimo: 3,
+                          maximo: 500,
+                        ),
                         style: GoogleFonts.poppins(
                             color: textDark, fontSize: 13, fontWeight: FontWeight.w500),
                         decoration: InputDecoration(
@@ -357,6 +377,7 @@ class _EnviarAvaliacaoDialogState extends State<EnviarAvaliacaoDialog> {
                     ),
                   ],
                 ),
+              ),
               ),
             ),
           ],

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../../controllers/convidado/grupo_convidado_controller.dart';
+import './../../../../core/utils/form_validators.dart';
 import './../../../../data/models/convidado/grupo_convidado_model.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import 'show_cadastro_bottom_sheet.dart';
@@ -162,20 +163,35 @@ class _AdicionarGrupoFormContentState
                       label: 'Nome do grupo',
                       icon: Icons.badge_outlined,
                       requiredField: true,
+                      validator: (v) => FormValidators.titulo(
+                        v,
+                        campo: 'o nome do grupo',
+                        minimo: 2,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _textField(
                       controller: _numeroMesaCtrl,
-                      label: 'Número da mesa (Opcional)',
+                      label: 'Número da mesa (opcional)',
                       icon: Icons.table_bar_outlined,
                       keyboardType: TextInputType.number,
+                      validator: (v) => FormValidators.inteiroNaoNegativo(
+                        v,
+                        campo: 'o número da mesa',
+                        obrigatorio: false,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     _textField(
                       controller: _descCtrl,
-                      label: 'Descrição',
+                      label: 'Descrição (opcional)',
                       icon: Icons.notes_rounded,
                       maxLines: 2,
+                      validator: (v) => FormValidators.descricao(
+                        v,
+                        campo: 'a descrição',
+                        obrigatorio: false,
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text('Cor do grupo',
@@ -269,6 +285,7 @@ class _AdicionarGrupoFormContentState
     bool requiredField = false,
     int maxLines = 1,
     TextInputType? keyboardType,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
@@ -276,7 +293,7 @@ class _AdicionarGrupoFormContentState
       keyboardType: keyboardType,
       style: const TextStyle(fontSize: 13),
       decoration: InputDecoration(
-        labelText: label,
+        labelText: requiredField ? '$label *' : label,
         labelStyle: const TextStyle(fontSize: 13),
         prefixIcon: Icon(icon, size: 18),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -285,15 +302,15 @@ class _AdicionarGrupoFormContentState
           borderSide:
               BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
         ),
+        errorMaxLines: 2,
         isDense: true,
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       ),
-      validator: requiredField
-          ? (value) => (value == null || value.trim().isEmpty)
-              ? 'Campo obrigatório'
-              : null
-          : null,
+      validator: validator ??
+          (requiredField
+              ? (value) => FormValidators.titulo(value, campo: label.toLowerCase(), minimo: 2)
+              : null),
     );
   }
 

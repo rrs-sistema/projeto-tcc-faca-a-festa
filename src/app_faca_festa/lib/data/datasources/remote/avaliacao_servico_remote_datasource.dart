@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class AvaliacaoServicoRemoteDatasource {
   AvaliacaoServicoRemoteDatasource({FirebaseFirestore? firestore})
@@ -119,37 +120,47 @@ class AvaliacaoServicoRemoteDatasource {
     required String idEvento,
     required String idUsuario,
   }) async {
-    final avaliacao = await _db
-        .collection('avaliacao_fornecedor')
-        .where('id_evento', isEqualTo: idEvento)
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .where('id_usuario', isEqualTo: idUsuario)
-        .limit(1)
-        .get();
-
-    if (avaliacao.docs.isNotEmpty) return false;
-
-    final cotacoes = await _db
-        .collection('cotacao')
-        .where('id_evento', isEqualTo: idEvento)
-        .get();
-
-    for (final cotacao in cotacoes.docs) {
-      final fornecedorSnap = await cotacao.reference
-          .collection('fornecedores')
-          .doc(idFornecedor)
+    try {
+      final avaliacao = await _db
+          .collection('avaliacao_fornecedor')
+          .where('id_evento', isEqualTo: idEvento)
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .where('id_usuario', isEqualTo: idUsuario)
+          .limit(1)
           .get();
 
-      if (fornecedorSnap.exists) return true;
+      if (avaliacao.docs.isNotEmpty) return false;
+
+      // A regra de `cotacao` só libera listagem para o solicitante
+      // (`id_usuario_solicitante == uid`). Filtrar só por `id_evento`
+      // gera PERMISSION_DENIED e derruba a tela de detalhe.
+      final cotacoes = await _db
+          .collection('cotacao')
+          .where('id_usuario_solicitante', isEqualTo: idUsuario)
+          .get();
+
+      for (final cotacao in cotacoes.docs) {
+        if (cotacao.data()['id_evento'] != idEvento) continue;
+
+        final fornecedorSnap = await cotacao.reference
+            .collection('fornecedores')
+            .doc(idFornecedor)
+            .get();
+
+        if (fornecedorSnap.exists) return true;
+      }
+
+      final orcamentos = await _db
+          .collection('orcamento')
+          .where('id_evento', isEqualTo: idEvento)
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .get();
+
+      return orcamentos.docs.isNotEmpty;
+    } catch (e, s) {
+      debugPrint('❌ Erro ao verificar se pode avaliar fornecedor: $e\n$s');
+      return false;
     }
-
-    final orcamentos = await _db
-        .collection('orcamento')
-        .where('id_evento', isEqualTo: idEvento)
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .get();
-
-    return orcamentos.docs.isNotEmpty;
   }
 
   Future<bool> podeAvaliarCotacao({
@@ -157,14 +168,19 @@ class AvaliacaoServicoRemoteDatasource {
     required String idEvento,
     required String idUsuario,
   }) async {
-    final jaAvaliou = await _db
-        .collection('avaliacao_fornecedor')
-        .where('id_evento', isEqualTo: idEvento)
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .where('id_usuario', isEqualTo: idUsuario)
-        .limit(1)
-        .get();
+    try {
+      final jaAvaliou = await _db
+          .collection('avaliacao_fornecedor')
+          .where('id_evento', isEqualTo: idEvento)
+          .where('id_fornecedor', isEqualTo: idFornecedor)
+          .where('id_usuario', isEqualTo: idUsuario)
+          .limit(1)
+          .get();
 
-    return jaAvaliou.docs.isEmpty;
+      return jaAvaliou.docs.isEmpty;
+    } catch (e, s) {
+      debugPrint('❌ Erro ao verificar se pode avaliar cotação: $e\n$s');
+      return false;
+    }
   }
 }

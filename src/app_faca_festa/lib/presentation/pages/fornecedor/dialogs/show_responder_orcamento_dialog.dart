@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../core/utils/biblioteca.dart';
+import '../../../../core/utils/form_validators.dart';
 import './../../../../controllers/orcamento_controller.dart';
 import './../../../../data/models/model.dart';
 
@@ -17,6 +17,7 @@ Future<void> showResponderOrcamentoDialog(
     text: orcamento.custoEstimado?.toStringAsFixed(2) ?? '',
   );
   final anotacoesController = TextEditingController(text: orcamento.anotacoes ?? '');
+  final formKey = GlobalKey<FormState>();
 
   bool fecharOrcamento = false;
 
@@ -29,7 +30,10 @@ Future<void> showResponderOrcamentoDialog(
         insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
         child: Padding(
           padding: const EdgeInsets.all(20),
-          child: Column(
+          child: Form(
+            key: formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -57,13 +61,19 @@ Future<void> showResponderOrcamentoDialog(
               const SizedBox(height: 16),
 
               // 🔹 Campo valor proposto
-              TextField(
+              TextFormField(
                 controller: valorController,
-                keyboardType: TextInputType.number,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: (value) => FormValidators.dinheiro(
+                  value,
+                  obrigatorio: true,
+                  campo: 'o valor proposto',
+                ),
                 decoration: InputDecoration(
-                  labelText: "Valor proposto (R\$)",
+                  labelText: "Valor proposto (R\$) *",
                   labelStyle: GoogleFonts.poppins(color: Colors.teal.shade800),
                   prefixIcon: const Icon(Icons.monetization_on, color: Colors.teal),
+                  errorMaxLines: 2,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -72,13 +82,19 @@ Future<void> showResponderOrcamentoDialog(
               const SizedBox(height: 16),
 
               // 🔹 Campo observações
-              TextField(
+              TextFormField(
                 controller: anotacoesController,
                 maxLines: 3,
+                validator: (value) => FormValidators.descricao(
+                  value,
+                  campo: 'as observações',
+                  obrigatorio: false,
+                ),
                 decoration: InputDecoration(
-                  labelText: "Observações / Detalhes adicionais",
+                  labelText: "Observações / detalhes adicionais (opcional)",
                   labelStyle: GoogleFonts.poppins(color: Colors.teal.shade800),
                   prefixIcon: const Icon(Icons.notes_rounded, color: Colors.teal),
+                  errorMaxLines: 2,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -124,7 +140,8 @@ Future<void> showResponderOrcamentoDialog(
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
                     onPressed: () async {
-                      final valor = Biblioteca.toDouble(valorController.text);
+                      if (!(formKey.currentState?.validate() ?? false)) return;
+                      final valor = FormValidators.parseDinheiro(valorController.text);
                       await controller.responderOrcamento(
                         idOrcamento: orcamento.idOrcamento,
                         custoEstimado: valor,
@@ -159,6 +176,7 @@ Future<void> showResponderOrcamentoDialog(
                 ],
               ),
             ],
+          ),
           ),
         ),
       );

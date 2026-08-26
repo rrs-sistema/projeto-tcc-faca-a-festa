@@ -2,8 +2,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/utils/form_validators.dart';
+
 Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
   final empresaController = TextEditingController(text: '');
+  final razaoController = TextEditingController(text: '');
   final categoriaController = TextEditingController(text: '');
   final emailController = TextEditingController(text: '');
   final telefoneController = TextEditingController(text: '');
@@ -85,10 +88,13 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
                           child: Column(
                             children: [
                               _CompactField(
-                                label: "Nome do Responsável",
+                                label: "Nome do responsável *",
                                 icon: Icons.person_rounded,
                                 controller: empresaController,
-                                validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                                validator: (v) => FormValidators.nomeCompleto(
+                                  v,
+                                  campo: 'o nome do responsável',
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Row(
@@ -96,21 +102,24 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
                                   Expanded(
                                     flex: 3,
                                     child: _CompactField(
-                                      label: "Empresa",
+                                      label: "Empresa *",
                                       icon: Icons.store_rounded,
-                                      controller:
-                                          categoriaController, // Ideal usar uma controller separada
-                                      validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                                      controller: razaoController,
+                                      validator: FormValidators.razaoSocial,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     flex: 2,
                                     child: _CompactField(
-                                      label: "Categoria",
+                                      label: "Categoria *",
                                       icon: Icons.category_rounded,
                                       controller: categoriaController,
-                                      validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                                      validator: (v) => FormValidators.titulo(
+                                        v,
+                                        campo: 'a categoria',
+                                        minimo: 2,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -120,21 +129,21 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
                                 children: [
                                   Expanded(
                                     child: _CompactField(
-                                      label: "Telefone",
+                                      label: "Telefone *",
                                       icon: Icons.phone_rounded,
                                       controller: telefoneController,
                                       keyboardType: TextInputType.phone,
-                                      validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                                      validator: FormValidators.telefone,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: _CompactField(
-                                      label: "E-mail",
+                                      label: "E-mail *",
                                       icon: Icons.email_rounded,
                                       controller: emailController,
                                       keyboardType: TextInputType.emailAddress,
-                                      validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                                      validator: FormValidators.email,
                                     ),
                                   ),
                                 ],
@@ -145,21 +154,21 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
                                   Expanded(
                                     flex: 3,
                                     child: _CompactField(
-                                      label: "Cidade",
+                                      label: "Cidade *",
                                       icon: Icons.location_city_rounded,
                                       controller: cidadeController,
-                                      validator: (v) => v!.isEmpty ? "Obrigatório" : null,
+                                      validator: FormValidators.cidade,
                                     ),
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     flex: 1,
                                     child: _CompactField(
-                                      label: "UF",
+                                      label: "UF *",
                                       icon: Icons.map_rounded,
                                       controller: ufController,
                                       maxLength: 2,
-                                      validator: (v) => v!.length != 2 ? "Erro" : null,
+                                      validator: FormValidators.uf,
                                     ),
                                   ),
                                 ],
@@ -209,13 +218,6 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
                                       if (formKey.currentState!.validate()) {
                                         confirmado = true;
                                         Navigator.pop(context);
-                                      } else {
-                                        Get.snackbar(
-                                          "Atenção",
-                                          "Preencha todos os campos.",
-                                          backgroundColor: Colors.redAccent,
-                                          colorText: Colors.white,
-                                        );
                                       }
                                     },
                                     icon: const Icon(Icons.check_circle_rounded, size: 18),
@@ -313,9 +315,7 @@ class _CompactField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 44, // Altura restrita do padrão
-      child: TextFormField(
+    return TextFormField(
         controller: controller,
         keyboardType: keyboardType,
         maxLength: maxLength,
@@ -326,6 +326,8 @@ class _CompactField extends StatelessWidget {
           prefixIcon: Icon(icon, size: 16),
           isDense: true,
           counterText: "",
+          errorMaxLines: 2,
+          errorStyle: GoogleFonts.poppins(fontSize: 9, height: 1.1),
           contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
           border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
@@ -339,7 +341,6 @@ class _CompactField extends StatelessWidget {
           fillColor: Colors.grey.shade50,
         ),
         validator: validator,
-      ),
     );
   }
 }

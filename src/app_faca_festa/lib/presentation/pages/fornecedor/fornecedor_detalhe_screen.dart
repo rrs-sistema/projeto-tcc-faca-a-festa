@@ -56,7 +56,11 @@ class FornecedorDetalheScreen extends StatelessWidget {
       final idEvento = eventoController.eventoAtualEntidade?.idEvento ?? '';
       final idUsuario = appController.usuarioLogado.value?.idUsuario ?? '';
 
-      if (idEvento.isNotEmpty && idUsuario.isNotEmpty) {
+      avaliacaoController.permitidoAvaliarFornecedor.value = false;
+
+      if (idEvento.isEmpty || idUsuario.isEmpty) return;
+
+      try {
         final pode = await avaliacaoController.podeAvaliarFornecedor(
           idFornecedor: idFornecedor,
           idEvento: idEvento,
@@ -64,6 +68,9 @@ class FornecedorDetalheScreen extends StatelessWidget {
         );
 
         avaliacaoController.permitidoAvaliarFornecedor.value = pode;
+      } catch (e, s) {
+        debugPrint('❌ Erro ao verificar avaliação do fornecedor: $e\n$s');
+        avaliacaoController.permitidoAvaliarFornecedor.value = false;
       }
     });
 
@@ -783,11 +790,49 @@ class FornecedorDetalheScreen extends StatelessWidget {
     final fornecedor = detalhe.fornecedor;
     final controllerLocalizacao = FornecedorLocalizacaoController.to;
 
-    final servicoFornecedor = fornecedorController.allServicosFornecedor.firstWhereOrNull(
-      (s) => s.idFornecedor == fornecedor.idFornecedor,
-    );
+    final servicosDoFornecedor = <FornecedorServicoDetalhadoDto>[];
 
-    if (servicoFornecedor == null) {
+    for (final sev in controllerLocalizacao.allService) {
+      if (sev.idFornecedor == fornecedor.idFornecedor && sev.ativo) {
+        servicosDoFornecedor.add(sev);
+      }
+    }
+
+    if (servicosDoFornecedor.isEmpty) {
+      for (final vinculo in fornecedorController.allServicosFornecedor) {
+        if (vinculo.idFornecedor != fornecedor.idFornecedor) continue;
+
+        final catalogo = fornecedorController.catalogoServicos.firstWhereOrNull(
+          (s) => s.id == vinculo.idProdutoServico,
+        );
+        final foto = fornecedorController.fotosServico.firstWhereOrNull(
+          (f) =>
+              f.idFornecedor == fornecedor.idFornecedor &&
+              f.idProdutoServico == vinculo.idProdutoServico,
+        );
+
+        servicosDoFornecedor.add(
+          FornecedorServicoDetalhadoDto(
+            id: vinculo.id,
+            idFornecedor: fornecedor.idFornecedor,
+            idProdutoServico: vinculo.idProdutoServico,
+            idSubcategoria: vinculo.idSubcategoria ?? catalogo?.idSubcategoria,
+            nomeServico: catalogo?.nome,
+            nomeFornecedor: fornecedor.razaoSocial,
+            descricaoServico: catalogo?.descricao,
+            preco: vinculo.preco,
+            quantidade: 1,
+            precoPromocao: vinculo.precoPromocao,
+            nomeCategoria: detalhe.categoriaNome,
+            imagemUrl: foto?.url,
+            tipoMedida: catalogo?.tipoMedida,
+            ativo: vinculo.ativo,
+          ),
+        );
+      }
+    }
+
+    if (servicosDoFornecedor.isEmpty) {
       Get.snackbar(
         'Fornecedor sem serviços',
         'Este fornecedor ainda não possui serviços disponíveis para cotação.',
@@ -797,23 +842,9 @@ class FornecedorDetalheScreen extends StatelessWidget {
       return;
     }
 
-    FornecedorServicoDetalhadoDto? serviceComplet =
-        (controllerLocalizacao.allService.firstWhereOrNull(
-              (sev) =>
-                  sev.idFornecedor == fornecedor.idFornecedor &&
-                  sev.idProdutoServico == servicoFornecedor.idProdutoServico,
-            ) ??
-            servicoFornecedor) as FornecedorServicoDetalhadoDto?;
-
-    if (serviceComplet == null) return;
-
-    controllerLocalizacao.servicosFornecedor.removeWhere(
-      (sev) =>
-          sev.idFornecedor == serviceComplet.idFornecedor &&
-          sev.idProdutoServico == serviceComplet.idProdutoServico,
-    );
-
-    controllerLocalizacao.servicosFornecedor.add(serviceComplet);
+    controllerLocalizacao.servicosFornecedor
+      ..clear()
+      ..addAll(servicosDoFornecedor);
 
     Get.to(
       () => ServicosParaCotacaoScreen(
@@ -1173,9 +1204,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
                                   if (serviceComplet == null) return;
 
                                   controllerLocalizacao.servicosFornecedor
-                                      .removeWhere((sev) => sev.idProdutoServico == s.id);
-
-                                  controllerLocalizacao.servicosFornecedor.add(serviceComplet);
+                                    ..clear()
+                                    ..add(serviceComplet);
 
                                   Get.to(() => ServicosParaCotacaoScreen(
                                         idCategoria: "",
@@ -1558,10 +1588,9 @@ class FornecedorDetalheScreen extends StatelessWidget {
 
                             if (serviceComplet == null) return;
 
-                            controllerLocalizacao.servicosFornecedor.removeWhere(
-                                (sev) => sev.idProdutoServico == detalhe.idProdutoServico);
-
-                            controllerLocalizacao.servicosFornecedor.add(serviceComplet);
+                            controllerLocalizacao.servicosFornecedor
+                              ..clear()
+                              ..add(serviceComplet);
 
                             Get.to(() => ServicosParaCotacaoScreen(
                                   idCategoria: fornecedorDetalhado.categoriaId,
@@ -1757,7 +1786,9 @@ Widget _cardServicoCarrossel({
 
                     if (serviceComplet == null) return;
 
-                    controllerLocalizacao.servicosFornecedor.add(serviceComplet);
+                    controllerLocalizacao.servicosFornecedor
+                      ..clear()
+                      ..add(serviceComplet);
 
                     Get.to(() => ServicosParaCotacaoScreen(
                           idCategoria: categoria.id,

@@ -2,9 +2,10 @@
 
 import 'package:app_faca_festa/controllers/fornecedor/fornecedor_controller.dart';
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
+import 'package:app_faca_festa/core/utils/form_validators.dart';
+import 'package:app_faca_festa/data/datasources/remote/cotacao_functions_datasource.dart';
 import 'package:app_faca_festa/presentation/widgets/button/botao_cancelar.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
@@ -44,6 +45,8 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
   final fornecedorController = Get.find<FornecedorController>();
   final eventoCtrl = Get.find<EventoController>();
   final appCtrl = Get.find<AppController>();
+  final formKey = GlobalKey<FormState>();
+  var autovalidateMode = AutovalidateMode.disabled;
 
   final observacaoController = TextEditingController();
   final precoDesejadoController = TextEditingController();
@@ -90,9 +93,28 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
   // ==========================================================
 
   Future<void> _enviarCotacao() async {
+    setState(() => autovalidateMode = AutovalidateMode.onUserInteraction);
+    if (!(formKey.currentState?.validate() ?? false)) return;
+
     final evento = eventoCtrl.eventoAtualEntidade;
     final usuario = appCtrl.usuarioLogado.value;
-    final db = FirebaseFirestore.instance;
+
+    if (usuario == null || (usuario.idUsuario).trim().isEmpty) {
+      Get.snackbar('Atenção', 'Faça login para enviar a cotação.',
+          backgroundColor: Colors.orange, colorText: Colors.white);
+      return;
+    }
+
+    final idEvento = (evento?.idEvento ?? '').trim();
+    if (idEvento.isEmpty) {
+      Get.snackbar(
+        'Atenção',
+        'Selecione um evento ativo antes de pedir orçamento.',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
 
     if (widget.fornecedoresSelecionados.isEmpty) {
       Get.snackbar('Atenção', 'Selecione pelo menos um fornecedor.',
@@ -109,63 +131,30 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
     EasyLoading.show(status: 'Enviando cotações...');
 
     try {
-      // 🔹 Cria o documento principal da cotação
-      final cotacaoRef = await db.collection('cotacao').add({
-        'id_evento': evento?.idEvento ?? '',
-        'id_usuario_solicitante': usuario?.idUsuario ?? '',
-        'nome_usuario_solicitante': usuario?.nome ?? '',
-        'observacao': observacaoController.text.trim(),
-        'valor_estimado_total': Biblioteca.toDouble(precoDesejadoController.text),
-        'data_limite_resposta': Timestamp.fromDate(dataLimite),
-        'data_envio': Timestamp.now(),
-        'status': StatusCotacao.pendente.firestoreValue,
-        'visualizado': false,
-        'categoria_nome': widget.tipoEventoNome,
-      });
-
-      final batch = db.batch();
-
-      // 🔹 Para cada fornecedor selecionado
-      for (final idFornecedor in widget.fornecedoresSelecionados) {
-        final fornecedor = fornecedorController.fornecedores
-            .firstWhereOrNull((f) => f.idFornecedor == idFornecedor);
-        if (fornecedor == null) continue;
-
-        final fornecedorRef = cotacaoRef.collection('fornecedores').doc(idFornecedor);
-
-        batch.set(fornecedorRef, {
-          'id_fornecedor': fornecedor.idFornecedor,
-          'nome_fornecedor': fornecedor.razaoSocial,
-          'email': fornecedor.email,
-          'telefone': fornecedor.telefone,
-          'status': StatusFornecedorCotacao.aguardando.firestoreValue,
-          'data_envio': Timestamp.now(),
-          'respondido': false,
+      final servicosPayload = <Map<String, dynamic>>[];
+      for (var i = 0; i < widget.servicosSelecionados.length; i++) {
+        final s = widget.servicosSelecionados[i];
+        final qtd = int.tryParse(qtdControllers[i].text) ?? s.quantidade;
+        servicosPayload.add({
+          'idFornecedor': s.idFornecedor,
+          'idProdutoServico': s.idProdutoServico,
+          'quantidade': qtd < 1 ? 1 : qtd,
         });
-
-        // 🔹 Filtra apenas os serviços pertencentes a este fornecedor
-        final servicosDoFornecedor =
-            widget.servicosSelecionados.where((s) => s.idFornecedor == idFornecedor).toList();
-
-        for (int i = 0; i < servicosDoFornecedor.length; i++) {
-          final s = servicosDoFornecedor[i];
-          final qtd = int.tryParse(qtdControllers[i].text) ?? 1;
-
-          final servicoRef = fornecedorRef.collection('servicos').doc(s.idProdutoServico);
-
-          batch.set(servicoRef, {
-            'id_produto_servico': s.idProdutoServico,
-            'nome_produto_servico': s.nomeServico,
-            'quantidade': qtd,
-            'valor_estimado': s.preco,
-            'subtotal': qtd * s.preco,
-            'status': 'pendente',
-            'data_adicionado': Timestamp.now(),
-          });
-        }
       }
 
-      await batch.commit();
+      final functions = Get.isRegistered<CotacaoFunctionsDatasource>()
+          ? Get.find<CotacaoFunctionsDatasource>()
+          : Get.put(CotacaoFunctionsDatasource(), permanent: true);
+
+      await functions.criarCotacao(
+        idEvento: idEvento,
+        categoriaNome: widget.tipoEventoNome,
+        observacao: observacaoController.text.trim(),
+        valorEstimadoTotal: Biblioteca.toDouble(precoDesejadoController.text),
+        dataLimiteResposta: dataLimite,
+        fornecedoresSelecionados: widget.fornecedoresSelecionados,
+        servicos: servicosPayload,
+      );
 
       EasyLoading.dismiss();
       HapticFeedback.mediumImpact();
@@ -174,12 +163,20 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
 
       Get.snackbar(
         'Cotação enviada!',
-        'Os fornecedores foram notificados.',
+        'Sua solicitação foi registrada. O fornecedor verá no painel de solicitações.',
         backgroundColor: widget.primary,
         colorText: Colors.white,
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(12),
         duration: const Duration(seconds: 3),
+      );
+    } on CotacaoFunctionsException catch (e) {
+      EasyLoading.dismiss();
+      Get.snackbar(
+        'Erro ao enviar',
+        e.message,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
       );
     } catch (e) {
       EasyLoading.dismiss();
@@ -228,7 +225,10 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
               top: 18,
               bottom: MediaQuery.of(context).viewInsets.bottom + 18,
             ),
-            child: NotificationListener<ScrollUpdateNotification>(
+            child: Form(
+              key: formKey,
+              autovalidateMode: autovalidateMode,
+              child: NotificationListener<ScrollUpdateNotification>(
               onNotification: (_) => false,
               child: SingleChildScrollView(
                 controller: scrollController,
@@ -264,6 +264,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
                   ],
                 ),
               ),
+            ),
             ),
           ),
         ),
@@ -386,7 +387,7 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
                             ),
                             const SizedBox(width: 5),
                             Text(
-                              "x R\$ ${Biblioteca.formatarValorDecimal(s.preco)}",
+                              "x R\$ ${Biblioteca.formatarValorDecimal(s.precoEfetivo)}",
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -395,7 +396,8 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
                             ),
                             const Spacer(),
                             _buildTotalAnimado(
-                              servicosInternal[index].preco * servicosInternal[index].quantidade,
+                              servicosInternal[index].precoEfetivo *
+                                  servicosInternal[index].quantidade,
                             )
                           ],
                         ),
@@ -589,6 +591,11 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
           type: InputType.money,
           hintlabel: 'Informe a sua oferta',
           titleColor: Colors.white,
+          validator: (value) => FormValidators.dinheiro(
+            value,
+            obrigatorio: false,
+            campo: 'a oferta desejada',
+          ),
         ),
       );
 
@@ -612,6 +619,11 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
           hintlabel: 'Descreva sua oferta para os fornecedores',
           titleColor: Colors.white,
           maxLines: 4,
+          validator: (value) => FormValidators.descricao(
+            value,
+            campo: 'as observações',
+            obrigatorio: false,
+          ),
         ),
       );
 

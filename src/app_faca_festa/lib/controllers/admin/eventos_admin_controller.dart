@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../data/models/admin/evento_com_tipo_model.dart';
+import '../../data/services/auditoria/auditoria_app.dart';
 import '../../domain/usecases/gerenciar_eventos_admin.dart';
 
 class EventosAdminController extends GetxController {
@@ -45,6 +46,14 @@ class EventosAdminController extends GetxController {
     switch (acao) {
       case 'aprovar':
         await _eventosAdmin.aprovarEvento(evento.id);
+        AuditoriaApp.registrar(
+          acao: 'EVENTO_APROVADO',
+          resumo: 'Evento aprovado pelo administrador.',
+          entidadeTipo: 'evento',
+          entidadeId: evento.id,
+          entidadeNome: evento.nome,
+          idEvento: evento.id,
+        );
         _mostrarSnackbar(
           'Evento aprovado',
           '${evento.nome} foi aprovado com sucesso!',
@@ -80,8 +89,17 @@ class EventosAdminController extends GetxController {
   }
 
   Future<void> excluirEvento(String id) async {
+    final evento = eventos.firstWhereOrNull((e) => e.id == id);
     await _eventosAdmin.excluirEvento(id);
     eventos.removeWhere((e) => e.id == id);
+    AuditoriaApp.registrar(
+      acao: 'EVENTO_EXCLUIDO',
+      resumo: 'Evento removido pelo administrador.',
+      entidadeTipo: 'evento',
+      entidadeId: id,
+      entidadeNome: evento?.nome,
+      idEvento: id,
+    );
   }
 
   void _mostrarSnackbar(

@@ -31,6 +31,8 @@ class EventThemeController extends GetxController {
   final RxnString papelSessao = RxnString();
   final Rxn<TemaFestaModel> temaFestaAtual = Rxn<TemaFestaModel>();
   final RxnString capaUrl = RxnString();
+  final RxnString capaTemaUrl = RxnString();
+  final RxnString capaEventoUrl = RxnString();
 
   final GerenciarTemasFesta? _temasFesta;
   final EventoRepository? _eventoRepository;
@@ -58,6 +60,27 @@ class EventThemeController extends GetxController {
     return url.isNotEmpty;
   }
 
+  bool get temCapaEvento {
+    final url = (capaEventoUrl.value ?? '').trim();
+    return url.isNotEmpty;
+  }
+
+  void _definirCapaEvento(String? url) {
+    final capa = (url ?? '').trim();
+    capaEventoUrl.value = capa.isEmpty ? null : capa;
+    _resolverCapaExibida();
+  }
+
+  void _resolverCapaExibida() {
+    final doEvento = (capaEventoUrl.value ?? '').trim();
+    if (doEvento.isNotEmpty) {
+      capaUrl.value = doEvento;
+      return;
+    }
+    final doTema = (capaTemaUrl.value ?? '').trim();
+    capaUrl.value = doTema.isEmpty ? null : doTema;
+  }
+
   void atualizarCacheTema(TemaFestaModel tema) {
     _cacheTemasFesta[tema.idTema] = tema;
     if (temaFestaAtual.value?.idTema == tema.idTema) {
@@ -81,6 +104,7 @@ class EventThemeController extends GetxController {
 
   void aplicarTemaProduto() {
     temaFestaAtual.value = null;
+    capaEventoUrl.value = null;
     _setTheme(
       primary: const Color(0xFF009688),
       secondary: const Color(0xFFE0F2F1),
@@ -103,6 +127,8 @@ class EventThemeController extends GetxController {
       aplicarTemaProduto();
       return;
     }
+
+    _definirCapaEvento(evento.imagemCapaUrl);
 
     final idTema = (evento.idTema ?? '').trim();
     if (idTema.isNotEmpty && idTema != TemaFestaModel.slugOutro) {
@@ -404,7 +430,8 @@ class EventThemeController extends GetxController {
     icon.value = icone;
     tituloCabecalho.value = titulo;
     final capa = (capaUrl ?? '').trim();
-    this.capaUrl.value = capa.isEmpty ? null : capa;
+    capaTemaUrl.value = capa.isEmpty ? null : capa;
+    _resolverCapaExibida();
     _aplicarThemeDataNoApp(primary, secondary);
 
     debugPrint(

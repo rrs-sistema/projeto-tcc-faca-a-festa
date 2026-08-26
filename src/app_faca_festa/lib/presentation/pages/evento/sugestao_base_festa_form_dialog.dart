@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/sugestao_base_festa_controller.dart';
+import '../../../core/utils/form_validators.dart';
 import '../../../data/models/evento/sugestao_base_festa_model.dart';
 
 class SugestaoBaseFestaFormDialog extends StatefulWidget {
@@ -169,7 +170,7 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
                                       controller: _tituloController,
                                       label: 'Título',
                                       icon: Icons.title_rounded,
-                                      validator: _required,
+                                      validator: (v) => FormValidators.titulo(v, campo: 'o título'),
                                     ),
                                     const SizedBox(height: 10),
                                     _TextField(
@@ -177,7 +178,12 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
                                       label: 'Descrição',
                                       icon: Icons.notes_rounded,
                                       maxLines: 4,
-                                      validator: _required,
+                                      validator: (v) => FormValidators.descricao(
+                                        v,
+                                        campo: 'a descrição',
+                                        obrigatorio: true,
+                                        minimo: 10,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -201,7 +207,11 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
                                       controller: _temaController,
                                       label: 'Tema',
                                       icon: Icons.sell_rounded,
-                                      validator: _required,
+                                      validator: (v) => FormValidators.titulo(
+                                        v,
+                                        campo: 'o tema',
+                                        minimo: 2,
+                                      ),
                                     ),
                                     _DropdownField(
                                       value: _categoria,
@@ -299,11 +309,6 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
         ),
       ),
     );
-  }
-
-  String? _required(String? value) {
-    if (value == null || value.trim().isEmpty) return 'Campo obrigatório';
-    return null;
   }
 
   Future<void> _salvar() async {

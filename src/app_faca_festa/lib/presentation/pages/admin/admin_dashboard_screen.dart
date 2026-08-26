@@ -180,6 +180,17 @@ class AdminDashboardScreen extends StatelessWidget {
                 controller.carregar();
               },
             ),
+            _AdminItem(
+              title: 'Auditoria',
+              subtitle: 'Quem alterou o quê',
+              icon: Icons.policy_rounded,
+              count: 0,
+              showCount: false,
+              color: const Color(0xFF1E3A5F),
+              onTap: () async {
+                await Get.toNamed('/admin/auditoria');
+              },
+            ),
           ];
 
           return RefreshIndicator(
@@ -400,14 +411,15 @@ class _AdminCardState extends State<_AdminCard> {
                             ),
                           ),
                         ),
-                      Text(
-                        '${widget.item.count}',
-                        style: GoogleFonts.poppins(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                          color: AdminPalette.ink,
+                      if (widget.item.showCount)
+                        Text(
+                          '${widget.item.count}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: AdminPalette.ink,
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ],
@@ -458,6 +470,7 @@ class _AdminItem {
   final int count;
   final Color color;
   final int? badge;
+  final bool showCount;
   final VoidCallback onTap;
   _AdminItem({
     required this.title,
@@ -467,5 +480,6 @@ class _AdminItem {
     required this.color,
     required this.onTap,
     this.badge,
+    this.showCount = true,
   });
 }

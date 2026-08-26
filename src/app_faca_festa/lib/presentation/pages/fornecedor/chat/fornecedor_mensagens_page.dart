@@ -34,6 +34,23 @@ class FornecedorMensagensPage extends StatelessWidget {
             .where("id_fornecedor", isEqualTo: fornecedorId)
             .snapshots(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            debugPrint('❌ Erro ao listar mensagens do fornecedor: ${snapshot.error}');
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Não foi possível carregar as mensagens agora.',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            );
+          }
+
           if (!snapshot.hasData) {
             return Center(
               child: CircularProgressIndicator(

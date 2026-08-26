@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../../controllers/convidado/cardapio_controller.dart';
+import './../../../../core/utils/form_validators.dart';
 import './../../../../data/models/cardapio/cardapio_item_model.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 
@@ -208,9 +209,7 @@ class _EditarItemCardapioBottomSheetState
             const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       ),
       validator: requiredField
-          ? (value) => (value == null || value.trim().isEmpty)
-              ? 'Campo obrigatório'
-              : null
+          ? (value) => FormValidators.titulo(value, campo: 'o nome do item', minimo: 2)
           : null,
     );
   }

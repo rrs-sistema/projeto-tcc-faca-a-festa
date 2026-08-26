@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 
 import './../../data/models/servico_produto/categoria_servico_model.dart';
+import '../../data/services/auditoria/auditoria_app.dart';
 import '../../domain/usecases/gerenciar_catalogo_servico.dart';
 
 class CategoriaServicoController extends GetxController {
@@ -73,6 +74,13 @@ class CategoriaServicoController extends GetxController {
 
   Future<void> salvarCategoria(CategoriaServicoModel model) async {
     await _catalogo.salvarCategoria(model);
+    AuditoriaApp.registrar(
+      acao: 'CATEGORIA_SALVA',
+      resumo: 'Categoria de serviço salva no catálogo.',
+      entidadeTipo: 'categoria_servico',
+      entidadeId: model.id,
+      entidadeNome: model.nome,
+    );
     await carregarCategorias();
   }
 
@@ -94,7 +102,15 @@ class CategoriaServicoController extends GetxController {
   }
 
   Future<void> excluirCategoria(String id) async {
+    final atual = categorias.firstWhereOrNull((c) => c.id == id);
     await _catalogo.excluirCategoria(id);
+    AuditoriaApp.registrar(
+      acao: 'CATEGORIA_EXCLUIDA',
+      resumo: 'Categoria removida do catálogo.',
+      entidadeTipo: 'categoria_servico',
+      entidadeId: id,
+      entidadeNome: atual?.nome,
+    );
     await carregarCategorias();
   }
 }

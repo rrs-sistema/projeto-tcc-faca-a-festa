@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../controllers/usuario/usuario_controller.dart';
 import '../../../controllers/tema/admin_theme.dart';
+import '../../../core/utils/form_validators.dart';
 import '../endereco/endereco_section.dart';
 import '../endereco/endereco_section_controller.dart';
 import '../../../controllers/tema/event_theme_controller.dart';
@@ -257,6 +258,7 @@ class UsuariosAdminListScreen extends StatelessWidget {
     final cpfCtrl = TextEditingController(text: usuario?.cpf ?? '');
     final senhaCtrl = TextEditingController();
     final tipoSelecionado = (usuario?.tipo ?? 'O').obs;
+    final formKey = GlobalKey<FormState>();
 
     final enderecoController = EnderecoSectionController();
     controller.enderecoController.value = enderecoController;
@@ -300,58 +302,62 @@ class UsuariosAdminListScreen extends StatelessWidget {
                   ),
                   const Divider(height: 1, color: Color(0xFFEEEEEE)),
                   Expanded(
-                    child: SingleChildScrollView(
+                    child: Form(
+                      key: formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: SingleChildScrollView(
                       controller: scrollController,
                       padding: const EdgeInsets.all(24),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           CustomInputField(
-                            label: 'Nome Completo',
+                            label: 'Nome completo',
                             controller: nomeCtrl,
                             icon: Icons.person_outline,
                             color: Colors.grey.shade600,
+                            titleColor: Colors.grey.shade800,
                             readOnly: modoEdicao,
+                            isRequired: !modoEdicao,
+                            validator: modoEdicao ? null : FormValidators.nomeCompleto,
                           ),
                           const SizedBox(height: 16),
                           CustomInputField(
-                            label: 'E-mail Institucional ou Pessoal',
+                            label: 'E-mail institucional ou pessoal',
                             controller: emailCtrl,
                             icon: Icons.email_outlined,
                             color: Colors.grey.shade600,
+                            titleColor: Colors.grey.shade800,
                             readOnly: modoEdicao,
+                            type: InputType.email,
+                            isRequired: !modoEdicao,
+                            validator: modoEdicao ? null : FormValidators.email,
                           ),
                           const SizedBox(height: 16),
                           CustomInputField(
                             label: 'Documento (CPF)',
+                            hintlabel: 'Opcional',
                             controller: cpfCtrl,
                             icon: Icons.badge_outlined,
-                            keyboardType: TextInputType.number,
+                            type: InputType.cpf,
                             color: Colors.grey.shade600,
+                            titleColor: Colors.grey.shade800,
                             readOnly: modoEdicao,
+                            validator: (v) => FormValidators.cpf(v, obrigatorio: false),
                           ),
                           const SizedBox(height: 16),
                           if (!modoEdicao)
-                            Obx(() {
-                              final senhaVisivel = controller.senhaVisivel.value;
-                              return CustomInputField(
-                                label: 'Senha de Acesso Temporária',
-                                controller: senhaCtrl,
-                                icon: Icons.lock_outline_rounded,
-                                obscureText: !senhaVisivel,
-                                color: Colors.grey.shade600,
-                                suffixIcon: IconButton(
-                                  icon: Icon(
-                                    senhaVisivel
-                                        ? Icons.visibility_off_rounded
-                                        : Icons.visibility_rounded,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                  onPressed: () => controller.senhaVisivel.value =
-                                      !controller.senhaVisivel.value,
-                                ),
-                              );
-                            }),
+                            CustomInputField(
+                              label: 'Senha de acesso temporária',
+                              hintlabel: 'Mínimo 6 caracteres, com letra e número',
+                              controller: senhaCtrl,
+                              icon: Icons.lock_outline_rounded,
+                              type: InputType.password,
+                              isRequired: true,
+                              validator: FormValidators.senha,
+                              color: Colors.grey.shade600,
+                              titleColor: Colors.grey.shade800,
+                            ),
                           const SizedBox(height: 24),
                           Obx(() {
                             final tipo = tipoSelecionado.value;
@@ -397,6 +403,7 @@ class UsuariosAdminListScreen extends StatelessWidget {
                         ],
                       ),
                     ),
+                    ),
                   ),
                   Container(
                     padding: const EdgeInsets.all(20),
@@ -433,15 +440,7 @@ class UsuariosAdminListScreen extends StatelessWidget {
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                             ),
                             onPressed: () async {
-                              if (nomeCtrl.text.isEmpty ||
-                                  emailCtrl.text.isEmpty ||
-                                  senhaCtrl.text.trim().length < 6) {
-                                Get.snackbar(
-                                  'Campos Obrigatórios',
-                                  'Preencha nome, e-mail e uma senha com pelo menos 6 caracteres.',
-                                  backgroundColor: Colors.grey.shade900,
-                                  colorText: Colors.white,
-                                );
+                              if (!(formKey.currentState?.validate() ?? false)) {
                                 return;
                               }
 

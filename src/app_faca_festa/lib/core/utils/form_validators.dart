@@ -3,6 +3,13 @@ import 'package:email_validator/email_validator.dart';
 import 'package:intl/intl.dart';
 
 /// Validações de formulário reutilizáveis, com mensagens específicas por campo.
+///
+/// Padrão do app:
+/// - `Form` + `TextFormField` / `CustomInputField` / `DropdownButtonFormField`
+/// - erro inline no campo (não snackbar de "preencha")
+/// - `*` no obrigatório e "(opcional)" no restante
+/// - `AutovalidateMode.disabled` até o primeiro submit, depois `onUserInteraction`
+/// - snackbar só para erro de API, rede ou permissão
 class FormValidators {
   FormValidators._();
 
@@ -113,7 +120,11 @@ class FormValidators {
     return null;
   }
 
-  static String? senha(String? value, {bool obrigatorio = true}) {
+  static String? senha(
+    String? value, {
+    bool obrigatorio = true,
+    bool exigirLetraENumero = true,
+  }) {
     final texto = value ?? '';
     if (texto.isEmpty) {
       return obrigatorio ? 'Informe a senha' : null;
@@ -127,11 +138,83 @@ class FormValidators {
     if (texto.length > 72) {
       return 'A senha deve ter no máximo 72 caracteres';
     }
-    if (!RegExp(r'[A-Za-zÀ-ÿ]').hasMatch(texto)) {
-      return 'A senha deve conter pelo menos uma letra';
+    if (exigirLetraENumero) {
+      if (!RegExp(r'[A-Za-zÀ-ÿ]').hasMatch(texto)) {
+        return 'A senha deve conter pelo menos uma letra';
+      }
+      if (!RegExp(r'\d').hasMatch(texto)) {
+        return 'A senha deve conter pelo menos um número';
+      }
     }
-    if (!RegExp(r'\d').hasMatch(texto)) {
-      return 'A senha deve conter pelo menos um número';
+    return null;
+  }
+
+  /// Login: exige senha preenchida, sem regra de complexidade
+  /// (a conta já existe; a força vale só no cadastro).
+  static String? senhaLogin(String? value) {
+    return senha(value, obrigatorio: true, exigirLetraENumero: false);
+  }
+
+  static String? codigoVerificacao(
+    String? value, {
+    int tamanho = 6,
+    String campo = 'o código de verificação',
+  }) {
+    final digitos = somenteDigitos(value);
+    if (digitos.isEmpty) {
+      return 'Informe $campo';
+    }
+    if (digitos.length != tamanho) {
+      return 'Informe $campo com $tamanho dígitos';
+    }
+    return null;
+  }
+
+  static String? confirmarSenha(
+    String? value, {
+    required String? senha,
+  }) {
+    final texto = value ?? '';
+    if (texto.isEmpty) {
+      return 'Confirme a senha';
+    }
+    if (texto != (senha ?? '')) {
+      return 'As senhas não coincidem';
+    }
+    return null;
+  }
+
+  static String? selecao(dynamic value, {required String campo}) {
+    if (value == null) {
+      return 'Selecione $campo';
+    }
+    if (value is String && value.trim().isEmpty) {
+      return 'Selecione $campo';
+    }
+    if (value is Iterable && value.isEmpty) {
+      return 'Selecione $campo';
+    }
+    return null;
+  }
+
+  static String? url(
+    String? value, {
+    bool obrigatorio = false,
+    String campo = 'a URL',
+  }) {
+    final texto = value?.trim() ?? '';
+    if (texto.isEmpty) {
+      return obrigatorio ? 'Informe $campo' : null;
+    }
+    final uri = Uri.tryParse(texto);
+    if (uri == null || !uri.hasScheme || uri.host.isEmpty) {
+      return 'Informe uma URL válida (ex: https://site.com/imagem.jpg)';
+    }
+    if (uri.scheme != 'http' && uri.scheme != 'https') {
+      return 'A URL deve começar com http:// ou https://';
+    }
+    if (!uri.host.contains('.')) {
+      return 'Informe uma URL válida (ex: https://site.com/imagem.jpg)';
     }
     return null;
   }
@@ -407,6 +490,28 @@ class FormValidators {
     if (valor <= maiorQue) {
       final minimo = maiorQue.toStringAsFixed(2).replaceAll('.', ',');
       return '${_capitalizar(campo)} deve ser maior que R\$ $minimo';
+    }
+    return null;
+  }
+
+  /// Preço promocional: opcional; se preenchido, deve ser > 0 e menor que o preço padrão.
+  static String? dinheiroPromocional(
+    String? promocao, {
+    required String? preco,
+  }) {
+    final erroPromo = dinheiro(
+      promocao,
+      obrigatorio: false,
+      campo: 'o preço promocional',
+    );
+    if (erroPromo != null) return erroPromo;
+
+    final valorPromo = parseDinheiro(promocao);
+    if (valorPromo <= 0) return null;
+
+    final valorPreco = parseDinheiro(preco);
+    if (valorPreco > 0 && valorPromo >= valorPreco) {
+      return 'O preço promocional deve ser menor que o preço padrão';
     }
     return null;
   }

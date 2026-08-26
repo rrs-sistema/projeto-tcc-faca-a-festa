@@ -107,8 +107,15 @@ class HeaderSection extends StatelessWidget {
               ],
             );
 
-            final logout = _LogoutButton(
+            final logout = _HeaderIconButton(
+              tooltip: 'Sair',
+              icon: Icons.logout_rounded,
               onPressed: () => _confirmarLogout(context, appController),
+            );
+            final auditoria = _HeaderIconButton(
+              tooltip: 'Auditoria dos serviços',
+              icon: Icons.policy_outlined,
+              onPressed: () => Get.toNamed('/fornecedor/auditoria'),
             );
 
             if (compact) {
@@ -120,6 +127,8 @@ class HeaderSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(child: identity),
+                      const SizedBox(width: 8),
+                      auditoria,
                       const SizedBox(width: 8),
                       logout,
                     ],
@@ -136,6 +145,8 @@ class HeaderSection extends StatelessWidget {
                 const SizedBox(width: 14),
                 Expanded(flex: 4, child: Align(alignment: Alignment.centerRight, child: chips)),
                 const SizedBox(width: 12),
+                auditoria,
+                const SizedBox(width: 8),
                 logout,
               ],
             );
@@ -275,15 +286,21 @@ class _LogoFornecedor extends StatelessWidget {
       );
 }
 
-class _LogoutButton extends StatelessWidget {
+class _HeaderIconButton extends StatelessWidget {
+  final String tooltip;
+  final IconData icon;
   final VoidCallback onPressed;
 
-  const _LogoutButton({required this.onPressed});
+  const _HeaderIconButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: 'Sair',
+      message: tooltip,
       child: Material(
         color: Colors.white.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(14),
@@ -294,7 +311,7 @@ class _LogoutButton extends StatelessWidget {
             height: 40,
             width: 40,
             child: Icon(
-              Icons.logout_rounded,
+              icon,
               color: Colors.white.withValues(alpha: 0.86),
               size: 20,
             ),

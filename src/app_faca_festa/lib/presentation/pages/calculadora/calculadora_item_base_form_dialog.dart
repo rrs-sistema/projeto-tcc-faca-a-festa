@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../controllers/calculadora/calculadora_itens_admin_controller.dart';
+import '../../../core/utils/form_validators.dart';
 import '../../../data/models/calculadora/calculadora_item_base_model.dart';
 
 class CalculadoraItemBaseFormDialog {
@@ -297,12 +298,7 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
       textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
       decoration: _decoration(label: label, icon: icon, hint: hint),
       validator: requiredField
-          ? (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Campo obrigatório';
-              }
-              return null;
-            }
+          ? (value) => FormValidators.titulo(value, campo: label.toLowerCase(), minimo: 2)
           : null,
     );
   }

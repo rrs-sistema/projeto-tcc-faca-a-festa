@@ -7,7 +7,8 @@ import 'package:get/get.dart';
 import './../../../../controllers/tema/event_theme_controller.dart';
 import '../../../../controllers/fornecedor/fornecedor_controller.dart';
 import './../../../../core/utils/biblioteca.dart';
-import './../../../../data/models/model.dart';
+import './../../../../core/utils/form_validators.dart';
+import './../../../../data/datasources/remote/cotacao_functions_datasource.dart';
 
 Future<void> showResponderCotacaoBottomSheet({
   required BuildContext context,
@@ -26,9 +27,20 @@ Future<void> showResponderCotacaoBottomSheet({
   final condicaoController = TextEditingController();
   final observacaoController = TextEditingController();
   final carregando = false.obs;
+  final formKey = GlobalKey<FormState>();
+  var autovalidateMode = AutovalidateMode.disabled;
 
   await Get.bottomSheet(
-    Obx(
+    StatefulBuilder(
+      builder: (modalContext, setModalState) {
+        bool validarFormulario() {
+          setModalState(() {
+            autovalidateMode = AutovalidateMode.onUserInteraction;
+          });
+          return formKey.currentState?.validate() ?? false;
+        }
+
+        return Obx(
       () => AbsorbPointer(
         absorbing: carregando.value,
         child: Container(
@@ -38,7 +50,10 @@ Future<void> showResponderCotacaoBottomSheet({
           ),
           child: SafeArea(
             top: false,
-            child: SingleChildScrollView(
+                child: Form(
+                  key: formKey,
+                  autovalidateMode: autovalidateMode,
+                  child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
               child: Column(
@@ -405,76 +420,114 @@ Future<void> showResponderCotacaoBottomSheet({
                   const SizedBox(height: 20),
 
                   // === Prazo ===
-                  _buildLabel("Prazo de Entrega até", primary),
-                  GestureDetector(
-                    onTap: () async {
-                      final hoje = DateTime.now();
-                      final limite = hoje.add(const Duration(days: 180));
+                        _buildLabel("Prazo de entrega *", primary),
+                        FormField<DateTime>(
+                          initialValue: prazoEntregaSelecionado.value,
+                          validator: (value) =>
+                              FormValidators.selecao(value, campo: 'o prazo de entrega'),
+                          builder: (state) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    final hoje = DateTime.now();
+                                    final limite = hoje.add(const Duration(days: 180));
 
-                      final selecionada = await showDatePicker(
-                        context: Get.context!,
-                        initialDate: hoje,
-                        firstDate: hoje,
-                        lastDate: limite,
-                        locale: const Locale('pt', 'BR'),
-                        builder: (context, child) {
-                          return Theme(
-                            data: Theme.of(context).copyWith(
-                              colorScheme: ColorScheme.light(
-                                primary: primary,
-                                onPrimary: Colors.white,
-                                onSurface: Colors.black87,
-                              ),
-                            ),
-                            child: child!,
-                          );
-                        },
-                      );
+                                    final selecionada = await showDatePicker(
+                                      context: Get.context!,
+                                      initialDate: state.value ?? hoje,
+                                      firstDate: hoje,
+                                      lastDate: limite,
+                                      locale: const Locale('pt', 'BR'),
+                                      builder: (context, child) {
+                                        return Theme(
+                                          data: Theme.of(context).copyWith(
+                                            colorScheme: ColorScheme.light(
+                                              primary: primary,
+                                              onPrimary: Colors.white,
+                                              onSurface: Colors.black87,
+                                            ),
+                                          ),
+                                          child: child!,
+                                        );
+                                      },
+                                    );
 
-                      if (selecionada != null) {
-                        prazoEntregaSelecionado.value = selecionada;
-                      }
-                    },
-                    child: Obx(() => Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey.shade300),
-                            borderRadius: BorderRadius.circular(14),
-                            color: Colors.grey.shade50,
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Flexible(
-                                child: Text(
-                                  prazoEntregaSelecionado.value != null
-                                      ? 'Prazo: ${DateFormat("dd/MM/yyyy").format(prazoEntregaSelecionado.value!)}'
-                                      : 'Selecione uma data',
-                                  style: GoogleFonts.poppins(
-                                    color: prazoEntregaSelecionado.value != null
-                                        ? Colors.black87
-                                        : Colors.grey.shade600,
-                                    fontSize: 14,
+                                    if (selecionada != null) {
+                                      prazoEntregaSelecionado.value = selecionada;
+                                      state.didChange(selecionada);
+                                    }
+                                  },
+                                  child: Container(
+                                    width: double.infinity,
+                                    padding:
+                                        const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: state.hasError
+                                            ? Colors.redAccent
+                                            : Colors.grey.shade300,
+                                      ),
+                                      borderRadius: BorderRadius.circular(14),
+                                      color: Colors.grey.shade50,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Flexible(
+                                          child: Text(
+                                            state.value != null
+                                                ? 'Prazo: ${DateFormat("dd/MM/yyyy").format(state.value!)}'
+                                                : 'Selecione uma data',
+                                            style: GoogleFonts.poppins(
+                                              color: state.value != null
+                                                  ? Colors.black87
+                                                  : Colors.grey.shade600,
+                                              fontSize: 14,
+                                            ),
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                        Icon(Icons.calendar_today_rounded,
+                                            color: primary, size: 20),
+                                      ],
+                                    ),
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              Icon(Icons.calendar_today_rounded, color: primary, size: 20),
-                            ],
-                          ),
-                        )),
+                                if (state.hasError)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 12, top: 6),
+                                    child: Text(
+                                      state.errorText!,
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.redAccent,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
                   ),
 
                   const SizedBox(height: 16),
 
                   // === Condição ===
-                  _buildLabel("Condição de Pagamento", primary),
-                  TextField(
+                        _buildLabel("Condição de pagamento (opcional)", primary),
+                        TextFormField(
                     controller: condicaoController,
+                          validator: (value) => FormValidators.descricao(
+                            value,
+                            campo: 'a condição de pagamento',
+                            obrigatorio: false,
+                            minimo: 2,
+                            maximo: 200,
+                          ),
                     decoration: InputDecoration(
                       hintText: "Ex: 50% na reserva e 50% na entrega",
                       prefixIcon: Icon(Icons.payments_outlined, color: primary),
+                            errorMaxLines: 2,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -487,11 +540,17 @@ Future<void> showResponderCotacaoBottomSheet({
 
                   // === Observação ===
                   _buildLabel("Observações (opcional)", primary),
-                  TextField(
+                        TextFormField(
                     controller: observacaoController,
+                          validator: (value) => FormValidators.descricao(
+                            value,
+                            campo: 'as observações',
+                            obrigatorio: false,
+                          ),
                     decoration: InputDecoration(
                       hintText: "Detalhes adicionais da proposta...",
-                      prefixIcon: Icon(Icons.chat_bubble_outline_rounded, color: primary),
+                            prefixIcon: Icon(Icons.chat_bubble_outline_rounded, color: primary),
+                            errorMaxLines: 2,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -512,13 +571,7 @@ Future<void> showResponderCotacaoBottomSheet({
                           onPressed: carregando.value
                               ? null
                               : () {
-                                  if (prazoEntregaSelecionado.value == null) {
-                                    Get.snackbar(
-                                        'Prazo obrigatório', 'Selecione o prazo de entrega.',
-                                        backgroundColor: Colors.orange.shade100,
-                                        colorText: Colors.black87);
-                                    return;
-                                  }
+                                        if (!validarFormulario()) return;
 
                                   _confirmarEnvio(
                                     context: context,
@@ -554,13 +607,7 @@ Future<void> showResponderCotacaoBottomSheet({
                           onPressed: carregando.value
                               ? null
                               : () {
-                                  if (prazoEntregaSelecionado.value == null) {
-                                    Get.snackbar(
-                                        'Prazo obrigatório', 'Selecione o prazo de entrega.',
-                                        backgroundColor: Colors.orange.shade100,
-                                        colorText: Colors.black87);
-                                    return;
-                                  }
+                                        if (!validarFormulario()) return;
                                   _enviarResposta(
                                     aceitou: false,
                                     idCotacao: idCotacao,
@@ -619,10 +666,13 @@ Future<void> showResponderCotacaoBottomSheet({
                   const SizedBox(height: 30),
                 ],
               ),
+                  ),
+                ),
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     ),
     isScrollControlled: true,
   );
@@ -741,47 +791,18 @@ Future<void> _enviarResposta({
 
   try {
     carregando.value = true;
-    final db = FirebaseFirestore.instance;
 
-    // 🔍 Busca o documento do fornecedor
-    final subSnap = await db
-        .collection('cotacao')
-        .doc(idCotacao)
-        .collection('fornecedores')
-        .where('id_fornecedor', isEqualTo: idFornecedor)
-        .limit(1)
-        .get();
+    final functions = Get.isRegistered<CotacaoFunctionsDatasource>()
+        ? Get.find<CotacaoFunctionsDatasource>()
+        : Get.put(CotacaoFunctionsDatasource(), permanent: true);
 
-    if (subSnap.docs.isEmpty) throw Exception('Fornecedor não encontrado.');
-
-    final docId = subSnap.docs.first.id;
-
-    // 🔹 Atualiza o fornecedor atual
-    await db.collection('cotacao').doc(idCotacao).collection('fornecedores').doc(docId).update({
-      'status': aceitou
-          ? StatusFornecedorCotacao.respondido.firestoreValue
-          : StatusFornecedorCotacao.recusado.firestoreValue,
-      'prazo_entrega': prazo != null ? Timestamp.fromDate(prazo) : null,
-      'condicao_pagamento': condicao.trim(),
-      'observacao_fornecedor': observacao.trim(),
-      'data_resposta': Timestamp.now(),
-    });
-
-    // 🔍 Verifica se todos responderam
-    final fornecedoresSnap =
-        await db.collection('cotacao').doc(idCotacao).collection('fornecedores').get();
-
-    final todosResponderam = fornecedoresSnap.docs.every((d) {
-      final s = d['status'] ?? '';
-      return s == 'respondido' || s == 'recusado';
-    });
-
-    if (todosResponderam) {
-      await db.collection('cotacao').doc(idCotacao).update({
-        'status': StatusCotacao.respondida.firestoreValue,
-        'data_resposta_completa': Timestamp.now(),
-      });
-    }
+    await functions.responderCotacao(
+      idCotacao: idCotacao,
+      aceitou: aceitou,
+      prazoEntrega: prazo,
+      condicaoPagamento: condicao.trim(),
+      observacaoFornecedor: observacao.trim(),
+    );
 
     Get.back();
     Get.snackbar(
@@ -794,6 +815,8 @@ Future<void> _enviarResposta({
       snackPosition: SnackPosition.BOTTOM,
       margin: const EdgeInsets.all(12),
     );
+  } on CotacaoFunctionsException catch (e) {
+    Get.snackbar('Erro', e.message, backgroundColor: Colors.redAccent, colorText: Colors.white);
   } catch (e, s) {
     debugPrint('❌ Erro ao responder cotação: $e\n$s');
     Get.snackbar('Erro', 'Falha ao enviar a resposta. Tente novamente.',

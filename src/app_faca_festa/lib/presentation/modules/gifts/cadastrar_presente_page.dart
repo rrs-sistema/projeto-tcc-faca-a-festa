@@ -7,6 +7,7 @@ import 'package:uuid/uuid.dart';
 
 import './../../../controllers/gift/gift_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
+import './../../../core/utils/form_validators.dart';
 import './../../../domain/entities/gift/gift.dart';
 
 void abrirDialogCadastrarPresente(
@@ -221,12 +222,11 @@ void abrirDialogCadastrarPresente(
                             hint: 'Ex.: Fralda Pampers G',
                             icon: Icons.redeem_rounded,
                             textCapitalization: TextCapitalization.sentences,
-                            validator: (value) {
-                              if ((value ?? '').trim().isEmpty) {
-                                return 'Informe o nome do presente';
-                              }
-                              return null;
-                            },
+                            validator: (value) => FormValidators.titulo(
+                              value,
+                              campo: 'o nome do presente',
+                              minimo: 2,
+                            ),
                             onChanged: (_) => urlPreview.refresh(),
                           ),
                           const SizedBox(height: 10),
@@ -653,11 +653,10 @@ class _TipoCamposDinamicos extends StatelessWidget {
           hint: 'Ex.: 50,00',
           icon: Icons.payments_rounded,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          validator: (value) {
-            final parsed = _parseMoney(value ?? '');
-            if (parsed <= 0) return 'Informe um valor maior que zero';
-            return null;
-          },
+          validator: (value) => FormValidators.dinheiro(
+            value,
+            campo: 'o valor',
+          ),
         ),
         const SizedBox(height: 10),
         _PremiumTextField(
@@ -667,10 +666,10 @@ class _TipoCamposDinamicos extends StatelessWidget {
           hint: 'CPF, e-mail, telefone ou chave aleatória.',
           icon: Icons.pix_rounded,
           keyboardType: TextInputType.text,
-          validator: (value) {
-            if ((value ?? '').trim().isEmpty) return 'Informe a chave PIX';
-            return null;
-          },
+          validator: (value) => FormValidators.obrigatorio(
+            value,
+            campo: 'a chave PIX',
+          ),
         ),
         if (tipo == GiftType.coletivo) ...[
           const SizedBox(height: 10),
@@ -681,11 +680,10 @@ class _TipoCamposDinamicos extends StatelessWidget {
             hint: 'Ex.: 600,00',
             icon: Icons.flag_rounded,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            validator: (value) {
-              final parsed = _parseMoney(value ?? '');
-              if (parsed <= 0) return 'Informe a meta total';
-              return null;
-            },
+            validator: (value) => FormValidators.dinheiro(
+              value,
+              campo: 'a meta total',
+            ),
           ),
         ],
       ],

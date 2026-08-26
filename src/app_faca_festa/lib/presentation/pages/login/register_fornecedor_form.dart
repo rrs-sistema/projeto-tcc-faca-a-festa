@@ -125,7 +125,6 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
     });
 
     if (!(_formKey.currentState?.validate() ?? false)) return;
-    if (!_validarTiposEvento()) return;
 
     final controller = widget.controller;
     _aplicarTiposEventoNoController(controller);
@@ -252,7 +251,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
           const SizedBox(height: 10),
           CustomInputField(
             label: 'Senha',
-            hintlabel: 'Informe a senha',
+            hintlabel: 'Mínimo 6 caracteres, com letra e número',
             icon: Icons.lock_outline,
             controller: senhaCtrl,
             color: primary,
@@ -299,8 +298,8 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
           ),
           const SizedBox(height: 10),
           CustomInputField(
-            label: 'Descrição dos serviços',
-            hintlabel: 'Informe quais serviços você fornece',
+            label: 'Descrição dos serviços (opcional)',
+            hintlabel: 'Se informar, use pelo menos 10 caracteres',
             icon: Icons.description_outlined,
             controller: descCtrl,
             color: primary,
@@ -392,7 +391,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                     const SizedBox(width: 12),
                     Flexible(
                       child: Text(
-                        'Selecionar logo/banner',
+                        'Selecionar logo/banner (opcional)',
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
                           color: color,
@@ -429,119 +428,143 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
       );
 
   Widget _tiposEventoSection(Color primary) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Colors.white.withValues(alpha: 0.18),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+    return FormField<List<_TipoEventoCadastro>>(
+      validator: (_) => FormValidators.selecao(
+        _tiposEventoSelecionados,
+        campo: 'pelo menos um tipo de evento atendido',
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                height: 38,
-                width: 38,
-                decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.16),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: primary.withValues(alpha: 0.22),
-                  ),
-                ),
-                child: Icon(
-                  Icons.auto_awesome_rounded,
-                  color: primary,
-                  size: 22,
-                ),
+      builder: (state) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: state.hasError
+                  ? Colors.redAccent.withValues(alpha: 0.85)
+                  : Colors.white.withValues(alpha: 0.18),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  'Tipos de evento atendidos',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              _buildIaBadge(primary),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Selecione os eventos em que este fornecedor costuma atuar. '
-            'Esses dados serão usados pela IA para recomendar fornecedores mais compatíveis.',
-            style: GoogleFonts.poppins(
-              fontSize: 12.5,
-              color: Colors.white.withValues(alpha: 0.78),
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _tiposEventoDisponiveis.map((tipo) {
-              final selected = _tiposEventoSelecionados.any(
-                (item) => item.id == tipo.id,
-              );
-
-              return FilterChip(
-                selected: selected,
-                showCheckmark: false,
-                avatar: Icon(
-                  selected ? Icons.check_circle_rounded : tipo.icon,
-                  size: 18,
-                  color: selected ? Colors.white : primary,
-                ),
-                label: Text(tipo.titulo),
-                labelStyle: GoogleFonts.poppins(
-                  fontSize: 12.5,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
-                  color: selected ? Colors.white : Colors.grey.shade800,
-                ),
-                selectedColor: primary,
-                backgroundColor: Colors.white.withValues(alpha: 0.92),
-                side: BorderSide(
-                  color: selected
-                      ? primary.withValues(alpha: 0.0)
-                      : Colors.white.withValues(alpha: 0.35),
-                ),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 8,
-                ),
-                onSelected: (_) => _alternarTipoEvento(tipo),
-              );
-            }).toList(),
-          ),
-          if (_tiposEventoSelecionados.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              '${_tiposEventoSelecionados.length} tipo(s) selecionado(s)',
-              style: GoogleFonts.poppins(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: primary,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    height: 38,
+                    width: 38,
+                    decoration: BoxDecoration(
+                      color: primary.withValues(alpha: 0.16),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: primary.withValues(alpha: 0.22),
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.auto_awesome_rounded,
+                      color: primary,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Tipos de evento atendidos *',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  _buildIaBadge(primary),
+                ],
               ),
-            ),
-          ],
-        ],
-      ),
+              const SizedBox(height: 8),
+              Text(
+                'Selecione os eventos em que este fornecedor costuma atuar. '
+                'Esses dados serão usados pela IA para recomendar fornecedores mais compatíveis.',
+                style: GoogleFonts.poppins(
+                  fontSize: 12.5,
+                  color: Colors.white.withValues(alpha: 0.78),
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _tiposEventoDisponiveis.map((tipo) {
+                  final selected = _tiposEventoSelecionados.any(
+                    (item) => item.id == tipo.id,
+                  );
+
+                  return FilterChip(
+                    selected: selected,
+                    showCheckmark: false,
+                    avatar: Icon(
+                      selected ? Icons.check_circle_rounded : tipo.icon,
+                      size: 18,
+                      color: selected ? Colors.white : primary,
+                    ),
+                    label: Text(tipo.titulo),
+                    labelStyle: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                      color: selected ? Colors.white : Colors.grey.shade800,
+                    ),
+                    selectedColor: primary,
+                    backgroundColor: Colors.white.withValues(alpha: 0.92),
+                    side: BorderSide(
+                      color: selected
+                          ? primary.withValues(alpha: 0.0)
+                          : Colors.white.withValues(alpha: 0.35),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    onSelected: (_) {
+                      _alternarTipoEvento(tipo);
+                      state.didChange(_tiposEventoSelecionados);
+                    },
+                  );
+                }).toList(),
+              ),
+              if (_tiposEventoSelecionados.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  '${_tiposEventoSelecionados.length} tipo(s) selecionado(s)',
+                  style: GoogleFonts.poppins(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: primary,
+                  ),
+                ),
+              ],
+              if (state.hasError) ...[
+                const SizedBox(height: 10),
+                Text(
+                  state.errorText!,
+                  style: GoogleFonts.poppins(
+                    color: Colors.redAccent.shade100,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -589,28 +612,6 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
         _tiposEventoSelecionados.add(tipo);
       }
     });
-  }
-
-  bool _validarTiposEvento() {
-    if (_tiposEventoSelecionados.isNotEmpty) {
-      return true;
-    }
-
-    Get.snackbar(
-      'Tipos de evento',
-      'Selecione pelo menos um tipo de evento atendido pelo fornecedor.',
-      snackPosition: SnackPosition.BOTTOM,
-      backgroundColor: Colors.orange.shade700,
-      colorText: Colors.white,
-      margin: const EdgeInsets.all(14),
-      borderRadius: 14,
-      icon: const Icon(
-        Icons.event_busy_rounded,
-        color: Colors.white,
-      ),
-    );
-
-    return false;
   }
 
   void _aplicarTiposEventoNoController(RegisterController controller) {

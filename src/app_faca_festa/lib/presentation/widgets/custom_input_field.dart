@@ -303,6 +303,12 @@ class _CustomInputFieldState extends State<CustomInputField> {
         return FormValidators.cnpj(value, obrigatorio: widget.isRequired);
       case InputType.cpfCnpj:
         return FormValidators.cpfOuCnpj(value, obrigatorio: widget.isRequired);
+      case InputType.money:
+        return FormValidators.dinheiro(
+          value,
+          obrigatorio: widget.isRequired,
+          campo: widget.label.toLowerCase(),
+        );
       default:
         return widget.isRequired
             ? FormValidators.obrigatorio(

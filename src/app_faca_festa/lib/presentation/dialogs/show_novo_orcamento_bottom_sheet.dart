@@ -10,6 +10,8 @@ import 'package:get/get.dart';
 
 import '../../controllers/tema/event_theme_controller.dart';
 import '../../controllers/fornecedor/fornecedor_controller.dart';
+import '../../core/utils/form_masks.dart';
+import '../../core/utils/form_validators.dart';
 import './../../data/models/model.dart';
 
 Future<void> showNovoOrcamentoBottomSheet({
@@ -26,6 +28,9 @@ Future<void> showNovoOrcamentoBottomSheet({
   final themeController = Get.find<EventThemeController>();
 
   final anotacoesController = TextEditingController();
+  final valorEstimadoCtrl = TextEditingController();
+  final formKey = GlobalKey<FormState>();
+  final dinheiroMask = FormMasks.dinheiro();
   double? valorEstimado;
   DateTime? dataReserva;
 
@@ -37,12 +42,63 @@ Future<void> showNovoOrcamentoBottomSheet({
       orcamentoExistente = OrcamentoModel.fromMap(doc.data()!);
       anotacoesController.text = orcamentoExistente.anotacoes ?? '';
       valorEstimado = orcamentoExistente.custoEstimado;
+      final valorInicial = valorEstimado;
+      if (valorInicial != null && valorInicial > 0) {
+        valorEstimadoCtrl.text = valorInicial.toStringAsFixed(2);
+      }
     }
   }
 
   final isEdicao = orcamentoExistente != null;
   final String titulo = isEdicao ? "Reservar Fornecedor" : "Solicitar Orçamento";
   final String textoBotao = isEdicao ? "Confirmar Reserva" : "Enviar Solicitação";
+
+  Future<void> salvarOrcamento() async {
+    if (!(formKey.currentState?.validate() ?? false)) return;
+
+    final valorDigitado = FormValidators.parseDinheiro(valorEstimadoCtrl.text);
+    valorEstimado = valorDigitado > 0 ? valorDigitado : valorEstimado;
+
+    if (isEdicao) {
+      await db.collection('orcamento').doc(idOrcamento).update({
+        'anotacoes': anotacoesController.text.trim(),
+        'custo_estimado': valorEstimado,
+        'data_reserva':
+            dataReserva != null ? Timestamp.fromDate(dataReserva!) : null,
+        'status': statusInicial.firestoreValue,
+        'data_fechamento': Timestamp.fromDate(DateTime.now()),
+      });
+
+      Get.back();
+      Get.snackbar(
+        "Reserva confirmada",
+        "O fornecedor foi notificado.",
+        backgroundColor: themeController.primaryColor.value,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final model = OrcamentoModel(
+      idOrcamento: uuid.v4(),
+      idEvento: idEvento,
+      idServicoFornecido: servico.idProdutoServico,
+      custoEstimado: valorEstimado ?? servico.preco,
+      anotacoes: anotacoesController.text.trim(),
+      orcamentoFechado: false,
+      status: statusInicial,
+    );
+
+    await db.collection('orcamento').doc(model.idOrcamento).set(model.toMap());
+
+    Get.back();
+    Get.snackbar(
+      "Solicitação enviada",
+      "O fornecedor será notificado 💌",
+      backgroundColor: themeController.primaryColor.value,
+      colorText: Colors.white,
+    );
+  }
 
   await showModalBottomSheet(
     context: context,
@@ -75,7 +131,10 @@ Future<void> showNovoOrcamentoBottomSheet({
                 padding: const EdgeInsets.all(22),
                 child: StatefulBuilder(
                   builder: (context, setState) {
-                    return SingleChildScrollView(
+                    return Form(
+                      key: formKey,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      child: SingleChildScrollView(
                       physics: const BouncingScrollPhysics(),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,15 +174,21 @@ Future<void> showNovoOrcamentoBottomSheet({
                           const SizedBox(height: 28),
 
                           // === CAMPO DE MENSAGEM ===
-                          TextField(
+                          TextFormField(
                             controller: anotacoesController,
                             maxLines: 4,
+                            validator: (value) => FormValidators.descricao(
+                              value,
+                              campo: 'a mensagem ao fornecedor',
+                              obrigatorio: false,
+                            ),
                             decoration: InputDecoration(
-                              labelText: "Mensagem ao fornecedor",
+                              labelText: "Mensagem ao fornecedor (opcional)",
                               hintText:
                                   "Ex: Olá! Gostaria de saber mais sobre esse serviço e disponibilidade.",
                               labelStyle: GoogleFonts.poppins(color: primary),
                               prefixIcon: Icon(Icons.message_rounded, color: primary),
+                              errorMaxLines: 2,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
@@ -132,21 +197,25 @@ Future<void> showNovoOrcamentoBottomSheet({
                           const SizedBox(height: 16),
 
                           // === CAMPO DE VALOR ESTIMADO ===
-                          TextField(
+                          TextFormField(
                             keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            controller: TextEditingController(
-                              text: valorEstimado?.toStringAsFixed(2) ?? '',
+                            controller: valorEstimadoCtrl,
+                            inputFormatters: [dinheiroMask],
+                            validator: (value) => FormValidators.dinheiro(
+                              value,
+                              obrigatorio: false,
+                              campo: 'o valor estimado',
                             ),
                             decoration: InputDecoration(
                               labelText: "Valor estimado (opcional)",
+                              helperText: "Se não informar, usamos o preço do serviço.",
                               labelStyle: GoogleFonts.poppins(color: primary),
                               prefixIcon: Icon(Icons.attach_money_rounded, color: primary),
+                              errorMaxLines: 2,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
-                            onChanged: (v) =>
-                                valorEstimado = Biblioteca.toDouble(v.replaceAll(',', '.')),
                           ),
 
                           const SizedBox(height: 16),
@@ -240,52 +309,7 @@ Future<void> showNovoOrcamentoBottomSheet({
                                 ),
                                 const SizedBox(height: 12),
                                 ElevatedButton.icon(
-                                  onPressed: () async {
-                                    if (isEdicao) {
-                                      // === Atualiza reserva ===
-                                      await db.collection('orcamento').doc(idOrcamento).update({
-                                        'anotacoes': anotacoesController.text,
-                                        'custo_estimado': valorEstimado,
-                                        'data_reserva': dataReserva != null
-                                            ? Timestamp.fromDate(dataReserva!)
-                                            : null,
-                                        'status': statusInicial.firestoreValue,
-                                        'data_fechamento': Timestamp.fromDate(DateTime.now()),
-                                      });
-
-                                      Get.back();
-                                      Get.snackbar(
-                                        "Reserva confirmada",
-                                        "O fornecedor foi notificado.",
-                                        backgroundColor: primary,
-                                        colorText: Colors.white,
-                                      );
-                                    } else {
-                                      // === Cria novo orçamento ===
-                                      final model = OrcamentoModel(
-                                        idOrcamento: uuid.v4(),
-                                        idEvento: idEvento,
-                                        idServicoFornecido: servico.idProdutoServico,
-                                        custoEstimado: valorEstimado ?? servico.preco,
-                                        anotacoes: anotacoesController.text,
-                                        orcamentoFechado: false,
-                                        status: statusInicial,
-                                      );
-
-                                      await db
-                                          .collection('orcamento')
-                                          .doc(model.idOrcamento)
-                                          .set(model.toMap());
-
-                                      Get.back();
-                                      Get.snackbar(
-                                        "Solicitação enviada",
-                                        "O fornecedor será notificado 💌",
-                                        backgroundColor: primary,
-                                        colorText: Colors.white,
-                                      );
-                                    }
-                                  },
+                                  onPressed: salvarOrcamento,
                                   icon: Icon(
                                     isEdicao ? Icons.event_available_rounded : Icons.send_rounded,
                                     color: Colors.white,
@@ -336,52 +360,7 @@ Future<void> showNovoOrcamentoBottomSheet({
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: ElevatedButton.icon(
-                                    onPressed: () async {
-                                      if (isEdicao) {
-                                        // === Atualiza reserva ===
-                                        await db.collection('orcamento').doc(idOrcamento).update({
-                                          'anotacoes': anotacoesController.text,
-                                          'custo_estimado': valorEstimado,
-                                          'data_reserva': dataReserva != null
-                                              ? Timestamp.fromDate(dataReserva!)
-                                              : null,
-                                          'status': statusInicial.firestoreValue,
-                                          'data_fechamento': Timestamp.fromDate(DateTime.now()),
-                                        });
-
-                                        Get.back();
-                                        Get.snackbar(
-                                          "Reserva confirmada",
-                                          "O fornecedor foi notificado.",
-                                          backgroundColor: primary,
-                                          colorText: Colors.white,
-                                        );
-                                      } else {
-                                        // === Cria novo orçamento ===
-                                        final model = OrcamentoModel(
-                                          idOrcamento: uuid.v4(),
-                                          idEvento: idEvento,
-                                          idServicoFornecido: servico.idProdutoServico,
-                                          custoEstimado: valorEstimado ?? servico.preco,
-                                          anotacoes: anotacoesController.text,
-                                          orcamentoFechado: false,
-                                          status: statusInicial,
-                                        );
-
-                                        await db
-                                            .collection('orcamento')
-                                            .doc(model.idOrcamento)
-                                            .set(model.toMap());
-
-                                        Get.back();
-                                        Get.snackbar(
-                                          "Solicitação enviada",
-                                          "O fornecedor será notificado 💌",
-                                          backgroundColor: primary,
-                                          colorText: Colors.white,
-                                        );
-                                      }
-                                    },
+                                    onPressed: salvarOrcamento,
                                     icon: Icon(
                                       isEdicao ? Icons.event_available_rounded : Icons.send_rounded,
                                       color: Colors.white,
@@ -408,6 +387,7 @@ Future<void> showNovoOrcamentoBottomSheet({
                             ),
                         ],
                       ),
+                    ),
                     );
                   },
                 ),

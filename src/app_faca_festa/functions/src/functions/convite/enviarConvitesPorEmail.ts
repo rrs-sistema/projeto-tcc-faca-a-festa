@@ -247,10 +247,11 @@ async function carregarVisualTema(evento: Record<string, unknown>): Promise<{
   corPrimaria: string;
   corSecundaria: string;
 }> {
+  const capaEvento = texto(evento.imagem_capa_url);
   const fallback = {
     nomeTema: texto(evento.tema),
     dressCode: texto(evento.dress_code),
-    capaUrl: "",
+    capaUrl: capaEvento,
     corPrimaria: "#009688",
     corSecundaria: "#4DB6AC",
   };
@@ -268,7 +269,10 @@ async function carregarVisualTema(evento: Record<string, unknown>): Promise<{
       nomeTema: texto(data.nome) || fallback.nomeTema,
       dressCode:
         fallback.dressCode || texto(data.dress_code_sugerido),
-      capaUrl: texto(data.imagem_capa_url) || urlCapaStorage(idTema),
+      capaUrl:
+        capaEvento ||
+        texto(data.imagem_capa_url) ||
+        urlCapaStorage(idTema),
       corPrimaria: corCss(texto(data.cor_primaria), fallback.corPrimaria),
       corSecundaria: corCss(texto(data.cor_secundaria), fallback.corSecundaria),
     };

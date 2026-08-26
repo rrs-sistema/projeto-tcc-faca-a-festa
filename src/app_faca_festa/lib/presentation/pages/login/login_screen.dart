@@ -7,19 +7,49 @@ import 'package:get/get.dart';
 import './../../../controllers/app_controller.dart';
 import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../controllers/login_controller.dart';
+import './../../../core/utils/form_validators.dart';
 import './../../widgets/custom_input_field.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
   @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  var _autovalidateMode = AutovalidateMode.disabled;
+
+  late final LoginController controller;
+  late final TextEditingController emailCtrl;
+  late final TextEditingController senhaCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = Get.put(LoginController());
+    emailCtrl = TextEditingController();
+    senhaCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    emailCtrl.dispose();
+    senhaCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _entrar() async {
+    setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    await controller.login();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final controller = Get.put(LoginController());
     final theme = Get.find<EventThemeController>();
     final gradient = theme.gradient.value;
-
-    final emailCtrl = TextEditingController();
-    final senhaCtrl = TextEditingController();
 
     return Scaffold(
       body: Stack(
@@ -102,164 +132,177 @@ class LoginScreen extends StatelessWidget {
                           )
                         ],
                       ),
-                      child: Column(
-                        children: [
-                          // Campo Email
-                          CustomInputField(
-                            label: 'Email',
-                            hintlabel: 'Digite seu email',
-                            icon: Icons.email_outlined,
-                            controller: emailCtrl,
-                            color: theme.primaryColor.value,
-                            titleColor: theme.primaryColor.value,
-                            type: InputType.email,
-                            onChanged: (v) => controller.email.value = v,
-                          ),
-
-                          // Campo Senha
-                          CustomInputField(
-                            label: 'Senha',
-                            hintlabel: 'Digite sua senha',
-                            icon: Icons.lock_outline,
-                            controller: senhaCtrl,
-                            color: theme.primaryColor.value,
-                            obscureText: true,
-                            titleColor: theme.primaryColor.value,
-                            type: InputType.password,
-                            onChanged: (v) => controller.senha.value = v,
-                          ),
-
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: () => Get.toNamed('/forgotPassword'),
-                              child: Text(
-                                'Esqueci minha senha',
-                                style: GoogleFonts.poppins(
-                                  color: theme.primaryColor.value,
-                                  fontSize: 13.5,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                      child: Form(
+                        key: _formKey,
+                        autovalidateMode: _autovalidateMode,
+                        child: Column(
+                          children: [
+                            // Campo Email
+                            CustomInputField(
+                              label: 'E-mail',
+                              hintlabel: 'ex: contato@email.com',
+                              icon: Icons.email_outlined,
+                              controller: emailCtrl,
+                              color: theme.primaryColor.value,
+                              titleColor: theme.primaryColor.value,
+                              type: InputType.email,
+                              isRequired: true,
+                              validator: FormValidators.email,
+                              onChanged: (v) => controller.email.value = v,
                             ),
-                          ),
 
-                          const SizedBox(height: 12),
+                            // Campo Senha
+                            CustomInputField(
+                              label: 'Senha',
+                              hintlabel: 'Digite sua senha',
+                              icon: Icons.lock_outline,
+                              controller: senhaCtrl,
+                              color: theme.primaryColor.value,
+                              obscureText: true,
+                              titleColor: theme.primaryColor.value,
+                              type: InputType.password,
+                              isRequired: true,
+                              validator: FormValidators.senhaLogin,
+                              onChanged: (v) => controller.senha.value = v,
+                            ),
 
-                          // Botão Entrar
-                          Obx(() {
-                            return SizedBox(
-                              height: 55,
-                              child: ElevatedButton(
-                                onPressed: controller.carregando.value
-                                    ? null
-                                    : () async => await controller.login(),
-                                style: ElevatedButton.styleFrom(
-                                  padding:
-                                      const EdgeInsets.symmetric(vertical: 2),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  backgroundColor: Colors.transparent,
-                                  shadowColor: Colors.transparent,
-                                ).copyWith(
-                                  elevation: WidgetStateProperty.all(0),
-                                  backgroundColor:
-                                      WidgetStateProperty.resolveWith((states) {
-                                    if (states.contains(WidgetState.disabled)) {
-                                      return gradient.colors.first
-                                          .withValues(alpha: 0.6);
-                                    }
-                                    return null;
-                                  }),
-                                ),
-                                child: Ink(
-                                  decoration: BoxDecoration(
-                                    gradient: gradient,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Container(
-                                    alignment: Alignment.center,
-                                    child: controller.carregando.value
-                                        ? const SizedBox(
-                                            height: 24,
-                                            width: 24,
-                                            child: CircularProgressIndicator(
-                                              color: Colors.white,
-                                              strokeWidth: 2.3,
-                                            ),
-                                          )
-                                        : Text(
-                                            'Entrar',
-                                            style: GoogleFonts.poppins(
-                                              color: Colors.white,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }),
-                          const SizedBox(height: 18),
-                          Row(
-                            children: [
-                              Expanded(
-                                  child: Divider(color: Colors.grey.shade300)),
-                              Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 12),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () => Get.toNamed('/forgotPassword'),
                                 child: Text(
-                                  'ou',
+                                  'Esqueci minha senha',
                                   style: GoogleFonts.poppins(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                  child: Divider(color: Colors.grey.shade300)),
-                            ],
-                          ),
-                          const SizedBox(height: 18),
-                          Obx(
-                            () => SizedBox(
-                              width: double.infinity,
-                              height: 52,
-                              child: OutlinedButton.icon(
-                                onPressed: controller.carregando.value
-                                    ? null
-                                    : () async =>
-                                        await controller.loginComGoogle(),
-                                style: OutlinedButton.styleFrom(
-                                  backgroundColor: Colors.white,
-                                  foregroundColor: Colors.grey.shade800,
-                                  side: BorderSide(color: Colors.grey.shade300),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                icon: Text(
-                                  'G',
-                                  style: GoogleFonts.poppins(
-                                    color: const Color(0xFF4285F4),
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                label: Text(
-                                  'Entrar com Google',
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 15,
+                                    color: theme.primaryColor.value,
+                                    fontSize: 13.5,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                        ],
+
+                            const SizedBox(height: 12),
+
+                            // Botão Entrar
+                            Obx(() {
+                              return SizedBox(
+                                height: 55,
+                                child: ElevatedButton(
+                                  onPressed: controller.carregando.value
+                                      ? null
+                                      : _entrar,
+                                  style: ElevatedButton.styleFrom(
+                                    padding:
+                                        const EdgeInsets.symmetric(vertical: 2),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                  ).copyWith(
+                                    elevation: WidgetStateProperty.all(0),
+                                    backgroundColor:
+                                        WidgetStateProperty.resolveWith(
+                                            (states) {
+                                      if (states
+                                          .contains(WidgetState.disabled)) {
+                                        return gradient.colors.first
+                                            .withValues(alpha: 0.6);
+                                      }
+                                      return null;
+                                    }),
+                                  ),
+                                  child: Ink(
+                                    decoration: BoxDecoration(
+                                      gradient: gradient,
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: Container(
+                                      alignment: Alignment.center,
+                                      child: controller.carregando.value
+                                          ? const SizedBox(
+                                              height: 24,
+                                              width: 24,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.white,
+                                                strokeWidth: 2.3,
+                                              ),
+                                            )
+                                          : Text(
+                                              'Entrar',
+                                              style: GoogleFonts.poppins(
+                                                color: Colors.white,
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }),
+                            const SizedBox(height: 18),
+                            Row(
+                              children: [
+                                Expanded(
+                                    child:
+                                        Divider(color: Colors.grey.shade300)),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12),
+                                  child: Text(
+                                    'ou',
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                    child:
+                                        Divider(color: Colors.grey.shade300)),
+                              ],
+                            ),
+                            const SizedBox(height: 18),
+                            Obx(
+                              () => SizedBox(
+                                width: double.infinity,
+                                height: 52,
+                                child: OutlinedButton.icon(
+                                  onPressed: controller.carregando.value
+                                      ? null
+                                      : () async =>
+                                          await controller.loginComGoogle(),
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: Colors.white,
+                                    foregroundColor: Colors.grey.shade800,
+                                    side: BorderSide(
+                                        color: Colors.grey.shade300),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  icon: Text(
+                                    'G',
+                                    style: GoogleFonts.poppins(
+                                      color: const Color(0xFF4285F4),
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  label: Text(
+                                    'Entrar com Google',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
 

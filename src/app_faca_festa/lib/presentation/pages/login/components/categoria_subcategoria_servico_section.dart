@@ -7,6 +7,7 @@ import './../../../../controllers/categoria/subcategoria_servico_controller.dart
 import './../../../../controllers/categoria/categoria_servico_controller.dart';
 import '../../../../controllers/servico/servico_produto_controller.dart';
 import './../../../../controllers/register_controller.dart';
+import './../../../../core/utils/form_validators.dart';
 
 class CategoriaSubcategoriaServicoSection extends StatelessWidget {
   final RegisterController controller;
@@ -28,98 +29,132 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Áreas de atuação',
+          'Áreas de atuação *',
           style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
             color: Colors.white,
           ),
         ),
+        const SizedBox(height: 4),
+        Text(
+          'Escolha categoria e pelo menos um serviço oferecido.',
+          style: GoogleFonts.poppins(
+            fontSize: 12,
+            color: Colors.white70,
+          ),
+        ),
         const SizedBox(height: 12),
 
         // 🟢 CATEGORIAS
-        Obx(() {
-          final categorias = categoriaController.categorias.toList();
-          final selecionadas = controller.categoriasSelecionadas.toList();
+        FormField<int>(
+          validator: (_) => FormValidators.selecao(
+            controller.categoriasSelecionadas,
+            campo: 'pelo menos uma categoria de atuação',
+          ),
+          builder: (catState) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Obx(() {
+                  final categorias = categoriaController.categorias.toList();
+                  final selecionadas = controller.categoriasSelecionadas.toList();
 
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            child: categorias.isEmpty
-                ? Padding(
-                    key: const ValueKey('no_cat'),
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      'Nenhuma categoria disponível.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 13,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  )
-                : SizedBox(
-                    key: const ValueKey('cat_list'),
-                    height: 50,
-                    child: ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemCount: categorias.length,
-                      itemBuilder: (_, i) {
-                        final cat = categorias[i];
-                        final isSelecionada =
-                            selecionadas.map((c) => c.idCategoria).contains(cat.id);
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: categorias.isEmpty
+                        ? Padding(
+                            key: const ValueKey('no_cat'),
+                            padding: const EdgeInsets.only(top: 6),
+                            child: Text(
+                              'Nenhuma categoria disponível.',
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          )
+                        : SizedBox(
+                            key: const ValueKey('cat_list'),
+                            height: 50,
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              separatorBuilder: (_, __) => const SizedBox(width: 8),
+                              itemCount: categorias.length,
+                              itemBuilder: (_, i) {
+                                final cat = categorias[i];
+                                final isSelecionada =
+                                    selecionadas.map((c) => c.idCategoria).contains(cat.id);
 
-                        return ChoiceChip(
-                          label: Text(
-                            cat.nome,
-                            style: GoogleFonts.poppins(
-                              color: isSelecionada ? Colors.white : Colors.grey.shade700,
-                              fontWeight: isSelecionada ? FontWeight.w600 : FontWeight.normal,
+                                return ChoiceChip(
+                                  label: Text(
+                                    cat.nome,
+                                    style: GoogleFonts.poppins(
+                                      color: isSelecionada ? Colors.white : Colors.grey.shade700,
+                                      fontWeight: isSelecionada ? FontWeight.w600 : FontWeight.normal,
+                                    ),
+                                  ),
+                                  selected: isSelecionada,
+                                  selectedColor: primary,
+                                  backgroundColor: Colors.grey.shade200,
+                                  onSelected: (v) async {
+                                    if (v) {
+                                      final jaExiste = controller.categoriasSelecionadas
+                                          .any((c) => c.idCategoria == cat.id);
+
+                                      if (!jaExiste) {
+                                        EasyLoading.show(status: 'Processando...');
+                                        controller.adicionarCategoria(cat);
+
+                                        // 🔹 Carrega subcategorias sem limpar tudo
+                                        await subcategoriaController
+                                            .carregarSubcategoriasPorCategoria(cat.id);
+
+                                        // 🔹 (Opcional) Limpa apenas serviços da nova categoria
+                                        final subcats =
+                                            subcategoriaController.subcategoriasPorCategoria[cat.id] ?? [];
+                                        for (final sub in subcats) {
+                                          servicoController.removerServicosPorSubcategoria(sub.id);
+                                        }
+
+                                        await EasyLoading.dismiss();
+                                      }
+                                    } else {
+                                      controller.categoriasSelecionadas
+                                          .removeWhere((c) => c.idCategoria == cat.id);
+
+                                      // 🔹 Limpa apenas subcategorias e serviços dessa categoria desmarcada
+                                      controller.limparSubcategorias(cat.id);
+                                      final subcats =
+                                          subcategoriaController.subcategoriasPorCategoria[cat.id] ?? [];
+                                      for (final sub in subcats) {
+                                        servicoController.removerServicosPorSubcategoria(sub.id);
+                                      }
+                                    }
+                                    catState.didChange(controller.categoriasSelecionadas.length);
+                                  },
+                                );
+                              },
                             ),
                           ),
-                          selected: isSelecionada,
-                          selectedColor: primary,
-                          backgroundColor: Colors.grey.shade200,
-                          onSelected: (v) async {
-                            if (v) {
-                              final jaExiste = controller.categoriasSelecionadas
-                                  .any((c) => c.idCategoria == cat.id);
-
-                              if (!jaExiste) {
-                                EasyLoading.show(status: 'Processando...');
-                                controller.adicionarCategoria(cat);
-
-                                // 🔹 Carrega subcategorias sem limpar tudo
-                                await subcategoriaController
-                                    .carregarSubcategoriasPorCategoria(cat.id);
-
-                                // 🔹 (Opcional) Limpa apenas serviços da nova categoria
-                                final subcats =
-                                    subcategoriaController.subcategoriasPorCategoria[cat.id] ?? [];
-                                for (final sub in subcats) {
-                                  servicoController.removerServicosPorSubcategoria(sub.id);
-                                }
-
-                                await EasyLoading.dismiss();
-                              }
-                            } else {
-                              controller.categoriasSelecionadas
-                                  .removeWhere((c) => c.idCategoria == cat.id);
-
-                              // 🔹 Limpa apenas subcategorias e serviços dessa categoria desmarcada
-                              controller.limparSubcategorias(cat.id);
-                              final subcats =
-                                  subcategoriaController.subcategoriasPorCategoria[cat.id] ?? [];
-                              for (final sub in subcats) {
-                                servicoController.removerServicosPorSubcategoria(sub.id);
-                              }
-                            }
-                          },
-                        );
-                      },
+                  );
+                }),
+                if (catState.hasError)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 4),
+                    child: Text(
+                      catState.errorText!,
+                      style: GoogleFonts.poppins(
+                        color: Colors.redAccent.shade100,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-          );
-        }),
+              ],
+            );
+          },
+        ),
 
         Divider(thickness: 1, color: Colors.grey.shade200, height: 20),
 
@@ -195,91 +230,122 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
         Divider(thickness: 1, color: Colors.grey.shade200, height: 20),
 
         // 🟠 SERVIÇOS
-        Obx(() {
-          final selecionadas = controller.categoriasSelecionadas;
-          if (selecionadas.isEmpty) {
-            return AnimatedSwitcher(
-              duration: const Duration(milliseconds: 400),
-              child: Padding(
-                key: const ValueKey('sem_cat_serv'),
-                padding: const EdgeInsets.only(left: 10, top: 6),
-                child: Text(
-                  'Selecione uma categoria para visualizar os serviços disponíveis.',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white70,
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            );
-          }
-
-          final servicosMap = servicoController.servicosPorSubcategoria;
-          final todasSubcats =
-              subcategoriaController.subcategoriasPorCategoria.values.expand((e) => e).toList();
-          final todosServicos = todasSubcats.expand((sub) => servicosMap[sub.id] ?? []).toList();
-
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            child: servicoController.carregando.value
-                ? const Padding(
-                    key: ValueKey('loading_serv'),
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                  )
-                : todosServicos.isEmpty
-                    ? Padding(
-                        key: const ValueKey('no_serv'),
+        FormField<int>(
+          validator: (_) => FormValidators.selecao(
+            controller.servicosSelecionados,
+            campo: 'pelo menos um serviço oferecido',
+          ),
+          builder: (servState) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Obx(() {
+                  final selecionadas = controller.categoriasSelecionadas;
+                  if (selecionadas.isEmpty) {
+                    return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      child: Padding(
+                        key: const ValueKey('sem_cat_serv'),
                         padding: const EdgeInsets.only(left: 10, top: 6),
                         child: Text(
-                          'Nenhum serviço cadastrado para esta subcategoria.',
+                          'Selecione uma categoria para visualizar os serviços disponíveis.',
                           style: GoogleFonts.poppins(
-                            color: Colors.grey.shade500,
+                            color: Colors.white70,
                             fontSize: 13,
                           ),
                         ),
-                      )
-                    : Column(
-                        key: const ValueKey('serv_list'),
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Serviços e produtos',
-                            style: GoogleFonts.poppins(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w600,
-                              color: primary,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          SizedBox(
-                            height: 52,
-                            child: _HorizontalScrollChipsServicos(
-                              servicos: todosServicos,
-                              primary: primary,
-                              onToggle: (servico, selecionado) {
-                                controller.alternarServico(servico, selecionado);
-
-                                if (!selecionado) {
-                                  for (final entry
-                                      in servicoController.servicosPorSubcategoria.entries) {
-                                    final idSub = entry.key;
-                                    final lista = entry.value;
-
-                                    lista.removeWhere((s) => s.id == servico.id);
-                                    servicoController.servicosPorSubcategoria[idSub] =
-                                        List.from(lista);
-                                  }
-
-                                  servicoController.servicosPorSubcategoria.refresh();
-                                }
-                              },
-                            ),
-                          ),
-                        ],
                       ),
-          );
-        }),
+                    );
+                  }
+
+                  final servicosMap = servicoController.servicosPorSubcategoria;
+                  final todasSubcats = subcategoriaController
+                      .subcategoriasPorCategoria.values
+                      .expand((e) => e)
+                      .toList();
+                  final todosServicos =
+                      todasSubcats.expand((sub) => servicosMap[sub.id] ?? []).toList();
+
+                  return AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 400),
+                    child: servicoController.carregando.value
+                        ? const Padding(
+                            key: ValueKey('loading_serv'),
+                            padding: EdgeInsets.symmetric(vertical: 8),
+                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                          )
+                        : todosServicos.isEmpty
+                            ? Padding(
+                                key: const ValueKey('no_serv'),
+                                padding: const EdgeInsets.only(left: 10, top: 6),
+                                child: Text(
+                                  'Nenhum serviço cadastrado para esta subcategoria.',
+                                  style: GoogleFonts.poppins(
+                                    color: Colors.grey.shade500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              )
+                            : Column(
+                                key: const ValueKey('serv_list'),
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Serviços e produtos *',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      color: primary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  SizedBox(
+                                    height: 52,
+                                    child: _HorizontalScrollChipsServicos(
+                                      servicos: todosServicos,
+                                      primary: primary,
+                                      onToggle: (servico, selecionado) {
+                                        controller.alternarServico(servico, selecionado);
+
+                                        if (!selecionado) {
+                                          for (final entry
+                                              in servicoController.servicosPorSubcategoria.entries) {
+                                            final idSub = entry.key;
+                                            final lista = entry.value;
+
+                                            lista.removeWhere((s) => s.id == servico.id);
+                                            servicoController.servicosPorSubcategoria[idSub] =
+                                                List.from(lista);
+                                          }
+
+                                          servicoController.servicosPorSubcategoria.refresh();
+                                        }
+                                        servState.didChange(
+                                          controller.servicosSelecionados.length,
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                  );
+                }),
+                if (servState.hasError)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8, left: 4),
+                    child: Text(
+                      servState.errorText!,
+                      style: GoogleFonts.poppins(
+                        color: Colors.redAccent.shade100,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
+        ),
       ],
     );
   }

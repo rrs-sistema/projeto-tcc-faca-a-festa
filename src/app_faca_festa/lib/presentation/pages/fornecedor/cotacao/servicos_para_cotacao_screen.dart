@@ -33,7 +33,10 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
   final fornecedorController = Get.find<FornecedorLocalizacaoController>();
   final appController = Get.find<AppController>();
   final RxSet<String> selecionados = <String>{}.obs;
-  final RxSet<double> valorSolicitado = <double>{}.obs;
+  final RxMap<String, double> valoresPorChave = <String, double>{}.obs;
+
+  double get _totalSelecionado =>
+      valoresPorChave.values.fold<double>(0, (a, b) => a + b);
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +118,7 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                 const Icon(Icons.request_quote_rounded, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Text(
-                  'Cotar ${selecionados.length} item(ns) • R\$ ${Biblioteca.formatarValorDecimal(valorSolicitado.fold(0.0, (a, b) => a! + b))}',
+                  'Cotar ${selecionados.length} item(ns) • R\$ ${Biblioteca.formatarValorDecimal(_totalSelecionado)}',
                   style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13),
                 ),
@@ -171,7 +174,7 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                   setState(() {
                     fornecedorController.servicosFornecedor.removeAt(indexRemovido);
                     selecionados.remove(chave);
-                    valorSolicitado.remove(s.preco);
+                    valoresPorChave.remove(chave);
                   });
 
                   await Future.delayed(const Duration(milliseconds: 50));
@@ -223,10 +226,10 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
         final chave = '${s.id}_${s.idFornecedor}';
         if (selecionados.contains(chave)) {
           selecionados.remove(chave);
-          valorSolicitado.remove(s.preco);
+          valoresPorChave.remove(chave);
         } else {
           selecionados.add(chave);
-          valorSolicitado.add(s.preco);
+          valoresPorChave[chave] = s.precoEfetivo;
         }
         HapticFeedback.selectionClick();
       },
@@ -335,9 +338,7 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                                   decoration: TextDecoration.lineThrough),
                             ),
                           Text(
-                            s.precoPromocao != null && s.precoPromocao! > 0
-                                ? "R\$ ${Biblioteca.formatarValorDecimal(s.precoPromocao)}"
-                                : "R\$ ${Biblioteca.formatarValorDecimal(s.preco)}",
+                            "R\$ ${Biblioteca.formatarValorDecimal(s.precoEfetivo)}",
                             style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w800,
                                 color: const Color(0xFF1F2937),

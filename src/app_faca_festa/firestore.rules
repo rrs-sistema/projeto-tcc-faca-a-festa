@@ -319,38 +319,104 @@ service cloud.firestore {
         || (signedIn() && resource.data.id_fornecedor == uid());
     }
 
+    function cotacaoDoc(cotacaoId) {
+      return get(/databases/$(database)/documents/cotacao/$(cotacaoId)).data;
+    }
+
+    function ehSolicitanteCotacao(cotacaoId) {
+      return signedIn()
+        && cotacaoDoc(cotacaoId).id_usuario_solicitante == uid();
+    }
+
+    function ehFornecedorConvidadoCotacao(cotacaoId) {
+      return isTipo('F')
+        && exists(/databases/$(database)/documents/cotacao/$(cotacaoId)/fornecedores/$(uid()));
+    }
+
+    // Create/update sensíveis de cotação passam pelas callables (Admin SDK).
+    // O cliente só lê e (organizador) cancela/fecha campos permitidos.
     match /cotacao/{cotacaoId} {
       allow read: if isAdmin()
         || (signedIn() && resource.data.id_usuario_solicitante == uid())
-        || isTipo('F');
-      allow create: if isTipo('O') || isAdmin();
-      allow update, delete: if isAdmin()
+        || ehFornecedorConvidadoCotacao(cotacaoId);
+
+      allow create: if false;
+
+      allow update: if isAdmin()
+        || (
+          signedIn()
+          && resource.data.id_usuario_solicitante == uid()
+          && request.resource.data.id_usuario_solicitante == resource.data.id_usuario_solicitante
+          && request.resource.data.id_evento == resource.data.id_evento
+        );
+
+      allow delete: if isAdmin()
         || (signedIn() && resource.data.id_usuario_solicitante == uid());
 
       match /fornecedores/{fornecedorId} {
-        allow read: if signedIn();
-        allow write: if isAdmin()
-          || eventoDono(get(/databases/$(database)/documents/cotacao/$(cotacaoId)).data.id_evento)
-          || uid() == fornecedorId;
+        allow read: if isAdmin()
+          || ehSolicitanteCotacao(cotacaoId)
+          || uid() == fornecedorId
+          || (
+            isTipo('F')
+            && resource.data.id_fornecedor == uid()
+          );
+
+        allow create: if false;
+
+        allow update: if isAdmin()
+          || ehSolicitanteCotacao(cotacaoId)
+          || (
+            uid() == fornecedorId
+            && resource.data.id_fornecedor == uid()
+          );
+
+        allow delete: if isAdmin() || ehSolicitanteCotacao(cotacaoId);
 
         match /{subcolecao}/{docId} {
-          allow read: if signedIn();
-          allow write: if isAdmin()
-            || uid() == fornecedorId
-            || eventoDono(get(/databases/$(database)/documents/cotacao/$(cotacaoId)).data.id_evento);
+          allow read: if isAdmin()
+            || ehSolicitanteCotacao(cotacaoId)
+            || uid() == fornecedorId;
+
+          allow create: if false;
+
+          allow update, delete: if isAdmin()
+            || ehSolicitanteCotacao(cotacaoId)
+            || uid() == fornecedorId;
         }
       }
     }
 
     match /orcamento/{id} {
-      allow read: if signedIn();
-      allow write: if isAdmin()
+      allow read: if isAdmin()
+        || (
+          signedIn()
+          && (
+            eventoDono(resource.data.id_evento)
+            || resource.data.id_fornecedor == uid()
+            || resource.data.id_solicitante == uid()
+          )
+        );
+
+      allow create: if false;
+
+      allow update: if isAdmin()
         || eventoDono(resource.data.id_evento)
         || (signedIn() && resource.data.id_fornecedor == uid());
 
+      allow delete: if isAdmin() || eventoDono(resource.data.id_evento);
+
       match /orcamento_gasto/{gastoId} {
-        allow read: if signedIn();
-        allow write: if isAdmin()
+        allow read: if isAdmin()
+          || eventoDono(get(/databases/$(database)/documents/orcamento/$(id)).data.id_evento)
+          || (
+            signedIn()
+            && get(/databases/$(database)/documents/orcamento/$(id)).data.id_fornecedor == uid()
+          );
+
+        allow create: if false;
+
+        allow update, delete: if isAdmin()
           || eventoDono(get(/databases/$(database)/documents/orcamento/$(id)).data.id_evento);
       }
     }
@@ -412,6 +478,17 @@ service cloud.firestore {
 
     match /mfa_email_codes/{userId} {
       allow read, write: if false;
+    }
+
+    // Auditoria imutável: só Cloud Functions gravam.
+    // Admin lê tudo. Fornecedor lê apenas o que é dos próprios serviços.
+    // Organizador não lê (visão ainda não liberada).
+    match /auditoria_eventos/{id} {
+      allow get, list: if isAdmin()
+        || (isTipo('F')
+            && resource.data.id_fornecedor == uid()
+            && resource.data.visivel_fornecedor == true);
+      allow create, update, delete: if false;
     }
   }
 }

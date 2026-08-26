@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Evidências de validação — Faça a Festa</title>
+  <style>
+    :root {
+      --teal: #009688;
+      --teal-2: #4db6ac;
+      --ink: #111827;
+      --muted: #64748b;
+      --red: #e53935;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+    header.hero {
+      background: var(--teal);
+      color: #fff;
+      padding: 36px 24px 28px;
+    }
+    header.hero h1 { margin: 0 0 8px; font-size: 28px; }
+    header.hero p { margin: 0; max-width: 820px; line-height: 1.5; opacity: .95; }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px 24px;
+      background: #fff;
+      border-bottom: 1px solid #e2e8f0;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+    nav a {
+      color: var(--teal);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 6px 10px;
+      border: 1px solid #b2dfdb;
+      border-radius: 999px;
+    }
+    .slide {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 28px;
+      padding: 28px 24px 40px;
+      border-bottom: 1px solid #e2e8f0;
+      align-items: start;
+    }
+    .copy h2 { margin: 0 0 8px; font-size: 22px; }
+    .copy .tag {
+      display: inline-block;
+      background: #e0f2f1;
+      color: var(--teal);
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+    }
+    .copy p { color: #334155; line-height: 1.55; }
+    .copy ul { padding-left: 18px; color: #334155; }
+    .copy li { margin: 6px 0; }
+    .msg { color: var(--red); font-weight: 700; }
+    .phone {
+      width: 360px;
+      min-height: 640px;
+      background: #fff;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 10px solid #1f2937;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, .18);
+    }
+    .auth { background: linear-gradient(160deg, var(--teal), var(--teal-2)); padding: 22px 16px 28px; min-height: 620px; }
+    .brand { color: #fff; text-align: center; margin-bottom: 18px; }
+    .brand h3 { margin: 0; font-size: 26px; }
+    .brand small { opacity: .9; }
+    .card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 18px 16px 16px;
+    }
+    .card h4 { margin: 0 0 14px; color: var(--teal); text-align: center; font-size: 22px; }
+    .sheet { background: #f8fafc; padding: 12px 14px 18px; min-height: 620px; }
+    .handle { width: 40px; height: 4px; background: #d1d5db; border-radius: 99px; margin: 4px auto 12px; }
+    .sheet-head { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+    .icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: #e0f2f1; color: var(--teal);
+      display: grid; place-items: center; font-weight: 800;
+    }
+    .sheet-head b { display: block; font-size: 15px; }
+    .sheet-head span { color: var(--muted); font-size: 11px; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 4px; color: #334155; }
+    .box {
+      border: 1.3px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #0f172a;
+      background: #fff;
+      min-height: 40px;
+    }
+    .box.empty { color: #94a3b8; }
+    .field.error .box { border-color: var(--red); }
+    .field.error .hint { color: var(--red); font-size: 11px; margin-top: 4px; font-weight: 600; }
+    .btn {
+      width: 100%;
+      margin-top: 8px;
+      background: var(--teal);
+      color: #fff;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px;
+      font-weight: 800;
+    }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e2e8f0; vertical-align: top; }
+    th { background: #e0f2f1; color: #115e59; }
+    footer { padding: 20px 24px 40px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 900px) {
+      .slide { grid-template-columns: 1fr; }
+    }
+    @media print {
+      nav { display: none; }
+      .slide { break-inside: avoid; page-break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <h1>Evidências de validação — Faça a Festa</h1>
+    <p>
+      Mensagens reais do validador único <code>FormValidators</code>
+      (<code>lib/core/utils/form_validators.dart</code>), usadas nas telas de login,
+      recuperação de senha e cadastros. Os erros aparecem no próprio campo após o envio,
+      sem snackbar de “preencha os campos”.
+    </p>
+  </header>
+  <nav>
+    <a href="#login">1. Login</a>
+    <a href="#login-invalido">2. Login inválido</a>
+    <a href="#recuperar">3. Recuperar senha</a>
+    <a href="#redefinir">4. Código e senha</a>
+    <a href="#evento">5. Evento</a>
+    <a href="#fornecedor">6. Fornecedor</a>
+    <a href="#presente">7. Presente</a>
+    <a href="#orcamento">8. Orçamento</a>
+    <a href="#convidado">9. Convidado</a>
+    <a href="#cardapio">10. Cardápio</a>
+    <a href="#grupo">11. Grupo</a>
+    <a href="#tarefa">12. Tarefa</a>
+    <a href="#campos">13. Campos</a>
+  </nav>
+
+  <section class="slide" id="login">
+    <div class="phone auth">
+      <div class="brand"><h3>Faça a Festa</h3><small>Organize, inspire e celebre com estilo</small></div>
+      <div class="card">
+        <h4>Entrar</h4>
+        <div class="field error"><label>E-mail *</label><div class="box empty">ex: contato@email.com</div><div class="hint">Informe o e-mail</div></div>
+        <div class="field error"><label>Senha *</label><div class="box empty">Digite sua senha</div><div class="hint">Informe a senha</div></div>
+        <button class="btn">Entrar</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 1 · Login</div>
+      <h2>Campos obrigatórios vazios</h2>
+      <p>Ao tocar em <b>Entrar</b> sem preencher, o formulário não chama a API. Cada campo mostra o erro inline.</p>
+      <ul>
+        <li>E-mail vazio → <span class="msg">Informe o e-mail</span></li>
+        <li>Senha vazia → <span class="msg">Informe a senha</span></li>
+      </ul>
+      <p>Arquivo: <code>login_screen.dart</code> · validadores <code>FormValidators.email</code> e <code>senhaLogin</code>.</p>
+    </div>
+  </section>
+
+  <section class="slide" id="login-invalido">
+    <div class="phone auth">
+      <div class="brand"><h3>Faça a Festa</h3><small>Organize, inspire e celebre com estilo</small></div>
+      <div class="card">
+        <h4>Entrar</h4>
+        <div class="field error"><label>E-mail *</label><div class="box">email-invalido</div><div class="hint">Digite um e-mail válido (ex: contato@email.com)</div></div>
+        <div class="field error"><label>Senha *</label><div class="box">••••••</div><div class="hint">A senha deve ter pelo menos 6 caracteres</div></div>
+        <button class="btn">Entrar</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 1 · Login</div>
+      <h2>Formato inválido</h2>
+      <p>Valor digitado: e-mail sem <code>@</code> e senha <code>123</code> (3 caracteres). No login a senha não exige letra+número; só comprimento, porque a conta já existe.</p>
+      <ul>
+        <li><span class="msg">Digite um e-mail válido (ex: contato@email.com)</span></li>
+        <li><span class="msg">A senha deve ter pelo menos 6 caracteres</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" id="recuperar">
+    <div class="phone auth">
+      <div class="brand"><h3>Faça a Festa</h3><small>Informe seu e-mail para receber um código de verificação.</small></div>
+      <div class="card">
+        <h4>Recuperar senha</h4>
+        <div class="field error"><label>E-mail *</label><div class="box">usuario@</div><div class="hint">Digite um e-mail válido (ex: contato@email.com)</div></div>
+        <button class="btn">Enviar código</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 2 · Recuperação de senha</div>
+      <h2>E-mail inválido na solicitação do código</h2>
+      <p>Etapa 1: o código só é enviado se o e-mail passar em <code>FormValidators.email</code>. Entrada <code>usuario@</code> (sem domínio).</p>
+      <ul>
+        <li><span class="msg">Digite um e-mail válido (ex: contato@email.com)</span></li>
+      </ul>
+      <p>Arquivo: <code>forgot_password_screen.dart</code>.</p>
+    </div>
+  </section>
+
+  <section class="slide" id="redefinir">
+    <div class="phone auth">
+      <div class="brand"><h3>Faça a Festa</h3><small>Digite o código recebido no e-mail e escolha uma nova senha.</small></div>
+      <div class="card">
+        <h4>Recuperar senha</h4>
+        <div class="field error"><label>Código *</label><div class="box">12</div><div class="hint">Informe o código de verificação com 6 dígitos</div></div>
+        <div class="field error"><label>Nova senha *</label><div class="box">abcdef</div><div class="hint">A senha deve conter pelo menos um número</div></div>
+        <div class="field error"><label>Confirmar senha *</label><div class="box">outra</div><div class="hint">As senhas não coincidem</div></div>
+        <button class="btn">Redefinir senha</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 2 · Recuperação de senha</div>
+      <h2>Código, força da senha e confirmação</h2>
+      <p>Na redefinição a senha nova exige complexidade (letra e número). O login não exige isso.</p>
+      <ul>
+        <li>Código <code>12</code> → <span class="msg">Informe o código de verificação com 6 dígitos</span></li>
+        <li>Senha <code>abcdef</code> → <span class="msg">A senha deve conter pelo menos um número</span></li>
+        <li>Confirmação diferente → <span class="msg">As senhas não coincidem</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" id="evento">
+    <div class="phone">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><div class="icon">E</div><div><b>Novo Evento</b><span>Preencha as informações da festa.</span></div></div>
+        <div class="field error"><label>Título do evento *</label><div class="box empty">Informe o título</div><div class="hint">Informe o título do evento</div></div>
+        <div class="field error"><label>Data do evento *</label><div class="box empty">dd/MM/aaaa</div><div class="hint">Informe a data do evento</div></div>
+        <div class="field error"><label>Hora *</label><div class="box empty">HH:mm</div><div class="hint">Informe a hora do evento</div></div>
+        <div class="field error"><label>Custo estimado (R$) *</label><div class="box empty">R$ 0,00</div><div class="hint">Informe o custo estimado</div></div>
+        <button class="btn">Salvar</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 3 · Cadastro de evento</div>
+      <h2>Obrigatórios do planejamento</h2>
+      <p>Envio em branco do bottom sheet <code>cadastro_evento_bottom_sheet.dart</code>.</p>
+      <ul>
+        <li><span class="msg">Informe o título do evento</span></li>
+        <li><span class="msg">Informe a data do evento</span></li>
+        <li><span class="msg">Informe a hora do evento</span></li>
+        <li><span class="msg">Informe o custo estimado</span></li>
+      </ul>
+      <p>Há ainda nome da pessoa, idade (festa infantil), cerimônia/estilo (casamento) e endereço.</p>
+    </div>
+  </section>
+
+  <section class="slide" id="fornecedor">
+    <div class="phone">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><div class="icon">F</div><div><b>Novo Fornecedor</b><span>Dados da empresa e contato.</span></div></div>
+        <div class="field error"><label>Nome do responsável *</label><div class="box empty"></div><div class="hint">Informe o nome do responsável</div></div>
+        <div class="field error"><label>Empresa *</label><div class="box empty"></div><div class="hint">Informe a razão social da empresa</div></div>
+        <div class="field error"><label>Telefone *</label><div class="box">(10) 99999-999</div><div class="hint">Informe um DDD válido</div></div>
+        <div class="field error"><label>E-mail *</label><div class="box">fornecedor.com</div><div class="hint">Digite um e-mail válido (ex: contato@email.com)</div></div>
+        <div class="field error"><label>UF *</label><div class="box">XX</div><div class="hint">Informe uma UF válida</div></div>
+        <button class="btn">Cadastrar</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 4 · Cadastro de fornecedor</div>
+      <h2>Nome, empresa, telefone, e-mail e UF</h2>
+      <p>Arquivo: <code>show_fornecedor_cadastro_bottom_sheet.dart</code> (o cadastro de conta de fornecedor em <code>register_fornecedor_form.dart</code> usa as mesmas regras, mais CNPJ e senha).</p>
+      <ul>
+        <li>Vazio → <span class="msg">Informe o nome do responsável</span> / <span class="msg">Informe a razão social da empresa</span></li>
+        <li>DDD 10 → <span class="msg">Informe um DDD válido</span></li>
+        <li>Sem @ → <span class="msg">Digite um e-mail válido (ex: contato@email.com)</span></li>
+        <li>UF XX → <span class="msg">Informe uma UF válida</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" id="presente">
+    <div class="phone">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><div class="icon">P</div><div><b>Novo presente</b><span>Sugestão para a lista de presentes.</span></div></div>
+        <div class="field error"><label>Nome do presente *</label><div class="box empty">Ex.: Fralda Pampers G</div><div class="hint">Informe o nome do presente</div></div>
+        <div class="field error"><label>Valor sugerido *</label><div class="box empty">Ex.: 50,00</div><div class="hint">Informe o valor</div></div>
+        <div class="field error"><label>Chave PIX *</label><div class="box empty">CPF, e-mail, telefone ou chave aleatória.</div><div class="hint">Informe a chave PIX</div></div>
+        <button class="btn">Adicionar</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 5 · Cadastro de presente</div>
+      <h2>Nome, valor e PIX (tipo PIX/coletivo)</h2>
+      <p>Arquivo: <code>cadastrar_presente_page.dart</code>. Presente físico exige o nome; PIX/coletivo também exige valor e chave.</p>
+      <ul>
+        <li><span class="msg">Informe o nome do presente</span></li>
+        <li><span class="msg">Informe o valor</span></li>
+        <li><span class="msg">Informe a chave PIX</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" id="orcamento">
+    <div class="phone">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><div class="icon">O</div><div><b>Novo orçamento</b><span>Valores e observações do serviço.</span></div></div>
+        <div class="field error"><label>Observações (opcional)</label><div class="box">ab</div><div class="hint">As observações deve ter pelo menos 3 caracteres</div></div>
+        <div class="field"><label>Valor estimado (opcional)</label><div class="box">R$ 0,00</div></div>
+        <button class="btn">Solicitar</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 6 · Cadastro de orçamento</div>
+      <h2>Campo opcional com mínimo quando preenchido</h2>
+      <p>Arquivo: <code>show_novo_orcamento_bottom_sheet.dart</code>. Observações e valor não são obrigatórios; se o usuário escrever, a descrição precisa de pelo menos 3 caracteres.</p>
+      <ul>
+        <li>Texto <code>ab</code> → <span class="msg">As observações deve ter pelo menos 3 caracteres</span></li>
+        <li>Valor vazio ou R$ 0,00 é aceito (usa o preço do serviço)</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" id="convidado">
+    <div class="phone">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><div class="icon">C</div><div><b>Novo convidado</b><span>Dados do convidado</span></div></div>
+        <div class="field error"><label>Nome *</label><div class="box empty"></div><div class="hint">Informe o nome do convidado</div></div>
+        <div class="field error"><label>Telefone</label><div class="box">(11) 98888</div><div class="hint">Informe um telefone válido com DDD (10 ou 11 dígitos)</div></div>
+        <div class="field error"><label>E-mail *</label><div class="box">convidado@</div><div class="hint">Digite um e-mail válido (ex: contato@email.com)</div></div>
+        <button class="btn">Cadastrar</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 7 · Cadastro de convidado</div>
+      <h2>Nome obrigatório; telefone e e-mail com formato</h2>
+      <p>Arquivo: <code>abrir_adicionar_convidado.dart</code>. E-mail vira obrigatório se “enviar convite por e-mail” estiver marcado.</p>
+      <ul>
+        <li><span class="msg">Informe o nome do convidado</span></li>
+        <li>Telefone incompleto → <span class="msg">Informe um telefone válido com DDD (10 ou 11 dígitos)</span></li>
+        <li><span class="msg">Digite um e-mail válido (ex: contato@email.com)</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" id="cardapio">
+    <div class="phone">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><div class="icon">M</div><div><b>Novo Cardápio</b><span>Crie uma nova categoria de itens</span></div></div>
+        <div class="field error"><label>Título *</label><div class="box empty">Ex.: Comidas, Bebidas...</div><div class="hint">Informe o título</div></div>
+        <button class="btn">Salvar</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 8 · Cadastro de cardápio</div>
+      <h2>Título obrigatório</h2>
+      <p>Arquivo: <code>cadastro_cardapio_bottom_sheet.dart</code> · <code>FormValidators.titulo</code> (mínimo 2 caracteres).</p>
+      <ul>
+        <li>Vazio → <span class="msg">Informe o título</span></li>
+        <li>1 caractere → “O título deve ter pelo menos 2 caracteres”</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" id="grupo">
+    <div class="phone">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><div class="icon">G</div><div><b>Novo grupo</b><span>Organize os convidados por mesa ou família.</span></div></div>
+        <div class="field error"><label>Nome do grupo *</label><div class="box empty"></div><div class="hint">Informe o nome do grupo</div></div>
+        <div class="field"><label>Número da mesa (opcional)</label><div class="box empty"></div></div>
+        <button class="btn">Salvar</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 9 · Cadastro de grupo</div>
+      <h2>Nome obrigatório; mesa opcional numérica</h2>
+      <p>Arquivo: <code>abrir_adicionar_grupo_bottom_sheet.dart</code>.</p>
+      <ul>
+        <li><span class="msg">Informe o nome do grupo</span></li>
+        <li>Mesa opcional: se preenchida, precisa ser número ≥ 0</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" id="tarefa">
+    <div class="phone">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><div class="icon">T</div><div><b>Nova Tarefa</b><span>Defina o que precisa ser feito.</span></div></div>
+        <div class="field error"><label>Título da Tarefa *</label><div class="box empty"></div><div class="hint">Informe o título da tarefa</div></div>
+        <div class="field"><label>Descrição da Tarefa</label><div class="box empty"></div></div>
+        <div class="field error"><label>Data Prevista *</label><div class="box empty">dd/MM/aaaa</div><div class="hint">Informe a data prevista</div></div>
+        <div class="field error"><label>Responsável pela Tarefa *</label><div class="hint">Selecione o responsável pela tarefa</div></div>
+        <button class="btn">Adicionar Tarefa</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 10 · Cadastro de tarefa</div>
+      <h2>Título, data e responsável</h2>
+      <p>Arquivo: <code>tarefa_dialog.dart</code>. O responsável não é um TextFormField: a mensagem aparece abaixo da lista se ninguém for escolhido.</p>
+      <ul>
+        <li><span class="msg">Informe o título da tarefa</span></li>
+        <li><span class="msg">Informe a data prevista</span></li>
+        <li><span class="msg">Selecione o responsável pela tarefa</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="slide" id="campos">
+    <div class="phone">
+      <div class="sheet">
+        <div class="handle"></div>
+        <div class="sheet-head"><div class="icon">V</div><div><b>Validação de campos</b><span>E-mail, senha, telefone, CPF, CNPJ e CEP</span></div></div>
+        <div class="field error"><label>E-mail *</label><div class="box">a b@email.com</div><div class="hint">O e-mail não pode conter espaços</div></div>
+        <div class="field error"><label>Senha *</label><div class="box">12345</div><div class="hint">A senha deve ter pelo menos 6 caracteres</div></div>
+        <div class="field error"><label>Telefone *</label><div class="box">(11) 88888-7777</div><div class="hint">Celular deve começar com 9 após o DDD</div></div>
+        <div class="field error"><label>CPF *</label><div class="box">111.111.111-11</div><div class="hint">CPF inválido. Verifique e tente novamente.</div></div>
+        <div class="field error"><label>CNPJ *</label><div class="box">00.000.000/0000-00</div><div class="hint">CNPJ inválido. Verifique e tente novamente.</div></div>
+        <div class="field error"><label>CEP *</label><div class="box">00000-000</div><div class="hint">Informe um CEP válido</div></div>
+        <button class="btn">Validar</button>
+      </div>
+    </div>
+    <div class="copy">
+      <div class="tag">Tela 11 · Validação de campos</div>
+      <h2>Regras reutilizadas em todo o app</h2>
+      <p>O mesmo <code>FormValidators</code> cobre e-mail, senha, telefone (DDD e 9 no celular), CPF/CNPJ (dígitos verificadores) e CEP.</p>
+      <table>
+        <tr><th>Campo</th><th>Entrada</th><th>Mensagem</th></tr>
+        <tr><td>E-mail</td><td>a b@email.com</td><td class="msg">O e-mail não pode conter espaços</td></tr>
+        <tr><td>Senha (cadastro)</td><td>12345</td><td class="msg">A senha deve ter pelo menos 6 caracteres</td></tr>
+        <tr><td>Senha (cadastro)</td><td>abcdef</td><td class="msg">A senha deve conter pelo menos um número</td></tr>
+        <tr><td>Telefone 11 dígitos</td><td>11888887777</td><td class="msg">Celular deve começar com 9 após o DDD</td></tr>
+        <tr><td>CPF</td><td>111.111.111-11</td><td class="msg">CPF inválido. Verifique e tente novamente.</td></tr>
+        <tr><td>CNPJ</td><td>00.000.000/0000-00</td><td class="msg">CNPJ inválido. Verifique e tente novamente.</td></tr>
+        <tr><td>CEP</td><td>00000-000</td><td class="msg">Informe um CEP válido</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    Fonte das mensagens: <code>lib/core/utils/form_validators.dart</code>.
+    Telas: login, forgot password, cadastro de evento, fornecedor, presente, orçamento, convidado, cardápio, grupo e tarefa.
+    Padrão do app: erro no campo, asterisco no obrigatório, snackbar só para API/rede.
+  </footer>
+</body>
+</html>
