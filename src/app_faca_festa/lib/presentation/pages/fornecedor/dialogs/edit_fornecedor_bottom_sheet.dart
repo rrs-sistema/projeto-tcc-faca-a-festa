@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 import 'dart:io' show File;
 import 'dart:typed_data';
 
-import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import '../../../../core/utils/form_validators.dart';
 import './../../../widgets/custom_input_field.dart';
 import './../../../../data/models/model.dart';
@@ -20,7 +20,8 @@ class EditFornecedorBottomSheet extends StatefulWidget {
   const EditFornecedorBottomSheet({super.key, required this.fornecedor});
 
   @override
-  State<EditFornecedorBottomSheet> createState() => _EditFornecedorBottomSheetState();
+  State<EditFornecedorBottomSheet> createState() =>
+      _EditFornecedorBottomSheetState();
 }
 
 class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
@@ -40,7 +41,8 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
     _razaoCtrl = TextEditingController(text: widget.fornecedor.razaoSocial);
     _telefoneCtrl = TextEditingController(text: widget.fornecedor.telefone);
     _emailCtrl = TextEditingController(text: widget.fornecedor.email);
-    _descricaoCtrl = TextEditingController(text: widget.fornecedor.descricao ?? '');
+    _descricaoCtrl =
+        TextEditingController(text: widget.fornecedor.descricao ?? '');
   }
 
   @override
@@ -130,93 +132,93 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
         key: _formKey,
         autovalidateMode: _autovalidateMode,
         child: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // ===== CABEÇALHO =====
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.store_rounded, color: primary, size: 28),
-                    const SizedBox(width: 8),
-                    Text(
-                      "Editar Fornecedor",
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade800,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ===== CABEÇALHO =====
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.store_rounded, color: primary, size: 28),
+                      const SizedBox(width: 8),
+                      Text(
+                        "Editar Fornecedor",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade800,
+                        ),
                       ),
+                    ],
+                  ),
+                  Positioned(
+                    right: 0,
+                    child: IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      color: Colors.grey.shade600,
+                      tooltip: 'Fechar',
+                      onPressed: () => Navigator.pop(context),
                     ),
-                  ],
-                ),
-                Positioned(
-                  right: 0,
-                  child: IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    color: Colors.grey.shade600,
-                    tooltip: 'Fechar',
-                    onPressed: () => Navigator.pop(context),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-
-            // ===== BANNER =====
-            GestureDetector(
-              onTap: _selecionarImagem,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: _buildBannerWidget(primary),
+                ],
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-            // ===== CAMPOS =====
-            _campo("Razão Social", _razaoCtrl, Icons.business_rounded,
-                isRequired: true, validator: FormValidators.razaoSocial),
-            _campo("Telefone", _telefoneCtrl, Icons.phone_rounded,
-                type: InputType.phone, isRequired: true),
-            _campo("E-mail", _emailCtrl, Icons.email_rounded,
-                type: InputType.email, isRequired: true),
-            _campo(
-              "Descrição (opcional)",
-              _descricaoCtrl,
-              Icons.edit_note_rounded,
-              maxLines: 6,
-              validator: FormValidators.descricaoServicos,
-            ),
-            const SizedBox(height: 16),
-
-            // ===== BOTÃO SALVAR =====
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _salvar,
-                icon: const Icon(Icons.save_rounded, color: Colors.white),
-                label: Text(
-                  "Salvar alterações",
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
+              // ===== BANNER =====
+              GestureDetector(
+                onTap: _selecionarImagem,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: _buildBannerWidget(primary),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+              ),
+              const SizedBox(height: 20),
+
+              // ===== CAMPOS =====
+              _campo("Razão Social", _razaoCtrl, Icons.business_rounded,
+                  isRequired: true, validator: FormValidators.razaoSocial),
+              _campo("Telefone", _telefoneCtrl, Icons.phone_rounded,
+                  type: InputType.phone, isRequired: true),
+              _campo("E-mail", _emailCtrl, Icons.email_rounded,
+                  type: InputType.email, isRequired: true),
+              _campo(
+                "Descrição (opcional)",
+                _descricaoCtrl,
+                Icons.edit_note_rounded,
+                maxLines: 6,
+                validator: FormValidators.descricaoServicos,
+              ),
+              const SizedBox(height: 16),
+
+              // ===== BOTÃO SALVAR =====
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _salvar,
+                  icon: const Icon(Icons.save_rounded, color: Colors.white),
+                  label: Text(
+                    "Salvar alterações",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: primary,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-          ],
+              const SizedBox(height: 16),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -241,7 +243,8 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
       );
     }
 
-    if (widget.fornecedor.bannerUrl != null && widget.fornecedor.bannerUrl!.isNotEmpty) {
+    if (widget.fornecedor.bannerUrl != null &&
+        widget.fornecedor.bannerUrl!.isNotEmpty) {
       return CachedNetworkImage(
         imageUrl: widget.fornecedor.bannerUrl!,
         height: 150,
@@ -251,7 +254,8 @@ class _EditFornecedorBottomSheetState extends State<EditFornecedorBottomSheet> {
         errorWidget: (_, __, ___) => Container(
           height: 150,
           color: Colors.grey.shade300,
-          child: const Icon(Icons.image_not_supported, color: Colors.grey, size: 48),
+          child: const Icon(Icons.image_not_supported,
+              color: Colors.grey, size: 48),
         ),
       );
     }

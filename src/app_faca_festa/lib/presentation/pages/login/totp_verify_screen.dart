@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/totp_mfa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/controllers/totp_mfa_controller.dart';
 import '../../../core/utils/form_validators.dart';
 import '../../widgets/custom_input_field.dart';
 
@@ -25,7 +25,7 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(TotpMfaController());
+    controller = Get.find<TotpMfaController>();
     codigoCtrl = TextEditingController();
   }
 
@@ -93,113 +93,114 @@ class _TotpVerifyScreenState extends State<TotpVerifyScreen> {
                     ],
                   ),
                   child: Obx(() {
-                    final porEmail =
-                        controller.metodoLogin.value == TotpMfaController.etapaEmail;
+                    final porEmail = controller.metodoLogin.value ==
+                        TotpMfaController.etapaEmail;
                     final destino = controller.emailMascarado.value;
                     return Form(
                       key: _formKey,
                       autovalidateMode: _autovalidateMode,
                       child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          porEmail
-                              ? Icons.mark_email_read_outlined
-                              : Icons.security_rounded,
-                          size: 48,
-                          color: primary,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Verificação em duas etapas',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.fredoka(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            porEmail
+                                ? Icons.mark_email_read_outlined
+                                : Icons.security_rounded,
+                            size: 48,
                             color: primary,
-                            fontSize: 26,
-                            fontWeight: FontWeight.w600,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          porEmail
-                              ? (destino.isEmpty
-                                  ? 'Informe o código de 6 dígitos enviado para o e-mail da sua conta.'
-                                  : 'Informe o código enviado para $destino.')
-                              : 'Abra o app autenticador e informe o código de 6 dígitos para entrar.',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            color: Colors.grey.shade700,
-                            fontSize: 13.5,
-                            height: 1.35,
-                          ),
-                        ),
-                        const SizedBox(height: 22),
-                        CustomInputField(
-                          label: porEmail
-                              ? 'Código do e-mail'
-                              : 'Código do autenticador',
-                          hintlabel: '000000',
-                          icon: Icons.shield_outlined,
-                          controller: codigoCtrl,
-                          color: primary,
-                          titleColor: primary,
-                          type: InputType.number,
-                          isRequired: true,
-                          maxLength: 6,
-                          keyboardType: TextInputType.number,
-                          validator: FormValidators.codigoVerificacao,
-                          onChanged: (value) => controller.codigo.value = value,
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton.icon(
-                            onPressed: controller.carregando.value
-                                ? null
-                                : _confirmar,
-                            icon: const Icon(Icons.login_rounded,
-                                color: Colors.white),
-                            label: Text(
-                              'Confirmar e entrar',
-                              style: GoogleFonts.poppins(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Verificação em duas etapas',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.fredoka(
+                              color: primary,
+                              fontSize: 26,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                        if (porEmail)
+                          const SizedBox(height: 8),
+                          Text(
+                            porEmail
+                                ? (destino.isEmpty
+                                    ? 'Informe o código de 6 dígitos enviado para o e-mail da sua conta.'
+                                    : 'Informe o código enviado para $destino.')
+                                : 'Abra o app autenticador e informe o código de 6 dígitos para entrar.',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              color: Colors.grey.shade700,
+                              fontSize: 13.5,
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 22),
+                          CustomInputField(
+                            label: porEmail
+                                ? 'Código do e-mail'
+                                : 'Código do autenticador',
+                            hintlabel: '000000',
+                            icon: Icons.shield_outlined,
+                            controller: codigoCtrl,
+                            color: primary,
+                            titleColor: primary,
+                            type: InputType.number,
+                            isRequired: true,
+                            maxLength: 6,
+                            keyboardType: TextInputType.number,
+                            validator: FormValidators.codigoVerificacao,
+                            onChanged: (value) =>
+                                controller.codigo.value = value,
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: ElevatedButton.icon(
+                              onPressed: controller.carregando.value
+                                  ? null
+                                  : _confirmar,
+                              icon: const Icon(Icons.login_rounded,
+                                  color: Colors.white),
+                              label: Text(
+                                'Confirmar e entrar',
+                                style: GoogleFonts.poppins(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
+                          ),
+                          if (porEmail)
+                            TextButton(
+                              onPressed: controller.enviandoEmail.value
+                                  ? null
+                                  : controller.solicitarCodigoEmail,
+                              child: Text(
+                                'Reenviar código',
+                                style: GoogleFonts.poppins(
+                                  color: primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
                           TextButton(
-                            onPressed: controller.enviandoEmail.value
-                                ? null
-                                : controller.solicitarCodigoEmail,
+                            onPressed: controller.sair,
                             child: Text(
-                              'Reenviar código',
+                              'Sair',
                               style: GoogleFonts.poppins(
-                                color: primary,
+                                color: Colors.grey.shade700,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                           ),
-                        TextButton(
-                          onPressed: controller.sair,
-                          child: Text(
-                            'Sair',
-                            style: GoogleFonts.poppins(
-                              color: Colors.grey.shade700,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
                     );
                   }),
                 ),

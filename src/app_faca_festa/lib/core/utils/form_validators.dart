@@ -63,10 +63,8 @@ class FormValidators {
       return obrigatorio ? 'Informe $campo' : null;
     }
 
-    final partes = texto
-        .split(RegExp(r'\s+'))
-        .where((parte) => parte.isNotEmpty)
-        .toList();
+    final partes =
+        texto.split(RegExp(r'\s+')).where((parte) => parte.isNotEmpty).toList();
 
     if (partes.length < 2) {
       return 'Informe nome e sobrenome';

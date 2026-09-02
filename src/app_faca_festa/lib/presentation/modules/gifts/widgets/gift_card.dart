@@ -27,7 +27,8 @@ class GiftCard extends StatelessWidget {
     // Textos dinâmicos baseados no tipo do presente
     String labelBotao = "Reservar";
     if (!isDisponivel) {
-      labelBotao = gift.status == GiftStatus.reservado ? "Reservado" : "Finalizado";
+      labelBotao =
+          gift.status == GiftStatus.reservado ? "Reservado" : "Finalizado";
     } else if (isColetivo) {
       labelBotao = "Contribuir";
     } else if (isPix) {
@@ -58,21 +59,25 @@ class GiftCard extends StatelessWidget {
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.grey.shade50,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
               ),
               child: Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-                    child: (gift.imagem != null && gift.imagem!.trim().isNotEmpty)
-                        ? CachedNetworkImage(
-                            imageUrl: gift.imagem!,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            height: double.infinity,
-                            errorWidget: (_, __, ___) => _buildPlaceholder(primary),
-                          )
-                        : _buildPlaceholder(primary),
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(16)),
+                    child:
+                        (gift.imagem != null && gift.imagem!.trim().isNotEmpty)
+                            ? CachedNetworkImage(
+                                imageUrl: gift.imagem!,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                height: double.infinity,
+                                errorWidget: (_, __, ___) =>
+                                    _buildPlaceholder(primary),
+                              )
+                            : _buildPlaceholder(primary),
                   ),
 
                   // Película escura se não estiver disponível
@@ -81,7 +86,8 @@ class GiftCard extends StatelessWidget {
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.6),
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(16)),
                         ),
                       ),
                     ),
@@ -92,18 +98,25 @@ class GiftCard extends StatelessWidget {
                       top: 8,
                       right: 8,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: Colors.orange.shade700,
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
-                            BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 4)
+                            BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 4)
                           ],
                         ),
                         child: Text(
-                          gift.status == GiftStatus.reservado ? 'Reservado' : 'Arrecadado',
+                          gift.status == GiftStatus.reservado
+                              ? 'Reservado'
+                              : 'Arrecadado',
                           style: GoogleFonts.poppins(
-                              color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700),
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700),
                         ),
                       ),
                     ),
@@ -113,7 +126,8 @@ class GiftCard extends StatelessWidget {
                     bottom: 8,
                     left: 8,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 3),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(6),
@@ -124,7 +138,9 @@ class GiftCard extends StatelessWidget {
                           Icon(
                             isColetivo
                                 ? Icons.groups_rounded
-                                : (isPix ? Icons.pix_rounded : Icons.inventory_2_rounded),
+                                : (isPix
+                                    ? Icons.pix_rounded
+                                    : Icons.inventory_2_rounded),
                             color: Colors.white,
                             size: 10,
                           ),
@@ -132,7 +148,9 @@ class GiftCard extends StatelessWidget {
                           Text(
                             gift.tipo.name.toUpperCase(),
                             style: GoogleFonts.poppins(
-                                color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600),
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600),
                           ),
                         ],
                       ),
@@ -177,7 +195,9 @@ class GiftCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.poppins(
-                          fontSize: 10, color: Colors.grey.shade500, fontWeight: FontWeight.w500),
+                          fontSize: 10,
+                          color: Colors.grey.shade500,
+                          fontWeight: FontWeight.w500),
                     ),
                   _buildPrecoFixo(primary),
                 ] else ...[
@@ -197,14 +217,18 @@ class GiftCard extends StatelessWidget {
                     onPressed: isDisponivel ? onAcao : null,
                     style: ElevatedButton.styleFrom(
                       elevation: 0,
-                      backgroundColor: isDisponivel ? primary : Colors.grey.shade200,
-                      foregroundColor: isDisponivel ? Colors.white : Colors.grey.shade500,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      backgroundColor:
+                          isDisponivel ? primary : Colors.grey.shade200,
+                      foregroundColor:
+                          isDisponivel ? Colors.white : Colors.grey.shade500,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                       padding: EdgeInsets.zero,
                     ),
                     child: Text(
                       labelBotao,
-                      style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w700),
+                      style: GoogleFonts.poppins(
+                          fontSize: 11.5, fontWeight: FontWeight.w700),
                     ),
                   ),
                 ),
@@ -219,7 +243,8 @@ class GiftCard extends StatelessWidget {
   // Helper: Widget quando não tem imagem
   Widget _buildPlaceholder(Color primary) {
     return Center(
-      child: Icon(Icons.redeem_rounded, color: primary.withValues(alpha: 0.3), size: 40),
+      child: Icon(Icons.redeem_rounded,
+          color: primary.withValues(alpha: 0.3), size: 40),
     );
   }
 
@@ -228,19 +253,23 @@ class GiftCard extends StatelessWidget {
     if (gift.valor != null && gift.valor! > 0) {
       return Text(
         "R\$ ${gift.valor!.toStringAsFixed(2).replaceAll('.', ',')}",
-        style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w800, color: primary),
+        style: GoogleFonts.poppins(
+            fontSize: 13, fontWeight: FontWeight.w800, color: primary),
       );
     }
     return Text(
       "Valor livre",
       style: GoogleFonts.poppins(
-          fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green.shade600),
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: Colors.green.shade600),
     );
   }
 
   // Helper: Progresso (Coletivo)
   Widget _buildProgressoVaquinha(Color primary) {
-    final meta = (gift.metaValor != null && gift.metaValor! > 0) ? gift.metaValor! : 1.0;
+    final meta =
+        (gift.metaValor != null && gift.metaValor! > 0) ? gift.metaValor! : 1.0;
     final arrecadado = gift.valorArrecadado;
     final percent = (arrecadado / meta).clamp(0.0, 1.0);
 
@@ -252,12 +281,15 @@ class GiftCard extends StatelessWidget {
           children: [
             Text(
               "R\$ ${arrecadado.toStringAsFixed(0)}",
-              style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w700, color: primary),
+              style: GoogleFonts.poppins(
+                  fontSize: 11, fontWeight: FontWeight.w700, color: primary),
             ),
             Text(
               "Meta: R\$ ${gift.metaValor?.toStringAsFixed(0) ?? '0'}",
               style: GoogleFonts.poppins(
-                  fontSize: 9, fontWeight: FontWeight.w600, color: Colors.grey.shade500),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey.shade500),
             ),
           ],
         ),

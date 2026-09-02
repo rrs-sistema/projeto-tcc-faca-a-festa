@@ -1,10 +1,13 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/auditoria/auditoria_controller.dart';
 import '../../data/datasources/remote/auditoria_remote_datasource.dart';
 import '../../data/repositories_impl/auditoria_repository_impl.dart';
+import '../../data/services/functions/callable_https_client.dart';
 import '../../domain/repositories/auditoria_repository.dart';
 import '../../domain/usecases/gerenciar_auditoria.dart';
+import '../../presentation/modules/auditoria/controllers/auditoria_controller.dart';
 
 class AuditoriaBootstrap {
   AuditoriaBootstrap._();
@@ -12,7 +15,11 @@ class AuditoriaBootstrap {
   static void register() {
     if (!Get.isRegistered<AuditoriaRemoteDatasource>()) {
       Get.lazyPut<AuditoriaRemoteDatasource>(
-        () => AuditoriaRemoteDatasource(),
+        () => AuditoriaRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+          functions: Get.find<FirebaseFunctions>(),
+          httpsClient: Get.find<CallableHttpsClient>(),
+        ),
         fenix: true,
       );
     }

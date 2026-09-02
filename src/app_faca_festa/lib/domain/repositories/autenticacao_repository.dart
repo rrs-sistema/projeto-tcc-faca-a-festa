@@ -1,7 +1,8 @@
 class AutenticacaoException implements Exception {
-  const AutenticacaoException(this.codigo);
+  const AutenticacaoException(this.codigo, [this.mensagem]);
 
   final String codigo;
+  final String? mensagem;
 
   bool get foiCancelada => autenticacaoFoiCancelada(codigo);
 }
@@ -60,6 +61,28 @@ abstract interface class AutenticacaoRepository {
     required String email,
     required String senha,
   });
+
+  Future<void> solicitarCodigoRedefinicaoSenha({
+    required String email,
+  });
+
+  Future<void> redefinirSenhaComCodigo({
+    required String email,
+    required String codigo,
+    required String novaSenha,
+  });
+
+  Future<Map<String, dynamic>> iniciarTotpMfa();
+
+  Future<Map<String, dynamic>> solicitarCodigoEmailMfa();
+
+  Future<void> confirmarTotpMfa(String codigo);
+
+  Future<void> confirmarEmailMfa(String codigo);
+
+  Future<void> verificarTotpMfa(String codigo);
+
+  Future<void> verificarEmailMfa(String codigo);
 
   Future<void> sair();
 }

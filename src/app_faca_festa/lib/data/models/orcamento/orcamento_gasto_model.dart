@@ -59,5 +59,6 @@ class OrcamentoGastoModel {
 
   // 🔹 Cálculos auxiliares
   double get restante => (custo - pago).clamp(0, custo);
-  double get percentualPago => (custo > 0) ? (pago / custo).clamp(0.0, 1.0) : 0.0;
+  double get percentualPago =>
+      (custo > 0) ? (pago / custo).clamp(0.0, 1.0) : 0.0;
 }

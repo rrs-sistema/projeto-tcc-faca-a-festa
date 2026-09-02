@@ -26,6 +26,12 @@ abstract interface class PerfilUsuarioRemoteDatasource {
 
   Future<void> salvarUsuario(UsuarioModel usuario);
 
+  Future<void> salvarUsuarioCadastro(
+    UsuarioModel usuario, {
+    required String emailNormalizado,
+    String? provider,
+  });
+
   Future<void> criarUsuarioAutomatico({
     required String idUsuario,
     required String? email,
@@ -124,6 +130,20 @@ class FirebasePerfilUsuarioRemoteDatasource
       .collection('usuarios')
       .doc(usuario.idUsuario)
       .set(usuario.toMap());
+
+  @override
+  Future<void> salvarUsuarioCadastro(
+    UsuarioModel usuario, {
+    required String emailNormalizado,
+    String? provider,
+  }) {
+    final data = usuario.toMap();
+    data['email_normalizado'] = emailNormalizado;
+    data['tipo'] = usuario.tipo;
+    if (provider != null) data['provider'] = provider;
+
+    return firestore.collection('usuarios').doc(usuario.idUsuario).set(data);
+  }
 
   @override
   Future<void> criarUsuarioAutomatico({

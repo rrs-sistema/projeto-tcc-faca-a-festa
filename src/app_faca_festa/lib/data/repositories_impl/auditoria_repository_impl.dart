@@ -13,7 +13,17 @@ class AuditoriaRepositoryImpl implements AuditoriaRepository {
   }
 
   @override
+  Future<void> registrarFalhaLogin(RegistroFalhaLogin registro) {
+    return remote.registrarFalhaLogin(registro);
+  }
+
+  @override
   Future<List<AuditoriaEvento>> listar(AuditoriaConsulta consulta) {
     return remote.listar(consulta);
+  }
+
+  @override
+  Future<AuditoriaPagina> listarPagina(AuditoriaConsulta consulta) {
+    return remote.listarPagina(consulta);
   }
 }

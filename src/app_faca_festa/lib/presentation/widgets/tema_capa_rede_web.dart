@@ -14,7 +14,8 @@ Widget capaRede({
   required Widget fallback,
   Alignment alignment = Alignment.center,
 }) {
-  final viewType = 'faca-festa-capa-${url.hashCode}-${alignment.x}-${alignment.y}';
+  final viewType =
+      'faca-festa-capa-${url.hashCode}-${alignment.x}-${alignment.y}';
   if (_viewsRegistradas.add(viewType)) {
     ui_web.platformViewRegistry.registerViewFactory(viewType, (int viewId) {
       final img = html.ImageElement()

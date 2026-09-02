@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:get/get.dart';
 
-import '../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 Widget buildHeaderFornecedor() {
   final theme = Get.find<EventThemeController>();
@@ -123,7 +123,10 @@ Widget buildHeaderFornecedor() {
                   ),
                 ],
               ),
-            ).animate().fadeIn(duration: 1000.ms).scale(begin: Offset(0.6, 0.0)),
+            )
+                .animate()
+                .fadeIn(duration: 1000.ms)
+                .scale(begin: Offset(0.6, 0.0)),
           ],
         ),
       ],

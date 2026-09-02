@@ -1,10 +1,9 @@
 import 'dart:async';
 
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/contacao/solicitacoes_controller.dart';
-import 'package:app_faca_festa/data/datasources/remote/solicitacoes_remote_datasource.dart';
 import 'package:app_faca_festa/data/models/cotacao/cotacao_model.dart';
 import 'package:app_faca_festa/domain/repositories/solicitacoes_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_solicitacoes.dart';

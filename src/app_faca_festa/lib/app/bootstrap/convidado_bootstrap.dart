@@ -1,10 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/convidado/convidado_controller.dart';
-import '../../controllers/convidado/cardapio_controller.dart';
-import '../../controllers/convidado/grupo_convidado_controller.dart';
-import '../../controllers/tarefa_controller.dart';
 import '../../data/datasources/remote/convidado_remote_datasource.dart';
 import '../../data/datasources/remote/convite_convidado_remote_datasource.dart';
 import '../../data/datasources/remote/cardapio_remote_datasource.dart';
@@ -23,12 +20,16 @@ import '../../domain/repositories/cardapio_repository.dart';
 import '../../domain/repositories/grupo_convidado_repository.dart';
 import '../../domain/repositories/tarefa_repository.dart';
 import '../../domain/repositories/presente_reservation_repository.dart';
+import '../../presentation/modules/convidado/controllers/cardapio_controller.dart';
+import '../../presentation/modules/convidado/controllers/convidado_controller.dart';
+import '../../presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import '../../presentation/modules/convidado/controllers/tarefa_controller.dart';
 
 abstract final class ConvidadoBootstrap {
   static void register() {
     if (!Get.isRegistered<CardapioRemoteDatasource>()) {
       Get.put<CardapioRemoteDatasource>(
-        CardapioRemoteDatasource(FirebaseFirestore.instance),
+        CardapioRemoteDatasource(Get.find<FirebaseFirestore>()),
         permanent: true,
       );
     }
@@ -49,7 +50,7 @@ abstract final class ConvidadoBootstrap {
 
     if (!Get.isRegistered<ConvidadoRemoteDatasource>()) {
       Get.put<ConvidadoRemoteDatasource>(
-        ConvidadoRemoteDatasource(FirebaseFirestore.instance),
+        ConvidadoRemoteDatasource(Get.find<FirebaseFirestore>()),
         permanent: true,
       );
     }
@@ -63,7 +64,7 @@ abstract final class ConvidadoBootstrap {
 
     if (!Get.isRegistered<ConviteConvidadoRemoteDatasource>()) {
       Get.put<ConviteConvidadoRemoteDatasource>(
-        FirebaseConviteConvidadoRemoteDatasource(FirebaseFirestore.instance),
+        FirebaseConviteConvidadoRemoteDatasource(Get.find<FirebaseFirestore>()),
         permanent: true,
       );
     }
@@ -79,7 +80,7 @@ abstract final class ConvidadoBootstrap {
 
     if (!Get.isRegistered<TarefaRemoteDatasource>()) {
       Get.put<TarefaRemoteDatasource>(
-        TarefaRemoteDatasource(FirebaseFirestore.instance),
+        TarefaRemoteDatasource(Get.find<FirebaseFirestore>()),
         permanent: true,
       );
     }
@@ -103,7 +104,7 @@ abstract final class ConvidadoBootstrap {
 
     if (!Get.isRegistered<GrupoConvidadoRemoteDatasource>()) {
       Get.put<GrupoConvidadoRemoteDatasource>(
-        GrupoConvidadoRemoteDatasource(FirebaseFirestore.instance),
+        GrupoConvidadoRemoteDatasource(Get.find<FirebaseFirestore>()),
         permanent: true,
       );
     }
@@ -128,14 +129,16 @@ abstract final class ConvidadoBootstrap {
 
     if (!Get.isRegistered<PresenteReservationRepository>()) {
       Get.put<PresenteReservationRepository>(
-        PresenteReservationRepositoryImpl(FirebaseFirestore.instance),
+        PresenteReservationRepositoryImpl(Get.find<FirebaseFirestore>()),
         permanent: true,
       );
     }
 
     if (!Get.isRegistered<EnviarConvitesPorEmailService>()) {
       Get.put<EnviarConvitesPorEmailService>(
-        EnviarConvitesPorEmailService(),
+        EnviarConvitesPorEmailService(
+          functions: Get.find<FirebaseFunctions>(),
+        ),
         permanent: true,
       );
     }
@@ -146,6 +149,7 @@ abstract final class ConvidadoBootstrap {
           repository: Get.find<ConvidadoRepository>(),
           presenteReservationRepository:
               Get.find<PresenteReservationRepository>(),
+          conviteEmailService: Get.find<EnviarConvitesPorEmailService>(),
         ),
         permanent: true,
       );

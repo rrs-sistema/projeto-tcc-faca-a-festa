@@ -39,10 +39,8 @@ class ConvidadoRemoteDatasource {
     }
 
     for (final campo in const ['convite_token', 'token_convite', 'token']) {
-      final snapshot = await _convidados
-          .where(campo, isEqualTo: tokenLimpo)
-          .limit(1)
-          .get();
+      final snapshot =
+          await _convidados.where(campo, isEqualTo: tokenLimpo).limit(1).get();
       if (snapshot.docs.isNotEmpty) {
         return ConvidadoModel.fromMap(snapshot.docs.first.data());
       }
@@ -51,10 +49,7 @@ class ConvidadoRemoteDatasource {
   }
 
   Stream<List<ConvidadoModel>> observarPorEvento(String idEvento) {
-    return _convidados
-        .where('id_evento', isEqualTo: idEvento)
-        .snapshots()
-        .map(
+    return _convidados.where('id_evento', isEqualTo: idEvento).snapshots().map(
           (snapshot) => snapshot.docs
               .map((document) => ConvidadoModel.fromMap(document.data()))
               .toList(),

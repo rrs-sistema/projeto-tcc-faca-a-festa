@@ -66,6 +66,19 @@ class PerfilUsuarioRepositoryImpl implements PerfilUsuarioRepository {
       remote.salvarUsuario(UsuarioModel.fromEntity(usuario));
 
   @override
+  Future<void> salvarUsuarioCadastro(
+    Usuario usuario, {
+    required String emailNormalizado,
+    String? provider,
+  }) {
+    return remote.salvarUsuarioCadastro(
+      UsuarioModel.fromEntity(usuario),
+      emailNormalizado: emailNormalizado,
+      provider: provider,
+    );
+  }
+
+  @override
   Future<void> criarUsuarioAutomatico({
     required String idUsuario,
     required String? email,

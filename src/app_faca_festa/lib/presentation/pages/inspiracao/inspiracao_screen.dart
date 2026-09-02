@@ -5,9 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/inspiracao/inspiracao_controller.dart';
-import '../../../controllers/home_event_nav_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/home_event_nav_controller.dart';
 import './../../../domain/entities/tipo_evento.dart';
 import './../../widgets/confetti_background.dart';
 import './../../../data/models/model.dart' hide TipoEvento;
@@ -33,9 +33,7 @@ class InspiracaoScreen extends StatefulWidget {
 }
 
 class _InspiracaoScreenState extends State<InspiracaoScreen> {
-  final controller = Get.isRegistered<InspiracaoController>()
-      ? Get.find<InspiracaoController>()
-      : Get.put(InspiracaoController());
+  final controller = Get.find<InspiracaoController>();
   final themeController = Get.find<EventThemeController>();
 
   @override
@@ -66,7 +64,8 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverAppBar(
-              expandedHeight: 170, // 🔹 Altura reduzida e mais compacta[cite: 30]
+              expandedHeight:
+                  170, // 🔹 Altura reduzida e mais compacta[cite: 30]
               floating: true,
               pinned: true,
               backgroundColor: themeController.primaryColor.value,
@@ -76,7 +75,8 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
               systemOverlayStyle: SystemUiOverlayStyle.light,
               flexibleSpace: LayoutBuilder(
                 builder: (context, constraints) {
-                  final percent = (constraints.maxHeight - kToolbarHeight) / (170 - kToolbarHeight);
+                  final percent = (constraints.maxHeight - kToolbarHeight) /
+                      (170 - kToolbarHeight);
                   final progress = percent.clamp(0.0, 1.0);
 
                   return FlexibleSpaceBar(
@@ -96,7 +96,8 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                     background: Stack(
                       fit: StackFit.expand,
                       children: [
-                        Container(decoration: BoxDecoration(gradient: gradient)),
+                        Container(
+                            decoration: BoxDecoration(gradient: gradient)),
                         Stack(
                           fit: StackFit.expand,
                           children: [
@@ -167,7 +168,8 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
 
             // === Grid de Inspirações ===
             SliverToBoxAdapter(
-              child: _tituloSessao('Ideias e Tendências', Icons.auto_awesome_rounded, primary),
+              child: _tituloSessao(
+                  'Ideias e Tendências', Icons.auto_awesome_rounded, primary),
             ),
             SliverToBoxAdapter(
               child: _gridInspiracoes(inspiracoes, primary),
@@ -251,12 +253,16 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
           onTap: () {
             final eventoId = widget.eventoId ?? controller.eventoIdAtual;
             final userId = widget.userId ?? controller.userIdAtual;
-            if (eventoId == null || eventoId.isEmpty || userId == null || userId.isEmpty) {
+            if (eventoId == null ||
+                eventoId.isEmpty ||
+                userId == null ||
+                userId.isEmpty) {
               Get.snackbar('Evento não identificado', 'Abra um evento antes.',
                   snackPosition: SnackPosition.BOTTOM);
               return;
             }
-            Get.to(() => MinhasReferenciasEventoScreen(eventoId: eventoId, userId: userId));
+            Get.to(() => MinhasReferenciasEventoScreen(
+                eventoId: eventoId, userId: userId));
           },
           borderRadius: BorderRadius.circular(16),
           child: Container(
@@ -280,7 +286,8 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                   decoration: BoxDecoration(
                       color: primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12)),
-                  child: Icon(Icons.collections_bookmark_rounded, color: primary, size: 20),
+                  child: Icon(Icons.collections_bookmark_rounded,
+                      color: primary, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -293,7 +300,8 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                               fontSize: 13,
                               color: const Color(0xFF172033))),
                       Text(total == 0 ? 'Nenhuma salva' : '$total salva(s)',
-                          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600)),
+                          style: GoogleFonts.poppins(
+                              fontSize: 11, color: Colors.grey.shade600)),
                     ],
                   ),
                 ),
@@ -324,12 +332,14 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
               url.isEmpty
                   ? Container(
                       color: Colors.grey.shade200,
-                      child: const Icon(Icons.image_not_supported, color: Colors.grey))
+                      child: const Icon(Icons.image_not_supported,
+                          color: Colors.grey))
                   : Image.network(url,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
                           color: Colors.grey.shade200,
-                          child: const Icon(Icons.broken_image, color: Colors.grey))),
+                          child: const Icon(Icons.broken_image,
+                              color: Colors.grey))),
               Container(
                   decoration: const BoxDecoration(
                       gradient: LinearGradient(
@@ -344,7 +354,9 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
-                        color: Colors.white, fontSize: 13, fontWeight: FontWeight.w700)),
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700)),
               ),
             ],
           ),
@@ -367,7 +379,9 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
             const SizedBox(width: 8),
             Text(titulo,
                 style: GoogleFonts.poppins(
-                    fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
+                    fontSize: 16,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1F2937))),
           ],
         ),
       );
@@ -389,11 +403,14 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
             Text('Nenhuma inspiração encontrada',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w800, color: const Color(0xFF172033), fontSize: 14)),
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF172033),
+                    fontSize: 14)),
             const SizedBox(height: 4),
             Text('Mude a categoria ou adicione novas imagens.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600)),
+                style: GoogleFonts.poppins(
+                    fontSize: 11, color: Colors.grey.shade600)),
           ],
         ),
       ),
@@ -417,7 +434,8 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
           final url = insp.imagemUrl;
 
           return GestureDetector(
-            onTap: () => Get.to(() => InspiracaoDetalheScreen(inspiracao: insp)),
+            onTap: () =>
+                Get.to(() => InspiracaoDetalheScreen(inspiracao: insp)),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Stack(
@@ -426,18 +444,23 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                       ? Container(
                           height: 160,
                           color: Colors.grey.shade200,
-                          child: const Center(child: Icon(Icons.image, color: Colors.grey)))
+                          child: const Center(
+                              child: Icon(Icons.image, color: Colors.grey)))
                       : Image.network(url,
                           fit: BoxFit.cover,
                           errorBuilder: (_, __, ___) => Container(
                               height: 160,
                               color: Colors.grey.shade200,
-                              child: const Center(child: Icon(Icons.broken_image)))),
+                              child: const Center(
+                                  child: Icon(Icons.broken_image)))),
                   Positioned.fill(
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                           gradient: LinearGradient(
-                              colors: [Colors.transparent, Colors.black.withValues(alpha: 0.6)],
+                              colors: [
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.6)
+                          ],
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter)),
                     ),
@@ -449,10 +472,14 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                       onTap: () => controller.alternarFavorito(insp.id),
                       child: Container(
                         padding: const EdgeInsets.all(4),
-                        decoration:
-                            const BoxDecoration(color: Colors.black45, shape: BoxShape.circle),
-                        child: Icon(insp.favorito ? Icons.star_rounded : Icons.star_border_rounded,
-                            color: insp.favorito ? Colors.amber : Colors.white, size: 20),
+                        decoration: const BoxDecoration(
+                            color: Colors.black45, shape: BoxShape.circle),
+                        child: Icon(
+                            insp.favorito
+                                ? Icons.star_rounded
+                                : Icons.star_border_rounded,
+                            color: insp.favorito ? Colors.amber : Colors.white,
+                            size: 20),
                       ),
                     ),
                   ),
@@ -483,12 +510,16 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
         spacing: 4,
         runSpacing: 4,
         children: [
-          if (salva) _planejamentoBadge(icon: Icons.bookmark_added_rounded, color: primary),
+          if (salva)
+            _planejamentoBadge(
+                icon: Icons.bookmark_added_rounded, color: primary),
           if (checklist)
-            _planejamentoBadge(icon: Icons.checklist_rounded, color: Colors.green.shade700),
+            _planejamentoBadge(
+                icon: Icons.checklist_rounded, color: Colors.green.shade700),
           if (orcamento)
             _planejamentoBadge(
-                icon: Icons.account_balance_wallet_rounded, color: Colors.orange.shade800),
+                icon: Icons.account_balance_wallet_rounded,
+                color: Colors.orange.shade800),
         ],
       );
     });
@@ -497,7 +528,8 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
   Widget _planejamentoBadge({required IconData icon, required Color color}) {
     return Container(
       padding: const EdgeInsets.all(4), // 🔹 Muito menor[cite: 30]
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.9), shape: BoxShape.circle),
+      decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.9), shape: BoxShape.circle),
       child: Icon(icon, size: 12, color: Colors.white),
     );
   }
@@ -511,12 +543,14 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
           foregroundColor: primary,
           side: BorderSide(color: primary.withValues(alpha: 0.3)),
           minimumSize: const Size(double.infinity, 44),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 0,
         ),
         icon: const Icon(Icons.add_photo_alternate_rounded, size: 18),
         label: Text("Adicionar minhas referências",
-            style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13)),
+            style:
+                GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13)),
         onPressed: () => controller.adicionarReferenciaPessoal(),
       ),
     );
@@ -542,9 +576,11 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
-                    decoration:
-                        BoxDecoration(color: primary.withValues(alpha: 0.1), shape: BoxShape.circle),
-                    child: Icon(Icons.storefront_rounded, color: primary, size: 22),
+                    decoration: BoxDecoration(
+                        color: primary.withValues(alpha: 0.1),
+                        shape: BoxShape.circle),
+                    child: Icon(Icons.storefront_rounded,
+                        color: primary, size: 22),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -557,7 +593,8 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                                 fontSize: 13,
                                 color: const Color(0xFF1F2937))),
                         Text("Fornecedores que realizam essas ideias.",
-                            style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade700)),
+                            style: GoogleFonts.poppins(
+                                fontSize: 11, color: Colors.grey.shade700)),
                       ],
                     ),
                   ),
@@ -639,14 +676,16 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                 child: url.isEmpty
                     ? Container(
                         color: primary.withValues(alpha: 0.08),
-                        child: Icon(Icons.storefront_rounded, color: primary, size: 26),
+                        child: Icon(Icons.storefront_rounded,
+                            color: primary, size: 26),
                       )
                     : Image.network(
                         url,
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => Container(
                           color: Colors.grey.shade200,
-                          child: const Icon(Icons.storefront_rounded, color: Colors.grey),
+                          child: const Icon(Icons.storefront_rounded,
+                              color: Colors.grey),
                         ),
                       ),
               ),

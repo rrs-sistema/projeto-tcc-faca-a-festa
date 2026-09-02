@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:app_faca_festa/controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/tarefa_controller.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/tarefa.dart';
 import 'package:app_faca_festa/domain/repositories/convidado_repository.dart';

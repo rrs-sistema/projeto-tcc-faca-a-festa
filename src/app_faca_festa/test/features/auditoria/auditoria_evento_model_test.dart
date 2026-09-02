@@ -16,7 +16,14 @@ void main() {
         'ator_nome': 'Ana',
         'ator_email': 'ana@festa.com',
         'ator_tipo': 'F',
+        'ator_auth_type': 'unknown',
         'visivel_fornecedor': true,
+        'origem': 'firestore_trigger',
+        'operacao': 'updated',
+        'document_path': 'fornecedor_servico/serv-1',
+        'source_event_id': 'firebase-event-1',
+        'algoritmo_hash': 'sha256',
+        'hash_integridade': 'abc123',
         'mudancas': [
           {'campo': 'Preço', 'de': '100', 'para': '150'},
         ],
@@ -34,5 +41,43 @@ void main() {
     expect(model.mudancas.first.campo, 'Preço');
     expect(model.mudancas.first.para, '150');
     expect(model.atorNome, 'Ana');
+    expect(model.atorAuthType, 'unknown');
+    expect(model.origem, 'firestore_trigger');
+    expect(model.operacao, 'updated');
+    expect(model.documentPath, 'fornecedor_servico/serv-1');
+    expect(model.sourceEventId, 'firebase-event-1');
+    expect(model.algoritmoHash, 'sha256');
+    expect(model.hashIntegridade, 'abc123');
+  });
+
+  test('parses snapshot detail with raw document data', () {
+    final model = AuditoriaEventoModel.fromMap(
+      {
+        'acao': 'ORCAMENTO_REGISTRADO',
+        'area': 'ORCAMENTO',
+        'nivel': 'INFO',
+        'resumo': 'Orçamento registrado no sistema.',
+        'origem': 'snapshot',
+        'document_path': 'orcamento/1788344088644',
+        'detalhe': {
+          'tipo': 'snapshot',
+          'document_path': 'orcamento/1788344088644',
+          'dados': {
+            'anotacoes': 'Passagens aéreas',
+            'custo_estimado': 1650,
+            'status': 'pendente',
+          },
+        },
+      },
+      id: 'orcamento_1788344088644',
+    );
+
+    expect(model.origem, 'snapshot');
+    expect(model.documentPath, 'orcamento/1788344088644');
+    expect(model.detalhe?['dados'], isA<Map>());
+    expect(
+      (model.detalhe?['dados'] as Map)['anotacoes'],
+      'Passagens aéreas',
+    );
   });
 }

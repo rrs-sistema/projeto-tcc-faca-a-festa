@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../core/utils/form_validators.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/register_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/controllers/register_controller.dart';
 import './../../widgets/button/botao_salvar.dart';
 import './../../widgets/custom_input_field.dart';
 import './../endereco/endereco_section.dart';

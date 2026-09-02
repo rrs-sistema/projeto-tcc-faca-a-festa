@@ -2,8 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
 class AvaliacaoServicoRemoteDatasource {
-  AvaliacaoServicoRemoteDatasource({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  AvaliacaoServicoRemoteDatasource({required FirebaseFirestore firestore})
+      : _db = firestore;
 
   final FirebaseFirestore _db;
 

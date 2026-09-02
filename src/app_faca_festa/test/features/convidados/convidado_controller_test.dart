@@ -1,8 +1,8 @@
-import 'package:app_faca_festa/controllers/convidado/convidado_controller.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/repositories/convidado_repository.dart';
 import 'package:app_faca_festa/domain/repositories/presente_reservation_repository.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -78,7 +78,8 @@ void main() {
     expect(repository.dataResposta, isNotNull);
   });
 
-  test('invite links persist the token without claiming WhatsApp or SMS delivery',
+  test(
+      'invite links persist the token without claiming WhatsApp or SMS delivery',
       () async {
     final convidado = _convidado(nome: 'Ana');
 
@@ -87,7 +88,8 @@ void main() {
     expect(repository.tokensConvite, {'convidado-1': 'convidado-1'});
     expect(preparados.single.tokenParaLink, 'convidado-1');
     expect(
-      controller.urlConvite(preparados.single, origem: 'https://faca-a-festa.web.app'),
+      controller.urlConvite(preparados.single,
+          origem: 'https://faca-a-festa.web.app'),
       'https://faca-a-festa.web.app/#/convite/convidado-1',
     );
     expect(

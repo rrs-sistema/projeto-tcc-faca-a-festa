@@ -1,17 +1,18 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/tema/event_theme_controller.dart';
-import '../../controllers/fornecedor/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import '../../core/utils/form_masks.dart';
 import '../../core/utils/form_validators.dart';
+import '../../domain/usecases/gerenciar_orcamentos.dart';
 import './../../data/models/model.dart';
 
 Future<void> showNovoOrcamentoBottomSheet({
@@ -23,7 +24,7 @@ Future<void> showNovoOrcamentoBottomSheet({
   String? idOrcamento,
 }) async {
   final uuid = const Uuid();
-  final db = FirebaseFirestore.instance;
+  final orcamentos = Get.find<GerenciarOrcamentos>();
   final fornecedorController = Get.find<FornecedorController>();
   final themeController = Get.find<EventThemeController>();
 
@@ -37,9 +38,8 @@ Future<void> showNovoOrcamentoBottomSheet({
   // 🔹 Verifica se é edição (reserva existente)
   OrcamentoModel? orcamentoExistente;
   if (idOrcamento != null) {
-    final doc = await db.collection('orcamento').doc(idOrcamento).get();
-    if (doc.exists) {
-      orcamentoExistente = OrcamentoModel.fromMap(doc.data()!);
+    orcamentoExistente = await orcamentos.buscarPorId(idOrcamento);
+    if (orcamentoExistente != null) {
       anotacoesController.text = orcamentoExistente.anotacoes ?? '';
       valorEstimado = orcamentoExistente.custoEstimado;
       final valorInicial = valorEstimado;
@@ -50,8 +50,10 @@ Future<void> showNovoOrcamentoBottomSheet({
   }
 
   final isEdicao = orcamentoExistente != null;
-  final String titulo = isEdicao ? "Reservar Fornecedor" : "Solicitar Orçamento";
-  final String textoBotao = isEdicao ? "Confirmar Reserva" : "Enviar Solicitação";
+  final String titulo =
+      isEdicao ? "Reservar Fornecedor" : "Solicitar Orçamento";
+  final String textoBotao =
+      isEdicao ? "Confirmar Reserva" : "Enviar Solicitação";
 
   Future<void> salvarOrcamento() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
@@ -60,14 +62,13 @@ Future<void> showNovoOrcamentoBottomSheet({
     valorEstimado = valorDigitado > 0 ? valorDigitado : valorEstimado;
 
     if (isEdicao) {
-      await db.collection('orcamento').doc(idOrcamento).update({
-        'anotacoes': anotacoesController.text.trim(),
-        'custo_estimado': valorEstimado,
-        'data_reserva':
-            dataReserva != null ? Timestamp.fromDate(dataReserva!) : null,
-        'status': statusInicial.firestoreValue,
-        'data_fechamento': Timestamp.fromDate(DateTime.now()),
-      });
+      await orcamentos.confirmarReserva(
+        idOrcamento: idOrcamento!,
+        anotacoes: anotacoesController.text.trim(),
+        custoEstimado: valorEstimado,
+        dataReserva: dataReserva,
+        status: statusInicial,
+      );
 
       Get.back();
       Get.snackbar(
@@ -83,13 +84,15 @@ Future<void> showNovoOrcamentoBottomSheet({
       idOrcamento: uuid.v4(),
       idEvento: idEvento,
       idServicoFornecido: servico.idProdutoServico,
+      idFornecedor: idFornecedor,
+      idSolicitante: Get.find<AppController>().usuarioLogado.value?.idUsuario,
       custoEstimado: valorEstimado ?? servico.preco,
       anotacoes: anotacoesController.text.trim(),
       orcamentoFechado: false,
       status: statusInicial,
     );
 
-    await db.collection('orcamento').doc(model.idOrcamento).set(model.toMap());
+    await orcamentos.criarOrcamento(model);
 
     Get.back();
     Get.snackbar(
@@ -107,8 +110,8 @@ Future<void> showNovoOrcamentoBottomSheet({
     builder: (context) {
       final gradient = themeController.gradient.value;
       final primary = themeController.primaryColor.value;
-      final produtoServico =
-          fornecedorController.catalogoServicos.firstWhere((s) => s.id == servico.idProdutoServico);
+      final produtoServico = fornecedorController.catalogoServicos
+          .firstWhere((s) => s.id == servico.idProdutoServico);
       final bool isCelular = Biblioteca.isCelular(context);
       return FractionallySizedBox(
         heightFactor: 0.92,
@@ -135,217 +138,182 @@ Future<void> showNovoOrcamentoBottomSheet({
                       key: formKey,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
                       child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // === CABEÇALHO ===
-                          Center(
-                            child: Column(
-                              children: [
-                                Icon(
-                                  isEdicao
-                                      ? Icons.event_available_rounded
-                                      : Icons.request_quote_rounded,
-                                  color: primary,
-                                  size: 48,
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  titulo,
-                                  style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 20,
-                                    color: Colors.grey.shade800,
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // === CABEÇALHO ===
+                            Center(
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    isEdicao
+                                        ? Icons.event_available_rounded
+                                        : Icons.request_quote_rounded,
+                                    color: primary,
+                                    size: 48,
                                   ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  produtoServico.nome,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          const SizedBox(height: 28),
-
-                          // === CAMPO DE MENSAGEM ===
-                          TextFormField(
-                            controller: anotacoesController,
-                            maxLines: 4,
-                            validator: (value) => FormValidators.descricao(
-                              value,
-                              campo: 'a mensagem ao fornecedor',
-                              obrigatorio: false,
-                            ),
-                            decoration: InputDecoration(
-                              labelText: "Mensagem ao fornecedor (opcional)",
-                              hintText:
-                                  "Ex: Olá! Gostaria de saber mais sobre esse serviço e disponibilidade.",
-                              labelStyle: GoogleFonts.poppins(color: primary),
-                              prefixIcon: Icon(Icons.message_rounded, color: primary),
-                              errorMaxLines: 2,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // === CAMPO DE VALOR ESTIMADO ===
-                          TextFormField(
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                            controller: valorEstimadoCtrl,
-                            inputFormatters: [dinheiroMask],
-                            validator: (value) => FormValidators.dinheiro(
-                              value,
-                              obrigatorio: false,
-                              campo: 'o valor estimado',
-                            ),
-                            decoration: InputDecoration(
-                              labelText: "Valor estimado (opcional)",
-                              helperText: "Se não informar, usamos o preço do serviço.",
-                              labelStyle: GoogleFonts.poppins(color: primary),
-                              prefixIcon: Icon(Icons.attach_money_rounded, color: primary),
-                              errorMaxLines: 2,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                            ),
-                          ),
-
-                          const SizedBox(height: 16),
-
-                          // === DATA DE RESERVA (apenas se for reserva) ===
-                          if (isEdicao) ...[
-                            GestureDetector(
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: DateTime.now(),
-                                  firstDate: DateTime.now(),
-                                  lastDate: DateTime(2100),
-                                  builder: (context, child) {
-                                    return Theme(
-                                      data: ThemeData.light().copyWith(
-                                        colorScheme: ColorScheme.light(
-                                          primary: primary,
-                                        ),
-                                      ),
-                                      child: child!,
-                                    );
-                                  },
-                                );
-                                if (picked != null) {
-                                  setState(() => dataReserva = picked);
-                                }
-                              },
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: primary.withValues(alpha: 0.4)),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          Icon(Icons.calendar_month_rounded, color: primary),
-                                          const SizedBox(width: 10),
-                                          Expanded(
-                                            child: Text(
-                                              dataReserva == null
-                                                  ? "Informe data da reserva"
-                                                  : DateFormat('dd/MM/yyyy').format(dataReserva!),
-                                              style: GoogleFonts.poppins(
-                                                fontSize: 15,
-                                                color: Colors.grey.shade800,
-                                              ),
-                                              overflow:
-                                                  TextOverflow.ellipsis, // evita quebrar a linha
-                                            ),
-                                          ),
-                                        ],
-                                      ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    titulo,
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 20,
+                                      color: Colors.grey.shade800,
                                     ),
-                                    const Icon(Icons.expand_more, color: Colors.grey),
-                                  ],
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    produtoServico.nome,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+
+                            const SizedBox(height: 28),
+
+                            // === CAMPO DE MENSAGEM ===
+                            TextFormField(
+                              controller: anotacoesController,
+                              maxLines: 4,
+                              validator: (value) => FormValidators.descricao(
+                                value,
+                                campo: 'a mensagem ao fornecedor',
+                                obrigatorio: false,
+                              ),
+                              decoration: InputDecoration(
+                                labelText: "Mensagem ao fornecedor (opcional)",
+                                hintText:
+                                    "Ex: Olá! Gostaria de saber mais sobre esse serviço e disponibilidade.",
+                                labelStyle: GoogleFonts.poppins(color: primary),
+                                prefixIcon:
+                                    Icon(Icons.message_rounded, color: primary),
+                                errorMaxLines: 2,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
                             ),
                             const SizedBox(height: 16),
-                          ],
 
-                          // === BOTÕES ===
+                            // === CAMPO DE VALOR ESTIMADO ===
+                            TextFormField(
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                      decimal: true),
+                              controller: valorEstimadoCtrl,
+                              inputFormatters: [dinheiroMask],
+                              validator: (value) => FormValidators.dinheiro(
+                                value,
+                                obrigatorio: false,
+                                campo: 'o valor estimado',
+                              ),
+                              decoration: InputDecoration(
+                                labelText: "Valor estimado (opcional)",
+                                helperText:
+                                    "Se não informar, usamos o preço do serviço.",
+                                labelStyle: GoogleFonts.poppins(color: primary),
+                                prefixIcon: Icon(Icons.attach_money_rounded,
+                                    color: primary),
+                                errorMaxLines: 2,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                              ),
+                            ),
 
-                          if (isCelular)
-                            // 📱 CELULAR → Botões empilhados (um abaixo do outro)
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                OutlinedButton(
-                                  onPressed: () => Get.back(),
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(color: primary.withValues(alpha: 0.5)),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
+                            const SizedBox(height: 16),
+
+                            // === DATA DE RESERVA (apenas se for reserva) ===
+                            if (isEdicao) ...[
+                              GestureDetector(
+                                onTap: () async {
+                                  final picked = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime.now(),
+                                    lastDate: DateTime(2100),
+                                    builder: (context, child) {
+                                      return Theme(
+                                        data: ThemeData.light().copyWith(
+                                          colorScheme: ColorScheme.light(
+                                            primary: primary,
+                                          ),
+                                        ),
+                                        child: child!,
+                                      );
+                                    },
+                                  );
+                                  if (picked != null) {
+                                    setState(() => dataReserva = picked);
+                                  }
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16, vertical: 14),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                        color: primary.withValues(alpha: 0.4)),
+                                    borderRadius: BorderRadius.circular(14),
                                   ),
-                                  child: Text(
-                                    "Cancelar",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 15,
-                                      color: primary,
-                                      fontWeight: FontWeight.w500,
-                                    ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.calendar_month_rounded,
+                                                color: primary),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Text(
+                                                dataReserva == null
+                                                    ? "Informe data da reserva"
+                                                    : DateFormat('dd/MM/yyyy')
+                                                        .format(dataReserva!),
+                                                style: GoogleFonts.poppins(
+                                                  fontSize: 15,
+                                                  color: Colors.grey.shade800,
+                                                ),
+                                                overflow: TextOverflow
+                                                    .ellipsis, // evita quebrar a linha
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const Icon(Icons.expand_more,
+                                          color: Colors.grey),
+                                    ],
                                   ),
                                 ),
-                                const SizedBox(height: 12),
-                                ElevatedButton.icon(
-                                  onPressed: salvarOrcamento,
-                                  icon: Icon(
-                                    isEdicao ? Icons.event_available_rounded : Icons.send_rounded,
-                                    color: Colors.white,
-                                    size: 20,
-                                  ),
-                                  label: Text(
-                                    textoBotao,
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: primary,
-                                    padding: const EdgeInsets.symmetric(vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          else
-                            // 💻 TABLET OU DESKTOP → Botões lado a lado
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+
+                            // === BOTÕES ===
+
+                            if (isCelular)
+                              // 📱 CELULAR → Botões empilhados (um abaixo do outro)
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  OutlinedButton(
                                     onPressed: () => Get.back(),
                                     style: OutlinedButton.styleFrom(
-                                      side: BorderSide(color: primary.withValues(alpha: 0.5)),
+                                      side: BorderSide(
+                                          color:
+                                              primary.withValues(alpha: 0.5)),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 14),
                                     ),
                                     child: Text(
                                       "Cancelar",
@@ -356,13 +324,13 @@ Future<void> showNovoOrcamentoBottomSheet({
                                       ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton.icon(
+                                  const SizedBox(height: 12),
+                                  ElevatedButton.icon(
                                     onPressed: salvarOrcamento,
                                     icon: Icon(
-                                      isEdicao ? Icons.event_available_rounded : Icons.send_rounded,
+                                      isEdicao
+                                          ? Icons.event_available_rounded
+                                          : Icons.send_rounded,
                                       color: Colors.white,
                                       size: 20,
                                     ),
@@ -376,18 +344,78 @@ Future<void> showNovoOrcamentoBottomSheet({
                                     ),
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: primary,
-                                      padding: const EdgeInsets.symmetric(vertical: 14),
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 14),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                        ],
+                                ],
+                              )
+                            else
+                              // 💻 TABLET OU DESKTOP → Botões lado a lado
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () => Get.back(),
+                                      style: OutlinedButton.styleFrom(
+                                        side: BorderSide(
+                                            color:
+                                                primary.withValues(alpha: 0.5)),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 14),
+                                      ),
+                                      child: Text(
+                                        "Cancelar",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 15,
+                                          color: primary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton.icon(
+                                      onPressed: salvarOrcamento,
+                                      icon: Icon(
+                                        isEdicao
+                                            ? Icons.event_available_rounded
+                                            : Icons.send_rounded,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                      label: Text(
+                                        textoBotao,
+                                        style: GoogleFonts.poppins(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: primary,
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 14),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(12),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
                     );
                   },
                 ),

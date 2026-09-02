@@ -1,4 +1,4 @@
-import 'package:app_faca_festa/controllers/gift/gift_controller.dart';
+import 'package:app_faca_festa/presentation/modules/gifts/controllers/gift_controller.dart';
 import 'package:app_faca_festa/domain/entities/gift/gift.dart';
 import 'package:app_faca_festa/domain/entities/gift/gift_contribution.dart';
 import 'package:app_faca_festa/domain/repositories/gift_repository.dart';
@@ -94,6 +94,9 @@ class _GiftRepositoryFake implements GiftRepository {
 
   @override
   Stream<List<Gift>> getGifts(String eventoId) => const Stream.empty();
+
+  @override
+  Stream<List<Gift>> watchRemoteGifts(String eventoId) => const Stream.empty();
 
   @override
   Future<void> updateGift(String eventoId, Gift gift) async {}

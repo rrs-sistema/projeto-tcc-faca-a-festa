@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'fornecedor_aguardando_aprovacao_screen.dart';
 import './sections/avaliacoes_section.dart';
 import './sections/header_section.dart';
@@ -47,7 +47,8 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
     await _scrollToSection(
       key: _avaliacoesKey,
       title: 'Avaliações',
-      fallbackMessage: 'Não foi possível localizar a seção de avaliações agora.',
+      fallbackMessage:
+          'Não foi possível localizar a seção de avaliações agora.',
     );
   }
 
@@ -121,9 +122,11 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                 await controller.atualizarEstatisticasFornecedor();
                 final atual = controller.fornecedor.value;
                 if (atual != null) {
-                  await controller.escutarSolicitacoesPendentes(atual.idFornecedor);
+                  await controller
+                      .escutarSolicitacoesPendentes(atual.idFornecedor);
                   await controller.listarServicosFornecedor(atual.idFornecedor);
-                  await controller.carregarAiDasSolicitacoesPendentes(forceRefresh: true);
+                  await controller.carregarAiDasSolicitacoesPendentes(
+                      forceRefresh: true);
                 }
               },
               child: LayoutBuilder(
@@ -422,18 +425,21 @@ class _PremiumActionShell extends StatelessWidget {
 
           final button = ElevatedButton.icon(
             onPressed: onPressed,
-            icon: const Icon(Icons.arrow_forward_rounded, color: Colors.white, size: 16),
+            icon: const Icon(Icons.arrow_forward_rounded,
+                color: Colors.white, size: 16),
             label: Text(
               actionLabel,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w800),
+              style: GoogleFonts.poppins(
+                  fontSize: 11.5, fontWeight: FontWeight.w800),
             ),
             style: ElevatedButton.styleFrom(
               elevation: 0,
               backgroundColor: color,
               foregroundColor: Colors.white,
               disabledBackgroundColor: color.withValues(alpha: 0.35),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(13)),
               padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
             ),
           );

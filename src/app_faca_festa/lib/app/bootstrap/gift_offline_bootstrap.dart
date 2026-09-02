@@ -8,6 +8,9 @@ import '../../data/datasources/local/gift_local_datasource.dart';
 import '../../data/datasources/remote/gift_remote_datasource.dart';
 import '../../data/services/gift/gift_sync_service.dart';
 import '../../data/services/gift/sync_manager.dart';
+import '../../data/repositories_impl/gift_repository_impl.dart';
+import '../../domain/repositories/gift_repository.dart';
+import '../../domain/usecases/get_gifts/gift_usecases.dart';
 
 /// Composes and starts the app-wide offline-first infrastructure for Gifts.
 ///
@@ -16,7 +19,8 @@ import '../../data/services/gift/sync_manager.dart';
 /// independently from the Gifts screens.
 abstract final class GiftOfflineBootstrap {
   static Future<void> initialize() async {
-    final remoteDatasource = GiftRemoteDatasource(FirebaseFirestore.instance);
+    final remoteDatasource =
+        GiftRemoteDatasource(Get.find<FirebaseFirestore>());
     Get.put<GiftRemoteDatasource>(remoteDatasource, permanent: true);
 
     final database = await constructDb();
@@ -24,6 +28,18 @@ abstract final class GiftOfflineBootstrap {
 
     final localDatasource = GiftLocalDatasource(database);
     Get.put<GiftLocalDatasource>(localDatasource, permanent: true);
+
+    Get.put<GiftRepository>(
+      GiftRepositoryImpl(
+        local: localDatasource,
+        remote: remoteDatasource,
+      ),
+      permanent: true,
+    );
+    Get.put<GiftUseCases>(
+      GiftUseCases(Get.find<GiftRepository>()),
+      permanent: true,
+    );
 
     final syncService = GiftSyncService(
       local: localDatasource,

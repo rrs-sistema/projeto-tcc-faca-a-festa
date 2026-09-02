@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../core/utils/form_validators.dart';
-import './../../../../controllers/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/orcamento_controller.dart';
 import './../../../../data/models/model.dart';
 
 Future<void> showResponderOrcamentoDialog(
@@ -16,7 +16,8 @@ Future<void> showResponderOrcamentoDialog(
   final valorController = TextEditingController(
     text: orcamento.custoEstimado?.toStringAsFixed(2) ?? '',
   );
-  final anotacoesController = TextEditingController(text: orcamento.anotacoes ?? '');
+  final anotacoesController =
+      TextEditingController(text: orcamento.anotacoes ?? '');
   final formKey = GlobalKey<FormState>();
 
   bool fecharOrcamento = false;
@@ -34,149 +35,161 @@ Future<void> showResponderOrcamentoDialog(
             key: formKey,
             autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 🔹 Cabeçalho
-              Row(
-                children: [
-                  const Icon(Icons.request_quote_rounded, color: Colors.teal, size: 28),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "Responder Orçamento",
-                      style: GoogleFonts.poppins(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.grey.shade800,
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 🔹 Cabeçalho
+                Row(
+                  children: [
+                    const Icon(Icons.request_quote_rounded,
+                        color: Colors.teal, size: 28),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        "Responder Orçamento",
+                        style: GoogleFonts.poppins(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.grey.shade800,
+                        ),
                       ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: Colors.grey),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-
-              // 🔹 Campo valor proposto
-              TextFormField(
-                controller: valorController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: (value) => FormValidators.dinheiro(
-                  value,
-                  obrigatorio: true,
-                  campo: 'o valor proposto',
-                ),
-                decoration: InputDecoration(
-                  labelText: "Valor proposto (R\$) *",
-                  labelStyle: GoogleFonts.poppins(color: Colors.teal.shade800),
-                  prefixIcon: const Icon(Icons.monetization_on, color: Colors.teal),
-                  errorMaxLines: 2,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // 🔹 Campo observações
-              TextFormField(
-                controller: anotacoesController,
-                maxLines: 3,
-                validator: (value) => FormValidators.descricao(
-                  value,
-                  campo: 'as observações',
-                  obrigatorio: false,
-                ),
-                decoration: InputDecoration(
-                  labelText: "Observações / detalhes adicionais (opcional)",
-                  labelStyle: GoogleFonts.poppins(color: Colors.teal.shade800),
-                  prefixIcon: const Icon(Icons.notes_rounded, color: Colors.teal),
-                  errorMaxLines: 2,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              // 🔹 Checkbox para fechar orçamento
-              StatefulBuilder(
-                builder: (context, setState) {
-                  return CheckboxListTile(
-                    value: fecharOrcamento,
-                    onChanged: (v) => setState(() => fecharOrcamento = v!),
-                    title: Text(
-                      "Marcar como fechado",
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade800,
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.pop(context),
                     ),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    activeColor: Colors.teal.shade700,
-                  );
-                },
-              ),
+                  ],
+                ),
+                const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
-
-              // 🔹 Botões de ação
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text(
-                      "Cancelar",
-                      style: GoogleFonts.poppins(
-                        color: Colors.grey.shade700,
-                        fontWeight: FontWeight.w500,
-                      ),
+                // 🔹 Campo valor proposto
+                TextFormField(
+                  controller: valorController,
+                  keyboardType:
+                      const TextInputType.numberWithOptions(decimal: true),
+                  validator: (value) => FormValidators.dinheiro(
+                    value,
+                    obrigatorio: true,
+                    campo: 'o valor proposto',
+                  ),
+                  decoration: InputDecoration(
+                    labelText: "Valor proposto (R\$) *",
+                    labelStyle:
+                        GoogleFonts.poppins(color: Colors.teal.shade800),
+                    prefixIcon:
+                        const Icon(Icons.monetization_on, color: Colors.teal),
+                    errorMaxLines: 2,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  ElevatedButton.icon(
-                    onPressed: () async {
-                      if (!(formKey.currentState?.validate() ?? false)) return;
-                      final valor = FormValidators.parseDinheiro(valorController.text);
-                      await controller.responderOrcamento(
-                        idOrcamento: orcamento.idOrcamento,
-                        custoEstimado: valor,
-                        anotacoes: anotacoesController.text,
-                        fechar: fecharOrcamento,
-                      );
-                      Get.snackbar(
-                        "Orçamento atualizado",
-                        fecharOrcamento ? "Marcado como fechado" : "Resposta enviada com sucesso",
+                ),
+                const SizedBox(height: 16),
+
+                // 🔹 Campo observações
+                TextFormField(
+                  controller: anotacoesController,
+                  maxLines: 3,
+                  validator: (value) => FormValidators.descricao(
+                    value,
+                    campo: 'as observações',
+                    obrigatorio: false,
+                  ),
+                  decoration: InputDecoration(
+                    labelText: "Observações / detalhes adicionais (opcional)",
+                    labelStyle:
+                        GoogleFonts.poppins(color: Colors.teal.shade800),
+                    prefixIcon:
+                        const Icon(Icons.notes_rounded, color: Colors.teal),
+                    errorMaxLines: 2,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // 🔹 Checkbox para fechar orçamento
+                StatefulBuilder(
+                  builder: (context, setState) {
+                    return CheckboxListTile(
+                      value: fecharOrcamento,
+                      onChanged: (v) => setState(() => fecharOrcamento = v!),
+                      title: Text(
+                        "Marcar como fechado",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade800,
+                        ),
+                      ),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      activeColor: Colors.teal.shade700,
+                    );
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
+                // 🔹 Botões de ação
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        "Cancelar",
+                        style: GoogleFonts.poppins(
+                          color: Colors.grey.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        if (!(formKey.currentState?.validate() ?? false)) {
+                          return;
+                        }
+                        final valor =
+                            FormValidators.parseDinheiro(valorController.text);
+                        await controller.responderOrcamento(
+                          idOrcamento: orcamento.idOrcamento,
+                          custoEstimado: valor,
+                          anotacoes: anotacoesController.text,
+                          fechar: fecharOrcamento,
+                        );
+                        Get.snackbar(
+                          "Orçamento atualizado",
+                          fecharOrcamento
+                              ? "Marcado como fechado"
+                              : "Resposta enviada com sucesso",
+                          backgroundColor: Colors.teal.shade700,
+                          colorText: Colors.white,
+                          duration: const Duration(seconds: 2),
+                        );
+                        Navigator.pop(context);
+                      },
+                      icon: const Icon(Icons.send_rounded, color: Colors.white),
+                      label: Text(
+                        "Enviar Resposta",
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.teal.shade700,
-                        colorText: Colors.white,
-                        duration: const Duration(seconds: 2),
-                      );
-                      Navigator.pop(context);
-                    },
-                    icon: const Icon(Icons.send_rounded, color: Colors.white),
-                    label: Text(
-                      "Enviar Resposta",
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 20, vertical: 12),
                       ),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal.shade700,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       );

@@ -46,9 +46,12 @@ class _EnderecoSectionState extends State<EnderecoSection> {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          childrenPadding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          collapsedShape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          childrenPadding:
+              const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+          collapsedShape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
           title: Row(
             children: [
               Icon(Icons.location_on_rounded, color: cor),
@@ -187,8 +190,7 @@ class _EnderecoSectionState extends State<EnderecoSection> {
                       final uf = value
                           .replaceAll(RegExp(r'[^A-Za-z]'), '')
                           .toUpperCase();
-                      final limitado =
-                          uf.length > 2 ? uf.substring(0, 2) : uf;
+                      final limitado = uf.length > 2 ? uf.substring(0, 2) : uf;
                       if (limitado != value) {
                         c.ufController.value = TextEditingValue(
                           text: limitado,

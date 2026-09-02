@@ -2,7 +2,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/orcamento_controller.dart';
 import './dialogs/show_responder_orcamento_dialog.dart';
 import './../../../../data/models/model.dart';
 
@@ -23,7 +23,8 @@ class OrcamentosScreen extends StatelessWidget {
         automaticallyImplyLeading: false,
         leading: IconButton(
           tooltip: 'Voltar',
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon:
+              const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Get.back(),
         ),
         title: Text(
@@ -63,7 +64,8 @@ class OrcamentosScreen extends StatelessWidget {
 
           return ListView.separated(
             padding: const EdgeInsets.all(16),
-            separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.6),
+            separatorBuilder: (_, __) =>
+                const Divider(height: 1, thickness: 0.6),
             itemCount: lista.length,
             itemBuilder: (context, index) {
               final orcamento = lista[index];
@@ -82,7 +84,8 @@ class _OrcamentoCard extends StatelessWidget {
 
   Color get corStatus {
     switch (orcamento.status) {
-      case StatusOrcamento.pendente: //statusInicial: StatusOrcamento.emNegociacao,
+      case StatusOrcamento
+            .pendente: //statusInicial: StatusOrcamento.emNegociacao,
         return Colors.orange.shade700;
       case StatusOrcamento.emNegociacao:
         return Colors.blue.shade700;

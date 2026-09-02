@@ -351,7 +351,8 @@ class CalculadoraItemIconHelper {
       return Icons.handshake_outlined;
     }
 
-    if (_containsAny(categoriaKey, const ['entretenimento', 'animacao', 'animação'])) {
+    if (_containsAny(
+        categoriaKey, const ['entretenimento', 'animacao', 'animação'])) {
       return Icons.attractions_outlined;
     }
 
@@ -359,7 +360,8 @@ class CalculadoraItemIconHelper {
       return Icons.inventory_2_outlined;
     }
 
-    if (_containsAny(categoriaKey, const ['presente', 'presentes', 'brindes'])) {
+    if (_containsAny(
+        categoriaKey, const ['presente', 'presentes', 'brindes'])) {
       return Icons.redeem_outlined;
     }
 

@@ -170,7 +170,8 @@ class FornecedorAiService {
 
       if ((scoreCotacao?.score ?? 0) >= 75) {
         titulo = 'Priorize esta oportunidade';
-        descricao = 'Esta cotação tem bons sinais de compatibilidade com seu perfil.';
+        descricao =
+            'Esta cotação tem bons sinais de compatibilidade com seu perfil.';
         motivos.add('O score de oportunidade está alto.');
       }
 
@@ -307,7 +308,8 @@ class FornecedorAiService {
       subcategoriaSolicitada: subcategoriaSolicitada,
     )) {
       categoria = 20;
-      motivosPositivos.add('Fornecedor possui categoria ou serviço compatível.');
+      motivosPositivos
+          .add('Fornecedor possui categoria ou serviço compatível.');
     } else {
       categoria = 4;
       penalidades.add(
@@ -332,7 +334,8 @@ class FornecedorAiService {
       );
     } else if (_valorDentroDaFaixaFornecedor(fornecedor, valorReferencia)) {
       orcamento = 20;
-      motivosPositivos.add('Valor de referência está dentro da faixa cadastrada.');
+      motivosPositivos
+          .add('Valor de referência está dentro da faixa cadastrada.');
     } else if (_valorProximoDaFaixaFornecedor(fornecedor, valorReferencia)) {
       orcamento = 12;
       alertas.add('Valor de referência está próximo da faixa cadastrada.');
@@ -393,8 +396,9 @@ class FornecedorAiService {
     }
 
     // Interações - até 10 pontos.
-    final pesoInteracoes =
-        interacoes.where((i) => i.idFornecedor == fornecedor.idFornecedor).where((i) {
+    final pesoInteracoes = interacoes
+        .where((i) => i.idFornecedor == fornecedor.idFornecedor)
+        .where((i) {
       if (evento == null) return true;
       return i.idEvento == evento.idEvento;
     }).fold<int>(0, (total, item) => total + item.peso);
@@ -423,7 +427,13 @@ class FornecedorAiService {
       penalidades.add('Avaliação média baixa.');
     }
 
-    var score = tipoEvento + categoria + orcamento + localizacao + urgencia + interacao + reputacao;
+    var score = tipoEvento +
+        categoria +
+        orcamento +
+        localizacao +
+        urgencia +
+        interacao +
+        reputacao;
 
     if (!fornecedor.ativo || !fornecedor.aptoParaOperar) {
       score = score.clamp(0, 30);
@@ -567,7 +577,8 @@ class FornecedorAiService {
     final totalConvidados = evento?.totalConvidadosCalculado ?? 0;
 
     if (totalConvidados > 0) {
-      buffer.write(' Vi que o evento possui cerca de $totalConvidados convidados.');
+      buffer.write(
+          ' Vi que o evento possui cerca de $totalConvidados convidados.');
       camposUsados.add('total_convidados');
     } else {
       camposAusentes.add('total_convidados');
@@ -582,7 +593,8 @@ class FornecedorAiService {
         subcategoriaSolicitada: subcategoriaSolicitada,
       );
 
-      if (servicoCompativel != null && _hasText(servicoCompativel.nomeServico)) {
+      if (servicoCompativel != null &&
+          _hasText(servicoCompativel.nomeServico)) {
         buffer.write(
           ' Temos uma opção cadastrada para ${servicoCompativel.nomeServico}.',
         );
@@ -648,7 +660,8 @@ class FornecedorAiService {
       camposAusentes.add('banner_url');
     }
 
-    if (_hasText(fornecedor.descricao) && fornecedor.descricao!.trim().length >= 80) {
+    if (_hasText(fornecedor.descricao) &&
+        fornecedor.descricao!.trim().length >= 80) {
       score += 10;
     } else {
       pendencias.add('Melhore a descrição do fornecedor com mais detalhes.');
@@ -679,7 +692,8 @@ class FornecedorAiService {
         fornecedor.precoMedio != null) {
       score += 10;
     } else {
-      pendencias.add('Cadastre uma faixa de preço para melhorar recomendações.');
+      pendencias
+          .add('Cadastre uma faixa de preço para melhorar recomendações.');
       melhorias.add('Informar faixa de preço');
       camposAusentes.add('preco_minimo/preco_maximo/preco_medio');
     }
@@ -698,10 +712,13 @@ class FornecedorAiService {
       camposAusentes.add('servicos_ativos');
     }
 
-    final totalSemImagem = servicosAtivos.where((s) => !_hasText(s.imagemUrl)).length;
+    final totalSemImagem =
+        servicosAtivos.where((s) => !_hasText(s.imagemUrl)).length;
     final totalSemPreco = servicosAtivos.where((s) => s.preco <= 0).length;
-    final totalSemDescricao = servicosAtivos.where((s) => !_hasText(s.descricaoServico)).length;
-    final totalSemTipoMedida = servicosAtivos.where((s) => !_hasText(s.tipoMedida)).length;
+    final totalSemDescricao =
+        servicosAtivos.where((s) => !_hasText(s.descricaoServico)).length;
+    final totalSemTipoMedida =
+        servicosAtivos.where((s) => !_hasText(s.tipoMedida)).length;
 
     if (servicosAtivos.isNotEmpty) {
       if (totalSemImagem == 0) {
@@ -795,10 +812,12 @@ class FornecedorAiService {
   }) {
     final now = _clock();
 
-    final totalAvaliacoes = avaliacoes.isNotEmpty ? avaliacoes.length : fornecedor.totalAvaliacoes;
+    final totalAvaliacoes =
+        avaliacoes.isNotEmpty ? avaliacoes.length : fornecedor.totalAvaliacoes;
 
-    final mediaGeral =
-        avaliacoes.isNotEmpty ? _mediaAvaliacoes(avaliacoes) : fornecedor.mediaAvaliacoes;
+    final mediaGeral = avaliacoes.isNotEmpty
+        ? _mediaAvaliacoes(avaliacoes)
+        : fornecedor.mediaAvaliacoes;
 
     final positivas = avaliacoes.where((a) => a.nota >= 4).length;
     final neutras = avaliacoes.where((a) => a.nota == 3).length;
@@ -806,13 +825,16 @@ class FornecedorAiService {
 
     final percentualPositivas =
         avaliacoes.isEmpty ? 0.0 : _percentual(positivas, avaliacoes.length);
-    final percentualNeutras = avaliacoes.isEmpty ? 0.0 : _percentual(neutras, avaliacoes.length);
+    final percentualNeutras =
+        avaliacoes.isEmpty ? 0.0 : _percentual(neutras, avaliacoes.length);
     final percentualNegativas =
         avaliacoes.isEmpty ? 0.0 : _percentual(negativas, avaliacoes.length);
 
-    final avaliacoes90Dias = avaliacoes.where((a) => now.difference(a.data).inDays <= 90).toList();
+    final avaliacoes90Dias =
+        avaliacoes.where((a) => now.difference(a.data).inDays <= 90).toList();
 
-    final media90Dias = avaliacoes90Dias.isEmpty ? null : _mediaAvaliacoes(avaliacoes90Dias);
+    final media90Dias =
+        avaliacoes90Dias.isEmpty ? null : _mediaAvaliacoes(avaliacoes90Dias);
 
     final tendencia = _calcularTendencia(
       totalAvaliacoes: totalAvaliacoes,
@@ -867,7 +889,8 @@ class FornecedorAiService {
       pontosAtencao: pontosAtencao,
       servicoMelhorAvaliado: null,
       servicoComAlerta: null,
-      totalComentariosAnalisados: avaliacoes.where((a) => _hasText(a.comentario)).length,
+      totalComentariosAnalisados:
+          avaliacoes.where((a) => _hasText(a.comentario)).length,
       origem: 'deterministic_rules',
       versaoRegra: versaoRegra,
       createdAt: now,
@@ -919,7 +942,8 @@ class FornecedorAiService {
       addAlerta(
         tipo: 'perfil_inativo',
         titulo: 'Perfil inativo',
-        descricao: 'Seu perfil está inativo e pode não aparecer para organizadores.',
+        descricao:
+            'Seu perfil está inativo e pode não aparecer para organizadores.',
         prioridade: 5,
         motivos: ['Campo ativo está falso.'],
         acoes: ['Verificar status do fornecedor'],
@@ -1029,7 +1053,8 @@ class FornecedorAiService {
   ) {
     final idTipoEvento = _normalize(evento.idTipoEvento);
 
-    if (_hasText(idTipoEvento) && fornecedor.tipoEventoIds.map(_normalize).contains(idTipoEvento)) {
+    if (_hasText(idTipoEvento) &&
+        fornecedor.tipoEventoIds.map(_normalize).contains(idTipoEvento)) {
       return true;
     }
 
@@ -1074,7 +1099,8 @@ class FornecedorAiService {
       ].map(_normalize).where(_hasText).toList();
 
       for (final solicitado in termosSolicitados) {
-        if (termosServico.any((t) => t.contains(solicitado) || solicitado.contains(t))) {
+        if (termosServico
+            .any((t) => t.contains(solicitado) || solicitado.contains(t))) {
           return true;
         }
       }
@@ -1119,7 +1145,8 @@ class FornecedorAiService {
       }
 
       if (_hasText(subcategoria) &&
-          termos.any((t) => t.contains(subcategoria) || subcategoria.contains(t))) {
+          termos.any(
+              (t) => t.contains(subcategoria) || subcategoria.contains(t))) {
         return servico;
       }
     }
@@ -1219,8 +1246,10 @@ class FornecedorAiService {
     required List<FornecedorServicoDetalhadoDto> servicos,
   }) {
     final categoriasFornecedor = _extrairCategoriasFornecedor(fornecedor);
-    final categoriasServicos =
-        servicos.map((s) => _normalize(s.nomeCategoria)).where(_hasText).toSet();
+    final categoriasServicos = servicos
+        .map((s) => _normalize(s.nomeCategoria))
+        .where(_hasText)
+        .toSet();
 
     return categoriasFornecedor
         .where((categoria) => !categoriasServicos.contains(categoria))
@@ -1331,7 +1360,8 @@ class FornecedorAiService {
       return 'solicitar_detalhes';
     }
 
-    if (_hasText(cotacao?.categoriaSolicitada) || _hasText(cotacao?.subcategoriaSolicitada)) {
+    if (_hasText(cotacao?.categoriaSolicitada) ||
+        _hasText(cotacao?.subcategoriaSolicitada)) {
       return 'cotacao_com_categoria';
     }
 
@@ -1437,7 +1467,8 @@ class FornecedorAiService {
   }
 
   String _id(String prefix, String idFornecedor, [String? idRelacionado]) {
-    final cleanFornecedor = idFornecedor.isEmpty ? 'sem_fornecedor' : idFornecedor;
+    final cleanFornecedor =
+        idFornecedor.isEmpty ? 'sem_fornecedor' : idFornecedor;
     final cleanRelacionado = _hasText(idRelacionado) ? '_$idRelacionado' : '';
     return '${prefix}_$cleanFornecedor$cleanRelacionado';
   }
@@ -1519,7 +1550,8 @@ class FornecedorAiCotacaoInput {
       idFornecedor: idFornecedor ?? this.idFornecedor,
       idOrganizador: idOrganizador ?? this.idOrganizador,
       categoriaSolicitada: categoriaSolicitada ?? this.categoriaSolicitada,
-      subcategoriaSolicitada: subcategoriaSolicitada ?? this.subcategoriaSolicitada,
+      subcategoriaSolicitada:
+          subcategoriaSolicitada ?? this.subcategoriaSolicitada,
       mensagemCliente: mensagemCliente ?? this.mensagemCliente,
       statusCotacao: statusCotacao ?? this.statusCotacao,
       valorReferencia: valorReferencia ?? this.valorReferencia,

@@ -1,19 +1,20 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
 import '../../../data/models/avaliacao/avaliacao_model.dart';
-import './../../../controllers/avaliacao/avaliacao_servico_controller.dart';
-import './../../../controllers/contacao/cotacao_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/fornecedor/fornecedor_controller.dart';
-import './../../../controllers/evento_controller.dart';
+import '../../../data/models/cotacao/cotacao_chat_model.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import './../../dialogs/enviar_avaliacao_dialog.dart';
-import './../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../../data/models/model.dart';
+import '../../../domain/usecases/gerenciar_cotacoes.dart';
 import './chat/chat_mensagens_page.dart';
 
 void mostrarDetalhesCotacao(CotacaoModel cotacao) {
@@ -33,6 +34,7 @@ class _DetalhesCotacaoContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final fornecedorController = Get.find<FornecedorController>();
     final cotacaoController = Get.find<CotacaoController>();
+    final cotacoes = Get.find<GerenciarCotacoes>();
     final theme = Get.find<EventThemeController>();
 
     final primary = theme.primaryColor.value;
@@ -50,7 +52,8 @@ class _DetalhesCotacaoContent extends StatelessWidget {
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 16),
+            padding:
+                const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 16),
             child: Column(
               children: [
                 // 🔹 Drag Handle
@@ -59,7 +62,8 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                     width: 50,
                     height: 4,
                     decoration: BoxDecoration(
-                        color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -85,13 +89,15 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                             cotacao.categoriaNome?.isNotEmpty == true
                                 ? cotacao.categoriaNome!
                                 : "Detalhes da Cotação",
-                            style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 15),
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w800, fontSize: 15),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
                             "Informações e respostas",
-                            style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 11),
+                            style: GoogleFonts.poppins(
+                                color: Colors.grey.shade600, fontSize: 11),
                           ),
                         ],
                       ),
@@ -147,10 +153,11 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                               Row(
                                 children: [
                                   Text("Situação atual:",
-                                      style:
-                                          GoogleFonts.poppins(fontSize: 12, color: Colors.white)),
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 12, color: Colors.white)),
                                   const SizedBox(width: 8),
-                                  _buildStatusBadge(cotacao.status, invertColors: true),
+                                  _buildStatusBadge(cotacao.status,
+                                      invertColors: true),
                                 ],
                               ),
                               const SizedBox(height: 10),
@@ -162,11 +169,15 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                               _linhaDetalhe(
                                   Icons.calendar_month_rounded,
                                   "Prazo:",
-                                  DateFormat("dd/MM/yy")
-                                      .format(cotacao.dataLimiteResposta ?? DateTime.now())),
+                                  DateFormat("dd/MM/yy").format(
+                                      cotacao.dataLimiteResposta ??
+                                          DateTime.now())),
                               const SizedBox(height: 6),
-                              _linhaDetalhe(Icons.history_rounded, "Enviada:",
-                                  DateFormat("dd/MM/yy HH:mm").format(cotacao.dataCadastro)),
+                              _linhaDetalhe(
+                                  Icons.history_rounded,
+                                  "Enviada:",
+                                  DateFormat("dd/MM/yy HH:mm")
+                                      .format(cotacao.dataCadastro)),
                             ],
                           ),
                         ),
@@ -176,7 +187,8 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                         if (cotacao.descricao?.isNotEmpty == true) ...[
                           Row(
                             children: [
-                              Icon(Icons.edit_note_rounded, color: primary, size: 18),
+                              Icon(Icons.edit_note_rounded,
+                                  color: primary, size: 18),
                               const SizedBox(width: 6),
                               Text("Observações enviadas",
                                   style: GoogleFonts.poppins(
@@ -191,12 +203,14 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.grey.shade50,
-                              border: Border.all(color: primary.withValues(alpha: 0.15)),
+                              border: Border.all(
+                                  color: primary.withValues(alpha: 0.15)),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
                               cotacao.descricao!,
-                              style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade800),
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12, color: Colors.grey.shade800),
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -210,57 +224,62 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                 color: Colors.grey.shade800)),
                         const SizedBox(height: 10),
 
-                        StreamBuilder<QuerySnapshot>(
-                          stream: FirebaseFirestore.instance
-                              .collection('cotacao')
-                              .doc(cotacao.id)
-                              .collection('fornecedores')
-                              .snapshots(),
+                        StreamBuilder<List<CotacaoFornecedorResumoModel>>(
+                          stream: cotacoes
+                              .observarFornecedoresDaCotacao(cotacao.id),
                           builder: (context, snapshot) {
                             if (!snapshot.hasData) {
-                              return const Center(child: CircularProgressIndicator(strokeWidth: 2));
+                              return const Center(
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2));
                             }
 
-                            final docs = snapshot.data!.docs;
+                            final docs = snapshot.data!;
                             if (docs.isEmpty) {
                               return Text("Nenhum fornecedor vinculado.",
                                   style: GoogleFonts.poppins(
-                                      fontSize: 12, color: Colors.grey.shade600));
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600));
                             }
 
                             return Column(
-                              children: docs.map((doc) {
-                                final data = doc.data() as Map<String, dynamic>;
-                                final idFornecedor = data['id_fornecedor'];
-                                final fornecedor = fornecedorController.fornecedores
-                                    .firstWhereOrNull((f) => f.idFornecedor == idFornecedor);
-                                if (fornecedor == null) return const SizedBox.shrink();
+                              children: docs.map((data) {
+                                final idFornecedor = data.idFornecedor;
+                                final fornecedor = fornecedorController
+                                    .fornecedores
+                                    .firstWhereOrNull(
+                                        (f) => f.idFornecedor == idFornecedor);
+                                if (fornecedor == null) {
+                                  return const SizedBox.shrink();
+                                }
 
-                                final status =
-                                    (data['status'] ?? 'aguardando').toString().toLowerCase();
-                                final corStatus = _getFornecedorStatusColor(status);
-                                final textoStatus = _getFornecedorStatusText(status);
+                                final status = data.status;
+                                final corStatus =
+                                    _getFornecedorStatusColor(status);
+                                final textoStatus =
+                                    _getFornecedorStatusText(status);
 
-                                bool temResposta =
-                                    (data['observacao_fornecedor']?.toString().trim().isNotEmpty ??
-                                            false) ||
-                                        (data['prazo_entrega'] != null) ||
-                                        (data['condicao_pagamento'] != null);
+                                final temResposta = data.temResposta;
 
                                 return Container(
                                   margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.all(12), // 🔹 Mais compacto
+                                  padding: const EdgeInsets.all(
+                                      12), // 🔹 Mais compacto
                                   decoration: BoxDecoration(
                                     color: corStatus.withValues(alpha: 0.03),
-                                    border: Border.all(color: corStatus.withValues(alpha: 0.2)),
+                                    border: Border.all(
+                                        color:
+                                            corStatus.withValues(alpha: 0.2)),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       // 🔹 Cabeçalho do Fornecedor
                                       Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
                                         children: [
                                           Expanded(
                                             child: Text(
@@ -277,13 +296,16 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 8, vertical: 3),
                                             decoration: BoxDecoration(
-                                                color: corStatus.withValues(alpha: 0.1),
-                                                borderRadius: BorderRadius.circular(8)),
+                                                color: corStatus.withValues(
+                                                    alpha: 0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
                                             child: Text(textoStatus,
                                                 style: GoogleFonts.poppins(
                                                     fontSize: 10,
                                                     color: corStatus,
-                                                    fontWeight: FontWeight.w700)),
+                                                    fontWeight:
+                                                        FontWeight.w700)),
                                           ),
                                         ],
                                       ),
@@ -292,92 +314,108 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                       // 🔹 Respostas
                                       if (temResposta)
                                         Container(
-                                          margin: const EdgeInsets.only(top: 4, bottom: 8),
+                                          margin: const EdgeInsets.only(
+                                              top: 4, bottom: 8),
                                           padding: const EdgeInsets.all(10),
                                           decoration: BoxDecoration(
                                             color: Colors.white,
-                                            borderRadius: BorderRadius.circular(10),
-                                            border: Border.all(color: Colors.grey.shade200),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            border: Border.all(
+                                                color: Colors.grey.shade200),
                                           ),
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
-                                              if (data['observacao_fornecedor']
-                                                      ?.toString()
-                                                      .trim()
-                                                      .isNotEmpty ??
-                                                  false)
+                                              if (data.observacaoFornecedor
+                                                  .trim()
+                                                  .isNotEmpty)
                                                 Padding(
-                                                  padding: const EdgeInsets.only(bottom: 6),
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 6),
                                                   child: Text(
-                                                      "Obs: ${data['observacao_fornecedor']}",
-                                                      style: GoogleFonts.poppins(
-                                                          fontSize: 11.5,
-                                                          color: Colors.grey.shade800)),
+                                                      "Obs: ${data.observacaoFornecedor}",
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                              fontSize: 11.5,
+                                                              color: Colors.grey
+                                                                  .shade800)),
                                                 ),
-                                              if (data['prazo_entrega'] != null)
-                                                _linhaIconeMenor(Icons.timer_outlined,
-                                                    "Prazo: ${DateFormat("dd/MM/yy").format((data['prazo_entrega'] as Timestamp).toDate())}"),
-                                              if (data['condicao_pagamento']
-                                                      ?.toString()
-                                                      .trim()
+                                              if (data.prazoEntrega != null)
+                                                _linhaIconeMenor(
+                                                    Icons.timer_outlined,
+                                                    "Prazo: ${DateFormat("dd/MM/yy").format(data.prazoEntrega!)}"),
+                                              if (data.condicaoPagamento
+                                                      ?.trim()
                                                       .isNotEmpty ??
                                                   false)
-                                                _linhaIconeMenor(Icons.payments_outlined,
-                                                    "Pgto: ${data['condicao_pagamento']}"),
+                                                _linhaIconeMenor(
+                                                    Icons.payments_outlined,
+                                                    "Pgto: ${data.condicaoPagamento}"),
                                             ],
                                           ),
                                         ),
 
                                       // 🔹 Serviços
-                                      StreamBuilder<QuerySnapshot>(
-                                        stream: FirebaseFirestore.instance
-                                            .collection('cotacao')
-                                            .doc(cotacao.id)
-                                            .collection('fornecedores')
-                                            .doc(idFornecedor)
-                                            .collection('servicos')
-                                            .snapshots(),
-                                        builder: (context, servicosSnap) {
-                                          if (!servicosSnap.hasData ||
-                                              servicosSnap.data!.docs.isEmpty) {
+                                      Builder(
+                                        builder: (context) {
+                                          final servicos = data.servicos;
+                                          if (servicos.isEmpty) {
                                             return const SizedBox.shrink();
                                           }
-                                          final servicos = servicosSnap.data!.docs;
                                           return Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               const Divider(height: 16),
                                               Text("Serviços cotados",
                                                   style: GoogleFonts.poppins(
-                                                      fontWeight: FontWeight.w600,
+                                                      fontWeight:
+                                                          FontWeight.w600,
                                                       fontSize: 12,
-                                                      color: Colors.grey.shade700)),
+                                                      color: Colors
+                                                          .grey.shade700)),
                                               const SizedBox(height: 6),
                                               ...servicos.map((s) {
-                                                final d = s.data() as Map<String, dynamic>;
-                                                final qtd = d['quantidade'] ?? 1;
-                                                final valor = (d['valor_estimado'] ?? 0) as num;
+                                                final qtd = s.quantidade;
+                                                final valor = s.valorEstimado;
                                                 return Padding(
-                                                  padding: const EdgeInsets.only(bottom: 4),
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 4),
                                                   child: Row(
                                                     children: [
-                                                      Icon(Icons.check, size: 12, color: corStatus),
+                                                      Icon(Icons.check,
+                                                          size: 12,
+                                                          color: corStatus),
                                                       const SizedBox(width: 4),
                                                       Expanded(
                                                           child: Text(
-                                                              "${d['nome_produto_servico'] ?? 'Serviço'} (x$qtd)",
-                                                              style: GoogleFonts.poppins(
-                                                                  fontSize: 11,
-                                                                  color: Colors.grey.shade800),
+                                                              "${s.nome} (x$qtd)",
+                                                              style: GoogleFonts
+                                                                  .poppins(
+                                                                      fontSize:
+                                                                          11,
+                                                                      color: Colors
+                                                                          .grey
+                                                                          .shade800),
                                                               maxLines: 1,
-                                                              overflow: TextOverflow.ellipsis)),
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis)),
                                                       Text(
                                                           "R\$ ${(valor * qtd).toStringAsFixed(2)}",
-                                                          style: GoogleFonts.poppins(
-                                                              fontSize: 11,
-                                                              fontWeight: FontWeight.w700,
-                                                              color: Colors.green.shade700)),
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                                  fontSize: 11,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
+                                                                  color: Colors
+                                                                      .green
+                                                                      .shade700)),
                                                     ],
                                                   ),
                                                 );
@@ -394,14 +432,22 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                         runSpacing: 8,
                                         alignment: WrapAlignment.end,
                                         children: [
-                                          if (['respondido', 'respondida', 'recusado', 'cancelado']
-                                              .contains(status))
+                                          if ([
+                                            'respondido',
+                                            'respondida',
+                                            'recusado',
+                                            'cancelado'
+                                          ].contains(status))
                                             FutureBuilder<bool>(
-                                              future: Get.find<AvaliacaoServicoController>()
+                                              future: Get.find<
+                                                      AvaliacaoServicoController>()
                                                   .podeAvaliarCotacao(
-                                                      idFornecedor: idFornecedor,
-                                                      idEvento: cotacao.idEvento,
-                                                      idUsuario: Get.find<AppController>()
+                                                      idFornecedor:
+                                                          idFornecedor,
+                                                      idEvento:
+                                                          cotacao.idEvento,
+                                                      idUsuario: Get.find<
+                                                              AppController>()
                                                           .usuarioLogado
                                                           .value!
                                                           .idUsuario),
@@ -411,31 +457,43 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                                       Icons.star_rounded,
                                                       "Avaliar",
                                                       Colors.amber.shade700,
-                                                      () => getDialogAvaliacaoFornecedor(
-                                                          fornecedor: fornecedor));
+                                                      () =>
+                                                          getDialogAvaliacaoFornecedor(
+                                                              fornecedor:
+                                                                  fornecedor));
                                                 }
                                                 return const SizedBox.shrink();
                                               },
                                             ),
-                                          if (status == 'respondido' || status == 'respondida')
+                                          if (status == 'respondido' ||
+                                              status == 'respondida')
                                             _btnAcao(
                                                 Icons.check_circle_outline,
                                                 "Fechar negócio",
                                                 Colors.green.shade600,
-                                                () =>
-                                                    cotacaoController.confirmarFornecedorEscolhido(
-                                                        idFornecedor, cotacao.id)),
-                                          if (['respondido', 'respondida', 'fechado']
-                                              .contains(status))
+                                                () => cotacaoController
+                                                    .confirmarFornecedorEscolhido(
+                                                        idFornecedor,
+                                                        cotacao.id)),
+                                          if ([
+                                            'respondido',
+                                            'respondida',
+                                            'fechado'
+                                          ].contains(status))
                                             _btnAcao(
                                                 Icons.chat_rounded,
                                                 "Chat",
                                                 primary,
-                                                () => Get.to(() => ChatMensagensPage(
-                                                    idCotacao: cotacao.id,
-                                                    idFornecedor: idFornecedor,
-                                                    nomeFornecedor: fornecedor.razaoSocial,
-                                                    dataSolicitacao: cotacao.dataCadastro))),
+                                                () => Get.to(() =>
+                                                    ChatMensagensPage(
+                                                        idCotacao: cotacao.id,
+                                                        idFornecedor:
+                                                            idFornecedor,
+                                                        nomeFornecedor:
+                                                            fornecedor
+                                                                .razaoSocial,
+                                                        dataSolicitacao: cotacao
+                                                            .dataCadastro))),
                                         ],
                                       )
                                     ],
@@ -465,12 +523,14 @@ class _DetalhesCotacaoContent extends StatelessWidget {
         const SizedBox(width: 8),
         Text(label,
             style: GoogleFonts.poppins(
-                fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white)),
         const SizedBox(width: 4),
         Expanded(
             child: Text(value,
-                style:
-                    GoogleFonts.poppins(fontSize: 12, color: Colors.white.withValues(alpha: 0.9)),
+                style: GoogleFonts.poppins(
+                    fontSize: 12, color: Colors.white.withValues(alpha: 0.9)),
                 overflow: TextOverflow.ellipsis)),
       ],
     );
@@ -485,7 +545,8 @@ class _DetalhesCotacaoContent extends StatelessWidget {
           const SizedBox(width: 6),
           Expanded(
               child: Text(text,
-                  style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade700),
+                  style: GoogleFonts.poppins(
+                      fontSize: 11, color: Colors.grey.shade700),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis)),
         ],
@@ -493,13 +554,15 @@ class _DetalhesCotacaoContent extends StatelessWidget {
     );
   }
 
-  Widget _btnAcao(IconData icon, String label, Color color, VoidCallback onTap) {
+  Widget _btnAcao(
+      IconData icon, String label, Color color, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(
+            color: color, borderRadius: BorderRadius.circular(10)),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -507,7 +570,9 @@ class _DetalhesCotacaoContent extends StatelessWidget {
             const SizedBox(width: 4),
             Text(label,
                 style: GoogleFonts.poppins(
-                    fontSize: 11, fontWeight: FontWeight.w600, color: Colors.white)),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white)),
           ],
         ),
       ),
@@ -518,8 +583,16 @@ class _DetalhesCotacaoContent extends StatelessWidget {
     return switch (status) {
       'respondido' || 'respondida' => Colors.green.shade600,
       'perdeucotacao' || 'perdeucotacao' => Colors.black87,
-      'recusado' || 'recusada' || 'cancelado' || 'cancelada' => Colors.red.shade600,
-      'concluido' || 'concluida' || 'fechada' || 'fechado' => Colors.blue.shade700,
+      'recusado' ||
+      'recusada' ||
+      'cancelado' ||
+      'cancelada' =>
+        Colors.red.shade600,
+      'concluido' ||
+      'concluida' ||
+      'fechada' ||
+      'fechado' =>
+        Colors.blue.shade700,
       'parcial' || 'parcialmente' => Colors.orange.shade700,
       _ => Colors.orange.shade700
     };
@@ -573,9 +646,12 @@ Widget _buildStatusBadge(StatusCotacao status, {bool invertColors = false}) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
     decoration: BoxDecoration(
-      color: invertColors ? Colors.white.withValues(alpha: 0.2) : cor.withValues(alpha: 0.08),
+      color: invertColors
+          ? Colors.white.withValues(alpha: 0.2)
+          : cor.withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(10),
-      border: Border.all(color: invertColors ? Colors.white54 : cor.withValues(alpha: 0.3)),
+      border: Border.all(
+          color: invertColors ? Colors.white54 : cor.withValues(alpha: 0.3)),
     ),
     child: Row(
       mainAxisSize: MainAxisSize.min,

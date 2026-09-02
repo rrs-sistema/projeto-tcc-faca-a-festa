@@ -16,7 +16,8 @@ class GiftLocalDatasource {
   }
 
   Future<GiftLocal?> getGift(String giftId) {
-    return (db.select(db.giftLocals)..where((t) => t.giftId.equals(giftId))).getSingleOrNull();
+    return (db.select(db.giftLocals)..where((t) => t.giftId.equals(giftId)))
+        .getSingleOrNull();
   }
 
   Future<void> saveGift(GiftLocalsCompanion gift) async {
@@ -55,7 +56,8 @@ class GiftLocalDatasource {
   }
 
   Future<void> markDeleted(String giftId) async {
-    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId))).write(
+    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId)))
+        .write(
       GiftLocalsCompanion(
         deleted: const Value(true),
         synced: const Value(false),
@@ -65,11 +67,13 @@ class GiftLocalDatasource {
   }
 
   Future<List<GiftLocal>> getUnsynced() {
-    return (db.select(db.giftLocals)..where((t) => t.synced.equals(false))).get();
+    return (db.select(db.giftLocals)..where((t) => t.synced.equals(false)))
+        .get();
   }
 
   Future<void> markSynced(String giftId) async {
-    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId))).write(
+    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId)))
+        .write(
       const GiftLocalsCompanion(
         synced: Value(true),
       ),
@@ -88,7 +92,8 @@ class GiftLocalDatasource {
     required DateTime dataReserva,
     required bool synced,
   }) async {
-    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId))).write(
+    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId)))
+        .write(
       GiftLocalsCompanion(
         status: Value(status),
         reservadoPor: Value(reservadoPor),
@@ -105,7 +110,8 @@ class GiftLocalDatasource {
     required double valorArrecadado,
     required bool synced,
   }) async {
-    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId))).write(
+    await (db.update(db.giftLocals)..where((t) => t.giftId.equals(giftId)))
+        .write(
       GiftLocalsCompanion(
         valorArrecadado: Value(valorArrecadado),
         synced: Value(synced),
@@ -143,7 +149,9 @@ class GiftLocalDatasource {
   }
 
   Future<List<GiftContributionLocal>> getUnsyncedContributions() {
-    return (db.select(db.giftContributionLocals)..where((t) => t.synced.equals(false))).get();
+    return (db.select(db.giftContributionLocals)
+          ..where((t) => t.synced.equals(false)))
+        .get();
   }
 
   Future<void> markContributionSynced(String contributionId) async {

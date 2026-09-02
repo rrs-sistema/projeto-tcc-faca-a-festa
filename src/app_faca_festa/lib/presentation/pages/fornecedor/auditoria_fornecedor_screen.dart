@@ -1,9 +1,14 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../app/bootstrap/auditoria_bootstrap.dart';
-import '../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auditoria/controllers/auditoria_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import '../../widgets/auditoria/auditoria_evento_card.dart';
 import '../../widgets/auditoria/auditoria_filtros.dart';
 import 'sections/fornecedor_premium_layout.dart';
@@ -11,7 +16,8 @@ import 'sections/fornecedor_premium_layout.dart';
 class AuditoriaFornecedorScreen extends StatelessWidget {
   AuditoriaFornecedorScreen({super.key}) {
     Future.microtask(() {
-      final id = Get.find<FornecedorController>().fornecedor.value?.idFornecedor;
+      final id =
+          Get.find<FornecedorController>().fornecedor.value?.idFornecedor;
       if (id == null || id.trim().isEmpty) return;
       AuditoriaBootstrap.controllerFornecedor(id).carregar();
     });
@@ -82,129 +88,215 @@ class AuditoriaFornecedorScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
+            tooltip: 'Exportar PDF',
+            onPressed: () => _exportarPdf(controller),
+            icon: const Icon(Icons.picture_as_pdf_rounded),
+          ),
+          IconButton(
+            tooltip: 'Exportar CSV',
+            onPressed: () => _exportarCsv(controller),
+            icon: const Icon(Icons.download_rounded),
+          ),
+          IconButton(
             tooltip: 'Atualizar',
             onPressed: controller.carregar,
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-            child: Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF0B1220), Color(0xFF2A1748)],
-                    ),
-                  ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Column(
+            children: [
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: constraints.maxHeight * 0.62,
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Histórico · $nome',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 14,
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 11,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0B1220), Color(0xFF2A1748)],
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Histórico · $nome',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Acompanhe quem alterou seus serviços, respostas de orçamento e o status da conta.',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white.withValues(alpha: 0.82),
+                                fontSize: 12,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Acompanhe quem alterou seus serviços, respostas de orçamento e o status da conta.',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white.withValues(alpha: 0.82),
-                          fontSize: 12,
-                          height: 1.35,
-                        ),
+                      const SizedBox(height: 8),
+                      AuditoriaDashboardPanel(
+                        controller: controller,
+                        theme: _theme,
+                      ),
+                      const SizedBox(height: 8),
+                      AuditoriaFiltrosBar(
+                        controller: controller,
+                        theme: _theme,
+                        buscaHint:
+                            'Buscar nos seus serviços, orçamentos e perfil',
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
-                AuditoriaResumoRow(controller: controller, theme: _theme),
-                const SizedBox(height: 12),
-                AuditoriaFiltrosBar(
-                  controller: controller,
-                  theme: _theme,
-                  buscaHint: 'Buscar nos seus serviços, orçamentos e perfil',
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Obx(() {
-              if (controller.carregando.value) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              if (controller.erro.isNotEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24),
-                    child: Text(
-                      controller.erro.value,
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(color: _theme.muted),
-                    ),
-                  ),
-                );
-              }
-              final lista = controller.visiveis;
-              if (lista.isEmpty) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(32),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.policy_outlined, size: 48, color: _theme.muted),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Nenhuma alteração nos seus serviços ainda',
+              ),
+              Expanded(
+                child: Obx(() {
+                  if (controller.carregando.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (controller.erro.isNotEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          controller.erro.value,
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w700,
-                            color: _theme.ink,
-                          ),
+                          style: GoogleFonts.poppins(color: _theme.muted),
                         ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Quando você ou a equipe da plataforma alterar um serviço seu, o registro aparece aqui.',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            fontSize: 13,
-                            color: _theme.muted,
-                          ),
+                      ),
+                    );
+                  }
+                  final lista = controller.visiveis;
+                  if (lista.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.policy_outlined,
+                                size: 48, color: _theme.muted),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Nenhuma alteração nos seus serviços ainda',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w700,
+                                color: _theme.ink,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Quando você ou a equipe da plataforma alterar um serviço seu, o registro aparece aqui.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: _theme.muted,
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              }
+                      ),
+                    );
+                  }
 
-              return RefreshIndicator(
-                color: _theme.primary,
-                onRefresh: controller.carregar,
-                child: ListView.separated(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-                  itemCount: lista.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 10),
-                  itemBuilder: (context, i) => AuditoriaEventoCard(
-                    evento: lista[i],
-                    theme: _theme,
-                  ),
-                ),
-              );
-            }),
-          ),
-        ],
+                  return RefreshIndicator(
+                    color: _theme.primary,
+                    onRefresh: controller.carregar,
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                      itemCount:
+                          lista.length + (controller.temMais.value ? 1 : 0),
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, i) {
+                        if (i == lista.length) {
+                          return AuditoriaLoadMoreButton(
+                            controller: controller,
+                            theme: _theme,
+                          );
+                        }
+                        return AuditoriaEventoCard(
+                          evento: lista[i],
+                          theme: _theme,
+                        );
+                      },
+                    ),
+                  );
+                }),
+              ),
+            ],
+          );
+        },
       ),
+    );
+  }
+
+  Future<void> _exportarPdf(AuditoriaController controller) async {
+    if (controller.visiveis.isEmpty) {
+      Get.snackbar(
+        'Auditoria',
+        'Não há registros visíveis para exportar.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final pdf = await controller.exportarPdfVisivel(
+      titulo: 'Auditoria dos serviços Faça a Festa',
+    );
+    await Share.shareXFiles(
+      [
+        XFile.fromData(
+          pdf,
+          mimeType: 'application/pdf',
+        ),
+      ],
+      subject: 'auditoria-servicos-faca-festa.pdf',
+      text: 'Relatório de auditoria dos serviços no Faça a Festa.',
+      fileNameOverrides: ['auditoria-servicos-faca-festa.pdf'],
+    );
+  }
+
+  Future<void> _exportarCsv(AuditoriaController controller) async {
+    if (controller.visiveis.isEmpty) {
+      Get.snackbar(
+        'Auditoria',
+        'Não há registros visíveis para exportar.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final csv = controller.exportarCsvVisivel();
+    await Share.shareXFiles(
+      [
+        XFile.fromData(
+          Uint8List.fromList(utf8.encode(csv)),
+          mimeType: 'text/csv',
+        ),
+      ],
+      subject: 'auditoria-servicos-faca-festa.csv',
+      text: 'Exportação da auditoria dos serviços no Faça a Festa.',
+      fileNameOverrides: ['auditoria-servicos-faca-festa.csv'],
     );
   }
 }

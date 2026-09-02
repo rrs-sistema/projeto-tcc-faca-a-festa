@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class RankingRemoteDatasource {
-  RankingRemoteDatasource({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  RankingRemoteDatasource({required FirebaseFirestore firestore})
+      : _db = firestore;
 
   final FirebaseFirestore _db;
 

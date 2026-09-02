@@ -53,7 +53,8 @@ extension TipoSugestaoCalculadoraIAExtension on TipoSugestaoCalculadoraIA {
   }
 }
 
-extension PrioridadeSugestaoCalculadoraIAExtension on PrioridadeSugestaoCalculadoraIA {
+extension PrioridadeSugestaoCalculadoraIAExtension
+    on PrioridadeSugestaoCalculadoraIA {
   String get label {
     switch (this) {
       case PrioridadeSugestaoCalculadoraIA.baixa:
@@ -152,7 +153,9 @@ class SugestaoCalculadoraIAModel {
       descricao: descricao ?? this.descricao,
       tipo: tipo ?? this.tipo,
       prioridade: prioridade ?? this.prioridade,
-      itemRelacionado: limparItemRelacionado ? null : (itemRelacionado ?? this.itemRelacionado),
+      itemRelacionado: limparItemRelacionado
+          ? null
+          : (itemRelacionado ?? this.itemRelacionado),
       impactoEstimado: impactoEstimado ?? this.impactoEstimado,
     );
   }
@@ -242,15 +245,18 @@ class AnaliseCalculadoraIAModel {
 
   bool get possuiSugestoes => sugestoes.isNotEmpty;
 
-  bool get possuiOrcamento => orcamentoDisponivel != null && orcamentoDisponivel! > 0;
+  bool get possuiOrcamento =>
+      orcamentoDisponivel != null && orcamentoDisponivel! > 0;
 
   bool get acimaDoOrcamento => possuiOrcamento && diferencaOrcamento > 0;
 
   bool get dentroDoOrcamento => possuiOrcamento && diferencaOrcamento <= 0;
 
-  bool get geradaPorIAGenerativa => fonte.trim().toLowerCase() == 'ia_generativa';
+  bool get geradaPorIAGenerativa =>
+      fonte.trim().toLowerCase() == 'ia_generativa';
 
-  bool get geradaPorFallbackLocal => fonte.trim().toLowerCase() == 'fallback_local';
+  bool get geradaPorFallbackLocal =>
+      fonte.trim().toLowerCase() == 'fallback_local';
 
   bool get possuiRastreabilidadeIA {
     return versaoPrompt.trim().isNotEmpty ||
@@ -385,7 +391,8 @@ class AnaliseCalculadoraIAModel {
       diferencaOrcamento: _asDouble(
         map['diferenca_orcamento'] ?? map['diferencaOrcamento'],
       ),
-      dataAnalise: _asDateTime(map['data_analise'] ?? map['dataAnalise']) ?? DateTime.now(),
+      dataAnalise: _asDateTime(map['data_analise'] ?? map['dataAnalise']) ??
+          DateTime.now(),
       sugestoes: sugestoes,
       fonte: map['fonte']?.toString() ?? 'local',
       versaoPrompt: _firstNotEmpty([
@@ -412,7 +419,8 @@ class AnaliseCalculadoraIAModel {
       idsSugestoesBaseUtilizadas: idsSugestoesBaseUtilizadas,
       versoesSugestoesBaseUtilizadas: versoesSugestoesBaseUtilizadas,
       totalSugestoesBaseUtilizadas: _asInt(
-        map['total_sugestoes_base_utilizadas'] ?? map['totalSugestoesBaseUtilizadas'],
+        map['total_sugestoes_base_utilizadas'] ??
+            map['totalSugestoesBaseUtilizadas'],
         fallback: idsSugestoesBaseUtilizadas.length,
       ),
       dataProcessamento: _asDateTime(
@@ -471,11 +479,13 @@ class AnaliseCalculadoraIAModel {
       titulo: titulo ?? this.titulo,
       resumo: resumo ?? this.resumo,
       indiceEconomia: indiceEconomia ?? this.indiceEconomia,
-      indiceRiscoFaltarItens: indiceRiscoFaltarItens ?? this.indiceRiscoFaltarItens,
+      indiceRiscoFaltarItens:
+          indiceRiscoFaltarItens ?? this.indiceRiscoFaltarItens,
       indiceConforto: indiceConforto ?? this.indiceConforto,
       custoTotalEstimado: custoTotalEstimado ?? this.custoTotalEstimado,
-      orcamentoDisponivel:
-          limparOrcamentoDisponivel ? null : (orcamentoDisponivel ?? this.orcamentoDisponivel),
+      orcamentoDisponivel: limparOrcamentoDisponivel
+          ? null
+          : (orcamentoDisponivel ?? this.orcamentoDisponivel),
       diferencaOrcamento: diferencaOrcamento ?? this.diferencaOrcamento,
       dataAnalise: dataAnalise ?? this.dataAnalise,
       sugestoes: sugestoes ?? this.sugestoes,
@@ -484,14 +494,17 @@ class AnaliseCalculadoraIAModel {
       versaoPrompt: versaoPrompt ?? this.versaoPrompt,
       nomePrompt: nomePrompt ?? this.nomePrompt,
       modeloIAUtilizado: modeloIAUtilizado ?? this.modeloIAUtilizado,
-      idsSugestoesBaseUtilizadas: idsSugestoesBaseUtilizadas ?? this.idsSugestoesBaseUtilizadas,
+      idsSugestoesBaseUtilizadas:
+          idsSugestoesBaseUtilizadas ?? this.idsSugestoesBaseUtilizadas,
       versoesSugestoesBaseUtilizadas:
           versoesSugestoesBaseUtilizadas ?? this.versoesSugestoesBaseUtilizadas,
       totalSugestoesBaseUtilizadas:
           totalSugestoesBaseUtilizadas ?? this.totalSugestoesBaseUtilizadas,
-      dataProcessamento:
-          limparDataProcessamento ? null : (dataProcessamento ?? this.dataProcessamento),
-      diagnosticoFinanceiro: diagnosticoFinanceiro ?? this.diagnosticoFinanceiro,
+      dataProcessamento: limparDataProcessamento
+          ? null
+          : (dataProcessamento ?? this.dataProcessamento),
+      diagnosticoFinanceiro:
+          diagnosticoFinanceiro ?? this.diagnosticoFinanceiro,
       diagnosticoConsumo: diagnosticoConsumo ?? this.diagnosticoConsumo,
       recomendacaoFinal: recomendacaoFinal ?? this.recomendacaoFinal,
       pontosDeAtencao: pontosDeAtencao ?? this.pontosDeAtencao,

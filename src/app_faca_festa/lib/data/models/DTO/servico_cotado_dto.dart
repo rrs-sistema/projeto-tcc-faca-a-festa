@@ -18,7 +18,8 @@ class ServicoCotadoDto {
         'valor': valor,
       };
 
-  factory ServicoCotadoDto.fromMap(Map<String, dynamic> map) => ServicoCotadoDto(
+  factory ServicoCotadoDto.fromMap(Map<String, dynamic> map) =>
+      ServicoCotadoDto(
         idProduto: map['id_produto'],
         nomeProduto: map['nome_produto'],
         quantidade: map['quantidade'] ?? 1,

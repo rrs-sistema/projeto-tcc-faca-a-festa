@@ -4,8 +4,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import '../../../core/utils/form_masks.dart';
 import '../../../core/utils/form_validators.dart';
 import '../../../data/models/model.dart';
@@ -36,7 +37,8 @@ Future<void> showNovoOrcamentoBottomSheet({
   const textDark = Color(0xFF1F2937);
   const textMuted = Color(0xFF64748B);
 
-  void showSnack({required String title, required String message, required Color color}) {
+  void showSnack(
+      {required String title, required String message, required Color color}) {
     Get.snackbar(
       title,
       message,
@@ -61,14 +63,18 @@ Future<void> showNovoOrcamentoBottomSheet({
     try {
       salvando.value = true;
 
-      final valorDigitado = FormValidators.parseDinheiro(valorEstimadoCtrl.text);
-      final precoBase = servicoFornecedor.precoPromocao ?? servicoFornecedor.preco;
+      final valorDigitado =
+          FormValidators.parseDinheiro(valorEstimadoCtrl.text);
+      final precoBase =
+          servicoFornecedor.precoPromocao ?? servicoFornecedor.preco;
       final valorFinal = valorDigitado > 0 ? valorDigitado : precoBase;
 
       final orcamento = OrcamentoModel(
         idOrcamento: uuid.v4(),
         idEvento: idEvento,
         idServicoFornecido: servicoFornecedor.id,
+        idFornecedor: idFornecedor,
+        idSolicitante: Get.find<AppController>().usuarioLogado.value?.idUsuario,
         custoEstimado: valorFinal,
         anotacoes: anotacoesCtrl.text.trim(),
         orcamentoFechado: false,
@@ -82,9 +88,15 @@ Future<void> showNovoOrcamentoBottomSheet({
         Navigator.of(modalContext).pop();
       }
 
-      showSnack(title: 'Orçamento solicitado', message: servicoProduto.nome, color: primary);
+      showSnack(
+          title: 'Orçamento solicitado',
+          message: servicoProduto.nome,
+          color: primary);
     } catch (e) {
-      showSnack(title: 'Erro', message: 'Não foi possível solicitar: $e', color: Colors.redAccent);
+      showSnack(
+          title: 'Erro',
+          message: 'Não foi possível solicitar: $e',
+          color: Colors.redAccent);
     } finally {
       salvando.value = false;
     }
@@ -96,7 +108,8 @@ Future<void> showNovoOrcamentoBottomSheet({
         width: 40,
         height: 4,
         decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.55), borderRadius: BorderRadius.circular(999)),
+            color: Colors.white.withValues(alpha: 0.55),
+            borderRadius: BorderRadius.circular(999)),
       ),
     );
   }
@@ -122,7 +135,8 @@ Future<void> showNovoOrcamentoBottomSheet({
                 decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: 0.18),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.30)),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.30)),
                 ),
                 child: const Icon(
                   Icons.request_quote_rounded,
@@ -162,7 +176,8 @@ Future<void> showNovoOrcamentoBottomSheet({
     );
   }
 
-  Widget buildSectionTitle({required IconData icon, required String title, String? subtitle}) {
+  Widget buildSectionTitle(
+      {required IconData icon, required String title, String? subtitle}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -172,7 +187,8 @@ Future<void> showNovoOrcamentoBottomSheet({
             width: 28,
             height: 28,
             decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(8)),
+                color: primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(8)),
             child: Icon(icon, color: primary, size: 16),
           ),
           const SizedBox(width: 8),
@@ -182,7 +198,9 @@ Future<void> showNovoOrcamentoBottomSheet({
               children: [
                 Text(title,
                     style: GoogleFonts.poppins(
-                        color: textDark, fontSize: 13, fontWeight: FontWeight.w800)),
+                        color: textDark,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800)),
                 if (subtitle != null) ...[
                   const SizedBox(height: 2),
                   Text(subtitle,
@@ -233,19 +251,23 @@ Future<void> showNovoOrcamentoBottomSheet({
         maxLines: maxLines,
         inputFormatters: inputFormatters,
         validator: validator,
-        style: GoogleFonts.poppins(color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
+        style: GoogleFonts.poppins(
+            color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
           labelText: label,
           hintText: hint,
           helperText: helperText,
           helperMaxLines: 2,
-          helperStyle:
-              GoogleFonts.poppins(color: textMuted, fontSize: 10, fontWeight: FontWeight.w500),
-          labelStyle:
-              GoogleFonts.poppins(color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
-          hintStyle: GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
+          helperStyle: GoogleFonts.poppins(
+              color: textMuted, fontSize: 10, fontWeight: FontWeight.w500),
+          labelStyle: GoogleFonts.poppins(
+              color: textMuted, fontSize: 12, fontWeight: FontWeight.w500),
+          hintStyle:
+              GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
           prefixIcon: Column(
-            mainAxisAlignment: maxLines > 1 ? MainAxisAlignment.start : MainAxisAlignment.center,
+            mainAxisAlignment: maxLines > 1
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
@@ -256,7 +278,8 @@ Future<void> showNovoOrcamentoBottomSheet({
           ),
           filled: true,
           fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
               borderSide: BorderSide(color: Colors.grey.shade200)),
@@ -268,7 +291,8 @@ Future<void> showNovoOrcamentoBottomSheet({
               borderSide: const BorderSide(color: Colors.redAccent)),
           focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Colors.redAccent, width: 1.2)),
+              borderSide:
+                  const BorderSide(color: Colors.redAccent, width: 1.2)),
           errorStyle: const TextStyle(fontSize: 11, height: 0.9),
           errorMaxLines: 2,
         ),
@@ -301,7 +325,8 @@ Future<void> showNovoOrcamentoBottomSheet({
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-                color: primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10)),
+                color: primary.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10)),
             child: Icon(Icons.inventory_2_outlined, color: primary, size: 18),
           ),
           const SizedBox(width: 10),
@@ -312,13 +337,17 @@ Future<void> showNovoOrcamentoBottomSheet({
                 Text(
                   servicoProduto.nome,
                   style: GoogleFonts.poppins(
-                      color: textDark, fontSize: 13, fontWeight: FontWeight.w800),
+                      color: textDark,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   servicoProduto.descricao ?? 'Sem detalhes fornecidos.',
                   style: GoogleFonts.poppins(
-                      color: textMuted, fontSize: 10, fontWeight: FontWeight.w500),
+                      color: textMuted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 8),
                 Row(
@@ -327,12 +356,16 @@ Future<void> showNovoOrcamentoBottomSheet({
                     Text(
                       "Unid: ${servicoProduto.tipoMedida ?? 'N/A'}",
                       style: GoogleFonts.poppins(
-                          color: textMuted, fontSize: 11, fontWeight: FontWeight.w600),
+                          color: textMuted,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600),
                     ),
                     Text(
                       "R\$ ${preco.toStringAsFixed(2)}",
                       style: GoogleFonts.poppins(
-                          color: primary, fontSize: 13, fontWeight: FontWeight.w800),
+                          color: primary,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800),
                     ),
                   ],
                 ),
@@ -360,7 +393,9 @@ Future<void> showNovoOrcamentoBottomSheet({
             return Container(
               clipBehavior: Clip.antiAlias,
               decoration: const BoxDecoration(
-                  color: background, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+                  color: background,
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(24))),
               child: Column(
                 children: [
                   buildHeader(),
@@ -369,101 +404,112 @@ Future<void> showNovoOrcamentoBottomSheet({
                       key: formKey,
                       autovalidateMode: AutovalidateMode.onUserInteraction,
                       child: ListView(
-                      controller: controllerScroll,
-                      padding: EdgeInsets.fromLTRB(
-                          16, 16, 16, MediaQuery.of(modalContext).viewInsets.bottom + 16),
-                      children: [
-                        buildSectionTitle(
-                          icon: Icons.info_outline_rounded,
-                          title: 'Detalhes do Serviço',
-                        ),
-                        buildServiceCard(),
-                        const SizedBox(height: 10),
-                        buildSectionTitle(
-                            icon: Icons.edit_note_rounded, title: 'Valores e Observações'),
-                        buildTextField(
-                          controller: anotacoesCtrl,
-                          label: 'Observações (opcional)',
-                          hint: 'Detalhes, data ou preferências do pedido',
-                          helperText: 'Opcional. Se informar, use pelo menos 3 caracteres.',
-                          icon: Icons.notes_outlined,
-                          textCapitalization: TextCapitalization.sentences,
-                          maxLines: 3,
-                          textInputAction: TextInputAction.newline,
-                          validator: (v) => FormValidators.descricao(
-                            v,
-                            campo: 'as observações',
-                            obrigatorio: false,
-                            minimo: 3,
-                            maximo: 500,
+                        controller: controllerScroll,
+                        padding: EdgeInsets.fromLTRB(16, 16, 16,
+                            MediaQuery.of(modalContext).viewInsets.bottom + 16),
+                        children: [
+                          buildSectionTitle(
+                            icon: Icons.info_outline_rounded,
+                            title: 'Detalhes do Serviço',
                           ),
-                        ),
-                        buildTextField(
-                          controller: valorEstimadoCtrl,
-                          label: 'Valor estimado (opcional)',
-                          hint: 'R\$ 0,00',
-                          helperText:
-                              'Se não informar, usamos o preço do serviço.',
-                          icon: Icons.attach_money_rounded,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          textInputAction: TextInputAction.done,
-                          inputFormatters: [dinheiroMask],
-                          validator: (v) => FormValidators.dinheiro(
-                            v,
-                            obrigatorio: false,
-                            campo: 'o valor estimado',
+                          buildServiceCard(),
+                          const SizedBox(height: 10),
+                          buildSectionTitle(
+                              icon: Icons.edit_note_rounded,
+                              title: 'Valores e Observações'),
+                          buildTextField(
+                            controller: anotacoesCtrl,
+                            label: 'Observações (opcional)',
+                            hint: 'Detalhes, data ou preferências do pedido',
+                            helperText:
+                                'Opcional. Se informar, use pelo menos 3 caracteres.',
+                            icon: Icons.notes_outlined,
+                            textCapitalization: TextCapitalization.sentences,
+                            maxLines: 3,
+                            textInputAction: TextInputAction.newline,
+                            validator: (v) => FormValidators.descricao(
+                              v,
+                              campo: 'as observações',
+                              obrigatorio: false,
+                              minimo: 3,
+                              maximo: 500,
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
-                        Obx(() {
-                          final isSaving = salvando.value;
-                          return SizedBox(
+                          buildTextField(
+                            controller: valorEstimadoCtrl,
+                            label: 'Valor estimado (opcional)',
+                            hint: 'R\$ 0,00',
+                            helperText:
+                                'Se não informar, usamos o preço do serviço.',
+                            icon: Icons.attach_money_rounded,
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
+                            textInputAction: TextInputAction.done,
+                            inputFormatters: [dinheiroMask],
+                            validator: (v) => FormValidators.dinheiro(
+                              v,
+                              obrigatorio: false,
+                              campo: 'o valor estimado',
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Obx(() {
+                            final isSaving = salvando.value;
+                            return SizedBox(
+                              width: double.infinity,
+                              height: 44,
+                              child: ElevatedButton.icon(
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    disabledBackgroundColor:
+                                        primary.withValues(alpha: 0.45),
+                                    shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(14))),
+                                onPressed: isSaving
+                                    ? null
+                                    : () => salvarOrcamento(modalContext),
+                                icon: isSaving
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: Colors.white))
+                                    : const Icon(Icons.send_rounded,
+                                        color: Colors.white, size: 18),
+                                label: Text(
+                                    isSaving ? 'Enviando...' : 'Solicitar',
+                                    style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w800)),
+                              ),
+                            );
+                          }),
+                          const SizedBox(height: 6),
+                          SizedBox(
                             width: double.infinity,
                             height: 44,
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                  backgroundColor: primary,
-                                  disabledBackgroundColor: primary.withValues(alpha: 0.45),
+                            child: TextButton.icon(
+                              onPressed: () {
+                                FocusManager.instance.primaryFocus?.unfocus();
+                                Navigator.of(modalContext).pop();
+                              },
+                              icon: const Icon(Icons.close_rounded, size: 18),
+                              label: Text('Cancelar',
+                                  style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13)),
+                              style: TextButton.styleFrom(
+                                  foregroundColor: textMuted,
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14))),
-                              onPressed: isSaving ? null : () => salvarOrcamento(modalContext),
-                              icon: isSaving
-                                  ? const SizedBox(
-                                      width: 16,
-                                      height: 16,
-                                      child: CircularProgressIndicator(
-                                          strokeWidth: 2, color: Colors.white))
-                                  : const Icon(Icons.send_rounded, color: Colors.white, size: 18),
-                              label: Text(isSaving ? 'Enviando...' : 'Solicitar',
-                                  style: GoogleFonts.poppins(
-                                      color: Colors.white,
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800)),
                             ),
-                          );
-                        }),
-                        const SizedBox(height: 6),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 44,
-                          child: TextButton.icon(
-                            onPressed: () {
-                              FocusManager.instance.primaryFocus?.unfocus();
-                              Navigator.of(modalContext).pop();
-                            },
-                            icon: const Icon(Icons.close_rounded, size: 18),
-                            label: Text('Cancelar',
-                                style:
-                                    GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 13)),
-                            style: TextButton.styleFrom(
-                                foregroundColor: textMuted,
-                                shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14))),
                           ),
-                        ),
-                        const SizedBox(height: 35),
-                      ],
-                    ),
+                          const SizedBox(height: 35),
+                        ],
+                      ),
                     ),
                   ),
                 ],

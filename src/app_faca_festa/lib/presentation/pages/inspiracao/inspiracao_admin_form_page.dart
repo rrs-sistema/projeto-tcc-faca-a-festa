@@ -6,7 +6,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../controllers/inspiracao/inspiracao_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_admin_controller.dart';
 import '../../../core/utils/form_validators.dart';
 import './../../../data/models/model.dart';
 
@@ -23,7 +23,8 @@ class InspiracaoAdminFormPage extends StatefulWidget {
   });
 
   @override
-  State<InspiracaoAdminFormPage> createState() => _InspiracaoAdminFormPageState();
+  State<InspiracaoAdminFormPage> createState() =>
+      _InspiracaoAdminFormPageState();
 }
 
 class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
@@ -164,12 +165,11 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   void initState() {
     super.initState();
 
-    controller = Get.isRegistered<InspiracaoAdminController>()
-        ? Get.find<InspiracaoAdminController>()
-        : Get.put(InspiracaoAdminController());
+    controller = Get.find<InspiracaoAdminController>();
 
     final arguments = Get.arguments;
-    _inspiracaoInicial = widget.inspiracao ?? (arguments is InspiracaoModel ? arguments : null);
+    _inspiracaoInicial =
+        widget.inspiracao ?? (arguments is InspiracaoModel ? arguments : null);
 
     _inicializarControllers();
     _popularCampos();
@@ -207,10 +207,12 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
 
   void _popularCampos() {
     final inspiracao = _inspiracaoInicial;
-    final data =
-        inspiracao == null ? <String, dynamic>{} : controller.dadosDaInspiracao(inspiracao.id);
+    final data = inspiracao == null
+        ? <String, dynamic>{}
+        : controller.dadosDaInspiracao(inspiracao.id);
 
-    _tituloController.text = _readString(data, 'titulo', fallback: inspiracao?.titulo ?? '');
+    _tituloController.text =
+        _readString(data, 'titulo', fallback: inspiracao?.titulo ?? '');
     _descricaoController.text = _readString(
       data,
       'descricao',
@@ -231,13 +233,15 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       'imagemUrl',
       fallback: inspiracao?.imagemUrl ?? '',
     );
-    _galeriaUrlsController.text = _readStringList(data, 'galeriaUrls').join('\n');
+    _galeriaUrlsController.text =
+        _readStringList(data, 'galeriaUrls').join('\n');
     _tagsController.text = _readStringList(
       data,
       'tags',
       fallback: inspiracao?.tags ?? const <String>[],
     ).join(', ');
-    _paletaCoresController.text = _readStringList(data, 'paletaCores').join(', ');
+    _paletaCoresController.text =
+        _readStringList(data, 'paletaCores').join(', ');
     _estiloController.text = _readString(data, 'estilo');
     _faixaCustoController.text = _readString(data, 'faixaCusto');
     _nivelDificuldadeController.text = _readString(data, 'nivelDificuldade');
@@ -259,12 +263,17 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       'tipoEventoNormalizado',
       fallback: inspiracao?.tipoEventoNormalizado ?? '',
     );
-    _tipoEventoIdsController.text = _readStringList(data, 'tipoEventoIds').join(', ');
-    _tipoEventoSlugsController.text = _readStringList(data, 'tipoEventoSlugs').join(', ');
-    _tipoEventoNomesController.text = _readStringList(data, 'tipoEventoNomes').join(', ');
+    _tipoEventoIdsController.text =
+        _readStringList(data, 'tipoEventoIds').join(', ');
+    _tipoEventoSlugsController.text =
+        _readStringList(data, 'tipoEventoSlugs').join(', ');
+    _tipoEventoNomesController.text =
+        _readStringList(data, 'tipoEventoNomes').join(', ');
 
-    _tarefasSugeridasController.text = _formatarTarefas(_readMapList(data, 'tarefasSugeridas'));
-    controller.prepararTarefasSugeridasFormulario(_readMapList(data, 'tarefasSugeridas'));
+    _tarefasSugeridasController.text =
+        _formatarTarefas(_readMapList(data, 'tarefasSugeridas'));
+    controller.prepararTarefasSugeridasFormulario(
+        _readMapList(data, 'tarefasSugeridas'));
     _itensOrcamentoSugeridosController.text = _formatarItensOrcamento(
       _readMapList(data, 'itensOrcamentoSugeridos'),
     );
@@ -290,9 +299,11 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     final nomes = _readStringList(data, 'tipoEventoNomes');
 
     for (final option in _tiposEventoPadrao) {
-      final selecionadoPorId = ids.contains(option.id) || idPrincipal == option.id;
+      final selecionadoPorId =
+          ids.contains(option.id) || idPrincipal == option.id;
       final selecionadoPorSlug = slugs.map(_normalizeKey).contains(option.slug);
-      final selecionadoPorNome = nomes.map(_normalizeKey).contains(_normalizeKey(option.nome));
+      final selecionadoPorNome =
+          nomes.map(_normalizeKey).contains(_normalizeKey(option.nome));
       if (selecionadoPorId || selecionadoPorSlug || selecionadoPorNome) {
         _tipoEventoIdsSelecionados.add(option.id);
       }
@@ -349,7 +360,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   }
 
   void _sincronizarGaleriaFormulario() {
-    controller.atualizarGaleriaUrlsFormulario(_parseStringList(_galeriaUrlsController.text));
+    controller.atualizarGaleriaUrlsFormulario(
+        _parseStringList(_galeriaUrlsController.text));
   }
 
   @override
@@ -391,7 +403,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
             return Form(
               key: _formKey,
               child: SingleChildScrollView(
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
                 padding: EdgeInsets.fromLTRB(
                   horizontal,
                   16,
@@ -409,7 +422,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                         _FormSection(
                           icon: Icons.article_outlined,
                           title: 'Dados principais',
-                          subtitle: 'Informações básicas exibidas para o organizador do evento.',
+                          subtitle:
+                              'Informações básicas exibidas para o organizador do evento.',
                           child: Column(
                             children: [
                               _responsiveFields(
@@ -418,11 +432,13 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                   _buildTextField(
                                     controller: _tituloController,
                                     label: 'Título da inspiração',
-                                    hint: 'Ex.: Mesa provençal rosa com dourado',
+                                    hint:
+                                        'Ex.: Mesa provençal rosa com dourado',
                                     icon: Icons.title_rounded,
                                     requiredField: true,
-                                    validator: (value) =>
-                                        FormValidators.titulo(value, campo: 'o título'),
+                                    validator: (value) => FormValidators.titulo(
+                                        value,
+                                        campo: 'o título'),
                                   ),
                                   _buildTextField(
                                     controller: _categoriaController,
@@ -430,7 +446,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                     hint: 'Ex.: Decoração',
                                     icon: Icons.category_outlined,
                                     requiredField: true,
-                                    validator: (value) => FormValidators.obrigatorio(
+                                    validator: (value) =>
+                                        FormValidators.obrigatorio(
                                       value,
                                       campo: 'a categoria',
                                     ),
@@ -447,7 +464,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                     hint: 'Ex.: 1',
                                     icon: Icons.sort_rounded,
                                     keyboardType: TextInputType.number,
-                                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                    inputFormatters: [
+                                      FilteringTextInputFormatter.digitsOnly
+                                    ],
                                   ),
                                 ],
                               ),
@@ -455,7 +474,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                               _buildTextField(
                                 controller: _descricaoController,
                                 label: 'Descrição',
-                                hint: 'Descreva a ideia, quando usar e quais detalhes ela sugere.',
+                                hint:
+                                    'Descreva a ideia, quando usar e quais detalhes ela sugere.',
                                 icon: Icons.notes_rounded,
                                 minLines: 4,
                                 maxLines: 8,
@@ -467,7 +487,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                         _FormSection(
                           icon: Icons.image_outlined,
                           title: 'Imagem e galeria',
-                          subtitle: 'Cadastre a imagem principal e URLs extras de referência.',
+                          subtitle:
+                              'Cadastre a imagem principal e URLs extras de referência.',
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -510,7 +531,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               _buildTipoEventoChips(),
-                              if (_tentouSalvar && !_possuiTipoEventoValido()) ...[
+                              if (_tentouSalvar &&
+                                  !_possuiTipoEventoValido()) ...[
                                 const SizedBox(height: 10),
                                 _buildInlineWarning(
                                   'Selecione pelo menos um tipo de evento ou preencha os campos de tipo manualmente.',
@@ -535,7 +557,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                     icon: Icons.key_rounded,
                                   ),
                                   _buildTextField(
-                                    controller: _tipoEventoNormalizadoController,
+                                    controller:
+                                        _tipoEventoNormalizadoController,
                                     label: 'Tipo normalizado',
                                     hint: 'Ex.: casamento',
                                     icon: Icons.data_object_rounded,
@@ -567,7 +590,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                         _FormSection(
                           icon: Icons.tune_rounded,
                           title: 'Classificação',
-                          subtitle: 'Dados usados para busca, filtros e experiência personalizada.',
+                          subtitle:
+                              'Dados usados para busca, filtros e experiência personalizada.',
                           child: Column(
                             children: [
                               _responsiveFields(
@@ -624,13 +648,15 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 isWide: isWide,
                                 children: [
                                   _buildTextField(
-                                    controller: _categoriasFornecedorSugeridasController,
+                                    controller:
+                                        _categoriasFornecedorSugeridasController,
                                     label: 'Categorias de fornecedor sugeridas',
                                     hint: 'Decoração, Buffet, Fotografia',
                                     icon: Icons.storefront_outlined,
                                   ),
                                   _buildTextField(
-                                    controller: _fornecedoresRelacionadosController,
+                                    controller:
+                                        _fornecedoresRelacionadosController,
                                     label: 'Fornecedores relacionados',
                                     hint: 'Um ID, nome ou referência por linha',
                                     icon: Icons.handshake_outlined,
@@ -646,7 +672,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                         _FormSection(
                           icon: Icons.public_rounded,
                           title: 'Publicação',
-                          subtitle: 'Controle de disponibilidade da inspiração no app público.',
+                          subtitle:
+                              'Controle de disponibilidade da inspiração no app público.',
                           child: _buildPublicacaoCards(isWide: isWide),
                         ),
                       ],
@@ -689,7 +716,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: Colors.white.withValues(alpha: 0.24)),
             ),
-            child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 28),
+            child: const Icon(Icons.auto_awesome_rounded,
+                color: Colors.white, size: 28),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -697,7 +725,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _isEdicao ? 'Editar inspiração pública' : 'Cadastrar inspiração pública',
+                  _isEdicao
+                      ? 'Editar inspiração pública'
+                      : 'Cadastrar inspiração pública',
                   style: GoogleFonts.poppins(
                     color: Colors.white,
                     fontWeight: FontWeight.w800,
@@ -739,7 +769,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
           ],
         ),
         child: Obx(() {
-          final salvando = controller.salvando.value || controller.enviandoImagem.value;
+          final salvando =
+              controller.salvando.value || controller.enviandoImagem.value;
           final compact = MediaQuery.sizeOf(context).width < 520;
 
           final cancelar = OutlinedButton.icon(
@@ -747,7 +778,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
             style: OutlinedButton.styleFrom(
               foregroundColor: _dark,
               side: BorderSide(color: _dark.withValues(alpha: 0.16)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
             ),
             icon: const Icon(Icons.close_rounded, size: 18),
@@ -759,14 +791,16 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
             style: FilledButton.styleFrom(
               backgroundColor: _primary,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
             ),
             icon: salvando
                 ? const SizedBox(
                     width: 18,
                     height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
                   )
                 : const Icon(Icons.save_rounded, size: 18),
             label: Text(salvando ? 'Salvando...' : 'Salvar'),
@@ -852,7 +886,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       keyboardType: keyboardType,
       validator: validator,
       inputFormatters: inputFormatters,
-      textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
+      textInputAction:
+          maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
       style: GoogleFonts.poppins(
         fontSize: 13.5,
         fontWeight: FontWeight.w600,
@@ -865,7 +900,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
         filled: true,
         fillColor: Colors.white,
         alignLabelWithHint: maxLines > 1,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         labelStyle: GoogleFonts.poppins(
           color: _muted,
           fontWeight: FontWeight.w600,
@@ -919,7 +955,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.checklist_rounded, color: _primary, size: 21),
+                  child: const Icon(Icons.checklist_rounded,
+                      color: _primary, size: 21),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -950,8 +987,10 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                   style: FilledButton.styleFrom(
                     backgroundColor: _primary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                   icon: const Icon(Icons.add_rounded, size: 18),
                   label: const Text('Adicionar'),
@@ -970,7 +1009,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                 onReorder: controller.reordenarTarefaSugerida,
                 itemBuilder: (context, index) {
                   final tarefa = tarefas[index];
-                  final key = ValueKey('tarefa_${index}_${tarefa['titulo']}_${tarefa['ordem']}');
+                  final key = ValueKey(
+                      'tarefa_${index}_${tarefa['titulo']}_${tarefa['ordem']}');
 
                   return _buildTarefaSugeridaTile(
                     key: key,
@@ -979,7 +1019,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                   );
                 },
               ),
-            if (_tentouSalvar && controller.validarTarefasSugeridasFormulario() != null) ...[
+            if (_tentouSalvar &&
+                controller.validarTarefasSugeridasFormulario() != null) ...[
               const SizedBox(height: 10),
               _buildInlineWarning(
                 controller.validarTarefasSugeridasFormulario()!,
@@ -1010,7 +1051,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
               color: _warning.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.info_outline_rounded, color: _warning, size: 20),
+            child: const Icon(Icons.info_outline_rounded,
+                color: _warning, size: 20),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1034,7 +1076,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     required int index,
     required Map<String, dynamic> tarefa,
   }) {
-    final titulo = _readString(tarefa, 'titulo', fallback: _readString(tarefa, 'nome'));
+    final titulo =
+        _readString(tarefa, 'titulo', fallback: _readString(tarefa, 'nome'));
     final descricao = _readString(tarefa, 'descricao');
     final categoria = _readString(tarefa, 'categoria', fallback: 'Geral');
     final prioridade = _readString(tarefa, 'prioridade', fallback: 'media');
@@ -1069,7 +1112,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                 color: _surface,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.drag_indicator_rounded, color: _muted, size: 20),
+              child: const Icon(Icons.drag_indicator_rounded,
+                  color: _muted, size: 20),
             ),
           ),
           const SizedBox(width: 10),
@@ -1118,8 +1162,10 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                   runSpacing: 6,
                   children: [
                     _MiniBadge(text: categoria, color: _info),
-                    _MiniBadge(text: '$diasAntesEvento dias antes', color: _secondary),
-                    _MiniBadge(text: 'Prioridade $prioridade', color: prioridadeColor),
+                    _MiniBadge(
+                        text: '$diasAntesEvento dias antes', color: _secondary),
+                    _MiniBadge(
+                        text: 'Prioridade $prioridade', color: prioridadeColor),
                     _MiniBadge(text: 'Ordem ${index + 1}', color: _muted),
                   ],
                 ),
@@ -1129,7 +1175,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
           const SizedBox(width: 8),
           PopupMenuButton<String>(
             tooltip: 'Ações da tarefa',
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             onSelected: (value) {
               if (value == 'editar') {
                 _abrirTarefaSugeridaDialog(index: index, tarefa: tarefa);
@@ -1152,7 +1199,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                 value: 'remover',
                 child: Row(
                   children: [
-                    const Icon(Icons.delete_outline_rounded, size: 18, color: _danger),
+                    const Icon(Icons.delete_outline_rounded,
+                        size: 18, color: _danger),
                     const SizedBox(width: 8),
                     Text(
                       'Remover',
@@ -1195,7 +1243,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.receipt_long_rounded, color: _secondary, size: 21),
+                  child: const Icon(Icons.receipt_long_rounded,
+                      color: _secondary, size: 21),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -1226,8 +1275,10 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                   style: FilledButton.styleFrom(
                     backgroundColor: _secondary,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                   icon: const Icon(Icons.add_rounded, size: 18),
                   label: const Text('Adicionar'),
@@ -1246,7 +1297,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                 onReorder: controller.reordenarItemOrcamentoSugerido,
                 itemBuilder: (context, index) {
                   final item = itens[index];
-                  final key = ValueKey('item_orcamento_${index}_${item['item']}_${item['ordem']}');
+                  final key = ValueKey(
+                      'item_orcamento_${index}_${item['item']}_${item['ordem']}');
 
                   return _buildItemOrcamentoSugeridoTile(
                     key: key,
@@ -1255,7 +1307,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                   );
                 },
               ),
-            if (_tentouSalvar && controller.validarItensOrcamentoSugeridosFormulario() != null) ...[
+            if (_tentouSalvar &&
+                controller.validarItensOrcamentoSugeridosFormulario() !=
+                    null) ...[
               const SizedBox(height: 10),
               _buildInlineWarning(
                 controller.validarItensOrcamentoSugeridosFormulario()!,
@@ -1286,7 +1340,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
               color: _info.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.info_outline_rounded, color: _info, size: 20),
+            child:
+                const Icon(Icons.info_outline_rounded, color: _info, size: 20),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1311,7 +1366,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     required Map<String, dynamic> item,
   }) {
     final categoria = _readString(item, 'categoria', fallback: 'Geral');
-    final nomeItem = _readString(item, 'item', fallback: _readString(item, 'nome'));
+    final nomeItem =
+        _readString(item, 'item', fallback: _readString(item, 'nome'));
     final descricao = _readString(item, 'descricao');
     final custoEstimado = _readDouble(item, 'custoEstimado');
     final custoMinimo = _readDouble(item, 'custoMinimo');
@@ -1343,7 +1399,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                 color: _surface,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.drag_indicator_rounded, color: _muted, size: 20),
+              child: const Icon(Icons.drag_indicator_rounded,
+                  color: _muted, size: 20),
             ),
           ),
           const SizedBox(width: 10),
@@ -1378,7 +1435,10 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                   spacing: 6,
                   runSpacing: 6,
                   children: [
-                    _MiniBadge(text: categoria, color: _secondary, icon: Icons.category_outlined),
+                    _MiniBadge(
+                        text: categoria,
+                        color: _secondary,
+                        icon: Icons.category_outlined),
                     _MiniBadge(
                         text: _formatarMoeda(custoEstimado),
                         color: _success,
@@ -1395,7 +1455,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                       ),
                     if (custoMinimo > 0 || custoMaximo > 0)
                       _MiniBadge(
-                        text: '${_formatarMoeda(custoMinimo)} - ${_formatarMoeda(custoMaximo)}',
+                        text:
+                            '${_formatarMoeda(custoMinimo)} - ${_formatarMoeda(custoMaximo)}',
                         color: _muted,
                         icon: Icons.price_change_outlined,
                       ),
@@ -1421,7 +1482,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
           const SizedBox(width: 8),
           PopupMenuButton<String>(
             tooltip: 'Ações do item',
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
             onSelected: (value) {
               if (value == 'editar') {
                 _abrirItemOrcamentoSugeridoDialog(index: index, item: item);
@@ -1436,7 +1498,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                   children: [
                     const Icon(Icons.edit_outlined, size: 18),
                     const SizedBox(width: 8),
-                    Text('Editar', style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    Text('Editar',
+                        style:
+                            GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -1444,11 +1508,13 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                 value: 'remover',
                 child: Row(
                   children: [
-                    const Icon(Icons.delete_outline_rounded, size: 18, color: _danger),
+                    const Icon(Icons.delete_outline_rounded,
+                        size: 18, color: _danger),
                     const SizedBox(width: 8),
                     Text(
                       'Remover',
-                      style: GoogleFonts.poppins(color: _danger, fontWeight: FontWeight.w600),
+                      style: GoogleFonts.poppins(
+                          color: _danger, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -1473,30 +1539,35 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       text: _readString(tarefa ?? const <String, dynamic>{}, 'descricao'),
     );
     final diasController = TextEditingController(
-      text:
-          _readInt(tarefa ?? const <String, dynamic>{}, 'diasAntesEvento', fallback: 30).toString(),
+      text: _readInt(tarefa ?? const <String, dynamic>{}, 'diasAntesEvento',
+              fallback: 30)
+          .toString(),
     );
     final ordemController = TextEditingController(
       text: _readInt(tarefa ?? const <String, dynamic>{}, 'ordem',
-              fallback: (index ?? controller.tarefasSugeridasFormulario.length) + 1)
+              fallback:
+                  (index ?? controller.tarefasSugeridasFormulario.length) + 1)
           .toString(),
     );
 
-    var categoria = _readString(tarefa ?? const <String, dynamic>{}, 'categoria',
+    var categoria = _readString(
+        tarefa ?? const <String, dynamic>{}, 'categoria',
         fallback: _categoriaController.text.trim());
     if (!_categoriasTarefaSugerida.contains(categoria)) {
       categoria = categoria.isEmpty ? 'Geral' : categoria;
     }
 
-    var prioridade =
-        _readString(tarefa ?? const <String, dynamic>{}, 'prioridade', fallback: 'media')
-            .toLowerCase();
+    var prioridade = _readString(
+            tarefa ?? const <String, dynamic>{}, 'prioridade',
+            fallback: 'media')
+        .toLowerCase();
     if (!_prioridadesTarefaSugerida.contains(prioridade)) {
       prioridade = 'media';
     }
 
-    var obrigatoria =
-        _readBool(tarefa ?? const <String, dynamic>{}, 'obrigatoria', fallback: false);
+    var obrigatoria = _readBool(
+        tarefa ?? const <String, dynamic>{}, 'obrigatoria',
+        fallback: false);
 
     try {
       await Get.dialog<void>(
@@ -1510,13 +1581,16 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                 horizontal: compact ? 12 : 24,
                 vertical: 18,
               ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(26)),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 720),
                 child: Padding(
-                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                  padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom),
                   child: SingleChildScrollView(
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.all(18),
                     child: Form(
                       key: formKey,
@@ -1530,10 +1604,12 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  gradient: const LinearGradient(colors: [_primary, _secondary]),
+                                  gradient: const LinearGradient(
+                                      colors: [_primary, _secondary]),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: const Icon(Icons.checklist_rounded, color: Colors.white),
+                                child: const Icon(Icons.checklist_rounded,
+                                    color: Colors.white),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -1580,7 +1656,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                           _buildTextField(
                             controller: descricaoController,
                             label: 'Descrição',
-                            hint: 'Ex.: Enviar a referência visual para fornecedores.',
+                            hint:
+                                'Ex.: Enviar a referência visual para fornecedores.',
                             icon: Icons.description_outlined,
                             minLines: 3,
                             maxLines: 5,
@@ -1590,7 +1667,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                             isWide: !compact,
                             children: [
                               DropdownButtonFormField<String>(
-                                value: _categoriasTarefaSugerida.contains(categoria)
+                                value: _categoriasTarefaSugerida
+                                        .contains(categoria)
                                     ? categoria
                                     : 'Geral',
                                 decoration: _dropdownDecoration(
@@ -1606,7 +1684,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                     )
                                     .toList(),
                                 onChanged: (value) {
-                                  setDialogState(() => categoria = value ?? 'Geral');
+                                  setDialogState(
+                                      () => categoria = value ?? 'Geral');
                                 },
                               ),
                               DropdownButtonFormField<String>(
@@ -1624,7 +1703,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                     )
                                     .toList(),
                                 onChanged: (value) {
-                                  setDialogState(() => prioridade = value ?? 'media');
+                                  setDialogState(
+                                      () => prioridade = value ?? 'media');
                                 },
                               ),
                               _buildTextField(
@@ -1633,11 +1713,15 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 hint: 'Ex.: 45',
                                 icon: Icons.event_available_outlined,
                                 keyboardType: TextInputType.number,
-                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly
+                                ],
                                 validator: (value) {
                                   final text = (value ?? '').trim();
                                   if (text.isEmpty) return 'Informe os dias.';
-                                  if (int.tryParse(text) == null) return 'Use número inteiro.';
+                                  if (int.tryParse(text) == null) {
+                                    return 'Use número inteiro.';
+                                  }
                                   return null;
                                 },
                               ),
@@ -1647,11 +1731,15 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 hint: 'Ex.: 1',
                                 icon: Icons.sort_rounded,
                                 keyboardType: TextInputType.number,
-                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly
+                                ],
                                 validator: (value) {
                                   final text = (value ?? '').trim();
                                   if (text.isEmpty) return 'Informe a ordem.';
-                                  if (int.tryParse(text) == null) return 'Use número inteiro.';
+                                  if (int.tryParse(text) == null) {
+                                    return 'Use número inteiro.';
+                                  }
                                   return null;
                                 },
                               ),
@@ -1665,7 +1753,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                             icon: Icons.verified_rounded,
                             color: _primary,
                             value: obrigatoria,
-                            onChanged: (value) => setDialogState(() => obrigatoria = value),
+                            onChanged: (value) =>
+                                setDialogState(() => obrigatoria = value),
                           ),
                           const SizedBox(height: 18),
                           Row(
@@ -1675,12 +1764,16 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                   onPressed: () => Get.back(),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: _dark,
-                                    side: BorderSide(color: _dark.withValues(alpha: 0.16)),
+                                    side: BorderSide(
+                                        color: _dark.withValues(alpha: 0.16)),
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16)),
-                                    padding: const EdgeInsets.symmetric(vertical: 13),
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 13),
                                   ),
-                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  icon:
+                                      const Icon(Icons.close_rounded, size: 18),
                                   label: const Text('Cancelar'),
                                 ),
                               ),
@@ -1688,27 +1781,35 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                               Expanded(
                                 child: FilledButton.icon(
                                   onPressed: () {
-                                    if (!(formKey.currentState?.validate() ?? false)) {
+                                    if (!(formKey.currentState?.validate() ??
+                                        false)) {
                                       return;
                                     }
 
                                     final dados = <String, dynamic>{
                                       'titulo': tituloController.text.trim(),
-                                      'descricao': descricaoController.text.trim(),
+                                      'descricao':
+                                          descricaoController.text.trim(),
                                       'categoria': categoria,
-                                      'diasAntesEvento':
-                                          int.tryParse(diasController.text.trim()) ?? 30,
+                                      'diasAntesEvento': int.tryParse(
+                                              diasController.text.trim()) ??
+                                          30,
                                       'prioridade': prioridade,
                                       'obrigatoria': obrigatoria,
-                                      'ordem': int.tryParse(ordemController.text.trim()) ??
-                                          ((index ?? controller.tarefasSugeridasFormulario.length) +
+                                      'ordem': int.tryParse(
+                                              ordemController.text.trim()) ??
+                                          ((index ??
+                                                  controller
+                                                      .tarefasSugeridasFormulario
+                                                      .length) +
                                               1),
                                     };
 
                                     if (index == null) {
                                       controller.adicionarTarefaSugerida(dados);
                                     } else {
-                                      controller.editarTarefaSugerida(index, dados);
+                                      controller.editarTarefaSugerida(
+                                          index, dados);
                                     }
 
                                     Get.back();
@@ -1717,10 +1818,13 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                     backgroundColor: _primary,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16)),
-                                    padding: const EdgeInsets.symmetric(vertical: 13),
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 13),
                                   ),
-                                  icon: const Icon(Icons.save_rounded, size: 18),
+                                  icon:
+                                      const Icon(Icons.save_rounded, size: 18),
                                   label: const Text('Salvar'),
                                 ),
                               ),
@@ -1768,7 +1872,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       text: _formatarNumeroParaCampo(_readDouble(dados, 'custoMaximo')),
     );
     final quantidadeBaseController = TextEditingController(
-      text: _formatarNumeroParaCampo(_readDouble(dados, 'quantidadeBase', fallback: 1.0)),
+      text: _formatarNumeroParaCampo(
+          _readDouble(dados, 'quantidadeBase', fallback: 1.0)),
     );
     final custoPorConvidadoController = TextEditingController(
       text: _formatarNumeroParaCampo(_readDouble(dados, 'custoPorConvidado')),
@@ -1777,11 +1882,13 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       text: _readInt(
         dados,
         'ordem',
-        fallback: (index ?? controller.itensOrcamentoSugeridosFormulario.length) + 1,
+        fallback:
+            (index ?? controller.itensOrcamentoSugeridosFormulario.length) + 1,
       ).toString(),
     );
 
-    var categoria = _readString(dados, 'categoria', fallback: _categoriaController.text.trim());
+    var categoria = _readString(dados, 'categoria',
+        fallback: _categoriaController.text.trim());
     if (!_categoriasOrcamentoSugerido.contains(categoria)) {
       categoria = categoria.isEmpty ? 'Geral' : categoria;
       if (!_categoriasOrcamentoSugerido.contains(categoria)) {
@@ -1808,13 +1915,16 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                 horizontal: compact ? 12 : 24,
                 vertical: 18,
               ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(26)),
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 780),
                 child: Padding(
-                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                  padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).viewInsets.bottom),
                   child: SingleChildScrollView(
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     padding: const EdgeInsets.all(18),
                     child: Form(
                       key: formKey,
@@ -1828,10 +1938,12 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  gradient: const LinearGradient(colors: [_secondary, _primary]),
+                                  gradient: const LinearGradient(
+                                      colors: [_secondary, _primary]),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: const Icon(Icons.receipt_long_rounded, color: Colors.white),
+                                child: const Icon(Icons.receipt_long_rounded,
+                                    color: Colors.white),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -1887,7 +1999,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                   return null;
                                 },
                                 onChanged: (value) {
-                                  setDialogState(() => categoria = value ?? 'Geral');
+                                  setDialogState(
+                                      () => categoria = value ?? 'Geral');
                                 },
                               ),
                               _buildTextField(
@@ -1896,8 +2009,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 hint: 'Ex.: Painel temático',
                                 icon: Icons.shopping_bag_outlined,
                                 requiredField: true,
-                                validator: (value) =>
-                                    FormValidators.titulo(value, campo: 'o item'),
+                                validator: (value) => FormValidators.titulo(
+                                    value,
+                                    campo: 'o item'),
                               ),
                             ],
                           ),
@@ -1905,7 +2019,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                           _buildTextField(
                             controller: descricaoController,
                             label: 'Descrição',
-                            hint: 'Ex.: Painel principal inspirado na referência visual.',
+                            hint:
+                                'Ex.: Painel principal inspirado na referência visual.',
                             icon: Icons.description_outlined,
                             minLines: 3,
                             maxLines: 5,
@@ -1919,7 +2034,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 label: 'Custo estimado',
                                 hint: 'Ex.: 350,00',
                                 icon: Icons.payments_outlined,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 inputFormatters: [_decimalInputFormatter()],
                                 validator: _moneyValidator('Custo estimado'),
                               ),
@@ -1928,7 +2045,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 label: 'Custo mínimo',
                                 hint: 'Ex.: 200,00',
                                 icon: Icons.trending_down_rounded,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 inputFormatters: [_decimalInputFormatter()],
                                 validator: _moneyValidator('Custo mínimo'),
                               ),
@@ -1937,7 +2056,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 label: 'Custo máximo',
                                 hint: 'Ex.: 800,00',
                                 icon: Icons.trending_up_rounded,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 inputFormatters: [_decimalInputFormatter()],
                                 validator: _moneyValidator('Custo máximo'),
                               ),
@@ -1946,9 +2067,12 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 label: 'Custo por convidado',
                                 hint: 'Ex.: 0,00',
                                 icon: Icons.groups_rounded,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 inputFormatters: [_decimalInputFormatter()],
-                                validator: _moneyValidator('Custo por convidado'),
+                                validator:
+                                    _moneyValidator('Custo por convidado'),
                               ),
                               DropdownButtonFormField<String>(
                                 value: unidade,
@@ -1965,7 +2089,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                     )
                                     .toList(),
                                 onChanged: (value) {
-                                  setDialogState(() => unidade = value ?? 'unidade');
+                                  setDialogState(
+                                      () => unidade = value ?? 'unidade');
                                 },
                               ),
                               _buildTextField(
@@ -1973,7 +2098,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 label: 'Quantidade base',
                                 hint: 'Ex.: 1',
                                 icon: Icons.numbers_rounded,
-                                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                keyboardType:
+                                    const TextInputType.numberWithOptions(
+                                        decimal: true),
                                 inputFormatters: [_decimalInputFormatter()],
                                 validator: _decimalValidator('Quantidade base'),
                               ),
@@ -1983,11 +2110,15 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                 hint: 'Ex.: 1',
                                 icon: Icons.sort_rounded,
                                 keyboardType: TextInputType.number,
-                                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                                inputFormatters: [
+                                  FilteringTextInputFormatter.digitsOnly
+                                ],
                                 validator: (value) {
                                   final text = (value ?? '').trim();
                                   if (text.isEmpty) return 'Informe a ordem.';
-                                  if (int.tryParse(text) == null) return 'Use número inteiro.';
+                                  if (int.tryParse(text) == null) {
+                                    return 'Use número inteiro.';
+                                  }
                                   return null;
                                 },
                               ),
@@ -2001,7 +2132,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                             icon: Icons.verified_rounded,
                             color: _secondary,
                             value: obrigatorio,
-                            onChanged: (value) => setDialogState(() => obrigatorio = value),
+                            onChanged: (value) =>
+                                setDialogState(() => obrigatorio = value),
                           ),
                           const SizedBox(height: 18),
                           Row(
@@ -2011,12 +2143,16 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                   onPressed: () => Get.back(),
                                   style: OutlinedButton.styleFrom(
                                     foregroundColor: _dark,
-                                    side: BorderSide(color: _dark.withValues(alpha: 0.16)),
+                                    side: BorderSide(
+                                        color: _dark.withValues(alpha: 0.16)),
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16)),
-                                    padding: const EdgeInsets.symmetric(vertical: 13),
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 13),
                                   ),
-                                  icon: const Icon(Icons.close_rounded, size: 18),
+                                  icon:
+                                      const Icon(Icons.close_rounded, size: 18),
                                   label: const Text('Cancelar'),
                                 ),
                               ),
@@ -2024,34 +2160,43 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                               Expanded(
                                 child: FilledButton.icon(
                                   onPressed: () {
-                                    if (!(formKey.currentState?.validate() ?? false)) {
+                                    if (!(formKey.currentState?.validate() ??
+                                        false)) {
                                       return;
                                     }
 
                                     final dados = <String, dynamic>{
                                       'categoria': categoria,
                                       'item': itemController.text.trim(),
-                                      'descricao': descricaoController.text.trim(),
-                                      'custoEstimado': _parseDoubleBr(custoEstimadoController.text),
-                                      'custoMinimo': _parseDoubleBr(custoMinimoController.text),
-                                      'custoMaximo': _parseDoubleBr(custoMaximoController.text),
+                                      'descricao':
+                                          descricaoController.text.trim(),
+                                      'custoEstimado': _parseDoubleBr(
+                                          custoEstimadoController.text),
+                                      'custoMinimo': _parseDoubleBr(
+                                          custoMinimoController.text),
+                                      'custoMaximo': _parseDoubleBr(
+                                          custoMaximoController.text),
                                       'unidade': unidade,
-                                      'quantidadeBase':
-                                          _parseDoubleBr(quantidadeBaseController.text),
-                                      'custoPorConvidado':
-                                          _parseDoubleBr(custoPorConvidadoController.text),
+                                      'quantidadeBase': _parseDoubleBr(
+                                          quantidadeBaseController.text),
+                                      'custoPorConvidado': _parseDoubleBr(
+                                          custoPorConvidadoController.text),
                                       'obrigatorio': obrigatorio,
-                                      'ordem': int.tryParse(ordemController.text.trim()) ??
+                                      'ordem': int.tryParse(
+                                              ordemController.text.trim()) ??
                                           ((index ??
                                                   controller
-                                                      .itensOrcamentoSugeridosFormulario.length) +
+                                                      .itensOrcamentoSugeridosFormulario
+                                                      .length) +
                                               1),
                                     };
 
                                     if (index == null) {
-                                      controller.adicionarItemOrcamentoSugerido(dados);
+                                      controller.adicionarItemOrcamentoSugerido(
+                                          dados);
                                     } else {
-                                      controller.editarItemOrcamentoSugerido(index, dados);
+                                      controller.editarItemOrcamentoSugerido(
+                                          index, dados);
                                     }
 
                                     Get.back();
@@ -2060,10 +2205,13 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                     backgroundColor: _secondary,
                                     foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16)),
-                                    padding: const EdgeInsets.symmetric(vertical: 13),
+                                        borderRadius:
+                                            BorderRadius.circular(16)),
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 13),
                                   ),
-                                  icon: const Icon(Icons.save_rounded, size: 18),
+                                  icon:
+                                      const Icon(Icons.save_rounded, size: 18),
                                   label: const Text('Salvar'),
                                 ),
                               ),
@@ -2138,18 +2286,23 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     return Obx(() {
       final imagemUrl = controller.imagemPrincipalUrlAtual.value.trim();
       final hasCurrentImage = imagemUrl.isNotEmpty;
-      final hasSelectedImage = controller.imagemPrincipalSelecionadaBytes.value != null;
+      final hasSelectedImage =
+          controller.imagemPrincipalSelecionadaBytes.value != null;
       final missingImage = !hasCurrentImage && !hasSelectedImage;
-      final uploading =
-          controller.uploadImagemPrincipalLoading.value || controller.selecionandoImagem.value;
+      final uploading = controller.uploadImagemPrincipalLoading.value ||
+          controller.selecionandoImagem.value;
 
       return Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: missingImage ? _warning.withValues(alpha: 0.08) : _info.withValues(alpha: 0.06),
+          color: missingImage
+              ? _warning.withValues(alpha: 0.08)
+              : _info.withValues(alpha: 0.06),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: missingImage ? _warning.withValues(alpha: 0.26) : _info.withValues(alpha: 0.16),
+            color: missingImage
+                ? _warning.withValues(alpha: 0.26)
+                : _info.withValues(alpha: 0.16),
           ),
         ),
         child: LayoutBuilder(
@@ -2169,7 +2322,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                       child: const SizedBox(
                         width: 28,
                         height: 28,
-                        child: CircularProgressIndicator(strokeWidth: 2.6, color: Colors.white),
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2.6, color: Colors.white),
                       ),
                     ),
                   ),
@@ -2227,7 +2381,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                       style: FilledButton.styleFrom(
                         backgroundColor: _primary,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14)),
                       ),
                       icon: const Icon(Icons.upload_rounded, size: 18),
                       label: Text(hasCurrentImage || hasSelectedImage
@@ -2239,8 +2394,10 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                         onPressed: uploading ? null : _limparImagemPrincipal,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: _danger,
-                          side: BorderSide(color: _danger.withValues(alpha: 0.28)),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          side: BorderSide(
+                              color: _danger.withValues(alpha: 0.28)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
                         ),
                         icon: const Icon(Icons.close_rounded, size: 18),
                         label: const Text('Remover'),
@@ -2321,8 +2478,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     return Obx(() {
       final urls = controller.galeriaUrlsFormulario.toList();
       final pendentes = controller.imagensGaleriaPendentes.toList();
-      final uploading =
-          controller.uploadGaleriaLoading.value || controller.selecionandoImagem.value;
+      final uploading = controller.uploadGaleriaLoading.value ||
+          controller.selecionandoImagem.value;
       final total = urls.length + pendentes.length;
 
       return Container(
@@ -2344,7 +2501,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                     color: _primary.withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(13),
                   ),
-                  child: const Icon(Icons.photo_library_outlined, color: _primary, size: 20),
+                  child: const Icon(Icons.photo_library_outlined,
+                      color: _primary, size: 20),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -2377,15 +2535,18 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                   style: FilledButton.styleFrom(
                     backgroundColor: _primary,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                   icon: uploading
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
-                      : const Icon(Icons.add_photo_alternate_outlined, size: 18),
+                      : const Icon(Icons.add_photo_alternate_outlined,
+                          size: 18),
                   label: const Text('Adicionar'),
                 ),
               ],
@@ -2461,7 +2622,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
             top: 6,
             right: 6,
             child: _buildRemoveImageButton(
-              onTap: () => controller.removerImagemGaleriaPendente(item.localId),
+              onTap: () =>
+                  controller.removerImagemGaleriaPendente(item.localId),
             ),
           ),
           Positioned(
@@ -2541,7 +2703,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     );
   }
 
-  Widget _buildImagePlaceholder({required IconData icon, required String text}) {
+  Widget _buildImagePlaceholder(
+      {required IconData icon, required String text}) {
     return Container(
       color: Colors.white,
       alignment: Alignment.center,
@@ -2564,7 +2727,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     );
   }
 
-  Widget _buildInlineWarning(String text, {required Color color, required IconData icon}) {
+  Widget _buildInlineWarning(String text,
+      {required Color color, required IconData icon}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -2602,7 +2766,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
         return FilterChip(
           selected: selected,
           label: Text(option.nome),
-          avatar: selected ? const Icon(Icons.check_rounded, size: 16, color: Colors.white) : null,
+          avatar: selected
+              ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+              : null,
           onSelected: (value) {
             setState(() {
               if (value) {
@@ -2624,7 +2790,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
           side: BorderSide(
             color: selected ? _primary : _dark.withValues(alpha: 0.10),
           ),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         );
       }).toList(),
@@ -2755,7 +2922,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       return;
     }
 
-    final erroItensOrcamento = controller.validarItensOrcamentoSugeridosFormulario();
+    final erroItensOrcamento =
+        controller.validarItensOrcamentoSugeridosFormulario();
     if (erroItensOrcamento != null) {
       EasyLoading.showInfo(erroItensOrcamento);
       return;
@@ -2788,8 +2956,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   Future<void> _confirmarExclusao() async {
     if (!_isEdicao) return;
 
-    final titulo =
-        _tituloController.text.trim().isEmpty ? 'esta inspiração' : _tituloController.text.trim();
+    final titulo = _tituloController.text.trim().isEmpty
+        ? 'esta inspiração'
+        : _tituloController.text.trim();
 
     final confirmar = await Get.dialog<bool>(
       AlertDialog(
@@ -2812,7 +2981,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
             Expanded(
               child: Text(
                 'Excluir inspiração?',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 18),
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w800, fontSize: 18),
               ),
             ),
           ],
@@ -2831,7 +3001,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
             style: FilledButton.styleFrom(
               backgroundColor: _danger,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
             ),
             icon: const Icon(Icons.delete_rounded, size: 18),
             label: const Text('Excluir'),
@@ -2841,8 +3012,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     );
 
     if (confirmar == true) {
-      final sucesso =
-          await controller.excluirLogicamente(_inspiracaoId, usuarioId: widget.usuarioId);
+      final sucesso = await controller.excluirLogicamente(_inspiracaoId,
+          usuarioId: widget.usuarioId);
       if (sucesso) {
         Get.back(result: true);
       }
@@ -2866,7 +3037,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       'estilo': _estiloController.text.trim(),
       'faixaCusto': _faixaCustoController.text.trim(),
       'nivelDificuldade': _nivelDificuldadeController.text.trim(),
-      'ordem': int.tryParse(_ordemController.text.trim()) ?? controller.proximaOrdemSugerida(),
+      'ordem': int.tryParse(_ordemController.text.trim()) ??
+          controller.proximaOrdemSugerida(),
       'tipoEvento': tipos.tipoEvento,
       'tipoEventoId': tipos.tipoEventoId,
       'tipoEventoNormalizado': tipos.tipoEventoNormalizado,
@@ -2874,11 +3046,13 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       'tipoEventoSlugs': tipos.tipoEventoSlugs,
       'tipoEventoNomes': tipos.tipoEventoNomes,
       'tarefasSugeridas': controller.tarefasSugeridasParaFirestore(),
-      'itensOrcamentoSugeridos': controller.itensOrcamentoSugeridosParaFirestore(),
+      'itensOrcamentoSugeridos':
+          controller.itensOrcamentoSugeridosParaFirestore(),
       'categoriasFornecedorSugeridas': _parseStringList(
         _categoriasFornecedorSugeridasController.text,
       ),
-      'fornecedoresRelacionados': _parseStringList(_fornecedoresRelacionadosController.text),
+      'fornecedoresRelacionados':
+          _parseStringList(_fornecedoresRelacionadosController.text),
       'ativo': _ativo,
       'publicado': _publicado,
       'destaque': _destaque,
@@ -2902,12 +3076,14 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     }
 
     ids.addAll(_parseStringList(_tipoEventoIdsController.text));
-    slugs.addAll(_parseStringList(_tipoEventoSlugsController.text).map(_normalizeKey));
+    slugs.addAll(
+        _parseStringList(_tipoEventoSlugsController.text).map(_normalizeKey));
     nomes.addAll(_parseStringList(_tipoEventoNomesController.text));
 
     final tipoEventoManual = _tipoEventoController.text.trim();
     final tipoEventoIdManual = _tipoEventoIdController.text.trim();
-    final tipoEventoNormalizadoManual = _tipoEventoNormalizadoController.text.trim();
+    final tipoEventoNormalizadoManual =
+        _tipoEventoNormalizadoController.text.trim();
 
     if (tipoEventoIdManual.isNotEmpty) ids.add(tipoEventoIdManual);
     if (tipoEventoManual.isNotEmpty) nomes.add(tipoEventoManual);
@@ -2919,8 +3095,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     final tipoEventoId = ids.isNotEmpty ? ids.first : tipoEventoIdManual;
     final tipoEventoNormalizado = slugs.isNotEmpty
         ? slugs.first
-        : _normalizeKey(
-            tipoEventoNormalizadoManual.isNotEmpty ? tipoEventoNormalizadoManual : tipoEvento);
+        : _normalizeKey(tipoEventoNormalizadoManual.isNotEmpty
+            ? tipoEventoNormalizadoManual
+            : tipoEvento);
 
     return _TiposEventoResolvidos(
       tipoEvento: tipoEvento,
@@ -2960,7 +3137,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     if (!preferirCamposAtuais || _tipoEventoIdController.text.trim().isEmpty) {
       _tipoEventoIdController.text = ids.first;
     }
-    if (!preferirCamposAtuais || _tipoEventoNormalizadoController.text.trim().isEmpty) {
+    if (!preferirCamposAtuais ||
+        _tipoEventoNormalizadoController.text.trim().isEmpty) {
       _tipoEventoNormalizadoController.text = slugs.first;
     }
   }
@@ -3019,7 +3197,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   }
 
   double? _tryParseDoubleBr(String value) {
-    var text = value.replaceAll('R\$', '').replaceAll(RegExp(r'\s+'), '').trim();
+    var text =
+        value.replaceAll('R\$', '').replaceAll(RegExp(r'\s+'), '').trim();
 
     if (text.isEmpty) {
       return 0.0;
@@ -3076,7 +3255,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   String _formatarTarefas(List<Map<String, dynamic>> tarefas) {
     return tarefas
         .map((tarefa) {
-          final titulo = (tarefa['titulo'] ?? tarefa['nome'] ?? '').toString().trim();
+          final titulo =
+              (tarefa['titulo'] ?? tarefa['nome'] ?? '').toString().trim();
           final categoria = (tarefa['categoria'] ?? '').toString().trim();
           final descricao = (tarefa['descricao'] ?? '').toString().trim();
           return <String>[titulo, categoria, descricao]
@@ -3092,8 +3272,12 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
         .map((item) {
           final categoria = (item['categoria'] ?? '').toString().trim();
           final nome = (item['item'] ?? item['nome'] ?? '').toString().trim();
-          final valor = (item['custoEstimado'] ?? item['valorEstimado'] ?? '').toString().trim();
-          return <String>[categoria, nome, valor].where((e) => e.trim().isNotEmpty).join(' | ');
+          final valor = (item['custoEstimado'] ?? item['valorEstimado'] ?? '')
+              .toString()
+              .trim();
+          return <String>[categoria, nome, valor]
+              .where((e) => e.trim().isNotEmpty)
+              .join(' | ');
         })
         .where((e) => e.trim().isNotEmpty)
         .join('\n');
@@ -3118,13 +3302,18 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     return int.tryParse(value.toString()) ?? fallback;
   }
 
-  bool _readBool(Map<String, dynamic> data, String key, {bool fallback = false}) {
+  bool _readBool(Map<String, dynamic> data, String key,
+      {bool fallback = false}) {
     final value = data[key];
     if (value == null) return fallback;
     if (value is bool) return value;
     final text = value.toString().trim().toLowerCase();
-    if (<String>{'true', '1', 'sim', 's', 'yes', 'y'}.contains(text)) return true;
-    if (<String>{'false', '0', 'nao', 'não', 'n', 'no'}.contains(text)) return false;
+    if (<String>{'true', '1', 'sim', 's', 'yes', 'y'}.contains(text)) {
+      return true;
+    }
+    if (<String>{'false', '0', 'nao', 'não', 'n', 'no'}.contains(text)) {
+      return false;
+    }
     return fallback;
   }
 
@@ -3155,13 +3344,19 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     return <dynamic>[value];
   }
 
-  List<Map<String, dynamic>> _readMapList(Map<String, dynamic> data, String key) {
+  List<Map<String, dynamic>> _readMapList(
+      Map<String, dynamic> data, String key) {
     final value = data[key];
     if (value == null) return <Map<String, dynamic>>[];
     if (value is List) {
-      return value.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return value
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     }
-    if (value is Map) return <Map<String, dynamic>>[Map<String, dynamic>.from(value)];
+    if (value is Map) {
+      return <Map<String, dynamic>>[Map<String, dynamic>.from(value)];
+    }
     return <Map<String, dynamic>>[];
   }
 
@@ -3274,7 +3469,8 @@ class _FormSection extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFF1F2937).withValues(alpha: 0.06)),
+        border:
+            Border.all(color: const Color(0xFF1F2937).withValues(alpha: 0.06)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.035),

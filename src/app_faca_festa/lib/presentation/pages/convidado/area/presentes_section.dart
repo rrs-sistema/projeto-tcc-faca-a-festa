@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,8 +9,10 @@ import 'package:intl/intl.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../../domain/entities/evento.dart';
+import './../../../../domain/entities/gift/gift.dart';
+import './../../../../domain/usecases/get_gifts/gift_usecases.dart';
 
 class PresentesSection extends StatefulWidget {
   final Evento evento;
@@ -29,20 +30,17 @@ class PresentesSection extends StatefulWidget {
 
 class _PresentesSectionState extends State<PresentesSection> {
   _GiftFilter _filter = _GiftFilter.todos;
+  late final GiftUseCases _giftUseCases = Get.find<GiftUseCases>();
 
   @override
   Widget build(BuildContext context) {
     final primary = widget.theme.primaryColor.value;
 
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('evento')
-          .doc(widget.evento.idEvento)
-          .collection('presentes')
-          .orderBy('nome')
-          .snapshots(),
+    return StreamBuilder<List<Gift>>(
+      stream: _giftUseCases.getGifts.remote(widget.evento.idEvento),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting &&
+            !snapshot.hasData) {
           return _loadingState(primary);
         }
 
@@ -50,26 +48,25 @@ class _PresentesSectionState extends State<PresentesSection> {
           return _errorState(primary);
         }
 
-        final docs = snapshot.data?.docs ?? [];
-        if (docs.isEmpty) {
+        final gifts = snapshot.data ?? const <Gift>[];
+        if (gifts.isEmpty) {
           return _emptyState(primary);
         }
 
-        final presentes = docs.map((doc) {
-          final data = Map<String, dynamic>.from(doc.data() as Map<String, dynamic>);
-          data['id'] = doc.id;
-          return data;
-        }).toList()
+        final presentes = gifts.map(_giftToViewData).toList()
           ..sort(_sortPresentes);
 
         final filtered = presentes.where(_matchesFilter).toList();
-        final disponiveis = presentes.where((item) => !_isIndisponivel(item)).length;
+        final disponiveis =
+            presentes.where((item) => !_isIndisponivel(item)).length;
         final escolhidos = presentes.length - disponiveis;
         final pixCount = presentes.where((item) => _tipo(item) == 'pix').length;
-        final coletivoCount = presentes.where((item) => _tipo(item) == 'coletivo').length;
+        final coletivoCount =
+            presentes.where((item) => _tipo(item) == 'coletivo').length;
 
         return CustomScrollView(
-          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+          physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
           slivers: [
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
@@ -137,13 +134,17 @@ class _PresentesSectionState extends State<PresentesSection> {
   int _sortPresentes(Map<String, dynamic> a, Map<String, dynamic> b) {
     final unavailableA = _isIndisponivel(a) ? 1 : 0;
     final unavailableB = _isIndisponivel(b) ? 1 : 0;
-    if (unavailableA != unavailableB) return unavailableA.compareTo(unavailableB);
+    if (unavailableA != unavailableB) {
+      return unavailableA.compareTo(unavailableB);
+    }
 
     final featuredA = a['destaque'] == true ? 0 : 1;
     final featuredB = b['destaque'] == true ? 0 : 1;
     if (featuredA != featuredB) return featuredA.compareTo(featuredB);
 
-    return _text(a['nome']).toLowerCase().compareTo(_text(b['nome']).toLowerCase());
+    return _text(a['nome'])
+        .toLowerCase()
+        .compareTo(_text(b['nome']).toLowerCase());
   }
 
   bool _matchesFilter(Map<String, dynamic> item) {
@@ -162,12 +163,32 @@ class _PresentesSectionState extends State<PresentesSection> {
     }
   }
 
+  Map<String, dynamic> _giftToViewData(Gift gift) {
+    return {
+      'id': gift.id,
+      'nome': gift.nome,
+      'descricao': gift.descricao,
+      'categoria': gift.categoria,
+      'tipo': gift.tipo.name,
+      'valor': gift.valor,
+      'meta_valor': gift.metaValor,
+      'valor_arrecadado': gift.valorArrecadado,
+      'loja': gift.loja,
+      'link': gift.link,
+      'pix': gift.pix,
+      'imagem': gift.imagem,
+      'status': gift.status.name,
+      'reservado_por': gift.reservadoPor,
+    };
+  }
+
   bool _isIndisponivel(Map<String, dynamic> data) {
     final reservadoPor = data['reservado_por'];
     final status = _text(data['status']).toLowerCase();
-    final isReservado = (reservadoPor != null && reservadoPor.toString().trim().isNotEmpty) ||
-        status == 'reservado' ||
-        status == 'escolhido';
+    final isReservado =
+        (reservadoPor != null && reservadoPor.toString().trim().isNotEmpty) ||
+            status == 'reservado' ||
+            status == 'escolhido';
 
     final isColetivo = _tipo(data) == 'coletivo';
     final meta = _moneyValue(data['meta_valor'], fallback: 1.0);
@@ -221,7 +242,8 @@ class _PresentesSectionState extends State<PresentesSection> {
       primary: primary,
       icon: Icons.manage_search_rounded,
       title: 'Nada por aqui nesse filtro',
-      subtitle: 'Troque o filtro para ver outras formas de presentear os organizadores.',
+      subtitle:
+          'Troque o filtro para ver outras formas de presentear os organizadores.',
       compact: true,
     );
   }
@@ -247,7 +269,9 @@ class _PresentesSectionState extends State<PresentesSection> {
   }) {
     final valorSugerido = _moneyValue(valorInicial);
     final valorController = TextEditingController(
-      text: valorSugerido > 0 ? valorSugerido.toStringAsFixed(2).replaceAll('.', ',') : '',
+      text: valorSugerido > 0
+          ? valorSugerido.toStringAsFixed(2).replaceAll('.', ',')
+          : '',
     );
     final hasPix = chavePix.trim().isNotEmpty;
 
@@ -298,7 +322,8 @@ class _PresentesSectionState extends State<PresentesSection> {
                           ),
                         ],
                       ),
-                      child: const Icon(Icons.pix_rounded, color: Colors.white, size: 28),
+                      child: const Icon(Icons.pix_rounded,
+                          color: Colors.white, size: 28),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -332,7 +357,8 @@ class _PresentesSectionState extends State<PresentesSection> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(22),
-                          border: Border.all(color: primary.withValues(alpha: 0.14)),
+                          border: Border.all(
+                              color: primary.withValues(alpha: 0.14)),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withValues(alpha: 0.05),
@@ -354,11 +380,13 @@ class _PresentesSectionState extends State<PresentesSection> {
                         decoration: BoxDecoration(
                           color: Colors.orange.withValues(alpha: 0.10),
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: Colors.orange.withValues(alpha: 0.22)),
+                          border: Border.all(
+                              color: Colors.orange.withValues(alpha: 0.22)),
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.info_outline_rounded, color: Colors.orange),
+                            const Icon(Icons.info_outline_rounded,
+                                color: Colors.orange),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -390,11 +418,13 @@ class _PresentesSectionState extends State<PresentesSection> {
                       width: double.infinity,
                       height: 48,
                       child: ElevatedButton.icon(
-                        icon: const Icon(Icons.copy_rounded, color: Colors.white, size: 18),
+                        icon: const Icon(Icons.copy_rounded,
+                            color: Colors.white, size: 18),
                         label: const Text('Copiar chave PIX'),
                         onPressed: hasPix
                             ? () {
-                                Clipboard.setData(ClipboardData(text: chavePix));
+                                Clipboard.setData(
+                                    ClipboardData(text: chavePix));
                                 Get.back();
                                 Get.snackbar(
                                   'PIX copiado ✨',
@@ -404,7 +434,8 @@ class _PresentesSectionState extends State<PresentesSection> {
                                   snackPosition: SnackPosition.BOTTOM,
                                   margin: const EdgeInsets.all(14),
                                   borderRadius: 16,
-                                  icon: const Icon(Icons.check_circle_rounded, color: Colors.white),
+                                  icon: const Icon(Icons.check_circle_rounded,
+                                      color: Colors.white),
                                 );
                               }
                             : null,
@@ -413,7 +444,8 @@ class _PresentesSectionState extends State<PresentesSection> {
                           disabledBackgroundColor: Colors.grey.shade300,
                           foregroundColor: Colors.white,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
                           textStyle: GoogleFonts.poppins(
                             fontSize: 14,
                             fontWeight: FontWeight.w800,
@@ -475,7 +507,8 @@ class PremiumGiftCard extends StatelessWidget {
     final valor = _moneyValue(item['valor']);
     final meta = _moneyValue(item['meta_valor'], fallback: 1.0);
     final arrecadado = _moneyValue(item['valor_arrecadado']);
-    final percent = meta > 0 ? (arrecadado / meta).clamp(0.0, 1.0).toDouble() : 0.0;
+    final percent =
+        meta > 0 ? (arrecadado / meta).clamp(0.0, 1.0).toDouble() : 0.0;
 
     final indisponivel = _isUnavailable(item);
     final metaAlcancada = isColetivo && meta > 0 && arrecadado >= meta;
@@ -553,7 +586,8 @@ class PremiumGiftCard extends StatelessWidget {
                                 if (link.isNotEmpty) ...[
                                   const SizedBox(width: 6),
                                   Icon(Icons.verified_rounded,
-                                      size: 14, color: primary.withValues(alpha: 0.72)),
+                                      size: 14,
+                                      color: primary.withValues(alpha: 0.72)),
                                 ],
                               ],
                             ),
@@ -567,7 +601,9 @@ class PremiumGiftCard extends StatelessWidget {
                                 height: 1.16,
                                 fontWeight: FontWeight.w800,
                                 color: Colors.black87,
-                                decoration: indisponivel ? TextDecoration.lineThrough : null,
+                                decoration: indisponivel
+                                    ? TextDecoration.lineThrough
+                                    : null,
                               ),
                             ),
                             const SizedBox(height: 4),
@@ -617,13 +653,16 @@ class PremiumGiftCard extends StatelessWidget {
                     _PriceRow(primary: primary, value: valor, isPix: isPix)
                   else
                     _EmotionHint(
-                        primary: primary, text: 'Escolha este carinho e faça parte da festa'),
+                        primary: primary,
+                        text: 'Escolha este carinho e faça parte da festa'),
                   const SizedBox(height: 12),
                   _GiftActionButton(
                     primary: primary,
                     data: cta,
                     disabled: indisponivel,
-                    onPressed: indisponivel ? null : () => _handleMainAction(cta, link),
+                    onPressed: indisponivel
+                        ? null
+                        : () => _handleMainAction(cta, link),
                   ),
                 ],
               ),
@@ -762,12 +801,14 @@ class _GiftHeroCard extends StatelessWidget {
           Positioned(
             right: -28,
             top: -34,
-            child: _GlowCircle(size: 120, color: Colors.white.withValues(alpha: 0.18)),
+            child: _GlowCircle(
+                size: 120, color: Colors.white.withValues(alpha: 0.18)),
           ),
           Positioned(
             left: -26,
             bottom: -36,
-            child: _GlowCircle(size: 112, color: Colors.white.withValues(alpha: 0.12)),
+            child: _GlowCircle(
+                size: 112, color: Colors.white.withValues(alpha: 0.12)),
           ),
           Padding(
             padding: const EdgeInsets.all(18),
@@ -782,9 +823,11 @@ class _GiftHeroCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.18),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.28)),
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.28)),
                       ),
-                      child: const Icon(Icons.redeem_rounded, color: Colors.white, size: 24),
+                      child: const Icon(Icons.redeem_rounded,
+                          color: Colors.white, size: 24),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -876,7 +919,8 @@ class _FilterBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final filters = [
       _FilterOption(_GiftFilter.todos, 'Todos', Icons.auto_awesome_rounded),
-      _FilterOption(_GiftFilter.disponiveis, 'Disponíveis', Icons.check_circle_rounded),
+      _FilterOption(
+          _GiftFilter.disponiveis, 'Disponíveis', Icons.check_circle_rounded),
       _FilterOption(_GiftFilter.loja, 'Loja', Icons.storefront_rounded),
       _FilterOption(_GiftFilter.pix, 'PIX', Icons.pix_rounded),
       _FilterOption(_GiftFilter.coletivo, 'Cotas', Icons.groups_rounded),
@@ -903,7 +947,8 @@ class _FilterBar extends StatelessWidget {
                 color: active ? primary : Colors.white.withValues(alpha: 0.72),
                 borderRadius: BorderRadius.circular(999),
                 border: Border.all(
-                  color: active ? primary : Colors.white.withValues(alpha: 0.95),
+                  color:
+                      active ? primary : Colors.white.withValues(alpha: 0.95),
                 ),
                 boxShadow: [
                   if (active)
@@ -917,7 +962,8 @@ class _FilterBar extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(option.icon, size: 15, color: active ? Colors.white : primary),
+                  Icon(option.icon,
+                      size: 15, color: active ? Colors.white : primary),
                   const SizedBox(width: 6),
                   Text(
                     option.label,
@@ -996,7 +1042,8 @@ class _GiftIconBox extends StatelessWidget {
   final Color primary;
   final bool isError;
 
-  const _GiftIconBox({required this.tipo, required this.primary, this.isError = false});
+  const _GiftIconBox(
+      {required this.tipo, required this.primary, this.isError = false});
 
   @override
   Widget build(BuildContext context) {
@@ -1208,7 +1255,8 @@ class _PriceRow extends StatelessWidget {
   final double value;
   final bool isPix;
 
-  const _PriceRow({required this.primary, required this.value, required this.isPix});
+  const _PriceRow(
+      {required this.primary, required this.value, required this.isPix});
 
   @override
   Widget build(BuildContext context) {
@@ -1228,8 +1276,8 @@ class _PriceRow extends StatelessWidget {
               color: primary.withValues(alpha: 0.10),
               shape: BoxShape.circle,
             ),
-            child:
-                Icon(isPix ? Icons.favorite_rounded : Icons.sell_rounded, color: primary, size: 17),
+            child: Icon(isPix ? Icons.favorite_rounded : Icons.sell_rounded,
+                color: primary, size: 17),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -1255,7 +1303,8 @@ class _PriceRow extends StatelessWidget {
               ],
             ),
           ),
-          Icon(Icons.auto_awesome_rounded, color: primary.withValues(alpha: 0.65), size: 18),
+          Icon(Icons.auto_awesome_rounded,
+              color: primary.withValues(alpha: 0.65), size: 18),
         ],
       ),
     );
@@ -1328,7 +1377,8 @@ class _GiftActionButton extends StatelessWidget {
           disabledForegroundColor: Colors.grey.shade500,
           elevation: disabled ? 0 : 2,
           shadowColor: primary.withValues(alpha: 0.25),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           textStyle: GoogleFonts.poppins(
             fontSize: 13.5,
             fontWeight: FontWeight.w800,
@@ -1368,7 +1418,8 @@ class _GiftValueField extends StatelessWidget {
           Expanded(
             child: TextField(
               controller: controller,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'[0-9,.]')),
               ],
@@ -1399,7 +1450,8 @@ class _HeroMetric extends StatelessWidget {
   final String value;
   final IconData icon;
 
-  const _HeroMetric({required this.label, required this.value, required this.icon});
+  const _HeroMetric(
+      {required this.label, required this.value, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -1542,7 +1594,8 @@ class _GiftActionData {
   final IconData icon;
   final _GiftActionType type;
 
-  const _GiftActionData({required this.label, required this.icon, required this.type});
+  const _GiftActionData(
+      {required this.label, required this.icon, required this.type});
 }
 
 enum _GiftFilter { todos, disponiveis, loja, pix, coletivo }
@@ -1552,7 +1605,9 @@ enum _GiftActionType { pix, contribute, link, reserve, none }
 String _tipo(Map<String, dynamic> item) {
   final raw = _text(item['tipo']).toLowerCase().trim();
   if (raw == 'pix') return 'pix';
-  if (raw == 'coletivo' || raw == 'cota' || raw == 'vaquinha') return 'coletivo';
+  if (raw == 'coletivo' || raw == 'cota' || raw == 'vaquinha') {
+    return 'coletivo';
+  }
   return 'fisico';
 }
 
@@ -1583,15 +1638,17 @@ double _moneyValue(dynamic value, {double fallback = 0.0}) {
 }
 
 String _formatCurrency(double value) {
-  return NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2).format(value);
+  return NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$', decimalDigits: 2)
+      .format(value);
 }
 
 bool _isUnavailable(Map<String, dynamic> item) {
   final reservadoPor = item['reservado_por'];
   final status = _text(item['status']).toLowerCase();
-  final reservado = (reservadoPor != null && reservadoPor.toString().trim().isNotEmpty) ||
-      status == 'reservado' ||
-      status == 'escolhido';
+  final reservado =
+      (reservadoPor != null && reservadoPor.toString().trim().isNotEmpty) ||
+          status == 'reservado' ||
+          status == 'escolhido';
 
   final coletivo = _tipo(item) == 'coletivo';
   final meta = _moneyValue(item['meta_valor'], fallback: 1.0);

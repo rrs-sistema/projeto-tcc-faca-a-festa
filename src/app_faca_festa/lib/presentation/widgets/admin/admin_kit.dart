@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../controllers/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
 
 class AdminBackAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -31,8 +31,9 @@ class AdminBackAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       centerTitle: true,
       elevation: 0,
-      flexibleSpace:
-          Container(decoration: const BoxDecoration(gradient: AdminPalette.appBarGradient)),
+      flexibleSpace: Container(
+          decoration:
+              const BoxDecoration(gradient: AdminPalette.appBarGradient)),
       title: subtitle == null
           ? Text(
               title,
@@ -106,17 +107,21 @@ class AdminSearchField extends StatelessWidget {
         style: GoogleFonts.poppins(fontSize: 14, color: AdminPalette.ink),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
-          prefixIcon: Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
+          hintStyle:
+              GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+          prefixIcon:
+              Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
           suffixIcon: onClear == null
               ? null
               : IconButton(
                   tooltip: 'Limpar',
-                  icon: Icon(Icons.close_rounded, size: 18, color: Colors.grey.shade400),
+                  icon: Icon(Icons.close_rounded,
+                      size: 18, color: Colors.grey.shade400),
                   onPressed: onClear,
                 ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         ),
       ),
     );
@@ -171,7 +176,8 @@ class AdminEmptyState extends StatelessWidget {
               Text(
                 message!,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(fontSize: 13, color: AdminPalette.muted, height: 1.4),
+                style: GoogleFonts.poppins(
+                    fontSize: 13, color: AdminPalette.muted, height: 1.4),
               ),
             ],
             if (actionLabel != null && onAction != null) ...[
@@ -179,10 +185,12 @@ class AdminEmptyState extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onAction,
                 icon: const Icon(Icons.add_rounded, size: 18),
-                label: Text(actionLabel!, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                label: Text(actionLabel!,
+                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
                 style: FilledButton.styleFrom(
                   backgroundColor: AdminPalette.primary,
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 ),
               ),
             ],
@@ -330,7 +338,8 @@ class AdminSummaryChip extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               label,
-              style: GoogleFonts.poppins(fontSize: 11, color: AdminPalette.muted),
+              style:
+                  GoogleFonts.poppins(fontSize: 11, color: AdminPalette.muted),
             ),
           ],
         ),
@@ -344,7 +353,9 @@ BoxDecoration adminCardDecoration({bool highlighted = false}) {
     color: Colors.white,
     borderRadius: BorderRadius.circular(16),
     border: Border.all(
-      color: highlighted ? AdminPalette.primary.withValues(alpha: 0.35) : AdminPalette.border,
+      color: highlighted
+          ? AdminPalette.primary.withValues(alpha: 0.35)
+          : AdminPalette.border,
     ),
     boxShadow: [
       BoxShadow(
@@ -439,17 +450,22 @@ Future<bool> confirmarAcaoAdmin(
     context: context,
     builder: (_) => AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      title: Text(titulo, style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
-      content: Text(mensagem, style: GoogleFonts.poppins(fontSize: 14, height: 1.4)),
+      title: Text(titulo,
+          style:
+              GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),
+      content:
+          Text(mensagem, style: GoogleFonts.poppins(fontSize: 14, height: 1.4)),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, false),
-          child: Text('Cancelar', style: GoogleFonts.poppins(color: AdminPalette.muted)),
+          child: Text('Cancelar',
+              style: GoogleFonts.poppins(color: AdminPalette.muted)),
         ),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: cor),
           onPressed: () => Navigator.pop(context, true),
-          child: Text(confirmar, style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+          child: Text(confirmar,
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
         ),
       ],
     ),

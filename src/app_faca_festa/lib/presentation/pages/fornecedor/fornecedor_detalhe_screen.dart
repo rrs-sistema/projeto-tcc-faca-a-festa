@@ -8,16 +8,16 @@ import 'package:get/get.dart';
 import '../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../../../data/models/avaliacao/avaliacao_model.dart';
 import './../../../data/models/servico_produto/categoria_servico_model.dart';
-import './../../../controllers/avaliacao/avaliacao_servico_controller.dart';
-import '../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../core/utils/no_sqflite_cache_manager.dart';
-import '../../../controllers/fornecedor/fornecedor_controller.dart';
-import './../../../controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import './../../dialogs/enviar_avaliacao_dialog.dart';
 import './cotacao/servicos_para_cotacao_screen.dart';
-import './../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../../data/models/model.dart';
 
@@ -135,11 +135,14 @@ class FornecedorDetalheScreen extends StatelessWidget {
                           primary: primary,
                           fornecedor: fornecedor,
                           detalhe: fornecedorDetalhado,
-                          totalServicos: fornecedorController.allServicosFornecedor
-                              .where((s) => s.idFornecedor == fornecedor.idFornecedor)
+                          totalServicos: fornecedorController
+                              .allServicosFornecedor
+                              .where((s) =>
+                                  s.idFornecedor == fornecedor.idFornecedor)
                               .length,
                         ),
-                        if (fornecedor.descricao?.trim().isNotEmpty ?? false) ...[
+                        if (fornecedor.descricao?.trim().isNotEmpty ??
+                            false) ...[
                           const SizedBox(height: 14),
                           _buildDescricaoCard(fornecedor.descricao!),
                         ],
@@ -317,14 +320,16 @@ class FornecedorDetalheScreen extends StatelessWidget {
                 child: Wrap(
                   spacing: 8,
                   runSpacing: 6,
-                  children: selos.take(3).map((s) => seloBadge(texto: s)).toList(),
+                  children:
+                      selos.take(3).map((s) => seloBadge(texto: s)).toList(),
                 ),
               );
             },
           ),
           Obx(() {
             final avaliacaoController = Get.find<AvaliacaoServicoController>();
-            final podeAvaliar = avaliacaoController.permitidoAvaliarFornecedor.value;
+            final podeAvaliar =
+                avaliacaoController.permitidoAvaliarFornecedor.value;
 
             if (!podeAvaliar) return const SizedBox.shrink();
 
@@ -334,7 +339,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 42,
                 child: OutlinedButton.icon(
-                  icon: Icon(Icons.star_rounded, color: Colors.amber.shade700, size: 18),
+                  icon: Icon(Icons.star_rounded,
+                      color: Colors.amber.shade700, size: 18),
                   label: Text(
                     'Avaliar este fornecedor',
                     maxLines: 1,
@@ -346,8 +352,10 @@ class FornecedorDetalheScreen extends StatelessWidget {
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.amber.shade800,
-                    side: BorderSide(color: Colors.amber.shade700.withValues(alpha: 0.35)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    side: BorderSide(
+                        color: Colors.amber.shade700.withValues(alpha: 0.35)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                     visualDensity: VisualDensity.compact,
                   ),
                   onPressed: () {
@@ -462,8 +470,10 @@ class FornecedorDetalheScreen extends StatelessWidget {
               Expanded(
                 child: _buildMiniMetric(
                   icon: Icons.phone_in_talk_rounded,
-                  value:
-                      fornecedor.telefone.isNotEmpty || fornecedor.email.isNotEmpty ? 'Sim' : 'Não',
+                  value: fornecedor.telefone.isNotEmpty ||
+                          fornecedor.email.isNotEmpty
+                      ? 'Sim'
+                      : 'Não',
                   label: 'contato',
                   color: Colors.teal,
                 ),
@@ -530,7 +540,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.notes_rounded, size: 18, color: Color(0xFF64748B)),
+              const Icon(Icons.notes_rounded,
+                  size: 18, color: Color(0xFF64748B)),
               const SizedBox(width: 8),
               Text(
                 'Sobre o fornecedor',
@@ -577,7 +588,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Icon(Icons.contact_support_outlined, color: Colors.grey.shade400, size: 34),
+            Icon(Icons.contact_support_outlined,
+                color: Colors.grey.shade400, size: 34),
             const SizedBox(height: 8),
             Text(
               'Nenhuma informação de contato disponível.',
@@ -734,7 +746,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
                       detalhe: detalhe,
                     );
                   },
-                  icon: const Icon(Icons.request_quote_rounded, size: 19, color: Colors.white),
+                  icon: const Icon(Icons.request_quote_rounded,
+                      size: 19, color: Colors.white),
                   label: Text(
                     'Pedir orçamento',
                     maxLines: 1,
@@ -774,7 +787,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
                     margin: const EdgeInsets.all(16),
                   );
                 },
-                icon: Icon(Icons.contact_phone_rounded, color: primary, size: 21),
+                icon:
+                    Icon(Icons.contact_phone_rounded, color: primary, size: 21),
               ),
             ),
           ],
@@ -858,7 +872,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
   // -------------------------
   // 🔹 AppBar
   // -------------------------
-  AppBar _buildAppBar(BuildContext context, FornecedorModel fornecedor, Gradient gradient) {
+  AppBar _buildAppBar(
+      BuildContext context, FornecedorModel fornecedor, Gradient gradient) {
     return AppBar(
       elevation: 0,
       backgroundColor: Colors.transparent,
@@ -870,11 +885,13 @@ class FornecedorDetalheScreen extends StatelessWidget {
             color: Colors.white.withValues(alpha: 0.2),
             shape: BoxShape.circle,
             boxShadow: [
-              BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8),
+              BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15), blurRadius: 8),
             ],
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: Colors.white, size: 20),
             onPressed: () => Get.back(),
           ),
         ),
@@ -974,7 +991,9 @@ class FornecedorDetalheScreen extends StatelessWidget {
       if (temCategoriasSelecionadas) {
         for (final cat in categoriasEncontradas) {
           idsSubcategorias.addAll(
-            subCategorias.where((s) => s.idCategoria == cat.id).map((s) => s.id),
+            subCategorias
+                .where((s) => s.idCategoria == cat.id)
+                .map((s) => s.id),
           );
         }
       }
@@ -990,7 +1009,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
 
       // 5️⃣ Fallback se nada encontrado
       if (servicosValidos.isEmpty) {
-        debugPrint('⚠️ Nenhum serviço dentro das categorias detectadas. Usando fallback.');
+        debugPrint(
+            '⚠️ Nenhum serviço dentro das categorias detectadas. Usando fallback.');
         servicosValidos = servicosDoFornecedor;
       }
 
@@ -1006,8 +1026,10 @@ class FornecedorDetalheScreen extends StatelessWidget {
       }
 
       // 7️⃣ Foto
-      final fotosUrls =
-          fotos.where((f) => f.idProdutoServico == servico.id).map((f) => f.url).toList();
+      final fotosUrls = fotos
+          .where((f) => f.idProdutoServico == servico.id)
+          .map((f) => f.url)
+          .toList();
 
       // 8️⃣ Exibe o card
       return _cardServicoCarrossel(
@@ -1037,7 +1059,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
     final fornecedor = detalhe.fornecedor;
 
     return Obx(() {
-      if (controller.isLoadingFotos.value || controller.catalogoServicos.isEmpty) {
+      if (controller.isLoadingFotos.value ||
+          controller.catalogoServicos.isEmpty) {
         return const Center(
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
@@ -1068,8 +1091,9 @@ class FornecedorDetalheScreen extends StatelessWidget {
           .where((id) => id != idServicoPrincipal)
           .toList();
 
-      final servicosOutros =
-          controller.catalogoServicos.where((s) => idsServicosOutros.contains(s.id)).toList();
+      final servicosOutros = controller.catalogoServicos
+          .where((s) => idsServicosOutros.contains(s.id))
+          .toList();
 
       if (servicosOutros.isEmpty) {
         return const SizedBox.shrink();
@@ -1086,7 +1110,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
           itemCount: servicosOutros.length,
           itemBuilder: (context, index, _) {
             final s = servicosOutros[index];
-            final foto = fotos.firstWhereOrNull((f) => f.idProdutoServico == s.id);
+            final foto =
+                fotos.firstWhereOrNull((f) => f.idProdutoServico == s.id);
 
             final fotoUrl = (foto?.url.isNotEmpty ?? false)
                 ? foto!.url
@@ -1115,12 +1140,13 @@ class FornecedorDetalheScreen extends StatelessWidget {
                       imageUrl: fotoUrl,
                       fit: BoxFit.cover,
                       fadeInDuration: const Duration(milliseconds: 500),
-                      placeholder: (_, __) => Container(color: Colors.grey.shade200),
+                      placeholder: (_, __) =>
+                          Container(color: Colors.grey.shade200),
                       errorWidget: (_, __, ___) => Container(
                         color: Colors.grey.shade300,
                         alignment: Alignment.center,
-                        child:
-                            const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 48),
+                        child: const Icon(Icons.broken_image_outlined,
+                            color: Colors.grey, size: 48),
                       ),
                     ),
                     Container(
@@ -1138,12 +1164,16 @@ class FornecedorDetalheScreen extends StatelessWidget {
                     Align(
                       alignment: Alignment.bottomCenter,
                       child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 16),
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
                           borderRadius: BorderRadius.circular(18),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.2), width: 1),
+                          border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              width: 1),
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -1182,23 +1212,30 @@ class FornecedorDetalheScreen extends StatelessWidget {
                                       color: Colors.white),
                                 ),
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: primary.withValues(alpha: 0.85),
-                                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                  backgroundColor:
+                                      primary.withValues(alpha: 0.85),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 18, vertical: 10),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                     side: BorderSide(
-                                        color: Colors.white.withValues(alpha: 0.3), width: 1),
+                                        color:
+                                            Colors.white.withValues(alpha: 0.3),
+                                        width: 1),
                                   ),
                                   elevation: 5,
                                 ),
                                 onPressed: () {
-                                  final controllerLocalizacao = FornecedorLocalizacaoController.to;
+                                  final controllerLocalizacao =
+                                      FornecedorLocalizacaoController.to;
 
-                                  final serviceComplet =
-                                      controllerLocalizacao.allService.firstWhereOrNull(
+                                  final serviceComplet = controllerLocalizacao
+                                      .allService
+                                      .firstWhereOrNull(
                                     (sev) =>
                                         sev.idProdutoServico == s.id &&
-                                        sev.idFornecedor == fornecedor.idFornecedor,
+                                        sev.idFornecedor ==
+                                            fornecedor.idFornecedor,
                                   );
 
                                   if (serviceComplet == null) return;
@@ -1210,7 +1247,9 @@ class FornecedorDetalheScreen extends StatelessWidget {
                                   Get.to(() => ServicosParaCotacaoScreen(
                                         idCategoria: "",
                                         nomeCategoria: "",
-                                        fornecedoresSelecionados: [fornecedor.idFornecedor],
+                                        fornecedoresSelecionados: [
+                                          fornecedor.idFornecedor
+                                        ],
                                       ));
                                 },
                               ),
@@ -1251,7 +1290,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
     final fornecedorAtual = detalhe.fornecedor;
 
     return Obx(() {
-      if (controller.isLoadingFotos.value || controller.catalogoServicos.isEmpty) {
+      if (controller.isLoadingFotos.value ||
+          controller.catalogoServicos.isEmpty) {
         return const Center(
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
@@ -1277,7 +1317,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
       // 2️⃣ Encontrar todas as subcategorias correspondentes
       // ======================================================
       final idsSubcategorias = controller.subCategorias
-          .where((s) => categoriasEncontradas.any((cat) => cat.id == s.idCategoria))
+          .where((s) =>
+              categoriasEncontradas.any((cat) => cat.id == s.idCategoria))
           .map((s) => s.id)
           .toList();
 
@@ -1291,7 +1332,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
       final servicosOutrosFornecedores = controller.allServicosFornecedor
           .where((sf) =>
               idsSubcategorias.contains(sf.idSubcategoria) &&
-              sf.idFornecedor != fornecedorAtual.idFornecedor) // ❗ agora correto
+              sf.idFornecedor !=
+                  fornecedorAtual.idFornecedor) // ❗ agora correto
           .toList();
 
       if (servicosOutrosFornecedores.isEmpty) {
@@ -1301,11 +1343,14 @@ class FornecedorDetalheScreen extends StatelessWidget {
       // ======================================================
       // 4️⃣ Montar lista de serviços do catálogo
       // ======================================================
-      final idsProdutos =
-          servicosOutrosFornecedores.map((sf) => sf.idProdutoServico).whereType<String>().toList();
+      final idsProdutos = servicosOutrosFornecedores
+          .map((sf) => sf.idProdutoServico)
+          .whereType<String>()
+          .toList();
 
-      final servicosSemelhantes =
-          controller.catalogoServicos.where((s) => idsProdutos.contains(s.id)).toList();
+      final servicosSemelhantes = controller.catalogoServicos
+          .where((s) => idsProdutos.contains(s.id))
+          .toList();
 
       if (servicosSemelhantes.isEmpty) {
         return emptyServiceMessage();
@@ -1326,10 +1371,11 @@ class FornecedorDetalheScreen extends StatelessWidget {
               (sf) => sf.idProdutoServico == s.id,
             );
 
-            final fornecedorOutro = controller.fornecedores
-                .firstWhereOrNull((f) => f.idFornecedor == servicoFornecedor.idFornecedor);
+            final fornecedorOutro = controller.fornecedores.firstWhereOrNull(
+                (f) => f.idFornecedor == servicoFornecedor.idFornecedor);
 
-            final foto = fotos.firstWhereOrNull((f) => f.idProdutoServico == s.id);
+            final foto =
+                fotos.firstWhereOrNull((f) => f.idProdutoServico == s.id);
             final fotoUrl = (foto?.url.isNotEmpty ?? false)
                 ? foto!.url
                 : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media&token=6a769a8b-b604-41d0-ac63-ebd38b4af5f6';
@@ -1413,7 +1459,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
               errorWidget: (_, __, ___) => Container(
                 color: Colors.grey.shade300,
                 alignment: Alignment.center,
-                child: const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 48),
+                child: const Icon(Icons.broken_image_outlined,
+                    color: Colors.grey, size: 48),
               ),
             ),
 
@@ -1468,7 +1515,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
                       Row(
                         children: [
                           Icon(Icons.store_rounded,
-                              color: Colors.white.withValues(alpha: 0.8), size: 16),
+                              color: Colors.white.withValues(alpha: 0.8),
+                              size: 16),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -1499,7 +1547,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
                       // ⭐ Estrelas de avaliação
                       Row(
                         children: [
-                          Icon(Icons.star_rounded, color: Colors.amber.shade300, size: 18),
+                          Icon(Icons.star_rounded,
+                              color: Colors.amber.shade300, size: 18),
                           const SizedBox(width: 2),
                           Text(
                             avaliacao.toStringAsFixed(1),
@@ -1527,7 +1576,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
                         children: [
                           if (precoPromocao != null && precoPromocao > 0)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
                                 color: Colors.green.withValues(alpha: 0.25),
                                 borderRadius: BorderRadius.circular(6),
@@ -1544,9 +1594,10 @@ class FornecedorDetalheScreen extends StatelessWidget {
                             "R\$ ${Biblioteca.formatarValorDecimal(preco)}",
                             style: GoogleFonts.poppins(
                               color: Colors.white.withValues(alpha: 0.8),
-                              decoration: precoPromocao != null && precoPromocao > 0
-                                  ? TextDecoration.lineThrough
-                                  : null,
+                              decoration:
+                                  precoPromocao != null && precoPromocao > 0
+                                      ? TextDecoration.lineThrough
+                                      : null,
                             ),
                           )
                         ],
@@ -1570,19 +1621,23 @@ class FornecedorDetalheScreen extends StatelessWidget {
                           ),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primary.withValues(alpha: 0.85),
-                            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 10, horizontal: 20),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
                             elevation: 6,
                           ),
                           onPressed: () {
-                            final controllerLocalizacao = FornecedorLocalizacaoController.to;
+                            final controllerLocalizacao =
+                                FornecedorLocalizacaoController.to;
 
-                            final serviceComplet =
-                                controllerLocalizacao.allService.firstWhereOrNull(
+                            final serviceComplet = controllerLocalizacao
+                                .allService
+                                .firstWhereOrNull(
                               (sev) =>
-                                  sev.idProdutoServico == detalhe.idProdutoServico &&
+                                  sev.idProdutoServico ==
+                                      detalhe.idProdutoServico &&
                                   sev.idFornecedor == detalhe.idFornecedor,
                             );
 
@@ -1594,8 +1649,11 @@ class FornecedorDetalheScreen extends StatelessWidget {
 
                             Get.to(() => ServicosParaCotacaoScreen(
                                   idCategoria: fornecedorDetalhado.categoriaId,
-                                  nomeCategoria: fornecedorDetalhado.categoriaNome,
-                                  fornecedoresSelecionados: [detalhe.idFornecedor],
+                                  nomeCategoria:
+                                      fornecedorDetalhado.categoriaNome,
+                                  fornecedoresSelecionados: [
+                                    detalhe.idFornecedor
+                                  ],
                                 ));
                           },
                         ),
@@ -1685,8 +1743,8 @@ class FornecedorDetalheScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 12),
         child: Text(
           text,
-          style:
-              GoogleFonts.poppins(fontSize: 14, color: Colors.black54, fontStyle: FontStyle.italic),
+          style: GoogleFonts.poppins(
+              fontSize: 14, color: Colors.black54, fontStyle: FontStyle.italic),
         ),
       );
 }
@@ -1718,7 +1776,8 @@ Widget _cardServicoCarrossel({
             errorWidget: (_, __, ___) => Container(
               color: Colors.grey.shade300,
               alignment: Alignment.center,
-              child: const Icon(Icons.broken_image_outlined, color: Colors.grey, size: 50),
+              child: const Icon(Icons.broken_image_outlined,
+                  color: Colors.grey, size: 50),
             ),
           ),
           Container(
@@ -1745,7 +1804,10 @@ Widget _cardServicoCarrossel({
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                     shadows: const [
-                      Shadow(color: Colors.black54, blurRadius: 4, offset: Offset(1, 1)),
+                      Shadow(
+                          color: Colors.black54,
+                          blurRadius: 4,
+                          offset: Offset(1, 1)),
                     ],
                   ),
                 ),
@@ -1762,7 +1824,8 @@ Widget _cardServicoCarrossel({
                 ),
                 const SizedBox(height: 12),
                 ElevatedButton.icon(
-                  icon: const Icon(Icons.request_quote_rounded, size: 18, color: Colors.white),
+                  icon: const Icon(Icons.request_quote_rounded,
+                      size: 18, color: Colors.white),
                   label: Text('Orçar Serviço',
                       style: GoogleFonts.poppins(
                         fontSize: 13,
@@ -1771,13 +1834,17 @@ Widget _cardServicoCarrossel({
                       )),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primary.withValues(alpha: 0.9),
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 10, horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                   onPressed: () {
-                    final controllerLocalizacao = FornecedorLocalizacaoController.to;
+                    final controllerLocalizacao =
+                        FornecedorLocalizacaoController.to;
 
-                    final serviceComplet = controllerLocalizacao.allService.firstWhereOrNull(
+                    final serviceComplet =
+                        controllerLocalizacao.allService.firstWhereOrNull(
                       (s) =>
                           s.idProdutoServico == servico.id &&
                           s.idFornecedor == fornecedorId &&
@@ -1814,7 +1881,8 @@ Widget _bannerFornecedor(String fotoCapa, Gradient gradient) {
         height: 280,
         width: double.infinity,
         decoration: BoxDecoration(
-          borderRadius: const BorderRadius.vertical(bottom: Radius.circular(32)),
+          borderRadius:
+              const BorderRadius.vertical(bottom: Radius.circular(32)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.15),
@@ -1844,7 +1912,8 @@ Widget _bannerFornecedor(String fotoCapa, Gradient gradient) {
           errorWidget: (_, __, ___) => Container(
             color: Colors.grey.shade300,
             child: const Center(
-              child: Icon(Icons.broken_image_outlined, color: Colors.grey, size: 50),
+              child: Icon(Icons.broken_image_outlined,
+                  color: Colors.grey, size: 50),
             ),
           ),
         ),

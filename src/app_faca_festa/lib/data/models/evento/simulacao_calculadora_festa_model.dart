@@ -122,7 +122,10 @@ class SimulacaoCalculadoraFestaModel {
 
   factory SimulacaoCalculadoraFestaModel.fromMap(Map<String, dynamic> map) {
     final analiseMap = _asMap(
-      map['analise_ia'] ?? map['analise_ia_generativa'] ?? map['analiseIA'] ?? map['analysis'],
+      map['analise_ia'] ??
+          map['analise_ia_generativa'] ??
+          map['analiseIA'] ??
+          map['analysis'],
     );
 
     final status = StatusSimulacaoCalculadoraExtension.fromString(
@@ -154,9 +157,12 @@ class SimulacaoCalculadoraFestaModel {
       statusSimulacao: status,
       convertidoEmOrcamento: convertido,
       dataConversaoOrcamento: _asDate(map['data_conversao_orcamento']),
-      dataCriacao: _asDate(map['data_criacao'] ?? map['data_calculo']) ?? DateTime.now(),
+      dataCriacao:
+          _asDate(map['data_criacao'] ?? map['data_calculo']) ?? DateTime.now(),
       dataAtualizacao: _asDate(map['data_atualizacao']),
-      analiseIA: analiseMap != null ? AnaliseCalculadoraIAModel.fromMap(analiseMap) : null,
+      analiseIA: analiseMap != null
+          ? AnaliseCalculadoraIAModel.fromMap(analiseMap)
+          : null,
     );
   }
 
@@ -201,8 +207,13 @@ class SimulacaoCalculadoraFestaModel {
     if (value is bool) return value;
     final normalized = value?.toString().trim().toLowerCase();
 
-    if (normalized == 'true' || normalized == '1' || normalized == 'sim') return true;
-    if (normalized == 'false' || normalized == '0' || normalized == 'nao' || normalized == 'não') {
+    if (normalized == 'true' || normalized == '1' || normalized == 'sim') {
+      return true;
+    }
+    if (normalized == 'false' ||
+        normalized == '0' ||
+        normalized == 'nao' ||
+        normalized == 'não') {
       return false;
     }
 

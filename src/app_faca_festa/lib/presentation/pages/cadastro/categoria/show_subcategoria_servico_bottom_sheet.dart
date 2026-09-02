@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../controllers/categoria/categoria_servico_controller.dart';
-import '../../../../controllers/categoria/subcategoria_servico_controller.dart';
-import '../../../../controllers/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcategoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
 import '../../../../core/utils/form_masks.dart';
 import '../../../../core/utils/form_validators.dart';
 import '../../../../data/models/servico_produto/categoria_servico_model.dart';
@@ -76,8 +76,10 @@ class _SubcategoriaServicoSheetState extends State<_SubcategoriaServicoSheet> {
     descCtrl = TextEditingController(text: subcategoria?.descricao ?? '');
     ordemCtrl = TextEditingController(text: '${subcategoria?.ordem ?? 0}');
     ativo = subcategoria?.ativo ?? true;
-    icone = subcategoria?.icone ?? widget.categoriaSelecionada?.icone ?? 'category';
-    idCategoria = subcategoria?.idCategoria ?? widget.categoriaSelecionada?.id ?? '';
+    icone =
+        subcategoria?.icone ?? widget.categoriaSelecionada?.icone ?? 'category';
+    idCategoria =
+        subcategoria?.idCategoria ?? widget.categoriaSelecionada?.id ?? '';
   }
 
   @override
@@ -114,7 +116,8 @@ class _SubcategoriaServicoSheetState extends State<_SubcategoriaServicoSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Form(
         key: _formKey,
         autovalidateMode: _autovalidateMode,
@@ -161,9 +164,11 @@ class _SubcategoriaServicoSheetState extends State<_SubcategoriaServicoSheet> {
                   obrigatorio: true,
                 ),
                 items: categoriaController.categorias
-                    .map((c) => DropdownMenuItem(value: c.id, child: Text(c.nome)))
+                    .map((c) =>
+                        DropdownMenuItem(value: c.id, child: Text(c.nome)))
                     .toList(),
-                validator: (v) => FormValidators.selecao(v, campo: 'a categoria'),
+                validator: (v) =>
+                    FormValidators.selecao(v, campo: 'a categoria'),
                 onChanged: (v) => setState(() => idCategoria = v ?? ''),
               ),
               const SizedBox(height: 14),
@@ -221,7 +226,8 @@ class _SubcategoriaServicoSheetState extends State<_SubcategoriaServicoSheet> {
               const SizedBox(height: 16),
               Text(
                 'Ícone (opcional)',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13),
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600, fontSize: 13),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -243,7 +249,8 @@ class _SubcategoriaServicoSheetState extends State<_SubcategoriaServicoSheet> {
                       ),
                       child: Icon(
                         e.value,
-                        color: selecionado ? Colors.white : AdminPalette.primary,
+                        color:
+                            selecionado ? Colors.white : AdminPalette.primary,
                         size: 20,
                       ),
                     ),
@@ -254,7 +261,8 @@ class _SubcategoriaServicoSheetState extends State<_SubcategoriaServicoSheet> {
                 contentPadding: EdgeInsets.zero,
                 value: ativo,
                 onChanged: (v) => setState(() => ativo = v),
-                title: Text('Subcategoria ativa', style: GoogleFonts.poppins(fontSize: 14)),
+                title: Text('Subcategoria ativa',
+                    style: GoogleFonts.poppins(fontSize: 14)),
               ),
               const SizedBox(height: 8),
               SizedBox(
@@ -271,18 +279,21 @@ class _SubcategoriaServicoSheetState extends State<_SubcategoriaServicoSheet> {
                           ),
                         )
                       : const Icon(Icons.save_rounded),
-                  label: Text('Salvar', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+                  label: Text('Salvar',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
                   style: FilledButton.styleFrom(
                     backgroundColor: AdminPalette.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
               ),
               TextButton(
                 onPressed: salvando ? null : () => Get.back(),
                 child: Center(
-                  child: Text('Cancelar', style: GoogleFonts.poppins(color: AdminPalette.muted)),
+                  child: Text('Cancelar',
+                      style: GoogleFonts.poppins(color: AdminPalette.muted)),
                 ),
               ),
             ],

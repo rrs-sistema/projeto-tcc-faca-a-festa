@@ -4,7 +4,7 @@ import 'package:get/get.dart';
 import 'dart:async';
 import 'dart:math';
 
-import './../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 class ContadorEventoScreen extends StatefulWidget {
   final DateTime dataEvento;
@@ -37,7 +37,8 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
   void initState() {
     super.initState();
     _atualizarTempo();
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _atualizarTempo());
+    _timer =
+        Timer.periodic(const Duration(seconds: 1), (_) => _atualizarTempo());
     _animController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 3),
@@ -192,96 +193,96 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
 
       return Padding(
         padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: _gradienteDoTema(primary),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
-          boxShadow: [
-            BoxShadow(
-              color: primary.withValues(alpha: 0.28),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.10),
-                        Colors.transparent,
-                      ],
-                    ),
-                  ),
-                ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: _gradienteDoTema(primary),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+            boxShadow: [
+              BoxShadow(
+                color: primary.withValues(alpha: 0.28),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
               ),
-              if (_ativarParticulas)
-                Positioned.fill(
-                  child: IgnorePointer(
-                    child: AnimatedBuilder(
-                      animation: _animController,
-                      builder: (context, _) {
-                        return CustomPaint(
-                          painter: _ParticlePainter(
-                            progress: _animController.value,
-                            random: _random,
-                            cores: _coresParticulas,
-                            glow: glowAtivo,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              if (_mostrarConfete)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'O grande dia chegou',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                )
-              else
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: compacto ? 6 : 8,
-                  ),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        _unidade('dias', dias, compacto),
-                        _divisor(),
-                        _unidade('horas', horas, compacto),
-                        _divisor(),
-                        _unidade('min', minutos, compacto),
-                        _divisor(),
-                        _unidade('seg', segundos, compacto),
-                      ],
-                    ),
-                  ),
-                ),
             ],
           ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(22),
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                Positioned.fill(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: 0.10),
+                          Colors.transparent,
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                if (_ativarParticulas)
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: AnimatedBuilder(
+                        animation: _animController,
+                        builder: (context, _) {
+                          return CustomPaint(
+                            painter: _ParticlePainter(
+                              progress: _animController.value,
+                              random: _random,
+                              cores: _coresParticulas,
+                              glow: glowAtivo,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                if (_mostrarConfete)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Text(
+                      'O grande dia chegou',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
+                else
+                  Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: compacto ? 6 : 8,
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _unidade('dias', dias, compacto),
+                          _divisor(),
+                          _unidade('horas', horas, compacto),
+                          _divisor(),
+                          _unidade('min', minutos, compacto),
+                          _divisor(),
+                          _unidade('seg', segundos, compacto),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ),
-      ),
-    );
+      );
     });
   }
 
@@ -344,7 +345,8 @@ class _ContadorEventoScreenState extends State<ContadorEventoScreen>
 
 // ignore: unused_element
 String _mensagemContagemRegressiva(int dias, String tipoEvento) {
-  final tipo = tipoEvento.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '').trim();
+  final tipo =
+      tipoEvento.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '').trim();
 
   String tempo;
   if (dias > 1) {

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/servico/servico_produto_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_produto_controller.dart';
 import 'package:app_faca_festa/data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import 'package:app_faca_festa/data/models/servico_produto/fornecedor_produto_servico_model.dart';
 import 'package:app_faca_festa/data/models/servico_produto/servico_produto_model.dart';

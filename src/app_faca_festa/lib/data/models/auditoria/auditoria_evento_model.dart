@@ -21,12 +21,18 @@ class AuditoriaEventoModel extends AuditoriaEvento {
     super.atorNome,
     super.atorEmail,
     super.atorTipo,
+    super.atorAuthType,
     super.mudancas,
     super.detalhe,
     super.visivelFornecedor,
     super.plataforma,
     super.rota,
     super.origem,
+    super.operacao,
+    super.documentPath,
+    super.sourceEventId,
+    super.algoritmoHash,
+    super.hashIntegridade,
     super.criadoEm,
   });
 
@@ -72,13 +78,23 @@ class AuditoriaEventoModel extends AuditoriaEvento {
       atorNome: _textoOpcional(map['ator_nome'] ?? map['atorNome']),
       atorEmail: _textoOpcional(map['ator_email'] ?? map['atorEmail']),
       atorTipo: _textoOpcional(map['ator_tipo'] ?? map['atorTipo']),
+      atorAuthType:
+          _textoOpcional(map['ator_auth_type'] ?? map['atorAuthType']),
       mudancas: mudancas,
       detalhe: detalhe,
-      visivelFornecedor: map['visivel_fornecedor'] == true ||
-          map['visivelFornecedor'] == true,
+      visivelFornecedor:
+          map['visivel_fornecedor'] == true || map['visivelFornecedor'] == true,
       plataforma: _textoOpcional(map['plataforma']),
       rota: _textoOpcional(map['rota']),
       origem: _textoOpcional(map['origem']),
+      operacao: _textoOpcional(map['operacao']),
+      documentPath: _textoOpcional(map['document_path'] ?? map['documentPath']),
+      sourceEventId:
+          _textoOpcional(map['source_event_id'] ?? map['sourceEventId']),
+      algoritmoHash:
+          _textoOpcional(map['algoritmo_hash'] ?? map['algoritmoHash']),
+      hashIntegridade:
+          _textoOpcional(map['hash_integridade'] ?? map['hashIntegridade']),
       criadoEm: _toDate(map['criado_em'] ?? map['criadoEm']),
     );
   }

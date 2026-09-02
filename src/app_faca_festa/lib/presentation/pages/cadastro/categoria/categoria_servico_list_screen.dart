@@ -3,12 +3,11 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../controllers/categoria/categoria_servico_controller.dart';
-import '../../../../controllers/categoria/subcategoria_servico_controller.dart';
-import '../../../../controllers/tema/admin_theme.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcategoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../../../data/models/servico_produto/categoria_servico_model.dart';
-import '../../../../domain/usecases/gerenciar_catalogo_servico.dart';
 import '../../../widgets/admin/admin_kit.dart';
 import './categoria_servico_bottom_sheet.dart';
 import './subcategoria_servico_list_screen.dart';
@@ -18,13 +17,7 @@ class CategoriaServicoListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.isRegistered<CategoriaServicoController>()
-        ? Get.find<CategoriaServicoController>()
-        : Get.put(
-            CategoriaServicoController(
-              catalogo: Get.find<GerenciarCatalogoServico>(),
-            ),
-          );
+    final controller = Get.find<CategoriaServicoController>();
     final theme = Get.find<EventThemeController>();
 
     return Theme(

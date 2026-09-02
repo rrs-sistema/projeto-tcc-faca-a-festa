@@ -6,8 +6,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
-import '../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/totp_mfa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/controllers/totp_mfa_controller.dart';
 import '../../../core/utils/form_validators.dart';
 import '../../widgets/custom_input_field.dart';
 
@@ -25,7 +25,7 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(TotpMfaController());
+    controller = Get.find<TotpMfaController>();
     codigoCtrl = TextEditingController();
   }
 
@@ -94,7 +94,8 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
                         codigoCtrl: codigoCtrl,
                       );
                     }
-                    if (controller.etapa.value == TotpMfaController.etapaEmail) {
+                    if (controller.etapa.value ==
+                        TotpMfaController.etapaEmail) {
                       return _EtapaEmail(
                         controller: controller,
                         primary: primary,
@@ -453,91 +454,91 @@ class _EtapaEmailState extends State<_EtapaEmail> {
       key: _formKey,
       autovalidateMode: _autovalidateMode,
       child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (widget.cadastro)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: controller.voltarEscolha,
-              icon: Icon(Icons.arrow_back_rounded, color: primary),
-              label: Text(
-                'Trocar método',
-                style: GoogleFonts.poppins(
-                  color: primary,
-                  fontWeight: FontWeight.w600,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (widget.cadastro)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: controller.voltarEscolha,
+                icon: Icon(Icons.arrow_back_rounded, color: primary),
+                label: Text(
+                  'Trocar método',
+                  style: GoogleFonts.poppins(
+                    color: primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
-          ),
-        Icon(Icons.mark_email_read_outlined, size: 48, color: primary),
-        const SizedBox(height: 12),
-        Text(
-          'Código por e-mail',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.fredoka(
-            color: primary,
-            fontSize: 26,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          destino.isEmpty
-              ? 'Enviamos um código de 6 dígitos para o e-mail da sua conta.'
-              : 'Enviamos um código de 6 dígitos para $destino.',
-          textAlign: TextAlign.center,
-          style: GoogleFonts.poppins(
-            color: Colors.grey.shade700,
-            fontSize: 13.5,
-            height: 1.35,
-          ),
-        ),
-        const SizedBox(height: 22),
-        CustomInputField(
-          label: 'Código do e-mail',
-          hintlabel: '000000',
-          icon: Icons.shield_outlined,
-          controller: widget.codigoCtrl,
-          color: primary,
-          titleColor: primary,
-          type: InputType.number,
-          isRequired: true,
-          maxLength: 6,
-          keyboardType: TextInputType.number,
-          validator: FormValidators.codigoVerificacao,
-          onChanged: (value) => controller.codigo.value = value,
-        ),
-        const SizedBox(height: 16),
-        _BotaoConfirmar(
-          primary: primary,
-          loading: controller.carregando.value,
-          label: widget.cadastro ? 'Confirmar e-mail' : 'Confirmar e entrar',
-          onPressed: _confirmar,
-        ),
-        TextButton(
-          onPressed: controller.enviandoEmail.value
-              ? null
-              : controller.solicitarCodigoEmail,
-          child: Text(
-            'Reenviar código',
-            style: GoogleFonts.poppins(
+          Icon(Icons.mark_email_read_outlined, size: 48, color: primary),
+          const SizedBox(height: 12),
+          Text(
+            'Código por e-mail',
+            textAlign: TextAlign.center,
+            style: GoogleFonts.fredoka(
               color: primary,
+              fontSize: 26,
               fontWeight: FontWeight.w600,
             ),
           ),
-        ),
-        TextButton(
-          onPressed: controller.sair,
-          child: Text(
-            'Sair',
+          const SizedBox(height: 8),
+          Text(
+            destino.isEmpty
+                ? 'Enviamos um código de 6 dígitos para o e-mail da sua conta.'
+                : 'Enviamos um código de 6 dígitos para $destino.',
+            textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               color: Colors.grey.shade700,
-              fontWeight: FontWeight.w600,
+              fontSize: 13.5,
+              height: 1.35,
             ),
           ),
-        ),
-      ],
+          const SizedBox(height: 22),
+          CustomInputField(
+            label: 'Código do e-mail',
+            hintlabel: '000000',
+            icon: Icons.shield_outlined,
+            controller: widget.codigoCtrl,
+            color: primary,
+            titleColor: primary,
+            type: InputType.number,
+            isRequired: true,
+            maxLength: 6,
+            keyboardType: TextInputType.number,
+            validator: FormValidators.codigoVerificacao,
+            onChanged: (value) => controller.codigo.value = value,
+          ),
+          const SizedBox(height: 16),
+          _BotaoConfirmar(
+            primary: primary,
+            loading: controller.carregando.value,
+            label: widget.cadastro ? 'Confirmar e-mail' : 'Confirmar e entrar',
+            onPressed: _confirmar,
+          ),
+          TextButton(
+            onPressed: controller.enviandoEmail.value
+                ? null
+                : controller.solicitarCodigoEmail,
+            child: Text(
+              'Reenviar código',
+              style: GoogleFonts.poppins(
+                color: primary,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: controller.sair,
+            child: Text(
+              'Sair',
+              style: GoogleFonts.poppins(
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

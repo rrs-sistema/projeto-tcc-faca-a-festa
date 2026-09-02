@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/avaliacao/avaliacao_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import 'package:app_faca_festa/domain/repositories/avaliacao_servico_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_avaliacoes_servico.dart';
 

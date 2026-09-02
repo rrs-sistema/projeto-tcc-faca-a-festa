@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/calculadora/calculadora_itens_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_itens_admin_controller.dart';
 import 'package:app_faca_festa/data/models/calculadora/calculadora_evento_item_model.dart';
 import 'package:app_faca_festa/data/models/calculadora/calculadora_item_base_model.dart';
 import 'package:app_faca_festa/domain/repositories/calculadora_itens_base_repository_contract.dart';

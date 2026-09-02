@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import './../../../../controllers/app_controller.dart';
-import './../../../../controllers/convidado/grupo_convidado_controller.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../../data/models/convidado/grupo_convidado_model.dart';
 import './../../../../data/models/model.dart';
 import './abrir_adicionar_grupo_bottom_sheet.dart';
@@ -55,7 +55,8 @@ class GruposTab extends StatelessWidget {
               _SectionTitle(
                 icon: Icons.folder_shared_rounded,
                 title: 'Grupos',
-                subtitle: 'Toque para ver os convidados. Use o menu para editar.',
+                subtitle:
+                    'Toque para ver os convidados. Use o menu para editar.',
                 color: primary,
               ),
               const SizedBox(height: 10),
@@ -135,7 +136,8 @@ Future<void> _confirmarExcluirGrupo({
       ),
       content: Text(
         'O grupo "${grupo.nome}" está vazio e será removido permanentemente.',
-        style: GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF4B5563)),
+        style:
+            GoogleFonts.poppins(fontSize: 13, color: const Color(0xFF4B5563)),
       ),
       actions: [
         TextButton(
@@ -226,7 +228,8 @@ class _GruposHero extends StatelessWidget {
               color: Colors.white.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.groups_2_rounded, color: Colors.white, size: 24),
+            child: const Icon(Icons.groups_2_rounded,
+                color: Colors.white, size: 24),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -303,7 +306,8 @@ class _ResumoGrupos extends StatelessWidget {
         spacing: 8,
         runSpacing: 8,
         children: resumo
-            .map((item) => SizedBox(width: width, child: _ResumoCard(item: item)))
+            .map((item) =>
+                SizedBox(width: width, child: _ResumoCard(item: item)))
             .toList(),
       );
     });
@@ -691,7 +695,8 @@ class _GrupoCardState extends State<_GrupoCard> {
                         children: [
                           const Icon(Icons.edit_outlined, size: 16),
                           const SizedBox(width: 8),
-                          Text('Editar', style: GoogleFonts.poppins(fontSize: 13)),
+                          Text('Editar',
+                              style: GoogleFonts.poppins(fontSize: 13)),
                         ],
                       ),
                     ),

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/fornecedor/fornecedor_recomendacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_recomendacao_controller.dart';
 import 'package:app_faca_festa/data/models/fornecedor/fornecedor_recomendacao_model.dart';
 import 'package:app_faca_festa/domain/repositories/fornecedor_recomendacao_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedor_recomendacoes.dart';

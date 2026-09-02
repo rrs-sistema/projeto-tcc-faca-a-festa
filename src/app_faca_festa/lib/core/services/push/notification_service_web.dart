@@ -8,7 +8,9 @@ Future<void> setupNotificationChannel() async {
   // Web: não usa Android channel
 }
 
-Future<void> initPushNotifications() async {
-  await FirebaseMessaging.instance.requestPermission();
-  await FirebaseMessaging.instance.getToken();
+Future<void> initPushNotifications({
+  required FirebaseMessaging messaging,
+}) async {
+  await messaging.requestPermission();
+  await messaging.getToken();
 }

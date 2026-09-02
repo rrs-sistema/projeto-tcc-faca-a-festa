@@ -8,11 +8,11 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/utils/agenda_contatos.dart';
 import '../../../../core/utils/form_masks.dart';
 import '../../../../core/utils/form_validators.dart';
-import '../../../../controllers/convidado/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import '../../../../data/services/convite/enviar_convites_por_email_service.dart';
-import '../../../../controllers/convidado/grupo_convidado_controller.dart';
-import '../../../../controllers/evento_controller.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../../../data/models/convidado/grupo_convidado_model.dart';
 import '../../../../data/models/model.dart';
 import 'buscar_contato_agenda_sheet.dart';
@@ -544,7 +544,8 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
               borderSide: const BorderSide(color: Colors.redAccent)),
           focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Colors.redAccent, width: 1.2)),
+              borderSide:
+                  const BorderSide(color: Colors.redAccent, width: 1.2)),
           errorStyle: const TextStyle(fontSize: 11, height: 0.9),
           errorMaxLines: 2,
         ),
@@ -718,9 +719,8 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
                           fontWeight: FontWeight.w600))))
               .toList(),
           onChanged: (v) => idGrupoSelecionado.value = v ?? '',
-          validator: (v) => (v == null || v.trim().isEmpty)
-              ? 'Selecione um grupo'
-              : null,
+          validator: (v) =>
+              (v == null || v.trim().isEmpty) ? 'Selecione um grupo' : null,
         ),
       );
     });
@@ -881,131 +881,130 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
                   key: _formKey,
                   autovalidateMode: _autovalidateMode,
                   child: ListView(
-                  controller: controllerScroll,
-                  padding: EdgeInsets.fromLTRB(16, 16, 16,
-                      MediaQuery.of(context).viewInsets.bottom + 16),
-                  children: [
-                    buildSectionTitle(
-                        icon: Icons.badge_outlined,
-                        title: 'Dados do convidado'),
-                    buildBotaoAgenda(),
-                    buildTextField(
-                        controller: nomeCtrl,
-                        label: 'Nome',
-                        icon: Icons.person_outline_rounded,
-                        textCapitalization: TextCapitalization.words,
-                        validator: (v) => FormValidators.nomePessoa(
-                              v,
-                              campo: 'o nome do convidado',
-                            )),
-                    buildTextField(
-                        controller: telCtrl,
-                        label: 'Telefone',
-                        hint: '(00) 00000-0000',
-                        icon: Icons.phone_outlined,
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: [telefoneMask],
-                        validator: (v) => FormValidators.telefone(
-                              v,
-                              obrigatorio: false,
-                            ),
-                        onChanged: (v) => FormMasks.atualizarTelefone(
-                              telefoneMask,
-                              v,
-                              controller: telCtrl,
-                            )),
-                    Obx(() {
-                      final exigirEmail = enviarPorEmail.value;
-                      return buildTextField(
-                          controller: emailCtrl,
-                          label: 'E-mail',
-                          icon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.done,
-                          validator: (v) => FormValidators.email(
+                    controller: controllerScroll,
+                    padding: EdgeInsets.fromLTRB(16, 16, 16,
+                        MediaQuery.of(context).viewInsets.bottom + 16),
+                    children: [
+                      buildSectionTitle(
+                          icon: Icons.badge_outlined,
+                          title: 'Dados do convidado'),
+                      buildBotaoAgenda(),
+                      buildTextField(
+                          controller: nomeCtrl,
+                          label: 'Nome',
+                          icon: Icons.person_outline_rounded,
+                          textCapitalization: TextCapitalization.words,
+                          validator: (v) => FormValidators.nomePessoa(
                                 v,
-                                obrigatorio: exigirEmail,
-                              ));
-                    }),
-                    const SizedBox(height: 4),
-                    buildEnviarEmailCheck(),
-                    const SizedBox(height: 10),
-                    buildSectionTitle(
-                        icon: Icons.groups_2_outlined, title: 'Classificação'),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(children: [
-                        buildTipoCard(TipoConvidado.adulto),
-                        const SizedBox(width: 8),
-                        buildTipoCard(TipoConvidado.crianca),
-                        const SizedBox(width: 8),
-                        buildTipoCard(TipoConvidado.bebe)
-                      ]),
-                    ),
-                    const SizedBox(height: 12),
-                    buildGroupDropdown(),
-                    const SizedBox(height: 12),
-                    buildCareSwitch(),
-                    const SizedBox(height: 20),
-                    Obx(() {
-                      final isSaving = salvando.value;
-                      return SizedBox(
+                                campo: 'o nome do convidado',
+                              )),
+                      buildTextField(
+                          controller: telCtrl,
+                          label: 'Telefone',
+                          hint: '(00) 00000-0000',
+                          icon: Icons.phone_outlined,
+                          keyboardType: TextInputType.phone,
+                          inputFormatters: [telefoneMask],
+                          validator: (v) => FormValidators.telefone(
+                                v,
+                                obrigatorio: false,
+                              ),
+                          onChanged: (v) => FormMasks.atualizarTelefone(
+                                telefoneMask,
+                                v,
+                                controller: telCtrl,
+                              )),
+                      Obx(() {
+                        final exigirEmail = enviarPorEmail.value;
+                        return buildTextField(
+                            controller: emailCtrl,
+                            label: 'E-mail',
+                            icon: Icons.email_outlined,
+                            keyboardType: TextInputType.emailAddress,
+                            textInputAction: TextInputAction.done,
+                            validator: (v) => FormValidators.email(
+                                  v,
+                                  obrigatorio: exigirEmail,
+                                ));
+                      }),
+                      const SizedBox(height: 4),
+                      buildEnviarEmailCheck(),
+                      const SizedBox(height: 10),
+                      buildSectionTitle(
+                          icon: Icons.groups_2_outlined,
+                          title: 'Classificação'),
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(children: [
+                          buildTipoCard(TipoConvidado.adulto),
+                          const SizedBox(width: 8),
+                          buildTipoCard(TipoConvidado.crianca),
+                          const SizedBox(width: 8),
+                          buildTipoCard(TipoConvidado.bebe)
+                        ]),
+                      ),
+                      const SizedBox(height: 12),
+                      buildGroupDropdown(),
+                      const SizedBox(height: 12),
+                      buildCareSwitch(),
+                      const SizedBox(height: 20),
+                      Obx(() {
+                        final isSaving = salvando.value;
+                        return SizedBox(
+                          width: double.infinity,
+                          height: 44,
+                          child: ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                                backgroundColor: primary,
+                                disabledBackgroundColor:
+                                    primary.withValues(alpha: 0.45),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14))),
+                            onPressed: isSaving ? null : salvarConvidado,
+                            icon: isSaving
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2, color: Colors.white))
+                                : const Icon(Icons.check_circle_outline_rounded,
+                                    color: Colors.white, size: 18),
+                            label: Text(
+                                isSaving
+                                    ? 'Salvando...'
+                                    : editando
+                                        ? 'Salvar'
+                                        : 'Cadastrar',
+                                style: GoogleFonts.poppins(
+                                    color: Colors.white,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800)),
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 6),
+                      SizedBox(
                         width: double.infinity,
                         height: 44,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: primary,
-                              disabledBackgroundColor:
-                                  primary.withValues(alpha: 0.45),
+                        child: TextButton.icon(
+                          onPressed: () {
+                            FocusManager.instance.primaryFocus?.unfocus();
+                            Navigator.of(context).pop();
+                          },
+                          icon: const Icon(Icons.close_rounded, size: 18),
+                          label: Text('Cancelar',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w700, fontSize: 13)),
+                          style: TextButton.styleFrom(
+                              foregroundColor: textMuted,
                               shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14))),
-                          onPressed: isSaving ? null : salvarConvidado,
-                          icon: isSaving
-                              ? const SizedBox(
-                                  width: 16,
-                                  height: 16,
-                                  child: CircularProgressIndicator(
-                                      strokeWidth: 2, color: Colors.white))
-                              : const Icon(
-                                  Icons.check_circle_outline_rounded,
-                                  color: Colors.white,
-                                  size: 18),
-                          label: Text(
-                              isSaving
-                                  ? 'Salvando...'
-                                  : editando
-                                      ? 'Salvar'
-                                      : 'Cadastrar',
-                              style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800)),
                         ),
-                      );
-                    }),
-                    const SizedBox(height: 6),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 44,
-                      child: TextButton.icon(
-                        onPressed: () {
-                          FocusManager.instance.primaryFocus?.unfocus();
-                          Navigator.of(context).pop();
-                        },
-                        icon: const Icon(Icons.close_rounded, size: 18),
-                        label: Text('Cancelar',
-                            style: GoogleFonts.poppins(
-                                fontWeight: FontWeight.w700, fontSize: 13)),
-                        style: TextButton.styleFrom(
-                            foregroundColor: textMuted,
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(14))),
                       ),
-                    ),
-                    const SizedBox(height: 35),
-                  ],
-                ),
+                      const SizedBox(height: 35),
+                    ],
+                  ),
                 ),
               ),
             ],

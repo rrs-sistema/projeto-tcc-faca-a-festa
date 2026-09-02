@@ -9,12 +9,12 @@ import 'package:get/get.dart';
 import '../../../app/bootstrap/orcamento_gasto_bootstrap.dart';
 import '../../../app/bootstrap/orcamento_bootstrap.dart';
 import '../../../data/models/avaliacao/avaliacao_model.dart';
-import './../../../controllers/orcamento_gasto_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/orcamento_controller.dart';
-import './../../../controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import './../../dialogs/enviar_avaliacao_dialog.dart';
-import './../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../../core/utils/form_masks.dart';
 import './../../../core/utils/form_validators.dart';
@@ -1084,7 +1084,7 @@ Future<void> _showAddGastoDialog(
     );
   } finally {
     FocusManager.instance.primaryFocus?.unfocus();
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 350));
     nomeCtrl.dispose();
     custoCtrl.dispose();
     pagoCtrl.dispose();
@@ -1247,6 +1247,7 @@ Future<void> showAddOrcamentoBottomSheet(
         idOrcamento: DateTime.now().millisecondsSinceEpoch.toString(),
         idEvento: idEvento,
         idServicoFornecido: null,
+        idSolicitante: Get.find<AppController>().usuarioLogado.value?.idUsuario,
         custoEstimado: custo,
         anotacoes: descricao,
         status: StatusOrcamento.pendente,
@@ -1626,7 +1627,7 @@ Future<void> showAddOrcamentoBottomSheet(
     );
   } finally {
     FocusManager.instance.primaryFocus?.unfocus();
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 350));
     nomeCtrl.dispose();
     custoEstimadoCtrl.dispose();
   }

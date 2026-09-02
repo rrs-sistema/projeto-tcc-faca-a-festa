@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../controllers/inspiracao/inspiracao_controller.dart';
-import '../../../controllers/home_event_nav_controller.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/home_event_nav_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../../data/models/model.dart';
 import '../../../data/models/DTO/fornecedor_detalhado_dto.dart';
 import '../fornecedor/fornecedor_detalhe_screen.dart';
@@ -34,7 +34,11 @@ class InspiracaoDetalheScreen extends StatelessWidget {
             height: 400, // 🔹 Imagem de fundo ligeiramente menor[cite: 31]
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xCC000000), Color(0x66000000), Colors.transparent],
+                colors: [
+                  Color(0xCC000000),
+                  Color(0x66000000),
+                  Colors.transparent
+                ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
               ),
@@ -51,21 +55,27 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                   backgroundColor: Colors.black.withValues(alpha: 0.3),
                   radius: 18,
                   child: IconButton(
-                    icon:
-                        const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white, size: 18),
                     onPressed: () => Get.back(),
                     padding: EdgeInsets.zero,
                   ),
                 ),
                 Obx(() {
-                  final atual = _resolverInspiracaoAtual(inspiracaoController, inspiracao);
+                  final atual = _resolverInspiracaoAtual(
+                      inspiracaoController, inspiracao);
                   return CircleAvatar(
                     backgroundColor: Colors.black.withValues(alpha: 0.3),
                     radius: 18,
                     child: IconButton(
-                      icon: Icon(atual.favorito ? Icons.star_rounded : Icons.star_border_rounded,
-                          color: atual.favorito ? Colors.amber : Colors.white, size: 20),
-                      onPressed: () => inspiracaoController.alternarFavorito(atual.id),
+                      icon: Icon(
+                          atual.favorito
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
+                          color: atual.favorito ? Colors.amber : Colors.white,
+                          size: 20),
+                      onPressed: () =>
+                          inspiracaoController.alternarFavorito(atual.id),
                       padding: EdgeInsets.zero,
                     ),
                   );
@@ -75,20 +85,24 @@ class InspiracaoDetalheScreen extends StatelessWidget {
           ),
           Positioned(
             left: 20, right: 20,
-            bottom: MediaQuery.of(context).size.height * 0.52, // 🔹 Ajuste dinâmico[cite: 31]
+            bottom: MediaQuery.of(context).size.height *
+                0.52, // 🔹 Ajuste dinâmico[cite: 31]
             child: IgnorePointer(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if ((inspiracao.categoria ?? '').isNotEmpty)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                           color: primary.withValues(alpha: 0.8),
                           borderRadius: BorderRadius.circular(8)),
                       child: Text(inspiracao.categoria!,
                           style: GoogleFonts.poppins(
-                              color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700)),
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.w700)),
                     ),
                   const SizedBox(height: 8),
                   Text(
@@ -100,14 +114,17 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                         fontSize: 24,
                         fontWeight: FontWeight.w800,
                         height: 1.1,
-                        shadows: const [Shadow(color: Colors.black54, blurRadius: 6)]),
+                        shadows: const [
+                          Shadow(color: Colors.black54, blurRadius: 6)
+                        ]),
                   ),
                 ],
               ),
             ),
           ),
           DraggableScrollableSheet(
-            initialChildSize: 0.50, // 🔹 Começa mais baixo, dando mais espaço para a foto[cite: 31]
+            initialChildSize:
+                0.50, // 🔹 Começa mais baixo, dando mais espaço para a foto[cite: 31]
             minChildSize: 0.50,
             maxChildSize: 0.95,
             builder: (context, scrollController) => Container(
@@ -115,7 +132,10 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                 color: Colors.white,
                 borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 boxShadow: [
-                  BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, -4))
+                  BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      offset: Offset(0, -4))
                 ],
               ),
               child: SingleChildScrollView(
@@ -124,7 +144,8 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                     horizontal: 16, vertical: 16), // 🔹 Compacto[cite: 31]
                 physics: const BouncingScrollPhysics(),
                 child: Obx(() {
-                  final atual = _resolverInspiracaoAtual(inspiracaoController, inspiracao);
+                  final atual = _resolverInspiracaoAtual(
+                      inspiracaoController, inspiracao);
                   inspiracaoController.fornecedoresRelacionados.length;
 
                   return Column(
@@ -136,7 +157,8 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                           height: 4,
                           margin: const EdgeInsets.only(bottom: 16),
                           decoration: BoxDecoration(
-                              color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(10)),
                         ),
                       ),
                       Wrap(
@@ -150,7 +172,9 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                                 primary: primary),
                           if ((atual.estilo).isNotEmpty)
                             _infoChip(
-                                icon: Icons.palette_rounded, label: atual.estilo, primary: primary),
+                                icon: Icons.palette_rounded,
+                                label: atual.estilo,
+                                primary: primary),
                           if ((atual.faixaCusto).isNotEmpty)
                             _infoChip(
                                 icon: Icons.payments_rounded,
@@ -169,11 +193,13 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                           runSpacing: 6,
                           children: atual.tags
                               .map((tag) => Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
                                       color: Colors.grey.shade100,
                                       borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: Colors.grey.shade300)),
+                                      border: Border.all(
+                                          color: Colors.grey.shade300)),
                                   child: Text(tag,
                                       style: GoogleFonts.poppins(
                                           fontSize: 10,
@@ -192,7 +218,8 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                             scrollDirection: Axis.horizontal,
                             physics: const BouncingScrollPhysics(),
                             itemCount: atual.galeriaUrls.length,
-                            separatorBuilder: (_, __) => const SizedBox(width: 10),
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(width: 10),
                             itemBuilder: (_, i) => ClipRRect(
                                 borderRadius: BorderRadius.circular(12),
                                 child: _galleryImage(atual.galeriaUrls[i])),
@@ -211,16 +238,21 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                                       margin: const EdgeInsets.only(right: 6),
                                       decoration: BoxDecoration(
                                           color: _parseColor(cor),
-                                          borderRadius: BorderRadius.circular(8),
+                                          borderRadius:
+                                              BorderRadius.circular(8),
                                           border: Border.all(
-                                              color: Colors.black.withValues(alpha: 0.05))))))
+                                              color: Colors.black
+                                                  .withValues(alpha: 0.05))))))
                               .toList(),
                         ),
                         const SizedBox(height: 20),
                       ],
-                      _fornecedoresRelacionados(inspiracaoController, atual, primary),
+                      _fornecedoresRelacionados(
+                          inspiracaoController, atual, primary),
                       _buildAcoesPlanejamento(
-                          controller: inspiracaoController, inspiracao: atual, primary: primary),
+                          controller: inspiracaoController,
+                          inspiracao: atual,
+                          primary: primary),
                       const SizedBox(height: 30),
                     ],
                   );
@@ -260,7 +292,9 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text('Planejamento do evento',
                     style: GoogleFonts.poppins(
-                        fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF1F2937))),
               ],
             ),
             const SizedBox(height: 14),
@@ -270,16 +304,23 @@ class InspiracaoDetalheScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: salva ? null : () => controller.salvarInspiracaoNoEvento(inspiracao),
+                    onPressed: salva
+                        ? null
+                        : () => controller.salvarInspiracaoNoEvento(inspiracao),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
                       disabledBackgroundColor: Colors.grey.shade300,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       elevation: 0,
                     ),
-                    icon: Icon(salva ? Icons.bookmark_added_rounded : Icons.bookmark_add_rounded,
-                        size: 16, color: salva ? Colors.grey.shade600 : Colors.white),
+                    icon: Icon(
+                        salva
+                            ? Icons.bookmark_added_rounded
+                            : Icons.bookmark_add_rounded,
+                        size: 16,
+                        color: salva ? Colors.grey.shade600 : Colors.white),
                     label: Text(salva ? 'Salva' : 'Salvar',
                         style: GoogleFonts.poppins(
                             color: salva ? Colors.grey.shade600 : Colors.white,
@@ -290,19 +331,28 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                 const SizedBox(width: 10),
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed:
-                        checklist ? null : () => controller.gerarChecklistDaInspiracao(inspiracao),
+                    onPressed: checklist
+                        ? null
+                        : () =>
+                            controller.gerarChecklistDaInspiracao(inspiracao),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: primary,
                       side: BorderSide(
-                          color: checklist ? Colors.grey.shade300 : primary.withValues(alpha: 0.4)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          color: checklist
+                              ? Colors.grey.shade300
+                              : primary.withValues(alpha: 0.4)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
-                    icon: Icon(checklist ? Icons.check_circle_rounded : Icons.checklist_rounded,
+                    icon: Icon(
+                        checklist
+                            ? Icons.check_circle_rounded
+                            : Icons.checklist_rounded,
                         size: 16),
                     label: Text(checklist ? 'Checklist OK' : 'Checklist',
-                        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700)),
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],
@@ -312,13 +362,18 @@ class InspiracaoDetalheScreen extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed:
-                        orcamento ? null : () => controller.gerarOrcamentoDaInspiracao(inspiracao),
+                    onPressed: orcamento
+                        ? null
+                        : () =>
+                            controller.gerarOrcamentoDaInspiracao(inspiracao),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: primary,
                       side: BorderSide(
-                          color: orcamento ? Colors.grey.shade300 : primary.withValues(alpha: 0.4)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          color: orcamento
+                              ? Colors.grey.shade300
+                              : primary.withValues(alpha: 0.4)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     icon: Icon(
@@ -327,7 +382,8 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                             : Icons.account_balance_wallet_rounded,
                         size: 16),
                     label: Text(orcamento ? 'Orçamento OK' : 'Gerar Orçamento',
-                        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700)),
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],
@@ -338,11 +394,15 @@ class InspiracaoDetalheScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 TextButton.icon(
-                  onPressed: () => HomeEventNavController.to.irParaFornecedores(),
-                  icon: Icon(Icons.storefront_rounded, size: 16, color: primary),
+                  onPressed: () =>
+                      HomeEventNavController.to.irParaFornecedores(),
+                  icon:
+                      Icon(Icons.storefront_rounded, size: 16, color: primary),
                   label: Text('Fornecedores',
                       style: GoogleFonts.poppins(
-                          fontSize: 11, color: primary, fontWeight: FontWeight.w700)),
+                          fontSize: 11,
+                          color: primary,
+                          fontWeight: FontWeight.w700)),
                 ),
                 TextButton.icon(
                   onPressed: () => controller.adicionarReferenciaPessoal(),
@@ -350,7 +410,9 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                       size: 16, color: Colors.grey.shade700),
                   label: Text('Sua Galeria',
                       style: GoogleFonts.poppins(
-                          fontSize: 11, color: Colors.grey.shade800, fontWeight: FontWeight.w600)),
+                          fontSize: 11,
+                          color: Colors.grey.shade800,
+                          fontWeight: FontWeight.w600)),
                 ),
               ],
             ),
@@ -407,14 +469,16 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                           child: url.isEmpty
                               ? Container(
                                   color: primary.withValues(alpha: 0.08),
-                                  child: Icon(Icons.storefront_rounded, color: primary, size: 26),
+                                  child: Icon(Icons.storefront_rounded,
+                                      color: primary, size: 26),
                                 )
                               : Image.network(
                                   url,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => Container(
                                     color: Colors.grey.shade200,
-                                    child: const Icon(Icons.storefront_rounded, color: Colors.grey),
+                                    child: const Icon(Icons.storefront_rounded,
+                                        color: Colors.grey),
                                   ),
                                 ),
                         ),
@@ -465,7 +529,8 @@ class InspiracaoDetalheScreen extends StatelessWidget {
           border: Border.all(color: Colors.grey.shade200)),
       child: Text(
         descricao.isEmpty ? 'Nenhuma descrição informada.' : descricao,
-        style: GoogleFonts.poppins(fontSize: 12.5, height: 1.4, color: Colors.grey.shade700),
+        style: GoogleFonts.poppins(
+            fontSize: 12.5, height: 1.4, color: Colors.grey.shade700),
       ),
     );
   }
@@ -473,10 +538,13 @@ class InspiracaoDetalheScreen extends StatelessWidget {
   Widget _sectionTitle(String title) {
     return Text(title,
         style: GoogleFonts.poppins(
-            fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937)));
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF1F2937)));
   }
 
-  Widget _infoChip({required IconData icon, required String label, required Color primary}) {
+  Widget _infoChip(
+      {required IconData icon, required String label, required Color primary}) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -490,7 +558,9 @@ class InspiracaoDetalheScreen extends StatelessWidget {
           const SizedBox(width: 4),
           Text(label,
               style: GoogleFonts.poppins(
-                  fontSize: 10, color: Colors.grey.shade800, fontWeight: FontWeight.w700)),
+                  fontSize: 10,
+                  color: Colors.grey.shade800,
+                  fontWeight: FontWeight.w700)),
         ],
       ),
     );
@@ -502,7 +572,8 @@ class InspiracaoDetalheScreen extends StatelessWidget {
           width: double.infinity,
           height: 400,
           color: Colors.grey.shade200,
-          child: const Icon(Icons.image_not_supported_rounded, color: Colors.white, size: 40));
+          child: const Icon(Icons.image_not_supported_rounded,
+              color: Colors.white, size: 40));
     }
     return Image.network(url,
         width: double.infinity,
@@ -512,7 +583,8 @@ class InspiracaoDetalheScreen extends StatelessWidget {
             width: double.infinity,
             height: 400,
             color: Colors.grey.shade200,
-            child: const Icon(Icons.broken_image_rounded, color: Colors.white, size: 40)));
+            child: const Icon(Icons.broken_image_rounded,
+                color: Colors.white, size: 40)));
   }
 
   Widget _galleryImage(String url) {

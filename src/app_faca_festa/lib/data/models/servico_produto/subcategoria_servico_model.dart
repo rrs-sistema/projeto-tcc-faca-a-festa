@@ -42,7 +42,8 @@ class SubcategoriaServicoModel {
         'data_atualizacao': FieldValue.serverTimestamp(),
       };
 
-  factory SubcategoriaServicoModel.fromMap(Map<String, dynamic> map, {String? documentId}) {
+  factory SubcategoriaServicoModel.fromMap(Map<String, dynamic> map,
+      {String? documentId}) {
     return SubcategoriaServicoModel(
       id: _texto(map, ['id'], fallback: documentId ?? ''),
       idCategoria: _texto(map, ['id_categoria', 'idCategoria', 'categoria_id']),
@@ -80,7 +81,8 @@ class SubcategoriaServicoModel {
   }
 }
 
-String _texto(Map<String, dynamic> map, List<String> keys, {String fallback = ''}) {
+String _texto(Map<String, dynamic> map, List<String> keys,
+    {String fallback = ''}) {
   for (final key in keys) {
     final value = map[key];
     if (value == null) continue;
@@ -95,7 +97,8 @@ String? _textoOpcional(Map<String, dynamic> map, List<String> keys) {
   return value.isEmpty ? null : value;
 }
 
-bool _bool(Map<String, dynamic> map, List<String> keys, {bool fallback = false}) {
+bool _bool(Map<String, dynamic> map, List<String> keys,
+    {bool fallback = false}) {
   for (final key in keys) {
     final value = map[key];
     if (value is bool) return value;

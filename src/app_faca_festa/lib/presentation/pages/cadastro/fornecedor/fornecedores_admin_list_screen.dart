@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../controllers/fornecedor/fornecedor_controller.dart';
-import '../../../../controllers/tema/admin_theme.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../../core/utils/biblioteca.dart';
 import '../../../widgets/admin/admin_kit.dart';
 import './components/fornecedor_list_tile.dart';
@@ -13,19 +13,19 @@ class FornecedoresAdminListScreen extends StatefulWidget {
   const FornecedoresAdminListScreen({super.key});
 
   @override
-  State<FornecedoresAdminListScreen> createState() => _FornecedoresAdminListScreenState();
+  State<FornecedoresAdminListScreen> createState() =>
+      _FornecedoresAdminListScreenState();
 }
 
-class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScreen> {
+class _FornecedoresAdminListScreenState
+    extends State<FornecedoresAdminListScreen> {
   late final FornecedorController controller;
   final buscaCtrl = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    controller = Get.isRegistered<FornecedorController>()
-        ? Get.find<FornecedorController>()
-        : Get.put(FornecedorController());
+    controller = Get.find<FornecedorController>();
     buscaCtrl.text = controller.filtroNome.value;
     controller.carregarTodosFornecedores();
   }
@@ -133,7 +133,8 @@ class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScree
                   Obx(() {
                     return Row(
                       children: [
-                        Icon(Icons.sort_rounded, color: AdminPalette.primary, size: 20),
+                        Icon(Icons.sort_rounded,
+                            color: AdminPalette.primary, size: 20),
                         const SizedBox(width: 8),
                         Text(
                           'Ordenar',
@@ -161,7 +162,8 @@ class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScree
                                     value: 'status',
                                     child: Text('Status (aprovados primeiro)'),
                                   ),
-                                  DropdownMenuItem(value: 'nome', child: Text('Nome A-Z')),
+                                  DropdownMenuItem(
+                                      value: 'nome', child: Text('Nome A-Z')),
                                   DropdownMenuItem(
                                     value: 'recentes',
                                     child: Text('Mais recentes'),
@@ -183,10 +185,12 @@ class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScree
             ),
             Expanded(
               child: Obx(() {
-                if (controller.carregando.value && controller.fornecedores.isEmpty) {
+                if (controller.carregando.value &&
+                    controller.fornecedores.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                if (controller.erro.isNotEmpty && controller.fornecedores.isEmpty) {
+                if (controller.erro.isNotEmpty &&
+                    controller.fornecedores.isEmpty) {
                   return AdminEmptyState(
                     icon: Icons.error_outline_rounded,
                     title: 'Falha ao carregar fornecedores',
@@ -203,7 +207,8 @@ class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScree
                     title: controller.fornecedores.isEmpty
                         ? 'Nenhum fornecedor cadastrado'
                         : 'Nenhum fornecedor neste filtro',
-                    message: 'Ajuste a busca ou limpe os filtros para ver a base completa.',
+                    message:
+                        'Ajuste a busca ou limpe os filtros para ver a base completa.',
                     actionLabel: 'Limpar filtros',
                     onAction: () {
                       buscaCtrl.clear();
@@ -288,7 +293,8 @@ class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScree
                 children: [
                   Text(
                     'Filtros de fornecedores',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 17),
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w800, fontSize: 17),
                   ),
                   const SizedBox(height: 16),
                   TextField(
@@ -301,8 +307,11 @@ class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScree
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
                     value: cidadeSelecionada.isEmpty ? null : cidadeSelecionada,
-                    items: cidades.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-                    onChanged: (v) => setState(() => cidadeSelecionada = v ?? ''),
+                    items: cidades
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (v) =>
+                        setState(() => cidadeSelecionada = v ?? ''),
                     decoration: adminInputDecoration(
                       label: 'Cidade',
                       icon: Icons.location_city_outlined,
@@ -310,14 +319,17 @@ class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScree
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: categoriaSelecionada.isEmpty ? null : categoriaSelecionada,
+                    value: categoriaSelecionada.isEmpty
+                        ? null
+                        : categoriaSelecionada,
                     items: categorias
                         .map((c) => DropdownMenuItem<String>(
                               value: c['id'] as String?,
                               child: Text(c['nome'] as String? ?? 'Sem nome'),
                             ))
                         .toList(),
-                    onChanged: (v) => setState(() => categoriaSelecionada = v ?? ''),
+                    onChanged: (v) =>
+                        setState(() => categoriaSelecionada = v ?? ''),
                     decoration: adminInputDecoration(
                       label: 'Categoria',
                       icon: Icons.category_outlined,
@@ -326,14 +338,17 @@ class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScree
                   if (categoriaSelecionada.isNotEmpty) ...[
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: subcategoriaSelecionada.isEmpty ? null : subcategoriaSelecionada,
+                      value: subcategoriaSelecionada.isEmpty
+                          ? null
+                          : subcategoriaSelecionada,
                       items: subcategorias
                           .map((s) => DropdownMenuItem<String>(
                                 value: s['id'] as String?,
                                 child: Text(s['nome'] as String? ?? ''),
                               ))
                           .toList(),
-                      onChanged: (v) => setState(() => subcategoriaSelecionada = v ?? ''),
+                      onChanged: (v) =>
+                          setState(() => subcategoriaSelecionada = v ?? ''),
                       decoration: adminInputDecoration(
                         label: 'Subcategoria',
                         icon: Icons.label_important_outline_rounded,
@@ -342,10 +357,16 @@ class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScree
                   ],
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: aprovado == null ? null : (aprovado! ? 'Aprovados' : 'Aguardando'),
+                    value: aprovado == null
+                        ? null
+                        : (aprovado! ? 'Aprovados' : 'Aguardando'),
                     items: const [
-                      DropdownMenuItem(value: 'Aprovados', child: Text('Aprovados para operar')),
-                      DropdownMenuItem(value: 'Aguardando', child: Text('Aguardando aprovação')),
+                      DropdownMenuItem(
+                          value: 'Aprovados',
+                          child: Text('Aprovados para operar')),
+                      DropdownMenuItem(
+                          value: 'Aguardando',
+                          child: Text('Aguardando aprovação')),
                     ],
                     onChanged: (v) {
                       setState(() {
@@ -359,10 +380,13 @@ class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScree
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: ativo == null ? null : (ativo! ? 'Ativos' : 'Desativados'),
+                    value: ativo == null
+                        ? null
+                        : (ativo! ? 'Ativos' : 'Desativados'),
                     items: const [
                       DropdownMenuItem(value: 'Ativos', child: Text('Ativos')),
-                      DropdownMenuItem(value: 'Desativados', child: Text('Desativados')),
+                      DropdownMenuItem(
+                          value: 'Desativados', child: Text('Desativados')),
                     ],
                     onChanged: (v) {
                       setState(() {
@@ -394,7 +418,8 @@ class _FornecedoresAdminListScreenState extends State<FornecedoresAdminListScree
                       ),
                       const Spacer(),
                       FilledButton.icon(
-                        style: FilledButton.styleFrom(backgroundColor: AdminPalette.primary),
+                        style: FilledButton.styleFrom(
+                            backgroundColor: AdminPalette.primary),
                         icon: const Icon(Icons.check),
                         onPressed: () {
                           controller.aplicarFiltros(

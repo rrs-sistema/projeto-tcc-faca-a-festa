@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/evento_cadastro_controller.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import '../../../data/models/evento/evento_model.dart';
 import '../../pages/welcome/welcome_event_screen.dart';
 import '../usuario/cadastro_evento_bottom_sheet.dart';
@@ -140,7 +140,8 @@ class _SeletorEventoSheet extends StatelessWidget {
                         duration: const Duration(milliseconds: 260),
                       );
                     },
-                    icon: const Icon(Icons.add_rounded, size: 20, color: Colors.white),
+                    icon: const Icon(Icons.add_rounded,
+                        size: 20, color: Colors.white),
                     label: Text(
                       'Novo evento',
                       style: GoogleFonts.poppins(

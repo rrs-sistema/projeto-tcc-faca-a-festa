@@ -6,7 +6,8 @@ import '../../data/models/evento/estimativa_financeira_model.dart';
 class CalculadoraFestaService {
   const CalculadoraFestaService();
 
-  static List<ItemEstimativaFinanceiraModel> get itensPadraoEstimativa => const [
+  static List<ItemEstimativaFinanceiraModel> get itensPadraoEstimativa =>
+      const [
         ItemEstimativaFinanceiraModel(
           id: 'salgadinhos',
           categoria: 'Recepção',
@@ -125,8 +126,10 @@ class CalculadoraFestaService {
 
     if (!estimativa.podeCalcular) return [];
 
-    final convidadosEquivalentes = estimativa.convidados.totalEquivalenteArredondado;
-    final margem = estimativa.margemPersonalizada ?? estimativa.perfil.margemSegurancaPadrao;
+    final convidadosEquivalentes =
+        estimativa.convidados.totalEquivalenteArredondado;
+    final margem = estimativa.margemPersonalizada ??
+        estimativa.perfil.margemSegurancaPadrao;
 
     return estimativa.itensSelecionados.map((item) {
       final quantidade = item.calcularQuantidadeArredondada(
@@ -159,7 +162,8 @@ class CalculadoraFestaService {
             '+ ${(margem * 100).round()}% de margem. Perfil ${estimativa.perfil.nome}.',
         valorUnitarioMedio: item.valorUnitarioMedio,
         custoEstimado: custo,
-        quantidadePorConvidadoEquivalente: item.quantidadePorConvidadoEquivalente,
+        quantidadePorConvidadoEquivalente:
+            item.quantidadePorConvidadoEquivalente,
       );
     }).toList();
   }
@@ -183,7 +187,8 @@ class CalculadoraFestaService {
     final result = <String, double>{};
 
     for (final item in itens) {
-      result[item.categoria] = (result[item.categoria] ?? 0) + item.custoEstimado;
+      result[item.categoria] =
+          (result[item.categoria] ?? 0) + item.custoEstimado;
     }
 
     return result;

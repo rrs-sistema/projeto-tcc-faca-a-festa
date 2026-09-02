@@ -7,8 +7,8 @@ import 'package:get/get.dart';
 
 import './../../../app/bootstrap/orcamentos_admin_bootstrap.dart';
 import './../../../data/models/admin/orcamento_admin_model.dart';
-import '../../../controllers/tema/admin_theme.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../widgets/admin/admin_kit.dart';
 
 class OrcamentosAdminListScreen extends StatelessWidget {

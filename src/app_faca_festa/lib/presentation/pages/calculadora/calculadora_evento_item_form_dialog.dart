@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/calculadora/calculadora_itens_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_itens_admin_controller.dart';
 import '../../../core/utils/form_validators.dart';
 import '../../../data/models/calculadora/calculadora_evento_item_model.dart';
 import '../../../data/models/calculadora/calculadora_item_base_model.dart';
@@ -28,7 +28,8 @@ class _CalculadoraEventoItemFormContent extends StatefulWidget {
       _CalculadoraEventoItemFormContentState();
 }
 
-class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoItemFormContent> {
+class _CalculadoraEventoItemFormContentState
+    extends State<_CalculadoraEventoItemFormContent> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nomeController;
@@ -47,7 +48,8 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
   late bool _ativo;
   late Set<String> _perfisSelecionados;
 
-  CalculadoraItensAdminController get controller => Get.find<CalculadoraItensAdminController>();
+  CalculadoraItensAdminController get controller =>
+      Get.find<CalculadoraItensAdminController>();
 
   bool get isEditing => widget.item != null;
 
@@ -95,9 +97,12 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
 
     _nomeController = TextEditingController(text: item?.nome ?? '');
     _categoriaController = TextEditingController(text: item?.categoria ?? '');
-    _unidadeController = TextEditingController(text: item?.unidade ?? 'unidade');
+    _unidadeController =
+        TextEditingController(text: item?.unidade ?? 'unidade');
     _quantidadeController = TextEditingController(
-      text: item == null ? '1' : _formatDouble(item.quantidadePorConvidadoEquivalente),
+      text: item == null
+          ? '1'
+          : _formatDouble(item.quantidadePorConvidadoEquivalente),
     );
     _valorController = TextEditingController(
       text: item == null ? '0' : _formatDouble(item.valorUnitarioMedio),
@@ -108,11 +113,12 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
     _selecionadoPadrao = item?.selecionadoPadrao ?? true;
     _obrigatorio = item?.obrigatorio ?? false;
     _ativo = item?.ativo ?? true;
-    _perfisSelecionados =
-        item?.perfisFesta.toSet() ?? CalculadoraItensAdminController.perfisFestaPadrao.toSet();
+    _perfisSelecionados = item?.perfisFesta.toSet() ??
+        CalculadoraItensAdminController.perfisFestaPadrao.toSet();
 
     if (_idItemBase.isEmpty && controller.itensBaseAtivos.isNotEmpty) {
-      _aplicarItemBase(controller.itensBaseAtivos.first, sobrescreverCampos: true);
+      _aplicarItemBase(controller.itensBaseAtivos.first,
+          sobrescreverCampos: true);
     }
   }
 
@@ -155,7 +161,9 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _Header(
-                          title: isEditing ? 'Editar regra do evento' : 'Nova regra por evento',
+                          title: isEditing
+                              ? 'Editar regra do evento'
+                              : 'Nova regra por evento',
                           subtitle: isEditing
                               ? 'Ajuste a quantidade, valores e perfis da calculadora'
                               : 'Configure como um item aparece em um tipo de evento',
@@ -177,7 +185,8 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
                                   .map(
                                     (value) => DropdownMenuItem(
                                       value: value,
-                                      child: Text(controller.labelTipoEvento(value)),
+                                      child: Text(
+                                          controller.labelTipoEvento(value)),
                                     ),
                                   )
                                   .toList(),
@@ -212,14 +221,15 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
                                 label: 'Público-alvo',
                                 icon: Icons.groups_2_outlined,
                               ),
-                              items: CalculadoraItensAdminController.publicosAlvo
-                                  .map(
-                                    (value) => DropdownMenuItem(
-                                      value: value,
-                                      child: Text(_labelPublico(value)),
-                                    ),
-                                  )
-                                  .toList(),
+                              items:
+                                  CalculadoraItensAdminController.publicosAlvo
+                                      .map(
+                                        (value) => DropdownMenuItem(
+                                          value: value,
+                                          child: Text(_labelPublico(value)),
+                                        ),
+                                      )
+                                      .toList(),
                               onChanged: (value) {
                                 if (value == null) return;
                                 setState(() => _publicoAlvo = value);
@@ -229,7 +239,8 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
                               controller: _quantidadeController,
                               label: 'Qtd. por convidado equivalente',
                               icon: Icons.calculate_outlined,
-                              keyboardType: const TextInputType.numberWithOptions(
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
                                 decimal: true,
                               ),
                               requiredField: true,
@@ -238,7 +249,8 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
                               controller: _valorController,
                               label: 'Valor unitário médio',
                               icon: Icons.attach_money_outlined,
-                              keyboardType: const TextInputType.numberWithOptions(
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
                                 decimal: true,
                               ),
                               requiredField: true,
@@ -262,23 +274,25 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,
-                          children: CalculadoraItensAdminController.perfisFestaPadrao
-                              .map(
-                                (perfil) => FilterChip(
-                                  label: Text(_labelPerfil(perfil)),
-                                  selected: _perfisSelecionados.contains(perfil),
-                                  onSelected: (selected) {
-                                    setState(() {
-                                      if (selected) {
-                                        _perfisSelecionados.add(perfil);
-                                      } else {
-                                        _perfisSelecionados.remove(perfil);
-                                      }
-                                    });
-                                  },
-                                ),
-                              )
-                              .toList(),
+                          children:
+                              CalculadoraItensAdminController.perfisFestaPadrao
+                                  .map(
+                                    (perfil) => FilterChip(
+                                      label: Text(_labelPerfil(perfil)),
+                                      selected:
+                                          _perfisSelecionados.contains(perfil),
+                                      onSelected: (selected) {
+                                        setState(() {
+                                          if (selected) {
+                                            _perfisSelecionados.add(perfil);
+                                          } else {
+                                            _perfisSelecionados.remove(perfil);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                  )
+                                  .toList(),
                         ),
                         const SizedBox(height: 12),
                         _textField(
@@ -310,7 +324,8 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
                               value: _ativo,
                               title: const Text('Ativo'),
                               contentPadding: EdgeInsets.zero,
-                              onChanged: (value) => setState(() => _ativo = value),
+                              onChanged: (value) =>
+                                  setState(() => _ativo = value),
                             ),
                           ],
                         ),
@@ -320,8 +335,9 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
                             children: [
                               Expanded(
                                 child: OutlinedButton.icon(
-                                  onPressed:
-                                      controller.saving.value ? null : () => Get.back<void>(),
+                                  onPressed: controller.saving.value
+                                      ? null
+                                      : () => Get.back<void>(),
                                   icon: const Icon(Icons.close),
                                   label: const Text('Cancelar'),
                                 ),
@@ -329,7 +345,8 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
                               const SizedBox(width: 12),
                               Expanded(
                                 child: FilledButton.icon(
-                                  onPressed: controller.saving.value ? null : _submit,
+                                  onPressed:
+                                      controller.saving.value ? null : _submit,
                                   icon: controller.saving.value
                                       ? const SizedBox(
                                           width: 18,
@@ -340,7 +357,9 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
                                         )
                                       : const Icon(Icons.save_outlined),
                                   label: Text(
-                                    controller.saving.value ? 'Salvando...' : 'Salvar',
+                                    controller.saving.value
+                                        ? 'Salvando...'
+                                        : 'Salvar',
                                   ),
                                 ),
                               ),
@@ -371,7 +390,8 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        color:
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Text(
@@ -394,7 +414,10 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
         width: double.infinity,
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.4),
+          color: Theme.of(context)
+              .colorScheme
+              .errorContainer
+              .withValues(alpha: 0.4),
           borderRadius: BorderRadius.circular(14),
         ),
         child: const Text(
@@ -403,8 +426,9 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
       );
     }
 
-    final selectedValue =
-        itensBase.any((item) => item.id == _idItemBase) ? _idItemBase : itensBase.first.id;
+    final selectedValue = itensBase.any((item) => item.id == _idItemBase)
+        ? _idItemBase
+        : itensBase.first.id;
 
     if (_idItemBase.isEmpty || _idItemBase != selectedValue) {
       _idItemBase = selectedValue;
@@ -528,7 +552,8 @@ class _CalculadoraEventoItemFormContentState extends State<_CalculadoraEventoIte
       keyboardType: keyboardType,
       decoration: _decoration(label: label, icon: icon),
       validator: requiredField
-          ? (value) => FormValidators.titulo(value, campo: label.toLowerCase(), minimo: 2)
+          ? (value) => FormValidators.titulo(value,
+              campo: label.toLowerCase(), minimo: 2)
           : null,
     );
   }
@@ -701,7 +726,8 @@ class _ResponsiveFields extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 700;
-        final itemWidth = isWide ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth;
+        final itemWidth =
+            isWide ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth;
 
         return Wrap(
           spacing: 12,
@@ -730,7 +756,8 @@ class _SwitchGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 720;
-        final itemWidth = isWide ? (constraints.maxWidth - 24) / 3 : constraints.maxWidth;
+        final itemWidth =
+            isWide ? (constraints.maxWidth - 24) / 3 : constraints.maxWidth;
 
         return Wrap(
           spacing: 12,

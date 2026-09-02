@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/orcamento_controller.dart';
 import 'package:app_faca_festa/data/models/orcamento/orcamento_model.dart';
 import 'package:app_faca_festa/domain/repositories/orcamento_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_orcamentos.dart';
@@ -151,6 +151,20 @@ class _OrcamentoRepositoryFake implements OrcamentoRepository {
   Future<void> criarOrcamento(OrcamentoModel model) async {
     criados.add(model);
   }
+
+  @override
+  Future<OrcamentoModel?> buscarPorId(String idOrcamento) async {
+    return null;
+  }
+
+  @override
+  Future<void> confirmarReserva({
+    required String idOrcamento,
+    required double? custoEstimado,
+    required String? anotacoes,
+    required DateTime? dataReserva,
+    required StatusOrcamento status,
+  }) async {}
 
   @override
   Future<void> responderOrcamento({

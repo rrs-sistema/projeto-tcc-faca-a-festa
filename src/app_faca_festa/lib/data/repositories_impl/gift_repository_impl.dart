@@ -28,6 +28,13 @@ class GiftRepositoryImpl implements GiftRepository {
   }
 
   @override
+  Stream<List<Gift>> watchRemoteGifts(String eventoId) {
+    return remote.watchRemote(eventoId).map(
+          (list) => list.map((model) => model as Gift).toList(),
+        );
+  }
+
+  @override
   Future<void> createGift(String eventoId, Gift gift) async {
     final model = GiftModel.fromEntity(gift);
 

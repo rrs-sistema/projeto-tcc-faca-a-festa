@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/admin/admin_dashboard_controller.dart';
-import 'package:app_faca_festa/domain/entities/admin_dashboard_stats.dart';
+import 'package:app_faca_festa/presentation/modules/admin/controllers/admin_dashboard_controller.dart';
 import 'package:app_faca_festa/domain/repositories/admin_dashboard_repository.dart';
 import 'package:app_faca_festa/domain/usecases/carregar_admin_dashboard.dart';
+import 'package:app_faca_festa/domain/entities/admin_dashboard_stats.dart';
 
 void main() {
   late _AdminDashboardRepositoryFake repository;

@@ -75,7 +75,8 @@ extension StatusSimulacaoCalculadoraExtension on StatusSimulacaoCalculadora {
     }
 
     return StatusSimulacaoCalculadora.values.firstWhere(
-      (item) => item.name.toLowerCase() == normalized || item.value == normalized,
+      (item) =>
+          item.name.toLowerCase() == normalized || item.value == normalized,
       orElse: () => StatusSimulacaoCalculadora.rascunho,
     );
   }
@@ -205,15 +206,18 @@ class CalculadoraFestaModel {
       dataCalculo: dataCalculo ?? this.dataCalculo,
       dataAtualizacao: dataAtualizacao ?? this.dataAtualizacao,
       perfilFesta: perfilFesta ?? this.perfilFesta,
-      margemPersonalizada:
-          limparMargemPersonalizada ? null : (margemPersonalizada ?? this.margemPersonalizada),
+      margemPersonalizada: limparMargemPersonalizada
+          ? null
+          : (margemPersonalizada ?? this.margemPersonalizada),
       custoTotalEstimado: custoTotalEstimado ?? this.custoTotalEstimado,
       idUsuario: limparIdUsuario ? null : (idUsuario ?? this.idUsuario),
       nomeEvento: limparNomeEvento ? null : (nomeEvento ?? this.nomeEvento),
-      orcamentoDisponivel:
-          limparOrcamentoDisponivel ? null : (orcamentoDisponivel ?? this.orcamentoDisponivel),
+      orcamentoDisponivel: limparOrcamentoDisponivel
+          ? null
+          : (orcamentoDisponivel ?? this.orcamentoDisponivel),
       statusSimulacao: statusSimulacao ?? this.statusSimulacao,
-      convertidoEmOrcamento: convertidoEmOrcamento ?? this.convertidoEmOrcamento,
+      convertidoEmOrcamento:
+          convertidoEmOrcamento ?? this.convertidoEmOrcamento,
       dataConversaoOrcamento: limparDataConversaoOrcamento
           ? null
           : (dataConversaoOrcamento ?? this.dataConversaoOrcamento),
@@ -234,7 +238,8 @@ class CalculadoraFestaModel {
       'total_convidados': totalConvidados,
       'convidados_equivalentes': convidadosEquivalentes.toMap(),
       'total_equivalente': convidadosEquivalentes.totalEquivalente,
-      'total_equivalente_arredondado': convidadosEquivalentes.totalEquivalenteArredondado,
+      'total_equivalente_arredondado':
+          convidadosEquivalentes.totalEquivalenteArredondado,
       'duracao_horas': duracaoHoras,
       'perfil_festa': perfilFesta.toMap(),
       'margem_personalizada': margemPersonalizada,
@@ -250,7 +255,8 @@ class CalculadoraFestaModel {
       'data_atualizacao': dataAtualizacao.toIso8601String(),
       if (analiseIA != null) 'analise_ia': analiseIA!.toMap(),
       if (analiseIA != null) 'fonte_analise_ia': analiseIA!.fonte,
-      if (analiseIA != null) 'data_analise_ia': analiseIA!.dataAnalise.toIso8601String(),
+      if (analiseIA != null)
+        'data_analise_ia': analiseIA!.dataAnalise.toIso8601String(),
     };
   }
 
@@ -258,17 +264,22 @@ class CalculadoraFestaModel {
     final perfilMap = _asMap(map['perfil_festa']);
 
     final analiseMap = _asMap(
-      map['analise_ia'] ?? map['analise_ia_generativa'] ?? map['analiseIA'] ?? map['analysis'],
+      map['analise_ia'] ??
+          map['analise_ia_generativa'] ??
+          map['analiseIA'] ??
+          map['analysis'],
     );
 
     final adultos = _asInt(map['total_adultos'] ?? map['adultos']);
     final criancas = _asInt(map['total_criancas'] ?? map['criancas']);
     final bebes = _asInt(map['total_bebes'] ?? map['bebes']);
     final totalPorTipo = adultos + criancas + bebes;
-    final totalLegado = _asInt(map['total_convidados'] ?? map['total_informado']);
+    final totalLegado =
+        _asInt(map['total_convidados'] ?? map['total_informado']);
 
     // Compatibilidade com cálculos/eventos antigos que só tinham total_convidados.
-    final adultosNormalizados = totalPorTipo == 0 && totalLegado > 0 ? totalLegado : adultos;
+    final adultosNormalizados =
+        totalPorTipo == 0 && totalLegado > 0 ? totalLegado : adultos;
 
     final status = StatusSimulacaoCalculadoraExtension.fromString(
       map['status_simulacao']?.toString(),
@@ -281,26 +292,32 @@ class CalculadoraFestaModel {
       idCalculo: map['id_calculo']?.toString() ?? map['id']?.toString() ?? '',
       idEvento: map['id_evento']?.toString() ?? '',
       tipoEvento: map['tipo_evento']?.toString() ?? 'Evento',
-      baseCalculo: BaseCalculoFestaExtension.fromString(map['base_calculo']?.toString()),
+      baseCalculo:
+          BaseCalculoFestaExtension.fromString(map['base_calculo']?.toString()),
       totalAdultos: adultosNormalizados,
       totalCriancas: criancas,
       totalBebes: bebes,
       duracaoHoras: _asInt(map['duracao_horas'], fallback: 4),
-      dataCalculo: _asDate(map['data_calculo'] ?? map['data_criacao']) ?? DateTime.now(),
+      dataCalculo:
+          _asDate(map['data_calculo'] ?? map['data_criacao']) ?? DateTime.now(),
       dataAtualizacao: _asDate(map['data_atualizacao']) ??
           _asDate(map['data_calculo'] ?? map['data_criacao']) ??
           DateTime.now(),
-      perfilFesta:
-          perfilMap != null ? PerfilFestaModel.fromMap(perfilMap) : PerfilFestaModel.padrao(),
+      perfilFesta: perfilMap != null
+          ? PerfilFestaModel.fromMap(perfilMap)
+          : PerfilFestaModel.padrao(),
       margemPersonalizada: _asNullableDouble(map['margem_personalizada']),
-      custoTotalEstimado: _asDouble(map['custo_total_estimado'] ?? map['custo_estimado']),
+      custoTotalEstimado:
+          _asDouble(map['custo_total_estimado'] ?? map['custo_estimado']),
       idUsuario: _nullableString(map['id_usuario']),
       nomeEvento: _nullableString(map['nome_evento']),
       orcamentoDisponivel: _asNullableDouble(map['orcamento_disponivel']),
       statusSimulacao: status,
       convertidoEmOrcamento: convertido,
       dataConversaoOrcamento: _asDate(map['data_conversao_orcamento']),
-      analiseIA: analiseMap != null ? AnaliseCalculadoraIAModel.fromMap(analiseMap) : null,
+      analiseIA: analiseMap != null
+          ? AnaliseCalculadoraIAModel.fromMap(analiseMap)
+          : null,
     );
   }
 
@@ -322,7 +339,8 @@ class CalculadoraFestaModel {
 
   static double _asDouble(dynamic value, {double fallback = 0}) {
     if (value is num) return value.toDouble();
-    return double.tryParse(value?.toString().replaceAll(',', '.') ?? '') ?? fallback;
+    return double.tryParse(value?.toString().replaceAll(',', '.') ?? '') ??
+        fallback;
   }
 
   static double? _asNullableDouble(dynamic value) {
@@ -335,8 +353,13 @@ class CalculadoraFestaModel {
     if (value is bool) return value;
     final normalized = value?.toString().trim().toLowerCase();
 
-    if (normalized == 'true' || normalized == '1' || normalized == 'sim') return true;
-    if (normalized == 'false' || normalized == '0' || normalized == 'nao' || normalized == 'não') {
+    if (normalized == 'true' || normalized == '1' || normalized == 'sim') {
+      return true;
+    }
+    if (normalized == 'false' ||
+        normalized == '0' ||
+        normalized == 'nao' ||
+        normalized == 'não') {
       return false;
     }
 

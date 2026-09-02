@@ -8,10 +8,10 @@ import '../../services/functions/callable_https_client.dart';
 
 class TemaFestaRemoteDatasource {
   TemaFestaRemoteDatasource({
-    FirebaseFirestore? firestore,
-    CallableHttpsClient? httpsClient,
-  })  : _db = firestore ?? FirebaseFirestore.instance,
-        _https = httpsClient ?? CallableHttpsClient();
+    required FirebaseFirestore firestore,
+    required CallableHttpsClient httpsClient,
+  })  : _db = firestore,
+        _https = httpsClient;
 
   final FirebaseFirestore _db;
   final CallableHttpsClient _https;

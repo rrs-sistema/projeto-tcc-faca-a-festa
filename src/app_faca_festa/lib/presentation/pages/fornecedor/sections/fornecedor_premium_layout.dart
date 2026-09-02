@@ -148,7 +148,9 @@ class PremiumSectionShell extends StatelessWidget {
                 children: [
                   Expanded(child: header),
                   const SizedBox(width: 12),
-                  Flexible(child: Align(alignment: Alignment.centerRight, child: trailing!)),
+                  Flexible(
+                      child: Align(
+                          alignment: Alignment.centerRight, child: trailing!)),
                 ],
               );
             },
@@ -394,7 +396,8 @@ class ResponsiveWrapGrid extends StatelessWidget {
           minColumns: minColumns,
           minTileWidth: minTileWidth,
         );
-        final tileWidth = (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+        final tileWidth =
+            (constraints.maxWidth - (spacing * (columns - 1))) / columns;
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,

@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 
-import '../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 class BotaoSalvar extends StatelessWidget {
   final String texto;
@@ -46,7 +46,8 @@ class BotaoSalvar extends StatelessWidget {
           ],
         ),
         child: ElevatedButton.icon(
-          icon: icon ?? Icon(Icons.check_circle_rounded, color: Colors.white, size: 26),
+          icon: icon ??
+              Icon(Icons.check_circle_rounded, color: Colors.white, size: 26),
           label: Text(
             texto,
             style: GoogleFonts.poppins(

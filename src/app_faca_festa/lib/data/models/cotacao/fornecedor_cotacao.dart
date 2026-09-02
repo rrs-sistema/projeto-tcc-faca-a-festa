@@ -92,11 +92,13 @@ class FornecedorCotacaoModel {
       'id_cotacao': idCotacao,
       'id_fornecedor': idFornecedor,
       'nome_fornecedor': nomeFornecedor,
-      'prazo_entrega': prazoEntrega != null ? Timestamp.fromDate(prazoEntrega!) : null,
+      'prazo_entrega':
+          prazoEntrega != null ? Timestamp.fromDate(prazoEntrega!) : null,
       'condicao_pagamento': condicaoPagamento,
       'status': status.firestoreValue,
       'observacao_fornecedor': observacaoFornecedor,
-      'data_resposta': dataResposta != null ? Timestamp.fromDate(dataResposta!) : null,
+      'data_resposta':
+          dataResposta != null ? Timestamp.fromDate(dataResposta!) : null,
     };
   }
 

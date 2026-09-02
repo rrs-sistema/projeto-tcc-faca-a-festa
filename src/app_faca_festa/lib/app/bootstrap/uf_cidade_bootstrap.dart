@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/uf_cidade_controller.dart';
 import '../../data/datasources/remote/uf_cidade_remote_datasource.dart';
 import '../../data/repositories_impl/uf_cidade_repository_impl.dart';
 import '../../domain/repositories/uf_cidade_repository.dart';
 import '../../domain/usecases/gerenciar_ufs_cidades.dart';
+import '../../presentation/modules/usuario/controllers/uf_cidade_controller.dart';
 
 class UfCidadeBootstrap {
   UfCidadeBootstrap._();
@@ -12,7 +13,9 @@ class UfCidadeBootstrap {
   static void register() {
     if (!Get.isRegistered<UfCidadeRemoteDatasource>()) {
       Get.lazyPut<UfCidadeRemoteDatasource>(
-        () => UfCidadeRemoteDatasource(),
+        () => UfCidadeRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+        ),
         fenix: true,
       );
     }

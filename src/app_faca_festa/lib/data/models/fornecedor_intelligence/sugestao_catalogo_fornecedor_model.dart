@@ -214,14 +214,18 @@ class SugestaoCatalogoFornecedorModel {
       titulo: titulo ?? this.titulo,
       descricao: descricao ?? this.descricao,
       pendencias: pendencias ?? this.pendencias,
-      melhoriasPrioritarias: melhoriasPrioritarias ?? this.melhoriasPrioritarias,
+      melhoriasPrioritarias:
+          melhoriasPrioritarias ?? this.melhoriasPrioritarias,
       camposAusentes: camposAusentes ?? this.camposAusentes,
       servicosComAlerta: servicosComAlerta ?? this.servicosComAlerta,
       categoriasSemServico: categoriasSemServico ?? this.categoriasSemServico,
       totalServicosAtivos: totalServicosAtivos ?? this.totalServicosAtivos,
-      totalServicosSemImagem: totalServicosSemImagem ?? this.totalServicosSemImagem,
-      totalServicosSemPreco: totalServicosSemPreco ?? this.totalServicosSemPreco,
-      totalServicosSemDescricao: totalServicosSemDescricao ?? this.totalServicosSemDescricao,
+      totalServicosSemImagem:
+          totalServicosSemImagem ?? this.totalServicosSemImagem,
+      totalServicosSemPreco:
+          totalServicosSemPreco ?? this.totalServicosSemPreco,
+      totalServicosSemDescricao:
+          totalServicosSemDescricao ?? this.totalServicosSemDescricao,
       origem: origem ?? this.origem,
       versaoRegra: versaoRegra ?? this.versaoRegra,
       status: status ?? this.status,
@@ -307,7 +311,10 @@ class SugestaoCatalogoFornecedorModel {
   static List<Map<String, dynamic>> _readMapList(dynamic value) {
     if (value is! List) return <Map<String, dynamic>>[];
 
-    return value.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+    return value
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
   }
 
   static DateTime _readDate(

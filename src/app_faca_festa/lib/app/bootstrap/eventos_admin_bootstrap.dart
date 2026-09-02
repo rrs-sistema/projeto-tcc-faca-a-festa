@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/admin/eventos_admin_controller.dart';
 import '../../data/datasources/remote/eventos_admin_remote_datasource.dart';
 import '../../data/repositories_impl/eventos_admin_repository_impl.dart';
 import '../../domain/repositories/eventos_admin_repository.dart';
 import '../../domain/usecases/gerenciar_eventos_admin.dart';
+import '../../presentation/modules/admin/controllers/eventos_admin_controller.dart';
 
 class EventosAdminBootstrap {
   EventosAdminBootstrap._();
@@ -12,7 +13,9 @@ class EventosAdminBootstrap {
   static void register() {
     if (!Get.isRegistered<EventosAdminRemoteDatasource>()) {
       Get.lazyPut<EventosAdminRemoteDatasource>(
-        () => EventosAdminRemoteDatasource(),
+        () => EventosAdminRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+        ),
         fenix: true,
       );
     }

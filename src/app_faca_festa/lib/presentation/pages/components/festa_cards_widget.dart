@@ -3,13 +3,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../controllers/convidado/convidado_controller.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/orcamento_controller.dart';
 import '../fornecedor/painel_cotacao_page.dart';
 import './../../pages/orcamento/orcamento_screen.dart';
-import './../../../controllers/tarefa_controller.dart';
-import './../../../controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import './../../pages/tarefa/tarefas_screen.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../convidado/convidado_page.dart';
@@ -32,122 +32,124 @@ class FestaCardsWidget extends StatelessWidget {
       final paleta = _paletaDoTema(corBase, secundaria, fundo);
 
       return SizedBox(
-      height: 165,
-      child: ListView.separated(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        scrollDirection: Axis.horizontal,
-        itemCount: 4,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
-        itemBuilder: (context, index) {
-          switch (index) {
-            // === 1️⃣ Meus Fornecedores ===
-            case 0:
-              return Obx(() => _FestaInfoCard(
-                    card: _CardData(
-                      title: "Meus Fornecedores",
-                      subtitle:
-                          "${orcamentoController.contratadosCount.value} de: ${orcamentoController.fornecedorContatadoCount.value}",
-                      style: paleta[0],
-                    ),
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (_) => const PainelCotacaoPage()),
-                    ),
-                  )
-                      .animate()
-                      .fadeIn(duration: 500.ms, delay: (index * 100).ms)
-                      .slideY(begin: 0.1, end: 0, curve: Curves.easeOut));
+        height: 165,
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          scrollDirection: Axis.horizontal,
+          itemCount: 4,
+          separatorBuilder: (_, __) => const SizedBox(width: 12),
+          itemBuilder: (context, index) {
+            switch (index) {
+              // === 1️⃣ Meus Fornecedores ===
+              case 0:
+                return Obx(() => _FestaInfoCard(
+                      card: _CardData(
+                        title: "Meus Fornecedores",
+                        subtitle:
+                            "${orcamentoController.contratadosCount.value} de: ${orcamentoController.fornecedorContatadoCount.value}",
+                        style: paleta[0],
+                      ),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const PainelCotacaoPage()),
+                      ),
+                    )
+                        .animate()
+                        .fadeIn(duration: 500.ms, delay: (index * 100).ms)
+                        .slideY(begin: 0.1, end: 0, curve: Curves.easeOut));
 
-            // === 2️⃣ Orçamentos ===
-            case 1:
-              return _FestaInfoCard(
-                card: _CardData(
-                    title: "Orçamentos", subtitle: "", style: paleta[1]),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const OrcamentoScreen()),
-                ),
-                reactiveSubtitle: Obx(() {
-                  final custo =
-                      eventoController.eventoAtualEntidade?.custoEstimado ?? 0;
-                  return Text(
-                    Biblioteca.formatarValorDecimal(custo),
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      color: paleta[1].text.withValues(alpha: 0.75),
-                      fontSize: 12.5,
-                    ),
-                  );
-                }),
-              )
-                  .animate()
-                  .fadeIn(duration: 500.ms, delay: (index * 100).ms)
-                  .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
+              // === 2️⃣ Orçamentos ===
+              case 1:
+                return _FestaInfoCard(
+                  card: _CardData(
+                      title: "Orçamentos", subtitle: "", style: paleta[1]),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const OrcamentoScreen()),
+                  ),
+                  reactiveSubtitle: Obx(() {
+                    final custo =
+                        eventoController.eventoAtualEntidade?.custoEstimado ??
+                            0;
+                    return Text(
+                      Biblioteca.formatarValorDecimal(custo),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: paleta[1].text.withValues(alpha: 0.75),
+                        fontSize: 12.5,
+                      ),
+                    );
+                  }),
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: (index * 100).ms)
+                    .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
 
-            // === 3️⃣ Convidados ===
-            case 2:
-              return _FestaInfoCard(
-                card: _CardData(
-                    title: "Convidados", subtitle: "", style: paleta[2]),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const ConvidadosPage()),
-                ),
-                reactiveSubtitle: Obx(() {
-                  final total = convidadoController.totalConvidados;
-                  final conf = convidadoController.totalConfirmados;
-                  final pend = convidadoController.totalPendentes;
-                  return Text(
-                    "$conf confirmados de $total ($pend pendentes)",
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      color: paleta[2].text.withValues(alpha: 0.75),
-                      fontSize: 12.5,
-                    ),
-                  );
-                }),
-              )
-                  .animate()
-                  .fadeIn(duration: 500.ms, delay: (index * 100).ms)
-                  .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
+              // === 3️⃣ Convidados ===
+              case 2:
+                return _FestaInfoCard(
+                  card: _CardData(
+                      title: "Convidados", subtitle: "", style: paleta[2]),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const ConvidadosPage()),
+                  ),
+                  reactiveSubtitle: Obx(() {
+                    final total = convidadoController.totalConvidados;
+                    final conf = convidadoController.totalConfirmados;
+                    final pend = convidadoController.totalPendentes;
+                    return Text(
+                      "$conf confirmados de $total ($pend pendentes)",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: paleta[2].text.withValues(alpha: 0.75),
+                        fontSize: 12.5,
+                      ),
+                    );
+                  }),
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: (index * 100).ms)
+                    .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
 
-            // === 4️⃣ Tarefas ===
-            case 3:
-              return _FestaInfoCard(
-                card:
-                    _CardData(title: "Tarefas", subtitle: "", style: paleta[3]),
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => TarefasScreen()),
-                ),
-                reactiveSubtitle: Obx(() {
-                  final concluidas = tarefaController.concluidas;
-                  final total = tarefaController.tarefas.length;
-                  return Text(
-                    "$concluidas de $total concluídas",
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      color: paleta[3].text.withValues(alpha: 0.75),
-                      fontSize: 12.5,
-                    ),
-                  );
-                }),
-              )
-                  .animate()
-                  .fadeIn(duration: 500.ms, delay: (index * 100).ms)
-                  .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
+              // === 4️⃣ Tarefas ===
+              case 3:
+                return _FestaInfoCard(
+                  card: _CardData(
+                      title: "Tarefas", subtitle: "", style: paleta[3]),
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => TarefasScreen()),
+                  ),
+                  reactiveSubtitle: Obx(() {
+                    final concluidas = tarefaController.concluidas;
+                    final total = tarefaController.tarefas.length;
+                    return Text(
+                      "$concluidas de $total concluídas",
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: paleta[3].text.withValues(alpha: 0.75),
+                        fontSize: 12.5,
+                      ),
+                    );
+                  }),
+                )
+                    .animate()
+                    .fadeIn(duration: 500.ms, delay: (index * 100).ms)
+                    .slideY(begin: 0.1, end: 0, curve: Curves.easeOut);
 
-            default:
-              return const SizedBox.shrink();
-          }
-        },
-      ),
-    );
+              default:
+                return const SizedBox.shrink();
+            }
+          },
+        ),
+      );
     });
   }
 
-  List<_CardStyle> _paletaDoTema(Color primaria, Color secundaria, Color fundo) {
+  List<_CardStyle> _paletaDoTema(
+      Color primaria, Color secundaria, Color fundo) {
     return [
       _CardStyle(
         bg: Colors.white,

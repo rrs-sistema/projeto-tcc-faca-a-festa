@@ -1,13 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../models/evento/evento_model.dart';
 import '../../models/evento/tipo_evento.dart';
 
 /// Isolates the existing Firestore operations for Eventos.
 class EventoRemoteDatasource {
-  EventoRemoteDatasource(this.firestore);
+  EventoRemoteDatasource(
+    this.firestore, {
+    required this.storage,
+  });
 
   final FirebaseFirestore firestore;
+  final FirebaseStorage storage;
 
   CollectionReference<Map<String, dynamic>> get _eventos =>
       firestore.collection('evento');
@@ -100,6 +106,30 @@ class EventoRemoteDatasource {
     return _eventos.doc(evento.idEvento).set(evento.toMap());
   }
 
+  Future<String> enviarCapa({
+    required String idEvento,
+    required List<int> bytes,
+  }) async {
+    final ref =
+        storage.ref().child('eventos').child(idEvento).child('capa.jpg');
+    final payload = Uint8List.fromList(bytes);
+    await ref.putData(
+      payload,
+      SettableMetadata(contentType: _contentTypeCapa(payload)),
+    );
+    final url = await ref.getDownloadURL();
+    return '$url${url.contains('?') ? '&' : '?'}v=${DateTime.now().millisecondsSinceEpoch}';
+  }
+
+  Future<void> removerArquivoCapa(String idEvento) {
+    return storage
+        .ref()
+        .child('eventos')
+        .child(idEvento)
+        .child('capa.jpg')
+        .delete();
+  }
+
   Future<void> atualizarImagemCapa({
     required String idEvento,
     String? imagemCapaUrl,
@@ -136,5 +166,16 @@ class EventoRemoteDatasource {
               .map((document) => EventoModel.fromMap(document.data()))
               .toList(),
         );
+  }
+
+  String _contentTypeCapa(Uint8List bytes) {
+    if (bytes.length >= 8 &&
+        bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47) {
+      return 'image/png';
+    }
+    return 'image/jpeg';
   }
 }

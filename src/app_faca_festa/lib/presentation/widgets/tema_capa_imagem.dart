@@ -1,8 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import 'tema_capa_rede.dart'
-    if (dart.library.html) 'tema_capa_rede_web.dart' as rede;
+import 'tema_capa_rede.dart' if (dart.library.html) 'tema_capa_rede_web.dart'
+    as rede;
 
 class TemaCapaImagem extends StatelessWidget {
   const TemaCapaImagem({

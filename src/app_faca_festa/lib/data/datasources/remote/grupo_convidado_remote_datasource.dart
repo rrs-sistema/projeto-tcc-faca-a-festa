@@ -42,7 +42,8 @@ class GrupoConvidadoRemoteDatasource {
     return _convidados.where('id_evento', isEqualTo: idEvento).snapshots().map(
       (snapshot) {
         final lista = _normalizarConvidados(snapshot, idEvento).values.toList()
-          ..sort((a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
+          ..sort(
+              (a, b) => a.nome.toLowerCase().compareTo(b.nome.toLowerCase()));
         return lista;
       },
     );

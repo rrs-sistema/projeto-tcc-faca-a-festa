@@ -4,16 +4,16 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/inspiracao/inspiracao_controller.dart';
-import '../../controllers/usuario/usuario_controller.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_controller.dart';
 import '../pages/calculadora/calculadora_itens_admin_page.dart';
 import '../pages/inspiracao/inspiracao_admin_page.dart';
 import '../pages/inspiracao/minhas_referencias_evento_screen.dart';
 import './../pages/evento/seletor_evento_bottom_sheet.dart';
-import './../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../pages/usuario/edit_usuario_screen.dart';
-import './../../controllers/evento_controller.dart';
-import './../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './../../core/utils/biblioteca.dart';
 
 class MenuDrawerFacaFesta extends StatelessWidget {

@@ -67,7 +67,8 @@ class CategoriaIcones {
     'auto_awesome': Icons.auto_awesome_rounded,
   };
 
-  static IconData de(String? chave) => catalogo[chave] ?? Icons.category_rounded;
+  static IconData de(String? chave) =>
+      catalogo[chave] ?? Icons.category_rounded;
 }
 
 class CategoriaServicoModel {
@@ -106,7 +107,8 @@ class CategoriaServicoModel {
         'data_atualizacao': FieldValue.serverTimestamp(),
       };
 
-  factory CategoriaServicoModel.fromMap(Map<String, dynamic> map, {String? documentId}) {
+  factory CategoriaServicoModel.fromMap(Map<String, dynamic> map,
+      {String? documentId}) {
     return CategoriaServicoModel(
       id: _texto(map, ['id'], fallback: documentId ?? ''),
       nome: _texto(map, ['nome', 'name']),
@@ -141,7 +143,8 @@ class CategoriaServicoModel {
   }
 }
 
-String _texto(Map<String, dynamic> map, List<String> keys, {String fallback = ''}) {
+String _texto(Map<String, dynamic> map, List<String> keys,
+    {String fallback = ''}) {
   for (final key in keys) {
     final value = map[key];
     if (value == null) continue;
@@ -156,7 +159,8 @@ String? _textoOpcional(Map<String, dynamic> map, List<String> keys) {
   return value.isEmpty ? null : value;
 }
 
-bool _bool(Map<String, dynamic> map, List<String> keys, {bool fallback = false}) {
+bool _bool(Map<String, dynamic> map, List<String> keys,
+    {bool fallback = false}) {
   for (final key in keys) {
     final value = map[key];
     if (value is bool) return value;

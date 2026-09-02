@@ -32,10 +32,12 @@ class PlanejamentoFestaIAResponse {
                 Map<String, dynamic>.from(item),
               ))
           .toList(),
-      pontosDeAtencao:
-          ((json['pontosDeAtencao'] as List?) ?? []).map((item) => item.toString()).toList(),
-      proximasAcoes:
-          ((json['proximasAcoes'] as List?) ?? []).map((item) => item.toString()).toList(),
+      pontosDeAtencao: ((json['pontosDeAtencao'] as List?) ?? [])
+          .map((item) => item.toString())
+          .toList(),
+      proximasAcoes: ((json['proximasAcoes'] as List?) ?? [])
+          .map((item) => item.toString())
+          .toList(),
     );
   }
 }

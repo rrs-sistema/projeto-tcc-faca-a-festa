@@ -5,8 +5,8 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
 import './../../../core/utils/form_validators.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './../../../data/models/model.dart';
 
 Future<void> showTarefaDialog({
@@ -156,66 +156,67 @@ Future<void> showTarefaDialog({
                             autovalidateMode: autovalidateMode,
                             child: Column(
                               children: [
-                          _buildInput(
-                            context,
-                            controller: tituloController,
-                            label: 'Título da Tarefa',
-                            icon: Icons.title_outlined,
-                            color: primary,
-                            validator: (v) => FormValidators.titulo(
-                              v,
-                              campo: 'o título da tarefa',
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          _buildInput(
-                            context,
-                            controller: descricaoController,
-                            label: 'Descrição da Tarefa',
-                            icon: Icons.notes_outlined,
-                            color: primary,
-                            maxLines: 2, // Reduzido de 3 para 2
-                            validator: (v) => FormValidators.descricao(
-                              v,
-                              campo: 'a descrição da tarefa',
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-
-                          // === Data Prevista ===
-                          GestureDetector(
-                            onTap: () async {
-                              final novaData = await showDatePicker(
-                                context: context,
-                                initialDate: dataSelecionada,
-                                firstDate: DateTime(2000),
-                                lastDate: DateTime(2100),
-                                locale: const Locale('pt', 'BR'),
-                                helpText: 'Selecionar Data Prevista',
-                              );
-                              if (novaData != null) {
-                                setState(() {
-                                  dataSelecionada = novaData;
-                                  dataController.text =
-                                      DateFormat('dd/MM/yyyy').format(novaData);
-                                });
-                              }
-                            },
-                            child: AbsorbPointer(
-                              child: _buildInput(
-                                context,
-                                controller: dataController,
-                                label: 'Data Prevista',
-                                icon: Icons.calendar_today_outlined,
-                                color: primary,
-                                readOnly: true,
-                                validator: (v) => FormValidators.data(
-                                  v,
-                                  campo: 'a data prevista',
+                                _buildInput(
+                                  context,
+                                  controller: tituloController,
+                                  label: 'Título da Tarefa',
+                                  icon: Icons.title_outlined,
+                                  color: primary,
+                                  validator: (v) => FormValidators.titulo(
+                                    v,
+                                    campo: 'o título da tarefa',
+                                  ),
                                 ),
-                              ),
-                            ),
-                          ),
+                                const SizedBox(height: 10),
+                                _buildInput(
+                                  context,
+                                  controller: descricaoController,
+                                  label: 'Descrição da Tarefa',
+                                  icon: Icons.notes_outlined,
+                                  color: primary,
+                                  maxLines: 2, // Reduzido de 3 para 2
+                                  validator: (v) => FormValidators.descricao(
+                                    v,
+                                    campo: 'a descrição da tarefa',
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+
+                                // === Data Prevista ===
+                                GestureDetector(
+                                  onTap: () async {
+                                    final novaData = await showDatePicker(
+                                      context: context,
+                                      initialDate: dataSelecionada,
+                                      firstDate: DateTime(2000),
+                                      lastDate: DateTime(2100),
+                                      locale: const Locale('pt', 'BR'),
+                                      helpText: 'Selecionar Data Prevista',
+                                    );
+                                    if (novaData != null) {
+                                      setState(() {
+                                        dataSelecionada = novaData;
+                                        dataController.text =
+                                            DateFormat('dd/MM/yyyy')
+                                                .format(novaData);
+                                      });
+                                    }
+                                  },
+                                  child: AbsorbPointer(
+                                    child: _buildInput(
+                                      context,
+                                      controller: dataController,
+                                      label: 'Data Prevista',
+                                      icon: Icons.calendar_today_outlined,
+                                      color: primary,
+                                      readOnly: true,
+                                      validator: (v) => FormValidators.data(
+                                        v,
+                                        campo: 'a data prevista',
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -268,10 +269,13 @@ Future<void> showTarefaDialog({
                                               usuario.mesmoIdentificador(
                                                   responsavelSelecionado!);
 
-                                      final isOrganizador = usuario.idConvidado ==
-                                              app.usuarioLogado.value?.idUsuario ||
-                                          usuario.idUsuario ==
-                                              app.usuarioLogado.value?.idUsuario;
+                                      final isOrganizador =
+                                          usuario.idConvidado ==
+                                                  app.usuarioLogado.value
+                                                      ?.idUsuario ||
+                                              usuario.idUsuario ==
+                                                  app.usuarioLogado.value
+                                                      ?.idUsuario;
 
                                       return GestureDetector(
                                         onTap: () => setState(() {
@@ -325,10 +329,10 @@ Future<void> showTarefaDialog({
                                 setState(() {
                                   autovalidateMode =
                                       AutovalidateMode.onUserInteraction;
-                                  erroResponsavel =
-                                      responsavelSelecionado == null
-                                          ? 'Selecione o responsável pela tarefa'
-                                          : null;
+                                  erroResponsavel = responsavelSelecionado ==
+                                          null
+                                      ? 'Selecione o responsável pela tarefa'
+                                      : null;
                                 });
                               },
                             ),
@@ -598,7 +602,8 @@ List<Convidado> _deduplicarElegiveis(Iterable<Convidado> origem) {
   final resultado = <Convidado>[];
   for (final item in origem) {
     final id = item.idConvidado.trim();
-    final chave = id.isNotEmpty ? 'id:$id' : 'email:${item.emailNormalizadoEfetivo}';
+    final chave =
+        id.isNotEmpty ? 'id:$id' : 'email:${item.emailNormalizadoEfetivo}';
     if (chave.endsWith(':') || !vistos.add(chave)) continue;
     resultado.add(item);
   }

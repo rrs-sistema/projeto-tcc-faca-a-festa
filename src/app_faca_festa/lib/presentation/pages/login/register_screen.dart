@@ -7,9 +7,9 @@ import 'dart:io';
 import 'dart:ui';
 
 import '../../../app/bootstrap/servico_produto_bootstrap.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/fornecedor/fornecedor_controller.dart';
-import './../../../controllers/register_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/controllers/register_controller.dart';
 import './components/build_header_organizador.dart';
 import './components/build_header_fornecedor.dart';
 import './register_organizador_form.dart';
@@ -24,8 +24,8 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final controller = Get.put(RegisterController());
-  final fornecedorController = Get.put(FornecedorController());
+  final controller = Get.find<RegisterController>();
+  final fornecedorController = Get.find<FornecedorController>();
   final servicoController = ServicoProdutoBootstrap.findController();
   final picker = ImagePicker();
   File? bannerFile;

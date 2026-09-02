@@ -204,7 +204,8 @@ class SugestaoBaseFestaModel {
         _asString(map['categoria'], fallback: CategoriaSugestaoIA.geral.value),
       ),
       prioridade: _normalizeToken(
-        _asString(map['prioridade'], fallback: PrioridadeSugestaoIA.media.value),
+        _asString(map['prioridade'],
+            fallback: PrioridadeSugestaoIA.media.value),
       ),
       gatilhos: _asMap(map['gatilhos']),
       tags: _asStringList(map['tags']),
@@ -232,7 +233,9 @@ class SugestaoBaseFestaModel {
         ),
       ),
       observacaoRevisao: _asString(
-        map['observacao_revisao'] ?? map['observacaoRevisao'] ?? map['review_note'],
+        map['observacao_revisao'] ??
+            map['observacaoRevisao'] ??
+            map['review_note'],
       ),
       createdAt: _asDateTime(map['created_at'] ?? map['createdAt']),
       updatedAt: _asDateTime(map['updated_at'] ?? map['updatedAt']),
@@ -258,14 +261,17 @@ class SugestaoBaseFestaModel {
       'versao': versao,
       'origem': origem,
       'revisado_por': revisadoPor,
-      'data_revisao': _dateOrServerTimestamp(dataRevisao, includeDates: includeDates),
+      'data_revisao':
+          _dateOrServerTimestamp(dataRevisao, includeDates: includeDates),
       'data_publicacao': _dateOrServerTimestamp(
         dataPublicacao,
         includeDates: includeDates,
       ),
       'status_revisao': statusRevisao,
       'observacao_revisao': observacaoRevisao,
-      'created_at': includeDates && createdAt == null ? FieldValue.serverTimestamp() : createdAt,
+      'created_at': includeDates && createdAt == null
+          ? FieldValue.serverTimestamp()
+          : createdAt,
       'updated_at': includeDates ? FieldValue.serverTimestamp() : updatedAt,
     };
   }
@@ -337,7 +343,8 @@ class SugestaoBaseFestaModel {
       origem: origem ?? this.origem,
       revisadoPor: revisadoPor ?? this.revisadoPor,
       dataRevisao: limparDataRevisao ? null : (dataRevisao ?? this.dataRevisao),
-      dataPublicacao: limparDataPublicacao ? null : (dataPublicacao ?? this.dataPublicacao),
+      dataPublicacao:
+          limparDataPublicacao ? null : (dataPublicacao ?? this.dataPublicacao),
       statusRevisao: statusRevisao ?? this.statusRevisao,
       observacaoRevisao: observacaoRevisao ?? this.observacaoRevisao,
       createdAt: createdAt ?? this.createdAt,
@@ -349,11 +356,16 @@ class SugestaoBaseFestaModel {
   bool get isInactive => !ativo;
   bool get isCritica => prioridade == PrioridadeSugestaoIA.critica.value;
   bool get isAlta => prioridade == PrioridadeSugestaoIA.alta.value;
-  bool get isAprovada => statusRevisao == StatusRevisaoSugestaoIA.aprovada.value;
-  bool get isPendente => statusRevisao == StatusRevisaoSugestaoIA.pendente.value;
-  bool get isReprovada => statusRevisao == StatusRevisaoSugestaoIA.reprovada.value;
-  bool get isArquivada => statusRevisao == StatusRevisaoSugestaoIA.arquivada.value;
-  bool get possuiRevisao => revisadoPor.trim().isNotEmpty || dataRevisao != null;
+  bool get isAprovada =>
+      statusRevisao == StatusRevisaoSugestaoIA.aprovada.value;
+  bool get isPendente =>
+      statusRevisao == StatusRevisaoSugestaoIA.pendente.value;
+  bool get isReprovada =>
+      statusRevisao == StatusRevisaoSugestaoIA.reprovada.value;
+  bool get isArquivada =>
+      statusRevisao == StatusRevisaoSugestaoIA.arquivada.value;
+  bool get possuiRevisao =>
+      revisadoPor.trim().isNotEmpty || dataRevisao != null;
   bool get possuiPublicacao => dataPublicacao != null;
   bool get possuiObservacaoRevisao => observacaoRevisao.trim().isNotEmpty;
 
@@ -361,8 +373,10 @@ class SugestaoBaseFestaModel {
     return ativo && !excluido && isAprovada;
   }
 
-  String get tipoEventoLabel => tipoEvento.isEmpty ? 'todos' : tipoEvento.join(', ');
-  String get perfisFestaLabel => perfisFesta.isEmpty ? 'todos' : perfisFesta.join(', ');
+  String get tipoEventoLabel =>
+      tipoEvento.isEmpty ? 'todos' : tipoEvento.join(', ');
+  String get perfisFestaLabel =>
+      perfisFesta.isEmpty ? 'todos' : perfisFesta.join(', ');
   String get tagsLabel => tags.join(', ');
   String get versaoLabel => 'v$versao';
   String get rastreioLabel => '$id@$versaoLabel';
@@ -434,7 +448,8 @@ class SugestaoBaseFestaModel {
       if (<String>['true', '1', 'sim', 's', 'yes'].contains(normalized)) {
         return true;
       }
-      if (<String>['false', '0', 'nao', 'não', 'n', 'no'].contains(normalized)) {
+      if (<String>['false', '0', 'nao', 'não', 'n', 'no']
+          .contains(normalized)) {
         return false;
       }
     }

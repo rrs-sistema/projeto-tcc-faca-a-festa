@@ -6,9 +6,9 @@ import 'package:get/get.dart';
 
 import '../../../../../app/bootstrap/admin_territorio_bootstrap.dart';
 import '../../../../../core/utils/biblioteca.dart';
-import '../../../../../controllers/tema/admin_theme.dart';
-import './../../../../../controllers/tema/event_theme_controller.dart';
-import '../../../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import '../../../../../data/models/model.dart';
 import '../../../../widgets/admin/admin_kit.dart';
 

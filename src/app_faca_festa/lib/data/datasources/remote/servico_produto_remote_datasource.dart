@@ -6,8 +6,8 @@ import '../../models/servico_produto/servico_produto_model.dart';
 import '../../seeds/servico_produto_seed.dart';
 
 class ServicoProdutoRemoteDatasource {
-  ServicoProdutoRemoteDatasource({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  ServicoProdutoRemoteDatasource({required FirebaseFirestore firestore})
+      : _db = firestore;
 
   final FirebaseFirestore _db;
 

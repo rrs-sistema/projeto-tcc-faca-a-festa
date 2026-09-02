@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../controllers/categoria/categoria_servico_controller.dart';
-import '../../../../controllers/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
 import '../../../../core/utils/form_masks.dart';
 import '../../../../core/utils/form_validators.dart';
 import '../../../../data/models/servico_produto/categoria_servico_model.dart';
@@ -91,7 +91,8 @@ class _CategoriaServicoSheetState extends State<_CategoriaServicoSheet> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Form(
         key: _formKey,
         autovalidateMode: _autovalidateMode,
@@ -112,7 +113,9 @@ class _CategoriaServicoSheetState extends State<_CategoriaServicoSheet> {
               ),
               const SizedBox(height: 18),
               Text(
-                widget.categoria == null ? 'Nova categoria' : 'Editar categoria',
+                widget.categoria == null
+                    ? 'Nova categoria'
+                    : 'Editar categoria',
                 style: GoogleFonts.poppins(
                   fontSize: 18,
                   fontWeight: FontWeight.w800,
@@ -122,7 +125,8 @@ class _CategoriaServicoSheetState extends State<_CategoriaServicoSheet> {
               const SizedBox(height: 6),
               Text(
                 'Campos com * são obrigatórios. Descrição, ordem e ícone são opcionais.',
-                style: GoogleFonts.poppins(fontSize: 12.5, color: AdminPalette.muted),
+                style: GoogleFonts.poppins(
+                    fontSize: 12.5, color: AdminPalette.muted),
               ),
               const SizedBox(height: 20),
               TextFormField(
@@ -179,7 +183,8 @@ class _CategoriaServicoSheetState extends State<_CategoriaServicoSheet> {
               const SizedBox(height: 16),
               Text(
                 'Ícone (opcional)',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 13),
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600, fontSize: 13),
               ),
               const SizedBox(height: 8),
               Wrap(
@@ -200,12 +205,15 @@ class _CategoriaServicoSheetState extends State<_CategoriaServicoSheet> {
                             : AdminPalette.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: selecionado ? AdminPalette.primary : AdminPalette.border,
+                          color: selecionado
+                              ? AdminPalette.primary
+                              : AdminPalette.border,
                         ),
                       ),
                       child: Icon(
                         e.value,
-                        color: selecionado ? Colors.white : AdminPalette.primary,
+                        color:
+                            selecionado ? Colors.white : AdminPalette.primary,
                         size: 20,
                       ),
                     ),
@@ -217,10 +225,12 @@ class _CategoriaServicoSheetState extends State<_CategoriaServicoSheet> {
                 contentPadding: EdgeInsets.zero,
                 value: ativo,
                 onChanged: (v) => setState(() => ativo = v),
-                title: Text('Categoria ativa', style: GoogleFonts.poppins(fontSize: 14)),
+                title: Text('Categoria ativa',
+                    style: GoogleFonts.poppins(fontSize: 14)),
                 subtitle: Text(
                   'Inativas deixam de aparecer no cadastro de fornecedores.',
-                  style: GoogleFonts.poppins(fontSize: 12, color: AdminPalette.muted),
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, color: AdminPalette.muted),
                 ),
               ),
               const SizedBox(height: 12),
@@ -232,14 +242,17 @@ class _CategoriaServicoSheetState extends State<_CategoriaServicoSheet> {
                       ? const SizedBox(
                           width: 16,
                           height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white),
                         )
                       : const Icon(Icons.save_rounded),
-                  label: Text('Salvar', style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
+                  label: Text('Salvar',
+                      style: GoogleFonts.poppins(fontWeight: FontWeight.w700)),
                   style: FilledButton.styleFrom(
                     backgroundColor: AdminPalette.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
                   ),
                 ),
               ),
@@ -248,7 +261,8 @@ class _CategoriaServicoSheetState extends State<_CategoriaServicoSheet> {
                 width: double.infinity,
                 child: TextButton(
                   onPressed: salvando ? null : () => Get.back(),
-                  child: Text('Cancelar', style: GoogleFonts.poppins(color: AdminPalette.muted)),
+                  child: Text('Cancelar',
+                      style: GoogleFonts.poppins(color: AdminPalette.muted)),
                 ),
               ),
             ],

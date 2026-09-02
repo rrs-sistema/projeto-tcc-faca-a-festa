@@ -216,7 +216,11 @@ class SugestaoRespostaCotacaoAiModel {
           return decodedList;
         }
 
-        return text.split(',').map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
+        return text
+            .split(',')
+            .map((item) => item.trim())
+            .where((item) => item.isNotEmpty)
+            .toList();
       }
 
       return <String>[_dynamicToString(value)]
@@ -330,7 +334,8 @@ class SugestaoRespostaCotacaoAiModel {
     var text = raw.trim();
 
     if (text.startsWith('```')) {
-      text = text.replaceFirst(RegExp(r'^```json\s*', caseSensitive: false), '');
+      text =
+          text.replaceFirst(RegExp(r'^```json\s*', caseSensitive: false), '');
       text = text.replaceFirst(RegExp(r'^```\s*'), '');
 
       if (text.endsWith('```')) {

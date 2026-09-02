@@ -58,21 +58,24 @@ class InspiracaoModel {
 
     return InspiracaoModel(
       id: _asString(data['id']).isNotEmpty ? _asString(data['id']) : doc.id,
-      tipoEventoId:
-          _asString(data['tipoEventoId'] ?? data['idTipoEvento'] ?? data['id_tipo_evento']),
+      tipoEventoId: _asString(data['tipoEventoId'] ??
+          data['idTipoEvento'] ??
+          data['id_tipo_evento']),
       tipoEvento: _asString(data['tipoEvento'] ?? data['tipo_evento']),
-      tipoEventoNormalizado:
-          _asString(data['tipoEventoNormalizado'] ?? data['tipo_evento_normalizado']),
+      tipoEventoNormalizado: _asString(
+          data['tipoEventoNormalizado'] ?? data['tipo_evento_normalizado']),
       titulo: _asString(data['titulo']),
       descricao: _asString(data['descricao']),
       imagemUrl: _asString(data['imagemUrl'] ?? data['imagem_url']),
       tags: _asStringList(data['tags']),
       galeriaUrls: _asStringList(data['galeriaUrls'] ?? data['galeria_urls']),
       paletaCores: _asStringList(data['paletaCores'] ?? data['paleta_cores']),
-      categoriaId: _asString(data['categoriaId'] ?? data['idCategoria'] ?? data['categoria_id']),
+      categoriaId: _asString(
+          data['categoriaId'] ?? data['idCategoria'] ?? data['categoria_id']),
       categoria: _asString(data['categoria']),
       fornecedoresRelacionados: _asStringList(data['fornecedoresRelacionados']),
-      categoriasFornecedorSugeridas: _asStringList(data['categoriasFornecedorSugeridas']),
+      categoriasFornecedorSugeridas:
+          _asStringList(data['categoriasFornecedorSugeridas']),
       tarefasSugeridas: _asMapList(data['tarefasSugeridas']),
       itensOrcamentoSugeridos: _asMapList(data['itensOrcamentoSugeridos']),
       estilo: _asString(data['estilo']),
@@ -81,8 +84,10 @@ class InspiracaoModel {
       destaque: data['destaque'] == true,
       ativo: data['ativo'] != false && data['deletado'] != true,
       favorito: data['favorito'] == true,
-      criadoEm: _asDateTime(data['criadoEm'] ?? data['dataCriacao'] ?? data['data_criacao']),
-      atualizadoEm: _asDateTime(data['atualizadoEm'] ?? data['dataAtualizacao']),
+      criadoEm: _asDateTime(
+          data['criadoEm'] ?? data['dataCriacao'] ?? data['data_criacao']),
+      atualizadoEm:
+          _asDateTime(data['atualizadoEm'] ?? data['dataAtualizacao']),
     );
   }
 
@@ -110,7 +115,9 @@ class InspiracaoModel {
       'destaque': destaque,
       'ativo': ativo,
       'favorito': favorito,
-      'criadoEm': criadoEm == null ? FieldValue.serverTimestamp() : Timestamp.fromDate(criadoEm!),
+      'criadoEm': criadoEm == null
+          ? FieldValue.serverTimestamp()
+          : Timestamp.fromDate(criadoEm!),
       'atualizadoEm': FieldValue.serverTimestamp(),
     };
   }
@@ -187,7 +194,8 @@ class InspiracaoModel {
       id: id ?? this.id,
       tipoEventoId: tipoEventoId ?? this.tipoEventoId,
       tipoEvento: tipoEvento ?? this.tipoEvento,
-      tipoEventoNormalizado: tipoEventoNormalizado ?? this.tipoEventoNormalizado,
+      tipoEventoNormalizado:
+          tipoEventoNormalizado ?? this.tipoEventoNormalizado,
       titulo: titulo ?? this.titulo,
       descricao: descricao ?? this.descricao,
       imagemUrl: imagemUrl ?? this.imagemUrl,
@@ -196,11 +204,13 @@ class InspiracaoModel {
       paletaCores: paletaCores ?? this.paletaCores,
       categoriaId: categoriaId ?? this.categoriaId,
       categoria: categoria ?? this.categoria,
-      fornecedoresRelacionados: fornecedoresRelacionados ?? this.fornecedoresRelacionados,
+      fornecedoresRelacionados:
+          fornecedoresRelacionados ?? this.fornecedoresRelacionados,
       categoriasFornecedorSugeridas:
           categoriasFornecedorSugeridas ?? this.categoriasFornecedorSugeridas,
       tarefasSugeridas: tarefasSugeridas ?? this.tarefasSugeridas,
-      itensOrcamentoSugeridos: itensOrcamentoSugeridos ?? this.itensOrcamentoSugeridos,
+      itensOrcamentoSugeridos:
+          itensOrcamentoSugeridos ?? this.itensOrcamentoSugeridos,
       estilo: estilo ?? this.estilo,
       faixaCusto: faixaCusto ?? this.faixaCusto,
       nivelDificuldade: nivelDificuldade ?? this.nivelDificuldade,
@@ -220,7 +230,10 @@ class InspiracaoModel {
   static List<String> _asStringList(dynamic value) {
     if (value == null) return <String>[];
     if (value is List) {
-      return value.map((e) => e.toString()).where((e) => e.trim().isNotEmpty).toList();
+      return value
+          .map((e) => e.toString())
+          .where((e) => e.trim().isNotEmpty)
+          .toList();
     }
     return <String>[];
   }
@@ -228,7 +241,10 @@ class InspiracaoModel {
   static List<Map<String, dynamic>> _asMapList(dynamic value) {
     if (value == null) return <Map<String, dynamic>>[];
     if (value is List) {
-      return value.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+      return value
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
     }
     return <Map<String, dynamic>>[];
   }
@@ -289,7 +305,8 @@ class ReferenciaEventoModel {
     this.atualizadoEm,
   });
 
-  factory ReferenciaEventoModel.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
+  factory ReferenciaEventoModel.fromFirestore(
+      DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? <String, dynamic>{};
 
     return ReferenciaEventoModel(
@@ -297,20 +314,28 @@ class ReferenciaEventoModel {
       eventoId: _asString(data['eventoId'] ?? data['idEvento']),
       userId: _asString(data['userId'] ?? data['idUsuario']),
       inspiracaoId: _asString(data['inspiracaoId']),
-      titulo:
-          _asString(data['titulo']).isEmpty ? 'Referência sem título' : _asString(data['titulo']),
+      titulo: _asString(data['titulo']).isEmpty
+          ? 'Referência sem título'
+          : _asString(data['titulo']),
       descricao: _asString(data['descricao']),
       imagemUrl: _asString(data['imagemUrl']),
       categoriaId: _asString(data['categoriaId']),
-      categoria:
-          _asString(data['categoria']).isEmpty ? 'Sem categoria' : _asString(data['categoria']),
+      categoria: _asString(data['categoria']).isEmpty
+          ? 'Sem categoria'
+          : _asString(data['categoria']),
       tags: _asStringList(data['tags']),
       galeriaUrls: _asStringList(data['galeriaUrls']),
       paletaCores: _asStringList(data['paletaCores']),
       favorito: data['favorito'] == true,
-      status: _asString(data['status']).isEmpty ? 'salva' : _asString(data['status']),
-      prioridade: _asString(data['prioridade']).isEmpty ? 'media' : _asString(data['prioridade']),
-      origem: _asString(data['origem']).isEmpty ? 'manual' : _asString(data['origem']),
+      status: _asString(data['status']).isEmpty
+          ? 'salva'
+          : _asString(data['status']),
+      prioridade: _asString(data['prioridade']).isEmpty
+          ? 'media'
+          : _asString(data['prioridade']),
+      origem: _asString(data['origem']).isEmpty
+          ? 'manual'
+          : _asString(data['origem']),
       anotacao: _asString(data['anotacao']),
       ativo: data['ativo'] != false,
       deletado: data['deletado'] == true,
@@ -327,7 +352,10 @@ class ReferenciaEventoModel {
   static List<String> _asStringList(dynamic value) {
     if (value == null) return <String>[];
     if (value is List) {
-      return value.map((e) => e.toString()).where((e) => e.trim().isNotEmpty).toList();
+      return value
+          .map((e) => e.toString())
+          .where((e) => e.trim().isNotEmpty)
+          .toList();
     }
     return <String>[];
   }

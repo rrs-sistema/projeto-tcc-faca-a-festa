@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UfCidadeRemoteDatasource {
-  UfCidadeRemoteDatasource({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  UfCidadeRemoteDatasource({required FirebaseFirestore firestore})
+      : _db = firestore;
 
   final FirebaseFirestore _db;
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'fornecedor_premium_layout.dart';
 
 class PerfilSection extends StatelessWidget {
@@ -13,19 +13,28 @@ class PerfilSection extends StatelessWidget {
     final controller = Get.find<FornecedorController>();
 
     return Obx(() {
-      final servicos = controller.servicosDetalhado.where((s) => s.ativo).toList();
-      final servicosBasicos = controller.servicosFornecedor.where((s) => s.ativo).length;
-      final totalAtivos = servicos.isNotEmpty ? servicos.length : servicosBasicos;
-      final semFoto = servicos.where((s) => (s.imagemUrl ?? '').trim().isEmpty).length;
-      final comPreco = servicos.where((s) => s.preco > 0 || (s.precoPromocao ?? 0) > 0).length;
-      final semDescricao = servicos.where((s) => (s.descricaoServico ?? '').trim().isEmpty).length;
+      final servicos =
+          controller.servicosDetalhado.where((s) => s.ativo).toList();
+      final servicosBasicos =
+          controller.servicosFornecedor.where((s) => s.ativo).length;
+      final totalAtivos =
+          servicos.isNotEmpty ? servicos.length : servicosBasicos;
+      final semFoto =
+          servicos.where((s) => (s.imagemUrl ?? '').trim().isEmpty).length;
+      final comPreco = servicos
+          .where((s) => s.preco > 0 || (s.precoPromocao ?? 0) > 0)
+          .length;
+      final semDescricao = servicos
+          .where((s) => (s.descricaoServico ?? '').trim().isEmpty)
+          .length;
 
       final catalogoInsight = controller.insightsFornecedor.firstWhereOrNull(
         (i) => i.tipo == 'catalogo',
       );
       final sugestoes = catalogoInsight?.acoesSugeridas ?? const <String>[];
       final pendencias = controller.alertasPerfil
-          .where((a) => a.tipo.contains('catalogo') || a.tipo.contains('perfil'))
+          .where(
+              (a) => a.tipo.contains('catalogo') || a.tipo.contains('perfil'))
           .expand((a) => a.acoesSugeridas)
           .toSet()
           .toList();
@@ -127,7 +136,8 @@ class PerfilSection extends StatelessWidget {
       fornecedor.ativo,
       fornecedor.aptoParaOperar,
       fornecedor.razaoSocial.trim().isNotEmpty,
-      (fornecedor.email).trim().isNotEmpty || (fornecedor.telefone ).trim().isNotEmpty,
+      (fornecedor.email).trim().isNotEmpty ||
+          (fornecedor.telefone).trim().isNotEmpty,
       (fornecedor.descricao ?? '').trim().isNotEmpty,
       (fornecedor.bannerUrl ?? '').trim().isNotEmpty,
       fornecedor.categorias.isNotEmpty,
@@ -154,7 +164,9 @@ class _ScoreBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = score == null ? 'IA em análise' : '${score!.toStringAsFixed(0)}% completo';
+    final label = score == null
+        ? 'IA em análise'
+        : '${score!.toStringAsFixed(0)}% completo';
     final color = score == null
         ? FornecedorPremiumPalette.muted
         : score! >= 70
@@ -174,7 +186,8 @@ class _CatalogMetric {
   final IconData icon;
   final Color color;
 
-  const _CatalogMetric(this.label, this.value, this.subtitle, this.icon, this.color);
+  const _CatalogMetric(
+      this.label, this.value, this.subtitle, this.icon, this.color);
 }
 
 class _SugestoesCatalogo extends StatelessWidget {
@@ -276,7 +289,8 @@ class _ServicoMiniCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final nome = (servico.nomeServico ?? 'Serviço').toString();
     final categoria =
-        (servico.nomeCategoria ?? servico.nomeSubcategoria ?? 'Sem categoria').toString();
+        (servico.nomeCategoria ?? servico.nomeSubcategoria ?? 'Sem categoria')
+            .toString();
     final preco = (servico.preco as num?)?.toDouble() ?? 0.0;
     final promocao = (servico.precoPromocao as num?)?.toDouble() ?? 0.0;
     final valor = promocao > 0 ? promocao : preco;
@@ -302,8 +316,12 @@ class _ServicoMiniCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(15),
             ),
             child: Icon(
-              possuiFoto ? Icons.image_rounded : Icons.image_not_supported_outlined,
-              color: possuiFoto ? FornecedorPremiumPalette.primary : FornecedorPremiumPalette.rose,
+              possuiFoto
+                  ? Icons.image_rounded
+                  : Icons.image_not_supported_outlined,
+              color: possuiFoto
+                  ? FornecedorPremiumPalette.primary
+                  : FornecedorPremiumPalette.rose,
               size: 20,
             ),
           ),
@@ -328,7 +346,8 @@ class _ServicoMiniCard extends StatelessWidget {
                   categoria,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(fontSize: 10.8, color: FornecedorPremiumPalette.muted),
+                  style: GoogleFonts.poppins(
+                      fontSize: 10.8, color: FornecedorPremiumPalette.muted),
                 ),
                 const SizedBox(height: 3),
                 Text(
@@ -372,7 +391,8 @@ class _SuggestionPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check_circle_rounded, size: 13, color: FornecedorPremiumPalette.emerald),
+          const Icon(Icons.check_circle_rounded,
+              size: 13, color: FornecedorPremiumPalette.emerald),
           const SizedBox(width: 6),
           Flexible(
             child: Text(

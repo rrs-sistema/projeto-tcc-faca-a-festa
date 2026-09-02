@@ -45,7 +45,8 @@ class PagamentoModel {
           : int.tryParse(map['id_tipo_pagamento'].toString()) ?? 0,
       dataPagamento: map['data_pagamento'] is Timestamp
           ? (map['data_pagamento'] as Timestamp).toDate()
-          : DateTime.tryParse(map['data_pagamento'].toString()) ?? DateTime.now(),
+          : DateTime.tryParse(map['data_pagamento'].toString()) ??
+              DateTime.now(),
       valorPago: (map['valor_pago'] as num?)?.toDouble() ?? 0.0,
       observacoes: map['observacoes'],
       statusPagamento: _parseStatus(map['status_pagamento']),
@@ -83,5 +84,6 @@ class PagamentoModel {
   }
 
   /// 🔹 Texto legível
-  String get statusDescricao => statusPagamento == PagamentoStatus.total ? 'Total' : 'Parcial';
+  String get statusDescricao =>
+      statusPagamento == PagamentoStatus.total ? 'Total' : 'Parcial';
 }

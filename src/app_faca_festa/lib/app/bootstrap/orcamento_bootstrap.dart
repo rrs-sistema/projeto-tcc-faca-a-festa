@@ -1,10 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/orcamento_controller.dart';
 import '../../data/datasources/remote/orcamento_remote_datasource.dart';
 import '../../data/repositories_impl/orcamento_repository_impl.dart';
 import '../../domain/repositories/orcamento_repository.dart';
 import '../../domain/usecases/gerenciar_orcamentos.dart';
+import '../../presentation/modules/orcamento/orcamento_controller.dart';
 
 class OrcamentoBootstrap {
   OrcamentoBootstrap._();
@@ -12,7 +14,10 @@ class OrcamentoBootstrap {
   static void register() {
     if (!Get.isRegistered<OrcamentoRemoteDatasource>()) {
       Get.lazyPut<OrcamentoRemoteDatasource>(
-        () => OrcamentoRemoteDatasource(),
+        () => OrcamentoRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+          auth: Get.find<FirebaseAuth>(),
+        ),
         fenix: true,
       );
     }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import './../../../../controllers/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/orcamento_controller.dart';
 import './../../../../data/models/model.dart';
 import './../dialogs/show_responder_orcamento_dialog.dart';
 import 'fornecedor_premium_layout.dart';
@@ -18,18 +18,21 @@ class OrcamentosSection extends StatelessWidget {
       final lista = controller.orcamentos;
       final emNegociacao = lista
           .where((o) =>
-              o.status == StatusOrcamento.pendente || o.status == StatusOrcamento.emNegociacao)
+              o.status == StatusOrcamento.pendente ||
+              o.status == StatusOrcamento.emNegociacao)
           .toList();
 
       return PremiumSectionShell(
         title: 'Orçamentos em negociação',
-        subtitle: 'Propostas abertas, valores em análise e respostas pendentes.',
+        subtitle:
+            'Propostas abertas, valores em análise e respostas pendentes.',
         icon: Icons.handshake_outlined,
         color: FornecedorPremiumPalette.amber,
         trailing: emNegociacao.isEmpty
             ? null
             : PremiumPill(
-                text: '${emNegociacao.length} aberto${emNegociacao.length == 1 ? '' : 's'}',
+                text:
+                    '${emNegociacao.length} aberto${emNegociacao.length == 1 ? '' : 's'}',
                 color: FornecedorPremiumPalette.amber,
                 icon: Icons.pending_actions_rounded,
               ),
@@ -46,7 +49,8 @@ class OrcamentosSection extends StatelessWidget {
                 children: [
                   for (int i = 0; i < emNegociacao.length; i++) ...[
                     _OrcamentoCard(orcamento: emNegociacao[i]),
-                    if (i != emNegociacao.length - 1) const SizedBox(height: 10),
+                    if (i != emNegociacao.length - 1)
+                      const SizedBox(height: 10),
                   ],
                 ],
               ),
@@ -134,7 +138,8 @@ class _OrcamentoCard extends StatelessWidget {
                     Text(
                       orcamento.idCategoria ?? 'Categoria não informada',
                       style: GoogleFonts.poppins(
-                          fontSize: 11.7, color: FornecedorPremiumPalette.muted),
+                          fontSize: 11.7,
+                          color: FornecedorPremiumPalette.muted),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -157,7 +162,8 @@ class _OrcamentoCard extends StatelessWidget {
               ),
             ],
           ),
-          if (orcamento.anotacoes != null && orcamento.anotacoes!.isNotEmpty) ...[
+          if (orcamento.anotacoes != null &&
+              orcamento.anotacoes!.isNotEmpty) ...[
             const SizedBox(height: 10),
             Text(
               orcamento.anotacoes!,
@@ -174,19 +180,24 @@ class _OrcamentoCard extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final compact = constraints.maxWidth < 360;
-              final status = PremiumPill(text: orcamento.status.label, color: corStatus);
+              final status =
+                  PremiumPill(text: orcamento.status.label, color: corStatus);
               final button = OutlinedButton.icon(
-                onPressed: () => showResponderOrcamentoDialog(context, orcamento: orcamento),
+                onPressed: () =>
+                    showResponderOrcamentoDialog(context, orcamento: orcamento),
                 icon: const Icon(Icons.reply_rounded, size: 16),
                 label: Text(
                   'Responder',
-                  style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w800),
+                  style: GoogleFonts.poppins(
+                      fontSize: 11.5, fontWeight: FontWeight.w800),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: FornecedorPremiumPalette.dark,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   side: const BorderSide(color: Color(0xFFD1D5DB)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                 ),
               );
 

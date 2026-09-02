@@ -60,7 +60,8 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _statusColor(solicitacao.status.name);
     final icon = _statusIcon(solicitacao.status.name);
-    final dataFmt = DateFormat('dd/MM/yyyy • HH:mm').format(solicitacao.dataCadastro);
+    final dataFmt =
+        DateFormat('dd/MM/yyyy • HH:mm').format(solicitacao.dataCadastro);
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
@@ -82,11 +83,13 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
               showResponderCotacaoBottomSheet(
                 context: context,
                 idCotacao: solicitacao.id,
-                categoriaNome: solicitacao.categoriaNome ?? 'Categoria não informada',
+                categoriaNome:
+                    solicitacao.categoriaNome ?? 'Categoria não informada',
                 descricao: solicitacao.descricao ?? 'Sem descrição',
                 nomeSolicitante: solicitacao.nomeUsuarioSolicitante,
                 dataLimite: dataFmt,
-                ofertaDesejada: Biblioteca.toDouble(solicitacao.valorEstimadoTotal.toString()),
+                ofertaDesejada: Biblioteca.toDouble(
+                    solicitacao.valorEstimadoTotal.toString()),
               );
             }
           },
@@ -131,7 +134,8 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                           ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 118),
                             child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
                                 color: color.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6),
@@ -219,12 +223,14 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                         }).toList(),
                       ),
 
-                      const Divider(height: 20, thickness: 0.5, color: Color(0xFFEEEEEE)),
+                      const Divider(
+                          height: 20, thickness: 0.5, color: Color(0xFFEEEEEE)),
 
                       // Rodapé: Data + Valor total
                       LayoutBuilder(
                         builder: (context, constraints) {
-                          final totalLabel = solicitacao.valorEstimadoTotal != null
+                          final totalLabel = solicitacao.valorEstimadoTotal !=
+                                  null
                               ? "Total: R\$ ${Biblioteca.formatarValorDecimal(solicitacao.valorEstimadoTotal)}"
                               : "Aguardando";
 
@@ -291,16 +297,22 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                         SizedBox(
                           width: double.infinity,
                           child: OutlinedButton.icon(
-                            onPressed: isGerandoRespostaIa ? null : onGerarRespostaComIa,
+                            onPressed: isGerandoRespostaIa
+                                ? null
+                                : onGerarRespostaComIa,
                             icon: isGerandoRespostaIa
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
                                   )
-                                : const Icon(Icons.auto_awesome_rounded, size: 18),
+                                : const Icon(Icons.auto_awesome_rounded,
+                                    size: 18),
                             label: Text(
-                              isGerandoRespostaIa ? 'Gerando resposta...' : 'Gerar resposta com IA',
+                              isGerandoRespostaIa
+                                  ? 'Gerando resposta...'
+                                  : 'Gerar resposta com IA',
                               style: GoogleFonts.poppins(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w700,
@@ -309,8 +321,8 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                             style: OutlinedButton.styleFrom(
                               foregroundColor: const Color(0xFF4F46E5),
                               side: const BorderSide(color: Color(0xFFC7D2FE)),
-                              shape:
-                                  RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                             ),
                           ),

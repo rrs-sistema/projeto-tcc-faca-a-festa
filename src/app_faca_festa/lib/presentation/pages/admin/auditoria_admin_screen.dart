@@ -1,11 +1,15 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../app/bootstrap/auditoria_bootstrap.dart';
-import '../../../controllers/auditoria/auditoria_controller.dart';
-import '../../../controllers/tema/admin_theme.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auditoria/controllers/auditoria_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../widgets/admin/admin_kit.dart';
 import '../../widgets/auditoria/auditoria_evento_card.dart';
 import '../../widgets/auditoria/auditoria_filtros.dart';
@@ -43,6 +47,22 @@ class AuditoriaAdminScreen extends StatelessWidget {
           subtitle: 'Rastreie quem alterou serviços, acessos e cadastros',
           actions: [
             IconButton(
+              tooltip: 'Dashboard',
+              icon: const Icon(Icons.dashboard_rounded, color: Colors.white),
+              onPressed: () => Get.toNamed('/admin/auditoria/dashboard'),
+            ),
+            IconButton(
+              tooltip: 'Exportar PDF',
+              icon:
+                  const Icon(Icons.picture_as_pdf_rounded, color: Colors.white),
+              onPressed: () => _exportarPdf(controller),
+            ),
+            IconButton(
+              tooltip: 'Exportar CSV',
+              icon: const Icon(Icons.download_rounded, color: Colors.white),
+              onPressed: () => _exportarCsv(controller),
+            ),
+            IconButton(
               tooltip: 'Atualizar',
               icon: const Icon(Icons.refresh_rounded, color: Colors.white),
               onPressed: controller.carregar,
@@ -58,6 +78,56 @@ class AuditoriaAdminScreen extends StatelessWidget {
           buscaHint: 'Buscar por ação, usuário, serviço ou e-mail',
         ),
       ),
+    );
+  }
+
+  Future<void> _exportarCsv(AuditoriaController controller) async {
+    if (controller.visiveis.isEmpty) {
+      Get.snackbar(
+        'Auditoria',
+        'Não há registros visíveis para exportar.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final csv = controller.exportarCsvVisivel();
+    await Share.shareXFiles(
+      [
+        XFile.fromData(
+          Uint8List.fromList(utf8.encode(csv)),
+          mimeType: 'text/csv',
+        ),
+      ],
+      subject: 'auditoria-faca-festa.csv',
+      text: 'Exportação da auditoria da plataforma Faça a Festa.',
+      fileNameOverrides: ['auditoria-faca-festa.csv'],
+    );
+  }
+
+  Future<void> _exportarPdf(AuditoriaController controller) async {
+    if (controller.visiveis.isEmpty) {
+      Get.snackbar(
+        'Auditoria',
+        'Não há registros visíveis para exportar.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final pdf = await controller.exportarPdfVisivel(
+      titulo: 'Auditoria da plataforma Faça a Festa',
+    );
+    await Share.shareXFiles(
+      [
+        XFile.fromData(
+          pdf,
+          mimeType: 'application/pdf',
+        ),
+      ],
+      subject: 'auditoria-faca-festa.pdf',
+      text: 'Relatório de auditoria da plataforma Faça a Festa.',
+      fileNameOverrides: ['auditoria-faca-festa.pdf'],
     );
   }
 }
@@ -79,97 +149,121 @@ class _AuditoriaBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-          child: Column(
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  gradient: AdminPalette.appBarGradient,
-                  borderRadius: BorderRadius.circular(16),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return Column(
+          children: [
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: constraints.maxHeight * 0.62,
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      bannerTitulo,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 11,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: AdminPalette.appBarGradient,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            bannerTitulo,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            bannerTexto,
+                            style: GoogleFonts.poppins(
+                              color: Colors.white.withValues(alpha: 0.82),
+                              fontSize: 12,
+                              height: 1.35,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      bannerTexto,
-                      style: GoogleFonts.poppins(
-                        color: Colors.white.withValues(alpha: 0.82),
-                        fontSize: 12,
-                        height: 1.35,
-                      ),
+                    const SizedBox(height: 8),
+                    AuditoriaDashboardPanel(
+                      controller: controller,
+                      theme: theme,
+                    ),
+                    const SizedBox(height: 8),
+                    AuditoriaFiltrosBar(
+                      controller: controller,
+                      theme: theme,
+                      buscaHint: buscaHint,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-              AuditoriaResumoRow(controller: controller, theme: theme),
-              const SizedBox(height: 12),
-              AuditoriaFiltrosBar(
-                controller: controller,
-                theme: theme,
-                buscaHint: buscaHint,
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: Obx(() {
-            if (controller.carregando.value) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (controller.erro.isNotEmpty) {
-              return AdminEmptyState(
-                icon: Icons.error_outline_rounded,
-                title: 'Não foi possível carregar a auditoria',
-                message: controller.erro.value,
-                actionLabel: 'Tentar de novo',
-                onAction: controller.carregar,
-              );
-            }
-            final lista = controller.visiveis;
-            if (lista.isEmpty) {
-              return AdminEmptyState(
-                icon: Icons.policy_rounded,
-                title: controller.eventos.isEmpty
-                    ? 'Nenhum evento de auditoria ainda'
-                    : 'Nenhum evento nestes filtros',
-                message: controller.eventos.isEmpty
-                    ? 'As alterações da plataforma passam a aparecer aqui automaticamente.'
-                    : 'Ajuste a busca ou limpe os filtros para ver o histórico.',
-              );
-            }
+            ),
+            Expanded(
+              child: Obx(() {
+                if (controller.carregando.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (controller.erro.isNotEmpty) {
+                  return AdminEmptyState(
+                    icon: Icons.error_outline_rounded,
+                    title: 'Não foi possível carregar a auditoria',
+                    message: controller.erro.value,
+                    actionLabel: 'Tentar de novo',
+                    onAction: controller.carregar,
+                  );
+                }
+                final lista = controller.visiveis;
+                if (lista.isEmpty) {
+                  return AdminEmptyState(
+                    icon: Icons.policy_rounded,
+                    title: controller.eventos.isEmpty
+                        ? 'Nenhum evento de auditoria ainda'
+                        : 'Nenhum evento nestes filtros',
+                    message: controller.eventos.isEmpty
+                        ? 'As alterações da plataforma passam a aparecer aqui automaticamente.'
+                        : 'Ajuste a busca ou limpe os filtros para ver o histórico.',
+                  );
+                }
 
-            return RefreshIndicator(
-              color: theme.primary,
-              onRefresh: controller.carregar,
-              child: ListView.separated(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
-                itemCount: lista.length,
-                separatorBuilder: (_, __) => const SizedBox(height: 10),
-                itemBuilder: (context, i) => AuditoriaEventoCard(
-                  evento: lista[i],
-                  theme: theme,
-                ),
-              ),
-            );
-          }),
-        ),
-      ],
+                return RefreshIndicator(
+                  color: theme.primary,
+                  onRefresh: controller.carregar,
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                    itemCount:
+                        lista.length + (controller.temMais.value ? 1 : 0),
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, i) {
+                      if (i == lista.length) {
+                        return AuditoriaLoadMoreButton(
+                          controller: controller,
+                          theme: theme,
+                        );
+                      }
+                      return AuditoriaEventoCard(
+                        evento: lista[i],
+                        theme: theme,
+                      );
+                    },
+                  ),
+                );
+              }),
+            ),
+          ],
+        );
+      },
     );
   }
 }

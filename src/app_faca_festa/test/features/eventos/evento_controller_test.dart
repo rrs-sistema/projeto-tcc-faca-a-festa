@@ -1,4 +1,4 @@
-import 'package:app_faca_festa/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/data/local/evento_ativo_store.dart';
 import 'package:app_faca_festa/data/models/evento/evento_model.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
@@ -414,6 +414,17 @@ class _EventoRepositoryFake implements EventoRepository {
   Future<void> salvar(Evento evento) async {
     eventoSalvo = evento;
   }
+
+  @override
+  Future<String> enviarCapa({
+    required String idEvento,
+    required List<int> bytes,
+  }) async {
+    return 'https://example.com/$idEvento.jpg';
+  }
+
+  @override
+  Future<void> removerArquivoCapa(String idEvento) async {}
 
   @override
   Future<void> atualizarImagemCapa({

@@ -4,9 +4,9 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import './../../../controllers/convidado/convidado_controller.dart';
-import './../../../controllers/evento_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../core/utils/convite_compartilhar.dart';
 import './../../../data/models/model.dart';
 import './../../../data/services/convite/enviar_convites_por_email_service.dart';
@@ -559,8 +559,9 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
         convidados: preparados,
         evento: evento,
       );
-      final nomeEvento =
-          evento.nomeEvento.trim().isEmpty ? 'Convite' : 'Convite — ${evento.nomeEvento.trim()}';
+      final nomeEvento = evento.nomeEvento.trim().isEmpty
+          ? 'Convite'
+          : 'Convite — ${evento.nomeEvento.trim()}';
       final resultado = await compartilharTextoConvite(
         texto: texto,
         assunto: nomeEvento,
@@ -826,11 +827,15 @@ class _InviteGuestCard extends StatelessWidget {
                             icon: _getStatusIcon(convidado.status),
                             color: statusColor),
                         _InviteChip(
-                            label: convidado.contaVinculada ? 'Conta vinculada' : 'Link gerado',
+                            label: convidado.contaVinculada
+                                ? 'Conta vinculada'
+                                : 'Link gerado',
                             icon: convidado.contaVinculada
                                 ? Icons.verified_user_rounded
                                 : Icons.link_rounded,
-                            color: convidado.contaVinculada ? Colors.teal.shade700 : primary),
+                            color: convidado.contaVinculada
+                                ? Colors.teal.shade700
+                                : primary),
                       ],
                     ),
                   ],
@@ -843,16 +848,20 @@ class _InviteGuestCard extends StatelessWidget {
                     tooltip: 'Copiar link',
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    icon: Icon(Icons.copy_rounded, size: 18, color: Colors.grey.shade700),
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(Icons.copy_rounded,
+                        size: 18, color: Colors.grey.shade700),
                     onPressed: onCopiar,
                   ),
                   IconButton(
                     tooltip: 'Compartilhar',
                     visualDensity: VisualDensity.compact,
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    icon: Icon(Icons.share_rounded, size: 18, color: Colors.grey.shade700),
+                    constraints:
+                        const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(Icons.share_rounded,
+                        size: 18, color: Colors.grey.shade700),
                     onPressed: onCompartilhar,
                   ),
                 ],
@@ -1020,7 +1029,8 @@ class _EmptyInviteState extends StatelessWidget {
                           FocusManager.instance.primaryFocus?.unfocus();
                           await onAdd();
                         },
-                        icon: const Icon(Icons.add_rounded, size: 17, color: Colors.white),
+                        icon: const Icon(Icons.add_rounded,
+                            size: 17, color: Colors.white),
                         label: Text(
                           'Adicionar',
                           style: GoogleFonts.poppins(

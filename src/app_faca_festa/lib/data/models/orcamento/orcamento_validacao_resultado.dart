@@ -11,7 +11,8 @@ class OrcamentoValidacaoResultado {
     this.limite,
   });
 
-  factory OrcamentoValidacaoResultado.ok() => OrcamentoValidacaoResultado(ok: true);
+  factory OrcamentoValidacaoResultado.ok() =>
+      OrcamentoValidacaoResultado(ok: true);
 
   factory OrcamentoValidacaoResultado.excedeuCategoria({
     required double excedente,

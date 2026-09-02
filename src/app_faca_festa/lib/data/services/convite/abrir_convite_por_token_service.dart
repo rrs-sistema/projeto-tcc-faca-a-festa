@@ -22,13 +22,15 @@ class AbrirConvitePorTokenResultado {
 
 class AbrirConvitePorTokenService {
   AbrirConvitePorTokenService({
-    FirebaseFunctions? functions,
-    CallableHttpsClient? httpsClient,
-  })  : _functions = functions ??
-            FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
-        _httpsClient = httpsClient ?? CallableHttpsClient();
+    required FirebaseFunctions functions,
+    required FirebaseAuth auth,
+    required CallableHttpsClient httpsClient,
+  })  : _functions = functions,
+        _auth = auth,
+        _httpsClient = httpsClient;
 
   final FirebaseFunctions _functions;
+  final FirebaseAuth _auth;
   final CallableHttpsClient _httpsClient;
 
   Future<AbrirConvitePorTokenResultado> abrir(String token) async {
@@ -36,9 +38,9 @@ class AbrirConvitePorTokenService {
       final mapa = await _chamar(token.trim());
       final tokenSessao = mapa['tokenSessao']?.toString() ?? '';
       if (tokenSessao.isNotEmpty) {
-        await FirebaseAuth.instance.signInWithCustomToken(tokenSessao);
+        await _auth.signInWithCustomToken(tokenSessao);
       } else {
-        await FirebaseAuth.instance.currentUser?.getIdToken(true);
+        await _auth.currentUser?.getIdToken(true);
       }
 
       final convidado = mapa['convidado'];

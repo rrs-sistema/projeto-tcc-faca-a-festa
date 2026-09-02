@@ -99,7 +99,11 @@ class Biblioteca {
 
   static double toDouble(String value) {
     return double.tryParse(
-          value.replaceAll('R\$', '').replaceAll('.', '').replaceAll(',', '.').trim(),
+          value
+              .replaceAll('R\$', '')
+              .replaceAll('.', '')
+              .replaceAll(',', '.')
+              .trim(),
         ) ??
         0.0;
   }
@@ -118,16 +122,19 @@ class Biblioteca {
   }
 
   static DateTime converteDataInicioParaFiltro(DateTime data) {
-    return DateTime(data.year, data.month, data.day, 0, 0, 0, 0, 0); // zera o tempo
+    return DateTime(
+        data.year, data.month, data.day, 0, 0, 0, 0, 0); // zera o tempo
   }
 
   static DateTime converteDataFimParaFiltro(DateTime data) {
-    return DateTime(data.year, data.month, data.day, 23, 59, 59, 0, 0); // adiciona o tempo
+    return DateTime(
+        data.year, data.month, data.day, 23, 59, 59, 0, 0); // adiciona o tempo
   }
 
   static DateTime? removerTempoDaData(DateTime? data) {
     if (data != null) {
-      return DateTime(data.year, data.month, data.day, 0, 0, 0, 0, 0); // zera o tempo
+      return DateTime(
+          data.year, data.month, data.day, 0, 0, 0, 0, 0); // zera o tempo
     } else {
       return data;
     }
@@ -253,7 +260,8 @@ class Biblioteca {
     // Junta tudo em uma única string
     final combinado = chaves.join('-').toLowerCase();
 
-    int hash = combinado.codeUnits.fold(0, (prev, elem) => (prev * 37 + elem) % 360);
+    int hash =
+        combinado.codeUnits.fold(0, (prev, elem) => (prev * 37 + elem) % 360);
 
     final hslColor = HSLColor.fromAHSL(
       1.0,
@@ -268,7 +276,9 @@ class Biblioteca {
   static IconData iconePorCategoria(String? nome) {
     final lower = nome?.toLowerCase() ?? '';
 
-    if (lower.contains('buffet') || lower.contains('gastronomia') || lower.contains('culinária')) {
+    if (lower.contains('buffet') ||
+        lower.contains('gastronomia') ||
+        lower.contains('culinária')) {
       return FontAwesomeIcons.utensils;
     } else if (lower.contains('decoração') ||
         lower.contains('flores') ||
@@ -297,9 +307,13 @@ class Biblioteca {
         lower.contains('carro') ||
         lower.contains('limousine')) {
       return FontAwesomeIcons.carSide;
-    } else if (lower.contains('bebida') || lower.contains('bar') || lower.contains('coquetel')) {
+    } else if (lower.contains('bebida') ||
+        lower.contains('bar') ||
+        lower.contains('coquetel')) {
       return FontAwesomeIcons.champagneGlasses;
-    } else if (lower.contains('bolo') || lower.contains('doce') || lower.contains('confeitaria')) {
+    } else if (lower.contains('bolo') ||
+        lower.contains('doce') ||
+        lower.contains('confeitaria')) {
       return FontAwesomeIcons.cakeCandles;
     } else if (lower.contains('segurança') ||
         lower.contains('porteiro') ||
@@ -337,9 +351,13 @@ class Biblioteca {
         lower.contains('lua de mel') ||
         lower.contains('turismo')) {
       return FontAwesomeIcons.planeDeparture;
-    } else if (lower.contains('joia') || lower.contains('aliança') || lower.contains('bijuteria')) {
+    } else if (lower.contains('joia') ||
+        lower.contains('aliança') ||
+        lower.contains('bijuteria')) {
       return FontAwesomeIcons.ring;
-    } else if (lower.contains('pet') || lower.contains('animal') || lower.contains('mascote')) {
+    } else if (lower.contains('pet') ||
+        lower.contains('animal') ||
+        lower.contains('mascote')) {
       return FontAwesomeIcons.paw;
     }
     return FontAwesomeIcons.clipboardList; // padrão genérico
@@ -358,15 +376,23 @@ class Biblioteca {
     if (lower.contains('bebida')) return Colors.brown;
     if (lower.contains('bolo')) return Colors.amber.shade800;
     if (lower.contains('segurança')) return Colors.green.shade700;
-    if (lower.contains('cabelo') || lower.contains('maquiagem') || lower.contains('beleza')) {
+    if (lower.contains('cabelo') ||
+        lower.contains('maquiagem') ||
+        lower.contains('beleza')) {
       return Colors.pink.shade400;
     }
     if (lower.contains('cerimonial')) return Colors.deepPurpleAccent;
     if (lower.contains('iluminação')) return Colors.yellow.shade700;
-    if (lower.contains('terno') || lower.contains('vestido')) return Colors.cyan.shade600;
-    if (lower.contains('igreja') || lower.contains('cerimônia')) return Colors.redAccent;
+    if (lower.contains('terno') || lower.contains('vestido')) {
+      return Colors.cyan.shade600;
+    }
+    if (lower.contains('igreja') || lower.contains('cerimônia')) {
+      return Colors.redAccent;
+    }
     if (lower.contains('infantil')) return Colors.lightBlueAccent;
-    if (lower.contains('viagem') || lower.contains('lua de mel')) return Colors.orangeAccent;
+    if (lower.contains('viagem') || lower.contains('lua de mel')) {
+      return Colors.orangeAccent;
+    }
     if (lower.contains('joia')) return Colors.amber;
     if (lower.contains('pet')) return Colors.lightGreen;
 
@@ -456,7 +482,8 @@ class Biblioteca {
                         onPressed: () => Get.back(result: false),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          side: BorderSide(color: Colors.grey.shade400, width: 1.3),
+                          side: BorderSide(
+                              color: Colors.grey.shade400, width: 1.3),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),

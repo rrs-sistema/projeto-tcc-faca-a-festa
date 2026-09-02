@@ -41,6 +41,46 @@
         { "fieldPath": "visivel_fornecedor", "order": "ASCENDING" },
         { "fieldPath": "criado_em", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "auditoria_eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "area", "order": "ASCENDING" },
+        { "fieldPath": "criado_em", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "auditoria_eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "acao", "order": "ASCENDING" },
+        { "fieldPath": "criado_em", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "auditoria_eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "nivel", "order": "ASCENDING" },
+        { "fieldPath": "criado_em", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "auditoria_eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "origem", "order": "ASCENDING" },
+        { "fieldPath": "criado_em", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "auditoria_eventos",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ator_uid", "order": "ASCENDING" },
+        { "fieldPath": "criado_em", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": [

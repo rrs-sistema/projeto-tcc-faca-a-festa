@@ -211,9 +211,11 @@ class ResumoReputacaoFornecedorModel {
       resumo: resumo ?? this.resumo,
       pontosFortes: pontosFortes ?? this.pontosFortes,
       pontosAtencao: pontosAtencao ?? this.pontosAtencao,
-      servicoMelhorAvaliado: servicoMelhorAvaliado ?? this.servicoMelhorAvaliado,
+      servicoMelhorAvaliado:
+          servicoMelhorAvaliado ?? this.servicoMelhorAvaliado,
       servicoComAlerta: servicoComAlerta ?? this.servicoComAlerta,
-      totalComentariosAnalisados: totalComentariosAnalisados ?? this.totalComentariosAnalisados,
+      totalComentariosAnalisados:
+          totalComentariosAnalisados ?? this.totalComentariosAnalisados,
       origem: origem ?? this.origem,
       versaoRegra: versaoRegra ?? this.versaoRegra,
       metadados: metadados ?? this.metadados,

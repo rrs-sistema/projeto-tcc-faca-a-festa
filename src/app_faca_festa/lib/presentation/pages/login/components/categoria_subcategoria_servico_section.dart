@@ -3,10 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/categoria/subcategoria_servico_controller.dart';
-import './../../../../controllers/categoria/categoria_servico_controller.dart';
-import '../../../../controllers/servico/servico_produto_controller.dart';
-import './../../../../controllers/register_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcategoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_produto_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/controllers/register_controller.dart';
 import './../../../../core/utils/form_validators.dart';
 
 class CategoriaSubcategoriaServicoSection extends StatelessWidget {
@@ -58,7 +58,8 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
               children: [
                 Obx(() {
                   final categorias = categoriaController.categorias.toList();
-                  final selecionadas = controller.categoriasSelecionadas.toList();
+                  final selecionadas =
+                      controller.categoriasSelecionadas.toList();
 
                   return AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
@@ -79,19 +80,25 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                             height: 50,
                             child: ListView.separated(
                               scrollDirection: Axis.horizontal,
-                              separatorBuilder: (_, __) => const SizedBox(width: 8),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 8),
                               itemCount: categorias.length,
                               itemBuilder: (_, i) {
                                 final cat = categorias[i];
-                                final isSelecionada =
-                                    selecionadas.map((c) => c.idCategoria).contains(cat.id);
+                                final isSelecionada = selecionadas
+                                    .map((c) => c.idCategoria)
+                                    .contains(cat.id);
 
                                 return ChoiceChip(
                                   label: Text(
                                     cat.nome,
                                     style: GoogleFonts.poppins(
-                                      color: isSelecionada ? Colors.white : Colors.grey.shade700,
-                                      fontWeight: isSelecionada ? FontWeight.w600 : FontWeight.normal,
+                                      color: isSelecionada
+                                          ? Colors.white
+                                          : Colors.grey.shade700,
+                                      fontWeight: isSelecionada
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
                                     ),
                                   ),
                                   selected: isSelecionada,
@@ -99,39 +106,52 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                                   backgroundColor: Colors.grey.shade200,
                                   onSelected: (v) async {
                                     if (v) {
-                                      final jaExiste = controller.categoriasSelecionadas
+                                      final jaExiste = controller
+                                          .categoriasSelecionadas
                                           .any((c) => c.idCategoria == cat.id);
 
                                       if (!jaExiste) {
-                                        EasyLoading.show(status: 'Processando...');
+                                        EasyLoading.show(
+                                            status: 'Processando...');
                                         controller.adicionarCategoria(cat);
 
                                         // 🔹 Carrega subcategorias sem limpar tudo
                                         await subcategoriaController
-                                            .carregarSubcategoriasPorCategoria(cat.id);
+                                            .carregarSubcategoriasPorCategoria(
+                                                cat.id);
 
                                         // 🔹 (Opcional) Limpa apenas serviços da nova categoria
-                                        final subcats =
-                                            subcategoriaController.subcategoriasPorCategoria[cat.id] ?? [];
+                                        final subcats = subcategoriaController
+                                                    .subcategoriasPorCategoria[
+                                                cat.id] ??
+                                            [];
                                         for (final sub in subcats) {
-                                          servicoController.removerServicosPorSubcategoria(sub.id);
+                                          servicoController
+                                              .removerServicosPorSubcategoria(
+                                                  sub.id);
                                         }
 
                                         await EasyLoading.dismiss();
                                       }
                                     } else {
                                       controller.categoriasSelecionadas
-                                          .removeWhere((c) => c.idCategoria == cat.id);
+                                          .removeWhere(
+                                              (c) => c.idCategoria == cat.id);
 
                                       // 🔹 Limpa apenas subcategorias e serviços dessa categoria desmarcada
                                       controller.limparSubcategorias(cat.id);
-                                      final subcats =
-                                          subcategoriaController.subcategoriasPorCategoria[cat.id] ?? [];
+                                      final subcats = subcategoriaController
+                                                  .subcategoriasPorCategoria[
+                                              cat.id] ??
+                                          [];
                                       for (final sub in subcats) {
-                                        servicoController.removerServicosPorSubcategoria(sub.id);
+                                        servicoController
+                                            .removerServicosPorSubcategoria(
+                                                sub.id);
                                       }
                                     }
-                                    catState.didChange(controller.categoriasSelecionadas.length);
+                                    catState.didChange(controller
+                                        .categoriasSelecionadas.length);
                                   },
                                 );
                               },
@@ -164,7 +184,9 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
           if (selecionadas.isEmpty) return const SizedBox.shrink();
 
           final todasSubcats = selecionadas.expand((catSel) {
-            return subcategoriaController.subcategoriasPorCategoria[catSel.idCategoria] ?? [];
+            return subcategoriaController
+                    .subcategoriasPorCategoria[catSel.idCategoria] ??
+                [];
           }).toList();
 
           return AnimatedSize(
@@ -200,11 +222,12 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                           catSel: selecionadas.first,
                           primary: primary,
                           onToggle: (sub, v) async {
-                            controller.alternarSubcategoria(selecionadas.first, sub, v);
+                            controller.alternarSubcategoria(
+                                selecionadas.first, sub, v);
                             if (v) {
                               EasyLoading.show(status: 'Processando...');
-                              final lista =
-                                  await servicoController.carregarServicosPorSubcategoria(sub.id);
+                              final lista = await servicoController
+                                  .carregarServicosPorSubcategoria(sub.id);
 
                               // 🔹 Adiciona os novos serviços sem apagar os anteriores
                               controller.servicosSelecionados.addAll(lista);
@@ -212,7 +235,8 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                               await EasyLoading.dismiss();
                             } else {
                               // 🔹 Remove apenas os serviços da subcategoria desmarcada
-                              servicoController.removerServicosPorSubcategoria(sub.id);
+                              servicoController
+                                  .removerServicosPorSubcategoria(sub.id);
 
                               // 🔹 Remove também da lista reativa de selecionados
                               controller.servicosSelecionados.removeWhere(
@@ -263,8 +287,9 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                       .subcategoriasPorCategoria.values
                       .expand((e) => e)
                       .toList();
-                  final todosServicos =
-                      todasSubcats.expand((sub) => servicosMap[sub.id] ?? []).toList();
+                  final todosServicos = todasSubcats
+                      .expand((sub) => servicosMap[sub.id] ?? [])
+                      .toList();
 
                   return AnimatedSwitcher(
                     duration: const Duration(milliseconds: 400),
@@ -272,12 +297,15 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                         ? const Padding(
                             key: ValueKey('loading_serv'),
                             padding: EdgeInsets.symmetric(vertical: 8),
-                            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                            child: Center(
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2)),
                           )
                         : todosServicos.isEmpty
                             ? Padding(
                                 key: const ValueKey('no_serv'),
-                                padding: const EdgeInsets.only(left: 10, top: 6),
+                                padding:
+                                    const EdgeInsets.only(left: 10, top: 6),
                                 child: Text(
                                   'Nenhum serviço cadastrado para esta subcategoria.',
                                   style: GoogleFonts.poppins(
@@ -305,23 +333,30 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                                       servicos: todosServicos,
                                       primary: primary,
                                       onToggle: (servico, selecionado) {
-                                        controller.alternarServico(servico, selecionado);
+                                        controller.alternarServico(
+                                            servico, selecionado);
 
                                         if (!selecionado) {
-                                          for (final entry
-                                              in servicoController.servicosPorSubcategoria.entries) {
+                                          for (final entry in servicoController
+                                              .servicosPorSubcategoria
+                                              .entries) {
                                             final idSub = entry.key;
                                             final lista = entry.value;
 
-                                            lista.removeWhere((s) => s.id == servico.id);
-                                            servicoController.servicosPorSubcategoria[idSub] =
-                                                List.from(lista);
+                                            lista.removeWhere(
+                                                (s) => s.id == servico.id);
+                                            servicoController
+                                                    .servicosPorSubcategoria[
+                                                idSub] = List.from(lista);
                                           }
 
-                                          servicoController.servicosPorSubcategoria.refresh();
+                                          servicoController
+                                              .servicosPorSubcategoria
+                                              .refresh();
                                         }
                                         servState.didChange(
-                                          controller.servicosSelecionados.length,
+                                          controller
+                                              .servicosSelecionados.length,
                                         );
                                       },
                                     ),
@@ -398,8 +433,8 @@ class _HorizontalScrollChipsState extends State<_HorizontalScrollChips> {
         padding: const EdgeInsets.symmetric(horizontal: 6),
         child: Row(
           children: widget.subcats.map((sub) {
-            final selecionada =
-                widget.catSel.subcategorias.any((s) => s['idSubcategoria'] == sub.id);
+            final selecionada = widget.catSel.subcategorias
+                .any((s) => s['idSubcategoria'] == sub.id);
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: FilterChip(
@@ -434,10 +469,12 @@ class _HorizontalScrollChipsServicos extends StatefulWidget {
   });
 
   @override
-  State<_HorizontalScrollChipsServicos> createState() => _HorizontalScrollChipsServicosState();
+  State<_HorizontalScrollChipsServicos> createState() =>
+      _HorizontalScrollChipsServicosState();
 }
 
-class _HorizontalScrollChipsServicosState extends State<_HorizontalScrollChipsServicos> {
+class _HorizontalScrollChipsServicosState
+    extends State<_HorizontalScrollChipsServicos> {
   late final ScrollController _scrollController;
 
   @override
@@ -471,7 +508,8 @@ class _HorizontalScrollChipsServicosState extends State<_HorizontalScrollChipsSe
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: FilterChip(
-                avatar: const Icon(Icons.design_services_rounded, size: 18, color: Colors.white),
+                avatar: const Icon(Icons.design_services_rounded,
+                    size: 18, color: Colors.white),
                 label: Text(serv.nome),
                 labelStyle: GoogleFonts.poppins(
                   color: Colors.white,

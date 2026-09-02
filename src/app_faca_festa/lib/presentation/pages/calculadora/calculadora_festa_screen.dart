@@ -5,15 +5,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/calculadora/calculadora_festa_controller.dart';
-import '../../../controllers/tests/fornecedor_migracao_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/fornecedor_migracao_admin_controller.dart';
 import '../../../data/models/evento/analise_calculadora_ia_model.dart';
 import '../../../data/models/evento/calculadora_festa_item_model.dart';
-import '../../../controllers/convidado/cardapio_controller.dart';
-import '../../../domain/repositories/cardapio_repository.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import '../../../data/models/evento/calculadora_festa_model.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import '../../../data/models/evento/perfil_festa_model.dart';
 import '../../widgets/festa_app_bar.dart';
 import 'minhas_simulacoes_calculadora_bottom_sheet.dart';
@@ -65,22 +64,14 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
   void initState() {
     super.initState();
 
-    calculadoraController = Get.isRegistered<CalculadoraFestaController>()
-        ? Get.find<CalculadoraFestaController>()
-        : Get.put(CalculadoraFestaController());
+    calculadoraController = Get.find<CalculadoraFestaController>();
 
     eventoController = Get.find<EventoController>();
     themeController = Get.find<EventThemeController>();
 
-    cardapioController = Get.isRegistered<CardapioController>()
-        ? Get.find<CardapioController>()
-        : Get.put(
-            CardapioController(repository: Get.find<CardapioRepository>()),
-          );
+    cardapioController = Get.find<CardapioController>();
 
-    controllerTest = Get.isRegistered<FornecedorMigracaoAdminController>()
-        ? Get.find<FornecedorMigracaoAdminController>()
-        : Get.put(FornecedorMigracaoAdminController());
+    controllerTest = Get.find<FornecedorMigracaoAdminController>();
 
     _cardapiosWorker = ever(
       cardapioController.cardapios,
@@ -788,9 +779,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
             )
           : _MiniBadge(
               label: analise?.statusOrcamento ?? 'Pronta',
-              color: analise?.acimaDoOrcamento == true
-                  ? Colors.orange
-                  : primary,
+              color:
+                  analise?.acimaDoOrcamento == true ? Colors.orange : primary,
             ),
       child: analisando && analise == null
           ? Column(

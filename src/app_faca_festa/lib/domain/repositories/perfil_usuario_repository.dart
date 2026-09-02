@@ -33,6 +33,12 @@ abstract interface class PerfilUsuarioRepository {
 
   Future<void> salvarUsuario(Usuario usuario);
 
+  Future<void> salvarUsuarioCadastro(
+    Usuario usuario, {
+    required String emailNormalizado,
+    String? provider,
+  });
+
   Future<void> criarUsuarioAutomatico({
     required String idUsuario,
     required String? email,

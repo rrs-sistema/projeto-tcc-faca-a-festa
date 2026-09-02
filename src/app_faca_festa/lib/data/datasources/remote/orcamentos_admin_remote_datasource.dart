@@ -4,8 +4,8 @@ import '../../models/admin/orcamento_admin_model.dart';
 import '../../models/orcamento/orcamento_model.dart';
 
 class OrcamentosAdminRemoteDatasource {
-  OrcamentosAdminRemoteDatasource({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  OrcamentosAdminRemoteDatasource({required FirebaseFirestore firestore})
+      : _db = firestore;
 
   final FirebaseFirestore _db;
   final Map<String, String> _cacheCategorias = {};

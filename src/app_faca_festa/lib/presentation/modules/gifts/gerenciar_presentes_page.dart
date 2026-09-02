@@ -4,10 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import './../../../controllers/gift/gift_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../domain/entities/gift/gift.dart';
+import '../tema/controllers/event_theme_controller.dart';
 import './cadastrar_presente_page.dart';
+import 'controllers/gift_controller.dart';
 
 class GerenciarPresentesPage extends StatefulWidget {
   final String eventoId;

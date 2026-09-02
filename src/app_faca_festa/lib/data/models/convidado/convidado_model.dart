@@ -119,11 +119,10 @@ class ConvidadoModel extends Convidado {
     try {
       return ConvidadoModel(
         idConvidado: map['id_convidado']?.toString() ?? '',
-        idEvento: (map['id_evento'] ??
-                    map['id_evento_evento'] ??
-                    map['evento_id'])
-                ?.toString() ??
-            '',
+        idEvento:
+            (map['id_evento'] ?? map['id_evento_evento'] ?? map['evento_id'])
+                    ?.toString() ??
+                '',
         nome: map['nome']?.toString() ?? '',
         contato: map['contato']?.toString() ?? '',
         email: _primeiroTexto(map, const ['email', 'email_usuario']),

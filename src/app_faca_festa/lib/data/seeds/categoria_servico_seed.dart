@@ -135,7 +135,8 @@ class CatalogoCategoriaServico {
           id: '1761673211096',
           idCategoria: idEspaco,
           nome: 'Salão de festas, sítios e chácaras',
-          descricao: 'Locação de salão, sítio, chácara, fazenda e áreas de lazer.',
+          descricao:
+              'Locação de salão, sítio, chácara, fazenda e áreas de lazer.',
           ordem: 10,
           icone: 'cottage',
         ),
@@ -159,7 +160,8 @@ class CatalogoCategoriaServico {
           id: 'sub_buffet_infantil_espaco',
           idCategoria: idEspaco,
           nome: 'Buffets e espaços infantis',
-          descricao: 'Espaços com brinquedos, playground e estrutura para festa infantil.',
+          descricao:
+              'Espaços com brinquedos, playground e estrutura para festa infantil.',
           ordem: 40,
           icone: 'child_care',
         ),
@@ -191,7 +193,8 @@ class CatalogoCategoriaServico {
           id: '1761673224551',
           idCategoria: idEspaco,
           nome: 'Tendas cristal e cobertura externa',
-          descricao: 'Tendas cristal, stretching e cobertura para cerimônia ao ar livre.',
+          descricao:
+              'Tendas cristal, stretching e cobertura para cerimônia ao ar livre.',
           ordem: 80,
           icone: 'festival',
         ),
@@ -199,7 +202,8 @@ class CatalogoCategoriaServico {
           id: '1761673231215',
           idCategoria: idEspaco,
           nome: 'Palcos e tablados',
-          descricao: 'Palco, tablado, passarela e estrutura para banda ou cerimônia.',
+          descricao:
+              'Palco, tablado, passarela e estrutura para banda ou cerimônia.',
           ordem: 90,
           icone: 'weekend',
         ),
@@ -239,7 +243,8 @@ class CatalogoCategoriaServico {
           id: 'sub_freezer_chopp',
           idCategoria: idEspaco,
           nome: 'Freezers, choppeiras e máquinas de gelo',
-          descricao: 'Freezer, refrigerador, choppeira, máquina de gelo e utensílios.',
+          descricao:
+              'Freezer, refrigerador, choppeira, máquina de gelo e utensílios.',
           ordem: 140,
           icone: 'kitchen',
         ),
@@ -249,7 +254,8 @@ class CatalogoCategoriaServico {
           id: 'd53c30bf-e790-4849-b40f-40358e90af68',
           idCategoria: idBuffet,
           nome: 'Buffet completo',
-          descricao: 'Buffet por pessoa com entrada, prato principal e serviço de mesa.',
+          descricao:
+              'Buffet por pessoa com entrada, prato principal e serviço de mesa.',
           ordem: 10,
           icone: 'restaurant',
         ),
@@ -265,7 +271,8 @@ class CatalogoCategoriaServico {
           id: 'sub_salgados',
           idCategoria: idBuffet,
           nome: 'Salgados fritos e assados',
-          descricao: 'Coxinha, empada, mini pizza, esfirra e salgados variados.',
+          descricao:
+              'Coxinha, empada, mini pizza, esfirra e salgados variados.',
           ordem: 30,
           icone: 'restaurant_menu',
         ),
@@ -273,7 +280,8 @@ class CatalogoCategoriaServico {
           id: 'sub_doces_brigadeiros',
           idCategoria: idBuffet,
           nome: 'Doces, brigadeiros e bem-casados',
-          descricao: 'Docinhos finos, brigadeiros gourmet, bem-casados e mesa de doces.',
+          descricao:
+              'Docinhos finos, brigadeiros gourmet, bem-casados e mesa de doces.',
           ordem: 40,
           icone: 'cake',
         ),
@@ -281,7 +289,8 @@ class CatalogoCategoriaServico {
           id: '1761673028470',
           idCategoria: idBuffet,
           nome: 'Bolo e sobremesas',
-          descricao: 'Bolo de festa, bolo de andares, sobremesas e mesa de bolo.',
+          descricao:
+              'Bolo de festa, bolo de andares, sobremesas e mesa de bolo.',
           ordem: 50,
           icone: 'cake',
         ),
@@ -289,7 +298,8 @@ class CatalogoCategoriaServico {
           id: 'sub_confeitaria',
           idCategoria: idBuffet,
           nome: 'Confeitaria e bolo artístico',
-          descricao: 'Bolo cenográfico, cupcakes, naked cake e confeitaria personalizada.',
+          descricao:
+              'Bolo cenográfico, cupcakes, naked cake e confeitaria personalizada.',
           ordem: 60,
           icone: 'bakery',
         ),
@@ -297,7 +307,8 @@ class CatalogoCategoriaServico {
           id: '1761673040023',
           idCategoria: idBuffet,
           nome: 'Bebidas',
-          descricao: 'Refrigerante, suco, água, cerveja e bebidas não alcoólicas.',
+          descricao:
+              'Refrigerante, suco, água, cerveja e bebidas não alcoólicas.',
           ordem: 70,
           icone: 'local_bar',
         ),
@@ -313,7 +324,8 @@ class CatalogoCategoriaServico {
           id: 'sub_churrasco',
           idCategoria: idBuffet,
           nome: 'Churrasco e espetinhos',
-          descricao: 'Churrasqueiro, espetinho, costela e estação de churrasco.',
+          descricao:
+              'Churrasqueiro, espetinho, costela e estação de churrasco.',
           ordem: 90,
           icone: 'outdoor_grill',
         ),
@@ -321,7 +333,8 @@ class CatalogoCategoriaServico {
           id: 'sub_food_truck',
           idCategoria: idBuffet,
           nome: 'Food truck e estação gastronômica',
-          descricao: 'Food truck, hambúrguer, massas, pizza e estações ao vivo.',
+          descricao:
+              'Food truck, hambúrguer, massas, pizza e estações ao vivo.',
           ordem: 100,
           icone: 'storefront',
         ),
@@ -329,7 +342,8 @@ class CatalogoCategoriaServico {
           id: '1761673081975',
           idCategoria: idBuffet,
           nome: 'Carrinhos temáticos',
-          descricao: 'Carrinho de pipoca, algodão-doce, churros, hot dog e açaí.',
+          descricao:
+              'Carrinho de pipoca, algodão-doce, churros, hot dog e açaí.',
           ordem: 110,
           icone: 'icecream',
         ),
@@ -355,7 +369,8 @@ class CatalogoCategoriaServico {
           id: '1761673391822',
           idCategoria: idDecoracao,
           nome: 'Decoração temática',
-          descricao: 'Decoração infantil, casamento, 15 anos, chá de bebê e corporativa.',
+          descricao:
+              'Decoração infantil, casamento, 15 anos, chá de bebê e corporativa.',
           ordem: 10,
           icone: 'palette',
         ),
@@ -363,7 +378,8 @@ class CatalogoCategoriaServico {
           id: '1761672773772',
           idCategoria: idDecoracao,
           nome: 'Decoração personalizada',
-          descricao: 'Projeto exclusivo de ambientação conforme o tema da festa.',
+          descricao:
+              'Projeto exclusivo de ambientação conforme o tema da festa.',
           ordem: 20,
           icone: 'auto_awesome',
         ),
@@ -379,7 +395,8 @@ class CatalogoCategoriaServico {
           id: '1761673407907',
           idCategoria: idDecoracao,
           nome: 'Arranjos de cerimônia e altar',
-          descricao: 'Altar, arco floral, caminho de entrada e flores da cerimônia.',
+          descricao:
+              'Altar, arco floral, caminho de entrada e flores da cerimônia.',
           ordem: 40,
           icone: 'florist',
         ),
@@ -411,7 +428,8 @@ class CatalogoCategoriaServico {
           id: '4f8f9e9a-7f67-45ca-91f6-4ad6c2885389',
           idCategoria: idDecoracao,
           nome: 'Locação de móveis',
-          descricao: 'Sofás, puffs, mesas laterais, lounge e mobiliário decorativo.',
+          descricao:
+              'Sofás, puffs, mesas laterais, lounge e mobiliário decorativo.',
           ordem: 80,
           icone: 'weekend',
         ),
@@ -419,7 +437,8 @@ class CatalogoCategoriaServico {
           id: '1761673418508',
           idCategoria: idDecoracao,
           nome: 'Vasos, arcos e cenários',
-          descricao: 'Arco, vaso, pedestal, cenário e locação de peças de cenografia.',
+          descricao:
+              'Arco, vaso, pedestal, cenário e locação de peças de cenografia.',
           ordem: 90,
           icone: 'palette',
         ),
@@ -427,7 +446,8 @@ class CatalogoCategoriaServico {
           id: 'sub_iluminacao_decorativa',
           idCategoria: idDecoracao,
           nome: 'Iluminação decorativa',
-          descricao: 'Cordão de luz, lustre, velas, neon e ambientação luminosa.',
+          descricao:
+              'Cordão de luz, lustre, velas, neon e ambientação luminosa.',
           ordem: 100,
           icone: 'light',
         ),
@@ -437,7 +457,8 @@ class CatalogoCategoriaServico {
           id: 'sub_vestido_noiva',
           idCategoria: idModa,
           nome: 'Vestidos de noiva',
-          descricao: 'Venda e aluguel de vestido de noiva, véu e acessórios da noiva.',
+          descricao:
+              'Venda e aluguel de vestido de noiva, véu e acessórios da noiva.',
           ordem: 10,
           icone: 'checkroom',
         ),
@@ -453,7 +474,8 @@ class CatalogoCategoriaServico {
           id: 'sub_aluguel_terno',
           idCategoria: idModa,
           nome: 'Aluguel de ternos e trajes',
-          descricao: 'Terno, smoking, traje do noivo, padrinhos e trajes sociais.',
+          descricao:
+              'Terno, smoking, traje do noivo, padrinhos e trajes sociais.',
           ordem: 30,
           icone: 'dry_cleaning',
         ),
@@ -477,7 +499,8 @@ class CatalogoCategoriaServico {
           id: 'sub_acessorios_moda',
           idCategoria: idModa,
           nome: 'Véu, joias, sapatos e acessórios',
-          descricao: 'Joias, tiara, sapato, clutch, gravatas e acessórios da festa.',
+          descricao:
+              'Joias, tiara, sapato, clutch, gravatas e acessórios da festa.',
           ordem: 60,
           icone: 'diamond',
         ),
@@ -495,7 +518,8 @@ class CatalogoCategoriaServico {
           id: '1760932672539',
           idCategoria: idBeleza,
           nome: 'Cabeleireiro e penteado',
-          descricao: 'Penteado de noiva, debutante, madrinha e produção de cabelo.',
+          descricao:
+              'Penteado de noiva, debutante, madrinha e produção de cabelo.',
           ordem: 10,
           icone: 'content_cut',
         ),
@@ -503,7 +527,8 @@ class CatalogoCategoriaServico {
           id: '1761672969508',
           idCategoria: idBeleza,
           nome: 'Maquiagem profissional',
-          descricao: 'Maquiagem social, noiva, 15 anos e produção para eventos.',
+          descricao:
+              'Maquiagem social, noiva, 15 anos e produção para eventos.',
           ordem: 20,
           icone: 'face',
         ),
@@ -519,7 +544,8 @@ class CatalogoCategoriaServico {
           id: '1761672978643',
           idCategoria: idBeleza,
           nome: 'Cuidados estéticos',
-          descricao: 'Limpeza de pele, estética facial e corporal para o evento.',
+          descricao:
+              'Limpeza de pele, estética facial e corporal para o evento.',
           ordem: 40,
           icone: 'spa',
         ),
@@ -535,7 +561,8 @@ class CatalogoCategoriaServico {
           id: 'sub_dia_noiva',
           idCategoria: idBeleza,
           nome: 'Dia da noiva / spa da noiva',
-          descricao: 'Pacote de produção, spa, massagem e camarim no dia do evento.',
+          descricao:
+              'Pacote de produção, spa, massagem e camarim no dia do evento.',
           ordem: 60,
           icone: 'spa',
         ),
@@ -569,7 +596,8 @@ class CatalogoCategoriaServico {
           id: '1761673598981',
           idCategoria: idFoto,
           nome: 'Cabine de fotos',
-          descricao: 'Cabine, totem e fotos instantâneas com moldura personalizada.',
+          descricao:
+              'Cabine, totem e fotos instantâneas com moldura personalizada.',
           ordem: 30,
           icone: 'photo',
         ),
@@ -585,7 +613,8 @@ class CatalogoCategoriaServico {
           id: 'sub_ensaio',
           idCategoria: idFoto,
           nome: 'Ensaio pré-evento',
-          descricao: 'Pre-wedding, smash the cake, gestante e ensaio da família.',
+          descricao:
+              'Pre-wedding, smash the cake, gestante e ensaio da família.',
           ordem: 50,
           icone: 'photo_album',
         ),
@@ -611,7 +640,8 @@ class CatalogoCategoriaServico {
           id: '1761673760258',
           idCategoria: idMusica,
           nome: 'Bandas e músicos',
-          descricao: 'Banda ao vivo, orquestra, coral e músicos para cerimônia.',
+          descricao:
+              'Banda ao vivo, orquestra, coral e músicos para cerimônia.',
           ordem: 20,
           icone: 'music',
         ),
@@ -643,7 +673,8 @@ class CatalogoCategoriaServico {
           id: 'sub_efeitos_especiais',
           idCategoria: idMusica,
           nome: 'Fumaça, laser e efeitos especiais',
-          descricao: 'Máquina de fumaça, laser, sparkle, confete e efeitos de pista.',
+          descricao:
+              'Máquina de fumaça, laser, sparkle, confete e efeitos de pista.',
           ordem: 60,
           icone: 'auto_awesome',
         ),
@@ -701,7 +732,8 @@ class CatalogoCategoriaServico {
           id: 'sub_piscina_bolinhas',
           idCategoria: idRecreacao,
           nome: 'Piscina de bolinhas e playground',
-          descricao: 'Piscina de bolinhas, touro mecânico, playground e kid space.',
+          descricao:
+              'Piscina de bolinhas, touro mecânico, playground e kid space.',
           ordem: 50,
           icone: 'toys',
         ),
@@ -709,7 +741,8 @@ class CatalogoCategoriaServico {
           id: 'sub_oficina_festas',
           idCategoria: idRecreacao,
           nome: 'Oficinas e atividades',
-          descricao: 'Oficina de slime, pintura, biscuit e atividades temáticas.',
+          descricao:
+              'Oficina de slime, pintura, biscuit e atividades temáticas.',
           ordem: 60,
           icone: 'palette',
         ),
@@ -717,7 +750,8 @@ class CatalogoCategoriaServico {
           id: 'sub_fliperama',
           idCategoria: idRecreacao,
           nome: 'Fliperama, jogos e karaokê',
-          descricao: 'Fliperama, pebolim, videogame, jogos e karaokê recreativo.',
+          descricao:
+              'Fliperama, pebolim, videogame, jogos e karaokê recreativo.',
           ordem: 70,
           icone: 'sports',
         ),
@@ -775,7 +809,8 @@ class CatalogoCategoriaServico {
           id: '1761673325402',
           idCategoria: idTransporte,
           nome: 'Vans para eventos corporativos',
-          descricao: 'Transporte de equipes, congressos e eventos empresariais.',
+          descricao:
+              'Transporte de equipes, congressos e eventos empresariais.',
           ordem: 60,
           icone: 'airport_shuttle',
         ),
@@ -783,7 +818,8 @@ class CatalogoCategoriaServico {
           id: 'sub_limousine',
           idCategoria: idTransporte,
           nome: 'Limousine',
-          descricao: 'Limousine para noivos, debutantes e despedida de solteiro.',
+          descricao:
+              'Limousine para noivos, debutantes e despedida de solteiro.',
           ordem: 70,
           icone: 'directions_car',
         ),
@@ -841,7 +877,8 @@ class CatalogoCategoriaServico {
           id: 'sub_lembranca_padrinhos',
           idCategoria: idPapelaria,
           nome: 'Lembranças para padrinhos e madrinhas',
-          descricao: 'Kits, caixas e presentes para padrinhos, madrinhas e pais.',
+          descricao:
+              'Kits, caixas e presentes para padrinhos, madrinhas e pais.',
           ordem: 50,
           icone: 'diamond',
         ),
@@ -883,7 +920,8 @@ class CatalogoCategoriaServico {
           id: '1761674096559',
           idCategoria: idAssessoria,
           nome: 'Produção e organização',
-          descricao: 'Cronograma, fornecedores, checklist e produção do evento.',
+          descricao:
+              'Cronograma, fornecedores, checklist e produção do evento.',
           ordem: 30,
           icone: 'groups',
         ),
@@ -891,7 +929,8 @@ class CatalogoCategoriaServico {
           id: 'sub_wedding_planner',
           idCategoria: idAssessoria,
           nome: 'Wedding planner',
-          descricao: 'Planejamento completo de casamento, do conceito ao dia D.',
+          descricao:
+              'Planejamento completo de casamento, do conceito ao dia D.',
           ordem: 40,
           icone: 'celebration',
         ),
@@ -907,7 +946,8 @@ class CatalogoCategoriaServico {
           id: 'sub_coordenacao_dia',
           idCategoria: idAssessoria,
           nome: 'Coordenação do dia',
-          descricao: 'Coordenação apenas no dia do evento, sem assessoria prévia.',
+          descricao:
+              'Coordenação apenas no dia do evento, sem assessoria prévia.',
           ordem: 60,
           icone: 'support_agent',
         ),
@@ -925,7 +965,8 @@ class CatalogoCategoriaServico {
           id: 'd3c555da-6491-424c-8d57-4db07188cc9e',
           idCategoria: idCorporativo,
           nome: 'Estrutura e palco',
-          descricao: 'Palco, backdrop, púlpito e estrutura para formatura ou congresso.',
+          descricao:
+              'Palco, backdrop, púlpito e estrutura para formatura ou congresso.',
           ordem: 20,
           icone: 'weekend',
         ),
@@ -941,7 +982,8 @@ class CatalogoCategoriaServico {
           id: '1761674269687',
           idCategoria: idCorporativo,
           nome: 'Buffet corporativo',
-          descricao: 'Buffet e coquetel para formaturas, convenções e empresas.',
+          descricao:
+              'Buffet e coquetel para formaturas, convenções e empresas.',
           ordem: 40,
           icone: 'restaurant',
         ),
@@ -967,7 +1009,8 @@ class CatalogoCategoriaServico {
           id: 'sub_seguranca',
           idCategoria: idSeguranca,
           nome: 'Segurança patrimonial',
-          descricao: 'Equipe de segurança para o espaço e o fluxo de convidados.',
+          descricao:
+              'Equipe de segurança para o espaço e o fluxo de convidados.',
           ordem: 10,
           icone: 'security',
         ),
@@ -991,7 +1034,8 @@ class CatalogoCategoriaServico {
           id: 'sub_garcons',
           idCategoria: idSeguranca,
           nome: 'Garçons e copeiras',
-          descricao: 'Equipe de salão, copeira, bartender auxiliar e serviço de mesa.',
+          descricao:
+              'Equipe de salão, copeira, bartender auxiliar e serviço de mesa.',
           ordem: 40,
           icone: 'room_service',
         ),

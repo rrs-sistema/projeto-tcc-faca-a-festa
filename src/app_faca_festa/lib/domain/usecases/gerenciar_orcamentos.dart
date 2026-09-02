@@ -6,6 +6,10 @@ class GerenciarOrcamentos {
 
   final OrcamentoRepository repository;
 
+  Future<OrcamentoModel?> buscarPorId(String idOrcamento) {
+    return repository.buscarPorId(idOrcamento);
+  }
+
   Stream<List<OrcamentoModel>> observarOrcamentosDoEvento(String idEvento) {
     return repository.observarOrcamentosDoEvento(idEvento);
   }
@@ -18,6 +22,22 @@ class GerenciarOrcamentos {
 
   Future<void> criarOrcamento(OrcamentoModel model) {
     return repository.criarOrcamento(model);
+  }
+
+  Future<void> confirmarReserva({
+    required String idOrcamento,
+    required double? custoEstimado,
+    required String? anotacoes,
+    required DateTime? dataReserva,
+    required StatusOrcamento status,
+  }) {
+    return repository.confirmarReserva(
+      idOrcamento: idOrcamento,
+      custoEstimado: custoEstimado,
+      anotacoes: anotacoes,
+      dataReserva: dataReserva,
+      status: status,
+    );
   }
 
   Future<void> responderOrcamento({

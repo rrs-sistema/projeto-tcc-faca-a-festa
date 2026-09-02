@@ -2,8 +2,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 class FiltroFornecedorBottomSheet extends StatelessWidget {
   final FornecedorLocalizacaoController controller;
@@ -19,7 +19,8 @@ class FiltroFornecedorBottomSheet extends StatelessWidget {
       final gradient = themeController.gradient.value;
 
       return Padding(
-        padding: const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 30),
+        padding:
+            const EdgeInsets.only(top: 16, left: 20, right: 20, bottom: 30),
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -70,8 +71,10 @@ class FiltroFornecedorBottomSheet extends StatelessWidget {
               SliderTheme(
                 data: SliderTheme.of(context).copyWith(
                   trackHeight: 6,
-                  thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
-                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+                  thumbShape:
+                      const RoundSliderThumbShape(enabledThumbRadius: 10),
+                  overlayShape:
+                      const RoundSliderOverlayShape(overlayRadius: 20),
                   activeTrackColor: primary,
                   inactiveTrackColor: primary.withValues(alpha: 40),
                   thumbColor: primary,

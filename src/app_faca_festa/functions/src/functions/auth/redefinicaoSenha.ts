@@ -3,6 +3,7 @@ import { defineSecret } from "firebase-functions/params";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { Timestamp } from "firebase-admin/firestore";
 import { admin } from "../../shared/firebaseAdmin";
+import { registrarAuditTrailSeguro } from "../auditoria/auditTrailService";
 import {
   SECRETS_SMTP,
   enviarEmailCodigo,
@@ -74,6 +75,22 @@ export const solicitarCodigoRedefinicaoSenha = onCall(
           `<p style="font-size:28px;font-weight:700;letter-spacing:4px">${codigo}</p>` +
           `<p>Ele expira em ${CODIGO_EXPIRA_EM_MINUTOS} minutos.</p>`,
       });
+
+      await registrarAuditTrailSeguro({
+        acao: "SENHA_REDEFINICAO_SOLICITADA",
+        operacao: "created",
+        entidadeTipo: "acesso",
+        entidadeId: usuario.uid,
+        entidadeNome: email,
+        actorUid: usuario.uid,
+        actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
+        documentPath: `usuarios/${usuario.uid}`,
+        after: {
+          fluxo: "redefinicao_senha",
+          status: "codigo_enviado",
+          email,
+        },
+      });
     } catch (error) {
       if (isAuthUserNotFound(error)) {
         return {
@@ -135,6 +152,8 @@ export const redefinirSenhaComCodigo = onCall(
       .collection("password_reset_codes")
       .doc(email);
 
+    let uidRedefinido = "";
+
     await admin.firestore().runTransaction(async (transaction) => {
       const snapshot = await transaction.get(referencia);
       if (!snapshot.exists) {
@@ -170,12 +189,28 @@ export const redefinirSenhaComCodigo = onCall(
         throw new HttpsError("permission-denied", "Código incorreto.");
       }
 
+      uidRedefinido = uid;
       await admin.auth().updateUser(uid, { password: novaSenha });
       transaction.update(referencia, {
         usado: true,
         usadoEm: admin.firestore.FieldValue.serverTimestamp(),
       });
     });
+
+    if (uidRedefinido) {
+      await registrarAuditTrailSeguro({
+        acao: "SENHA_REDEFINIDA",
+        operacao: "updated",
+        entidadeTipo: "acesso",
+        entidadeId: uidRedefinido,
+        entidadeNome: email,
+        actorUid: uidRedefinido,
+        actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
+        documentPath: `usuarios/${uidRedefinido}`,
+        before: { fluxo: "redefinicao_senha", status: "codigo_validado" },
+        after: { fluxo: "redefinicao_senha", status: "senha_redefinida" },
+      });
+    }
 
     return {
       ok: true,

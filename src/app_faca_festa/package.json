@@ -1,0 +1,12 @@
+{
+  "name": "app-faca-festa-root",
+  "private": true,
+  "scripts": {
+    "test:audit": "npm --prefix functions run test:audit-actions && flutter test test/features/auditoria && dart analyze lib/data/models/auditoria lib/domain/entities/auditoria_evento.dart lib/presentation/modules/auditoria/controllers/auditoria_controller.dart lib/presentation/widgets/auditoria lib/presentation/pages/admin/auditoria_admin_screen.dart lib/presentation/pages/admin/auditoria_dashboard_screen.dart lib/presentation/pages/fornecedor/auditoria_fornecedor_screen.dart",
+    "test:rules": "firebase emulators:exec --only firestore \"node test/firestore/auditoria.rules.test.js\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "firebase": "^12.0.0"
+  }
+}

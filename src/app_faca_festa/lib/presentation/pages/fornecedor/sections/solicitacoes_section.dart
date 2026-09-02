@@ -5,8 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../app/bootstrap/solicitacoes_bootstrap.dart';
-import '../../../../controllers/fornecedor/fornecedor_controller.dart';
-import './../../../../controllers/contacao/solicitacoes_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
 import '../../../../data/models/fornecedor_intelligence/sugestao_resposta_cotacao_ai_model.dart';
 import '../components/show_responder_cotacao_bottom_sheet.dart';
 

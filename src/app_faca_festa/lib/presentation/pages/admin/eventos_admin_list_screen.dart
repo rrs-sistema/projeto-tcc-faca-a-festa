@@ -4,10 +4,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import './../../../app/bootstrap/eventos_admin_bootstrap.dart';
-import './../../../controllers/admin/eventos_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/admin/controllers/eventos_admin_controller.dart';
 import './../../../data/models/admin/evento_com_tipo_model.dart';
-import '../../../controllers/tema/admin_theme.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../widgets/admin/admin_kit.dart';
 
 class EventosAdminListScreen extends StatelessWidget {

@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../controllers/categoria/subcategoria_servico_controller.dart';
-import '../../../../controllers/tema/admin_theme.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcategoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../../../data/models/servico_produto/categoria_servico_model.dart';
-import '../../../../domain/usecases/gerenciar_catalogo_servico.dart';
 import '../../../widgets/admin/admin_kit.dart';
 import './show_subcategoria_servico_bottom_sheet.dart';
 
@@ -27,13 +26,7 @@ class _SubcategoriaServicoListScreenState
   @override
   void initState() {
     super.initState();
-    controller = Get.isRegistered<SubcategoriaServicoController>()
-        ? Get.find<SubcategoriaServicoController>()
-        : Get.put(
-            SubcategoriaServicoController(
-              catalogo: Get.find<GerenciarCatalogoServico>(),
-            ),
-          );
+    controller = Get.find<SubcategoriaServicoController>();
     controller.busca.value = '';
     controller.subcategoriasFiltradas.clear();
     controller.carregarSubcategorias(widget.categoria.id);

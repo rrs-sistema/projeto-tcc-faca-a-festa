@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/cotacao/cotacao_model.dart';
+import '../../../domain/repositories/solicitacoes_repository.dart';
 
 class SolicitacoesRemoteDatasource {
-  SolicitacoesRemoteDatasource({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  SolicitacoesRemoteDatasource({required FirebaseFirestore firestore})
+      : _db = firestore;
 
   final FirebaseFirestore _db;
 
@@ -25,8 +26,7 @@ class SolicitacoesRemoteDatasource {
         final cotacaoDoc = await cotacaoRef.get();
         if (!cotacaoDoc.exists) continue;
 
-        final cotacao =
-            CotacaoModel.fromMap(cotacaoDoc.data()!, cotacaoDoc.id);
+        final cotacao = CotacaoModel.fromMap(cotacaoDoc.data()!, cotacaoDoc.id);
 
         final servicosSnap =
             await fornecedorDoc.reference.collection('servicos').get();
@@ -127,18 +127,4 @@ class SolicitacoesRemoteDatasource {
 
     await batch.commit();
   }
-}
-
-class SolicitacaoNaoEncontradaException implements Exception {
-  const SolicitacaoNaoEncontradaException();
-}
-
-class SolicitacaoNaoCancelavelException implements Exception {
-  const SolicitacaoNaoCancelavelException(this.status);
-
-  final String status;
-}
-
-class SolicitacaoSemFornecedorException implements Exception {
-  const SolicitacaoSemFornecedorException();
 }

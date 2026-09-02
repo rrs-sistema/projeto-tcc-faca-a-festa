@@ -341,6 +341,20 @@ class _PerfilUsuarioRemoteFake implements PerfilUsuarioRemoteDatasource {
   }
 
   @override
+  Future<void> salvarUsuarioCadastro(
+    UsuarioModel usuario, {
+    required String emailNormalizado,
+    String? provider,
+  }) async {
+    usuarioSalvo = usuario;
+    escritas.add({
+      'operacao': 'cadastro',
+      'emailNormalizado': emailNormalizado,
+      'provider': provider,
+    });
+  }
+
+  @override
   Future<EnderecoUsuarioModel?> buscarEnderecoPrincipal(
     String idUsuario,
   ) async {

@@ -13,7 +13,7 @@ typedef FornecedorAiBackendCaller = Future<dynamic> Function(
 );
 
 class FornecedorAiGenerativaService {
-  final FirebaseFunctions _functions;
+  final FirebaseFunctions? _functions;
   final String functionName;
   final Duration timeout;
   final FornecedorAiBackendCaller? backendCaller;
@@ -23,7 +23,7 @@ class FornecedorAiGenerativaService {
     this.functionName = 'gerarRespostaCotacaoFornecedorAi',
     this.timeout = const Duration(seconds: 25),
     this.backendCaller,
-  }) : _functions = functions ?? FirebaseFunctions.instance;
+  }) : _functions = functions;
 
   Future<SugestaoRespostaCotacaoAiModel> gerarSugestaoRespostaCotacao({
     required FornecedorModel fornecedor,
@@ -58,7 +58,8 @@ class FornecedorAiGenerativaService {
       );
     } on TimeoutException {
       return _fallback(
-        motivo: 'A geração demorou mais que o esperado. Tente novamente ou responda manualmente.',
+        motivo:
+            'A geração demorou mais que o esperado. Tente novamente ou responda manualmente.',
         fornecedor: fornecedor,
         evento: evento,
         cotacao: cotacao,
@@ -90,8 +91,10 @@ class FornecedorAiGenerativaService {
     final dadosEvento = _mapEvento(evento);
     final dadosCotacao = _mapCotacao(cotacao);
     final dadosFornecedor = _mapFornecedor(fornecedor);
-    final dadosServicos =
-        servicosFornecedor.where((servico) => servico.ativo).map(_mapServico).toList();
+    final dadosServicos = servicosFornecedor
+        .where((servico) => servico.ativo)
+        .map(_mapServico)
+        .toList();
 
     final prompt = montarPrompt(
       dadosEvento: dadosEvento,
@@ -276,7 +279,11 @@ Se não houver serviço solicitado, pergunte qual serviço o organizador deseja.
   }
 
   Future<dynamic> _chamarCloudFunction(Map<String, dynamic> payload) async {
-    final callable = _functions.httpsCallable(functionName);
+    final functions = _functions;
+    if (functions == null) {
+      throw StateError('FirebaseFunctions não injetado para IA generativa.');
+    }
+    final callable = functions.httpsCallable(functionName);
     final result = await callable.call(payload);
     return result.data;
   }
@@ -562,7 +569,8 @@ Se não houver serviço solicitado, pergunte qual serviço o organizador deseja.
       'media_avaliacoes': fornecedor.mediaAvaliacoes.toStringAsFixed(1),
       'total_avaliacoes': fornecedor.totalAvaliacoes.toString(),
       'total_contratacoes': fornecedor.totalContratacoes.toString(),
-      'tempo_medio_resposta_horas': fornecedor.tempoMedioRespostaHoras?.toStringAsFixed(1) ?? '',
+      'tempo_medio_resposta_horas':
+          fornecedor.tempoMedioRespostaHoras?.toStringAsFixed(1) ?? '',
     };
   }
 
@@ -575,9 +583,10 @@ Se não houver serviço solicitado, pergunte qual serviço o organizador deseja.
       'subcategoria': _safeString(servico.nomeSubcategoria),
       'descricao': _safeString(servico.descricaoServico),
       'preco': servico.preco > 0 ? _formatMoneyNullable(servico.preco) : '',
-      'preco_promocao': servico.precoPromocao != null && servico.precoPromocao! > 0
-          ? _formatMoneyNullable(servico.precoPromocao)
-          : '',
+      'preco_promocao':
+          servico.precoPromocao != null && servico.precoPromocao! > 0
+              ? _formatMoneyNullable(servico.precoPromocao)
+              : '',
       'quantidade': servico.quantidade.toString(),
       'tipo_medida': _safeString(servico.tipoMedida),
       'ativo': servico.ativo,
@@ -606,8 +615,10 @@ Se não houver serviço solicitado, pergunte qual serviço o organizador deseja.
   }
 
   String _perguntasEmTexto(List<String> perguntas) {
-    final filtradas =
-        perguntas.map((item) => item.trim()).where((item) => item.isNotEmpty).toList();
+    final filtradas = perguntas
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .toList();
 
     if (filtradas.isEmpty) {
       return 'poderia me enviar mais detalhes do evento?';

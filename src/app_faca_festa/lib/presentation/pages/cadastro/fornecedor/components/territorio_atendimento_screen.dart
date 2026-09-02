@@ -11,7 +11,7 @@ import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
 import './../../../../../app/bootstrap/admin_territorio_bootstrap.dart';
-import './../../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../../../data/models/model.dart';
 
 import 'dart:ui';

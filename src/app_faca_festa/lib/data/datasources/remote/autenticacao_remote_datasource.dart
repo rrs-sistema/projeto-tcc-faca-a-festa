@@ -1,14 +1,17 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../../../domain/repositories/autenticacao_repository.dart';
+import '../../services/functions/callable_https_client.dart';
 
 class AutenticacaoRemoteException implements Exception {
-  const AutenticacaoRemoteException(this.codigo);
+  const AutenticacaoRemoteException(this.codigo, [this.mensagem]);
 
   final String codigo;
+  final String? mensagem;
 }
 
 class SessaoUsuarioRemote {
@@ -52,14 +55,43 @@ abstract interface class AutenticacaoRemoteDatasource {
     required String senha,
   });
 
+  Future<void> solicitarCodigoRedefinicaoSenha({
+    required String email,
+  });
+
+  Future<void> redefinirSenhaComCodigo({
+    required String email,
+    required String codigo,
+    required String novaSenha,
+  });
+
+  Future<Map<String, dynamic>> iniciarTotpMfa();
+
+  Future<Map<String, dynamic>> solicitarCodigoEmailMfa();
+
+  Future<void> confirmarTotpMfa(String codigo);
+
+  Future<void> confirmarEmailMfa(String codigo);
+
+  Future<void> verificarTotpMfa(String codigo);
+
+  Future<void> verificarEmailMfa(String codigo);
+
   Future<void> sair();
 }
 
 class FirebaseAutenticacaoRemoteDatasource
     implements AutenticacaoRemoteDatasource {
-  FirebaseAutenticacaoRemoteDatasource(this.auth);
+  FirebaseAutenticacaoRemoteDatasource(
+    this.auth, {
+    required FirebaseFunctions functions,
+    required CallableHttpsClient httpsClient,
+  })  : _functions = functions,
+        _httpsClient = httpsClient;
 
   final FirebaseAuth auth;
+  final FirebaseFunctions _functions;
+  final CallableHttpsClient _httpsClient;
   bool _googleInicializado = false;
 
   @override
@@ -327,6 +359,97 @@ class FirebaseAutenticacaoRemoteDatasource
       return credencial.user!.uid;
     } on FirebaseAuthException catch (erro) {
       throw AutenticacaoRemoteException(erro.code);
+    }
+  }
+
+  @override
+  Future<void> solicitarCodigoRedefinicaoSenha({
+    required String email,
+  }) async {
+    await _chamarFunctionSemRetorno(
+      'solicitarCodigoRedefinicaoSenha',
+      {'email': email},
+    );
+  }
+
+  @override
+  Future<void> redefinirSenhaComCodigo({
+    required String email,
+    required String codigo,
+    required String novaSenha,
+  }) async {
+    await _chamarFunctionSemRetorno(
+      'redefinirSenhaComCodigo',
+      {
+        'email': email,
+        'codigo': codigo,
+        'novaSenha': novaSenha,
+      },
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>> iniciarTotpMfa() => _chamarFunction(
+        'iniciarTotpMfa',
+      );
+
+  @override
+  Future<Map<String, dynamic>> solicitarCodigoEmailMfa() => _chamarFunction(
+        'solicitarCodigoEmailMfa',
+      );
+
+  @override
+  Future<void> confirmarTotpMfa(String codigo) => _chamarFunctionSemRetorno(
+        'confirmarTotpMfa',
+        {'codigo': codigo},
+      );
+
+  @override
+  Future<void> confirmarEmailMfa(String codigo) => _chamarFunctionSemRetorno(
+        'confirmarEmailMfa',
+        {'codigo': codigo},
+      );
+
+  @override
+  Future<void> verificarTotpMfa(String codigo) => _chamarFunctionSemRetorno(
+        'verificarTotpMfa',
+        {'codigo': codigo},
+      );
+
+  @override
+  Future<void> verificarEmailMfa(String codigo) => _chamarFunctionSemRetorno(
+        'verificarEmailMfa',
+        {'codigo': codigo},
+      );
+
+  Future<void> _chamarFunctionSemRetorno(
+    String nome, [
+    Map<String, dynamic>? data,
+  ]) async {
+    await _chamarFunction(nome, data);
+  }
+
+  Future<Map<String, dynamic>> _chamarFunction(
+    String nome, [
+    Map<String, dynamic>? data,
+  ]) async {
+    try {
+      if (CallableHttpsClient.necessarioNaPlataformaAtual &&
+          auth.currentUser != null) {
+        return await _httpsClient.call(nome, data);
+      }
+      final callable = _functions.httpsCallable(nome);
+      final resultado = await callable.call(data);
+      final payload = resultado.data;
+      if (payload is Map<String, dynamic>) return payload;
+      if (payload is Map) {
+        return payload.map((key, value) => MapEntry(key.toString(), value));
+      }
+      return const {};
+    } on FirebaseFunctionsException catch (erro) {
+      throw AutenticacaoRemoteException(erro.code, erro.message);
+    } on CallableHttpsException catch (erro) {
+      throw AutenticacaoRemoteException(erro.code, erro.message);
     }
   }
 

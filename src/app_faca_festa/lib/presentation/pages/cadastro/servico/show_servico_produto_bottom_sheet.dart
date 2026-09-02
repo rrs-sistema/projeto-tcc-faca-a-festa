@@ -5,11 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../../data/models/servico_produto/subcategoria_servico_model.dart';
-import './../../../../controllers/categoria/subcategoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcategoria_servico_controller.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
-import './../../../../controllers/categoria/categoria_servico_controller.dart';
-import '../../../../controllers/servico/servico_produto_controller.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_produto_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../../../core/utils/form_validators.dart';
 import './../../../../data/models/model.dart';
 
@@ -101,7 +101,8 @@ class _ServicoProdutoSheetState extends State<_ServicoProdutoSheet> {
     super.dispose();
   }
 
-  InputDecoration _decor(String label, IconData icon, {bool obrigatorio = false}) {
+  InputDecoration _decor(String label, IconData icon,
+      {bool obrigatorio = false}) {
     return InputDecoration(
       labelText: obrigatorio ? '$label *' : label,
       prefixIcon: Icon(icon, color: primary),
@@ -123,7 +124,8 @@ class _ServicoProdutoSheetState extends State<_ServicoProdutoSheet> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final model = ServicoProdutoModel(
-      id: widget.servico?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.servico?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       nome: nomeCtrl.text.trim(),
       tipoMedida: tipoMedida.isEmpty ? null : tipoMedida,
       descricao: descCtrl.text.trim(),
@@ -169,7 +171,9 @@ class _ServicoProdutoSheetState extends State<_ServicoProdutoSheet> {
                 const SizedBox(height: 16),
                 Center(
                   child: Text(
-                    widget.servico == null ? 'Novo Serviço / Produto' : 'Editar Serviço',
+                    widget.servico == null
+                        ? 'Novo Serviço / Produto'
+                        : 'Editar Serviço',
                     style: GoogleFonts.poppins(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -191,11 +195,14 @@ class _ServicoProdutoSheetState extends State<_ServicoProdutoSheet> {
                 const SizedBox(height: 24),
                 DropdownButtonFormField<CategoriaServicoModel>(
                   value: categoriaSelecionada,
-                  decoration: _decor('Categoria', Icons.category_outlined, obrigatorio: true),
+                  decoration: _decor('Categoria', Icons.category_outlined,
+                      obrigatorio: true),
                   items: categoriaController.categorias
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c.nome)))
+                      .map((c) =>
+                          DropdownMenuItem(value: c, child: Text(c.nome)))
                       .toList(),
-                  validator: (v) => FormValidators.selecao(v, campo: 'a categoria'),
+                  validator: (v) =>
+                      FormValidators.selecao(v, campo: 'a categoria'),
                   onChanged: (val) {
                     setState(() {
                       categoriaSelecionada = val;
@@ -209,13 +216,14 @@ class _ServicoProdutoSheetState extends State<_ServicoProdutoSheet> {
                 const SizedBox(height: 16),
                 DropdownButtonFormField<SubcategoriaServicoModel>(
                   value: subcategoriaSelecionada,
-                  decoration:
-                      _decor('Subcategoria', Icons.list_alt_outlined, obrigatorio: true),
+                  decoration: _decor('Subcategoria', Icons.list_alt_outlined,
+                      obrigatorio: true),
                   items: subcategoriaController.subcategorias
                       .where((s) =>
                           categoriaSelecionada == null ||
                           s.idCategoria == categoriaSelecionada?.id)
-                      .map((s) => DropdownMenuItem(value: s, child: Text(s.nome)))
+                      .map((s) =>
+                          DropdownMenuItem(value: s, child: Text(s.nome)))
                       .toList(),
                   validator: (v) {
                     if (categoriaSelecionada == null) {
@@ -283,7 +291,8 @@ class _ServicoProdutoSheetState extends State<_ServicoProdutoSheet> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
                       elevation: 2,
                     ),
                     onPressed: _salvar,
@@ -300,7 +309,8 @@ class _ServicoProdutoSheetState extends State<_ServicoProdutoSheet> {
                       backgroundColor: Colors.grey.shade800,
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14)),
                       elevation: 0,
                     ),
                     onPressed: () => Get.back(),

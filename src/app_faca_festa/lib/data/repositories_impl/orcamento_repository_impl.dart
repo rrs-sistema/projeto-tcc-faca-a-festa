@@ -8,6 +8,11 @@ class OrcamentoRepositoryImpl implements OrcamentoRepository {
   final OrcamentoRemoteDatasource remote;
 
   @override
+  Future<OrcamentoModel?> buscarPorId(String idOrcamento) {
+    return remote.buscarPorId(idOrcamento);
+  }
+
+  @override
   Stream<List<OrcamentoModel>> observarOrcamentosDoEvento(String idEvento) {
     return remote.observarOrcamentosDoEvento(idEvento);
   }
@@ -22,6 +27,23 @@ class OrcamentoRepositoryImpl implements OrcamentoRepository {
   @override
   Future<void> criarOrcamento(OrcamentoModel model) {
     return remote.criarOrcamento(model);
+  }
+
+  @override
+  Future<void> confirmarReserva({
+    required String idOrcamento,
+    required double? custoEstimado,
+    required String? anotacoes,
+    required DateTime? dataReserva,
+    required StatusOrcamento status,
+  }) {
+    return remote.confirmarReserva(
+      idOrcamento: idOrcamento,
+      custoEstimado: custoEstimado,
+      anotacoes: anotacoes,
+      dataReserva: dataReserva,
+      status: status,
+    );
   }
 
   @override

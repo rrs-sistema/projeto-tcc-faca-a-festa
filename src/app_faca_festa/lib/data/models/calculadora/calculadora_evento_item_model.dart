@@ -86,7 +86,8 @@ class CalculadoraEventoItemModel {
         map[fieldPublicoAlvo] ?? map['publicoAlvo'],
       ),
       quantidadePorConvidadoEquivalente: _parseDouble(
-        map[fieldQuantidadePorConvidadoEquivalente] ?? map['quantidadePorConvidadoEquivalente'],
+        map[fieldQuantidadePorConvidadoEquivalente] ??
+            map['quantidadePorConvidadoEquivalente'],
       ),
       valorUnitarioMedio: _parseDouble(
         map[fieldValorUnitarioMedio] ?? map['valorUnitarioMedio'],
@@ -189,8 +190,8 @@ class CalculadoraEventoItemModel {
       categoria: categoria ?? this.categoria,
       unidade: unidade ?? this.unidade,
       publicoAlvo: publicoAlvo ?? this.publicoAlvo,
-      quantidadePorConvidadoEquivalente:
-          quantidadePorConvidadoEquivalente ?? this.quantidadePorConvidadoEquivalente,
+      quantidadePorConvidadoEquivalente: quantidadePorConvidadoEquivalente ??
+          this.quantidadePorConvidadoEquivalente,
       valorUnitarioMedio: valorUnitarioMedio ?? this.valorUnitarioMedio,
       perfisFesta: perfisFesta ?? List<String>.from(this.perfisFesta),
       selecionadoPadrao: selecionadoPadrao ?? this.selecionadoPadrao,
@@ -274,7 +275,8 @@ class CalculadoraEventoItemModel {
   }
 
   bool get isPublicoAdulto {
-    return publicoAlvoNormalizado == 'adulto' || publicoAlvoNormalizado == 'adultos';
+    return publicoAlvoNormalizado == 'adulto' ||
+        publicoAlvoNormalizado == 'adultos';
   }
 
   bool get isPublicoCrianca {
@@ -746,7 +748,8 @@ class CalculadoraEventoItemModel {
         other.categoria == categoria &&
         other.unidade == unidade &&
         other.publicoAlvo == publicoAlvo &&
-        other.quantidadePorConvidadoEquivalente == quantidadePorConvidadoEquivalente &&
+        other.quantidadePorConvidadoEquivalente ==
+            quantidadePorConvidadoEquivalente &&
         other.valorUnitarioMedio == valorUnitarioMedio &&
         _listEquals(other.perfisFesta, perfisFesta) &&
         other.selecionadoPadrao == selecionadoPadrao &&

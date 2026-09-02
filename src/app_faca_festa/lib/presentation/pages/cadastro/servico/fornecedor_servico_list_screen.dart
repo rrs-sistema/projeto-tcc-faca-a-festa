@@ -8,8 +8,8 @@ import 'package:get/get.dart';
 
 import '../../../../app/bootstrap/servico_foto_bootstrap.dart';
 import './../../../../core/utils/no_sqflite_cache_manager.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
-import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import './../fornecedor/fornecedor_servico_bottom_sheet.dart';
 import './../../../../data/models/model.dart';
 
@@ -25,7 +25,7 @@ class FornecedorServicoListScreen extends StatefulWidget {
 class _FornecedorServicoListScreenState
     extends State<FornecedorServicoListScreen> {
   final fotoController = ServicoFotoBootstrap.findController();
-  final controller = Get.put(FornecedorController());
+  final controller = Get.find<FornecedorController>();
   final theme = Get.find<EventThemeController>();
 
   @override

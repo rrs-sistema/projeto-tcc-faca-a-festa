@@ -3,6 +3,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { Timestamp } from "firebase-admin/firestore";
 import { exigirLoginComSenha, exigirUsuarioAutenticado } from "../../shared/auth";
 import { admin } from "../../shared/firebaseAdmin";
+import { registrarAuditTrailSeguro } from "../auditoria/auditTrailService";
 import {
   cifrarTexto,
   decifrarTexto,
@@ -49,6 +50,21 @@ export const iniciarTotpMfa = onCall(
       { merge: true },
     );
 
+    await registrarAuditTrailSeguro({
+      acao: "MFA_TOTP_INICIADO",
+      operacao: "created",
+      entidadeTipo: "acesso",
+      entidadeId: perfil.uid,
+      entidadeNome: email,
+      actorUid: perfil.uid,
+      actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
+      documentPath: `mfa_totp/${perfil.uid}`,
+      after: {
+        fluxo: "mfa_totp",
+        status: "configuracao_iniciada",
+      },
+    });
+
     return {
       ok: true,
       secret,
@@ -93,6 +109,18 @@ export const confirmarTotpMfa = onCall(
       { merge: true },
     );
 
+    await registrarAuditTrailSeguro({
+      acao: "MFA_TOTP_CONFIRMADO",
+      operacao: "updated",
+      entidadeTipo: "acesso",
+      entidadeId: perfil.uid,
+      actorUid: perfil.uid,
+      actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
+      documentPath: `usuarios/${perfil.uid}`,
+      before: { mfa_metodo: "nenhum" },
+      after: { mfa_metodo: "totp", mfa_totp_ativo: true },
+    });
+
     return { ok: true };
   },
 );
@@ -115,6 +143,18 @@ export const verificarTotpMfa = onCall(
     await referenciaTotp(perfil.uid).update({
       tentativas: 0,
       verificadoEm: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    await registrarAuditTrailSeguro({
+      acao: "MFA_TOTP_VERIFICADO",
+      operacao: "updated",
+      entidadeTipo: "acesso",
+      entidadeId: perfil.uid,
+      actorUid: perfil.uid,
+      actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
+      documentPath: `mfa_totp/${perfil.uid}`,
+      before: { fluxo: "mfa_totp", status: "pendente" },
+      after: { fluxo: "mfa_totp", status: "verificado" },
     });
 
     return { ok: true };

@@ -47,6 +47,19 @@ class EventoRepositoryImpl implements EventoRepository {
   }
 
   @override
+  Future<String> enviarCapa({
+    required String idEvento,
+    required List<int> bytes,
+  }) {
+    return remote.enviarCapa(idEvento: idEvento, bytes: bytes);
+  }
+
+  @override
+  Future<void> removerArquivoCapa(String idEvento) {
+    return remote.removerArquivoCapa(idEvento);
+  }
+
+  @override
   Future<void> atualizarImagemCapa({
     required String idEvento,
     String? imagemCapaUrl,

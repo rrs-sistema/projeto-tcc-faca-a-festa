@@ -5,9 +5,9 @@ import 'package:get/get.dart';
 
 import '../components/abrir_adicionar_convidado.dart';
 import '../enviar_convites_screen.dart';
-import './../../../../controllers/convidado/convidado_controller.dart';
-import '../../../../controllers/evento_controller.dart';
-import '../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../../../data/services/convite/enviar_convites_por_email_service.dart';
 import './../../../../data/models/model.dart';
 
@@ -50,104 +50,107 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
       final totalSelecionados = _selecionados.length;
 
       return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
-      appBar: AppBar(
-        toolbarHeight: 54, // Bem mais fino
-        elevation: 0,
-        centerTitle: true,
-        automaticallyImplyLeading: false,
-        backgroundColor: Colors.transparent,
-        flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
-        title: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              modoSelecao ? 'Selecionar convites' : 'Lista de convidados',
-              style: GoogleFonts.playfairDisplay(
-                fontSize: 16, // Fonte reduzida
-                fontWeight: FontWeight.w800,
+        backgroundColor: const Color(0xFFF6F7FB),
+        appBar: AppBar(
+          toolbarHeight: 54, // Bem mais fino
+          elevation: 0,
+          centerTitle: true,
+          automaticallyImplyLeading: false,
+          backgroundColor: Colors.transparent,
+          flexibleSpace:
+              Container(decoration: BoxDecoration(gradient: gradient)),
+          title: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                modoSelecao ? 'Selecionar convites' : 'Lista de convidados',
+                style: GoogleFonts.playfairDisplay(
+                  fontSize: 16, // Fonte reduzida
+                  fontWeight: FontWeight.w800,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                        blurRadius: 10,
+                        color: Colors.black.withValues(alpha: 0.25)),
+                  ],
+                ),
+              ),
+              Text(
+                modoSelecao
+                    ? (totalSelecionados == 0
+                        ? 'Toque para marcar'
+                        : '$totalSelecionados selecionados')
+                    : 'Confirmações e contatos',
+                style: GoogleFonts.poppins(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white.withValues(alpha: 0.88),
+                ),
+              ),
+            ],
+          ),
+          leading: IconButton(
+            tooltip: modoSelecao ? 'Cancelar seleção' : 'Voltar',
+            icon: Icon(
+                modoSelecao
+                    ? Icons.close_rounded
+                    : Icons.arrow_back_ios_new_rounded,
                 color: Colors.white,
-                shadows: [
-                  Shadow(
-                      blurRadius: 10,
-                      color: Colors.black.withValues(alpha: 0.25)),
-                ],
+                size: 18),
+            onPressed: () {
+              if (modoSelecao) {
+                _sairSelecao();
+                return;
+              }
+              Get.back();
+            },
+          ),
+          actions: [
+            if (modoSelecao)
+              IconButton(
+                tooltip: 'Selecionar visíveis',
+                icon: const Icon(Icons.select_all_rounded,
+                    color: Colors.white, size: 20),
+                onPressed: _alternarSelecaoVisivel,
+              )
+            else ...[
+              IconButton(
+                tooltip: 'Selecionar para e-mail',
+                icon: const Icon(Icons.checklist_rounded,
+                    color: Colors.white, size: 20),
+                onPressed: () => _modoSelecao.value = true,
               ),
-            ),
-            Text(
-              modoSelecao
-                  ? (totalSelecionados == 0
-                      ? 'Toque para marcar'
-                      : '$totalSelecionados selecionados')
-                  : 'Confirmações e contatos',
-              style: GoogleFonts.poppins(
-                fontSize: 10,
-                fontWeight: FontWeight.w500,
-                color: Colors.white.withValues(alpha: 0.88),
+              IconButton(
+                tooltip: 'Convites',
+                icon: const Icon(Icons.mark_email_read_rounded,
+                    color: Colors.white, size: 20),
+                onPressed: () => Get.to(() => const EnviarConvitesScreen()),
               ),
-            ),
+            ],
           ],
         ),
-        leading: IconButton(
-          tooltip: modoSelecao ? 'Cancelar seleção' : 'Voltar',
-          icon: Icon(
-              modoSelecao
-                  ? Icons.close_rounded
-                  : Icons.arrow_back_ios_new_rounded,
-              color: Colors.white,
-              size: 18),
-          onPressed: () {
-            if (modoSelecao) {
-              _sairSelecao();
-              return;
-            }
-            Get.back();
-          },
+        body: SafeArea(
+          top: false,
+          child: _buildBody(primary),
         ),
-        actions: [
-          if (modoSelecao)
-            IconButton(
-              tooltip: 'Selecionar visíveis',
-              icon: const Icon(Icons.select_all_rounded,
-                  color: Colors.white, size: 20),
-              onPressed: _alternarSelecaoVisivel,
-            )
-          else ...[
-            IconButton(
-              tooltip: 'Selecionar para e-mail',
-              icon: const Icon(Icons.checklist_rounded,
-                  color: Colors.white, size: 20),
-              onPressed: () => _modoSelecao.value = true,
-            ),
-            IconButton(
-              tooltip: 'Convites',
-              icon: const Icon(Icons.mark_email_read_rounded,
-                  color: Colors.white, size: 20),
-              onPressed: () => Get.to(() => const EnviarConvitesScreen()),
-            ),
-          ],
-        ],
-      ),
-      body: SafeArea(
-        top: false,
-        child: _buildBody(primary),
-      ),
-      bottomNavigationBar:
-          modoSelecao ? _buildBarraEnvioEmail(primary, gradient) : null,
-      floatingActionButton: modoSelecao
-          ? null
-          : FloatingActionButton.extended(
-        backgroundColor: primary,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        onPressed: () => abrirDialogAdicionarConvidado(context, primary),
-        label: Text(
-          'Novo',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 12),
-        ),
-        icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
-      ),
-    );
+        bottomNavigationBar:
+            modoSelecao ? _buildBarraEnvioEmail(primary, gradient) : null,
+        floatingActionButton: modoSelecao
+            ? null
+            : FloatingActionButton.extended(
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                elevation: 4,
+                onPressed: () =>
+                    abrirDialogAdicionarConvidado(context, primary),
+                label: Text(
+                  'Novo',
+                  style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w700, fontSize: 12),
+                ),
+                icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+              ),
+      );
     });
   }
 
@@ -879,66 +882,66 @@ class _GuestCard extends StatelessWidget {
                     onChanged: (_) => onToggleSelecao(),
                   )
                 else
-                SizedBox(
-                  height:
-                      24, // Limita altura da área do popup para alinhar perfeitamente
-                  width: 24,
-                  child: PopupMenuButton<String>(
-                    padding: EdgeInsets.zero,
-                    color: Colors.white,
-                    elevation: 6,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    icon: Icon(Icons.more_vert_rounded,
-                        color: Colors.grey.shade600, size: 18),
-                    onSelected: (value) {
-                      if (value == 'editar') onEdit();
-                      if (value == 'confirmar') onConfirm();
-                      if (value == 'pendente') onPending();
-                      if (value == 'recusar') onRefuse();
-                      if (value == 'excluir') onDelete();
-                    },
-                    itemBuilder: (context) => [
-                      PopupMenuItem(
-                          height: 36,
-                          value: 'editar',
-                          child: _MenuItem(
-                              icon: Icons.edit_outlined,
-                              label: 'Editar',
-                              color: Colors.blue.shade700)),
-                      const PopupMenuDivider(height: 1),
-                      PopupMenuItem(
-                          height: 36,
-                          value: 'confirmar',
-                          child: _MenuItem(
-                              icon: Icons.check_circle_outline,
-                              label: 'Confirmar',
-                              color: Colors.green.shade700)),
-                      PopupMenuItem(
-                          height: 36,
-                          value: 'pendente',
-                          child: _MenuItem(
-                              icon: Icons.hourglass_bottom_rounded,
-                              label: 'Pendente',
-                              color: Colors.orange.shade700)),
-                      PopupMenuItem(
-                          height: 36,
-                          value: 'recusar',
-                          child: _MenuItem(
-                              icon: Icons.cancel_outlined,
-                              label: 'Recusar',
-                              color: Colors.red.shade700)),
-                      const PopupMenuDivider(height: 1),
-                      PopupMenuItem(
-                          height: 36,
-                          value: 'excluir',
-                          child: _MenuItem(
-                              icon: Icons.delete_outline_rounded,
-                              label: 'Excluir',
-                              color: Colors.red.shade600)),
-                    ],
+                  SizedBox(
+                    height:
+                        24, // Limita altura da área do popup para alinhar perfeitamente
+                    width: 24,
+                    child: PopupMenuButton<String>(
+                      padding: EdgeInsets.zero,
+                      color: Colors.white,
+                      elevation: 6,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      icon: Icon(Icons.more_vert_rounded,
+                          color: Colors.grey.shade600, size: 18),
+                      onSelected: (value) {
+                        if (value == 'editar') onEdit();
+                        if (value == 'confirmar') onConfirm();
+                        if (value == 'pendente') onPending();
+                        if (value == 'recusar') onRefuse();
+                        if (value == 'excluir') onDelete();
+                      },
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                            height: 36,
+                            value: 'editar',
+                            child: _MenuItem(
+                                icon: Icons.edit_outlined,
+                                label: 'Editar',
+                                color: Colors.blue.shade700)),
+                        const PopupMenuDivider(height: 1),
+                        PopupMenuItem(
+                            height: 36,
+                            value: 'confirmar',
+                            child: _MenuItem(
+                                icon: Icons.check_circle_outline,
+                                label: 'Confirmar',
+                                color: Colors.green.shade700)),
+                        PopupMenuItem(
+                            height: 36,
+                            value: 'pendente',
+                            child: _MenuItem(
+                                icon: Icons.hourglass_bottom_rounded,
+                                label: 'Pendente',
+                                color: Colors.orange.shade700)),
+                        PopupMenuItem(
+                            height: 36,
+                            value: 'recusar',
+                            child: _MenuItem(
+                                icon: Icons.cancel_outlined,
+                                label: 'Recusar',
+                                color: Colors.red.shade700)),
+                        const PopupMenuDivider(height: 1),
+                        PopupMenuItem(
+                            height: 36,
+                            value: 'excluir',
+                            child: _MenuItem(
+                                icon: Icons.delete_outline_rounded,
+                                label: 'Excluir',
+                                color: Colors.red.shade600)),
+                      ],
+                    ),
                   ),
-                ),
               ],
             ),
           ),

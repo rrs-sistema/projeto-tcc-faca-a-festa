@@ -3,8 +3,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/bootstrap/tema_festa_bootstrap.dart';
-import '../../../controllers/evento_cadastro_controller.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../../core/utils/form_validators.dart';
 import '../../../data/models/evento/tema_festa_model.dart';
 import '../../widgets/custom_input_field.dart';

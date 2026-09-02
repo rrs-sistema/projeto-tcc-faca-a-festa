@@ -1,4 +1,3 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,12 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/evento_controller.dart';
-import '../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 import '../../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
-import './../../../controllers/contacao/solicitacoes_controller.dart';
-import './../../../controllers/contacao/cotacao_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../../data/models/model.dart';
 import './mostrar_detalhes_cotacao.dart';
@@ -81,7 +81,8 @@ class PainelCotacaoPage extends StatelessWidget {
     return Obx(() {
       final eventoAtual = eventoCtrl.eventoAtualEntidade;
       final tipoEventoAtual = eventoCtrl.tipoEventoAtualEntidade;
-      final idUsuario = FirebaseAuth.instance.currentUser?.uid ?? '';
+      final idUsuario =
+          Get.find<AppController>().usuarioLogado.value?.idUsuario ?? '';
 
       final idEvento = eventoAtual?.idEvento ?? '';
       final tipoEventoId = tipoEventoAtual?.idTipoEvento ?? '';
@@ -123,7 +124,9 @@ class PainelCotacaoPage extends StatelessWidget {
       ];
 
       final fornecedorDetalhado = fornecedores.firstWhereOrNull(
-        (item) => item.fornecedor.idFornecedor.trim() == recomendacao.idFornecedor.trim(),
+        (item) =>
+            item.fornecedor.idFornecedor.trim() ==
+            recomendacao.idFornecedor.trim(),
       );
 
       if (fornecedorDetalhado == null) {
@@ -221,7 +224,8 @@ class PainelCotacaoPage extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.event_available_rounded, color: Colors.white, size: 20),
+                    child: const Icon(Icons.event_available_rounded,
+                        color: Colors.white, size: 20),
                   ),
                 ],
               ),
@@ -254,7 +258,8 @@ class PainelCotacaoPage extends StatelessWidget {
                 ],
               ),
               padding: const EdgeInsets.all(8),
-              child: const Icon(Icons.handshake_rounded, color: Colors.white, size: 22),
+              child: const Icon(Icons.handshake_rounded,
+                  color: Colors.white, size: 22),
             ),
             const SizedBox(width: 10),
             Expanded(
@@ -285,7 +290,8 @@ class PainelCotacaoPage extends StatelessWidget {
   // ===========================================================
   // 🔹 Card de resumo de progresso
   // ===========================================================
-  Widget _buildResumoCard(double progresso, int contratados, int total, LinearGradient gradient) {
+  Widget _buildResumoCard(
+      double progresso, int contratados, int total, LinearGradient gradient) {
     return Container(
       decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(16),
@@ -305,7 +311,9 @@ class PainelCotacaoPage extends StatelessWidget {
             children: [
               Text("Resumo do Evento",
                   style: GoogleFonts.poppins(
-                      fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white)),
               Text("$contratados de $total contratados",
                   style: GoogleFonts.poppins(
                       fontSize: 11,
@@ -349,11 +357,14 @@ class PainelCotacaoPage extends StatelessWidget {
           return Card(
             margin: const EdgeInsets.only(bottom: 8),
             elevation: 1, // 🔹 Sombra mais leve
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             child: Theme(
-              data: Theme.of(Get.context!).copyWith(dividerColor: Colors.transparent),
+              data: Theme.of(Get.context!)
+                  .copyWith(dividerColor: Colors.transparent),
               child: ExpansionTile(
-                tilePadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2), // 🔹 Compacto
+                tilePadding: const EdgeInsets.symmetric(
+                    horizontal: 12, vertical: 2), // 🔹 Compacto
                 leading: Container(
                   width: 38,
                   height: 38,
@@ -382,7 +393,8 @@ class PainelCotacaoPage extends StatelessWidget {
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.calendar_today_rounded, size: 12, color: Colors.grey.shade600),
+                          Icon(Icons.calendar_today_rounded,
+                              size: 12, color: Colors.grey.shade600),
                           const SizedBox(width: 4),
                           Flexible(
                             child: Text(
@@ -402,13 +414,14 @@ class PainelCotacaoPage extends StatelessWidget {
                 ),
                 childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                 children: [
-                  _buildAcaoCotacao(primary, "Ver detalhes", Icons.visibility_rounded, () {
+                  _buildAcaoCotacao(
+                      primary, "Ver detalhes", Icons.visibility_rounded, () {
                     mostrarDetalhesCotacao(cotacao);
                   }),
                   if (cotacao.status == StatusCotacao.pendente ||
                       cotacao.status == StatusCotacao.parcial)
-                    _buildAcaoCotacao(Colors.redAccent, "Cancelar cotação", Icons.cancel_outlined,
-                        () async {
+                    _buildAcaoCotacao(Colors.redAccent, "Cancelar cotação",
+                        Icons.cancel_outlined, () async {
                       EasyLoading.show(status: 'Processando...');
                       await solicitacoeCtrl.cancelarCotacao(cotacao.id);
                       EasyLoading.dismiss();
@@ -422,7 +435,8 @@ class PainelCotacaoPage extends StatelessWidget {
     );
   }
 
-  Widget _buildAcaoCotacao(Color color, String label, IconData icon, VoidCallback onTap) {
+  Widget _buildAcaoCotacao(
+      Color color, String label, IconData icon, VoidCallback onTap) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -433,15 +447,16 @@ class PainelCotacaoPage extends StatelessWidget {
             Icon(icon, color: color, size: 18),
             const SizedBox(width: 8),
             Text(label,
-                style:
-                    GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600, color: color)),
+                style: GoogleFonts.poppins(
+                    fontSize: 12, fontWeight: FontWeight.w600, color: color)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMensagemVazia(Color primary, String mensagem, {IconData? icone}) {
+  Widget _buildMensagemVazia(Color primary, String mensagem,
+      {IconData? icone}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
       child: Center(
@@ -450,12 +465,14 @@ class PainelCotacaoPage extends StatelessWidget {
           decoration: BoxDecoration(
             color: primary.withValues(alpha: 0.04),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: primary.withValues(alpha: 0.15), width: 1),
+            border:
+                Border.all(color: primary.withValues(alpha: 0.15), width: 1),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icone ?? Icons.inbox_rounded, color: primary.withValues(alpha: 0.5), size: 38),
+              Icon(icone ?? Icons.inbox_rounded,
+                  color: primary.withValues(alpha: 0.5), size: 38),
               const SizedBox(height: 10),
               Text(
                 "Nada por aqui ainda",

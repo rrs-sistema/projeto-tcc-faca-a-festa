@@ -5,8 +5,8 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
-import '../../../controllers/inspiracao/inspiracao_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../data/models/evento/inspiracao_model.dart';
 
 class MinhasReferenciasEventoScreen extends StatefulWidget {
@@ -20,13 +20,13 @@ class MinhasReferenciasEventoScreen extends StatefulWidget {
   });
 
   @override
-  State<MinhasReferenciasEventoScreen> createState() => _MinhasReferenciasEventoScreenState();
+  State<MinhasReferenciasEventoScreen> createState() =>
+      _MinhasReferenciasEventoScreenState();
 }
 
-class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoScreen> {
-  final InspiracaoController controller = Get.isRegistered<InspiracaoController>()
-      ? Get.find<InspiracaoController>()
-      : Get.put(InspiracaoController());
+class _MinhasReferenciasEventoScreenState
+    extends State<MinhasReferenciasEventoScreen> {
+  final InspiracaoController controller = Get.find<InspiracaoController>();
 
   final EventThemeController themeController = Get.find<EventThemeController>();
   final RxString filtroStatus = 'todos'.obs;
@@ -72,7 +72,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
           physics: const BouncingScrollPhysics(),
           slivers: [
             SliverAppBar(
-              expandedHeight: 160, // 🔹 Altura reduzida para ficar mais compacto
+              expandedHeight:
+                  160, // 🔹 Altura reduzida para ficar mais compacto
               collapsedHeight: kToolbarHeight,
               pinned: true,
               elevation: 0,
@@ -80,7 +81,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
               foregroundColor: Colors.white,
               title: Text(
                 'Minhas Referências',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700, fontSize: 16),
               ),
               flexibleSpace: FlexibleSpaceBar(
                 collapseMode: CollapseMode.pin,
@@ -91,7 +93,9 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         final availableHeight = constraints.maxHeight;
-                        if (availableHeight <= 100) return const SizedBox.shrink();
+                        if (availableHeight <= 100) {
+                          return const SizedBox.shrink();
+                        }
 
                         return ClipRect(
                           child: Align(
@@ -119,7 +123,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                                     overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.poppins(
                                       fontSize: 11.5,
-                                      color: Colors.white.withValues(alpha: 0.88),
+                                      color:
+                                          Colors.white.withValues(alpha: 0.88),
                                       height: 1.3,
                                     ),
                                   ),
@@ -168,7 +173,9 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
 
   List<ReferenciaEventoModel> _referenciasFiltradas() {
     final status = filtroStatus.value;
-    final refs = controller.referenciasEvento.where((ref) => ref.ativo && !ref.deletado).toList();
+    final refs = controller.referenciasEvento
+        .where((ref) => ref.ativo && !ref.deletado)
+        .toList();
     if (status == 'todos') return refs;
     return refs.where((ref) => ref.status == status).toList();
   }
@@ -178,7 +185,9 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
   // =========================================================================
   Widget _resumoCards(Color primary) {
     return Obx(() {
-      final refsAtivas = controller.referenciasEvento.where((r) => r.ativo && !r.deletado).toList();
+      final refsAtivas = controller.referenciasEvento
+          .where((r) => r.ativo && !r.deletado)
+          .toList();
       final total = refsAtivas.length;
       final favoritas = refsAtivas.where((r) => r.favorito).length;
       final aprovadas = refsAtivas.where((r) => r.status == 'aprovada').length;
@@ -189,20 +198,20 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
         child: Row(
           children: [
             Expanded(
-                child: _miniResumo(
-                    'Ref.', total.toString(), Icons.collections_bookmark_rounded, primary)),
+                child: _miniResumo('Ref.', total.toString(),
+                    Icons.collections_bookmark_rounded, primary)),
             const SizedBox(width: 8),
             Expanded(
-                child: _miniResumo(
-                    'Fav.', favoritas.toString(), Icons.star_rounded, Colors.amber.shade700)),
+                child: _miniResumo('Fav.', favoritas.toString(),
+                    Icons.star_rounded, Colors.amber.shade700)),
             const SizedBox(width: 8),
             Expanded(
-                child: _miniResumo(
-                    'Aprov.', aprovadas.toString(), Icons.verified_rounded, Colors.green.shade700)),
+                child: _miniResumo('Aprov.', aprovadas.toString(),
+                    Icons.verified_rounded, Colors.green.shade700)),
             const SizedBox(width: 8),
             Expanded(
-                child: _miniResumo('Orçar', orcar.toString(), Icons.request_quote_rounded,
-                    Colors.orange.shade700)),
+                child: _miniResumo('Orçar', orcar.toString(),
+                    Icons.request_quote_rounded, Colors.orange.shade700)),
           ],
         ),
       );
@@ -231,14 +240,18 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
           Text(
             value,
             style: GoogleFonts.poppins(
-                fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF1E293B)),
+                fontSize: 15,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF1E293B)),
           ),
           Text(
             label,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.poppins(
-                fontSize: 9.5, color: Colors.grey.shade600, fontWeight: FontWeight.w600),
+                fontSize: 9.5,
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w600),
           ),
         ],
       ),
@@ -265,11 +278,13 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 margin: const EdgeInsets.only(right: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: selected ? primary : Colors.white,
                   borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: selected ? primary : Colors.grey.shade300),
+                  border: Border.all(
+                      color: selected ? primary : Colors.grey.shade300),
                 ),
                 child: Text(
                   _labelStatus(status),
@@ -292,8 +307,10 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
   // =========================================================================
   Widget _referenciaCard(ReferenciaEventoModel ref, Color primary) {
     final totalTarefas = controller.totalTarefasPorInspiracao(ref.inspiracaoId);
-    final concluidas = controller.tarefasConcluidasPorInspiracao(ref.inspiracaoId);
-    final totalOrcamentos = controller.totalOrcamentosPorInspiracao(ref.inspiracaoId);
+    final concluidas =
+        controller.tarefasConcluidasPorInspiracao(ref.inspiracaoId);
+    final totalOrcamentos =
+        controller.totalOrcamentosPorInspiracao(ref.inspiracaoId);
     final valorOrcado = controller.valorOrcadoPorInspiracao(ref.inspiracaoId);
 
     return Container(
@@ -329,15 +346,20 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                   child: Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.4), shape: BoxShape.circle),
+                        color: Colors.black.withValues(alpha: 0.4),
+                        shape: BoxShape.circle),
                     child: InkWell(
                       onTap: () {
                         HapticFeedback.lightImpact();
                         controller.atualizarReferenciaPlanejamento(
                             referenciaId: ref.id, favorito: !ref.favorito);
                       },
-                      child: Icon(ref.favorito ? Icons.star_rounded : Icons.star_border_rounded,
-                          color: ref.favorito ? Colors.amber : Colors.white, size: 20),
+                      child: Icon(
+                          ref.favorito
+                              ? Icons.star_rounded
+                              : Icons.star_border_rounded,
+                          color: ref.favorito ? Colors.amber : Colors.white,
+                          size: 20),
                     ),
                   ),
                 ),
@@ -399,7 +421,9 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                     child: Text(
                       ref.anotacao,
                       style: GoogleFonts.poppins(
-                          fontSize: 11.5, color: Colors.grey.shade700, height: 1.4),
+                          fontSize: 11.5,
+                          color: Colors.grey.shade700,
+                          height: 1.4),
                     ),
                   ),
                 ],
@@ -413,14 +437,18 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                         child: _infoBox(
                             icon: Icons.checklist_rounded,
                             label: 'Checklist',
-                            value: totalTarefas == 0 ? 'Nenhum' : '$concluidas/$totalTarefas',
+                            value: totalTarefas == 0
+                                ? 'Nenhum'
+                                : '$concluidas/$totalTarefas',
                             color: Colors.green.shade700)),
                     const SizedBox(width: 8),
                     Expanded(
                         child: _infoBox(
                             icon: Icons.account_balance_wallet_rounded,
                             label: 'Orçamento',
-                            value: totalOrcamentos == 0 ? 'Nenhum' : _formatCurrency(valorOrcado),
+                            value: totalOrcamentos == 0
+                                ? 'Nenhum'
+                                : _formatCurrency(valorOrcado),
                             color: Colors.orange.shade800)),
                   ],
                 ),
@@ -433,12 +461,15 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                       child: OutlinedButton.icon(
                         onPressed: () => _gerarBriefing(ref),
                         icon: const Icon(Icons.description_outlined, size: 16),
-                        label: const Text('Briefing', style: TextStyle(fontSize: 12)),
+                        label: const Text('Briefing',
+                            style: TextStyle(fontSize: 12)),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: primary,
-                          side: BorderSide(color: primary.withValues(alpha: 0.35)),
+                          side: BorderSide(
+                              color: primary.withValues(alpha: 0.35)),
                           padding: const EdgeInsets.symmetric(vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12)),
                         ),
                       ),
                     ),
@@ -447,7 +478,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                       onPressed: () => _confirmarRemocao(ref, primary),
                       icon: const Icon(Icons.delete_outline_rounded, size: 18),
                       color: Colors.red.shade700,
-                      constraints: const BoxConstraints(minHeight: 40, minWidth: 40),
+                      constraints:
+                          const BoxConstraints(minHeight: 40, minWidth: 40),
                     ),
                   ],
                 ),
@@ -466,7 +498,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
         width: double.infinity,
         color: Colors.grey.shade200,
         alignment: Alignment.center,
-        child: Icon(Icons.image_not_supported_rounded, color: Colors.grey.shade400, size: 36),
+        child: Icon(Icons.image_not_supported_rounded,
+            color: Colors.grey.shade400, size: 36),
       );
     }
     return CachedNetworkImage(
@@ -479,7 +512,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
         width: double.infinity,
         color: Colors.grey.shade200,
         alignment: Alignment.center,
-        child: Icon(Icons.broken_image_rounded, color: Colors.grey.shade400, size: 36),
+        child: Icon(Icons.broken_image_rounded,
+            color: Colors.grey.shade400, size: 36),
       ),
     );
   }
@@ -488,13 +522,16 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: light ? Colors.white.withValues(alpha: 0.95) : color.withValues(alpha: 0.08),
+        color: light
+            ? Colors.white.withValues(alpha: 0.95)
+            : color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.15)),
       ),
       child: Text(
         label,
-        style: GoogleFonts.poppins(fontSize: 10, fontWeight: FontWeight.w700, color: color),
+        style: GoogleFonts.poppins(
+            fontSize: 10, fontWeight: FontWeight.w700, color: color),
       ),
     );
   }
@@ -507,7 +544,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.06), borderRadius: BorderRadius.circular(10)),
+          color: color.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10)),
       child: Row(
         children: [
           Icon(icon, color: color, size: 16),
@@ -516,7 +554,9 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: GoogleFonts.poppins(fontSize: 9, color: Colors.grey.shade600)),
+                Text(label,
+                    style: GoogleFonts.poppins(
+                        fontSize: 9, color: Colors.grey.shade600)),
                 Text(value,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -541,22 +581,26 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
           Container(
             width: 70,
             height: 70,
-            decoration:
-                BoxDecoration(color: primary.withValues(alpha: 0.08), shape: BoxShape.circle),
-            child: Icon(Icons.collections_bookmark_outlined, color: primary, size: 36),
+            decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.08), shape: BoxShape.circle),
+            child: Icon(Icons.collections_bookmark_outlined,
+                color: primary, size: 36),
           ),
           const SizedBox(height: 14),
           Text(
             'Nenhuma referência',
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
-                fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF172033)),
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF172033)),
           ),
           const SizedBox(height: 6),
           Text(
             'Salve ideias na tela de inspirações para montar seu painel.',
             textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600, height: 1.4),
+            style: GoogleFonts.poppins(
+                fontSize: 11.5, color: Colors.grey.shade600, height: 1.4),
           ),
         ],
       ),
@@ -574,9 +618,11 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
     Get.bottomSheet(
       SafeArea(
         child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16), // 🔹 Mais compacto
+          padding:
+              const EdgeInsets.fromLTRB(16, 12, 16, 16), // 🔹 Mais compacto
           decoration: const BoxDecoration(
-              color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
           child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Column(
@@ -589,24 +635,31 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                     height: 4,
                     margin: const EdgeInsets.only(bottom: 12),
                     decoration: BoxDecoration(
-                        color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)),
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10)),
                   ),
                 ),
                 Text('Editar referência',
                     style: GoogleFonts.poppins(
-                        fontSize: 16, fontWeight: FontWeight.w800, color: const Color(0xFF172033))),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF172033))),
                 Text(ref.titulo,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade600)),
+                    style: GoogleFonts.poppins(
+                        fontSize: 12, color: Colors.grey.shade600)),
                 const SizedBox(height: 16),
                 Text('Status',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 12)),
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700, fontSize: 12)),
                 const SizedBox(height: 6),
                 Obx(() => Wrap(
                       spacing: 6,
                       runSpacing: 6,
-                      children: statusOptions.where((s) => s != 'todos').map((status) {
+                      children: statusOptions
+                          .where((s) => s != 'todos')
+                          .map((status) {
                         final selected = statusSelecionado.value == status;
                         return ChoiceChip(
                           selected: selected,
@@ -622,17 +675,20 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                     )),
                 const SizedBox(height: 16),
                 Text('Prioridade',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 12)),
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700, fontSize: 12)),
                 const SizedBox(height: 6),
                 Obx(() => Wrap(
                       spacing: 6,
                       runSpacing: 6,
                       children: prioridadeOptions.map((prioridade) {
-                        final selected = prioridadeSelecionada.value == prioridade;
+                        final selected =
+                            prioridadeSelecionada.value == prioridade;
                         return ChoiceChip(
                           selected: selected,
                           label: Text(_labelPrioridade(prioridade)),
-                          onSelected: (_) => prioridadeSelecionada.value = prioridade,
+                          onSelected: (_) =>
+                              prioridadeSelecionada.value = prioridade,
                           selectedColor: primary.withValues(alpha: 0.15),
                           labelStyle: GoogleFonts.poppins(
                               color: selected ? primary : Colors.grey.shade800,
@@ -643,7 +699,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                     )),
                 const SizedBox(height: 16),
                 Text('Anotação',
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 12)),
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700, fontSize: 12)),
                 const SizedBox(height: 6),
                 TextFormField(
                   initialValue: anotacaoAtual,
@@ -677,14 +734,18 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                           anotacao: anotacaoAtual.trim());
                       if (Get.isBottomSheetOpen == true) Get.back();
                     },
-                    icon: const Icon(Icons.save_rounded, color: Colors.white, size: 16),
+                    icon: const Icon(Icons.save_rounded,
+                        color: Colors.white, size: 16),
                     label: Text('Salvar alterações',
                         style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13)),
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            fontSize: 13)),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12))),
                   ),
                 ),
               ],
@@ -696,20 +757,24 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
     );
   }
 
-  Future<void> _confirmarRemocao(ReferenciaEventoModel ref, Color primary) async {
+  Future<void> _confirmarRemocao(
+      ReferenciaEventoModel ref, Color primary) async {
     var removerPlanejamento = false;
     final totalTarefas = controller.totalTarefasPorInspiracao(ref.inspiracaoId);
-    final totalOrcamentos = controller.totalOrcamentosPorInspiracao(ref.inspiracaoId);
+    final totalOrcamentos =
+        controller.totalOrcamentosPorInspiracao(ref.inspiracaoId);
     final possuiVinculo = totalTarefas > 0 || totalOrcamentos > 0;
 
     await Get.dialog<void>(
       StatefulBuilder(
         builder: (context, setStateDialog) {
           return AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             contentPadding: const EdgeInsets.all(20),
             title: Text('Remover?',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 16)),
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w800, fontSize: 16)),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -726,16 +791,18 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                         border: Border.all(color: Colors.orange.shade100)),
                     child: Text(
                         'Existem $totalTarefas tarefa(s) e $totalOrcamentos orçamento(s) vinculados. Por padrão, não serão apagados.',
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.orange.shade900)),
+                        style: GoogleFonts.poppins(
+                            fontSize: 11, color: Colors.orange.shade900)),
                   ),
                   CheckboxListTile(
                     contentPadding: EdgeInsets.zero,
                     value: removerPlanejamento,
                     activeColor: Colors.red.shade600,
                     title: Text('Descartar vinculados',
-                        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
-                    onChanged: (value) =>
-                        setStateDialog(() => removerPlanejamento = value ?? false),
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, fontWeight: FontWeight.w600)),
+                    onChanged: (value) => setStateDialog(
+                        () => removerPlanejamento = value ?? false),
                   ),
                 ],
               ],
@@ -743,7 +810,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
             actions: [
               TextButton(
                   onPressed: Get.back,
-                  child: Text('Cancelar', style: GoogleFonts.poppins(fontSize: 13))),
+                  child: Text('Cancelar',
+                      style: GoogleFonts.poppins(fontSize: 13))),
               ElevatedButton(
                 onPressed: () async {
                   Get.back();
@@ -753,9 +821,11 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                 },
                 style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red.shade600,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
-                child:
-                    Text('Remover', style: GoogleFonts.poppins(color: Colors.white, fontSize: 13)),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10))),
+                child: Text('Remover',
+                    style:
+                        GoogleFonts.poppins(color: Colors.white, fontSize: 13)),
               ),
             ],
           );
@@ -773,7 +843,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
         child: Container(
           padding: const EdgeInsets.all(20),
           decoration: const BoxDecoration(
-              color: Colors.white, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
           // 1. Usamos o IntrinsicHeight para garantir que a coluna não ocupe a tela toda se o conteúdo for pequeno
           child: IntrinsicHeight(
             child: Column(
@@ -786,7 +857,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                         height: 4,
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
-                            color: Colors.grey.shade300, borderRadius: BorderRadius.circular(10)))),
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10)))),
                 Row(
                   children: [
                     Icon(Icons.description_outlined, color: primary, size: 24),
@@ -800,7 +872,8 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                 ),
                 const SizedBox(height: 4),
                 Text('Texto pronto para enviar a fornecedores.',
-                    style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600)),
+                    style: GoogleFonts.poppins(
+                        fontSize: 11.5, color: Colors.grey.shade600)),
                 const SizedBox(height: 16),
 
                 // 2. Aqui está a chave: Expanded faz o container ocupar o espaço restante
@@ -816,7 +889,9 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                     child: SingleChildScrollView(
                       child: SelectableText(texto,
                           style: GoogleFonts.poppins(
-                              fontSize: 12, height: 1.4, color: const Color(0xFF334155))),
+                              fontSize: 12,
+                              height: 1.4,
+                              color: const Color(0xFF334155))),
                     ),
                   ),
                 ),
@@ -829,14 +904,18 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
                       await Clipboard.setData(ClipboardData(text: texto));
                       EasyLoading.showSuccess('Copiado!');
                     },
-                    icon: const Icon(Icons.copy_rounded, color: Colors.white, size: 16),
+                    icon: const Icon(Icons.copy_rounded,
+                        color: Colors.white, size: 16),
                     label: Text('Copiar Texto',
                         style: GoogleFonts.poppins(
-                            color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13)),
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13)),
                     style: ElevatedButton.styleFrom(
                         backgroundColor: primary,
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12))),
                   ),
                 ),
               ],
@@ -854,13 +933,17 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
     final texto = StringBuffer()
       ..writeln('REFERÊNCIA PARA ORÇAMENTO')
       ..writeln('Tema: ${ref.titulo.isEmpty ? 'Sem título' : ref.titulo}')
-      ..writeln('Categoria: ${ref.categoria.isEmpty ? 'Não informada' : ref.categoria}')
+      ..writeln(
+          'Categoria: ${ref.categoria.isEmpty ? 'Não informada' : ref.categoria}')
       ..writeln(
           '\nDetalhes da imagem:\n${ref.descricao.trim().isEmpty ? '-' : ref.descricao.trim()}')
       ..writeln(
           '\nMinhas observações:\n${ref.anotacao.trim().isEmpty ? '-' : ref.anotacao.trim()}');
-    if (ref.paletaCores.isNotEmpty) texto.writeln('\nCores: ${ref.paletaCores.join(', ')}');
-    texto.writeln('\nLink Imagem: ${ref.imagemUrl.trim().isEmpty ? '-' : ref.imagemUrl.trim()}');
+    if (ref.paletaCores.isNotEmpty) {
+      texto.writeln('\nCores: ${ref.paletaCores.join(', ')}');
+    }
+    texto.writeln(
+        '\nLink Imagem: ${ref.imagemUrl.trim().isEmpty ? '-' : ref.imagemUrl.trim()}');
     return texto.toString();
   }
 
@@ -877,7 +960,13 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
       }[status] ??
       status;
   String _labelPrioridade(String p) =>
-      {'baixa': 'Baixa', 'media': 'Média', 'alta': 'Alta', 'essencial': 'Essencial'}[p] ?? p;
+      {
+        'baixa': 'Baixa',
+        'media': 'Média',
+        'alta': 'Alta',
+        'essencial': 'Essencial'
+      }[p] ??
+      p;
   Color _corStatus(String status) =>
       {
         'salva': Colors.blueGrey,
@@ -897,5 +986,6 @@ class _MinhasReferenciasEventoScreenState extends State<MinhasReferenciasEventoS
         'essencial': Colors.red.shade700
       }[p] ??
       Colors.blueGrey;
-  String _formatCurrency(double v) => 'R\$ ${v.toStringAsFixed(2).replaceAll('.', ',')}';
+  String _formatCurrency(double v) =>
+      'R\$ ${v.toStringAsFixed(2).replaceAll('.', ',')}';
 }

@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../controllers/password_reset_controller.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/controllers/password_reset_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../../core/utils/form_validators.dart';
 import '../../widgets/custom_input_field.dart';
 
@@ -14,7 +14,7 @@ class ForgotPasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(PasswordResetController());
+    final controller = Get.find<PasswordResetController>();
     final theme = Get.find<EventThemeController>();
     final gradient = theme.gradient.value;
     final primary = theme.primaryColor.value;

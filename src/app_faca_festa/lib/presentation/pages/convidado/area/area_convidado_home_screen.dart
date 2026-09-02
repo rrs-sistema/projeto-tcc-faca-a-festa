@@ -6,11 +6,11 @@ import 'package:get/get.dart';
 import 'dart:async';
 import 'dart:ui';
 
-import './../../../../controllers/convidado/convidado_controller.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
-import './../../../../controllers/evento_controller.dart';
-import './../../../../controllers/tarefa_controller.dart';
-import './../../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './../../../../domain/entities/evento.dart';
 import './../../../../domain/entities/convidado.dart';
 import './../../../../domain/entities/tarefa.dart';
@@ -85,300 +85,301 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-    final gradient = theme.gradient.value;
-    final icon = theme.icon.value;
-    final evento = widget.evento;
-    final titulo = evento.nomeEvento;
-    final temCapa = theme.temCapaTema;
-    final alturaCabecalho = temCapa ? 228.0 : 80.0;
+      final gradient = theme.gradient.value;
+      final icon = theme.icon.value;
+      final evento = widget.evento;
+      final titulo = evento.nomeEvento;
+      final temCapa = theme.temCapaTema;
+      final alturaCabecalho = temCapa ? 228.0 : 80.0;
 
-    return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(alturaCabecalho),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: temCapa ? null : gradient,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.15),
-                blurRadius: 8,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (temCapa) ...[
-                TemaCapaImagem(
-                  url: theme.capaUrl.value,
-                  fallback: DecoratedBox(
-                    decoration: BoxDecoration(gradient: gradient),
-                  ),
-                ),
-                const DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Color(0x66000000),
-                        Color(0x00000000),
-                        Color(0x00000000),
-                        Color(0xB3000000),
-                      ],
-                      stops: [0, 0.22, 0.52, 1],
-                    ),
-                  ),
+      return Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(alturaCabecalho),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: temCapa ? null : gradient,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
                 ),
               ],
-              SafeArea(
-                bottom: false,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(12, 4, 12, temCapa ? 16 : 6),
-                  child: temCapa
-                      ? Column(
-                          children: [
-                            Row(
-                              children: [
-                                _botaoCabecalhoConvidado(
-                                  child: Icon(
-                                    icon,
-                                    color: Colors.white,
-                                    size: 22,
+            ),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                if (temCapa) ...[
+                  TemaCapaImagem(
+                    url: theme.capaUrl.value,
+                    fallback: DecoratedBox(
+                      decoration: BoxDecoration(gradient: gradient),
+                    ),
+                  ),
+                  const DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0x66000000),
+                          Color(0x00000000),
+                          Color(0x00000000),
+                          Color(0xB3000000),
+                        ],
+                        stops: [0, 0.22, 0.52, 1],
+                      ),
+                    ),
+                  ),
+                ],
+                SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(12, 4, 12, temCapa ? 16 : 6),
+                    child: temCapa
+                        ? Column(
+                            children: [
+                              Row(
+                                children: [
+                                  _botaoCabecalhoConvidado(
+                                    child: Icon(
+                                      icon,
+                                      color: Colors.white,
+                                      size: 22,
+                                    ),
                                   ),
-                                ),
-                                const Spacer(),
-                                Tooltip(
-                                  message: 'Sair',
-                                  child: InkWell(
-                                    borderRadius: BorderRadius.circular(20),
-                                    onTap: () =>
-                                        Get.find<AppController>().logout(),
-                                    child: _botaoCabecalhoConvidado(
-                                      child: const Icon(
-                                        Icons.logout,
-                                        color: Colors.white,
-                                        size: 20,
+                                  const Spacer(),
+                                  Tooltip(
+                                    message: 'Sair',
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(20),
+                                      onTap: () =>
+                                          Get.find<AppController>().logout(),
+                                      child: _botaoCabecalhoConvidado(
+                                        child: const Icon(
+                                          Icons.logout,
+                                          color: Colors.white,
+                                          size: 20,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            Text(
-                              theme.tituloCabecalho.value,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white.withValues(alpha: 0.92),
-                                shadows: _sombraTextoCapa,
+                                ],
                               ),
-                            ),
-                            Text(
-                              titulo,
-                              textAlign: TextAlign.center,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                height: 1.2,
-                                shadows: _sombraTextoCapa,
-                              ),
-                            ),
-                          ],
-                        )
-                      : Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Hero(
-                              tag: 'temaIcon',
-                              child: _botaoCabecalhoConvidado(
-                                child: Icon(
-                                  icon,
-                                  color: theme.onPrimaryColor.value,
-                                  size: 22,
+                              const Spacer(),
+                              Text(
+                                theme.tituloCabecalho.value,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withValues(alpha: 0.92),
+                                  shadows: _sombraTextoCapa,
                                 ),
                               ),
-                            ),
-                            Expanded(
-                              child: Center(
-                                child: Text(
-                                  '${theme.tituloCabecalho.value}\n$titulo',
-                                  textAlign: TextAlign.center,
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 2,
-                                  style: GoogleFonts.poppins(
-                                    fontSize: 15,
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white,
-                                    letterSpacing: 0.4,
-                                  ),
+                              Text(
+                                titulo,
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                  height: 1.2,
+                                  shadows: _sombraTextoCapa,
                                 ),
                               ),
-                            ),
-                            Tooltip(
-                              message: 'Sair',
-                              child: InkWell(
-                                borderRadius: BorderRadius.circular(20),
-                                onTap: () =>
-                                    Get.find<AppController>().logout(),
+                            ],
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Hero(
+                                tag: 'temaIcon',
                                 child: _botaoCabecalhoConvidado(
-                                  child: const Icon(
-                                    Icons.logout,
-                                    color: Colors.white,
-                                    size: 20,
+                                  child: Icon(
+                                    icon,
+                                    color: theme.onPrimaryColor.value,
+                                    size: 22,
                                   ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
+                              Expanded(
+                                child: Center(
+                                  child: Text(
+                                    '${theme.tituloCabecalho.value}\n$titulo',
+                                    textAlign: TextAlign.center,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 2,
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      letterSpacing: 0.4,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              Tooltip(
+                                message: 'Sair',
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(20),
+                                  onTap: () =>
+                                      Get.find<AppController>().logout(),
+                                  child: _botaoCabecalhoConvidado(
+                                    child: const Icon(
+                                      Icons.logout,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-      body: Container(
-        decoration: BoxDecoration(gradient: gradient),
-        child: Obx(() {
-          if (convidadoController.carregando.value) {
-            return const Center(
-                child: CircularProgressIndicator(color: Colors.white));
-          }
+        body: Container(
+          decoration: BoxDecoration(gradient: gradient),
+          child: Obx(() {
+            if (convidadoController.carregando.value) {
+              return const Center(
+                  child: CircularProgressIndicator(color: Colors.white));
+            }
 
-          final convidadoAtual =
-              convidadoController.convidadoAtual.value ?? widget.convidado;
-          final nomeConvidado = convidadoAtual.nome.split(' ').first;
-          final mensagemBoasVindas = 'Bem-vindo(a), $nomeConvidado! 🎉';
+            final convidadoAtual =
+                convidadoController.convidadoAtual.value ?? widget.convidado;
+            final nomeConvidado = convidadoAtual.nome.split(' ').first;
+            final mensagemBoasVindas = 'Bem-vindo(a), $nomeConvidado! 🎉';
 
-          final pages = [
-            _buildInformacoesPage(evento),
-            PresentesSection(evento: evento, theme: theme),
-            _buildConfirmacaoPage(convidadoAtual),
-            _buildTarefasPage(evento, convidadoAtual),
-          ];
+            final pages = [
+              _buildInformacoesPage(evento),
+              PresentesSection(evento: evento, theme: theme),
+              _buildConfirmacaoPage(convidadoAtual),
+              _buildTarefasPage(evento, convidadoAtual),
+            ];
 
-          return Stack(
-            children: [
-              Positioned.fill(
-                child: AnimatedOpacity(
-                  opacity: 1,
-                  duration: const Duration(milliseconds: 600),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          gradient.colors.first.withValues(alpha: 0.8),
-                          gradient.colors.last.withValues(alpha: 0.6),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
+            return Stack(
+              children: [
+                Positioned.fill(
+                  child: AnimatedOpacity(
+                    opacity: 1,
+                    duration: const Duration(milliseconds: 600),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            gradient.colors.first.withValues(alpha: 0.8),
+                            gradient.colors.last.withValues(alpha: 0.6),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 500),
-                switchInCurve: Curves.easeOutBack,
-                switchOutCurve: Curves.easeIn,
-                child: Container(
-                  key: ValueKey(_selectedIndex),
-                  margin: EdgeInsets.only(
-                    top: temCapa ? alturaCabecalho + 4 : 100,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.surfaceColor.value,
-                    borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(24)), // 🔹 Raio menor
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
-                        child: Column(
-                          children: [
-                            Text(
-                              mensagemBoasVindas,
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 14, // 🔹 Fonte menor
-                                fontWeight: FontWeight.w700,
-                                color: theme.primaryColor.value,
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  switchInCurve: Curves.easeOutBack,
+                  switchOutCurve: Curves.easeIn,
+                  child: Container(
+                    key: ValueKey(_selectedIndex),
+                    margin: EdgeInsets.only(
+                      top: temCapa ? alturaCabecalho + 4 : 100,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.surfaceColor.value,
+                      borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(24)), // 🔹 Raio menor
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, -2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+                          child: Column(
+                            children: [
+                              Text(
+                                mensagemBoasVindas,
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 14, // 🔹 Fonte menor
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.primaryColor.value,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Você foi convidado(a) para um momento especial!',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.poppins(
-                                fontSize: 12, // 🔹 Fonte menor
-                                color: Colors.grey.shade700,
-                                height: 1.3,
+                              const SizedBox(height: 4),
+                              Text(
+                                'Você foi convidado(a) para um momento especial!',
+                                textAlign: TextAlign.center,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12, // 🔹 Fonte menor
+                                  color: Colors.grey.shade700,
+                                  height: 1.3,
+                                ),
                               ),
-                            ),
-                            if (appController.acessoPorLink.value) ...[
-                              const SizedBox(height: 10),
-                              _bannerCriarConta(),
+                              if (appController.acessoPorLink.value) ...[
+                                const SizedBox(height: 10),
+                                _bannerCriarConta(),
+                              ],
                             ],
-                          ],
+                          ),
                         ),
-                      ),
-                      const Divider(thickness: 0.5, indent: 16, endIndent: 16),
-                      Expanded(child: pages[_selectedIndex]),
-                      const SizedBox(height: 6),
-                      Padding(
-                        padding:
-                            const EdgeInsets.only(bottom: 6), // 🔹 Compacto
-                        child: Column(
-                          children: [
-                            Text(
-                              'Organizado com 💕 pelo aplicativo',
-                              style: GoogleFonts.poppins(
-                                fontSize: 10, // 🔹 Fonte menor
-                                color: Colors.grey.shade600,
-                                fontWeight: FontWeight.w400,
+                        const Divider(
+                            thickness: 0.5, indent: 16, endIndent: 16),
+                        Expanded(child: pages[_selectedIndex]),
+                        const SizedBox(height: 6),
+                        Padding(
+                          padding:
+                              const EdgeInsets.only(bottom: 6), // 🔹 Compacto
+                          child: Column(
+                            children: [
+                              Text(
+                                'Organizado com 💕 pelo aplicativo',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10, // 🔹 Fonte menor
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w400,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              '🎉 Faça a Festa',
-                              style: GoogleFonts.poppins(
-                                fontSize: 13, // 🔹 Fonte menor
-                                fontWeight: FontWeight.w700,
-                                color: theme.primaryColor.value,
+                              const SizedBox(height: 2),
+                              Text(
+                                '🎉 Faça a Festa',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13, // 🔹 Fonte menor
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.primaryColor.value,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              ConfettiBackground(seconds: 30),
-            ],
-          );
-        }),
-      ),
-      bottomNavigationBar: _buildAnimatedBottomBar(theme.primaryColor.value),
-    );
+                ConfettiBackground(seconds: 30),
+              ],
+            );
+          }),
+        ),
+        bottomNavigationBar: _buildAnimatedBottomBar(theme.primaryColor.value),
+      );
     });
   }
 
@@ -1245,7 +1246,8 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
     });
   }
 
-  Widget _tarefaCard(Tarefa tarefa, Color primary, {bool somenteLeitura = false}) {
+  Widget _tarefaCard(Tarefa tarefa, Color primary,
+      {bool somenteLeitura = false}) {
     final corStatus = switch (tarefa.status) {
       StatusTarefa.aFazer => Colors.orange.shade400,
       StatusTarefa.emAndamento => Colors.blue.shade400,
@@ -1314,28 +1316,30 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                 ),
                 if (!somenteLeitura)
                   PopupMenuButton<String>(
-                  tooltip: 'Alterar status',
-                  onSelected: (value) => _atualizarStatusTarefa(tarefa, value),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  elevation: 3,
-                  color: Colors.white,
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                        value: 'a_fazer',
-                        child: Text('A Fazer', style: TextStyle(fontSize: 13))),
-                    const PopupMenuItem(
-                        value: 'em_andamento',
-                        child: Text('Em Andamento',
-                            style: TextStyle(fontSize: 13))),
-                    const PopupMenuItem(
-                        value: 'concluida',
-                        child:
-                            Text('Concluída', style: TextStyle(fontSize: 13))),
-                  ],
-                  icon: Icon(Icons.more_vert_rounded,
-                      color: Colors.grey.shade600, size: 20),
-                )
+                    tooltip: 'Alterar status',
+                    onSelected: (value) =>
+                        _atualizarStatusTarefa(tarefa, value),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14)),
+                    elevation: 3,
+                    color: Colors.white,
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                          value: 'a_fazer',
+                          child:
+                              Text('A Fazer', style: TextStyle(fontSize: 13))),
+                      const PopupMenuItem(
+                          value: 'em_andamento',
+                          child: Text('Em Andamento',
+                              style: TextStyle(fontSize: 13))),
+                      const PopupMenuItem(
+                          value: 'concluida',
+                          child: Text('Concluída',
+                              style: TextStyle(fontSize: 13))),
+                    ],
+                    icon: Icon(Icons.more_vert_rounded,
+                        color: Colors.grey.shade600, size: 20),
+                  )
               ],
             ),
             if (tarefa.descricao?.isNotEmpty ?? false) ...[

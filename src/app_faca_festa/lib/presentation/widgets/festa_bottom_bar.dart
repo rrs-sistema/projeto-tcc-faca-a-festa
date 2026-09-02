@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 class FestaNavItem {
   const FestaNavItem({
@@ -93,14 +93,16 @@ class FestaBottomBar extends StatelessWidget {
                   child: SizedBox(
                     height: 64,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 6),
                       child: Row(
                         children: [
                           for (var i = 0; i < items.length; i++)
                             Expanded(
                               child: _FestaNavButton(
                                 item: items[i],
-                                selected: !items[i].isAction && currentIndex == i,
+                                selected:
+                                    !items[i].isAction && currentIndex == i,
                                 primary: primary,
                                 gradient: gradient,
                                 onTap: () {
@@ -174,7 +176,8 @@ class _FestaNavButton extends StatelessWidget {
                 Icon(
                   icon,
                   size: selected ? 22 : 21,
-                  color: selected ? Colors.white : primary.withValues(alpha: 0.78),
+                  color:
+                      selected ? Colors.white : primary.withValues(alpha: 0.78),
                 ),
                 const SizedBox(height: 3),
                 AnimatedDefaultTextStyle(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/data/models/evento/tema_festa_model.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
@@ -242,6 +242,17 @@ class _EventoRepositoryFake implements EventoRepository {
 
   @override
   Future<void> salvar(Evento evento) async {}
+
+  @override
+  Future<String> enviarCapa({
+    required String idEvento,
+    required List<int> bytes,
+  }) async {
+    return 'https://example.com/$idEvento.jpg';
+  }
+
+  @override
+  Future<void> removerArquivoCapa(String idEvento) async {}
 
   @override
   Future<void> atualizarImagemCapa({

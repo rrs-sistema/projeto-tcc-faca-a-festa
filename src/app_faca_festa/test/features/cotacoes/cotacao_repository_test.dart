@@ -100,6 +100,9 @@ class _CotacaoRemoteFake implements CotacaoRemoteDatasource {
     this.nomeSolicitante = nomeSolicitante;
     return idEvento;
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 CotacaoModel _cotacao() {

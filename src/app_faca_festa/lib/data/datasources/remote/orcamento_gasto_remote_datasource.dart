@@ -6,9 +6,9 @@ import '../../models/orcamento/orcamento_validacao_resultado.dart';
 
 class OrcamentoGastoRemoteDatasource {
   OrcamentoGastoRemoteDatasource({
-    FirebaseFirestore? firestore,
+    required FirebaseFirestore firestore,
     Uuid? uuid,
-  })  : _db = firestore ?? FirebaseFirestore.instance,
+  })  : _db = firestore,
         _uuid = uuid ?? const Uuid();
 
   final FirebaseFirestore _db;

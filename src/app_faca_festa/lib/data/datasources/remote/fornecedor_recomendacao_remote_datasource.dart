@@ -6,11 +6,10 @@ import '../../models/fornecedor/fornecedor_recomendacao_model.dart';
 
 class FornecedorRecomendacaoRemoteDatasource {
   FornecedorRecomendacaoRemoteDatasource({
-    FirebaseFirestore? firestore,
-    FirebaseFunctions? functions,
-  })  : _db = firestore ?? FirebaseFirestore.instance,
-        _functions = functions ??
-            FirebaseFunctions.instanceFor(region: 'southamerica-east1');
+    required FirebaseFirestore firestore,
+    required FirebaseFunctions functions,
+  })  : _db = firestore,
+        _functions = functions;
 
   final FirebaseFirestore _db;
   final FirebaseFunctions _functions;

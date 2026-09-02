@@ -60,7 +60,8 @@ class _TituloVinculoAnimadoState extends State<TituloVinculoAnimado>
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.design_services_rounded, color: Colors.white, size: 22),
+              Icon(Icons.design_services_rounded,
+                  color: Colors.white, size: 22),
               const SizedBox(width: 10),
               Text(
                 titulo,

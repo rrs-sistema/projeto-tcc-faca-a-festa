@@ -4,6 +4,7 @@ import { logger } from "firebase-functions";
 
 import { admin } from "../../shared/firebaseAdmin";
 import { exigirTipo, exigirUsuarioAutenticado } from "../../shared/auth";
+import { calcularHashIntegridadeAuditoria } from "./auditIntegrity";
 import { definirAcao } from "./catalogoAuditoria";
 
 const REGION = "southamerica-east1";
@@ -151,6 +152,7 @@ export const registrarAuditoria = onCall(
       rota: limitar(texto(data.rota), 180) || null,
       origem: "callable",
       versao_schema: 1,
+      algoritmo_hash: "sha256",
       criado_em: FieldValue.serverTimestamp(),
       criado_em_local: texto(data.criadoEmLocal) || new Date().toISOString(),
     };
@@ -164,6 +166,8 @@ export const registrarAuditoria = onCall(
     if (Array.isArray(payload.mudancas) && payload.mudancas.length === 0) {
       delete payload.mudancas;
     }
+
+    payload.hash_integridade = calcularHashIntegridadeAuditoria(payload);
 
     const ref = admin.firestore().collection("auditoria_eventos").doc();
     await ref.set(payload);

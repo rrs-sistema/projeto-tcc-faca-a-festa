@@ -1,4 +1,3 @@
-
 import 'package:drift/drift.dart';
 
 class GiftContributionLocals extends Table {

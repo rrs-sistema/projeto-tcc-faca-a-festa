@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/convidado/convidado_controller.dart';
-import './../../../controllers/convidado/grupo_convidado_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './components/abrir_adicionar_grupo_bottom_sheet.dart';
-import './../../../controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import './../../../domain/entities/evento.dart';
-import './../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './area/lista_convidados_screen.dart';
 import './enviar_convites_screen.dart';
 import './../../widgets/festa_app_bar.dart';
@@ -25,7 +25,8 @@ class ConvidadosPage extends StatefulWidget {
   State<ConvidadosPage> createState() => _ConvidadosPageState();
 }
 
-class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProviderStateMixin {
+class _ConvidadosPageState extends State<ConvidadosPage>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   final themeController = Get.find<EventThemeController>();
@@ -89,99 +90,111 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
       return AnnotatedRegion<SystemUiOverlayStyle>(
         value: FestaSystemUi.fundoEscuro,
         child: Scaffold(
-        backgroundColor: const Color(0xFFF6F7FB),
-        appBar: FestaAppBar(
-          titulo: 'Central de Convites',
-          altura: 124,
-          acoes: [
-            IconButton(
-              tooltip: 'Pesquisar convidados',
-              icon: const Icon(Icons.search_rounded, color: Colors.white),
-              onPressed: _abrirListaConvidados,
-            ),
-            IconButton(
-              tooltip: 'Copiar e compartilhar convites',
-              icon: const Icon(Icons.mark_email_read_rounded, color: Colors.white),
-              onPressed: _abrirEnvioConvites,
-            ),
-          ],
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(66),
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
-              child: Container(
-                height: 52,
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.96),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.55),
-                    width: 1,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.08),
-                      blurRadius: 16,
-                      offset: const Offset(0, 8),
+          backgroundColor: const Color(0xFFF6F7FB),
+          appBar: FestaAppBar(
+            titulo: 'Central de Convites',
+            altura: 124,
+            acoes: [
+              IconButton(
+                tooltip: 'Pesquisar convidados',
+                icon: const Icon(Icons.search_rounded, color: Colors.white),
+                onPressed: _abrirListaConvidados,
+              ),
+              IconButton(
+                tooltip: 'Copiar e compartilhar convites',
+                icon: const Icon(Icons.mark_email_read_rounded,
+                    color: Colors.white),
+                onPressed: _abrirEnvioConvites,
+              ),
+            ],
+            bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(66),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 12),
+                child: Container(
+                  height: 52,
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.96),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.55),
+                      width: 1,
                     ),
-                  ],
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  padding: EdgeInsets.zero,
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  splashFactory: NoSplash.splashFactory,
-                  overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-                  splashBorderRadius: BorderRadius.circular(14),
-                  onTap: (_) => HapticFeedback.selectionClick(),
-                  indicator: BoxDecoration(
-                    color: primary.withValues(alpha: 0.13),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: primary.withValues(alpha: 0.16)),
                     boxShadow: [
                       BoxShadow(
-                        color: primary.withValues(alpha: 0.10),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 16,
+                        offset: const Offset(0, 8),
                       ),
                     ],
                   ),
-                  labelColor: primary,
-                  unselectedLabelColor: const Color(0xFF6B7280),
-                  labelStyle: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 11.8,
+                  child: TabBar(
+                    controller: _tabController,
+                    padding: EdgeInsets.zero,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    splashFactory: NoSplash.splashFactory,
+                    overlayColor:
+                        const WidgetStatePropertyAll(Colors.transparent),
+                    splashBorderRadius: BorderRadius.circular(14),
+                    onTap: (_) => HapticFeedback.selectionClick(),
+                    indicator: BoxDecoration(
+                      color: primary.withValues(alpha: 0.13),
+                      borderRadius: BorderRadius.circular(14),
+                      border:
+                          Border.all(color: primary.withValues(alpha: 0.16)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: primary.withValues(alpha: 0.10),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    labelColor: primary,
+                    unselectedLabelColor: const Color(0xFF6B7280),
+                    labelStyle: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11.8,
+                    ),
+                    unselectedLabelStyle: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 11.5,
+                    ),
+                    tabs: const [
+                      Tab(
+                          icon: Icon(Icons.groups_rounded, size: 18),
+                          text: 'Grupos'),
+                      Tab(
+                          icon: Icon(Icons.restaurant_menu_rounded, size: 18),
+                          text: 'Cardápio'),
+                      Tab(
+                          icon: Icon(Icons.table_restaurant_rounded, size: 18),
+                          text: 'Mesas'),
+                      Tab(
+                          icon: Icon(Icons.query_stats_rounded, size: 18),
+                          text: 'Status'),
+                    ],
                   ),
-                  unselectedLabelStyle: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 11.5,
-                  ),
-                  tabs: const [
-                    Tab(icon: Icon(Icons.groups_rounded, size: 18), text: 'Grupos'),
-                    Tab(icon: Icon(Icons.restaurant_menu_rounded, size: 18), text: 'Cardápio'),
-                    Tab(icon: Icon(Icons.table_restaurant_rounded, size: 18), text: 'Mesas'),
-                    Tab(icon: Icon(Icons.query_stats_rounded, size: 18), text: 'Status'),
-                  ],
                 ),
               ),
             ),
           ),
+          body: TabBarView(
+            controller: _tabController,
+            physics: const NeverScrollableScrollPhysics(),
+            children: const [
+              GruposTab(),
+              CardapiosTab(),
+              MesasTab(),
+              EstatisticasTab(),
+            ],
+          ),
+          floatingActionButton: podeGerenciar
+              ? _buildFloatingActionButton(primary)
+              : const SizedBox.shrink(),
         ),
-        body: TabBarView(
-          controller: _tabController,
-          physics: const NeverScrollableScrollPhysics(),
-          children: const [
-            GruposTab(),
-            CardapiosTab(),
-            MesasTab(),
-            EstatisticasTab(),
-          ],
-        ),
-        floatingActionButton:
-            podeGerenciar ? _buildFloatingActionButton(primary) : const SizedBox.shrink(),
-      ),
       );
     });
   }
@@ -268,4 +281,3 @@ class _ConvidadosPageState extends State<ConvidadosPage> with SingleTickerProvid
     );
   }
 }
-

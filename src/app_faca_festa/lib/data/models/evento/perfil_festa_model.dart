@@ -69,7 +69,8 @@ class PerfilFestaModel {
     return const PerfilFestaModel(
       tipo: TipoPerfilFesta.premium,
       nome: 'Premium',
-      descricao: 'Estimativa mais completa, com maior margem e custo médio elevado.',
+      descricao:
+          'Estimativa mais completa, com maior margem e custo médio elevado.',
       multiplicadorQuantidade: 1.20,
       multiplicadorCusto: 1.25,
       margemSegurancaPadrao: 0.15,
@@ -116,9 +117,11 @@ class PerfilFestaModel {
       tipo: tipo ?? this.tipo,
       nome: nome ?? this.nome,
       descricao: descricao ?? this.descricao,
-      multiplicadorQuantidade: multiplicadorQuantidade ?? this.multiplicadorQuantidade,
+      multiplicadorQuantidade:
+          multiplicadorQuantidade ?? this.multiplicadorQuantidade,
       multiplicadorCusto: multiplicadorCusto ?? this.multiplicadorCusto,
-      margemSegurancaPadrao: margemSegurancaPadrao ?? this.margemSegurancaPadrao,
+      margemSegurancaPadrao:
+          margemSegurancaPadrao ?? this.margemSegurancaPadrao,
     );
   }
 
@@ -156,6 +159,7 @@ class PerfilFestaModel {
 
   static double _asDouble(dynamic value, double fallback) {
     if (value is num) return value.toDouble();
-    return double.tryParse(value?.toString().replaceAll(',', '.') ?? '') ?? fallback;
+    return double.tryParse(value?.toString().replaceAll(',', '.') ?? '') ??
+        fallback;
   }
 }

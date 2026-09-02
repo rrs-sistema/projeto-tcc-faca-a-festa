@@ -192,10 +192,14 @@ class ScoreCotacaoFornecedorModel {
       idEvento: idEvento ?? this.idEvento,
       score: score ?? this.score,
       nivel: nivel ?? this.nivel,
-      compatibilidadeTipoEvento: compatibilidadeTipoEvento ?? this.compatibilidadeTipoEvento,
-      compatibilidadeCategoria: compatibilidadeCategoria ?? this.compatibilidadeCategoria,
-      compatibilidadeOrcamento: compatibilidadeOrcamento ?? this.compatibilidadeOrcamento,
-      compatibilidadeLocalizacao: compatibilidadeLocalizacao ?? this.compatibilidadeLocalizacao,
+      compatibilidadeTipoEvento:
+          compatibilidadeTipoEvento ?? this.compatibilidadeTipoEvento,
+      compatibilidadeCategoria:
+          compatibilidadeCategoria ?? this.compatibilidadeCategoria,
+      compatibilidadeOrcamento:
+          compatibilidadeOrcamento ?? this.compatibilidadeOrcamento,
+      compatibilidadeLocalizacao:
+          compatibilidadeLocalizacao ?? this.compatibilidadeLocalizacao,
       scoreUrgencia: scoreUrgencia ?? this.scoreUrgencia,
       scoreInteracao: scoreInteracao ?? this.scoreInteracao,
       scoreReputacao: scoreReputacao ?? this.scoreReputacao,

@@ -5,10 +5,10 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
-import './../../../controllers/gift/gift_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
 import './../../../core/utils/form_validators.dart';
 import './../../../domain/entities/gift/gift.dart';
+import '../tema/controllers/event_theme_controller.dart';
+import 'controllers/gift_controller.dart';
 
 void abrirDialogCadastrarPresente(
   BuildContext context, {
@@ -150,136 +150,137 @@ void abrirDialogCadastrarPresente(
       return PopScope(
         canPop: false,
         child: DraggableScrollableSheet(
-        initialChildSize: 0.92,
-        minChildSize: 0.62,
-        maxChildSize: 0.97,
-        expand: false,
-        shouldCloseOnMinExtent: false,
-        builder: (_, scrollController) {
-          return ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
-            child: Material(
-              color: const Color(0xFFF6F8FC),
-              child: Column(
-                children: [
-                  _GiftFormHeader(
-                    gradient: gradient,
-                    primary: primary,
-                    editando: editando,
-                    onClose: () {
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      Navigator.of(modalContext).pop();
-                    },
-                  ),
-                  Expanded(
-                    child: Form(
-                      key: formKey,
-                      child: ListView(
-                        controller: scrollController,
-                        padding: EdgeInsets.fromLTRB(
-                          16,
-                          16,
-                          16,
-                          MediaQuery.of(modalContext).viewInsets.bottom + 18,
-                        ),
-                        children: [
-                          Obx(
-                            () => _GiftPreviewCard(
-                              primary: primary,
-                              tipo: tipoSelecionado.value,
-                              imageUrl: urlPreview.value,
-                              nome: nomeCtrl.text.trim().isEmpty
-                                  ? 'Prévia do presente'
-                                  : nomeCtrl.text.trim(),
-                            ),
+          initialChildSize: 0.92,
+          minChildSize: 0.62,
+          maxChildSize: 0.97,
+          expand: false,
+          shouldCloseOnMinExtent: false,
+          builder: (_, scrollController) {
+            return ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(30)),
+              child: Material(
+                color: const Color(0xFFF6F8FC),
+                child: Column(
+                  children: [
+                    _GiftFormHeader(
+                      gradient: gradient,
+                      primary: primary,
+                      editando: editando,
+                      onClose: () {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        Navigator.of(modalContext).pop();
+                      },
+                    ),
+                    Expanded(
+                      child: Form(
+                        key: formKey,
+                        child: ListView(
+                          controller: scrollController,
+                          padding: EdgeInsets.fromLTRB(
+                            16,
+                            16,
+                            16,
+                            MediaQuery.of(modalContext).viewInsets.bottom + 18,
                           ),
-                          const SizedBox(height: 16),
-                          _SectionTitle(
-                            title: 'Formato do presente',
-                            subtitle:
-                                'Escolha como o convidado verá essa sugestão.',
-                          ),
-                          const SizedBox(height: 10),
-                          Obx(
-                            () => _GiftTypeSelector(
-                              primary: primary,
-                              selected: tipoSelecionado.value,
-                              onChanged: (value) =>
-                                  tipoSelecionado.value = value,
-                            ),
-                          ),
-                          const SizedBox(height: 18),
-                          _SectionTitle(
-                            title: 'Dados principais',
-                            subtitle:
-                                'Use nomes curtos e objetivos para facilitar a escolha.',
-                          ),
-                          const SizedBox(height: 10),
-                          _PremiumTextField(
-                            controller: nomeCtrl,
-                            primary: primary,
-                            label: 'Nome do presente',
-                            hint: 'Ex.: Fralda Pampers G',
-                            icon: Icons.redeem_rounded,
-                            textCapitalization: TextCapitalization.sentences,
-                            validator: (value) => FormValidators.titulo(
-                              value,
-                              campo: 'o nome do presente',
-                              minimo: 2,
-                            ),
-                            onChanged: (_) => urlPreview.refresh(),
-                          ),
-                          const SizedBox(height: 10),
-                          _PremiumTextField(
-                            controller: descricaoCtrl,
-                            primary: primary,
-                            label: 'Descrição curta',
-                            hint:
-                                'Opcional: cor, tamanho, observação ou preferência.',
-                            icon: Icons.notes_rounded,
-                            maxLines: 3,
-                            textCapitalization: TextCapitalization.sentences,
-                          ),
-                          const SizedBox(height: 10),
-                          Obx(
-                            () => AnimatedSwitcher(
-                              duration: const Duration(milliseconds: 220),
-                              switchInCurve: Curves.easeOut,
-                              switchOutCurve: Curves.easeIn,
-                              child: _TipoCamposDinamicos(
-                                key: ValueKey(tipoSelecionado.value.name),
-                                tipo: tipoSelecionado.value,
+                          children: [
+                            Obx(
+                              () => _GiftPreviewCard(
                                 primary: primary,
-                                valorCtrl: valorCtrl,
-                                lojaCtrl: lojaCtrl,
-                                linkCtrl: linkCtrl,
-                                pixCtrl: pixCtrl,
-                                metaCtrl: metaCtrl,
-                                imagemCtrl: imagemCtrl,
+                                tipo: tipoSelecionado.value,
+                                imageUrl: urlPreview.value,
+                                nome: nomeCtrl.text.trim().isEmpty
+                                    ? 'Prévia do presente'
+                                    : nomeCtrl.text.trim(),
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 14),
-                          _GiftFormHint(primary: primary),
-                        ],
+                            const SizedBox(height: 16),
+                            _SectionTitle(
+                              title: 'Formato do presente',
+                              subtitle:
+                                  'Escolha como o convidado verá essa sugestão.',
+                            ),
+                            const SizedBox(height: 10),
+                            Obx(
+                              () => _GiftTypeSelector(
+                                primary: primary,
+                                selected: tipoSelecionado.value,
+                                onChanged: (value) =>
+                                    tipoSelecionado.value = value,
+                              ),
+                            ),
+                            const SizedBox(height: 18),
+                            _SectionTitle(
+                              title: 'Dados principais',
+                              subtitle:
+                                  'Use nomes curtos e objetivos para facilitar a escolha.',
+                            ),
+                            const SizedBox(height: 10),
+                            _PremiumTextField(
+                              controller: nomeCtrl,
+                              primary: primary,
+                              label: 'Nome do presente',
+                              hint: 'Ex.: Fralda Pampers G',
+                              icon: Icons.redeem_rounded,
+                              textCapitalization: TextCapitalization.sentences,
+                              validator: (value) => FormValidators.titulo(
+                                value,
+                                campo: 'o nome do presente',
+                                minimo: 2,
+                              ),
+                              onChanged: (_) => urlPreview.refresh(),
+                            ),
+                            const SizedBox(height: 10),
+                            _PremiumTextField(
+                              controller: descricaoCtrl,
+                              primary: primary,
+                              label: 'Descrição curta',
+                              hint:
+                                  'Opcional: cor, tamanho, observação ou preferência.',
+                              icon: Icons.notes_rounded,
+                              maxLines: 3,
+                              textCapitalization: TextCapitalization.sentences,
+                            ),
+                            const SizedBox(height: 10),
+                            Obx(
+                              () => AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 220),
+                                switchInCurve: Curves.easeOut,
+                                switchOutCurve: Curves.easeIn,
+                                child: _TipoCamposDinamicos(
+                                  key: ValueKey(tipoSelecionado.value.name),
+                                  tipo: tipoSelecionado.value,
+                                  primary: primary,
+                                  valorCtrl: valorCtrl,
+                                  lojaCtrl: lojaCtrl,
+                                  linkCtrl: linkCtrl,
+                                  pixCtrl: pixCtrl,
+                                  metaCtrl: metaCtrl,
+                                  imagemCtrl: imagemCtrl,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            _GiftFormHint(primary: primary),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  _GiftFormFooter(
-                    primary: primary,
-                    editando: editando,
-                    salvando: salvando,
-                    onCancel: () {
-                      FocusManager.instance.primaryFocus?.unfocus();
-                      Navigator.of(modalContext).pop();
-                    },
-                    onSave: () => salvar(modalContext),
-                  ),
-                ],
+                    _GiftFormFooter(
+                      primary: primary,
+                      editando: editando,
+                      salvando: salvando,
+                      onCancel: () {
+                        FocusManager.instance.primaryFocus?.unfocus();
+                        Navigator.of(modalContext).pop();
+                      },
+                      onSave: () => salvar(modalContext),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
         ),
       );
     },

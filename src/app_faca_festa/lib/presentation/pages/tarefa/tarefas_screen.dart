@@ -4,14 +4,14 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../controllers/convidado/convidado_controller.dart';
-import '../../../controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import '../../widgets/festa_app_bar.dart';
 import './tarefa_dialog.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/tarefa_controller.dart';
 import './../../../data/models/model.dart';
 
 class TarefasScreen extends StatelessWidget {

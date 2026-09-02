@@ -34,7 +34,9 @@ class EventoComTipoModel {
       'em_andamento',
     };
     if (status.isNotEmpty) return ativos.contains(status);
-    return ativo && (data == null || !data!.isBefore(DateTime.now().subtract(const Duration(days: 1))));
+    return ativo &&
+        (data == null ||
+            !data!.isBefore(DateTime.now().subtract(const Duration(days: 1))));
   }
 
   String get statusLabel {
@@ -59,14 +61,22 @@ class EventoComTipoModel {
     }
   }
 
-  factory EventoComTipoModel.fromMap(Map<String, dynamic> map, String id, String tipoNome) {
+  factory EventoComTipoModel.fromMap(
+      Map<String, dynamic> map, String id, String tipoNome) {
     return EventoComTipoModel(
       id: id,
-      nome: _texto(map, ['nomeEvento', 'nome_evento', 'nome'], fallback: 'Sem nome'),
+      nome: _texto(map, ['nomeEvento', 'nome_evento', 'nome'],
+          fallback: 'Sem nome'),
       tipoNome: tipoNome,
       organizador: _texto(
         map,
-        ['nomePessoalPrincipal', 'nome_pessoal_principal', 'organizador', 'nomeResponsavel', 'nome_responsavel'],
+        [
+          'nomePessoalPrincipal',
+          'nome_pessoal_principal',
+          'organizador',
+          'nomeResponsavel',
+          'nome_responsavel'
+        ],
         fallback: '-',
       ),
       cidade: _textoOpcional(map, ['nomeCidade', 'nome_cidade', 'cidade']),
@@ -78,7 +88,8 @@ class EventoComTipoModel {
     );
   }
 
-  static String _texto(Map<String, dynamic> map, List<String> keys, {String fallback = ''}) {
+  static String _texto(Map<String, dynamic> map, List<String> keys,
+      {String fallback = ''}) {
     for (final key in keys) {
       final value = map[key];
       if (value == null) continue;

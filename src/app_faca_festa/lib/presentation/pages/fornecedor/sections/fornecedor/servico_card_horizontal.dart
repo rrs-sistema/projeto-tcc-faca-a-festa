@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../../../data/models/DTO/servico_cotado_dto.dart';
-import './../../../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './../../../../../data/models/model.dart';
 
 class ServicoCardHorizontal extends StatelessWidget {
@@ -94,7 +94,8 @@ class ServicoCardHorizontal extends StatelessWidget {
           errorWidget: (_, __, ___) => Container(
             height: 90,
             color: Colors.grey.shade50,
-            child: Icon(Icons.image_not_supported_outlined, size: 24, color: Colors.grey.shade300),
+            child: Icon(Icons.image_not_supported_outlined,
+                size: 24, color: Colors.grey.shade300),
           ),
         ),
       );
@@ -107,27 +108,31 @@ class ServicoCardHorizontal extends StatelessWidget {
             backgroundColor: primary,
             padding: EdgeInsets.zero,
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
           ),
           onPressed: () {
             final appController = Get.find<AppController>();
-            final servicoCotado =
-                ServicoCotadoDto(idProduto: servico.id, nomeProduto: servico.nome);
+            final servicoCotado = ServicoCotadoDto(
+                idProduto: servico.id, nomeProduto: servico.nome);
 
             if (appController.isServicoSelecionado(servico.id)) {
               appController.removerServico(servico.id);
               Get.snackbar('Removido', 'Serviço removido da lista de cotação.',
-                  backgroundColor: Colors.grey.shade900, colorText: Colors.white);
+                  backgroundColor: Colors.grey.shade900,
+                  colorText: Colors.white);
             } else {
               appController.adicionarServico(servicoCotado);
-              Get.snackbar('Adicionado', 'Serviço adicionado à lista de cotação.',
+              Get.snackbar(
+                  'Adicionado', 'Serviço adicionado à lista de cotação.',
                   backgroundColor: primary, colorText: Colors.white);
             }
           },
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.add_shopping_cart_rounded, size: 14, color: Colors.white),
+              const Icon(Icons.add_shopping_cart_rounded,
+                  size: 14, color: Colors.white),
               const SizedBox(width: 6),
               Text(
                 'Orçar',

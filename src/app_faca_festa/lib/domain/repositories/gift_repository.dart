@@ -4,6 +4,8 @@ import './../entities/gift/gift.dart';
 abstract class GiftRepository {
   Stream<List<Gift>> getGifts(String eventoId);
 
+  Stream<List<Gift>> watchRemoteGifts(String eventoId);
+
   Future<void> createGift(
     String eventoId,
     Gift gift,

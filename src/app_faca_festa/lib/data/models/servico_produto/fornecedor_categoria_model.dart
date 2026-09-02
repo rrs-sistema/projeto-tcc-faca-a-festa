@@ -36,8 +36,9 @@ class FornecedorCategoriaModel {
       subcategorias: (map['subcategorias'] != null)
           ? List<Map<String, dynamic>>.from(map['subcategorias'])
           : [],
-      dataCadastro:
-          map['data_cadastro'] is Timestamp ? (map['data_cadastro'] as Timestamp).toDate() : null,
+      dataCadastro: map['data_cadastro'] is Timestamp
+          ? (map['data_cadastro'] as Timestamp).toDate()
+          : null,
     );
   }
 

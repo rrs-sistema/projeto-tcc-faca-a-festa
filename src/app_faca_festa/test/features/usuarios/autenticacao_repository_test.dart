@@ -235,4 +235,52 @@ class _AutenticacaoRemoteFake implements AutenticacaoRemoteDatasource {
   Future<void> entrarComTokenCustomizado(String token) async {
     if (erro != null) throw erro!;
   }
+
+  @override
+  Future<void> solicitarCodigoRedefinicaoSenha({
+    required String email,
+  }) async {
+    if (erro != null) throw erro!;
+  }
+
+  @override
+  Future<void> redefinirSenhaComCodigo({
+    required String email,
+    required String codigo,
+    required String novaSenha,
+  }) async {
+    if (erro != null) throw erro!;
+  }
+
+  @override
+  Future<Map<String, dynamic>> iniciarTotpMfa() async {
+    if (erro != null) throw erro!;
+    return const {};
+  }
+
+  @override
+  Future<Map<String, dynamic>> solicitarCodigoEmailMfa() async {
+    if (erro != null) throw erro!;
+    return const {};
+  }
+
+  @override
+  Future<void> confirmarTotpMfa(String codigo) async {
+    if (erro != null) throw erro!;
+  }
+
+  @override
+  Future<void> confirmarEmailMfa(String codigo) async {
+    if (erro != null) throw erro!;
+  }
+
+  @override
+  Future<void> verificarTotpMfa(String codigo) async {
+    if (erro != null) throw erro!;
+  }
+
+  @override
+  Future<void> verificarEmailMfa(String codigo) async {
+    if (erro != null) throw erro!;
+  }
 }

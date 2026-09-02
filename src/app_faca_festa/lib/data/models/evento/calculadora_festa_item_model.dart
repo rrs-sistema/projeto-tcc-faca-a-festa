@@ -91,16 +91,18 @@ class CalculadoraFestaItemModel {
       unidade: unidade ?? this.unidade,
       regraAplicada: regraAplicada ?? this.regraAplicada,
       adicionadoAoCardapio: adicionadoAoCardapio ?? this.adicionadoAoCardapio,
-      adicionadoAoOrcamento: adicionadoAoOrcamento ?? this.adicionadoAoOrcamento,
-      idOrcamentoGerado:
-          limparIdOrcamentoGerado ? null : idOrcamentoGerado ?? this.idOrcamentoGerado,
+      adicionadoAoOrcamento:
+          adicionadoAoOrcamento ?? this.adicionadoAoOrcamento,
+      idOrcamentoGerado: limparIdOrcamentoGerado
+          ? null
+          : idOrcamentoGerado ?? this.idOrcamentoGerado,
       dataAdicionadoAoOrcamento: limparDataAdicionadoAoOrcamento
           ? null
           : dataAdicionadoAoOrcamento ?? this.dataAdicionadoAoOrcamento,
       valorUnitarioMedio: valorUnitarioMedio ?? this.valorUnitarioMedio,
       custoEstimado: custoEstimado ?? this.custoEstimado,
-      quantidadePorConvidadoEquivalente:
-          quantidadePorConvidadoEquivalente ?? this.quantidadePorConvidadoEquivalente,
+      quantidadePorConvidadoEquivalente: quantidadePorConvidadoEquivalente ??
+          this.quantidadePorConvidadoEquivalente,
     );
   }
 
@@ -119,7 +121,8 @@ class CalculadoraFestaItemModel {
       'adicionado_ao_cardapio': adicionadoAoCardapio,
       'adicionado_ao_orcamento': adicionadoAoOrcamento,
       'id_orcamento_gerado': idOrcamentoGerado,
-      'data_adicionado_ao_orcamento': dataAdicionadoAoOrcamento?.toIso8601String(),
+      'data_adicionado_ao_orcamento':
+          dataAdicionadoAoOrcamento?.toIso8601String(),
       'valor_unitario_medio': valorUnitarioMedio,
       'custo_estimado': custoEstimado,
       'quantidade_por_convidado_equivalente': quantidadePorConvidadoEquivalente,
@@ -160,8 +163,13 @@ class CalculadoraFestaItemModel {
     if (value is bool) return value;
     final normalized = value?.toString().trim().toLowerCase();
 
-    if (normalized == 'true' || normalized == '1' || normalized == 'sim') return true;
-    if (normalized == 'false' || normalized == '0' || normalized == 'nao' || normalized == 'não') {
+    if (normalized == 'true' || normalized == '1' || normalized == 'sim') {
+      return true;
+    }
+    if (normalized == 'false' ||
+        normalized == '0' ||
+        normalized == 'nao' ||
+        normalized == 'não') {
       return false;
     }
 

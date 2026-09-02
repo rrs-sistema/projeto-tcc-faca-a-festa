@@ -68,8 +68,10 @@ class Evento {
   final int? idade;
   final String? idTema;
   final String? tema;
+
   /// Capa personalizada do organizador; se vazia, usa a capa do tema.
   final String? imagemCapaUrl;
+
   /// Texto do topo do banner; se vazio, usa "tipo · tema".
   final String? rotuloBanner;
   final String? nomeResponsavel;

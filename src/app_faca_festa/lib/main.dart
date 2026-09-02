@@ -1,8 +1,7 @@
-import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:flutter/foundation.dart';
@@ -11,12 +10,10 @@ import 'package:get/get.dart';
 import 'dart:async';
 
 import './presentation/pages/convidado/area/area_convidado_home_screen.dart';
-import './controllers/categoria/subcategoria_servico_controller.dart';
 import './presentation/pages/fornecedor/fornecedor_home_screen.dart';
 import './presentation/pages/fornecedor/auditoria_fornecedor_screen.dart';
 import './presentation/pages/fornecedor/fornecedor_localizacao_screen.dart';
 import './presentation/modules/gifts/gerenciar_presentes_page.dart';
-import './controllers/categoria/categoria_servico_controller.dart';
 import './presentation/pages/convidado/convite_nao_encontrado_screen.dart';
 import './presentation/pages/convidado/convite_redirect_page.dart';
 import 'core/utils/convite_link.dart';
@@ -24,68 +21,26 @@ import './presentation/pages/fornecedor/orcamentos_screen.dart';
 import './presentation/pages/welcome/welcome_event_screen.dart';
 import './presentation/pages/admin/admin_dashboard_screen.dart';
 import './presentation/pages/admin/auditoria_admin_screen.dart';
-import 'controllers/calculadora/calculadora_itens_admin_controller.dart';
-import 'controllers/calculadora/calculadora_festa_controller.dart';
-import 'controllers/inspiracao/inspiracao_controller.dart';
-import 'controllers/sugestao_base_festa_controller.dart';
-import 'controllers/usuario/endereco_usuario_controller.dart';
+import './presentation/pages/admin/auditoria_dashboard_screen.dart';
 import './presentation/pages/convidado/convidado_page.dart';
 import './presentation/pages/login/register_screen.dart';
 import './presentation/pages/login/forgot_password_screen.dart';
 import './presentation/pages/login/totp_setup_screen.dart';
 import './presentation/pages/login/totp_verify_screen.dart';
-import './controllers/tema/event_theme_controller.dart';
-import './controllers/contacao/cotacao_controller.dart';
-import './controllers/evento_cadastro_controller.dart';
 import './presentation/pages/login/login_screen.dart';
-import 'controllers/usuario/usuario_controller.dart';
+import './presentation/modules/tema/controllers/event_theme_controller.dart';
 
 import 'core/services/push/notification_service.dart';
 import './presentation/pages/home_event_screen.dart';
-import 'controllers/fornecedor/fornecedor_controller.dart';
 import './presentation/widgets/splash.dart';
-import './controllers/app_controller.dart';
 import './role_selector_screen.dart';
 import './firebase_options.dart';
-import 'data/repositories/calculadora/calculadora_itens_base_repository.dart';
-import 'data/repositories/viacep_repository.dart';
-import 'data/datasources/remote/catalogo_servico_remote_datasource.dart';
-import 'data/repositories_impl/catalogo_servico_repository_impl.dart';
-import 'data/repositories/evento/calculadora_festa_remote_ai_service.dart';
-import 'data/repositories/i_calculadora_festa_ai_service.dart';
-import 'data/repositories/sugestao_base_festa_repository.dart';
 import 'app/bindings/gift_binding.dart';
-import 'app/bootstrap/avaliacao_servico_bootstrap.dart';
-import 'app/bootstrap/admin_territorio_bootstrap.dart';
-import 'app/bootstrap/admin_dashboard_bootstrap.dart';
-import 'app/bootstrap/auditoria_bootstrap.dart';
-import 'app/bootstrap/eventos_admin_bootstrap.dart';
+import 'app/bootstrap/app_bootstrap.dart';
+import 'app/bootstrap/app_check_bootstrap.dart';
+import 'app/bootstrap/firebase_services_bootstrap.dart';
 import 'app/bootstrap/gift_offline_bootstrap.dart';
-import 'app/bootstrap/orcamentos_admin_bootstrap.dart';
-import 'app/bootstrap/orcamento_bootstrap.dart';
-import 'app/bootstrap/orcamento_gasto_bootstrap.dart';
-import 'app/bootstrap/evento_bootstrap.dart';
-import 'app/bootstrap/fornecedor_bootstrap.dart';
-import 'app/bootstrap/convidado_bootstrap.dart';
-import 'app/bootstrap/fornecedor_recomendacao_bootstrap.dart';
-import 'app/bootstrap/perfil_usuario_bootstrap.dart';
-import 'app/bootstrap/ranking_bootstrap.dart';
-import 'app/bootstrap/servico_foto_bootstrap.dart';
-import 'app/bootstrap/servico_produto_bootstrap.dart';
-import 'app/bootstrap/solicitacoes_bootstrap.dart';
-import 'app/bootstrap/tema_festa_bootstrap.dart';
-import 'app/bootstrap/autenticacao_bootstrap.dart';
-import 'app/bootstrap/comunidade_bootstrap.dart';
-import 'app/bootstrap/cotacao_bootstrap.dart';
-import 'app/bootstrap/documento_bootstrap.dart';
-import 'app/bootstrap/uf_cidade_bootstrap.dart';
 import 'app/middleware/papel_middleware.dart';
-import 'domain/repositories/catalogo_servico_repository.dart';
-import 'domain/repositories/cep_repository.dart';
-import 'domain/repositories/evento_repository.dart';
-import 'domain/repositories/perfil_usuario_repository.dart';
-import 'domain/usecases/gerenciar_catalogo_servico.dart';
-import 'domain/usecases/gerenciar_temas_festa.dart';
 
 // =============================================================
 //  MAIN
@@ -100,8 +55,9 @@ Future<void> main() async {
   } catch (e, s) {
     debugPrint('⚠️ Firebase.initializeApp: $e\n$s');
   }
+  FirebaseServicesBootstrap.register();
 
-  unawaited(_ativarAppCheck());
+  unawaited(AppCheckBootstrap.activate());
 
   try {
     await GetStorage.init().timeout(const Duration(seconds: 4));
@@ -128,34 +84,13 @@ Future<void> main() async {
   if (!kIsWeb) {
     await initLocalNotifications();
     await setupNotificationChannel();
-    await initPushNotifications();
+    await initPushNotifications(messaging: Get.find<FirebaseMessaging>());
   }
 
   configLoading();
-  _registerControllers();
+  AppBootstrap.registerControllers();
 
   runApp(const FacaFestaApp());
-}
-
-Future<void> _ativarAppCheck() async {
-  try {
-    await FirebaseAppCheck.instance
-        .activate(
-          providerWeb: kDebugMode
-              ? WebDebugProvider()
-              : ReCaptchaV3Provider(
-                  '6LcKnYstAAAAAM8kfpp132CwtRGEER1BrRTLiI8H',
-                ),
-          providerAndroid: kDebugMode
-              ? AndroidDebugProvider()
-              : AndroidPlayIntegrityProvider(),
-          providerApple:
-              kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
-        )
-        .timeout(const Duration(seconds: 8));
-  } catch (e) {
-    debugPrint('⚠️ App Check indisponível, seguindo sem ele: $e');
-  }
 }
 
 String rotaInicial() {
@@ -166,55 +101,6 @@ String rotaInicial() {
     }
   }
   return '/splash';
-}
-
-Future<void> main001() async {
-  WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  await FirebaseAppCheck.instance.activate(
-    providerWeb: kDebugMode
-        ? WebDebugProvider()
-        : ReCaptchaV3Provider('SUA_SITE_KEY_RECAPTCHA_V3'),
-    providerAndroid:
-        kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
-    providerApple:
-        kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
-  );
-  /*
-  await CalculadoraItensSeedService().popularSeeds(
-    sobrescrever: false,
-  );
-  */
-
-  /*
-  await FirebaseAppCheck.instance.activate(
-    providerAndroid: kDebugMode ? AndroidDebugProvider() : AndroidPlayIntegrityProvider(),
-    providerApple: kDebugMode ? AppleDebugProvider() : AppleDeviceCheckProvider(),
-  );
-  */
-
-  await GetStorage.init();
-
-  try {
-    await GiftOfflineBootstrap.initialize();
-  } catch (e) {
-    debugPrint('⚠️ Falha ao iniciar banco local: $e');
-  }
-
-  await initializeDateFormatting('pt_BR', null);
-
-  await initLocalNotifications();
-  await setupNotificationChannel();
-  await initPushNotifications();
-
-  configLoading();
-  _registerControllers();
-
-  runApp(const FacaFestaApp());
 }
 
 class EntradaAppPage extends StatelessWidget {
@@ -296,6 +182,13 @@ class FacaFestaApp extends StatelessWidget {
         GetPage(
           name: '/admin/auditoria',
           page: () => AuditoriaAdminScreen(),
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['A'])
+          ],
+        ),
+        GetPage(
+          name: '/admin/auditoria/dashboard',
+          page: () => AuditoriaDashboardScreen(),
           middlewares: [
             PapelMiddleware(tiposPermitidos: const ['A'])
           ],
@@ -394,134 +287,6 @@ class FacaFestaApp extends StatelessWidget {
       },
     );
   }
-}
-
-void _registerControllers() {
-  AutenticacaoBootstrap.register();
-  DocumentoBootstrap.register();
-  ConvidadoBootstrap.register();
-  PerfilUsuarioBootstrap.register();
-  FornecedorBootstrap.register();
-  ComunidadeBootstrap.register();
-  AvaliacaoServicoBootstrap.register();
-  RankingBootstrap.register();
-  UfCidadeBootstrap.register();
-  FornecedorRecomendacaoBootstrap.register();
-  ServicoFotoBootstrap.register();
-  ServicoProdutoBootstrap.register();
-  TemaFestaBootstrap.register();
-  SolicitacoesBootstrap.register();
-  CotacaoBootstrap.register();
-  AdminDashboardBootstrap.register();
-  AuditoriaBootstrap.register();
-  EventosAdminBootstrap.register();
-  OrcamentosAdminBootstrap.register();
-  OrcamentoBootstrap.register();
-  OrcamentoGastoBootstrap.register();
-  AdminTerritorioBootstrap.register();
-  Get.lazyPut<AppController>(() => AppController(), fenix: true);
-  EventoBootstrap.register();
-  Get.put(
-    EventThemeController(
-      temasFesta: Get.find<GerenciarTemasFesta>(),
-      eventoRepository: Get.find<EventoRepository>(),
-    ),
-    permanent: true,
-  );
-  Get.put(
-    EventoCadastroController(repository: Get.find<EventoRepository>()),
-    permanent: true,
-  ).carregarTiposEvento();
-  Get.put(FornecedorController(), permanent: true);
-  Get.lazyPut<CatalogoServicoRemoteDatasource>(
-    () => CatalogoServicoRemoteDatasource(),
-    fenix: true,
-  );
-  Get.lazyPut<CatalogoServicoRepository>(
-    () => CatalogoServicoRepositoryImpl(
-      Get.find<CatalogoServicoRemoteDatasource>(),
-    ),
-    fenix: true,
-  );
-  Get.lazyPut<GerenciarCatalogoServico>(
-    () => GerenciarCatalogoServico(Get.find<CatalogoServicoRepository>()),
-    fenix: true,
-  );
-  Get.put(
-    CategoriaServicoController(catalogo: Get.find<GerenciarCatalogoServico>()),
-    permanent: true,
-  );
-  Get.put(
-    SubcategoriaServicoController(
-      catalogo: Get.find<GerenciarCatalogoServico>(),
-    ),
-    permanent: true,
-  );
-  Get.put(CotacaoController(), permanent: true);
-  Get.lazyPut<CepRepository>(() => ViaCepRepository(), fenix: true);
-  Get.put(
-    EnderecoUsuarioController(
-      perfilRepository: Get.find<PerfilUsuarioRepository>(),
-      cepRepository: Get.find<CepRepository>(),
-    ),
-    permanent: true,
-  );
-  Get.put(UsuarioController(), permanent: true);
-  Get.put(InspiracaoController(), permanent: true);
-  Get.put(CalculadoraFestaController(), permanent: true);
-  Get.lazyPut<ICalculadoraFestaAIService>(
-    () => CalculadoraFestaRemoteAIService(
-      executor: (payload) async {
-        final callable = FirebaseFunctions.instanceFor(
-          region: 'southamerica-east1',
-        ).httpsCallable(
-          'analisarCalculadoraFestaIA',
-          options: HttpsCallableOptions(
-            timeout: const Duration(seconds: 60),
-          ),
-        );
-        final result = await callable.call(payload);
-        final data = result.data;
-        if (data is Map) {
-          return Map<String, dynamic>.from(data);
-        }
-        throw Exception(
-          'Resposta inválida da Cloud Function analisarCalculadoraFestaIA.',
-        );
-      },
-    ),
-    fenix: true,
-  );
-  Get.lazyPut<CalculadoraFestaController>(
-    () => CalculadoraFestaController(
-      aiService: Get.find<ICalculadoraFestaAIService>(),
-    ),
-    fenix: true,
-  );
-  Get.lazyPut<SugestaoBaseFestaRepository>(
-    () => SugestaoBaseFestaRepository(),
-    fenix: true,
-  );
-
-  Get.lazyPut<SugestaoBaseFestaController>(
-    () => SugestaoBaseFestaController(
-      repository: Get.find<SugestaoBaseFestaRepository>(),
-    ),
-    fenix: true,
-  );
-  if (!Get.isRegistered<CalculadoraItensBaseRepository>()) {
-    Get.lazyPut<CalculadoraItensBaseRepository>(
-      () => CalculadoraItensBaseRepository(),
-      fenix: true,
-    );
-  }
-
-  Get.lazyPut<CalculadoraItensAdminController>(
-    () => CalculadoraItensAdminController(
-      repository: Get.find<CalculadoraItensBaseRepository>(),
-    ),
-    fenix: true,
-  );
 }
 
 // =============================================================

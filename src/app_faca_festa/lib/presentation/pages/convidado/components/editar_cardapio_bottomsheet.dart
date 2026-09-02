@@ -2,8 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/convidado/cardapio_controller.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../../core/utils/form_validators.dart';
 import './../../../../data/models/cardapio/cardapio_model.dart';
 
@@ -280,7 +280,8 @@ class _EditarCardapioBottomSheetState extends State<EditarCardapioBottomSheet> {
             const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       ),
       validator: requiredField
-          ? (value) => FormValidators.titulo(value, campo: 'o título', minimo: 2)
+          ? (value) =>
+              FormValidators.titulo(value, campo: 'o título', minimo: 2)
           : null,
     );
   }

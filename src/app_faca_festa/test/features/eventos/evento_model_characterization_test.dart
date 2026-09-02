@@ -208,6 +208,8 @@ const _firestoreKeys = {
   'idade',
   'id_tema',
   'tema',
+  'imagem_capa_url',
+  'rotulo_banner',
   'nome_responsavel',
   'nome_gestante',
   'nome_bebe',

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/admin/admin_territorio_controller.dart';
+import 'package:app_faca_festa/presentation/modules/admin/controllers/admin_territorio_controller.dart';
 import 'package:app_faca_festa/data/models/fornecedor/territorio_model.dart';
 import 'package:app_faca_festa/domain/repositories/admin_territorio_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_admin_territorios.dart';

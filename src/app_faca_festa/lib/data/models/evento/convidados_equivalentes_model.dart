@@ -20,7 +20,9 @@ class ConvidadosEquivalentesModel {
   int get totalInformado => adultos + criancas + bebes;
 
   double get totalEquivalente {
-    return (adultos * pesoAdulto) + (criancas * pesoCrianca) + (bebes * pesoBebe);
+    return (adultos * pesoAdulto) +
+        (criancas * pesoCrianca) +
+        (bebes * pesoBebe);
   }
 
   int get totalEquivalenteArredondado => totalEquivalente.ceil();
@@ -85,6 +87,7 @@ class ConvidadosEquivalentesModel {
 
   static double _asDouble(dynamic value, double fallback) {
     if (value is num) return value.toDouble();
-    return double.tryParse(value?.toString().replaceAll(',', '.') ?? '') ?? fallback;
+    return double.tryParse(value?.toString().replaceAll(',', '.') ?? '') ??
+        fallback;
   }
 }

@@ -16,7 +16,9 @@ class TipoPagamentoModel {
 
   factory TipoPagamentoModel.fromMap(Map<String, dynamic> map) {
     return TipoPagamentoModel(
-      id: map['id'] is int ? map['id'] : int.tryParse(map['id'].toString()) ?? 0,
+      id: map['id'] is int
+          ? map['id']
+          : int.tryParse(map['id'].toString()) ?? 0,
       nome: map['nome'] ?? '',
     );
   }

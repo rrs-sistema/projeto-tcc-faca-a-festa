@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 class StarRatingWidget extends StatelessWidget {
   final double rating;
@@ -56,7 +56,9 @@ class StarRatingWidget extends StatelessWidget {
                 },
           child: AnimatedScale(
             duration: const Duration(milliseconds: 180),
-            scale: (rating >= starValue - 0.2 && rating < starValue + 0.8) ? 1.12 : 1,
+            scale: (rating >= starValue - 0.2 && rating < starValue + 0.8)
+                ? 1.12
+                : 1,
             curve: Curves.easeOutBack,
             child: ShaderMask(
               shaderCallback: (bounds) {

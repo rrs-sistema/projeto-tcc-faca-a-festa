@@ -3,10 +3,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/convidado/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
 import './../../../../data/models/convidado/grupo_convidado_model.dart';
-import './../../../../controllers/convidado/convidado_controller.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../../core/utils/biblioteca.dart';
 import './../../../../data/models/model.dart';
 
@@ -200,7 +200,8 @@ class _MesasHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final progresso = assentos <= 0 ? 0.0 : (ocupados / assentos).clamp(0.0, 1.0);
+    final progresso =
+        assentos <= 0 ? 0.0 : (ocupados / assentos).clamp(0.0, 1.0);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -341,7 +342,8 @@ class _ResumoMesas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final resumo = [
-      _ResumoItem('Mesas', estat['totalMesas'] as int, Icons.table_bar_rounded, primary),
+      _ResumoItem('Mesas', estat['totalMesas'] as int, Icons.table_bar_rounded,
+          primary),
       _ResumoItem(
         'Assentos',
         estat['assentos'] as int,
@@ -368,7 +370,8 @@ class _ResumoMesas extends StatelessWidget {
         spacing: 8,
         runSpacing: 8,
         children: resumo
-            .map((item) => SizedBox(width: width, child: _ResumoCard(item: item)))
+            .map((item) =>
+                SizedBox(width: width, child: _ResumoCard(item: item)))
             .toList(),
       );
     });
@@ -558,7 +561,8 @@ class _ConvidadoItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = confirmado ? const Color(0xFF059669) : const Color(0xFFD97706);
+    final color =
+        confirmado ? const Color(0xFF059669) : const Color(0xFFD97706);
     return Container(
       margin: const EdgeInsets.only(top: 6),
       padding: const EdgeInsets.all(10),
@@ -573,7 +577,9 @@ class _ConvidadoItem extends StatelessWidget {
             radius: 14,
             backgroundColor: color.withValues(alpha: 0.12),
             child: Icon(
-              confirmado ? Icons.event_available_rounded : Icons.schedule_rounded,
+              confirmado
+                  ? Icons.event_available_rounded
+                  : Icons.schedule_rounded,
               color: color,
               size: 16,
             ),
@@ -698,8 +704,10 @@ class _GraficoMesas extends StatelessWidget {
               spacing: 8,
               runSpacing: 6,
               children: [
-                _legenda('Ocupados (${totalOcupados.toInt()})', const Color(0xFF0F766E)),
-                _legenda('Livres (${totalLivres.toInt()})', const Color(0xFFF59E0B)),
+                _legenda('Ocupados (${totalOcupados.toInt()})',
+                    const Color(0xFF0F766E)),
+                _legenda(
+                    'Livres (${totalLivres.toInt()})', const Color(0xFFF59E0B)),
               ],
             ),
           ],

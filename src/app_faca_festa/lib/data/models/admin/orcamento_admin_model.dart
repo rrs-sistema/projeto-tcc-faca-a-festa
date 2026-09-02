@@ -26,7 +26,8 @@ class OrcamentoAdminModel {
   });
 
   double get pendente => (custoEstimado > pago) ? custoEstimado - pago : 0;
-  double get percentualPago => (custoEstimado > 0) ? (pago / custoEstimado).clamp(0, 1) : 0.0;
+  double get percentualPago =>
+      (custoEstimado > 0) ? (pago / custoEstimado).clamp(0, 1) : 0.0;
 
   /// 🔹 Criação a partir de Map genérico (por exemplo, Firestore)
   factory OrcamentoAdminModel.fromMap(Map<String, dynamic> map, String id) {
@@ -50,7 +51,8 @@ class OrcamentoAdminModel {
       'evento_nome': eventoNome,
       'tipo_evento': tipoEvento,
       'cidade': cidade,
-      'data_evento': dataEvento != null ? Timestamp.fromDate(dataEvento!) : null,
+      'data_evento':
+          dataEvento != null ? Timestamp.fromDate(dataEvento!) : null,
       'categoria': categoria,
       'custo_estimado': custoEstimado,
       'pago': pago,

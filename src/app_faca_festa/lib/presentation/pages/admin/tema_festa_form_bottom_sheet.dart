@@ -4,9 +4,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../controllers/tema/admin_theme.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/tema/tema_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_controller.dart';
 import '../../../core/utils/form_validators.dart';
 import '../../../data/models/evento/tema_festa_model.dart';
 import '../../widgets/tema_capa_imagem.dart';
@@ -42,7 +42,8 @@ Future<void> showTemaFestaFormBottomSheet(
       borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
     ),
     builder: (_) => Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+          EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: SizedBox(
         height: MediaQuery.sizeOf(context).height * 0.92,
         child: form,
@@ -94,7 +95,8 @@ class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
     _descCtrl = TextEditingController(text: tema?.descricao ?? '');
     _dressCtrl = TextEditingController(text: tema?.dressCodeSugerido ?? '');
     _primariaCtrl = TextEditingController(text: tema?.corPrimaria ?? '#009688');
-    _secundariaCtrl = TextEditingController(text: tema?.corSecundaria ?? '#4DB6AC');
+    _secundariaCtrl =
+        TextEditingController(text: tema?.corSecundaria ?? '#4DB6AC');
     _categoria = (tema?.categoria ?? TemaFestaCategorias.criativo).obs;
     _icone = (tema?.icone ?? 'star').obs;
     _ativo = (tema?.ativo ?? true).obs;
@@ -104,7 +106,8 @@ class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
     _capaUrl = tema?.imagemCapaUrl;
     _nomeCtrl.addListener(() => setState(() {}));
     _primariaCtrl.addListener(() => _primariaHex.value = _primariaCtrl.text);
-    _secundariaCtrl.addListener(() => _secundariaHex.value = _secundariaCtrl.text);
+    _secundariaCtrl
+        .addListener(() => _secundariaHex.value = _secundariaCtrl.text);
   }
 
   @override
@@ -168,297 +171,306 @@ class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
               key: _formKey,
               autovalidateMode: _autovalidateMode,
               child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-              child: Obx(() {
-                final primaria = TemaFestaModel.parseCor(_primariaHex.value);
-                final secundaria = TemaFestaModel.parseCor(_secundariaHex.value);
-                final icone = TemaFestaIcones.iconeDe(_icone.value);
-                final nome = _nomeCtrl.text.trim();
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                child: Obx(() {
+                  final primaria = TemaFestaModel.parseCor(_primariaHex.value);
+                  final secundaria =
+                      TemaFestaModel.parseCor(_secundariaHex.value);
+                  final icone = TemaFestaIcones.iconeDe(_icone.value);
+                  final nome = _nomeCtrl.text.trim();
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _PreviewTema(
-                      nome: nome.isEmpty ? 'Nome do tema' : nome,
-                      categoria: TemaFestaCategorias.rotulo(_categoria.value),
-                      icone: icone,
-                      primaria: primaria,
-                      secundaria: secundaria,
-                      capaUrl: _removerCapa
-                          ? null
-                          : (_capaUrl ?? widget.tema?.capaEfetiva),
-                      capaBytes: _capaBytes,
-                    ),
-                    const SizedBox(height: 12),
-                    _campoCapa(controller),
-                    const SizedBox(height: 20),
-                    _secao('Identidade'),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _nomeCtrl,
-                      textCapitalization: TextCapitalization.sentences,
-                      decoration: _input(
-                        'Nome do tema *',
-                        hint: 'Ex.: Super-heróis',
-                        icon: Icons.auto_awesome_rounded,
-                      ),
-                      validator: (v) => FormValidators.titulo(
-                        v,
-                        campo: 'o nome do tema',
-                        minimo: 2,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'Categoria',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF64748B),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 8,
-                      children: TemaFestaCategorias.todas.map((item) {
-                        final selecionado = _categoria.value == item;
-                        return ChoiceChip(
-                          label: Text(TemaFestaCategorias.rotulo(item)),
-                          selected: selecionado,
-                          selectedColor: _dark,
-                          labelStyle: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: selecionado ? Colors.white : _dark,
-                          ),
-                          onSelected: (_) => _categoria.value = item,
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 16),
-                    _secao('Paleta e ícone'),
-                    const SizedBox(height: 4),
-                    Text(
-                      'A principal pinta cabeçalho e botões. A de destaque só aparece em detalhes. O fundo claro é gerado sozinho.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: const Color(0xFF64748B),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _CampoCor(
-                            label: 'Cor principal',
-                            controller: _primariaCtrl,
-                            cor: primaria,
-                            onPicked: (hex) {
-                              _primariaCtrl.text = hex;
-                              _primariaHex.value = hex;
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _CampoCor(
-                            label: 'Cor de destaque',
-                            controller: _secundariaCtrl,
-                            cor: secundaria,
-                            onPicked: (hex) {
-                              _secundariaCtrl.text = hex;
-                              _secundariaHex.value = hex;
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      'Ícone',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: const Color(0xFF64748B),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: TemaFestaIcones.mapa.keys.map((key) {
-                        final selecionado = _icone.value == key;
-                        return Tooltip(
-                          message: TemaFestaIcones.rotulo(key),
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12),
-                            onTap: () => _icone.value = key,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 160),
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: selecionado ? _dark : const Color(0xFFF1F5F9),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: selecionado ? _dark : Colors.grey.shade300,
-                                ),
-                              ),
-                              child: Icon(
-                                TemaFestaIcones.iconeDe(key),
-                                color: selecionado ? Colors.white : _dark,
-                                size: 20,
-                              ),
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const SizedBox(height: 18),
-                    _secao('Onde aparece'),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Escolha os tipos de evento que poderão usar este tema.',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: const Color(0xFF64748B),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    FormField<List<String>>(
-                      validator: (_) => FormValidators.selecao(
-                        _tipos,
-                        campo: 'pelo menos um tipo de evento',
-                      ),
-                      builder: (state) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: TemaFestaTipos.catalogo.map((tipo) {
-                                final selecionado = _tipos.contains(tipo);
-                                return FilterChip(
-                                  label: Text(TemaFestaTipos.rotulo(tipo)),
-                                  selected: selecionado,
-                                  selectedColor: _dark,
-                                  checkmarkColor: Colors.white,
-                                  labelStyle: GoogleFonts.poppins(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: selecionado ? Colors.white : _dark,
-                                  ),
-                                  onSelected: (value) {
-                                    if (value) {
-                                      _tipos.add(tipo);
-                                    } else {
-                                      _tipos.remove(tipo);
-                                    }
-                                    state.didChange(_tipos.toList());
-                                  },
-                                );
-                              }).toList(),
-                            ),
-                            if (state.hasError)
-                              Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: Text(
-                                  state.errorText!,
-                                  style: GoogleFonts.poppins(
-                                    color: Colors.redAccent,
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 18),
-                    _secao('Textos'),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      controller: _dressCtrl,
-                      decoration: _input(
-                        'Dress code sugerido (opcional)',
-                        hint: 'Ex.: Fantasia de herói, cores primárias',
-                        icon: Icons.checkroom_outlined,
-                      ),
-                      validator: (v) => FormValidators.descricao(
-                        v,
-                        campo: 'o dress code',
-                        obrigatorio: false,
-                        minimo: 3,
-                        maximo: 120,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      controller: _descCtrl,
-                      maxLines: 3,
-                      decoration: _input(
-                        'Descrição (opcional)',
-                        hint: 'Como a festa deve parecer para o organizador.',
-                        icon: Icons.notes_outlined,
-                      ),
-                      validator: (v) => FormValidators.descricao(
-                        v,
-                        campo: 'a descrição',
-                        obrigatorio: false,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(
-                        'Tema ativo',
-                        style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                      ),
-                      subtitle: Text(
-                        'Inativos não aparecem no cadastro do organizador.',
-                        style: GoogleFonts.poppins(fontSize: 12),
-                      ),
-                      value: _ativo.value,
-                      activeTrackColor: _dark,
-                      onChanged: (value) => _ativo.value = value,
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _dark,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        icon: controller.salvando.value
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(Icons.save_rounded),
-                        label: Text(
-                          widget.tema == null ? 'Cadastrar tema' : 'Salvar alterações',
-                          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-                        ),
-                        onPressed: controller.salvando.value
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _PreviewTema(
+                        nome: nome.isEmpty ? 'Nome do tema' : nome,
+                        categoria: TemaFestaCategorias.rotulo(_categoria.value),
+                        icone: icone,
+                        primaria: primaria,
+                        secundaria: secundaria,
+                        capaUrl: _removerCapa
                             ? null
-                            : () => _salvar(controller),
+                            : (_capaUrl ?? widget.tema?.capaEfetiva),
+                        capaBytes: _capaBytes,
                       ),
-                    ),
-                  ],
-                );
-              }),
-            ),
+                      const SizedBox(height: 12),
+                      _campoCapa(controller),
+                      const SizedBox(height: 20),
+                      _secao('Identidade'),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _nomeCtrl,
+                        textCapitalization: TextCapitalization.sentences,
+                        decoration: _input(
+                          'Nome do tema *',
+                          hint: 'Ex.: Super-heróis',
+                          icon: Icons.auto_awesome_rounded,
+                        ),
+                        validator: (v) => FormValidators.titulo(
+                          v,
+                          campo: 'o nome do tema',
+                          minimo: 2,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Categoria',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 8,
+                        children: TemaFestaCategorias.todas.map((item) {
+                          final selecionado = _categoria.value == item;
+                          return ChoiceChip(
+                            label: Text(TemaFestaCategorias.rotulo(item)),
+                            selected: selecionado,
+                            selectedColor: _dark,
+                            labelStyle: GoogleFonts.poppins(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: selecionado ? Colors.white : _dark,
+                            ),
+                            onSelected: (_) => _categoria.value = item,
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 16),
+                      _secao('Paleta e ícone'),
+                      const SizedBox(height: 4),
+                      Text(
+                        'A principal pinta cabeçalho e botões. A de destaque só aparece em detalhes. O fundo claro é gerado sozinho.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _CampoCor(
+                              label: 'Cor principal',
+                              controller: _primariaCtrl,
+                              cor: primaria,
+                              onPicked: (hex) {
+                                _primariaCtrl.text = hex;
+                                _primariaHex.value = hex;
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _CampoCor(
+                              label: 'Cor de destaque',
+                              controller: _secundariaCtrl,
+                              cor: secundaria,
+                              onPicked: (hex) {
+                                _secundariaCtrl.text = hex;
+                                _secundariaHex.value = hex;
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'Ícone',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: TemaFestaIcones.mapa.keys.map((key) {
+                          final selecionado = _icone.value == key;
+                          return Tooltip(
+                            message: TemaFestaIcones.rotulo(key),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap: () => _icone.value = key,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 160),
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: selecionado
+                                      ? _dark
+                                      : const Color(0xFFF1F5F9),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: selecionado
+                                        ? _dark
+                                        : Colors.grey.shade300,
+                                  ),
+                                ),
+                                child: Icon(
+                                  TemaFestaIcones.iconeDe(key),
+                                  color: selecionado ? Colors.white : _dark,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 18),
+                      _secao('Onde aparece'),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Escolha os tipos de evento que poderão usar este tema.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12,
+                          color: const Color(0xFF64748B),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      FormField<List<String>>(
+                        validator: (_) => FormValidators.selecao(
+                          _tipos,
+                          campo: 'pelo menos um tipo de evento',
+                        ),
+                        builder: (state) {
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: TemaFestaTipos.catalogo.map((tipo) {
+                                  final selecionado = _tipos.contains(tipo);
+                                  return FilterChip(
+                                    label: Text(TemaFestaTipos.rotulo(tipo)),
+                                    selected: selecionado,
+                                    selectedColor: _dark,
+                                    checkmarkColor: Colors.white,
+                                    labelStyle: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                      color: selecionado ? Colors.white : _dark,
+                                    ),
+                                    onSelected: (value) {
+                                      if (value) {
+                                        _tipos.add(tipo);
+                                      } else {
+                                        _tipos.remove(tipo);
+                                      }
+                                      state.didChange(_tipos.toList());
+                                    },
+                                  );
+                                }).toList(),
+                              ),
+                              if (state.hasError)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: Text(
+                                    state.errorText!,
+                                    style: GoogleFonts.poppins(
+                                      color: Colors.redAccent,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      _secao('Textos'),
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        controller: _dressCtrl,
+                        decoration: _input(
+                          'Dress code sugerido (opcional)',
+                          hint: 'Ex.: Fantasia de herói, cores primárias',
+                          icon: Icons.checkroom_outlined,
+                        ),
+                        validator: (v) => FormValidators.descricao(
+                          v,
+                          campo: 'o dress code',
+                          obrigatorio: false,
+                          minimo: 3,
+                          maximo: 120,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: _descCtrl,
+                        maxLines: 3,
+                        decoration: _input(
+                          'Descrição (opcional)',
+                          hint: 'Como a festa deve parecer para o organizador.',
+                          icon: Icons.notes_outlined,
+                        ),
+                        validator: (v) => FormValidators.descricao(
+                          v,
+                          campo: 'a descrição',
+                          obrigatorio: false,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(
+                          'Tema ativo',
+                          style:
+                              GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          'Inativos não aparecem no cadastro do organizador.',
+                          style: GoogleFonts.poppins(fontSize: 12),
+                        ),
+                        value: _ativo.value,
+                        activeTrackColor: _dark,
+                        onChanged: (value) => _ativo.value = value,
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _dark,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                          icon: controller.salvando.value
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Icon(Icons.save_rounded),
+                          label: Text(
+                            widget.tema == null
+                                ? 'Cadastrar tema'
+                                : 'Salvar alterações',
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600),
+                          ),
+                          onPressed: controller.salvando.value
+                              ? null
+                              : () => _salvar(controller),
+                        ),
+                      ),
+                    ],
+                  );
+                }),
+              ),
             ),
           ),
         ],
@@ -473,9 +485,11 @@ class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
     final slug = widget.tema?.slug ?? TemaFestaModel.slugify(nome);
     final id = widget.tema?.idTema ?? slug;
     final idTema = id.isEmpty ? const Uuid().v4() : id;
-    var capaUrl = _removerCapa ? null : (_capaUrl ?? widget.tema?.imagemCapaUrl);
+    var capaUrl =
+        _removerCapa ? null : (_capaUrl ?? widget.tema?.imagemCapaUrl);
     if (_capaBytes != null) {
-      final enviada = await controller.enviarCapa(idTema: idTema, bytes: _capaBytes!);
+      final enviada =
+          await controller.enviarCapa(idTema: idTema, bytes: _capaBytes!);
       if (enviada == null) return;
       capaUrl = enviada;
     } else if (_removerCapa && (widget.tema?.imagemCapaUrl ?? '').isNotEmpty) {
@@ -548,7 +562,9 @@ class _TemaFestaFormSheetState extends State<TemaFestaFormSheet> {
   String _normalizarHex(String value) {
     final limpo = value.trim();
     if (limpo.isEmpty) return '#009688';
-    return limpo.startsWith('#') ? limpo.toUpperCase() : '#${limpo.toUpperCase()}';
+    return limpo.startsWith('#')
+        ? limpo.toUpperCase()
+        : '#${limpo.toUpperCase()}';
   }
 
   Widget _secao(String titulo) {
@@ -612,10 +628,12 @@ class _PreviewTema extends StatelessWidget {
             height: 148,
             decoration: BoxDecoration(
               color: primaria,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(17)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(17)),
             ),
             child: ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(17)),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(17)),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -685,7 +703,8 @@ class _PreviewTema extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
                     color: primaria,
                     borderRadius: BorderRadius.circular(10),
@@ -768,7 +787,8 @@ Future<Color?> _escolherCor(BuildContext context, Color inicial) {
           return AlertDialog(
             title: Text(
               'Escolher cor',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16),
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700, fontSize: 16),
             ),
             content: SizedBox(
               width: 320,
@@ -807,7 +827,8 @@ Future<Color?> _escolherCor(BuildContext context, Color inicial) {
                       Color(0xFF37474F),
                     ].map((preset) {
                       return InkWell(
-                        onTap: () => setState(() => atual = HSVColor.fromColor(preset)),
+                        onTap: () =>
+                            setState(() => atual = HSVColor.fromColor(preset)),
                         child: Container(
                           width: 28,
                           height: 28,
@@ -854,7 +875,8 @@ Widget _slider(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(label, style: GoogleFonts.poppins(fontSize: 12)),
-      Slider(value: value.clamp(0, max), min: 0, max: max, onChanged: onChanged),
+      Slider(
+          value: value.clamp(0, max), min: 0, max: max, onChanged: onChanged),
     ],
   );
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import '../chat/fornecedor_mensagens_page.dart';
 import 'fornecedor_premium_layout.dart';
 
@@ -16,7 +16,9 @@ class MensagensSection extends StatelessWidget {
     return Obx(() {
       final naoLidas = fornecedorController.mensagensNaoLidas.value;
       final possuiPendencia = naoLidas > 0;
-      final color = possuiPendencia ? FornecedorPremiumPalette.sky : FornecedorPremiumPalette.dark;
+      final color = possuiPendencia
+          ? FornecedorPremiumPalette.sky
+          : FornecedorPremiumPalette.dark;
 
       return PremiumSectionShell(
         title: 'Mensagens',
@@ -28,12 +30,14 @@ class MensagensSection extends StatelessWidget {
           icon: const Icon(Icons.open_in_new_rounded, size: 16),
           label: Text(
             'Abrir central',
-            style: GoogleFonts.poppins(fontSize: 11.5, fontWeight: FontWeight.w800),
+            style: GoogleFonts.poppins(
+                fontSize: 11.5, fontWeight: FontWeight.w800),
           ),
           style: OutlinedButton.styleFrom(
             foregroundColor: FornecedorPremiumPalette.dark,
             side: const BorderSide(color: Color(0xFFD1D5DB)),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
           ),
         ),
@@ -60,7 +64,9 @@ class MensagensSection extends StatelessWidget {
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Icon(
-                  possuiPendencia ? Icons.mark_chat_unread_outlined : Icons.mark_chat_read_outlined,
+                  possuiPendencia
+                      ? Icons.mark_chat_unread_outlined
+                      : Icons.mark_chat_read_outlined,
                   color: Colors.white,
                   size: 21,
                 ),

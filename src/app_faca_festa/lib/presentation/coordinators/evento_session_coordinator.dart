@@ -2,18 +2,18 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 
-import '../../controllers/convidado/cardapio_controller.dart';
-import '../../controllers/convidado/convidado_controller.dart';
-import '../../controllers/convidado/grupo_convidado_controller.dart';
-import '../../controllers/calculadora/calculadora_festa_controller.dart';
-import '../../controllers/fornecedor/fornecedor_controller.dart';
-import '../../controllers/inspiracao/inspiracao_controller.dart';
-import '../../controllers/orcamento_controller.dart';
-import '../../controllers/orcamento_gasto_controller.dart';
-import '../../controllers/tarefa_controller.dart';
-import '../../controllers/tema/event_theme_controller.dart';
-import '../../controllers/usuario/usuario_controller.dart';
 import '../../domain/entities/evento.dart';
+import '../modules/calculadora/controllers/calculadora_festa_controller.dart';
+import '../modules/convidado/controllers/cardapio_controller.dart';
+import '../modules/convidado/controllers/convidado_controller.dart';
+import '../modules/convidado/controllers/grupo_convidado_controller.dart';
+import '../modules/convidado/controllers/tarefa_controller.dart';
+import '../modules/fornecedor/controllers/fornecedor_controller.dart';
+import '../modules/inspiracao/controllers/inspiracao_controller.dart';
+import '../modules/orcamento/controllers/orcamento_gasto_controller.dart';
+import '../modules/orcamento/orcamento_controller.dart';
+import '../modules/tema/controllers/event_theme_controller.dart';
+import '../modules/usuario/controllers/usuario_controller.dart';
 
 abstract interface class EventoSessionCoordinator {
   void aplicarTema(String nomeTipoEvento, {Evento? evento});

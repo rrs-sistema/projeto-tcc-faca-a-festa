@@ -4,8 +4,8 @@ import '../../../domain/entities/admin_dashboard_stats.dart';
 import '../../models/evento/tema_festa_model.dart';
 
 class AdminDashboardRemoteDatasource {
-  AdminDashboardRemoteDatasource({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  AdminDashboardRemoteDatasource({required FirebaseFirestore firestore})
+      : _db = firestore;
 
   final FirebaseFirestore _db;
 

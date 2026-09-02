@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/usuario/endereco_usuario_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/endereco_usuario_controller.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/cep_repository.dart';
@@ -142,6 +142,13 @@ class _PerfilUsuarioRepositoryFake implements PerfilUsuarioRepository {
   Future<void> salvarEndereco(EnderecoUsuario endereco) async {
     enderecosSalvos.add(endereco);
   }
+
+  @override
+  Future<void> salvarUsuarioCadastro(
+    Usuario usuario, {
+    required String emailNormalizado,
+    String? provider,
+  }) async {}
 
   @override
   Future<void> atualizarLocalizacaoUsuario({

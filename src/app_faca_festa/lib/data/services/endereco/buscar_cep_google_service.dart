@@ -27,7 +27,8 @@ class BuscarCepGoogleService {
 
   final http.Client _client;
 
-  BuscarCepGoogleService({http.Client? client}) : _client = client ?? http.Client();
+  BuscarCepGoogleService({http.Client? client})
+      : _client = client ?? http.Client();
 
   Uri get _uri {
     final projectId = Firebase.apps.isNotEmpty

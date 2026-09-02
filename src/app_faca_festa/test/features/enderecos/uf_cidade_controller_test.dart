@@ -1,7 +1,7 @@
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidade_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/uf_cidade_controller.dart';
 import 'package:app_faca_festa/domain/repositories/uf_cidade_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_ufs_cidades.dart';
 

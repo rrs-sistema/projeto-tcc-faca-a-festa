@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import './../../../../controllers/convidado/convidado_controller.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../../data/models/model.dart';
 
 class EstatisticasTab extends StatefulWidget {
@@ -14,33 +14,40 @@ class EstatisticasTab extends StatefulWidget {
   State<EstatisticasTab> createState() => _EstatisticasTabState();
 }
 
-class _EstatisticasTabState extends State<EstatisticasTab> with SingleTickerProviderStateMixin {
+class _EstatisticasTabState extends State<EstatisticasTab>
+    with SingleTickerProviderStateMixin {
   late final AnimationController _animationController;
   late final Animation<double> _fadeAnimation;
   late final Animation<double> _scaleAnimation;
 
-  final ConvidadoController convidadoController = Get.find<ConvidadoController>();
+  final ConvidadoController convidadoController =
+      Get.find<ConvidadoController>();
 
   @override
   void initState() {
     super.initState();
-    _animationController =
-        AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
-    _fadeAnimation = CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic);
-    _scaleAnimation = Tween<double>(begin: 0.96, end: 1)
-        .animate(CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack));
+    _animationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 700));
+    _fadeAnimation = CurvedAnimation(
+        parent: _animationController, curve: Curves.easeOutCubic);
+    _scaleAnimation = Tween<double>(begin: 0.96, end: 1).animate(
+        CurvedAnimation(
+            parent: _animationController, curve: Curves.easeOutBack));
     _animationController.forward();
   }
 
   @override
   Widget build(BuildContext context) {
     final EventThemeController? eventTheme =
-        Get.isRegistered<EventThemeController>() ? Get.find<EventThemeController>() : null;
+        Get.isRegistered<EventThemeController>()
+            ? Get.find<EventThemeController>()
+            : null;
 
     return ColoredBox(
       color: const Color(0xFFF8FAFC),
       child: Obx(() {
-        final primary = eventTheme?.primaryColor.value ?? const Color(0xFF0F766E);
+        final primary =
+            eventTheme?.primaryColor.value ?? const Color(0xFF0F766E);
         final total = convidadoController.totalConvidados;
         final confirmados = convidadoController.totalConfirmados;
         final pendentes = convidadoController.totalPendentes;
@@ -59,7 +66,8 @@ class _EstatisticasTabState extends State<EstatisticasTab> with SingleTickerProv
             scale: _scaleAnimation,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(12, 12, 12, 100), // Mais compacto
+              padding:
+                  const EdgeInsets.fromLTRB(12, 12, 12, 100), // Mais compacto
               children: [
                 _StatsHeroCard(
                     primary: primary,
@@ -116,7 +124,8 @@ class _EstatisticasTabState extends State<EstatisticasTab> with SingleTickerProv
 
   int _totalBebesEstimado() =>
       convidadoController.convidados
-          .where((c) => c.adulto == false && c.status == StatusConvidado.confirmado)
+          .where((c) =>
+              c.adulto == false && c.status == StatusConvidado.confirmado)
           .length ~/
       3;
   @override
@@ -147,8 +156,10 @@ class _StatsHeroCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-          gradient: LinearGradient(
-              colors: [primary.withValues(alpha: 0.98), primary.withValues(alpha: 0.76)]),
+          gradient: LinearGradient(colors: [
+            primary.withValues(alpha: 0.98),
+            primary.withValues(alpha: 0.76)
+          ]),
           borderRadius: BorderRadius.circular(20)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -161,7 +172,8 @@ class _StatsHeroCard extends StatelessWidget {
                   decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.18),
                       borderRadius: BorderRadius.circular(14)),
-                  child: const Icon(Icons.query_stats_rounded, color: Colors.white, size: 24)),
+                  child: const Icon(Icons.query_stats_rounded,
+                      color: Colors.white, size: 24)),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -169,15 +181,22 @@ class _StatsHeroCard extends StatelessWidget {
                   children: [
                     Text('Painel de confirmações',
                         style: GoogleFonts.poppins(
-                            color: Colors.white, fontSize: 15, fontWeight: FontWeight.w800)),
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800)),
                     Text(
-                        total == 0 ? 'Cadastre convidados.' : '$confirmados de $total confirmados.',
+                        total == 0
+                            ? 'Cadastre convidados.'
+                            : '$confirmados de $total confirmados.',
                         style: GoogleFonts.poppins(
-                            color: Colors.white.withValues(alpha: 0.88), fontSize: 11)),
+                            color: Colors.white.withValues(alpha: 0.88),
+                            fontSize: 11)),
                   ],
                 ),
               ),
-              _PercentRing(percent: progress, label: '${(progress * 100).toStringAsFixed(0)}%'),
+              _PercentRing(
+                  percent: progress,
+                  label: '${(progress * 100).toStringAsFixed(0)}%'),
             ],
           ),
           const SizedBox(height: 12),
@@ -190,7 +209,8 @@ class _StatsHeroCard extends StatelessWidget {
                   backgroundColor: Colors.white.withValues(alpha: 0.18))),
           const SizedBox(height: 8),
           Wrap(spacing: 6, runSpacing: 6, children: [
-            _HeroChip(icon: Icons.verified_rounded, label: '$confirmados conf.'),
+            _HeroChip(
+                icon: Icons.verified_rounded, label: '$confirmados conf.'),
             _HeroChip(icon: Icons.schedule_rounded, label: '$pendentes pend.'),
             _HeroChip(icon: Icons.cancel_rounded, label: '$recusados rec.')
           ]),
@@ -217,7 +237,9 @@ class _PercentRing extends StatelessWidget {
               backgroundColor: Colors.white.withValues(alpha: 0.18)),
           Text(label,
               style: GoogleFonts.poppins(
-                  color: Colors.white, fontSize: 11, fontWeight: FontWeight.w800))
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800))
         ]));
   }
 }
@@ -231,13 +253,16 @@ class _HeroChip extends StatelessWidget {
     return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.16), borderRadius: BorderRadius.circular(999)),
+            color: Colors.white.withValues(alpha: 0.16),
+            borderRadius: BorderRadius.circular(999)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(icon, color: Colors.white, size: 12),
           const SizedBox(width: 4),
           Text(label,
               style: GoogleFonts.poppins(
-                  color: Colors.white, fontSize: 10, fontWeight: FontWeight.w700))
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700))
         ]));
   }
 }
@@ -259,7 +284,10 @@ class _StatsOverviewGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final cards = [
       _StatMetricData(
-          icon: Icons.groups_rounded, label: 'Convidados', value: total.toString(), color: primary),
+          icon: Icons.groups_rounded,
+          label: 'Convidados',
+          value: total.toString(),
+          color: primary),
       _StatMetricData(
           icon: Icons.verified_rounded,
           label: 'Confirm.',
@@ -281,8 +309,10 @@ class _StatsOverviewGrid extends StatelessWidget {
       return Wrap(
           spacing: 8,
           runSpacing: 8,
-          children:
-              cards.map((c) => SizedBox(width: itemWidth, child: _MetricCard(data: c))).toList());
+          children: cards
+              .map((c) =>
+                  SizedBox(width: itemWidth, child: _MetricCard(data: c)))
+              .toList());
     });
   }
 }
@@ -309,16 +339,22 @@ class _MetricCard extends StatelessWidget {
               child: Icon(data.icon, color: data.color, size: 18)),
           const SizedBox(width: 8),
           Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(data.value,
-                style: GoogleFonts.poppins(
-                    color: const Color(0xFF111827), fontSize: 15, fontWeight: FontWeight.w800)),
-            Text(data.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                    color: const Color(0xFF64748B), fontSize: 10, fontWeight: FontWeight.w600))
-          ])),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text(data.value,
+                    style: GoogleFonts.poppins(
+                        color: const Color(0xFF111827),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800)),
+                Text(data.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.poppins(
+                        color: const Color(0xFF64748B),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600))
+              ])),
         ],
       ),
     );
@@ -341,14 +377,18 @@ class _EmptyStatsCard extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(16)),
+                  color: primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(16)),
               child: Icon(Icons.insights_rounded, color: primary, size: 26)),
           const SizedBox(height: 10),
           Text('Sem dados.',
               style: GoogleFonts.poppins(
-                  fontSize: 14, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF111827))),
           Text('Cadastre convidados.',
-              style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 11),
+              style: GoogleFonts.poppins(
+                  color: const Color(0xFF64748B), fontSize: 11),
               textAlign: TextAlign.center)
         ]));
   }
@@ -447,16 +487,21 @@ class _ProgressLine extends StatelessWidget {
                   child: Icon(icon, color: color, size: 16)),
               const SizedBox(width: 8),
               Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(title,
-                    style: GoogleFonts.poppins(
-                        fontSize: 12, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
-                Text(subtitle,
-                    style: GoogleFonts.poppins(fontSize: 9, color: const Color(0xFF64748B)))
-              ])),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Text(title,
+                        style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w800,
+                            color: const Color(0xFF111827))),
+                    Text(subtitle,
+                        style: GoogleFonts.poppins(
+                            fontSize: 9, color: const Color(0xFF64748B)))
+                  ])),
               Text('${(value * 100).toStringAsFixed(0)}%',
-                  style:
-                      GoogleFonts.poppins(color: color, fontWeight: FontWeight.w800, fontSize: 11)),
+                  style: GoogleFonts.poppins(
+                      color: color, fontWeight: FontWeight.w800, fontSize: 11)),
             ],
           ),
           const SizedBox(height: 8),
@@ -505,9 +550,16 @@ class _ChartsSection extends StatelessWidget {
                 criancas: totalCriancas,
                 bebes: totalBebes),
             legend: [
-              _LegendItem(label: 'Adultos', value: totalAdultos, color: primary),
-              _LegendItem(label: 'Crianças', value: totalCriancas, color: const Color(0xFFF59E0B)),
-              _LegendItem(label: 'Bebês', value: totalBebes, color: const Color(0xFF7C3AED))
+              _LegendItem(
+                  label: 'Adultos', value: totalAdultos, color: primary),
+              _LegendItem(
+                  label: 'Crianças',
+                  value: totalCriancas,
+                  color: const Color(0xFFF59E0B)),
+              _LegendItem(
+                  label: 'Bebês',
+                  value: totalBebes,
+                  color: const Color(0xFF7C3AED))
             ]),
         const SizedBox(height: 12),
         _ChartCard(
@@ -516,10 +568,14 @@ class _ChartsSection extends StatelessWidget {
             title: 'Status',
             subtitle: 'Respostas.',
             chart: _StatusPieChart(
-                confirmados: confirmados, pendentes: pendentes, recusados: recusados),
+                confirmados: confirmados,
+                pendentes: pendentes,
+                recusados: recusados),
             legend: const [
-              _LegendItem(label: 'Conf.', value: null, color: Color(0xFF059669)),
-              _LegendItem(label: 'Pend.', value: null, color: Color(0xFFF59E0B)),
+              _LegendItem(
+                  label: 'Conf.', value: null, color: Color(0xFF059669)),
+              _LegendItem(
+                  label: 'Pend.', value: null, color: Color(0xFFF59E0B)),
               _LegendItem(label: 'Rec.', value: null, color: Color(0xFFDC2626))
             ]),
       ],
@@ -547,7 +603,8 @@ class _ChartCard extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       decoration: _cardDecoration(primary),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        _SectionHeader(icon: icon, title: title, subtitle: subtitle, color: primary),
+        _SectionHeader(
+            icon: icon, title: title, subtitle: subtitle, color: primary),
         const SizedBox(height: 12),
         SizedBox(height: 180, child: chart),
         const SizedBox(height: 12),
@@ -563,20 +620,35 @@ class _AgePieChart extends StatelessWidget {
   final int criancas;
   final int bebes;
   const _AgePieChart(
-      {required this.primary, required this.adultos, required this.criancas, required this.bebes});
+      {required this.primary,
+      required this.adultos,
+      required this.criancas,
+      required this.bebes});
   @override
   Widget build(BuildContext context) {
     final total = adultos + criancas + bebes;
     if (total == 0) return _EmptyChart(primary: primary);
-    return PieChart(
-        PieChartData(sectionsSpace: 2, centerSpaceRadius: 40, startDegreeOffset: -90, sections: [
-      if (adultos > 0) _section(value: adultos.toDouble(), total: total.toDouble(), color: primary),
-      if (criancas > 0)
-        _section(
-            value: criancas.toDouble(), total: total.toDouble(), color: const Color(0xFFF59E0B)),
-      if (bebes > 0)
-        _section(value: bebes.toDouble(), total: total.toDouble(), color: const Color(0xFF7C3AED))
-    ]));
+    return PieChart(PieChartData(
+        sectionsSpace: 2,
+        centerSpaceRadius: 40,
+        startDegreeOffset: -90,
+        sections: [
+          if (adultos > 0)
+            _section(
+                value: adultos.toDouble(),
+                total: total.toDouble(),
+                color: primary),
+          if (criancas > 0)
+            _section(
+                value: criancas.toDouble(),
+                total: total.toDouble(),
+                color: const Color(0xFFF59E0B)),
+          if (bebes > 0)
+            _section(
+                value: bebes.toDouble(),
+                total: total.toDouble(),
+                color: const Color(0xFF7C3AED))
+        ]));
   }
 }
 
@@ -585,23 +657,34 @@ class _StatusPieChart extends StatelessWidget {
   final int pendentes;
   final int recusados;
   const _StatusPieChart(
-      {required this.confirmados, required this.pendentes, required this.recusados});
+      {required this.confirmados,
+      required this.pendentes,
+      required this.recusados});
   @override
   Widget build(BuildContext context) {
     final total = confirmados + pendentes + recusados;
     if (total == 0) return const _EmptyChart(primary: Color(0xFF0F766E));
-    return PieChart(
-        PieChartData(sectionsSpace: 2, centerSpaceRadius: 40, startDegreeOffset: -90, sections: [
-      if (confirmados > 0)
-        _section(
-            value: confirmados.toDouble(), total: total.toDouble(), color: const Color(0xFF059669)),
-      if (pendentes > 0)
-        _section(
-            value: pendentes.toDouble(), total: total.toDouble(), color: const Color(0xFFF59E0B)),
-      if (recusados > 0)
-        _section(
-            value: recusados.toDouble(), total: total.toDouble(), color: const Color(0xFFDC2626))
-    ]));
+    return PieChart(PieChartData(
+        sectionsSpace: 2,
+        centerSpaceRadius: 40,
+        startDegreeOffset: -90,
+        sections: [
+          if (confirmados > 0)
+            _section(
+                value: confirmados.toDouble(),
+                total: total.toDouble(),
+                color: const Color(0xFF059669)),
+          if (pendentes > 0)
+            _section(
+                value: pendentes.toDouble(),
+                total: total.toDouble(),
+                color: const Color(0xFFF59E0B)),
+          if (recusados > 0)
+            _section(
+                value: recusados.toDouble(),
+                total: total.toDouble(),
+                color: const Color(0xFFDC2626))
+        ]));
   }
 }
 
@@ -614,8 +697,8 @@ class _EmptyChart extends StatelessWidget {
         child: Container(
             width: 100,
             height: 100,
-            decoration:
-                BoxDecoration(color: primary.withValues(alpha: 0.08), shape: BoxShape.circle),
+            decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.08), shape: BoxShape.circle),
             child: Icon(Icons.pie_chart_outline_rounded,
                 color: primary.withValues(alpha: 0.55), size: 36)));
   }
@@ -625,18 +708,21 @@ class _LegendItem extends StatelessWidget {
   final String label;
   final int? value;
   final Color color;
-  const _LegendItem({required this.label, required this.value, required this.color});
+  const _LegendItem(
+      {required this.label, required this.value, required this.color});
   @override
   Widget build(BuildContext context) {
     return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.09), borderRadius: BorderRadius.circular(999)),
+            color: color.withValues(alpha: 0.09),
+            borderRadius: BorderRadius.circular(999)),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
           Icon(Icons.circle, color: color, size: 8),
           const SizedBox(width: 4),
           Text(value == null ? label : '$label · $value',
-              style: GoogleFonts.poppins(color: color, fontSize: 10, fontWeight: FontWeight.w700))
+              style: GoogleFonts.poppins(
+                  color: color, fontSize: 10, fontWeight: FontWeight.w700))
         ]));
   }
 }
@@ -665,17 +751,24 @@ class _InsightsCard extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                  color: primary.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(12)),
-              child: Icon(Icons.tips_and_updates_rounded, color: primary, size: 18)),
+                  color: primary.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(12)),
+              child: Icon(Icons.tips_and_updates_rounded,
+                  color: primary, size: 18)),
           const SizedBox(width: 8),
           Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Leitura rápida',
-                style: GoogleFonts.poppins(
-                    fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF111827))),
-            Text(total == 0 ? 'Sem dados.' : 'Acompanhe as estatísticas.',
-                style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 10))
-          ])),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                Text('Leitura rápida',
+                    style: GoogleFonts.poppins(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w800,
+                        color: const Color(0xFF111827))),
+                Text(total == 0 ? 'Sem dados.' : 'Acompanhe as estatísticas.',
+                    style: GoogleFonts.poppins(
+                        color: const Color(0xFF64748B), fontSize: 10))
+              ])),
         ],
       ),
     );
@@ -691,7 +784,8 @@ class _FooterInfo extends StatelessWidget {
         padding: const EdgeInsets.only(top: 16),
         child: Center(
             child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
                     color: primary.withValues(alpha: 0.07),
                     borderRadius: BorderRadius.circular(999)),
@@ -701,7 +795,9 @@ class _FooterInfo extends StatelessWidget {
                   Flexible(
                       child: Text('Estatísticas em tempo real.',
                           style: GoogleFonts.poppins(
-                              fontSize: 10, color: primary, fontWeight: FontWeight.w600)))
+                              fontSize: 10,
+                              color: primary,
+                              fontWeight: FontWeight.w600)))
                 ]))));
   }
 }
@@ -712,7 +808,10 @@ class _SectionHeader extends StatelessWidget {
   final String subtitle;
   final Color color;
   const _SectionHeader(
-      {required this.icon, required this.title, required this.subtitle, required this.color});
+      {required this.icon,
+      required this.title,
+      required this.subtitle,
+      required this.color});
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -721,15 +820,21 @@ class _SectionHeader extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(10)),
+                color: color.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(10)),
             child: Icon(icon, color: color, size: 18)),
         const SizedBox(width: 8),
         Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(title,
               style: GoogleFonts.poppins(
-                  color: const Color(0xFF111827), fontSize: 14, fontWeight: FontWeight.w800)),
-          Text(subtitle, style: GoogleFonts.poppins(color: const Color(0xFF64748B), fontSize: 10))
+                  color: const Color(0xFF111827),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800)),
+          Text(subtitle,
+              style: GoogleFonts.poppins(
+                  color: const Color(0xFF64748B), fontSize: 10))
         ])),
       ],
     );
@@ -742,7 +847,10 @@ class _StatMetricData {
   final String value;
   final Color color;
   const _StatMetricData(
-      {required this.icon, required this.label, required this.value, required this.color});
+      {required this.icon,
+      required this.label,
+      required this.value,
+      required this.color});
 }
 
 PieChartSectionData _section(
@@ -752,8 +860,8 @@ PieChartSectionData _section(
         value: value,
         radius: 50,
         title: '${((value / total) * 100).toStringAsFixed(0)}%',
-        titleStyle:
-            GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white));
+        titleStyle: GoogleFonts.poppins(
+            fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white));
 BoxDecoration _cardDecoration(Color color) => BoxDecoration(
     color: Colors.white,
     borderRadius: BorderRadius.circular(18),

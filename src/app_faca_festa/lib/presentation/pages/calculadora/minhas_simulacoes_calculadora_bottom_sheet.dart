@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../controllers/calculadora/calculadora_festa_controller.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../../data/models/evento/analise_calculadora_ia_model.dart';
 import '../../../data/models/evento/calculadora_festa_item_model.dart';
 import '../../../data/models/evento/calculadora_festa_model.dart';
@@ -291,7 +291,8 @@ class _ResumoSimulacao extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _ResumoItem(label: 'Adultos', value: '${simulacao.totalAdultos}'),
-              _ResumoItem(label: 'Crianças', value: '${simulacao.totalCriancas}'),
+              _ResumoItem(
+                  label: 'Crianças', value: '${simulacao.totalCriancas}'),
               _ResumoItem(label: 'Bebês', value: '${simulacao.totalBebes}'),
               _ResumoItem(label: 'Tempo', value: '${simulacao.duracaoHoras}h'),
             ],
@@ -317,10 +318,12 @@ class _AnaliseIASimulacaoCompacta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primary = Get.find<EventThemeController>().primaryColor.value;
-    final sugestao = analise.sugestoes.isNotEmpty ? analise.sugestoes.first : null;
+    final sugestao =
+        analise.sugestoes.isNotEmpty ? analise.sugestoes.first : null;
     final resumo = analise.resumo.trim().isNotEmpty
         ? analise.resumo.trim()
-        : sugestao?.descricao.trim() ?? 'Análise inteligente salva para esta simulação.';
+        : sugestao?.descricao.trim() ??
+            'Análise inteligente salva para esta simulação.';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,7 +345,9 @@ class _AnaliseIASimulacaoCompacta extends StatelessWidget {
             _ChipInfo(
               icon: Icons.warning_amber_rounded,
               label: '${analise.indiceRiscoFaltarItens.clamp(0, 100).round()}%',
-              color: analise.indiceRiscoFaltarItens >= 70 ? Colors.redAccent : Colors.orange,
+              color: analise.indiceRiscoFaltarItens >= 70
+                  ? Colors.redAccent
+                  : Colors.orange,
             ),
           ],
         ),
@@ -392,7 +397,8 @@ class _ItensSimulacaoPreview extends StatelessWidget {
   final CalculadoraFestaController controller;
   final CalculadoraFestaModel simulacao;
 
-  const _ItensSimulacaoPreview({required this.controller, required this.simulacao});
+  const _ItensSimulacaoPreview(
+      {required this.controller, required this.simulacao});
 
   @override
   Widget build(BuildContext context) {
@@ -412,7 +418,8 @@ class _ItensSimulacaoPreview extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            for (final item in itens.take(totalPreview)) _ItemPreviewTile(item: item),
+            for (final item in itens.take(totalPreview))
+              _ItemPreviewTile(item: item),
             if (itens.length > totalPreview)
               Text(
                 '+ ${itens.length - totalPreview} outros itens...',
@@ -442,9 +449,11 @@ class _AcoesSimulacao extends StatelessWidget {
 
     return Obx(() {
       final convertendo = controller.convertendoOrcamento.value;
-      final aprovada = simulacao.statusSimulacao == StatusSimulacaoCalculadora.aprovada;
+      final aprovada =
+          simulacao.statusSimulacao == StatusSimulacaoCalculadora.aprovada;
       final convertida = simulacao.convertidoEmOrcamento ||
-          simulacao.statusSimulacao == StatusSimulacaoCalculadora.convertidaOrcamento;
+          simulacao.statusSimulacao ==
+              StatusSimulacaoCalculadora.convertidaOrcamento;
       final podeConverter = aprovada && !convertida;
 
       return Column(
@@ -461,7 +470,8 @@ class _AcoesSimulacao extends StatelessWidget {
                         : Colors.blueGrey,
                 foregroundColor: Colors.white,
                 elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
               ),
               onPressed: (!podeConverter || convertendo)
                   ? null
@@ -470,10 +480,13 @@ class _AcoesSimulacao extends StatelessWidget {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white),
                     )
                   : Icon(
-                      convertida ? Icons.price_check_rounded : Icons.request_quote_rounded,
+                      convertida
+                          ? Icons.price_check_rounded
+                          : Icons.request_quote_rounded,
                       size: 18,
                     ),
               label: Text(
@@ -482,7 +495,8 @@ class _AcoesSimulacao extends StatelessWidget {
                     : aprovada
                         ? 'Transformar em orçamento'
                         : 'Aprove para gerar orçamento',
-                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w800),
+                style: GoogleFonts.poppins(
+                    fontSize: 12, fontWeight: FontWeight.w800),
               ),
             ),
           ),
@@ -497,7 +511,8 @@ class _AcoesSimulacao extends StatelessWidget {
                       backgroundColor: primary,
                       foregroundColor: Colors.white,
                       elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10)),
                     ),
                     onPressed: () async {
                       await controller.carregarSimulacaoNoEditor(simulacao);
@@ -505,7 +520,8 @@ class _AcoesSimulacao extends StatelessWidget {
                     },
                     child: Text(
                       'Aplicar',
-                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.poppins(
+                          fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
@@ -525,8 +541,10 @@ class _AcoesSimulacao extends StatelessWidget {
               ),
               IconButton(
                 visualDensity: VisualDensity.compact,
-                onPressed: convertendo ? null : () => _confirmarExclusao(context),
-                icon: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 22),
+                onPressed:
+                    convertendo ? null : () => _confirmarExclusao(context),
+                icon: const Icon(Icons.delete_outline_rounded,
+                    color: Colors.redAccent, size: 22),
                 tooltip: 'Excluir',
               ),
             ],
@@ -539,19 +557,23 @@ class _AcoesSimulacao extends StatelessWidget {
   Future<void> _confirmarExclusao(BuildContext context) async {
     final confirmar = await Get.dialog<bool>(
       AlertDialog(
-        title: Text('Excluir?', style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
+        title: Text('Excluir?',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.bold)),
         content: const Text('Deseja remover esta simulação?'),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text('Não')),
+          TextButton(
+              onPressed: () => Get.back(result: false),
+              child: const Text('Não')),
           TextButton(
               onPressed: () => Get.back(result: true),
               child: const Text('Sim', style: TextStyle(color: Colors.red))),
         ],
       ),
     );
-    if (confirmar == true) await controller.excluirSimulacao(simulacao.idCalculo);
+    if (confirmar == true) {
+      await controller.excluirSimulacao(simulacao.idCalculo);
+    }
   }
-  
 }
 
 class _ResumoItem extends StatelessWidget {
@@ -564,8 +586,12 @@ class _ResumoItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(label, style: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 10)),
-        Text(value, style: GoogleFonts.poppins(fontWeight: FontWeight.w900, fontSize: 13)),
+        Text(label,
+            style:
+                GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 10)),
+        Text(value,
+            style:
+                GoogleFonts.poppins(fontWeight: FontWeight.w900, fontSize: 13)),
       ],
     );
   }
@@ -588,13 +614,16 @@ class _ItemPreviewTile extends StatelessWidget {
               item.nome,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(fontSize: 11, fontWeight: FontWeight.w600),
+              style: GoogleFonts.poppins(
+                  fontSize: 11, fontWeight: FontWeight.w600),
             ),
           ),
           Text(
             item.quantidadeFormatada,
             style: GoogleFonts.poppins(
-                fontSize: 11, fontWeight: FontWeight.w800, color: Colors.grey.shade700),
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: Colors.grey.shade700),
           ),
         ],
       ),
@@ -607,7 +636,8 @@ class _ChipInfo extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _ChipInfo({required this.icon, required this.label, required this.color});
+  const _ChipInfo(
+      {required this.icon, required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -624,7 +654,8 @@ class _ChipInfo extends StatelessWidget {
           const SizedBox(width: 3),
           Text(
             label,
-            style: GoogleFonts.poppins(color: color, fontSize: 10, fontWeight: FontWeight.w700),
+            style: GoogleFonts.poppins(
+                color: color, fontSize: 10, fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -650,7 +681,8 @@ class _EmptyState extends StatelessWidget {
                 color: primary.withValues(alpha: 0.2), size: 48),
             const SizedBox(height: 12),
             Text('Nada salvo ainda',
-                style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.bold)),
+                style: GoogleFonts.poppins(
+                    fontSize: 15, fontWeight: FontWeight.bold)),
             const SizedBox(height: 4),
             Text('Gere um cálculo e salve para ver aqui.',
                 textAlign: TextAlign.center,
@@ -667,7 +699,8 @@ class _EmptyState extends StatelessWidget {
 String _formatMoney(double value) {
   final normalized = value.toStringAsFixed(2).replaceAll('.', ',');
   final parts = normalized.split(',');
-  final integer = parts.first.replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
+  final integer =
+      parts.first.replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => '.');
   return 'R\$ $integer,${parts.last}';
 }
 

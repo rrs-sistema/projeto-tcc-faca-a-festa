@@ -6,8 +6,8 @@ import '../../seeds/categoria_servico_seed.dart';
 import '../../../domain/repositories/catalogo_servico_repository.dart';
 
 class CatalogoServicoRemoteDatasource {
-  CatalogoServicoRemoteDatasource({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  CatalogoServicoRemoteDatasource({required FirebaseFirestore firestore})
+      : _db = firestore;
 
   final FirebaseFirestore _db;
 

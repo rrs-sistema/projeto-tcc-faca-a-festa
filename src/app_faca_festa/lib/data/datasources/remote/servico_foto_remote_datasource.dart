@@ -7,11 +7,11 @@ import '../../models/servico_produto/servico_foto_model.dart';
 
 class ServicoFotoRemoteDatasource {
   ServicoFotoRemoteDatasource({
-    FirebaseFirestore? firestore,
-    FirebaseStorage? storage,
+    required FirebaseFirestore firestore,
+    required FirebaseStorage storage,
     DateTime Function()? now,
-  })  : _db = firestore ?? FirebaseFirestore.instance,
-        _storage = storage ?? FirebaseStorage.instance,
+  })  : _db = firestore,
+        _storage = storage,
         _now = now ?? DateTime.now;
 
   final FirebaseFirestore _db;

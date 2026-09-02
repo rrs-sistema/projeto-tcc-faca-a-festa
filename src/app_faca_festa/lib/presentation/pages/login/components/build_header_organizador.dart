@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../widgets/confetti_background.dart';
 
 Widget buildHeaderOrganizador(bool isFornecedor, {bool isConvidado = false}) {
@@ -53,9 +53,7 @@ Widget buildHeaderOrganizador(bool isFornecedor, {bool isConvidado = false}) {
               .scale(begin: const Offset(0.8, 0.0), curve: Curves.easeOutBack)
               .then(delay: NumDurationExtensions(1).seconds)
               .shimmer(duration: NumDurationExtensions(2).seconds),
-
           const SizedBox(height: 16),
-
           ShaderMask(
             shaderCallback: (bounds) => LinearGradient(
               colors: [
@@ -117,9 +115,7 @@ Widget buildHeaderOrganizador(bool isFornecedor, {bool isConvidado = false}) {
                 begin: 0.4,
                 curve: Curves.easeOutCubic,
               ),
-
           const SizedBox(height: 8),
-
           Text(
             isConvidado
                 ? 'Crie sua conta para acessar o evento do convite.'
@@ -137,9 +133,7 @@ Widget buildHeaderOrganizador(bool isFornecedor, {bool isConvidado = false}) {
                 begin: 0.3,
                 curve: Curves.easeOutCubic,
               ),
-
           const SizedBox(height: 25),
-
           Container(
             height: 4,
             width: 100,

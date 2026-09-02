@@ -64,8 +64,7 @@ class _BuscaContatoAgendaSheetState extends State<_BuscaContatoAgendaSheet> {
       if (!mounted) return;
       setState(() {
         _carregando = false;
-        _erro =
-            'Permita o acesso à agenda para buscar seus contatos.';
+        _erro = 'Permita o acesso à agenda para buscar seus contatos.';
       });
     } on AgendaContatosIndisponivel {
       if (!mounted) return;
@@ -256,7 +255,8 @@ class _BuscaContatoAgendaSheetState extends State<_BuscaContatoAgendaSheet> {
               style: GoogleFonts.poppins(fontSize: 14, height: 1.4),
             ),
             const SizedBox(height: 16),
-            TextButton(onPressed: _carregar, child: const Text('Tentar de novo')),
+            TextButton(
+                onPressed: _carregar, child: const Text('Tentar de novo')),
           ],
         ),
       );

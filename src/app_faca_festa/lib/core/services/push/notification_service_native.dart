@@ -18,7 +18,8 @@ Future<void> setupNotificationChannel() async {
   );
 
   await flutterLocalNotificationsPlugin
-      .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+      .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>()
       ?.createNotificationChannel(channel);
 }
 
@@ -39,10 +40,12 @@ Future<void> initLocalNotifications() async {
   await flutterLocalNotificationsPlugin.initialize(settings);
 }
 
-Future<void> initPushNotifications() async {
+Future<void> initPushNotifications({
+  required FirebaseMessaging messaging,
+}) async {
   if (Platform.isAndroid || Platform.isIOS) {
-    await FirebaseMessaging.instance.requestPermission();
-    await FirebaseMessaging.instance.getToken();
+    await messaging.requestPermission();
+    await messaging.getToken();
   } else {
     debugPrint('Push FCM não suportado nesta plataforma.');
   }

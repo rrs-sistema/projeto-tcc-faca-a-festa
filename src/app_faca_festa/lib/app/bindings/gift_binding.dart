@@ -1,14 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/evento_controller.dart';
-import '../../controllers/gift/gift_controller.dart';
 import '../../core/database/app_database.dart';
 import '../../data/datasources/local/gift_local_datasource.dart';
 import '../../data/datasources/remote/gift_remote_datasource.dart';
 import '../../data/repositories_impl/gift_repository_impl.dart';
 import '../../domain/repositories/gift_repository.dart';
 import '../../domain/usecases/get_gifts/gift_usecases.dart';
+import '../../presentation/modules/eventos/controllers/evento_controller.dart';
+import '../../presentation/modules/gifts/controllers/gift_controller.dart';
 
 class GiftBinding extends Bindings {
   @override
@@ -22,7 +22,7 @@ class GiftBinding extends Bindings {
     }
     if (!Get.isRegistered<GiftRemoteDatasource>()) {
       Get.lazyPut<GiftRemoteDatasource>(
-        () => GiftRemoteDatasource(FirebaseFirestore.instance),
+        () => GiftRemoteDatasource(Get.find<FirebaseFirestore>()),
       );
     }
 

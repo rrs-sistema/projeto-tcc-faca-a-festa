@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/convidado/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
 import './../../../../core/utils/form_validators.dart';
 import './../../../../data/models/convidado/grupo_convidado_model.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'show_cadastro_bottom_sheet.dart';
 
 Future<void> abrirAdicionarGrupoBottomSheet({
@@ -309,7 +309,8 @@ class _AdicionarGrupoFormContentState
       ),
       validator: validator ??
           (requiredField
-              ? (value) => FormValidators.titulo(value, campo: label.toLowerCase(), minimo: 2)
+              ? (value) => FormValidators.titulo(value,
+                  campo: label.toLowerCase(), minimo: 2)
               : null),
     );
   }

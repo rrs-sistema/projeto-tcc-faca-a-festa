@@ -42,7 +42,7 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
     try {
       await remote.entrarAnonimamente();
     } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo);
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
     }
   }
 
@@ -51,7 +51,7 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
     try {
       await remote.entrarComTokenCustomizado(token);
     } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo);
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
     }
   }
 
@@ -63,7 +63,7 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
     try {
       await remote.entrar(email: email, senha: senha);
     } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo);
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
     }
   }
 
@@ -75,7 +75,7 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
       if (autenticacaoFoiCancelada(erro.codigo)) {
         return false;
       }
-      throw AutenticacaoException(erro.codigo);
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
     }
   }
 
@@ -87,7 +87,89 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
     try {
       return await remote.criarUsuario(email: email, senha: senha);
     } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo);
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
+    }
+  }
+
+  @override
+  Future<void> solicitarCodigoRedefinicaoSenha({
+    required String email,
+  }) async {
+    try {
+      await remote.solicitarCodigoRedefinicaoSenha(email: email);
+    } on AutenticacaoRemoteException catch (erro) {
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
+    }
+  }
+
+  @override
+  Future<void> redefinirSenhaComCodigo({
+    required String email,
+    required String codigo,
+    required String novaSenha,
+  }) async {
+    try {
+      await remote.redefinirSenhaComCodigo(
+        email: email,
+        codigo: codigo,
+        novaSenha: novaSenha,
+      );
+    } on AutenticacaoRemoteException catch (erro) {
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> iniciarTotpMfa() async {
+    try {
+      return await remote.iniciarTotpMfa();
+    } on AutenticacaoRemoteException catch (erro) {
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> solicitarCodigoEmailMfa() async {
+    try {
+      return await remote.solicitarCodigoEmailMfa();
+    } on AutenticacaoRemoteException catch (erro) {
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
+    }
+  }
+
+  @override
+  Future<void> confirmarTotpMfa(String codigo) async {
+    try {
+      await remote.confirmarTotpMfa(codigo);
+    } on AutenticacaoRemoteException catch (erro) {
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
+    }
+  }
+
+  @override
+  Future<void> confirmarEmailMfa(String codigo) async {
+    try {
+      await remote.confirmarEmailMfa(codigo);
+    } on AutenticacaoRemoteException catch (erro) {
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
+    }
+  }
+
+  @override
+  Future<void> verificarTotpMfa(String codigo) async {
+    try {
+      await remote.verificarTotpMfa(codigo);
+    } on AutenticacaoRemoteException catch (erro) {
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
+    }
+  }
+
+  @override
+  Future<void> verificarEmailMfa(String codigo) async {
+    try {
+      await remote.verificarEmailMfa(codigo);
+    } on AutenticacaoRemoteException catch (erro) {
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
     }
   }
 
@@ -96,7 +178,7 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
     try {
       await remote.sair();
     } on AutenticacaoRemoteException catch (erro) {
-      throw AutenticacaoException(erro.codigo);
+      throw AutenticacaoException(erro.codigo, erro.mensagem);
     }
   }
 }

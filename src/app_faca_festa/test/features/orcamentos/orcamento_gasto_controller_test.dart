@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/orcamento_gasto_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
 import 'package:app_faca_festa/data/models/orcamento/orcamento_gasto_model.dart';
 import 'package:app_faca_festa/data/models/orcamento/orcamento_validacao_resultado.dart';
 import 'package:app_faca_festa/domain/repositories/orcamento_gasto_repository.dart';

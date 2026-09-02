@@ -5,11 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../controllers/avaliacao/avaliacao_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../components/abrir_nova_cotacao_bottom_sheet.dart';
-import './../../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './../../../widgets/confetti_background.dart';
 
 class ServicoDetalheScreen extends StatefulWidget {
@@ -60,7 +60,8 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
             shape: BoxShape.circle,
           ),
           child: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                color: Colors.white, size: 18),
             onPressed: () => Get.back(),
           ),
         ),
@@ -73,7 +74,9 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
             ),
             child: IconButton(
               icon: Icon(
-                favorito ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                favorito
+                    ? Icons.favorite_rounded
+                    : Icons.favorite_border_rounded,
                 color: favorito ? Colors.pinkAccent : Colors.white,
                 size: 20,
               ),
@@ -113,16 +116,18 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
               offset: const Offset(0, -4))
         ]),
         child: ElevatedButton.icon(
-          icon: const Icon(Icons.request_quote_rounded, color: Colors.white, size: 18),
+          icon: const Icon(Icons.request_quote_rounded,
+              color: Colors.white, size: 18),
           label: Text(
             'Solicitar Cotação',
-            style:
-                GoogleFonts.poppins(fontWeight: FontWeight.w700, color: Colors.white, fontSize: 14),
+            style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w700, color: Colors.white, fontSize: 14),
           ),
           style: ElevatedButton.styleFrom(
             backgroundColor: primary,
             padding: const EdgeInsets.symmetric(vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
             elevation: 0,
           ),
           onPressed: () async {
@@ -136,7 +141,8 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                 fornecedoresSelecionados: [servico.idFornecedor],
                 servicosSelecionados: [servico],
                 primary: primary,
-                onCotacaoFinalizada: () => appController.limparServicosSelecionados(),
+                onCotacaoFinalizada: () =>
+                    appController.limparServicosSelecionados(),
               ),
             );
           },
@@ -152,7 +158,8 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
               alignment: Alignment.bottomLeft,
               children: [
                 SizedBox(
-                  height: 260, // 🔹 Altura reduzida para melhor visualização inicial
+                  height:
+                      260, // 🔹 Altura reduzida para melhor visualização inicial
                   width: double.infinity,
                   child: CachedNetworkImage(
                     imageUrl: servico.imagemUrl?.isNotEmpty == true
@@ -166,7 +173,10 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                   height: 180,
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
+                      colors: [
+                        Colors.black.withValues(alpha: 0.8),
+                        Colors.transparent
+                      ],
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                     ),
@@ -180,7 +190,8 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                     children: [
                       if (servico.nomeSubcategoria?.isNotEmpty ?? false)
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           margin: const EdgeInsets.only(bottom: 8),
                           decoration: BoxDecoration(
                             color: primary.withValues(alpha: 0.8),
@@ -189,7 +200,9 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                           child: Text(
                             servico.nomeSubcategoria!,
                             style: GoogleFonts.poppins(
-                                fontSize: 10, fontWeight: FontWeight.w700, color: Colors.white),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white),
                           ),
                         ),
                       Text(
@@ -204,15 +217,19 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.storefront_rounded, color: Colors.white70, size: 16),
+                          const Icon(Icons.storefront_rounded,
+                              color: Colors.white70, size: 16),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
-                              servico.nomeFornecedor ?? 'Fornecedor não informado',
+                              servico.nomeFornecedor ??
+                                  'Fornecedor não informado',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
-                                  color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w600),
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600),
                             ),
                           ),
                         ],
@@ -237,7 +254,8 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                     decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.black.withValues(alpha: 0.04)),
+                        border: Border.all(
+                            color: Colors.black.withValues(alpha: 0.04)),
                         boxShadow: [
                           BoxShadow(
                               color: Colors.black.withValues(alpha: 0.02),
@@ -249,8 +267,10 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                              color: primary.withValues(alpha: 0.1), shape: BoxShape.circle),
-                          child: Icon(Icons.sell_rounded, color: primary, size: 20),
+                              color: primary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle),
+                          child: Icon(Icons.sell_rounded,
+                              color: primary, size: 20),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -266,7 +286,8 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
                                   Text(
-                                    servico.precoPromocao != null && servico.precoPromocao! > 0
+                                    servico.precoPromocao != null &&
+                                            servico.precoPromocao! > 0
                                         ? "R\$ ${servico.precoPromocao!.toStringAsFixed(2)}"
                                         : "R\$ ${servico.preco.toStringAsFixed(2)}",
                                     style: GoogleFonts.poppins(
@@ -274,15 +295,18 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                                         fontWeight: FontWeight.w800,
                                         fontSize: 18),
                                   ),
-                                  if (servico.precoPromocao != null && servico.precoPromocao! > 0)
+                                  if (servico.precoPromocao != null &&
+                                      servico.precoPromocao! > 0)
                                     Padding(
-                                      padding: const EdgeInsets.only(left: 8, bottom: 2),
+                                      padding: const EdgeInsets.only(
+                                          left: 8, bottom: 2),
                                       child: Text(
                                         "R\$ ${servico.preco.toStringAsFixed(2)}",
                                         style: GoogleFonts.poppins(
                                             color: Colors.red.shade400,
                                             fontSize: 12,
-                                            decoration: TextDecoration.lineThrough,
+                                            decoration:
+                                                TextDecoration.lineThrough,
                                             fontWeight: FontWeight.w600),
                                       ),
                                     ),
@@ -293,19 +317,23 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                         ),
                       ],
                     ),
-                  ).animate().fadeIn(duration: 400.ms).slideY(begin: 0.05, end: 0),
+                  )
+                      .animate()
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.05, end: 0),
 
                   const SizedBox(height: 20),
 
                   // 🔹 Descrição
-                  _sectionTitle('Descrição', Icons.description_rounded, primary),
+                  _sectionTitle(
+                      'Descrição', Icons.description_rounded, primary),
                   const SizedBox(height: 8),
                   Text(
                     servico.descricaoServico?.isNotEmpty == true
                         ? servico.descricaoServico!
                         : 'Sem descrição detalhada disponível para este serviço no momento.',
-                    style:
-                        GoogleFonts.poppins(fontSize: 13, height: 1.5, color: Colors.grey.shade700),
+                    style: GoogleFonts.poppins(
+                        fontSize: 13, height: 1.5, color: Colors.grey.shade700),
                   ),
 
                   const SizedBox(height: 20),
@@ -313,7 +341,8 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                   const SizedBox(height: 16),
 
                   // 🔹 Avaliações
-                  _sectionTitle('Avaliações', Icons.star_rounded, Colors.amber.shade600),
+                  _sectionTitle(
+                      'Avaliações', Icons.star_rounded, Colors.amber.shade600),
                   const SizedBox(height: 8),
                   Obx(() {
                     final media = avaliacaoController.mediaServico.value;
@@ -340,12 +369,13 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
                   const SizedBox(height: 16),
 
                   // 🔹 Diferenciais
-                  _sectionTitle('Diferenciais', Icons.workspace_premium_rounded, primary),
+                  _sectionTitle(
+                      'Diferenciais', Icons.workspace_premium_rounded, primary),
                   const SizedBox(height: 8),
                   Text(
                     'Equipe criativa e dedicada, excelente reputação em eventos anteriores e atendimento personalizado. Torne sua celebração inesquecível com este fornecedor! 🎉',
-                    style:
-                        GoogleFonts.poppins(fontSize: 13, height: 1.5, color: Colors.grey.shade700),
+                    style: GoogleFonts.poppins(
+                        fontSize: 13, height: 1.5, color: Colors.grey.shade700),
                   ),
                   const SizedBox(height: 20),
                 ],
@@ -360,9 +390,14 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
   List<Widget> buildStarRating(double nota, {double size = 20}) {
     return List.generate(5, (i) {
       final index = i + 1;
-      if (nota >= index) return Icon(Icons.star_rounded, color: Colors.amber, size: size);
-      if (nota > index - 1) return Icon(Icons.star_half_rounded, color: Colors.amber, size: size);
-      return Icon(Icons.star_border_rounded, color: Colors.grey.shade300, size: size);
+      if (nota >= index) {
+        return Icon(Icons.star_rounded, color: Colors.amber, size: size);
+      }
+      if (nota > index - 1) {
+        return Icon(Icons.star_half_rounded, color: Colors.amber, size: size);
+      }
+      return Icon(Icons.star_border_rounded,
+          color: Colors.grey.shade300, size: size);
     });
   }
 
@@ -374,7 +409,9 @@ class _ServicoDetalheScreenState extends State<ServicoDetalheScreen> {
         Text(
           title,
           style: GoogleFonts.poppins(
-              fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937)),
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF1F2937)),
         ),
       ],
     );

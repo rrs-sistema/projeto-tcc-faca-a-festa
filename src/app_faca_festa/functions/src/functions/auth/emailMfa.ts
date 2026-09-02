@@ -6,6 +6,7 @@ import {
   exigirLoginComSenha,
   exigirUsuarioAutenticado,
 } from "../../shared/auth";
+import { registrarAuditTrailSeguro } from "../auditoria/auditTrailService";
 import {
   SECRETS_SMTP,
   enviarEmailCodigo,
@@ -100,6 +101,22 @@ export const solicitarCodigoEmailMfa = onCall(
       );
     }
 
+    await registrarAuditTrailSeguro({
+      acao: "MFA_EMAIL_CODIGO_SOLICITADO",
+      operacao: "created",
+      entidadeTipo: "acesso",
+      entidadeId: perfil.uid,
+      entidadeNome: email,
+      actorUid: perfil.uid,
+      actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
+      documentPath: `mfa_email_codes/${perfil.uid}`,
+      after: {
+        fluxo: "mfa_email",
+        status: "codigo_enviado",
+        emailMascarado: mascararEmail(email),
+      },
+    });
+
     return {
       ok: true,
       emailMascarado: mascararEmail(email),
@@ -131,6 +148,18 @@ export const confirmarEmailMfa = onCall(
       { merge: true },
     );
 
+    await registrarAuditTrailSeguro({
+      acao: "MFA_EMAIL_CONFIRMADO",
+      operacao: "updated",
+      entidadeTipo: "acesso",
+      entidadeId: perfil.uid,
+      actorUid: perfil.uid,
+      actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
+      documentPath: `usuarios/${perfil.uid}`,
+      before: { mfa_metodo: "nenhum" },
+      after: { mfa_metodo: "email", mfa_email_ativo: true },
+    });
+
     return { ok: true };
   },
 );
@@ -148,6 +177,17 @@ export const verificarEmailMfa = onCall(
     await exigirLoginComSenha(perfil.uid);
     const codigo = normalizarCodigo((request.data as CodigoData).codigo);
     await validarCodigoEmail(perfil.uid, codigo);
+    await registrarAuditTrailSeguro({
+      acao: "MFA_EMAIL_VERIFICADO",
+      operacao: "updated",
+      entidadeTipo: "acesso",
+      entidadeId: perfil.uid,
+      actorUid: perfil.uid,
+      actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
+      documentPath: `mfa_email_codes/${perfil.uid}`,
+      before: { fluxo: "mfa_email", status: "pendente" },
+      after: { fluxo: "mfa_email", status: "verificado" },
+    });
     return { ok: true };
   },
 );

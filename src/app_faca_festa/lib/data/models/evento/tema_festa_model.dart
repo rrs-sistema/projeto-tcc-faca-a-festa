@@ -227,7 +227,9 @@ class TemaFestaModel {
     if (value == null) return null;
     if (value is String && value.trim().isNotEmpty) {
       final texto = value.trim();
-      return texto.startsWith('#') ? texto.toUpperCase() : '#${texto.toUpperCase()}';
+      return texto.startsWith('#')
+          ? texto.toUpperCase()
+          : '#${texto.toUpperCase()}';
     }
     if (value is int) {
       return colorToHex(Color(value));
@@ -317,8 +319,7 @@ class TemaFestaIcones {
     'palette': Icons.palette_rounded,
   };
 
-  static IconData iconeDe(String chave) =>
-      mapa[chave] ?? Icons.star_rounded;
+  static IconData iconeDe(String chave) => mapa[chave] ?? Icons.star_rounded;
 
   static String rotulo(String chave) {
     switch (chave) {

@@ -132,7 +132,8 @@ class CotacaoModel {
       descricao: map['observacao'],
       categoriaNome: map['categoria_nome'], // ✅ novo
       nomeUsuarioSolicitante: map['nome_usuario_solicitante'], // ✅ novo
-      valorEstimadoTotal: (map['valor_estimado_total'] as num?)?.toDouble() ?? 0.0,
+      valorEstimadoTotal:
+          (map['valor_estimado_total'] as num?)?.toDouble() ?? 0.0,
 
       dataLimiteResposta: map['data_limite_resposta'] is Timestamp
           ? (map['data_limite_resposta'] as Timestamp).toDate()
@@ -151,8 +152,9 @@ class CotacaoModel {
         'id_usuario_solicitante': idUsuarioSolicitante,
         'descricao': descricao,
         'categoria_nome': categoriaNome, // ✅ novo
-        'data_limite_resposta':
-            dataLimiteResposta != null ? Timestamp.fromDate(dataLimiteResposta!) : null,
+        'data_limite_resposta': dataLimiteResposta != null
+            ? Timestamp.fromDate(dataLimiteResposta!)
+            : null,
         'data_envio': Timestamp.fromDate(dataCadastro),
         'status': status.firestoreValue,
         'fornecedores': fornecedores,

@@ -4,9 +4,9 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../app/bootstrap/tema_festa_bootstrap.dart';
-import '../../../controllers/tema/admin_theme.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/tema/tema_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_controller.dart';
 import '../../../data/models/evento/tema_festa_model.dart';
 import '../../widgets/tema_capa_imagem.dart';
 import 'tema_festa_form_bottom_sheet.dart';

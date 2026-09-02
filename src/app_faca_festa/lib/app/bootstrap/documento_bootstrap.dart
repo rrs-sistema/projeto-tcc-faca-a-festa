@@ -10,7 +10,7 @@ abstract final class DocumentoBootstrap {
   static void register() {
     if (!Get.isRegistered<DocumentoRemoteDatasource>()) {
       Get.put<DocumentoRemoteDatasource>(
-        FirebaseDocumentoRemoteDatasource(FirebaseFirestore.instance),
+        FirebaseDocumentoRemoteDatasource(Get.find<FirebaseFirestore>()),
         permanent: true,
       );
     }

@@ -5,10 +5,10 @@ import 'package:get/get.dart';
 import 'dart:io';
 
 import './components/categoria_subcategoria_servico_section.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
-import '../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import './../../../core/utils/form_validators.dart';
-import './../../../controllers/register_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/controllers/register_controller.dart';
 import './../../widgets/primary_action_button.dart';
 import './../../widgets/custom_input_field.dart';
 import './../endereco/endereco_section.dart';

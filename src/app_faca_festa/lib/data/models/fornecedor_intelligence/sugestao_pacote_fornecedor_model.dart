@@ -218,7 +218,8 @@ class SugestaoPacoteFornecedorModel {
       valorEstimado: valorEstimado ?? this.valorEstimado,
       valorMaximo: valorMaximo ?? this.valorMaximo,
       quantidadeBase: quantidadeBase ?? this.quantidadeBase,
-      totalConvidadosEquivalentes: totalConvidadosEquivalentes ?? this.totalConvidadosEquivalentes,
+      totalConvidadosEquivalentes:
+          totalConvidadosEquivalentes ?? this.totalConvidadosEquivalentes,
       motivos: motivos ?? this.motivos,
       alertas: alertas ?? this.alertas,
       origem: origem ?? this.origem,
@@ -312,7 +313,10 @@ class SugestaoPacoteFornecedorModel {
   static List<Map<String, dynamic>> _readMapList(dynamic value) {
     if (value is! List) return <Map<String, dynamic>>[];
 
-    return value.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+    return value
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
   }
 
   static DateTime _readDate(

@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:get/get.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 class FraseAleatoriaWidget extends StatefulWidget {
   final String tipoEvento;
@@ -149,7 +149,10 @@ class _FraseAleatoriaWidgetState extends State<FraseAleatoriaWidget>
   ];
 
   List<String> _selecionarFrasesPorTipo() {
-    final tipoEvento = widget.tipoEvento.replaceAll(RegExp(r'[^\w\sÀ-ú]'), '').trim().toLowerCase();
+    final tipoEvento = widget.tipoEvento
+        .replaceAll(RegExp(r'[^\w\sÀ-ú]'), '')
+        .trim()
+        .toLowerCase();
     switch (tipoEvento) {
       case 'casamento':
         return frasesCasamento;

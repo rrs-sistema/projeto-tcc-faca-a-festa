@@ -134,7 +134,8 @@ class OrcamentoModel {
       'anotacoes': anotacoes,
       'status': status.firestoreValue,
       'data_cadastro': Timestamp.fromDate(dataCadastro),
-      'data_fechamento': dataFechamento != null ? Timestamp.fromDate(dataFechamento!) : null,
+      'data_fechamento':
+          dataFechamento != null ? Timestamp.fromDate(dataFechamento!) : null,
       'fechado_por': fechadoPor,
     };
   }
@@ -153,8 +154,9 @@ class OrcamentoModel {
       nomeSolicitante: map['nome_solicitante'],
       idCategoria: map['id_categoria'],
       idTipoPagamento: map['id_tipo_pagamento'],
-      custoEstimado:
-          (map['custo_estimado'] is num) ? (map['custo_estimado'] as num).toDouble() : null,
+      custoEstimado: (map['custo_estimado'] is num)
+          ? (map['custo_estimado'] as num).toDouble()
+          : null,
       orcamentoFechado: map['orcamento_fechado'] ?? false,
       anotacoes: map['anotacoes'],
       status: StatusOrcamento.fromString(map['status']),

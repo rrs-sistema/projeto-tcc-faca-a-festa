@@ -17,6 +17,13 @@ abstract interface class EventoRepository {
 
   Future<void> salvar(Evento evento);
 
+  Future<String> enviarCapa({
+    required String idEvento,
+    required List<int> bytes,
+  });
+
+  Future<void> removerArquivoCapa(String idEvento);
+
   Future<void> atualizarImagemCapa({
     required String idEvento,
     String? imagemCapaUrl,

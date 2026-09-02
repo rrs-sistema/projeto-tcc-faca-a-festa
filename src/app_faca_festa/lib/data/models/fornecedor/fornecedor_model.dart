@@ -297,7 +297,8 @@ class FornecedorModel {
       totalAvaliacoes: totalAvaliacoes ?? this.totalAvaliacoes,
       isTopCategoria: isTopCategoria ?? this.isTopCategoria,
       totalContratacoes: totalContratacoes ?? this.totalContratacoes,
-      tempoMedioRespostaHoras: tempoMedioRespostaHoras ?? this.tempoMedioRespostaHoras,
+      tempoMedioRespostaHoras:
+          tempoMedioRespostaHoras ?? this.tempoMedioRespostaHoras,
       fcmToken: fcmToken ?? this.fcmToken,
     );
   }
@@ -312,8 +313,10 @@ class FornecedorModel {
     final nome = _normalizarTexto(tipoEventoNome);
 
     final ids = tipoEventoIds.map((e) => e.trim()).where((e) => e.isNotEmpty);
-    final slugs = tipoEventoSlugs.map(_normalizarTexto).where((e) => e.isNotEmpty);
-    final nomes = tipoEventoNomes.map(_normalizarTexto).where((e) => e.isNotEmpty);
+    final slugs =
+        tipoEventoSlugs.map(_normalizarTexto).where((e) => e.isNotEmpty);
+    final nomes =
+        tipoEventoNomes.map(_normalizarTexto).where((e) => e.isNotEmpty);
 
     if (id != null && id.isNotEmpty && ids.contains(id)) return true;
     if (slug.isNotEmpty && slugs.contains(slug)) return true;
@@ -323,7 +326,9 @@ class FornecedorModel {
   }
 
   bool get possuiRestricaoTipoEvento {
-    return tipoEventoIds.isNotEmpty || tipoEventoSlugs.isNotEmpty || tipoEventoNomes.isNotEmpty;
+    return tipoEventoIds.isNotEmpty ||
+        tipoEventoSlugs.isNotEmpty ||
+        tipoEventoNomes.isNotEmpty;
   }
 
   static String _normalizarTexto(dynamic value) {
@@ -476,6 +481,9 @@ class FornecedorModel {
   static List<Map<String, dynamic>> _readMapList(dynamic value) {
     if (value is! List) return <Map<String, dynamic>>[];
 
-    return value.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList();
+    return value
+        .whereType<Map>()
+        .map((item) => Map<String, dynamic>.from(item))
+        .toList();
   }
 }

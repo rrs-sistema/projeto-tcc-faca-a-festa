@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import './../../cadastro/servico/servico_produto_list_screen.dart';
 import './../chat/fornecedor_mensagens_page.dart';
 
@@ -15,17 +15,21 @@ class ResumoSection extends StatelessWidget {
 
     return Obx(() {
       final fornecedor = controller.fornecedor.value;
-      final servicosAtivosDetalhados = controller.servicosDetalhado.where((s) => s.ativo).length;
-      final servicosAtivosBasicos = controller.servicosFornecedor.where((s) => s.ativo).length;
-      final totalServicosAtivos =
-          servicosAtivosDetalhados > 0 ? servicosAtivosDetalhados : servicosAtivosBasicos;
+      final servicosAtivosDetalhados =
+          controller.servicosDetalhado.where((s) => s.ativo).length;
+      final servicosAtivosBasicos =
+          controller.servicosFornecedor.where((s) => s.ativo).length;
+      final totalServicosAtivos = servicosAtivosDetalhados > 0
+          ? servicosAtivosDetalhados
+          : servicosAtivosBasicos;
 
       final reputacao = controller.resumoReputacao.value;
       final media = reputacao?.mediaGeral ??
           (controller.avaliacaoMedia.value > 0
               ? controller.avaliacaoMedia.value
               : fornecedor?.mediaAvaliacoes ?? 0.0);
-      final totalAvaliacoes = reputacao?.totalAvaliacoes ?? fornecedor?.totalAvaliacoes ?? 0;
+      final totalAvaliacoes =
+          reputacao?.totalAvaliacoes ?? fornecedor?.totalAvaliacoes ?? 0;
       final respostaHoras = fornecedor?.tempoMedioRespostaHoras ??
           (controller.tempoMedioResposta.value > 0
               ? controller.tempoMedioResposta.value / 60
@@ -89,13 +93,15 @@ class ResumoSection extends StatelessWidget {
         _MetricData(
           title: 'Reputação',
           value: media > 0 ? media.toStringAsFixed(1) : '--',
-          subtitle: '$totalAvaliacoes avaliação${totalAvaliacoes == 1 ? '' : 'ões'}',
+          subtitle:
+              '$totalAvaliacoes avaliação${totalAvaliacoes == 1 ? '' : 'ões'}',
           icon: Icons.star_rate_rounded,
           color: const Color(0xFFF59E0B),
         ),
         _MetricData(
           title: 'Resposta média',
-          value: respostaHoras > 0 ? '${respostaHoras.toStringAsFixed(1)}h' : '--',
+          value:
+              respostaHoras > 0 ? '${respostaHoras.toStringAsFixed(1)}h' : '--',
           subtitle: 'tempo estimado',
           icon: Icons.timer_rounded,
           color: const Color(0xFF14B8A6),
@@ -137,7 +143,8 @@ class ResumoSection extends StatelessWidget {
                 icon: const Icon(Icons.auto_awesome_rounded, size: 17),
                 label: Text(
                   'Atualizar IA',
-                  style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w800),
+                  style: GoogleFonts.poppins(
+                      fontSize: 12, fontWeight: FontWeight.w800),
                 ),
               ),
         child: LayoutBuilder(
@@ -182,7 +189,9 @@ class ResumoSection extends StatelessWidget {
       (f.descricao ?? '').trim().isNotEmpty,
       (f.bannerUrl ?? '').trim().isNotEmpty,
       f.categorias.isNotEmpty,
-      f.tipoEventoIds.isNotEmpty || f.tipoEventoSlugs.isNotEmpty || f.tipoEventoNomes.isNotEmpty,
+      f.tipoEventoIds.isNotEmpty ||
+          f.tipoEventoSlugs.isNotEmpty ||
+          f.tipoEventoNomes.isNotEmpty,
       f.precoMinimo != null || f.precoMaximo != null || f.precoMedio != null,
       servicosAtivos,
     ];
@@ -264,7 +273,8 @@ class _SectionShell extends StatelessWidget {
                           subtitle,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.poppins(fontSize: 12, color: const Color(0xFF6B7280)),
+                          style: GoogleFonts.poppins(
+                              fontSize: 12, color: const Color(0xFF6B7280)),
                         ),
                       ],
                     ),
@@ -275,7 +285,11 @@ class _SectionShell extends StatelessWidget {
               if (compact || action == null) return header;
 
               return Row(
-                children: [Expanded(child: header), const SizedBox(width: 12), action!],
+                children: [
+                  Expanded(child: header),
+                  const SizedBox(width: 12),
+                  action!
+                ],
               );
             },
           ),
@@ -319,8 +333,10 @@ class _MetricCard extends StatelessWidget {
       child: InkWell(
         onTap: data.onTap,
         borderRadius: BorderRadius.circular(18),
-        hoverColor: clickable ? data.color.withValues(alpha: 0.04) : Colors.transparent,
-        splashColor: clickable ? data.color.withValues(alpha: 0.08) : Colors.transparent,
+        hoverColor:
+            clickable ? data.color.withValues(alpha: 0.04) : Colors.transparent,
+        splashColor:
+            clickable ? data.color.withValues(alpha: 0.08) : Colors.transparent,
         child: Ink(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(

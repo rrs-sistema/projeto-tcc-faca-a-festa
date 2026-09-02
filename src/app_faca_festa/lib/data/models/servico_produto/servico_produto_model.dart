@@ -40,7 +40,11 @@ class ServicoProdutoModel {
   }
 
   ServicoProdutoModel copyWith(
-      {String? nome, String? tipoMedida, String? descricao, String? idSubcategoria, bool? ativo}) {
+      {String? nome,
+      String? tipoMedida,
+      String? descricao,
+      String? idSubcategoria,
+      bool? ativo}) {
     return ServicoProdutoModel(
       id: id,
       nome: nome ?? this.nome,

@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import '../../../core/utils/convite_link.dart';
 
 class ConviteRedirectPage extends StatefulWidget {
@@ -63,7 +63,8 @@ class _ConviteRedirectPageState extends State<ConviteRedirectPage> {
                   ),
                 ),
               ] else ...[
-                const Icon(Icons.mail_outline, size: 48, color: Color(0xFFC2185B)),
+                const Icon(Icons.mail_outline,
+                    size: 48, color: Color(0xFFC2185B)),
                 const SizedBox(height: 16),
                 Text(
                   _erro!,

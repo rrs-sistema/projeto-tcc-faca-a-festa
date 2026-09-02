@@ -10,8 +10,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'dart:ui';
 
-import './../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import './../../../domain/entities/evento.dart';
 import './../../widgets/frase_aleatoria_widget.dart';
 import './../../widgets/tema_capa_imagem.dart';
@@ -194,7 +194,8 @@ Widget buildAnimatedHeader(BuildContext context) {
                                       const SizedBox(width: 4),
                                       Icon(
                                         Icons.edit_outlined,
-                                        color: Colors.white.withValues(alpha: 0.85),
+                                        color: Colors.white
+                                            .withValues(alpha: 0.85),
                                         size: 14,
                                         shadows: _sombraCapa,
                                       ),
@@ -293,7 +294,8 @@ Widget _botaoTrocarCapa({
       visualDensity: VisualDensity.compact,
       padding: const EdgeInsets.all(8),
       constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-      icon: const Icon(Icons.photo_camera_outlined, color: Colors.white, size: 18),
+      icon: const Icon(Icons.photo_camera_outlined,
+          color: Colors.white, size: 18),
       onPressed: () => _abrirOpcoesCapa(
         context: context,
         tema: tema,
@@ -611,7 +613,7 @@ Future<void> _escolherEEnviarCapa(
     );
     if (enquadrada == null || enquadrada.isEmpty) return;
 
-    if (enquadrada.length > 1_500_000) {
+    if (enquadrada.length > 1500000) {
       EasyLoading.showError('A foto precisa ter no máximo 1,5 MB.');
       return;
     }

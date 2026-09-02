@@ -15,7 +15,8 @@ class SyncManager {
     await _trySync();
 
     // 🔹 Escuta mudanças de conexão
-    _subscription = Connectivity().onConnectivityChanged.listen((results) async {
+    _subscription =
+        Connectivity().onConnectivityChanged.listen((results) async {
       if (!results.contains(ConnectivityResult.none)) {
         await _trySync();
       }

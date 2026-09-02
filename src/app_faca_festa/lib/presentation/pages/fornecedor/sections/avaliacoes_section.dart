@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../controllers/fornecedor/fornecedor_controller.dart';
-import './../../../../controllers/avaliacao/avaliacao_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import 'fornecedor_premium_layout.dart';
 
 class AvaliacoesSection extends StatelessWidget {
@@ -20,12 +20,17 @@ class AvaliacoesSection extends StatelessWidget {
       final reputacao = fornecedorController.resumoReputacao.value;
       final fornecedor = fornecedorController.fornecedor.value;
       final mediaController = avaliacaoController?.mediaFornecedor.value ?? 0.0;
-      final totalController = avaliacaoController?.avaliacoesFornecedor.length ?? 0;
+      final totalController =
+          avaliacaoController?.avaliacoesFornecedor.length ?? 0;
 
       final media = reputacao?.mediaGeral ??
-          (mediaController > 0 ? mediaController : fornecedor?.mediaAvaliacoes ?? 0.0);
+          (mediaController > 0
+              ? mediaController
+              : fornecedor?.mediaAvaliacoes ?? 0.0);
       final total = reputacao?.totalAvaliacoes ??
-          (totalController > 0 ? totalController : fornecedor?.totalAvaliacoes ?? 0);
+          (totalController > 0
+              ? totalController
+              : fornecedor?.totalAvaliacoes ?? 0);
       final pontosFortes = reputacao?.pontosFortes ?? const <String>[];
       final pontosAtencao = reputacao?.pontosAtencao ?? const <String>[];
       final resumo = reputacao?.resumo ??
@@ -46,7 +51,8 @@ class AvaliacoesSection extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final twoColumns = constraints.maxWidth >= 760;
-            final nota = _NotaResumo(media: media, total: total, resumo: resumo);
+            final nota =
+                _NotaResumo(media: media, total: total, resumo: resumo);
             final insights = _ReputacaoInsights(
               pontosFortes: pontosFortes,
               pontosAtencao: pontosAtencao,
@@ -79,7 +85,8 @@ class _NotaResumo extends StatelessWidget {
   final int total;
   final String resumo;
 
-  const _NotaResumo({required this.media, required this.total, required this.resumo});
+  const _NotaResumo(
+      {required this.media, required this.total, required this.resumo});
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +171,8 @@ class _ReputacaoInsights extends StatelessWidget {
   final List<String> pontosFortes;
   final List<String> pontosAtencao;
 
-  const _ReputacaoInsights({required this.pontosFortes, required this.pontosAtencao});
+  const _ReputacaoInsights(
+      {required this.pontosFortes, required this.pontosAtencao});
 
   @override
   Widget build(BuildContext context) {
@@ -200,7 +208,11 @@ class _ReputacaoInsights extends StatelessWidget {
 
         return Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [Expanded(child: elogios), const SizedBox(width: 10), Expanded(child: atencao)],
+          children: [
+            Expanded(child: elogios),
+            const SizedBox(width: 10),
+            Expanded(child: atencao)
+          ],
         );
       },
     );
@@ -262,7 +274,8 @@ class _InsightBox extends StatelessWidget {
                     margin: const EdgeInsets.only(top: 6),
                     width: 5,
                     height: 5,
-                    decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                    decoration:
+                        BoxDecoration(color: color, shape: BoxShape.circle),
                   ),
                   const SizedBox(width: 8),
                   Expanded(

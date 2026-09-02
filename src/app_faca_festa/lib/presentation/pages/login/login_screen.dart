@@ -4,9 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../controllers/app_controller.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/login_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/controllers/login_controller.dart';
 import './../../../core/utils/form_validators.dart';
 import './../../widgets/custom_input_field.dart';
 
@@ -28,7 +28,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    controller = Get.put(LoginController());
+    controller = Get.find<LoginController>();
     emailCtrl = TextEditingController();
     senhaCtrl = TextEditingController();
   }
@@ -277,8 +277,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                   style: OutlinedButton.styleFrom(
                                     backgroundColor: Colors.white,
                                     foregroundColor: Colors.grey.shade800,
-                                    side: BorderSide(
-                                        color: Colors.grey.shade300),
+                                    side:
+                                        BorderSide(color: Colors.grey.shade300),
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(14),
                                     ),

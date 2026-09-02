@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/sugestao_base_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/sugestao_base_festa_controller.dart';
 import '../../../core/utils/form_validators.dart';
 import '../../../data/models/evento/sugestao_base_festa_model.dart';
 
@@ -16,10 +16,12 @@ class SugestaoBaseFestaFormDialog extends StatefulWidget {
   final SugestaoBaseFestaModel? sugestao;
 
   @override
-  State<SugestaoBaseFestaFormDialog> createState() => _SugestaoBaseFestaFormDialogState();
+  State<SugestaoBaseFestaFormDialog> createState() =>
+      _SugestaoBaseFestaFormDialogState();
 }
 
-class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialog> {
+class _SugestaoBaseFestaFormDialogState
+    extends State<SugestaoBaseFestaFormDialog> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _tituloController;
@@ -37,9 +39,11 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
   late String _prioridade;
   late bool _ativo;
 
-  SugestaoBaseFestaController get controller => Get.find<SugestaoBaseFestaController>();
+  SugestaoBaseFestaController get controller =>
+      Get.find<SugestaoBaseFestaController>();
 
-  SugestaoBaseFestaModel get _base => widget.sugestao ?? SugestaoBaseFestaModel.empty();
+  SugestaoBaseFestaModel get _base =>
+      widget.sugestao ?? SugestaoBaseFestaModel.empty();
 
   bool get _isEditing => widget.sugestao != null;
 
@@ -53,10 +57,14 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
     _descricaoController = TextEditingController(text: sugestao.descricao);
     _temaController = TextEditingController(text: sugestao.tema);
     _tipoEventoController = TextEditingController(
-      text: sugestao.tipoEvento.isEmpty ? 'todos' : sugestao.tipoEvento.join(', '),
+      text: sugestao.tipoEvento.isEmpty
+          ? 'todos'
+          : sugestao.tipoEvento.join(', '),
     );
     _perfisFestaController = TextEditingController(
-      text: sugestao.perfisFesta.isEmpty ? 'todos' : sugestao.perfisFesta.join(', '),
+      text: sugestao.perfisFesta.isEmpty
+          ? 'todos'
+          : sugestao.perfisFesta.join(', '),
     );
     _tagsController = TextEditingController(text: sugestao.tags.join(', '));
     _ordemController = TextEditingController(text: sugestao.ordem.toString());
@@ -70,12 +78,14 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
     _modulo = SugestaoBaseFestaOptions.modulos.contains(sugestao.modulo)
         ? sugestao.modulo
         : SugestaoBaseFestaOptions.modulos.first;
-    _categoria = SugestaoBaseFestaOptions.categorias.contains(sugestao.categoria)
-        ? sugestao.categoria
-        : SugestaoBaseFestaOptions.categorias.first;
-    _prioridade = SugestaoBaseFestaOptions.prioridades.contains(sugestao.prioridade)
-        ? sugestao.prioridade
-        : 'media';
+    _categoria =
+        SugestaoBaseFestaOptions.categorias.contains(sugestao.categoria)
+            ? sugestao.categoria
+            : SugestaoBaseFestaOptions.categorias.first;
+    _prioridade =
+        SugestaoBaseFestaOptions.prioridades.contains(sugestao.prioridade)
+            ? sugestao.prioridade
+            : 'media';
     _ativo = sugestao.ativo;
   }
 
@@ -139,7 +149,8 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(26),
                 child: SingleChildScrollView(
-                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
                   padding: EdgeInsets.only(
                     bottom: keyboardHeight > 0 ? keyboardHeight + 16 : 0,
                   ),
@@ -170,7 +181,8 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
                                       controller: _tituloController,
                                       label: 'Título',
                                       icon: Icons.title_rounded,
-                                      validator: (v) => FormValidators.titulo(v, campo: 'o título'),
+                                      validator: (v) => FormValidators.titulo(v,
+                                          campo: 'o título'),
                                     ),
                                     const SizedBox(height: 10),
                                     _TextField(
@@ -178,7 +190,8 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
                                       label: 'Descrição',
                                       icon: Icons.notes_rounded,
                                       maxLines: 4,
-                                      validator: (v) => FormValidators.descricao(
+                                      validator: (v) =>
+                                          FormValidators.descricao(
                                         v,
                                         campo: 'a descrição',
                                         obrigatorio: true,
@@ -201,7 +214,8 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
                                       label: 'Módulo',
                                       icon: Icons.widgets_rounded,
                                       values: SugestaoBaseFestaOptions.modulos,
-                                      onChanged: (value) => setState(() => _modulo = value),
+                                      onChanged: (value) =>
+                                          setState(() => _modulo = value),
                                     ),
                                     _TextField(
                                       controller: _temaController,
@@ -217,15 +231,19 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
                                       value: _categoria,
                                       label: 'Categoria',
                                       icon: Icons.category_rounded,
-                                      values: SugestaoBaseFestaOptions.categorias,
-                                      onChanged: (value) => setState(() => _categoria = value),
+                                      values:
+                                          SugestaoBaseFestaOptions.categorias,
+                                      onChanged: (value) =>
+                                          setState(() => _categoria = value),
                                     ),
                                     _DropdownField(
                                       value: _prioridade,
                                       label: 'Prioridade',
                                       icon: Icons.priority_high_rounded,
-                                      values: SugestaoBaseFestaOptions.prioridades,
-                                      onChanged: (value) => setState(() => _prioridade = value),
+                                      values:
+                                          SugestaoBaseFestaOptions.prioridades,
+                                      onChanged: (value) =>
+                                          setState(() => _prioridade = value),
                                     ),
                                   ],
                                 ),
@@ -242,14 +260,16 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
                                     _TextField(
                                       controller: _tipoEventoController,
                                       label: 'Tipos de evento',
-                                      hint: 'Ex.: todos, aniversario_infantil, cha_de_bebe',
+                                      hint:
+                                          'Ex.: todos, aniversario_infantil, cha_de_bebe',
                                       icon: Icons.celebration_rounded,
                                     ),
                                     const SizedBox(height: 10),
                                     _TextField(
                                       controller: _perfisFestaController,
                                       label: 'Perfis de festa',
-                                      hint: 'Ex.: todos, economico, padrao, premium',
+                                      hint:
+                                          'Ex.: todos, economico, padrao, premium',
                                       icon: Icons.workspace_premium_rounded,
                                     ),
                                     const SizedBox(height: 10),
@@ -290,7 +310,8 @@ class _SugestaoBaseFestaFormDialogState extends State<SugestaoBaseFestaFormDialo
                                     ),
                                     _SwitchCard(
                                       value: _ativo,
-                                      onChanged: (value) => setState(() => _ativo = value),
+                                      onChanged: (value) =>
+                                          setState(() => _ativo = value),
                                     ),
                                   ],
                                 ),
@@ -420,7 +441,8 @@ class _Header extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.68),
+                    color: theme.textTheme.bodySmall?.color
+                        ?.withValues(alpha: 0.68),
                   ),
                 ),
               ],
@@ -498,7 +520,8 @@ class _FormSection extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.28),
+        color:
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.28),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: theme.dividerColor.withValues(alpha: 0.18),
@@ -529,7 +552,8 @@ class _FormSection extends StatelessWidget {
                       subtitle,
                       style: theme.textTheme.bodySmall?.copyWith(
                         height: 1.2,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.62),
                       ),
                     ),
                   ],
@@ -555,7 +579,8 @@ class _ResponsiveWrap extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 640;
-        final itemWidth = isWide ? (constraints.maxWidth - 10) / 2 : constraints.maxWidth;
+        final itemWidth =
+            isWide ? (constraints.maxWidth - 10) / 2 : constraints.maxWidth;
 
         return Wrap(
           spacing: 10,
@@ -667,14 +692,16 @@ class _TextField extends StatelessWidget {
       maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
-      textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
+      textInputAction:
+          maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
   }
@@ -721,7 +748,8 @@ class _DropdownField extends StatelessWidget {
         prefixIcon: Icon(icon, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
   }
@@ -752,7 +780,9 @@ class _SwitchCard extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            value ? Icons.check_circle_rounded : Icons.pause_circle_outline_rounded,
+            value
+                ? Icons.check_circle_rounded
+                : Icons.pause_circle_outline_rounded,
             color: value ? Colors.green.shade700 : Colors.grey.shade600,
             size: 20,
           ),

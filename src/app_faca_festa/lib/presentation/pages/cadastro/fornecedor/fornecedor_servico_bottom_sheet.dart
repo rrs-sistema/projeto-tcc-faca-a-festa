@@ -6,13 +6,13 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../../data/models/servico_produto/subcategoria_servico_model.dart';
-import './../../../../controllers/categoria/subcategoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcategoria_servico_controller.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
-import './../../../../controllers/categoria/categoria_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categoria_servico_controller.dart';
 import '../../../../app/bootstrap/servico_foto_bootstrap.dart';
 import '../../../../data/models/servico_produto/servico_foto_model.dart';
-import '../../../../controllers/servico/servico_produto_controller.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_produto_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../widgets/custom_input_field.dart';
 import './../../../../core/utils/form_validators.dart';
 import './components/titulo_vinculo_animado.dart';
@@ -63,7 +63,8 @@ class _FornecedorServicoSheet extends StatefulWidget {
   final FornecedorProdutoServicoModel? vinculo;
 
   @override
-  State<_FornecedorServicoSheet> createState() => _FornecedorServicoSheetState();
+  State<_FornecedorServicoSheet> createState() =>
+      _FornecedorServicoSheetState();
 }
 
 class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
@@ -108,8 +109,9 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
     if (vinculo != null) {
       final servico = servicoController.servicos
           .firstWhereOrNull((s) => s.id == vinculo.idProdutoServico);
-      final subcategoria = subcategoriaController.subcategorias.firstWhereOrNull(
-          (s) => s.id == (servico?.idSubcategoria ?? vinculo.idSubcategoria));
+      final subcategoria = subcategoriaController.subcategorias
+          .firstWhereOrNull((s) =>
+              s.id == (servico?.idSubcategoria ?? vinculo.idSubcategoria));
       final categoria = categoriaController.categorias
           .firstWhereOrNull((c) => c.id == subcategoria?.idCategoria);
       categoriaSelecionada = categoria;
@@ -126,7 +128,8 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
     super.dispose();
   }
 
-  InputDecoration _decor(String label, IconData icon, {bool obrigatorio = false}) {
+  InputDecoration _decor(String label, IconData icon,
+      {bool obrigatorio = false}) {
     return InputDecoration(
       labelText: obrigatorio ? '$label *' : label,
       prefixIcon: Icon(icon, color: primary),
@@ -156,7 +159,8 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
     EasyLoading.show(status: 'Salvando as informações...');
     final promo = FormValidators.parseDinheiro(promocaoCtrl.text);
     final vinculoNovo = FornecedorProdutoServicoModel(
-      id: widget.vinculo?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      id: widget.vinculo?.id ??
+          DateTime.now().millisecondsSinceEpoch.toString(),
       idProdutoServico: servicoSelecionado!.id,
       idSubcategoria: subcategoriaSelecionada!.id,
       idFornecedor: widget.idFornecedor,
@@ -259,9 +263,7 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
                     ],
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 DropdownButtonFormField<CategoriaServicoModel>(
                   value: categoriaSelecionada,
                   decoration: _decor(
@@ -282,13 +284,13 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
                       servicoSelecionado = null;
                     });
                     if (val != null) {
-                      await subcategoriaController.carregarSubcategorias(val.id);
+                      await subcategoriaController
+                          .carregarSubcategorias(val.id);
                       if (mounted) setState(() {});
                     }
                   },
                 ),
                 const SizedBox(height: 16),
-
                 DropdownButtonFormField<SubcategoriaServicoModel>(
                   value: subcategoriaSelecionada,
                   decoration: _decor(
@@ -300,7 +302,8 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
                   items: categoriaSelecionada == null
                       ? const []
                       : subcategoriaController.subcategorias
-                          .where((s) => s.idCategoria == categoriaSelecionada!.id)
+                          .where(
+                              (s) => s.idCategoria == categoriaSelecionada!.id)
                           .map((s) =>
                               DropdownMenuItem(value: s, child: Text(s.nome)))
                           .toList(),
@@ -320,7 +323,6 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
                         },
                 ),
                 const SizedBox(height: 16),
-
                 DropdownButtonFormField<ServicoProdutoModel>(
                   value: servicoSelecionado,
                   decoration: _decor(
@@ -347,9 +349,7 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
                       ? null
                       : (val) => setState(() => servicoSelecionado = val),
                 ),
-
                 const SizedBox(height: 24),
-
                 Card(
                   elevation: 2,
                   shape: RoundedRectangleBorder(
@@ -415,9 +415,7 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 if (servicoSelecionado != null) ...[
                   Text(
                     'Imagens do serviço (opcional)',
@@ -547,9 +545,7 @@ class _FornecedorServicoSheetState extends State<_FornecedorServicoSheet> {
                     ],
                   ),
                 ],
-
                 const SizedBox(height: 32),
-
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(

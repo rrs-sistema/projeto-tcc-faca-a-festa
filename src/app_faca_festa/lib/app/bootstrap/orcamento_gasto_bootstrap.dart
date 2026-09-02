@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/orcamento_gasto_controller.dart';
 import '../../data/datasources/remote/orcamento_gasto_remote_datasource.dart';
 import '../../data/repositories_impl/orcamento_gasto_repository_impl.dart';
 import '../../domain/repositories/orcamento_gasto_repository.dart';
 import '../../domain/usecases/gerenciar_orcamento_gastos.dart';
+import '../../presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
 
 class OrcamentoGastoBootstrap {
   OrcamentoGastoBootstrap._();
@@ -12,7 +13,9 @@ class OrcamentoGastoBootstrap {
   static void register() {
     if (!Get.isRegistered<OrcamentoGastoRemoteDatasource>()) {
       Get.lazyPut<OrcamentoGastoRemoteDatasource>(
-        () => OrcamentoGastoRemoteDatasource(),
+        () => OrcamentoGastoRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+        ),
         fenix: true,
       );
     }

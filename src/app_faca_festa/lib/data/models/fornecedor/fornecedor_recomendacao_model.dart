@@ -88,7 +88,11 @@ class FornecedorRecomendacaoModel {
 
     List<String> parseStringList(dynamic value) {
       if (value is List) {
-        return value.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toSet().toList();
+        return value
+            .map((e) => e.toString().trim())
+            .where((e) => e.isNotEmpty)
+            .toSet()
+            .toList();
       }
       return <String>[];
     }
@@ -234,7 +238,8 @@ class FornecedorRecomendacaoModel {
       nivel: nivel ?? this.nivel,
       nivelLabelBackend: nivelLabelBackend ?? this.nivelLabelBackend,
       motivoPrincipal: motivoPrincipal ?? this.motivoPrincipal,
-      compatibilidadePercentual: compatibilidadePercentual ?? this.compatibilidadePercentual,
+      compatibilidadePercentual:
+          compatibilidadePercentual ?? this.compatibilidadePercentual,
       mediaAvaliacoes: mediaAvaliacoes ?? this.mediaAvaliacoes,
       totalAvaliacoes: totalAvaliacoes ?? this.totalAvaliacoes,
       distanciaKm: distanciaKm ?? this.distanciaKm,
@@ -244,7 +249,8 @@ class FornecedorRecomendacaoModel {
       tipoEventoIds: tipoEventoIds ?? this.tipoEventoIds,
       tipoEventoInformado: tipoEventoInformado ?? this.tipoEventoInformado,
       tipoEventoCompativel: tipoEventoCompativel ?? this.tipoEventoCompativel,
-      tipoEventoIncompativel: tipoEventoIncompativel ?? this.tipoEventoIncompativel,
+      tipoEventoIncompativel:
+          tipoEventoIncompativel ?? this.tipoEventoIncompativel,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

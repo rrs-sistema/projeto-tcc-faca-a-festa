@@ -2,7 +2,7 @@ import '../../data/models/evento/analise_calculadora_ia_model.dart';
 import '../../data/models/evento/calculadora_festa_item_model.dart';
 import '../../data/models/evento/estimativa_financeira_model.dart';
 import '../../data/models/evento/perfil_festa_model.dart';
-import '../../data/repositories/i_calculadora_festa_ai_service.dart';
+import '../../domain/services/calculadora_festa_ai_service.dart';
 
 class CalculadoraFestaAIService implements ICalculadoraFestaAIService {
   const CalculadoraFestaAIService();
@@ -23,7 +23,8 @@ class CalculadoraFestaAIService implements ICalculadoraFestaAIService {
     final convidados = estimativa.convidados;
     final totalConvidados = convidados.totalInformado;
     final totalEquivalente = convidados.totalEquivalenteArredondado;
-    final margem = estimativa.margemPersonalizada ?? estimativa.perfil.margemSegurancaPadrao;
+    final margem = estimativa.margemPersonalizada ??
+        estimativa.perfil.margemSegurancaPadrao;
     final duracaoHoras = estimativa.duracaoHoras;
     final orcamento = _normalizarOrcamento(orcamentoDisponivel);
     final diferencaOrcamento = orcamento == null ? 0.0 : custoTotal - orcamento;
@@ -44,21 +45,28 @@ class CalculadoraFestaAIService implements ICalculadoraFestaAIService {
       );
     }
 
-    final nomesSelecionados = itensCalculados.map((item) => _normalize(item.nome)).toList();
+    final nomesSelecionados =
+        itensCalculados.map((item) => _normalize(item.nome)).toList();
     final possuiAgua = _containsAny(nomesSelecionados, const ['agua', 'água']);
     final possuiSuco = _containsAny(nomesSelecionados, const ['suco']);
-    final possuiRefrigerante = _containsAny(nomesSelecionados, const ['refrigerante', 'refri']);
-    final possuiSalgadinhos = _containsAny(nomesSelecionados, const ['salgadinho', 'salgadinhos']);
-    final possuiDocinhos = _containsAny(nomesSelecionados, const ['docinho', 'docinhos']);
+    final possuiRefrigerante =
+        _containsAny(nomesSelecionados, const ['refrigerante', 'refri']);
+    final possuiSalgadinhos =
+        _containsAny(nomesSelecionados, const ['salgadinho', 'salgadinhos']);
+    final possuiDocinhos =
+        _containsAny(nomesSelecionados, const ['docinho', 'docinhos']);
     final possuiBolo = _containsAny(nomesSelecionados, const ['bolo']);
-    final possuiLembrancinhas =
-        _containsAny(nomesSelecionados, const ['lembrancinha', 'lembrancinhas']);
+    final possuiLembrancinhas = _containsAny(
+        nomesSelecionados, const ['lembrancinha', 'lembrancinhas']);
 
-    final percentualCriancas = totalConvidados == 0 ? 0.0 : convidados.criancas / totalConvidados;
-    final percentualBebes = totalConvidados == 0 ? 0.0 : convidados.bebes / totalConvidados;
+    final percentualCriancas =
+        totalConvidados == 0 ? 0.0 : convidados.criancas / totalConvidados;
+    final percentualBebes =
+        totalConvidados == 0 ? 0.0 : convidados.bebes / totalConvidados;
     final itemMaisCaro = _itemMaisCaro(itensCalculados);
-    final percentualItemMaisCaro =
-        custoTotal <= 0 || itemMaisCaro == null ? 0.0 : itemMaisCaro.custoEstimado / custoTotal;
+    final percentualItemMaisCaro = custoTotal <= 0 || itemMaisCaro == null
+        ? 0.0
+        : itemMaisCaro.custoEstimado / custoTotal;
 
     if (orcamento == null) {
       sugestoes.add(
@@ -112,7 +120,9 @@ class CalculadoraFestaAIService implements ICalculadoraFestaAIService {
       );
     }
 
-    if (estimativa.perfil.tipo == TipoPerfilFesta.economico && duracaoHoras >= 5 && margem < 0.10) {
+    if (estimativa.perfil.tipo == TipoPerfilFesta.economico &&
+        duracaoHoras >= 5 &&
+        margem < 0.10) {
       sugestoes.add(
         const SugestaoCalculadoraIAModel(
           id: 'economico-festa-longa',
@@ -286,14 +296,30 @@ class CalculadoraFestaAIService implements ICalculadoraFestaAIService {
   }) {
     var risco = 18.0;
 
-    if (duracaoHoras >= 5) risco += 14;
-    if (duracaoHoras >= 7) risco += 8;
-    if (margem < 0.08) risco += 15;
-    if (margem >= 0.15) risco -= 8;
-    if (!possuiBebidas) risco += 25;
-    if (duracaoHoras >= 5 && !possuiAgua) risco += 12;
-    if (!possuiItensRecepcao) risco += 20;
-    if (percentualCriancas >= 0.35) risco += 6;
+    if (duracaoHoras >= 5) {
+      risco += 14;
+    }
+    if (duracaoHoras >= 7) {
+      risco += 8;
+    }
+    if (margem < 0.08) {
+      risco += 15;
+    }
+    if (margem >= 0.15) {
+      risco -= 8;
+    }
+    if (!possuiBebidas) {
+      risco += 25;
+    }
+    if (duracaoHoras >= 5 && !possuiAgua) {
+      risco += 12;
+    }
+    if (!possuiItensRecepcao) {
+      risco += 20;
+    }
+    if (percentualCriancas >= 0.35) {
+      risco += 6;
+    }
 
     switch (perfil.tipo) {
       case TipoPerfilFesta.economico:
@@ -325,12 +351,18 @@ class CalculadoraFestaAIService implements ICalculadoraFestaAIService {
       }
     }
 
-    if (custoTotal <= 0) return 0;
+    if (custoTotal <= 0) {
+      return 0;
+    }
 
     final ratio = custoTotal / orcamentoDisponivel;
 
-    if (ratio <= 0.75) return 92;
-    if (ratio <= 1.0) return (85 - ((ratio - 0.75) * 100)).clamp(60, 85).toDouble();
+    if (ratio <= 0.75) {
+      return 92;
+    }
+    if (ratio <= 1.0) {
+      return (85 - ((ratio - 0.75) * 100)).clamp(60, 85).toDouble();
+    }
 
     return (55 - ((ratio - 1.0) * 80)).clamp(10, 55).toDouble();
   }
@@ -343,8 +375,12 @@ class CalculadoraFestaAIService implements ICalculadoraFestaAIService {
   }) {
     var conforto = 100 - indiceRisco;
 
-    if (margem >= 0.10) conforto += 6;
-    if (possuiBebidas) conforto += 5;
+    if (margem >= 0.10) {
+      conforto += 6;
+    }
+    if (possuiBebidas) {
+      conforto += 5;
+    }
 
     switch (perfil.tipo) {
       case TipoPerfilFesta.economico:
@@ -395,12 +431,14 @@ class CalculadoraFestaAIService implements ICalculadoraFestaAIService {
     buffer.write(
       'Para $tipoEvento, no perfil ${perfil.nome}, a IA analisou $totalConvidados convidados ',
     );
-    buffer.write('($totalEquivalente equivalentes) e estimou ${_formatMoney(custoTotal)}. ');
+    buffer.write(
+        '($totalEquivalente equivalentes) e estimou ${_formatMoney(custoTotal)}. ');
 
     if (orcamento != null && orcamento > 0) {
       final diferenca = custoTotal - orcamento;
       if (diferenca > 0) {
-        buffer.write('O cálculo ultrapassa o orçamento em ${_formatMoney(diferenca)}. ');
+        buffer.write(
+            'O cálculo ultrapassa o orçamento em ${_formatMoney(diferenca)}. ');
       } else {
         buffer.write(
             'O cálculo está dentro do orçamento com folga de ${_formatMoney(diferenca.abs())}. ');
@@ -413,19 +451,26 @@ class CalculadoraFestaAIService implements ICalculadoraFestaAIService {
     return buffer.toString();
   }
 
-  CalculadoraFestaItemModel? _itemMaisCaro(List<CalculadoraFestaItemModel> itens) {
-    if (itens.isEmpty) return null;
+  CalculadoraFestaItemModel? _itemMaisCaro(
+      List<CalculadoraFestaItemModel> itens) {
+    if (itens.isEmpty) {
+      return null;
+    }
 
-    final ordenados = [...itens]..sort((a, b) => b.custoEstimado.compareTo(a.custoEstimado));
+    final ordenados = [...itens]
+      ..sort((a, b) => b.custoEstimado.compareTo(a.custoEstimado));
     return ordenados.first;
   }
 
   bool _containsAny(List<String> values, List<String> tokens) {
-    return values.any((value) => tokens.any((token) => value.contains(_normalize(token))));
+    return values.any(
+        (value) => tokens.any((token) => value.contains(_normalize(token))));
   }
 
   double? _normalizarOrcamento(double? value) {
-    if (value == null || value <= 0) return null;
+    if (value == null || value <= 0) {
+      return null;
+    }
     return value;
   }
 

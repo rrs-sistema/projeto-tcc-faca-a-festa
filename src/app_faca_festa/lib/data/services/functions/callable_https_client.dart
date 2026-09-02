@@ -12,19 +12,21 @@ class CallableHttpsException implements Exception {
   final String? message;
 
   @override
-  String toString() => message?.trim().isNotEmpty == true
-      ? '$code: $message'
-      : code;
+  String toString() =>
+      message?.trim().isNotEmpty == true ? '$code: $message' : code;
 }
 
 /// Chamada `onCall` por HTTP. No Windows o plugin `cloud_functions` falha
 /// (`CloudFunctionsHostApi.call`); este cliente usa a URL da function v2.
 class CallableHttpsClient {
   CallableHttpsClient({
+    required FirebaseAuth auth,
     http.Client? client,
     this.regiao = 'southamerica-east1',
-  }) : _client = client ?? http.Client();
+  })  : _auth = auth,
+        _client = client ?? http.Client();
 
+  final FirebaseAuth _auth;
   final http.Client _client;
   final String regiao;
   static const Duration _timeout = Duration(seconds: 30);
@@ -39,7 +41,7 @@ class CallableHttpsClient {
     Map<String, dynamic>? data,
     Duration? timeout,
   ]) async {
-    final usuario = FirebaseAuth.instance.currentUser;
+    final usuario = _auth.currentUser;
     if (usuario == null) {
       throw const CallableHttpsException(
         'unauthenticated',
@@ -55,12 +57,7 @@ class CallableHttpsClient {
       );
     }
 
-    final projectId = Firebase.apps.isNotEmpty
-        ? Firebase.app().options.projectId
-        : 'faca-a-festa';
-    final uri = Uri.parse(
-      'https://$regiao-$projectId.cloudfunctions.net/$nomeFunction',
-    );
+    final uri = _functionUri(nomeFunction);
 
     final response = await _client
         .post(
@@ -95,6 +92,54 @@ class CallableHttpsClient {
       return result.map((key, value) => MapEntry(key.toString(), value));
     }
     return const {};
+  }
+
+  Future<Map<String, dynamic>> callPublic(
+    String nomeFunction, [
+    Map<String, dynamic>? data,
+    Duration? timeout,
+  ]) async {
+    final uri = _functionUri(nomeFunction);
+
+    final response = await _client
+        .post(
+          uri,
+          headers: const {'Content-Type': 'application/json'},
+          body: jsonEncode({'data': data ?? <String, dynamic>{}}),
+        )
+        .timeout(timeout ?? _timeout);
+
+    final body = _decodificar(response.body);
+    final error = body['error'];
+    if (error is Map) {
+      throw CallableHttpsException(
+        _codigoDeStatus(error['status']?.toString()),
+        error['message']?.toString(),
+      );
+    }
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw const CallableHttpsException(
+        'internal',
+        'Não foi possível concluir a verificação.',
+      );
+    }
+
+    final result = body['result'];
+    if (result is Map<String, dynamic>) return result;
+    if (result is Map) {
+      return result.map((key, value) => MapEntry(key.toString(), value));
+    }
+    return const {};
+  }
+
+  Uri _functionUri(String nomeFunction) {
+    final projectId = Firebase.apps.isNotEmpty
+        ? Firebase.app().options.projectId
+        : 'faca-a-festa';
+    return Uri.parse(
+      'https://$regiao-$projectId.cloudfunctions.net/$nomeFunction',
+    );
   }
 
   Map<String, dynamic> _decodificar(String raw) {

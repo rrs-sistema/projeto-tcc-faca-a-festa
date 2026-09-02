@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../../../app/bootstrap/fornecedor_recomendacao_bootstrap.dart';
-import '../../../../controllers/fornecedor/fornecedor_recomendacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_recomendacao_controller.dart';
 import '../../../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
 import 'fornecedor_recomendado_card.dart';
 

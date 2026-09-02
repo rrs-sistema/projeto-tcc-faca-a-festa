@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import './../../../../controllers/convidado/cardapio_controller.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../../../data/models/cardapio/cardapio_item_model.dart';
 import './../../../../data/models/cardapio/cardapio_model.dart';
 import './add_item_cardapio_bottom_sheet.dart';
@@ -913,8 +913,8 @@ void abrirAdicionarItemCardapio(
     BuildContext context, String idEvento, String idCardapio) {
   showCadastroBottomSheet(
     context: context,
-    builder: (_) => AddItemCardapioBottomSheet(
-        idEvento: idEvento, idCardapio: idCardapio),
+    builder: (_) =>
+        AddItemCardapioBottomSheet(idEvento: idEvento, idCardapio: idCardapio),
   );
 }
 

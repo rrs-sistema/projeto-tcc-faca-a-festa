@@ -1,12 +1,13 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
+import '../../../../data/models/cotacao/cotacao_chat_model.dart';
 import '../../../../data/models/model.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
-import './../../../../controllers/app_controller.dart';
+import '../../../../domain/usecases/gerenciar_cotacoes.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 
 class ChatMensagensPage extends StatelessWidget {
   final String idCotacao;
@@ -24,23 +25,14 @@ class ChatMensagensPage extends StatelessWidget {
 
   final msgController = TextEditingController();
   final scrollCtrl = ScrollController();
+  final cotacoes = Get.find<GerenciarCotacoes>();
 
   Future<void> marcarMensagensComoLidas(String idUsuario) async {
-    final snap = await FirebaseFirestore.instance
-        .collection("cotacao")
-        .doc(idCotacao)
-        .collection("fornecedores")
-        .doc(idFornecedor)
-        .collection("mensagens")
-        .where("id_usuario", isNotEqualTo: idUsuario)
-        .get();
-
-    for (var m in snap.docs) {
-      final data = m.data();
-      if (data['lido'] != true) {
-        await m.reference.update({"lido": true});
-      }
-    }
+    await cotacoes.marcarMensagensComoLidas(
+      idCotacao: idCotacao,
+      idFornecedor: idFornecedor,
+      idUsuario: idUsuario,
+    );
   }
 
   @override
@@ -87,8 +79,8 @@ class ChatMensagensPage extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon:
-                        const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 20),
+                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white, size: 20),
                     onPressed: () => Get.back(),
                     padding: EdgeInsets.zero,
                     visualDensity: VisualDensity.compact,
@@ -101,7 +93,8 @@ class ChatMensagensPage extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.person, color: Colors.white, size: 18),
+                    child:
+                        const Icon(Icons.person, color: Colors.white, size: 18),
                   ),
                   const SizedBox(width: 10),
                   Expanded(
@@ -130,7 +123,8 @@ class ChatMensagensPage extends StatelessWidget {
   // ----------------------------------------------------------
   Widget _buildChatHeader(DateTime dataSolicitacao) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10), // 🔹 Compacto
+      padding: const EdgeInsets.symmetric(
+          horizontal: 14, vertical: 10), // 🔹 Compacto
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -150,7 +144,8 @@ class ChatMensagensPage extends StatelessWidget {
               color: Colors.teal.shade50,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(Icons.receipt_long_rounded, color: Colors.teal, size: 18),
+            child: const Icon(Icons.receipt_long_rounded,
+                color: Colors.teal, size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -184,21 +179,18 @@ class ChatMensagensPage extends StatelessWidget {
   // 🔹 LISTA DE MENSAGENS
   // ----------------------------------------------------------
   Widget _buildMensagens(UsuarioModel usuario, Color primary) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection("cotacao")
-          .doc(idCotacao)
-          .collection("fornecedores")
-          .doc(idFornecedor)
-          .collection("mensagens")
-          .orderBy("enviado_em")
-          .snapshots(),
+    return StreamBuilder<List<CotacaoMensagemModel>>(
+      stream: cotacoes.observarMensagens(
+        idCotacao: idCotacao,
+        idFornecedor: idFornecedor,
+      ),
       builder: (context, snap) {
         if (!snap.hasData) {
-          return Center(child: CircularProgressIndicator(color: primary, strokeWidth: 2));
+          return Center(
+              child: CircularProgressIndicator(color: primary, strokeWidth: 2));
         }
 
-        final msgs = snap.data!.docs;
+        final msgs = snap.data!;
 
         if (msgs.isEmpty) return _emptyChat();
 
@@ -214,9 +206,9 @@ class ChatMensagensPage extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
           itemCount: msgs.length,
           itemBuilder: (_, i) {
-            final data = msgs[i].data() as Map<String, dynamic>;
-            final isMe = data["id_usuario"] == usuario.idUsuario;
-            return _buildChatBubble(data, isMe, primary);
+            final mensagem = msgs[i];
+            final isMe = mensagem.idUsuario == usuario.idUsuario;
+            return _buildChatBubble(mensagem, isMe, primary);
           },
         );
       },
@@ -226,22 +218,26 @@ class ChatMensagensPage extends StatelessWidget {
   // ----------------------------------------------------------
   // 🔹 BALÃO DE CHAT PROFISSIONAL E COMPACTO
   // ----------------------------------------------------------
-  Widget _buildChatBubble(Map<String, dynamic> data, bool isMe, Color primary) {
-    final msg = data["mensagem"] ?? "";
-    final time = (data["enviado_em"] as Timestamp).toDate();
-
+  Widget _buildChatBubble(
+    CotacaoMensagemModel data,
+    bool isMe,
+    Color primary,
+  ) {
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // 🔹 Margens ajustadas
-        constraints: BoxConstraints(maxWidth: Get.width * 0.75), // 🔹 Evita balões largos demais
+        padding: const EdgeInsets.symmetric(
+            horizontal: 12, vertical: 8), // 🔹 Margens ajustadas
+        constraints: BoxConstraints(
+            maxWidth: Get.width * 0.75), // 🔹 Evita balões largos demais
         decoration: BoxDecoration(
           color: isMe ? primary : Colors.white,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 4), // 🔹 Borda sutil de origem
+            bottomLeft:
+                Radius.circular(isMe ? 16 : 4), // 🔹 Borda sutil de origem
             bottomRight: Radius.circular(isMe ? 4 : 16),
           ),
           boxShadow: [
@@ -253,10 +249,11 @@ class ChatMensagensPage extends StatelessWidget {
           ],
         ),
         child: Column(
-          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment:
+              isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
             Text(
-              msg,
+              data.mensagem,
               style: GoogleFonts.poppins(
                 fontSize: 13,
                 color: isMe ? Colors.white : const Color(0xFF1F2937),
@@ -264,11 +261,13 @@ class ChatMensagensPage extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Text(
-              DateFormat("HH:mm").format(time),
+              DateFormat("HH:mm").format(data.enviadoEm),
               style: GoogleFonts.poppins(
                 fontSize: 9.5,
                 fontWeight: FontWeight.w500,
-                color: isMe ? Colors.white.withValues(alpha: 0.75) : Colors.grey.shade500,
+                color: isMe
+                    ? Colors.white.withValues(alpha: 0.75)
+                    : Colors.grey.shade500,
               ),
             ),
           ],
@@ -282,7 +281,8 @@ class ChatMensagensPage extends StatelessWidget {
   // ----------------------------------------------------------
   Widget _buildInputField(Color primary, UsuarioModel usuario) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8), // 🔹 Bem mais fina
+      padding: const EdgeInsets.symmetric(
+          horizontal: 12, vertical: 8), // 🔹 Bem mais fina
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -309,15 +309,18 @@ class ChatMensagensPage extends StatelessWidget {
                 style: GoogleFonts.poppins(fontSize: 13),
                 decoration: InputDecoration(
                   hintText: "Digite sua mensagem...",
-                  hintStyle: GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade500),
+                  hintStyle: GoogleFonts.poppins(
+                      fontSize: 12.5, color: Colors.grey.shade500),
                   filled: true,
-                  fillColor: const Color(0xFFF1F5F9), // Fundo suave para a área de texto
+                  fillColor: const Color(
+                      0xFFF1F5F9), // Fundo suave para a área de texto
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
                     borderSide: BorderSide.none,
                   ),
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 ),
               ),
             ),
@@ -334,7 +337,8 @@ class ChatMensagensPage extends StatelessWidget {
                   color: primary,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                child: const Icon(Icons.send_rounded,
+                    color: Colors.white, size: 18),
               ),
             ),
           ),
@@ -349,19 +353,13 @@ class ChatMensagensPage extends StatelessWidget {
 
     msgController.clear(); // Limpa na hora para a UI ficar fluida
 
-    await FirebaseFirestore.instance
-        .collection("cotacao")
-        .doc(idCotacao)
-        .collection("fornecedores")
-        .doc(idFornecedor)
-        .collection("mensagens")
-        .add({
-      "id_usuario": usuario.idUsuario,
-      "nome_usuario": usuario.nome,
-      "mensagem": texto,
-      "enviado_em": Timestamp.now(),
-      "lido": false,
-    });
+    await cotacoes.enviarMensagem(
+      idCotacao: idCotacao,
+      idFornecedor: idFornecedor,
+      idUsuario: usuario.idUsuario,
+      nomeUsuario: usuario.nome,
+      mensagem: texto,
+    );
   }
 
   // ----------------------------------------------------------
@@ -378,7 +376,8 @@ class ChatMensagensPage extends StatelessWidget {
               color: Colors.grey.shade200,
               shape: BoxShape.circle,
             ),
-            child: Icon(Icons.chat_bubble_outline_rounded, size: 36, color: Colors.grey.shade500),
+            child: Icon(Icons.chat_bubble_outline_rounded,
+                size: 36, color: Colors.grey.shade500),
           ),
           const SizedBox(height: 12),
           Text(
@@ -392,7 +391,8 @@ class ChatMensagensPage extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             "Mande a primeira mensagem para o fornecedor.",
-            style: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey.shade600),
+            style: GoogleFonts.poppins(
+                fontSize: 11.5, color: Colors.grey.shade600),
           ),
         ],
       ),

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/tema/tema_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_controller.dart';
 import 'package:app_faca_festa/data/models/evento/tema_festa_model.dart';
 import 'package:app_faca_festa/domain/repositories/tema_festa_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_temas_festa.dart';

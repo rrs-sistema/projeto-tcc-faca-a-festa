@@ -10,7 +10,15 @@ class GerenciarAuditoria {
     return repository.registrar(registro);
   }
 
+  Future<void> registrarFalhaLogin(RegistroFalhaLogin registro) {
+    return repository.registrarFalhaLogin(registro);
+  }
+
   Future<List<AuditoriaEvento>> listar(AuditoriaConsulta consulta) {
     return repository.listar(consulta);
+  }
+
+  Future<AuditoriaPagina> listarPagina(AuditoriaConsulta consulta) {
+    return repository.listarPagina(consulta);
   }
 }

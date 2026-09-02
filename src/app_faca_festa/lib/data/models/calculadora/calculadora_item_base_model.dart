@@ -210,7 +210,10 @@ class CalculadoraItemBaseModel {
   bool get isPublicoCrianca {
     final value = publicoAlvo.trim().toLowerCase();
 
-    return value == 'crianca' || value == 'criança' || value == 'criancas' || value == 'crianças';
+    return value == 'crianca' ||
+        value == 'criança' ||
+        value == 'criancas' ||
+        value == 'crianças';
   }
 
   bool contemTag(String tag) {

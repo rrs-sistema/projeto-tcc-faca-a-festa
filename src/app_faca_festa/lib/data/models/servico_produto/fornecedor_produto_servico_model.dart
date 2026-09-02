@@ -68,7 +68,8 @@ class FornecedorProdutoServicoModel {
   factory FornecedorProdutoServicoModel.fromMap(Map<String, dynamic> map) {
     return FornecedorProdutoServicoModel(
       id: map['id_fornecedor_servico'] ?? map['id'] ?? '',
-      idProdutoServico: map['id_produto_servico'] ?? map['idProdutoServico'] ?? '',
+      idProdutoServico:
+          map['id_produto_servico'] ?? map['idProdutoServico'] ?? '',
       idFornecedor: map['id_fornecedor'] ?? map['idFornecedor'] ?? '',
       idSubcategoria: map['id_subcategoria'] ?? map['idSubcategoria'],
       preco: (map['preco'] as num?)?.toDouble() ?? 0.0,

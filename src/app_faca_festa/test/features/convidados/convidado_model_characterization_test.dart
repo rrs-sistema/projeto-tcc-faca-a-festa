@@ -64,7 +64,8 @@ void main() {
     expect(map['convite_status'], 'link_gerado');
   });
 
-  test('fromMap reads invite token and linked account without claiming delivery',
+  test(
+      'fromMap reads invite token and linked account without claiming delivery',
       () {
     final model = ConvidadoModel.fromMap({
       'id_convidado': 'convidado-2',

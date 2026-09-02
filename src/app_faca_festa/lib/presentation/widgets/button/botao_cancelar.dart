@@ -2,7 +2,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 
-import '../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 class BotaoCancelar extends StatelessWidget {
   final String texto;
@@ -30,12 +30,13 @@ class BotaoCancelar extends StatelessWidget {
         icon: Icon(Icons.cancel_outlined, color: Colors.white, size: 26),
         label: Text(
           texto,
-          style:
-              GoogleFonts.poppins(color: Colors.white, fontWeight: FontWeight.w500, fontSize: 20),
+          style: GoogleFonts.poppins(
+              color: Colors.white, fontWeight: FontWeight.w500, fontSize: 20),
         ),
         style: TextButton.styleFrom(
           overlayColor: corPrincipalOpcao.withValues(alpha: 0.1),
-          backgroundColor: corBackground ?? Colors.white.withValues(alpha: 0.25),
+          backgroundColor:
+              corBackground ?? Colors.white.withValues(alpha: 0.25),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(30),
           ),

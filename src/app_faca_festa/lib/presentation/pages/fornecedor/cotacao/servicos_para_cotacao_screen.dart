@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import '../../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../components/abrir_nova_cotacao_bottom_sheet.dart';
-import './../../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './../../../../core/utils/biblioteca.dart';
 
 class ServicosParaCotacaoScreen extends StatefulWidget {
@@ -25,7 +25,8 @@ class ServicosParaCotacaoScreen extends StatefulWidget {
   });
 
   @override
-  State<ServicosParaCotacaoScreen> createState() => _ServicosParaCotacaoScreenState();
+  State<ServicosParaCotacaoScreen> createState() =>
+      _ServicosParaCotacaoScreenState();
 }
 
 class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
@@ -51,11 +52,13 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
           elevation: 0,
           centerTitle: true,
           automaticallyImplyLeading: false,
-          flexibleSpace: Container(decoration: BoxDecoration(gradient: gradient)),
+          flexibleSpace:
+              Container(decoration: BoxDecoration(gradient: gradient)),
           title: Row(
             children: [
               IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white, size: 18),
+                icon: const Icon(Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white, size: 18),
                 onPressed: () => Get.back(),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -68,12 +71,15 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                   children: [
                     Text('Cotação de Serviços',
                         style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w800, color: Colors.white, fontSize: 15)),
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            fontSize: 15)),
                     Text(widget.nomeCategoria,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
-                            fontSize: 11, color: Colors.white.withValues(alpha: 0.85))),
+                            fontSize: 11,
+                            color: Colors.white.withValues(alpha: 0.85))),
                   ],
                 ),
               ),
@@ -108,19 +114,24 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: primary,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
               elevation: 0,
             ),
-            onPressed: () => _abrirBottomSheet(fornecedorController.servicosFornecedor, primary),
+            onPressed: () => _abrirBottomSheet(
+                fornecedorController.servicosFornecedor, primary),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.request_quote_rounded, color: Colors.white, size: 18),
+                const Icon(Icons.request_quote_rounded,
+                    color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   'Cotar ${selecionados.length} item(ns) • R\$ ${Biblioteca.formatarValorDecimal(_totalSelecionado)}',
                   style: GoogleFonts.poppins(
-                      fontWeight: FontWeight.w700, color: Colors.white, fontSize: 13),
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                      fontSize: 13),
                 ),
               ],
             ),
@@ -154,14 +165,16 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(color: Colors.red.shade200),
                   ),
-                  child: Icon(Icons.delete_outline_rounded, color: Colors.red.shade400, size: 26),
+                  child: Icon(Icons.delete_outline_rounded,
+                      color: Colors.red.shade400, size: 26),
                 ),
                 confirmDismiss: (_) async {
                   HapticFeedback.selectionClick();
                   return await Biblioteca.showConfirmDialog(
                     context,
                     title: 'Remover serviço?',
-                    message: 'Deseja remover "${s.nomeServico}" da visualização?',
+                    message:
+                        'Deseja remover "${s.nomeServico}" da visualização?',
                     confirmLabel: 'Remover',
                     color: Colors.red,
                     onConfirm: () async => Future.value(true),
@@ -172,7 +185,8 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                   final indexRemovido = i;
 
                   setState(() {
-                    fornecedorController.servicosFornecedor.removeAt(indexRemovido);
+                    fornecedorController.servicosFornecedor
+                        .removeAt(indexRemovido);
                     selecionados.remove(chave);
                     valoresPorChave.remove(chave);
                   });
@@ -198,7 +212,8 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                       },
                       child: Text('Desfazer',
                           style: GoogleFonts.poppins(
-                              fontWeight: FontWeight.w700, color: Colors.blueAccent.shade100)),
+                              fontWeight: FontWeight.w700,
+                              color: Colors.blueAccent.shade100)),
                     ),
                   );
                 },
@@ -216,7 +231,8 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
   }
 
   // 🔹 Design em Lista (Perfeito para celular e escaneabilidade)
-  Widget _cardServicoLista(FornecedorServicoDetalhadoDto s, bool selecionado, Color primary) {
+  Widget _cardServicoLista(
+      FornecedorServicoDetalhadoDto s, bool selecionado, Color primary) {
     final fotoUrl = s.imagemUrl?.isNotEmpty == true
         ? s.imagemUrl!
         : 'https://firebasestorage.googleapis.com/v0/b/faca-a-festa.firebasestorage.app/o/static%2Fsem-foto.jpg?alt=media';
@@ -288,7 +304,9 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                         ),
                       ),
                       Icon(
-                        selecionado ? Icons.check_circle_rounded : Icons.circle_outlined,
+                        selecionado
+                            ? Icons.check_circle_rounded
+                            : Icons.circle_outlined,
                         color: selecionado ? primary : Colors.grey.shade400,
                         size: 20,
                       ),
@@ -299,8 +317,8 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                     s.descricaoServico ?? 'Sem descrição.',
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style:
-                        GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600, height: 1.3),
+                    style: GoogleFonts.poppins(
+                        fontSize: 11, color: Colors.grey.shade600, height: 1.3),
                   ),
                   const SizedBox(height: 6),
 
@@ -312,7 +330,8 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                       Expanded(
                         child: Row(
                           children: [
-                            Icon(Icons.storefront_rounded, size: 12, color: primary),
+                            Icon(Icons.storefront_rounded,
+                                size: 12, color: primary),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
@@ -320,7 +339,9 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.poppins(
-                                    fontSize: 10, fontWeight: FontWeight.w600, color: primary),
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    color: primary),
                               ),
                             ),
                           ],
@@ -357,7 +378,8 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
     );
   }
 
-  void _abrirBottomSheet(List<FornecedorServicoDetalhadoDto> servicos, Color primary) {
+  void _abrirBottomSheet(
+      List<FornecedorServicoDetalhadoDto> servicos, Color primary) {
     final selecionadosServicos = servicos.where((s) {
       final chave = '${s.id}_${s.idFornecedor}';
       return selecionados.contains(chave);
@@ -365,8 +387,11 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
 
     if (selecionadosServicos.isEmpty) return;
 
-    final idsFornecedoresSelecionados =
-        selecionadosServicos.map((s) => s.idFornecedor).whereType<String>().toSet().toList();
+    final idsFornecedoresSelecionados = selecionadosServicos
+        .map((s) => s.idFornecedor)
+        .whereType<String>()
+        .toSet()
+        .toList();
 
     showModalBottomSheet(
       context: context,
@@ -389,14 +414,18 @@ class _ServicosParaCotacaoScreenState extends State<ServicosParaCotacaoScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.design_services_rounded, size: 50, color: Colors.grey.shade300),
+            Icon(Icons.design_services_rounded,
+                size: 50, color: Colors.grey.shade300),
             const SizedBox(height: 16),
             Text('Nenhum serviço disponível',
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700, fontSize: 15, color: const Color(0xFF1F2937))),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                    color: const Color(0xFF1F2937))),
             const SizedBox(height: 4),
             Text('Tente buscar outra categoria.',
-                style: GoogleFonts.poppins(color: Colors.grey.shade600, fontSize: 12)),
+                style: GoogleFonts.poppins(
+                    color: Colors.grey.shade600, fontSize: 12)),
           ],
         ),
       );

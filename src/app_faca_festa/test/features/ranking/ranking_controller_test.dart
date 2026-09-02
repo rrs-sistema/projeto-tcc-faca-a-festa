@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/ranking_controller.dart';
+import 'package:app_faca_festa/presentation/modules/ranking/controllers/ranking_controller.dart';
 import 'package:app_faca_festa/domain/repositories/ranking_repository.dart';
 import 'package:app_faca_festa/domain/usecases/carregar_ranking_servicos.dart';
 

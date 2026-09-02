@@ -9,9 +9,9 @@ import 'package:get/get.dart';
 
 import './../../../core/utils/form_masks.dart';
 import './../../../core/utils/form_validators.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/tema/tema_festa_controller.dart';
-import './../../../controllers/evento_cadastro_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
 import './../endereco/endereco_section.dart';
 import './evento_preview_titulo_widget.dart';
 import './tema_festa_selector.dart';
@@ -77,7 +77,8 @@ Future<void> showCadastroEventoBottomSheet(
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Row(
                     children: [
                       Container(
@@ -86,7 +87,8 @@ Future<void> showCadastroEventoBottomSheet(
                           color: primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: Icon(Icons.celebration_rounded, color: primary, size: 20),
+                        child: Icon(Icons.celebration_rounded,
+                            color: primary, size: 20),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -94,7 +96,9 @@ Future<void> showCadastroEventoBottomSheet(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              controller.isEditando ? 'Editar Evento' : 'Novo Evento',
+                              controller.isEditando
+                                  ? 'Editar Evento'
+                                  : 'Novo Evento',
                               style: GoogleFonts.poppins(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
@@ -192,13 +196,15 @@ List<Widget> _buildCamposPorTipo(
             label: "Título do evento",
             icon: Icons.celebration_rounded,
             controller: controller.nomeEvento,
-            validator: (v) => FormValidators.titulo(v, campo: 'o título do evento'),
+            validator: (v) =>
+                FormValidators.titulo(v, campo: 'o título do evento'),
             onChanged: (p0) {
               controller.nomeEventoPreview.value = p0;
               controller.atualizarPreview();
             },
           ),
-          if (tipoNormalizado == 'aniversario' || tipoNormalizado == 'aniversário') ...[
+          if (tipoNormalizado == 'aniversario' ||
+              tipoNormalizado == 'aniversário') ...[
             const SizedBox(height: 8),
             _CompactInputField(
               label: "Nome do(a) aniversariante",
@@ -213,7 +219,8 @@ List<Widget> _buildCamposPorTipo(
             const SizedBox(height: 10),
             TemaFestaSelector(primary: primary, obrigatorio: true),
           ],
-          if (tipoNormalizado == 'formatura' || tipoNormalizado == 'eventoformatura') ...[
+          if (tipoNormalizado == 'formatura' ||
+              tipoNormalizado == 'eventoformatura') ...[
             const SizedBox(height: 8),
             _CompactInputField(
               label: "Nome do(a) formando(a)",
@@ -248,7 +255,8 @@ List<Widget> _buildCamposPorTipo(
             const SizedBox(height: 10),
             TemaFestaSelector(primary: primary),
           ],
-          if (tipoNormalizado == 'festainfantil' || tipoNormalizado == 'festa infantil') ...[
+          if (tipoNormalizado == 'festainfantil' ||
+              tipoNormalizado == 'festa infantil') ...[
             const SizedBox(height: 8),
             _CompactInputField(
               label: "Nome da criança",
@@ -271,7 +279,8 @@ List<Widget> _buildCamposPorTipo(
                     controller: controller.idade,
                     keyboardType: TextInputType.number,
                     inputFormatters: FormMasks.inteiro(maxDigits: 3),
-                    validator: (v) => FormValidators.idade(v, obrigatorio: true, maximo: 17),
+                    validator: (v) =>
+                        FormValidators.idade(v, obrigatorio: true, maximo: 17),
                     onChanged: (_) => controller.atualizarPreview(),
                   ),
                 ),
@@ -332,37 +341,49 @@ List<Widget> _buildCamposPorTipo(
                             ? controller.tipoCerimonia.value
                             : null,
                         style: GoogleFonts.poppins(
-                            fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87),
                         decoration: InputDecoration(
                           labelText: "Cerimônia",
                           labelStyle: GoogleFonts.poppins(fontSize: 11),
-                          prefixIcon: const Icon(Icons.church_rounded, size: 16),
+                          prefixIcon:
+                              const Icon(Icons.church_rounded, size: 16),
                           isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
                           filled: true,
                           fillColor: Colors.grey.shade50,
                         ),
                         items: const [
                           DropdownMenuItem(
                               value: 'civil',
-                              child: Text('Civil', overflow: TextOverflow.ellipsis)),
+                              child: Text('Civil',
+                                  overflow: TextOverflow.ellipsis)),
                           DropdownMenuItem(
                               value: 'religiosa',
-                              child: Text('Religiosa', overflow: TextOverflow.ellipsis)),
+                              child: Text('Religiosa',
+                                  overflow: TextOverflow.ellipsis)),
                           DropdownMenuItem(
                               value: 'religiosa_civil',
-                              child: Text('Religiosa + Civil', overflow: TextOverflow.ellipsis)),
+                              child: Text('Religiosa + Civil',
+                                  overflow: TextOverflow.ellipsis)),
                           DropdownMenuItem(
                               value: 'simbolica',
-                              child: Text('Simbólica', overflow: TextOverflow.ellipsis)),
+                              child: Text('Simbólica',
+                                  overflow: TextOverflow.ellipsis)),
                           DropdownMenuItem(
                               value: 'ao_ar_livre',
-                              child: Text('Ao ar livre', overflow: TextOverflow.ellipsis)),
+                              child: Text('Ao ar livre',
+                                  overflow: TextOverflow.ellipsis)),
                         ],
-                        onChanged: (v) => controller.tipoCerimonia.value = v ?? '',
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Selecione o tipo de cerimônia' : null,
+                        onChanged: (v) =>
+                            controller.tipoCerimonia.value = v ?? '',
+                        validator: (v) => v == null || v.isEmpty
+                            ? 'Selecione o tipo de cerimônia'
+                            : null,
                       )),
                 ),
                 const SizedBox(width: 8),
@@ -373,45 +394,61 @@ List<Widget> _buildCamposPorTipo(
                             ? controller.estiloCasamento.value
                             : null,
                         style: GoogleFonts.poppins(
-                            fontSize: 12, fontWeight: FontWeight.w600, color: Colors.black87),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87),
                         decoration: InputDecoration(
                           labelText: "Estilo",
                           labelStyle: GoogleFonts.poppins(fontSize: 11),
-                          prefixIcon: const Icon(Icons.palette_rounded, size: 16),
+                          prefixIcon:
+                              const Icon(Icons.palette_rounded, size: 16),
                           isDense: true,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                          contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 10),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
                           filled: true,
                           fillColor: Colors.grey.shade50,
                         ),
                         items: const [
                           DropdownMenuItem(
                               value: 'classico',
-                              child: Text('Clássico', overflow: TextOverflow.ellipsis)),
+                              child: Text('Clássico',
+                                  overflow: TextOverflow.ellipsis)),
                           DropdownMenuItem(
                               value: 'rustico',
-                              child: Text('Rústico', overflow: TextOverflow.ellipsis)),
+                              child: Text('Rústico',
+                                  overflow: TextOverflow.ellipsis)),
                           DropdownMenuItem(
                               value: 'praia',
-                              child: Text('Praia', overflow: TextOverflow.ellipsis)),
+                              child: Text('Praia',
+                                  overflow: TextOverflow.ellipsis)),
                           DropdownMenuItem(
                               value: 'campo',
-                              child: Text('Campo', overflow: TextOverflow.ellipsis)),
+                              child: Text('Campo',
+                                  overflow: TextOverflow.ellipsis)),
                           DropdownMenuItem(
-                              value: 'boho', child: Text('Boho', overflow: TextOverflow.ellipsis)),
+                              value: 'boho',
+                              child: Text('Boho',
+                                  overflow: TextOverflow.ellipsis)),
                           DropdownMenuItem(
                               value: 'moderno',
-                              child: Text('Moderno', overflow: TextOverflow.ellipsis)),
+                              child: Text('Moderno',
+                                  overflow: TextOverflow.ellipsis)),
                           DropdownMenuItem(
                               value: 'industrial',
-                              child: Text('Industrial', overflow: TextOverflow.ellipsis)),
+                              child: Text('Industrial',
+                                  overflow: TextOverflow.ellipsis)),
                           DropdownMenuItem(
                               value: 'minimalista',
-                              child: Text('Minimalista', overflow: TextOverflow.ellipsis)),
+                              child: Text('Minimalista',
+                                  overflow: TextOverflow.ellipsis)),
                         ],
-                        onChanged: (v) => controller.estiloCasamento.value = v ?? '',
-                        validator: (v) =>
-                            v == null || v.isEmpty ? 'Selecione o estilo do casamento' : null,
+                        onChanged: (v) =>
+                            controller.estiloCasamento.value = v ?? '',
+                        validator: (v) => v == null || v.isEmpty
+                            ? 'Selecione o estilo do casamento'
+                            : null,
                       )),
                 ),
               ],
@@ -450,10 +487,12 @@ List<Widget> _buildCamposPorTipo(
                       initialEntryMode: DatePickerEntryMode.calendarOnly,
                     );
                     if (picked != null) {
-                      controller.dataFesta.text = DateFormat('dd/MM/yyyy', 'pt_BR').format(picked);
+                      controller.dataFesta.text =
+                          DateFormat('dd/MM/yyyy', 'pt_BR').format(picked);
                     }
                   },
-                  validator: (v) => FormValidators.data(v, campo: 'a data do evento'),
+                  validator: (v) =>
+                      FormValidators.data(v, campo: 'a data do evento'),
                 ),
               ),
               const SizedBox(width: 8),
@@ -473,7 +512,8 @@ List<Widget> _buildCamposPorTipo(
                           "${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}";
                     }
                   },
-                  validator: (v) => FormValidators.hora(v, campo: 'a hora do evento'),
+                  validator: (v) =>
+                      FormValidators.hora(v, campo: 'a hora do evento'),
                 ),
               ),
             ],
@@ -525,7 +565,8 @@ List<Widget> _buildCamposPorTipo(
 // ============================================================================
 // 🔹 Secções Específicas
 // ============================================================================
-Widget _buildCampoPadrinhos(Color primary, EventoCadastroController controller) {
+Widget _buildCampoPadrinhos(
+    Color primary, EventoCadastroController controller) {
   final padrinhoController = TextEditingController();
 
   return Obx(() => Column(
@@ -544,10 +585,12 @@ Widget _buildCampoPadrinhos(Color primary, EventoCadastroController controller) 
                 Expanded(
                   child: TextField(
                     controller: padrinhoController,
-                    style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+                    style: GoogleFonts.poppins(
+                        fontSize: 12, fontWeight: FontWeight.w600),
                     decoration: InputDecoration(
                       hintText: "💖 Nome dos padrinhos / casal",
-                      hintStyle: GoogleFonts.poppins(color: Colors.grey.shade500, fontSize: 11),
+                      hintStyle: GoogleFonts.poppins(
+                          color: Colors.grey.shade500, fontSize: 11),
                       border: InputBorder.none,
                       isDense: true,
                     ),
@@ -558,7 +601,8 @@ Widget _buildCampoPadrinhos(Color primary, EventoCadastroController controller) 
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.add_circle_rounded, color: primary, size: 20),
+                  icon:
+                      Icon(Icons.add_circle_rounded, color: primary, size: 20),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
@@ -589,12 +633,15 @@ Widget _buildCampoPadrinhos(Color primary, EventoCadastroController controller) 
                     Text(
                       p,
                       style: GoogleFonts.poppins(
-                          color: primary, fontWeight: FontWeight.w600, fontSize: 10),
+                          color: primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 10),
                     ),
                     const SizedBox(width: 4),
                     InkWell(
                       onTap: () => controller.removePadrinho(p),
-                      child: Icon(Icons.close_rounded, color: primary, size: 12),
+                      child:
+                          Icon(Icons.close_rounded, color: primary, size: 12),
                     )
                   ],
                 ),
@@ -605,7 +652,8 @@ Widget _buildCampoPadrinhos(Color primary, EventoCadastroController controller) 
       ));
 }
 
-Widget _buildSecaoConvidadosEstimados(Color primary, EventoCadastroController controller) {
+Widget _buildSecaoConvidadosEstimados(
+    Color primary, EventoCadastroController controller) {
   void atualizarTotal() {
     final adultos = _parseIntText(controller.totalAdultos.text);
     final criancas = _parseIntText(controller.totalCriancas.text);
@@ -704,8 +752,8 @@ Widget _buildSecaoConvidadosEstimados(Color primary, EventoCadastroController co
   );
 }
 
-Widget _buildBotaoCalculadoraFesta(
-    Color primary, EventoCadastroController controller, EventoModel? eventoParaEdicao) {
+Widget _buildBotaoCalculadoraFesta(Color primary,
+    EventoCadastroController controller, EventoModel? eventoParaEdicao) {
   final idEvento = eventoParaEdicao?.idEvento.trim() ?? '';
   final eventoJaSalvo = idEvento.isNotEmpty;
 
@@ -732,7 +780,8 @@ Widget _buildBotaoCalculadoraFesta(
             style: OutlinedButton.styleFrom(
               foregroundColor: primary,
               side: BorderSide(color: primary.withValues(alpha: 0.45)),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
               padding: EdgeInsets.zero,
             ),
             onPressed: () {
@@ -743,7 +792,8 @@ Widget _buildBotaoCalculadoraFesta(
                   tipoEvento: _resolverTipoEventoCalculadora(controller),
                   permitirEstimativaSemEvento: true,
                   adultosIniciais: _parseIntText(controller.totalAdultos.text),
-                  criancasIniciais: _parseIntText(controller.totalCriancas.text),
+                  criancasIniciais:
+                      _parseIntText(controller.totalCriancas.text),
                   bebesIniciais: _parseIntText(controller.totalBebes.text),
                 ),
                 fullscreenDialog: true,
@@ -751,8 +801,11 @@ Widget _buildBotaoCalculadoraFesta(
             },
             icon: const Icon(Icons.calculate_rounded, size: 18),
             label: Text(
-              eventoJaSalvo ? 'Abrir calculadora da festa' : 'Calcular estimativa',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+              eventoJaSalvo
+                  ? 'Abrir calculadora da festa'
+                  : 'Calcular estimativa',
+              style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w800, fontSize: 12),
             ),
           ),
         ),
@@ -774,14 +827,16 @@ Widget _buildAcoes(Color primary, EventoCadastroController controller) {
               style: OutlinedButton.styleFrom(
                 foregroundColor: primary,
                 side: BorderSide(color: primary.withValues(alpha: 0.55)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
                 padding: EdgeInsets.zero,
               ),
               onPressed: () => Get.back(),
               icon: const Icon(Icons.close_rounded, size: 18),
               label: Text(
                 'Cancelar',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w800, fontSize: 12),
               ),
             ),
           ),
@@ -794,7 +849,8 @@ Widget _buildAcoes(Color primary, EventoCadastroController controller) {
               style: ElevatedButton.styleFrom(
                 backgroundColor: primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10)),
                 padding: EdgeInsets.zero,
               ),
               onPressed: salvando
@@ -814,15 +870,19 @@ Widget _buildAcoes(Color primary, EventoCadastroController controller) {
                   ? const SizedBox(
                       width: 14,
                       height: 14,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
                   : Icon(
-                      controller.isEditando ? Icons.update_rounded : Icons.check_circle_rounded,
+                      controller.isEditando
+                          ? Icons.update_rounded
+                          : Icons.check_circle_rounded,
                       size: 18,
                       color: Colors.white,
                     ),
               label: Text(
                 controller.isEditando ? 'Atualizar' : 'Salvar',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w800, fontSize: 12),
+                style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w800, fontSize: 12),
               ),
             ),
           ),
@@ -840,7 +900,8 @@ class _SectionCard extends StatelessWidget {
   final IconData icon;
   final Widget child;
 
-  const _SectionCard({required this.title, required this.icon, required this.child});
+  const _SectionCard(
+      {required this.title, required this.icon, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -926,7 +987,8 @@ class _CompactInputField extends StatelessWidget {
         labelStyle: GoogleFonts.poppins(fontSize: 11),
         prefixIcon: Icon(icon, size: 16),
         isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
         fillColor: enabled ? Colors.grey.shade50 : Colors.grey.shade100,

@@ -5,11 +5,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../../controllers/evento_controller.dart';
-import '../../../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 import '../../../../../data/models/DTO/servico_cotado_dto.dart';
 import '../../components/abrir_nova_cotacao_bottom_sheet.dart';
-import './../../../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './../../../../../data/models/model.dart';
 
 class ServicoCardPrincipal extends StatelessWidget {
@@ -86,7 +86,8 @@ class ServicoCardPrincipal extends StatelessWidget {
           color: Colors.grey.shade50,
         ),
         alignment: Alignment.center,
-        child: Icon(Icons.image_not_supported_outlined, size: 40, color: Colors.grey.shade300),
+        child: Icon(Icons.image_not_supported_outlined,
+            size: 40, color: Colors.grey.shade300),
       );
     }
 
@@ -104,7 +105,8 @@ class ServicoCardPrincipal extends StatelessWidget {
                 fadeInDuration: const Duration(milliseconds: 400),
                 httpHeaders: const {"Connection": "keep-alive"},
                 errorWidget: (_, __, ___) => const Icon(Icons.broken_image),
-                placeholder: (_, __) => const Center(child: CircularProgressIndicator()),
+                placeholder: (_, __) =>
+                    const Center(child: CircularProgressIndicator()),
                 imageBuilder: (context, imageProvider) => Image(
                   image: imageProvider,
                   height: 180,
@@ -128,7 +130,10 @@ class ServicoCardPrincipal extends StatelessWidget {
             height: 180,
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.black.withValues(alpha: 0.3), Colors.transparent],
+                colors: [
+                  Colors.black.withValues(alpha: 0.3),
+                  Colors.transparent
+                ],
                 begin: Alignment.bottomCenter,
                 end: Alignment.center,
               ),
@@ -168,19 +173,22 @@ class ServicoCardPrincipal extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: primary,
             elevation: 0, // Design Flat
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
           onPressed: () {
-            final fornecedorLocalizacaoController = Get.find<FornecedorLocalizacaoController>();
+            final fornecedorLocalizacaoController =
+                Get.find<FornecedorLocalizacaoController>();
             final eventoController = Get.find<EventoController>();
             final appController = Get.find<AppController>();
-            final servicoCotado =
-                ServicoCotadoDto(idProduto: servico.id, nomeProduto: servico.nome);
+            final servicoCotado = ServicoCotadoDto(
+                idProduto: servico.id, nomeProduto: servico.nome);
 
             if (appController.isServicoSelecionado(servico.id)) {
               appController.removerServico(servico.id);
               Get.snackbar('Removido', 'Serviço removido da lista de cotação.',
-                  backgroundColor: Colors.grey.shade900, colorText: Colors.white);
+                  backgroundColor: Colors.grey.shade900,
+                  colorText: Colors.white);
             } else {
               final servico = fornecedorLocalizacaoController.servicosFornecedor
                   .where((s) => s.idFornecedor == fornecedorId)
@@ -221,7 +229,8 @@ class ServicoCardPrincipal extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.request_quote_rounded, color: Colors.white, size: 16),
+              const Icon(Icons.request_quote_rounded,
+                  color: Colors.white, size: 16),
               const SizedBox(width: 8),
               Text(
                 label,

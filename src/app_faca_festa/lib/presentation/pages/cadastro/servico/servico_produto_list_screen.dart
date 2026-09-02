@@ -5,17 +5,17 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../controllers/avaliacao/avaliacao_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import '../../../widgets/festa_app_bar.dart';
 import '../../../widgets/admin/admin_kit.dart';
-import '../../../../controllers/tema/admin_theme.dart';
+import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
 import './../../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import './../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import '../../../../app/bootstrap/servico_foto_bootstrap.dart';
 import '../../../../app/bootstrap/servico_produto_bootstrap.dart';
 import './../fornecedor/fornecedor_servico_bottom_sheet.dart';
-import '../../../../controllers/fornecedor/fornecedor_controller.dart';
-import './../../../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './../../../../core/utils/biblioteca.dart';
 import './show_servico_produto_bottom_sheet.dart';
 import './../../../../data/models/model.dart';
@@ -35,7 +35,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
   final fornecedorController = Get.find<FornecedorController>();
   final fotoController = ServicoFotoBootstrap.findController();
   final servicoController = ServicoProdutoBootstrap.findController();
-  final appController = Get.put(AppController());
+  final appController = Get.find<AppController>();
 
   final theme = Get.find<EventThemeController>();
   final RxInt _sortColumnIndex = 0.obs;

@@ -2,13 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../controllers/calculadora/calculadora_itens_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_itens_admin_controller.dart';
 import '../../../data/models/calculadora/calculadora_evento_item_model.dart';
 import '../../../data/models/calculadora/calculadora_item_base_model.dart';
 import 'calculadora_evento_item_form_dialog.dart';
 import 'calculadora_item_base_form_dialog.dart';
 
-class CalculadoraItensAdminPage extends GetView<CalculadoraItensAdminController> {
+class CalculadoraItensAdminPage
+    extends GetView<CalculadoraItensAdminController> {
   const CalculadoraItensAdminPage({super.key});
 
   @override
@@ -21,7 +22,8 @@ class CalculadoraItensAdminPage extends GetView<CalculadoraItensAdminController>
           toolbarHeight: 54, // Compactado
           title: Text(
             'Itens da Calculadora',
-            style: GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w800),
+            style:
+                GoogleFonts.poppins(fontSize: 16, fontWeight: FontWeight.w800),
           ),
           centerTitle: false,
           actions: [
@@ -46,7 +48,8 @@ class CalculadoraItensAdminPage extends GetView<CalculadoraItensAdminController>
                     children: [
                       const Icon(Icons.filter_alt_off_outlined, size: 18),
                       const SizedBox(width: 8),
-                      Text('Limpar filtros', style: GoogleFonts.poppins(fontSize: 13)),
+                      Text('Limpar filtros',
+                          style: GoogleFonts.poppins(fontSize: 13)),
                     ],
                   ),
                 ),
@@ -54,8 +57,10 @@ class CalculadoraItensAdminPage extends GetView<CalculadoraItensAdminController>
             ),
           ],
           bottom: TabBar(
-            labelStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
-            unselectedLabelStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
+            labelStyle:
+                GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
+            unselectedLabelStyle:
+                GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w500),
             tabs: const [
               Tab(
                 iconMargin: EdgeInsets.only(bottom: 4),
@@ -112,7 +117,8 @@ class _ItensBaseTab extends GetView<CalculadoraItensAdminController> {
                     return _EmptyState(
                       icon: Icons.inventory_2_outlined,
                       title: 'Nenhum item base encontrado',
-                      subtitle: 'Ajuste os filtros ou cadastre um novo item global.',
+                      subtitle:
+                          'Ajuste os filtros ou cadastre um novo item global.',
                       actionLabel: 'Novo item base',
                       onAction: () => CalculadoraItemBaseFormDialog.show(),
                     );
@@ -164,7 +170,8 @@ class _ItensEventoTab extends GetView<CalculadoraItensAdminController> {
                     return _EmptyState(
                       icon: Icons.rule_folder_outlined,
                       title: 'Nenhuma regra encontrada',
-                      subtitle: 'Cadastre uma configuração para tipo de evento.',
+                      subtitle:
+                          'Cadastre uma configuração para tipo de evento.',
                       actionLabel: 'Nova regra',
                       onAction: () => CalculadoraEventoItemFormDialog.show(),
                     );
@@ -209,7 +216,9 @@ class _ItensBaseHeader extends GetView<CalculadoraItensAdminController> {
       padding: EdgeInsets.fromLTRB(12, isDesktop ? 10 : 8, 12, 8), // Reduzido
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4))),
+        border: Border(
+            bottom:
+                BorderSide(color: theme.dividerColor.withValues(alpha: 0.4))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,14 +245,16 @@ class _ItensBaseHeader extends GetView<CalculadoraItensAdminController> {
                   label: 'Categoria',
                   value: controller.filtroCategoriaBase.value,
                   items: controller.categoriasBase,
-                  onChanged: (value) => controller.filtroCategoriaBase.value = value ?? '',
+                  onChanged: (value) =>
+                      controller.filtroCategoriaBase.value = value ?? '',
                 ),
                 _DropdownFilter(
                   label: 'Status',
                   value: controller.filtroStatusBase.value,
                   items: const ['ativos', 'inativos'],
                   labelBuilder: _labelStatus,
-                  onChanged: (value) => controller.filtroStatusBase.value = value ?? '',
+                  onChanged: (value) =>
+                      controller.filtroStatusBase.value = value ?? '',
                 ),
               ],
             ),
@@ -268,7 +279,9 @@ class _ItensEventoHeader extends GetView<CalculadoraItensAdminController> {
       padding: EdgeInsets.fromLTRB(12, isDesktop ? 10 : 8, 12, 8),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.4))),
+        border: Border(
+            bottom:
+                BorderSide(color: theme.dividerColor.withValues(alpha: 0.4))),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -296,27 +309,31 @@ class _ItensEventoHeader extends GetView<CalculadoraItensAdminController> {
                   value: controller.filtroTipoEvento.value,
                   items: CalculadoraItensAdminController.tiposEvento,
                   labelBuilder: controller.labelTipoEvento,
-                  onChanged: (value) => controller.filtroTipoEvento.value = value ?? '',
+                  onChanged: (value) =>
+                      controller.filtroTipoEvento.value = value ?? '',
                 ),
                 _DropdownFilter(
                   label: 'Perfil',
                   value: controller.filtroPerfilFesta.value,
                   items: CalculadoraItensAdminController.perfisFestaPadrao,
                   labelBuilder: _labelPerfil,
-                  onChanged: (value) => controller.filtroPerfilFesta.value = value ?? '',
+                  onChanged: (value) =>
+                      controller.filtroPerfilFesta.value = value ?? '',
                 ),
                 _DropdownFilter(
                   label: 'Categoria',
                   value: controller.filtroCategoriaEvento.value,
                   items: controller.categoriasEvento,
-                  onChanged: (value) => controller.filtroCategoriaEvento.value = value ?? '',
+                  onChanged: (value) =>
+                      controller.filtroCategoriaEvento.value = value ?? '',
                 ),
                 _DropdownFilter(
                   label: 'Status',
                   value: controller.filtroStatusEvento.value,
                   items: const ['ativos', 'inativos'],
                   labelBuilder: _labelStatus,
-                  onChanged: (value) => controller.filtroStatusEvento.value = value ?? '',
+                  onChanged: (value) =>
+                      controller.filtroStatusEvento.value = value ?? '',
                 ),
               ],
             ),
@@ -345,8 +362,10 @@ class _ItensBaseTable extends StatelessWidget {
             headingRowHeight: 36, // Muito mais compacto
             dataRowMinHeight: 38,
             dataRowMaxHeight: 44,
-            headingTextStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
-            dataTextStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.black87),
+            headingTextStyle:
+                GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
+            dataTextStyle:
+                GoogleFonts.poppins(fontSize: 11.5, color: Colors.black87),
             columns: const [
               DataColumn(label: Text('Ordem')),
               DataColumn(label: Text('Nome')),
@@ -366,7 +385,8 @@ class _ItensBaseTable extends StatelessWidget {
                           width: 200,
                           child: Text(item.nome,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w600)),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600)),
                         ),
                       ),
                       DataCell(Text(item.categoriaPadrao)),
@@ -380,16 +400,19 @@ class _ItensBaseTable extends StatelessWidget {
                             IconButton(
                               tooltip: 'Editar',
                               padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                              onPressed: () => CalculadoraItemBaseFormDialog.show(item: item),
+                              constraints: const BoxConstraints(
+                                  minWidth: 32, minHeight: 32),
+                              onPressed: () =>
+                                  CalculadoraItemBaseFormDialog.show(
+                                      item: item),
                               icon: const Icon(Icons.edit_outlined, size: 16),
                             ),
                             Transform.scale(
                               scale: 0.75, // Não deforma a altura da linha
                               child: Switch.adaptive(
                                 value: item.ativo,
-                                onChanged: (value) =>
-                                    controller.ativarDesativarItemBase(item, value),
+                                onChanged: (value) => controller
+                                    .ativarDesativarItemBase(item, value),
                               ),
                             ),
                           ],
@@ -424,8 +447,10 @@ class _ItensEventoTable extends StatelessWidget {
             headingRowHeight: 36, // Compacto
             dataRowMinHeight: 38,
             dataRowMaxHeight: 44,
-            headingTextStyle: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
-            dataTextStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.black87),
+            headingTextStyle:
+                GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700),
+            dataTextStyle:
+                GoogleFonts.poppins(fontSize: 11.5, color: Colors.black87),
             columns: const [
               DataColumn(label: Text('Evento')),
               DataColumn(label: Text('Ord.')),
@@ -441,23 +466,28 @@ class _ItensEventoTable extends StatelessWidget {
                 .map(
                   (item) => DataRow(
                     cells: [
-                      DataCell(Text(controller.labelTipoEvento(item.tipoEvento))),
+                      DataCell(
+                          Text(controller.labelTipoEvento(item.tipoEvento))),
                       DataCell(Text('${item.ordem}')),
                       DataCell(
                         SizedBox(
                           width: 160,
                           child: Text(item.nome,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w600)),
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.w600)),
                         ),
                       ),
                       DataCell(Text(item.categoria)),
-                      DataCell(Text(_formatDouble(item.quantidadePorConvidadoEquivalente))),
-                      DataCell(Text('R\$ ${_formatMoney(item.valorUnitarioMedio)}')),
+                      DataCell(Text(_formatDouble(
+                          item.quantidadePorConvidadoEquivalente))),
+                      DataCell(
+                          Text('R\$ ${_formatMoney(item.valorUnitarioMedio)}')),
                       DataCell(
                         SizedBox(
                           width: 120,
-                          child: Text(item.perfisFesta.map(_labelPerfil).join(', '),
+                          child: Text(
+                              item.perfisFesta.map(_labelPerfil).join(', '),
                               overflow: TextOverflow.ellipsis),
                         ),
                       ),
@@ -469,23 +499,28 @@ class _ItensEventoTable extends StatelessWidget {
                             IconButton(
                               tooltip: 'Editar',
                               padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                              onPressed: () => CalculadoraEventoItemFormDialog.show(item: item),
+                              constraints: const BoxConstraints(
+                                  minWidth: 28, minHeight: 28),
+                              onPressed: () =>
+                                  CalculadoraEventoItemFormDialog.show(
+                                      item: item),
                               icon: const Icon(Icons.edit_outlined, size: 16),
                             ),
                             IconButton(
                               tooltip: 'Duplicar',
                               padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                              onPressed: () => _DuplicarEventoItemSheet.show(item),
+                              constraints: const BoxConstraints(
+                                  minWidth: 28, minHeight: 28),
+                              onPressed: () =>
+                                  _DuplicarEventoItemSheet.show(item),
                               icon: const Icon(Icons.copy_outlined, size: 16),
                             ),
                             Transform.scale(
                               scale: 0.75,
                               child: Switch.adaptive(
                                 value: item.ativo,
-                                onChanged: (value) =>
-                                    controller.ativarDesativarItemEvento(item, value),
+                                onChanged: (value) => controller
+                                    .ativarDesativarItemEvento(item, value),
                               ),
                             ),
                           ],
@@ -535,7 +570,8 @@ class _ItemBaseCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           item.nome,
-                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700),
+                          style: GoogleFonts.poppins(
+                              fontSize: 13, fontWeight: FontWeight.w700),
                         ),
                       ),
                       _StatusChip(active: item.ativo),
@@ -545,14 +581,18 @@ class _ItemBaseCard extends StatelessWidget {
                   Text(
                     '${item.categoriaPadrao} • ${item.unidadePadrao} • ${_labelPublico(item.publicoAlvo)}',
                     style: GoogleFonts.poppins(
-                        fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurfaceVariant),
                   ),
                   if (item.tags.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Wrap(
                       spacing: 4,
                       runSpacing: 4,
-                      children: item.tags.take(4).map((tag) => _TinyChip(label: tag)).toList(),
+                      children: item.tags
+                          .take(4)
+                          .map((tag) => _TinyChip(label: tag))
+                          .toList(),
                     ),
                   ],
                 ],
@@ -561,8 +601,12 @@ class _ItemBaseCard extends StatelessWidget {
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert_rounded, size: 18),
               onSelected: (value) {
-                if (value == 'editar') CalculadoraItemBaseFormDialog.show(item: item);
-                if (value == 'status') controller.ativarDesativarItemBase(item, !item.ativo);
+                if (value == 'editar') {
+                  CalculadoraItemBaseFormDialog.show(item: item);
+                }
+                if (value == 'status') {
+                  controller.ativarDesativarItemBase(item, !item.ativo);
+                }
               },
               itemBuilder: (context) => [
                 const PopupMenuItem(
@@ -616,7 +660,8 @@ class _ItemEventoCard extends StatelessWidget {
                       Expanded(
                         child: Text(
                           item.nome,
-                          style: GoogleFonts.poppins(fontSize: 13, fontWeight: FontWeight.w700),
+                          style: GoogleFonts.poppins(
+                              fontSize: 13, fontWeight: FontWeight.w700),
                         ),
                       ),
                       _StatusChip(active: item.ativo),
@@ -626,7 +671,8 @@ class _ItemEventoCard extends StatelessWidget {
                   Text(
                     '${controller.labelTipoEvento(item.tipoEvento)} • ${item.categoria} • ord. ${item.ordem}',
                     style: GoogleFonts.poppins(
-                        fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 6),
                   Wrap(
@@ -636,10 +682,15 @@ class _ItemEventoCard extends StatelessWidget {
                       _TinyChip(
                           label:
                               '${_formatDouble(item.quantidadePorConvidadoEquivalente)} ${item.unidade}/conv.'),
-                      _TinyChip(label: 'R\$ ${_formatMoney(item.valorUnitarioMedio)}'),
-                      if (item.obrigatorio) const _TinyChip(label: 'Obrigatório'),
-                      if (item.selecionadoPadrao) const _TinyChip(label: 'Selecionado'),
-                      ...item.perfisFesta.map((perfil) => _TinyChip(label: _labelPerfil(perfil))),
+                      _TinyChip(
+                          label:
+                              'R\$ ${_formatMoney(item.valorUnitarioMedio)}'),
+                      if (item.obrigatorio)
+                        const _TinyChip(label: 'Obrigatório'),
+                      if (item.selecionadoPadrao)
+                        const _TinyChip(label: 'Selecionado'),
+                      ...item.perfisFesta.map(
+                          (perfil) => _TinyChip(label: _labelPerfil(perfil))),
                     ],
                   ),
                 ],
@@ -648,9 +699,13 @@ class _ItemEventoCard extends StatelessWidget {
             PopupMenuButton<String>(
               icon: const Icon(Icons.more_vert_rounded, size: 18),
               onSelected: (value) {
-                if (value == 'editar') CalculadoraEventoItemFormDialog.show(item: item);
+                if (value == 'editar') {
+                  CalculadoraEventoItemFormDialog.show(item: item);
+                }
                 if (value == 'duplicar') _DuplicarEventoItemSheet.show(item);
-                if (value == 'status') controller.ativarDesativarItemEvento(item, !item.ativo);
+                if (value == 'status') {
+                  controller.ativarDesativarItemEvento(item, !item.ativo);
+                }
               },
               itemBuilder: (context) => [
                 const PopupMenuItem(
@@ -707,11 +762,13 @@ class _SummaryRow extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w800),
+                style: GoogleFonts.poppins(
+                    fontSize: 14, fontWeight: FontWeight.w800),
               ),
               Text(
                 subtitle,
-                style: GoogleFonts.poppins(fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
+                style: GoogleFonts.poppins(
+                    fontSize: 11, color: theme.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 6),
               Wrap(
@@ -731,11 +788,13 @@ class _SummaryRow extends StatelessWidget {
             onPressed: onAdd,
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             icon: const Icon(Icons.add, size: 16),
             label: Text(addLabel,
-                style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                style: GoogleFonts.poppins(
+                    fontSize: 12, fontWeight: FontWeight.w600)),
           ),
         ),
       ],
@@ -754,7 +813,9 @@ class _FilterPanel extends StatelessWidget {
       initiallyExpanded: MediaQuery.of(context).size.width >= 900,
       tilePadding: EdgeInsets.zero,
       childrenPadding: EdgeInsets.zero,
-      title: Text('Filtros', style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700)),
+      title: Text('Filtros',
+          style:
+              GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w700)),
       leading: const Icon(Icons.filter_alt_outlined, size: 18),
       children: [
         LayoutBuilder(
@@ -809,7 +870,8 @@ class _SearchField extends StatelessWidget {
           hintText: hint,
           hintStyle: GoogleFonts.poppins(fontSize: 11.5, color: Colors.grey),
           prefixIcon: const Icon(Icons.search, size: 16),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           isDense: true,
         ),
@@ -845,7 +907,8 @@ class _DropdownFilter extends StatelessWidget {
       ),
     ];
 
-    final selectedValue = dropdownItems.any((item) => item.value == value) ? value : '';
+    final selectedValue =
+        dropdownItems.any((item) => item.value == value) ? value : '';
 
     return SizedBox(
       height: 38, // Altura densa
@@ -856,7 +919,8 @@ class _DropdownFilter extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           labelStyle: GoogleFonts.poppins(fontSize: 11.5),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           isDense: true,
         ),
@@ -881,13 +945,15 @@ class _DuplicarEventoItemSheet extends StatefulWidget {
   }
 
   @override
-  State<_DuplicarEventoItemSheet> createState() => _DuplicarEventoItemSheetState();
+  State<_DuplicarEventoItemSheet> createState() =>
+      _DuplicarEventoItemSheetState();
 }
 
 class _DuplicarEventoItemSheetState extends State<_DuplicarEventoItemSheet> {
   late String _tipoDestino;
 
-  CalculadoraItensAdminController get controller => Get.find<CalculadoraItensAdminController>();
+  CalculadoraItensAdminController get controller =>
+      Get.find<CalculadoraItensAdminController>();
 
   @override
   void initState() {
@@ -921,7 +987,8 @@ class _DuplicarEventoItemSheetState extends State<_DuplicarEventoItemSheet> {
                       Expanded(
                         child: Text(
                           'Duplicar configuração',
-                          style: GoogleFonts.poppins(fontSize: 15, fontWeight: FontWeight.w800),
+                          style: GoogleFonts.poppins(
+                              fontSize: 15, fontWeight: FontWeight.w800),
                         ),
                       ),
                       IconButton(
@@ -940,12 +1007,15 @@ class _DuplicarEventoItemSheetState extends State<_DuplicarEventoItemSheet> {
                   const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
                     value: _tipoDestino.isEmpty ? null : _tipoDestino,
-                    style: GoogleFonts.poppins(fontSize: 13, color: Colors.black87),
+                    style: GoogleFonts.poppins(
+                        fontSize: 13, color: Colors.black87),
                     decoration: InputDecoration(
                       labelText: 'Tipo de evento de destino',
                       labelStyle: GoogleFonts.poppins(fontSize: 12),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 12),
                     ),
                     items: CalculadoraItensAdminController.tiposEvento
                         .where((tipo) => tipo != widget.item.tipoEvento)
@@ -969,14 +1039,17 @@ class _DuplicarEventoItemSheetState extends State<_DuplicarEventoItemSheet> {
                           child: SizedBox(
                             height: 40,
                             child: OutlinedButton.icon(
-                              onPressed: controller.saving.value ? null : () => Get.back<void>(),
+                              onPressed: controller.saving.value
+                                  ? null
+                                  : () => Get.back<void>(),
                               style: OutlinedButton.styleFrom(
                                   shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(10))),
                               icon: const Icon(Icons.close, size: 16),
                               label: Text('Cancelar',
                                   style: GoogleFonts.poppins(
-                                      fontSize: 12, fontWeight: FontWeight.w600)),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ),
@@ -985,7 +1058,8 @@ class _DuplicarEventoItemSheetState extends State<_DuplicarEventoItemSheet> {
                           child: SizedBox(
                             height: 40,
                             child: FilledButton.icon(
-                              onPressed: controller.saving.value || _tipoDestino.isEmpty
+                              onPressed: controller.saving.value ||
+                                      _tipoDestino.isEmpty
                                   ? null
                                   : () => controller.duplicarItemEvento(
                                         item: widget.item,
@@ -1003,7 +1077,8 @@ class _DuplicarEventoItemSheetState extends State<_DuplicarEventoItemSheet> {
                                   : const Icon(Icons.copy_outlined, size: 16),
                               label: Text('Duplicar',
                                   style: GoogleFonts.poppins(
-                                      fontSize: 12, fontWeight: FontWeight.w600)),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600)),
                             ),
                           ),
                         ),
@@ -1038,7 +1113,8 @@ class _StatusChip extends StatelessWidget {
       ),
       child: Text(
         active ? 'Ativo' : 'Inativo',
-        style: GoogleFonts.poppins(fontSize: 9, color: color, fontWeight: FontWeight.w700),
+        style: GoogleFonts.poppins(
+            fontSize: 9, color: color, fontWeight: FontWeight.w700),
       ),
     );
   }
@@ -1056,13 +1132,16 @@ class _TinyChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        color:
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
         style: GoogleFonts.poppins(
-            fontSize: 9, color: theme.colorScheme.onSurfaceVariant, fontWeight: FontWeight.w600),
+            fontSize: 9,
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: FontWeight.w600),
       ),
     );
   }
@@ -1080,7 +1159,8 @@ class _AvatarIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = active ? theme.colorScheme.primary : theme.colorScheme.outline;
+    final color =
+        active ? theme.colorScheme.primary : theme.colorScheme.outline;
 
     return Container(
       width: 32, // Menor
@@ -1134,13 +1214,15 @@ class _EmptyState extends StatelessWidget {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w800),
+                style: GoogleFonts.poppins(
+                    fontSize: 14, fontWeight: FontWeight.w800),
               ),
               const SizedBox(height: 4),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
+                style: GoogleFonts.poppins(
+                    fontSize: 12, color: theme.colorScheme.onSurfaceVariant),
               ),
               const SizedBox(height: 16),
               SizedBox(
@@ -1148,10 +1230,12 @@ class _EmptyState extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: onAction,
                   style: FilledButton.styleFrom(
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10))),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10))),
                   icon: const Icon(Icons.add, size: 16),
                   label: Text(actionLabel,
-                      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600)),
+                      style: GoogleFonts.poppins(
+                          fontSize: 12, fontWeight: FontWeight.w600)),
                 ),
               ),
             ],

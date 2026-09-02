@@ -39,6 +39,10 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/evento/$(eventoId)).data.id_usuario == uid();
     }
 
+    function orcamentoDoSolicitante(data) {
+      return signedIn() && data.id_solicitante == uid();
+    }
+
     function campoIdUsuario(data) {
       return data.id_usuario == uid() || data.idUsuario == uid();
     }
@@ -394,14 +398,17 @@ service cloud.firestore {
           && (
             eventoDono(resource.data.id_evento)
             || resource.data.id_fornecedor == uid()
-            || resource.data.id_solicitante == uid()
+            || orcamentoDoSolicitante(resource.data)
           )
         );
 
-      allow create: if false;
+      allow create: if isAdmin()
+        || eventoDono(request.resource.data.id_evento)
+        || (isTipo('O') && orcamentoDoSolicitante(request.resource.data));
 
       allow update: if isAdmin()
         || eventoDono(resource.data.id_evento)
+        || orcamentoDoSolicitante(resource.data)
         || (signedIn() && resource.data.id_fornecedor == uid());
 
       allow delete: if isAdmin() || eventoDono(resource.data.id_evento);
@@ -409,15 +416,19 @@ service cloud.firestore {
       match /orcamento_gasto/{gastoId} {
         allow read: if isAdmin()
           || eventoDono(get(/databases/$(database)/documents/orcamento/$(id)).data.id_evento)
+          || orcamentoDoSolicitante(get(/databases/$(database)/documents/orcamento/$(id)).data)
           || (
             signedIn()
             && get(/databases/$(database)/documents/orcamento/$(id)).data.id_fornecedor == uid()
           );
 
-        allow create: if false;
+        allow create: if isAdmin()
+          || eventoDono(get(/databases/$(database)/documents/orcamento/$(id)).data.id_evento)
+          || orcamentoDoSolicitante(get(/databases/$(database)/documents/orcamento/$(id)).data);
 
         allow update, delete: if isAdmin()
-          || eventoDono(get(/databases/$(database)/documents/orcamento/$(id)).data.id_evento);
+          || eventoDono(get(/databases/$(database)/documents/orcamento/$(id)).data.id_evento)
+          || orcamentoDoSolicitante(get(/databases/$(database)/documents/orcamento/$(id)).data);
       }
     }
 

@@ -145,7 +145,8 @@ class _Header extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
                   fontSize: 10.8,
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.72),
+                  color:
+                      theme.textTheme.bodySmall?.color?.withValues(alpha: 0.72),
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -343,12 +344,14 @@ class _Actions extends StatelessWidget {
             icon: const Icon(Icons.request_quote_rounded, size: 15),
             label: Text(
               'Orçamento',
-              style: GoogleFonts.poppins(fontSize: 11.3, fontWeight: FontWeight.w700),
+              style: GoogleFonts.poppins(
+                  fontSize: 11.3, fontWeight: FontWeight.w700),
             ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 8),
               visualDensity: VisualDensity.compact,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ),
@@ -359,13 +362,15 @@ class _Actions extends StatelessWidget {
             icon: const Icon(Icons.bookmark_add_rounded, size: 15),
             label: Text(
               'Reservar',
-              style: GoogleFonts.poppins(fontSize: 11.3, fontWeight: FontWeight.w800),
+              style: GoogleFonts.poppins(
+                  fontSize: 11.3, fontWeight: FontWeight.w800),
             ),
             style: ElevatedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 8),
               visualDensity: VisualDensity.compact,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
             ),
           ),
         ),

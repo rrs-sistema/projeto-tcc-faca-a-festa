@@ -160,6 +160,9 @@ class _FornecedorRemoteFake implements FornecedorRemoteDatasource {
     idFornecedorToken = idFornecedor;
     tokenFcm = token;
   }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
 FornecedorModel _fornecedor() {

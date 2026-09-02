@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/controllers/admin/eventos_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/admin/controllers/eventos_admin_controller.dart';
 import 'package:app_faca_festa/data/models/admin/evento_com_tipo_model.dart';
 import 'package:app_faca_festa/domain/repositories/eventos_admin_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_eventos_admin.dart';

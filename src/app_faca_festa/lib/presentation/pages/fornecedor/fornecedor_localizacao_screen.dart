@@ -1,19 +1,19 @@
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
 import '../../../app/bootstrap/fornecedor_recomendacao_bootstrap.dart';
-import './../../../controllers/fornecedor/fornecedor_recomendacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_recomendacao_controller.dart';
 import './../../../../data/models/servico_produto/categoria_servico_model.dart';
-import '../../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 import '../../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
 import './../../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
 import './../../../data/models/DTO/fornecedor_detalhado_dto.dart';
-import './../../../controllers/tema/event_theme_controller.dart';
-import './../../../controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import './cotacao/servico_detalhe_screen.dart';
 import './../../../core/utils/biblioteca.dart';
 import './../../widgets/festa_app_bar.dart';
@@ -155,7 +155,8 @@ class _FornecedorLocalizacaoScreenState
     final tipoEventoAtual = eventoController.tipoEventoAtualEntidade;
 
     return {
-      'idUsuario': FirebaseAuth.instance.currentUser?.uid ?? '',
+      'idUsuario':
+          Get.find<AppController>().usuarioLogado.value?.idUsuario ?? '',
       'idEvento': eventoAtual?.idEvento ?? '',
       'tipoEventoId': tipoEventoAtual?.idTipoEvento ?? '',
       'tipoEventoNome': tipoEventoAtual?.nome ?? '',

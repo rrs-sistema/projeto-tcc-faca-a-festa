@@ -13,112 +13,128 @@ class CatalogoServicoProduto {
           id: '1761875536019',
           idSubcategoria: '1761673211096',
           nome: 'Diária de salão, sítio ou chácara',
-          descricao: 'Locação do espaço por diária, com área gourmet, jardim ou salão.',
+          descricao:
+              'Locação do espaço por diária, com área gourmet, jardim ou salão.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_chacara_piscina',
           idSubcategoria: '1761673211096',
           nome: 'Chácara com piscina e campo',
-          descricao: 'Espaço rural com piscina, campo, churrasqueira e estacionamento.',
+          descricao:
+              'Espaço rural com piscina, campo, churrasqueira e estacionamento.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_salao_100',
           idSubcategoria: '1761673175394',
           nome: 'Salão para até 100 convidados',
-          descricao: 'Locação de salão climatizado com mesas, cadeiras e cozinha de apoio.',
+          descricao:
+              'Locação de salão climatizado com mesas, cadeiras e cozinha de apoio.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_salao_200',
           idSubcategoria: '1761673175394',
           nome: 'Salão para até 200 convidados',
-          descricao: 'Espaço amplo para recepção, formatura ou festa com palco e pista.',
+          descricao:
+              'Espaço amplo para recepção, formatura ou festa com palco e pista.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_espaco_casamento',
           idSubcategoria: 'sub_espaco_casamento',
           nome: 'Espaço para cerimônia e recepção',
-          descricao: 'Local com jardim ou capela para cerimônia e salão para o jantar.',
+          descricao:
+              'Local com jardim ou capela para cerimônia e salão para o jantar.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_casa_fazenda',
           idSubcategoria: 'sub_espaco_casamento',
           nome: 'Casa de campo para casamento',
-          descricao: 'Propriedade com hospedagem dos noivos, cerimônia ao ar livre e festa.',
+          descricao:
+              'Propriedade com hospedagem dos noivos, cerimônia ao ar livre e festa.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_buffet_infantil',
           idSubcategoria: 'sub_buffet_infantil_espaco',
           nome: 'Buffet infantil com brinquedoteca',
-          descricao: 'Espaço com playground, monitoria e salão para aniversário infantil.',
+          descricao:
+              'Espaço com playground, monitoria e salão para aniversário infantil.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_espaco_kids',
           idSubcategoria: 'sub_buffet_infantil_espaco',
           nome: 'Espaço kids com infláveis',
-          descricao: 'Salão infantil com cama elástica, piscina de bolinhas e recreação.',
+          descricao:
+              'Salão infantil com cama elástica, piscina de bolinhas e recreação.',
           tipoMedida: 'D',
         ),
         _prod(
           id: '1761875593018',
           idSubcategoria: '1761673186978',
           nome: 'Locação de mesa redonda com cadeiras',
-          descricao: 'Mesa para 8 lugares com cadeiras, entrega e recolhimento.',
+          descricao:
+              'Mesa para 8 lugares com cadeiras, entrega e recolhimento.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_cadeira_tiffany',
           idSubcategoria: '1761673186978',
           nome: 'Cadeira Tiffany ou medalhão',
-          descricao: 'Cadeira decorativa para cerimônia, jantar ou mesa de bolo.',
+          descricao:
+              'Cadeira decorativa para cerimônia, jantar ou mesa de bolo.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_jogo_americano',
           idSubcategoria: '1761673218130',
           nome: 'Jogo de toalha, sousplat e guardanapo',
-          descricao: 'Kit de mesa com toalha, sousplat, guardanapo e porta-guardanapo.',
+          descricao:
+              'Kit de mesa com toalha, sousplat, guardanapo e porta-guardanapo.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_jogo_jantar',
           idSubcategoria: '1761673218130',
           nome: 'Jogo de jantar, taças e talheres',
-          descricao: 'Prato raso, sobremesa, talher completo e taça de vinho por pessoa.',
+          descricao:
+              'Prato raso, sobremesa, talher completo e taça de vinho por pessoa.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_tenda_10x10',
           idSubcategoria: '1761673195296',
           nome: 'Tenda 10x10 com calha',
-          descricao: 'Tenda piramidal ou chapéu de bruxa com montagem e desmontagem.',
+          descricao:
+              'Tenda piramidal ou chapéu de bruxa com montagem e desmontagem.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_tenda_alongada',
           idSubcategoria: '1761673195296',
           nome: 'Tenda alongada para recepção',
-          descricao: 'Cobertura contínua para buffet, pista ou área de convívio.',
+          descricao:
+              'Cobertura contínua para buffet, pista ou área de convívio.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_tenda_cristal',
           idSubcategoria: '1761673224551',
           nome: 'Tenda cristal para cerimônia',
-          descricao: 'Tenda transparente para altar, jantar ou cocktail ao ar livre.',
+          descricao:
+              'Tenda transparente para altar, jantar ou cocktail ao ar livre.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_cobertura_passarela',
           idSubcategoria: '1761673224551',
           nome: 'Cobertura de passarela e altar',
-          descricao: 'Estrutura leve para proteger cerimônia em jardim ou praia.',
+          descricao:
+              'Estrutura leve para proteger cerimônia em jardim ou praia.',
           tipoMedida: 'D',
         ),
         _prod(
@@ -132,42 +148,48 @@ class CatalogoServicoProduto {
           id: 'prod_tablado_cerimonia',
           idSubcategoria: '1761673231215',
           nome: 'Tablado e passarela de cerimônia',
-          descricao: 'Piso elevado para altar, passarela de noiva ou formatura.',
+          descricao:
+              'Piso elevado para altar, passarela de noiva ou formatura.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_pista_led',
           idSubcategoria: 'sub_pista_danca',
           nome: 'Pista de dança com LED',
-          descricao: 'Pista iluminada com painel de LED no piso, a partir de 4x4 m.',
+          descricao:
+              'Pista iluminada com painel de LED no piso, a partir de 4x4 m.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_pista_madeira',
           idSubcategoria: 'sub_pista_danca',
           nome: 'Pista de dança em taco ou vinílico',
-          descricao: 'Piso elevado para pista, com fita e acabamento nas bordas.',
+          descricao:
+              'Piso elevado para pista, com fita e acabamento nas bordas.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_gerador_45',
           idSubcategoria: '1761673202507',
           nome: 'Gerador 45 kVA silenciado',
-          descricao: 'Gerador com operador, cabo e proteção para som e iluminação.',
+          descricao:
+              'Gerador com operador, cabo e proteção para som e iluminação.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_quadro_energia',
           idSubcategoria: '1761673202507',
           nome: 'Quadro de energia e distribuição',
-          descricao: 'Distribuição elétrica temporária para tendas, palco e buffet.',
+          descricao:
+              'Distribuição elétrica temporária para tendas, palco e buffet.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_ar_split',
           idSubcategoria: 'sub_climatizacao',
           nome: 'Ar-condicionado split para salão',
-          descricao: 'Locação e instalação de splits para climatizar o espaço da festa.',
+          descricao:
+              'Locação e instalação de splits para climatizar o espaço da festa.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -181,28 +203,32 @@ class CatalogoServicoProduto {
           id: 'prod_banheiro_luxo',
           idSubcategoria: 'sub_banheiros_quimicos',
           nome: 'Banheiro químico luxo',
-          descricao: 'Cabine com pia, espelho, papel e reposição durante o evento.',
+          descricao:
+              'Cabine com pia, espelho, papel e reposição durante o evento.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_banheiro_duplo',
           idSubcategoria: 'sub_banheiros_quimicos',
           nome: 'Banheiro químico duplo (feminino e masculino)',
-          descricao: 'Conjunto de cabines identificadas, com higienização no local.',
+          descricao:
+              'Conjunto de cabines identificadas, com higienização no local.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_choppeira',
           idSubcategoria: 'sub_freezer_chopp',
           nome: 'Choppeira 2 torneiras com barril',
-          descricao: 'Choppeira gelada, extração e cilindro de CO2 para a festa.',
+          descricao:
+              'Choppeira gelada, extração e cilindro de CO2 para a festa.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_freezer_bebida',
           idSubcategoria: 'sub_freezer_chopp',
           nome: 'Freezer e máquina de gelo',
-          descricao: 'Freezer horizontal, refrigerador e máquina de gelo para o bar.',
+          descricao:
+              'Freezer horizontal, refrigerador e máquina de gelo para o bar.',
           tipoMedida: 'D',
         ),
 
@@ -211,7 +237,8 @@ class CatalogoServicoProduto {
           id: '1761927003652',
           idSubcategoria: 'd53c30bf-e790-4849-b40f-40358e90af68',
           nome: 'Buffet completo jantar ou coquetel',
-          descricao: 'Entrada, prato principal, sobremesa e serviço de garçons por pessoa.',
+          descricao:
+              'Entrada, prato principal, sobremesa e serviço de garçons por pessoa.',
           tipoMedida: 'P',
         ),
         _prod(
@@ -225,21 +252,24 @@ class CatalogoServicoProduto {
           id: '1761927027883',
           idSubcategoria: '1761673021428',
           nome: 'Kit cento de salgados e doces',
-          descricao: 'Cento misto de salgados fritos/assados e docinhos tradicionais.',
+          descricao:
+              'Cento misto de salgados fritos/assados e docinhos tradicionais.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_kit_festa_infantil',
           idSubcategoria: '1761673021428',
           nome: 'Kit festa infantil (salgado, doce e bolo)',
-          descricao: 'Pacote para aniversário com salgados, docinhos e bolo simples.',
+          descricao:
+              'Pacote para aniversário com salgados, docinhos e bolo simples.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_cento_fritos',
           idSubcategoria: 'sub_salgados',
           nome: 'Cento de salgados fritos',
-          descricao: 'Coxinha, bolinha de queijo, risoles e similares, fritos na hora ou congelados.',
+          descricao:
+              'Coxinha, bolinha de queijo, risoles e similares, fritos na hora ou congelados.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -253,77 +283,88 @@ class CatalogoServicoProduto {
           id: 'prod_cento_brigadeiro',
           idSubcategoria: 'sub_doces_brigadeiros',
           nome: 'Cento de brigadeiros gourmet',
-          descricao: 'Brigadeiro, beijinho, casadinho e sabores especiais em forminha.',
+          descricao:
+              'Brigadeiro, beijinho, casadinho e sabores especiais em forminha.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_bem_casado',
           idSubcategoria: 'sub_doces_brigadeiros',
           nome: 'Bem-casados e mesa de doces',
-          descricao: 'Bem-casado, camafeu, macaron e montagem da mesa de doces.',
+          descricao:
+              'Bem-casado, camafeu, macaron e montagem da mesa de doces.',
           tipoMedida: 'U',
         ),
         _prod(
           id: '1761928125187',
           idSubcategoria: '1761673028470',
           nome: 'Bolo de festa em andares',
-          descricao: 'Bolo recheado com pasta americana ou chantininho, cobrado por kg.',
+          descricao:
+              'Bolo recheado com pasta americana ou chantininho, cobrado por kg.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_mesa_bolo',
           idSubcategoria: '1761673028470',
           nome: 'Mesa de bolo, tortas e sobremesas',
-          descricao: 'Bolo principal, mini tortas, pavê e sobremesas individuais.',
+          descricao:
+              'Bolo principal, mini tortas, pavê e sobremesas individuais.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_bolo_cenografico',
           idSubcategoria: 'sub_confeitaria',
           nome: 'Bolo cenográfico e fake cake',
-          descricao: 'Bolo cenográfico para fotos, com fatia real para o corte.',
+          descricao:
+              'Bolo cenográfico para fotos, com fatia real para o corte.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_cupcake',
           idSubcategoria: 'sub_confeitaria',
           nome: 'Cupcakes e cake pops personalizados',
-          descricao: 'Doces modelados no tema da festa, com toppers e cores combinando.',
+          descricao:
+              'Doces modelados no tema da festa, com toppers e cores combinando.',
           tipoMedida: 'U',
         ),
         _prod(
           id: '1761928156729',
           idSubcategoria: '1761673040023',
           nome: 'Kit bebidas (refri, suco e água)',
-          descricao: 'Pacote de refrigerante, suco, água e gelo por quantidade de convidados.',
+          descricao:
+              'Pacote de refrigerante, suco, água e gelo por quantidade de convidados.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_chopp_barril',
           idSubcategoria: '1761673040023',
           nome: 'Barril de chopp com extração',
-          descricao: 'Barril, choppeira e copos para self-service durante a festa.',
+          descricao:
+              'Barril, choppeira e copos para self-service durante a festa.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_open_bar',
           idSubcategoria: 'sub_bar_open',
           nome: 'Open bar 4 horas',
-          descricao: 'Drinks clássicos, destilados, refrigerante e bartender por pessoa.',
+          descricao:
+              'Drinks clássicos, destilados, refrigerante e bartender por pessoa.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_bartender',
           idSubcategoria: 'sub_bar_open',
           nome: 'Estação de drinks com bartender',
-          descricao: 'Bar temático, coquetéis autorais e garnitura para o evento.',
+          descricao:
+              'Bar temático, coquetéis autorais e garnitura para o evento.',
           tipoMedida: 'H',
         ),
         _prod(
           id: 'prod_churrasco_pessoa',
           idSubcategoria: 'sub_churrasco',
           nome: 'Churrasco completo por pessoa',
-          descricao: 'Carnes, acompanhamentos, farofa, vinagrete e churrasqueiro.',
+          descricao:
+              'Carnes, acompanhamentos, farofa, vinagrete e churrasqueiro.',
           tipoMedida: 'P',
         ),
         _prod(
@@ -337,35 +378,40 @@ class CatalogoServicoProduto {
           id: 'prod_foodtruck_4h',
           idSubcategoria: 'sub_food_truck',
           nome: 'Food truck por 4 horas',
-          descricao: 'Hambúrguer, hot dog ou massas no caminhão, com equipe e energia.',
+          descricao:
+              'Hambúrguer, hot dog ou massas no caminhão, com equipe e energia.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_estacao_massa',
           idSubcategoria: 'sub_food_truck',
           nome: 'Estação de massas ou pizza',
-          descricao: 'Pasta ou pizza na pedra preparada ao vivo para os convidados.',
+          descricao:
+              'Pasta ou pizza na pedra preparada ao vivo para os convidados.',
           tipoMedida: 'P',
         ),
         _prod(
           id: '1761928171481',
           idSubcategoria: '1761673081975',
           nome: 'Carrinho de pipoca, algodão-doce e churros',
-          descricao: 'Carrinhos temáticos com operador, embalagem e insumos da festa.',
+          descricao:
+              'Carrinhos temáticos com operador, embalagem e insumos da festa.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_carrinho_crepe',
           idSubcategoria: '1761673081975',
           nome: 'Carrinho de crepe ou hot dog',
-          descricao: 'Estação itinerante com cardápio curto e atendimento contínuo.',
+          descricao:
+              'Estação itinerante com cardápio curto e atendimento contínuo.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_coffee_pessoa',
           idSubcategoria: 'sub_coffee_break',
           nome: 'Coffee break por pessoa',
-          descricao: 'Café, suco, mini sanduíche, bolo e frutas para intervalo ou manhã.',
+          descricao:
+              'Café, suco, mini sanduíche, bolo e frutas para intervalo ou manhã.',
           tipoMedida: 'P',
         ),
         _prod(
@@ -386,7 +432,8 @@ class CatalogoServicoProduto {
           id: 'prod_carrinho_sorvete',
           idSubcategoria: 'sub_sorvete',
           nome: 'Carrinho de sorvete e paletas',
-          descricao: 'Sorvete de massa, paleta mexicana ou gelato para a festa.',
+          descricao:
+              'Sorvete de massa, paleta mexicana ou gelato para a festa.',
           tipoMedida: 'D',
         ),
 
@@ -395,28 +442,32 @@ class CatalogoServicoProduto {
           id: '1761884685166',
           idSubcategoria: '1761673391822',
           nome: 'Decoração temática completa',
-          descricao: 'Projeto de ambientação infantil, casamento, 15 anos ou corporativo.',
+          descricao:
+              'Projeto de ambientação infantil, casamento, 15 anos ou corporativo.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_decor_mesa_principal',
           idSubcategoria: '1761673391822',
           nome: 'Decoração de mesa principal e bolo',
-          descricao: 'Mesa do bolo, doces e lembranças com tecido, flores e iluminação.',
+          descricao:
+              'Mesa do bolo, doces e lembranças com tecido, flores e iluminação.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_projeto_exclusivo',
           idSubcategoria: '1761672773772',
           nome: 'Projeto exclusivo de ambientação',
-          descricao: 'Moodboard, paleta, planta baixa e execução personalizada do espaço.',
+          descricao:
+              'Moodboard, paleta, planta baixa e execução personalizada do espaço.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_decor_cerimonia',
           idSubcategoria: '1761672773772',
           nome: 'Ambientação de cerimônia personalizada',
-          descricao: 'Altar, cadeiras, caminho e detalhes no estilo dos noivos.',
+          descricao:
+              'Altar, cadeiras, caminho e detalhes no estilo dos noivos.',
           tipoMedida: 'P',
         ),
         _prod(
@@ -437,7 +488,8 @@ class CatalogoServicoProduto {
           id: 'prod_arco_floral',
           idSubcategoria: '1761673407907',
           nome: 'Arco floral para altar',
-          descricao: 'Arco ou painel de flores naturais para cerimônia e fotos.',
+          descricao:
+              'Arco ou painel de flores naturais para cerimônia e fotos.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -451,7 +503,8 @@ class CatalogoServicoProduto {
           id: '1761675100047',
           idSubcategoria: '1761673400239',
           nome: 'Montagem de painel e arco de balões',
-          descricao: 'Painel de festa com nome, idade ou monograma e arco orgânico.',
+          descricao:
+              'Painel de festa com nome, idade ou monograma e arco orgânico.',
           tipoMedida: 'P',
         ),
         _prod(
@@ -465,14 +518,16 @@ class CatalogoServicoProduto {
           id: 'prod_arco_organico',
           idSubcategoria: 'sub_balao_arco',
           nome: 'Arco orgânico de balões',
-          descricao: 'Arco irregular com cores do tema, para entrada ou mesa do bolo.',
+          descricao:
+              'Arco irregular com cores do tema, para entrada ou mesa do bolo.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_numero_balao',
           idSubcategoria: 'sub_balao_arco',
           nome: 'Número ou letra gigante de balões',
-          descricao: 'Idade, iniciais dos noivos ou sigla da empresa em balloon mosaic.',
+          descricao:
+              'Idade, iniciais dos noivos ou sigla da empresa em balloon mosaic.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -500,14 +555,16 @@ class CatalogoServicoProduto {
           id: 'prod_mobilia_cerimonia',
           idSubcategoria: '4f8f9e9a-7f67-45ca-91f6-4ad6c2885389',
           nome: 'Mobiliário de cerimônia',
-          descricao: 'Banquetas, bancos, aparador e poltronas para altar e cocktail.',
+          descricao:
+              'Banquetas, bancos, aparador e poltronas para altar e cocktail.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_arco_metal',
           idSubcategoria: '1761673418508',
           nome: 'Arco, pedestal e vaso de cenografia',
-          descricao: 'Estruturas metálicas, pedestais e vasos para composição floral.',
+          descricao:
+              'Estruturas metálicas, pedestais e vasos para composição floral.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -528,7 +585,8 @@ class CatalogoServicoProduto {
           id: 'prod_neon',
           idSubcategoria: 'sub_iluminacao_decorativa',
           nome: 'Letreiro neon personalizado',
-          descricao: 'Frase ou nomes dos noivos em neon para parede ou cavalete.',
+          descricao:
+              'Frase ou nomes dos noivos em neon para parede ou cavalete.',
           tipoMedida: 'U',
         ),
 
@@ -537,14 +595,16 @@ class CatalogoServicoProduto {
           id: 'prod_aluguel_vestido_noiva',
           idSubcategoria: 'sub_vestido_noiva',
           nome: 'Aluguel de vestido de noiva',
-          descricao: 'Vestido com provas, ajuste básico e retirada na semana do evento.',
+          descricao:
+              'Vestido com provas, ajuste básico e retirada na semana do evento.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_venda_vestido_noiva',
           idSubcategoria: 'sub_vestido_noiva',
           nome: 'Venda de vestido de noiva sob medida',
-          descricao: 'Modelagem, tecido, provas e entrega do vestido exclusivo.',
+          descricao:
+              'Modelagem, tecido, provas e entrega do vestido exclusivo.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -558,21 +618,24 @@ class CatalogoServicoProduto {
           id: 'prod_vestido_madrinha',
           idSubcategoria: 'sub_vestido_festa',
           nome: 'Vestido de festa, formatura ou madrinha',
-          descricao: 'Aluguel ou venda de vestido longo ou midi para ocasião formal.',
+          descricao:
+              'Aluguel ou venda de vestido longo ou midi para ocasião formal.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_terno_noivo',
           idSubcategoria: 'sub_aluguel_terno',
           nome: 'Aluguel de terno ou smoking do noivo',
-          descricao: 'Terno, camisa, gravata, cinto e ajuste da calça e paletó.',
+          descricao:
+              'Terno, camisa, gravata, cinto e ajuste da calça e paletó.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_terno_padrinho',
           idSubcategoria: 'sub_aluguel_terno',
           nome: 'Aluguel de terno para padrinhos',
-          descricao: 'Traje social padronizado para padrinhos, pais e pajens adultos.',
+          descricao:
+              'Traje social padronizado para padrinhos, pais e pajens adultos.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -586,7 +649,8 @@ class CatalogoServicoProduto {
           id: 'prod_vestido_daminha',
           idSubcategoria: 'sub_pajem_daminha',
           nome: 'Vestido de daminha e florista',
-          descricao: 'Vestido infantil, cinto e acessório combinando com as madrinhas.',
+          descricao:
+              'Vestido infantil, cinto e acessório combinando com as madrinhas.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -600,7 +664,8 @@ class CatalogoServicoProduto {
           id: 'prod_caracterizacao',
           idSubcategoria: 'sub_fantasia',
           nome: 'Caracterização e figurino',
-          descricao: 'Figurino completo com maquiagem básica para animação ou teatro.',
+          descricao:
+              'Figurino completo com maquiagem básica para animação ou teatro.',
           tipoMedida: 'P',
         ),
         _prod(
@@ -614,14 +679,16 @@ class CatalogoServicoProduto {
           id: 'prod_sapato_festa',
           idSubcategoria: 'sub_acessorios_moda',
           nome: 'Sapato e acessórios de festa',
-          descricao: 'Sapato, cinto, gravata, abotoadura e bolsa para o evento.',
+          descricao:
+              'Sapato, cinto, gravata, abotoadura e bolsa para o evento.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_barra_vestido',
           idSubcategoria: 'sub_costura_ajustes',
           nome: 'Ajuste e barra de vestido',
-          descricao: 'Prova, barra, tomada e reforço de costura no vestido ou terno.',
+          descricao:
+              'Prova, barra, tomada e reforço de costura no vestido ou terno.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -637,21 +704,24 @@ class CatalogoServicoProduto {
           id: '1761875269254',
           idSubcategoria: '1760932672539',
           nome: 'Penteado e produção de cabelo',
-          descricao: 'Penteado de noiva, debutante ou madrinha, com teste prévio.',
+          descricao:
+              'Penteado de noiva, debutante ou madrinha, com teste prévio.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_penteado_teste',
           idSubcategoria: '1760932672539',
           nome: 'Teste de penteado',
-          descricao: 'Ensaio do penteado antes do evento, com registro em foto.',
+          descricao:
+              'Ensaio do penteado antes do evento, com registro em foto.',
           tipoMedida: 'U',
         ),
         _prod(
           id: '1761875398061',
           idSubcategoria: '1761672969508',
           nome: 'Maquiagem social',
-          descricao: 'Make para festa, formatura ou madrinha, com pele e olhos duradouros.',
+          descricao:
+              'Make para festa, formatura ou madrinha, com pele e olhos duradouros.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -665,28 +735,32 @@ class CatalogoServicoProduto {
           id: '1761875365937',
           idSubcategoria: '1761672987404',
           nome: 'Corte e barba para noivo e padrinhos',
-          descricao: 'Corte masculino, barba alinhada e finalização no dia do evento.',
+          descricao:
+              'Corte masculino, barba alinhada e finalização no dia do evento.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_barba_noivo',
           idSubcategoria: '1761672987404',
           nome: 'Pacote barbearia do noivo',
-          descricao: 'Corte, barba, sobrancelha e toalha quente no camarim ou salão.',
+          descricao:
+              'Corte, barba, sobrancelha e toalha quente no camarim ou salão.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_limpeza_pele',
           idSubcategoria: '1761672978643',
           nome: 'Limpeza de pele pré-evento',
-          descricao: 'Limpeza, hidratação e protocolo para a pele no dia da festa.',
+          descricao:
+              'Limpeza, hidratação e protocolo para a pele no dia da festa.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_massagem_relax',
           idSubcategoria: '1761672978643',
           nome: 'Massagem relaxante pré-festa',
-          descricao: 'Sessão de massagem para noiva, debutante ou aniversariante.',
+          descricao:
+              'Sessão de massagem para noiva, debutante ou aniversariante.',
           tipoMedida: 'H',
         ),
         _prod(
@@ -707,14 +781,16 @@ class CatalogoServicoProduto {
           id: 'prod_dia_noiva',
           idSubcategoria: 'sub_dia_noiva',
           nome: 'Pacote dia da noiva',
-          descricao: 'Cabelo, make, unhas, café da manhã e camarim no local do evento.',
+          descricao:
+              'Cabelo, make, unhas, café da manhã e camarim no local do evento.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_spa_noiva',
           idSubcategoria: 'sub_dia_noiva',
           nome: 'Spa da noiva com acompanhantes',
-          descricao: 'Produção da noiva mais madrinhas ou mãe, no salão ou hotel.',
+          descricao:
+              'Produção da noiva mais madrinhas ou mãe, no salão ou hotel.',
           tipoMedida: 'P',
         ),
         _prod(
@@ -728,7 +804,8 @@ class CatalogoServicoProduto {
           id: 'prod_henna',
           idSubcategoria: 'sub_sobrancelha',
           nome: 'Henna e micropigmentação',
-          descricao: 'Preenchimento temporário ou semipermanente das sobrancelhas.',
+          descricao:
+              'Preenchimento temporário ou semipermanente das sobrancelhas.',
           tipoMedida: 'U',
         ),
 
@@ -737,21 +814,24 @@ class CatalogoServicoProduto {
           id: 'prod_cobertura_foto',
           idSubcategoria: '8847a156-8823-4733-9c0e-69d94531d92a',
           nome: 'Cobertura fotográfica completa',
-          descricao: 'Making of, cerimônia, festa e galeria digital com tratamento.',
+          descricao:
+              'Making of, cerimônia, festa e galeria digital com tratamento.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_foto_hora',
           idSubcategoria: '8847a156-8823-4733-9c0e-69d94531d92a',
           nome: 'Fotógrafo por hora',
-          descricao: 'Cobertura avulsa para aniversário, chá de bebê ou corporativo.',
+          descricao:
+              'Cobertura avulsa para aniversário, chá de bebê ou corporativo.',
           tipoMedida: 'H',
         ),
         _prod(
           id: 'prod_filme_evento',
           idSubcategoria: '1761673592400',
           nome: 'Filme do evento e trailer',
-          descricao: 'Captação, edição, trailer e filme longo em Full HD ou 4K.',
+          descricao:
+              'Captação, edição, trailer e filme longo em Full HD ou 4K.',
           tipoMedida: 'P',
         ),
         _prod(
@@ -765,7 +845,8 @@ class CatalogoServicoProduto {
           id: '1761675196036',
           idSubcategoria: '1761673598981',
           nome: 'Cabine de fotos com moldura personalizada',
-          descricao: 'Cabine, recorte instantâneo, atendente e fundo personalizado.',
+          descricao:
+              'Cabine, recorte instantâneo, atendente e fundo personalizado.',
           tipoMedida: 'D',
         ),
         _prod(
@@ -779,7 +860,8 @@ class CatalogoServicoProduto {
           id: 'prod_drone_cerimonia',
           idSubcategoria: 'sub_drone',
           nome: 'Filmagem aérea com drone',
-          descricao: 'Sobrevoo da cerimônia, espaço e convidados, com piloto credenciado.',
+          descricao:
+              'Sobrevoo da cerimônia, espaço e convidados, com piloto credenciado.',
           tipoMedida: 'H',
         ),
         _prod(
@@ -793,7 +875,8 @@ class CatalogoServicoProduto {
           id: '9d95c062-dc90-45e3-a2e6-cc620842059f',
           idSubcategoria: 'sub_ensaio',
           nome: 'Ensaio pré-evento',
-          descricao: 'Pre-wedding, smash the cake, gestante ou ensaio da família.',
+          descricao:
+              'Pre-wedding, smash the cake, gestante ou ensaio da família.',
           tipoMedida: 'P',
         ),
         _prod(
@@ -807,14 +890,16 @@ class CatalogoServicoProduto {
           id: 'prod_plataforma_360',
           idSubcategoria: 'sub_plataforma_360',
           nome: 'Plataforma 360',
-          descricao: 'Vídeo em 360 graus, slow motion e compartilhamento no celular.',
+          descricao:
+              'Vídeo em 360 graus, slow motion e compartilhamento no celular.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_slow_motion',
           idSubcategoria: 'sub_plataforma_360',
           nome: 'Cabine slow motion',
-          descricao: 'Vídeo em câmera lenta com props e música escolhida pelos noivos.',
+          descricao:
+              'Vídeo em câmera lenta com props e música escolhida pelos noivos.',
           tipoMedida: 'D',
         ),
 
@@ -823,7 +908,8 @@ class CatalogoServicoProduto {
           id: 'bac73f82-319d-44b5-9359-7b5e7674cc1c',
           idSubcategoria: 'sub_dj',
           nome: 'DJ para festa e casamento',
-          descricao: 'DJ com notebook, controlador e playlist alinhada ao evento.',
+          descricao:
+              'DJ com notebook, controlador e playlist alinhada ao evento.',
           tipoMedida: 'H',
         ),
         _prod(
@@ -872,14 +958,16 @@ class CatalogoServicoProduto {
           id: 'prod_som_cerimonia',
           idSubcategoria: '1761673777692',
           nome: 'Som para cerimônia',
-          descricao: 'Caixas discretas, microfone de lapela e playlist da entrada.',
+          descricao:
+              'Caixas discretas, microfone de lapela e playlist da entrada.',
           tipoMedida: 'D',
         ),
         _prod(
           id: '1761675661136',
           idSubcategoria: '1761673797647',
           nome: 'Iluminação de pista e ambientação',
-          descricao: 'Moving light, par LED, mini laser e operação durante a festa.',
+          descricao:
+              'Moving light, par LED, mini laser e operação durante a festa.',
           tipoMedida: 'D',
         ),
         _prod(
@@ -900,7 +988,8 @@ class CatalogoServicoProduto {
           id: 'prod_sparkle',
           idSubcategoria: 'sub_efeitos_especiais',
           nome: 'Sparkle e chuva de prata',
-          descricao: 'Efeito de faísca fria para entrada, brinde ou última música.',
+          descricao:
+              'Efeito de faísca fria para entrada, brinde ou última música.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -921,7 +1010,8 @@ class CatalogoServicoProduto {
           id: 'prod_animador_pista',
           idSubcategoria: 'sub_animacao_pista',
           nome: 'Animador de pista',
-          descricao: 'Mestre de pista, brincadeiras e interação com os convidados.',
+          descricao:
+              'Mestre de pista, brincadeiras e interação com os convidados.',
           tipoMedida: 'H',
         ),
         _prod(
@@ -944,7 +1034,8 @@ class CatalogoServicoProduto {
           id: 'prod_monitoria',
           idSubcategoria: 'sub_recreacao_infantil',
           nome: 'Monitoria kids durante a festa',
-          descricao: 'Monitores para espaço kids, com seguro e lista de presença.',
+          descricao:
+              'Monitores para espaço kids, com seguro e lista de presença.',
           tipoMedida: 'H',
         ),
         _prod(
@@ -965,14 +1056,16 @@ class CatalogoServicoProduto {
           id: 'prod_magico',
           idSubcategoria: 'sub_magico_palhaco',
           nome: 'Show de mágica 40 minutos',
-          descricao: 'Mágico close-up ou palco, adequado para crianças e adultos.',
+          descricao:
+              'Mágico close-up ou palco, adequado para crianças e adultos.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_palhaco',
           idSubcategoria: 'sub_magico_palhaco',
           nome: 'Palhaço e pintura facial',
-          descricao: 'Animação, balões palhaço e pintura no rosto das crianças.',
+          descricao:
+              'Animação, balões palhaço e pintura no rosto das crianças.',
           tipoMedida: 'H',
         ),
         _prod(
@@ -1000,14 +1093,16 @@ class CatalogoServicoProduto {
           id: 'prod_touro_mecanico',
           idSubcategoria: 'sub_piscina_bolinhas',
           nome: 'Touro mecânico ou futebol de sabão',
-          descricao: 'Atração inflável para adolescentes e adultos, com operador.',
+          descricao:
+              'Atração inflável para adolescentes e adultos, com operador.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_oficina_slime',
           idSubcategoria: 'sub_oficina_festas',
           nome: 'Oficina de slime',
-          descricao: 'Atividade supervisionada com material incluso e lembrancinha.',
+          descricao:
+              'Atividade supervisionada com material incluso e lembrancinha.',
           tipoMedida: 'H',
         ),
         _prod(
@@ -1035,7 +1130,8 @@ class CatalogoServicoProduto {
           id: 'prod_cassino',
           idSubcategoria: 'sub_atracoes_adultas',
           nome: 'Cassino de premiação',
-          descricao: 'Mesas de blackjack, roleta e fichas para animação adulta.',
+          descricao:
+              'Mesas de blackjack, roleta e fichas para animação adulta.',
           tipoMedida: 'D',
         ),
         _prod(
@@ -1051,7 +1147,8 @@ class CatalogoServicoProduto {
           id: 'prod_carro_noiva',
           idSubcategoria: '1761673306202',
           nome: 'Carro clássico para a noiva',
-          descricao: 'Carro vintage ou conversível, motorista fardado e decoração simples.',
+          descricao:
+              'Carro vintage ou conversível, motorista fardado e decoração simples.',
           tipoMedida: 'D',
         ),
         _prod(
@@ -1065,7 +1162,8 @@ class CatalogoServicoProduto {
           id: '1761875667928',
           idSubcategoria: '1761673288334',
           nome: 'Carro de luxo com decoração',
-          descricao: 'Sedan ou SUV premium, motorista e arranjo floral no capô.',
+          descricao:
+              'Sedan ou SUV premium, motorista e arranjo floral no capô.',
           tipoMedida: 'D',
         ),
         _prod(
@@ -1079,7 +1177,8 @@ class CatalogoServicoProduto {
           id: '1761875630569',
           idSubcategoria: '1761673280167',
           nome: 'Motorista particular / executivo',
-          descricao: 'Motorista de terno, veículo executivo e horas à disposição.',
+          descricao:
+              'Motorista de terno, veículo executivo e horas à disposição.',
           tipoMedida: 'D',
         ),
         _prod(
@@ -1114,21 +1213,24 @@ class CatalogoServicoProduto {
           id: 'prod_microonibus',
           idSubcategoria: '1761673297233',
           nome: 'Micro-ônibus 28 lugares',
-          descricao: 'Micro-ônibus para padrinhos, família ou turma da formatura.',
+          descricao:
+              'Micro-ônibus para padrinhos, família ou turma da formatura.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_van_corporativa',
           idSubcategoria: '1761673325402',
           nome: 'Van para evento corporativo',
-          descricao: 'Traslado de equipes entre hotel, centro de convenções e jantar.',
+          descricao:
+              'Traslado de equipes entre hotel, centro de convenções e jantar.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_fretamento_congresso',
           idSubcategoria: '1761673325402',
           nome: 'Fretamento para congresso',
-          descricao: 'Frota com coordenador de embarque e identificação dos grupos.',
+          descricao:
+              'Frota com coordenador de embarque e identificação dos grupos.',
           tipoMedida: 'P',
         ),
         _prod(
@@ -1170,7 +1272,8 @@ class CatalogoServicoProduto {
           id: 'prod_receptivo_padrinhos',
           idSubcategoria: 'sub_transfer_aeroporto',
           nome: 'Receptivo de padrinhos e família',
-          descricao: 'Vários embarques no aeroporto com coordenação de horários.',
+          descricao:
+              'Vários embarques no aeroporto com coordenação de horários.',
           tipoMedida: 'P',
         ),
 
@@ -1179,7 +1282,8 @@ class CatalogoServicoProduto {
           id: '1761884436433',
           idSubcategoria: '1761673447533',
           nome: 'Convite impresso com acabamento especial',
-          descricao: 'Convite em papel especial, envelope, lacre e impressão offset ou letterpress.',
+          descricao:
+              'Convite em papel especial, envelope, lacre e impressão offset ou letterpress.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -1200,14 +1304,16 @@ class CatalogoServicoProduto {
           id: 'prod_site_evento',
           idSubcategoria: '1761673499234',
           nome: 'Site do evento com RSVP',
-          descricao: 'Página com história, lista de presentes, mapa e confirmação.',
+          descricao:
+              'Página com história, lista de presentes, mapa e confirmação.',
           tipoMedida: 'P',
         ),
         _prod(
           id: '1761884482694',
           idSubcategoria: '1761673454745',
           nome: 'Tags e toppers personalizados',
-          descricao: 'Topper de doce, tag de lembrança, menu e plaquinha de mesa.',
+          descricao:
+              'Topper de doce, tag de lembrança, menu e plaquinha de mesa.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -1221,7 +1327,8 @@ class CatalogoServicoProduto {
           id: '1761884500077',
           idSubcategoria: '1761673463610',
           nome: 'Lembrancinha temática',
-          descricao: 'Sachê, vela, suculenta, doce ou item sustentável personalizado.',
+          descricao:
+              'Sachê, vela, suculenta, doce ou item sustentável personalizado.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -1249,14 +1356,16 @@ class CatalogoServicoProduto {
           id: '1761884518309',
           idSubcategoria: '1761673472809',
           nome: 'Álbum e livro de assinaturas',
-          descricao: 'Álbum encadernado, polaroids e livro para recados dos convidados.',
+          descricao:
+              'Álbum encadernado, polaroids e livro para recados dos convidados.',
           tipoMedida: 'U',
         ),
         _prod(
           id: 'prod_fotolivro',
           idSubcategoria: '1761673472809',
           nome: 'Fotolivro do evento',
-          descricao: 'Livro fotográfico capa dura com diagramação profissional.',
+          descricao:
+              'Livro fotográfico capa dura com diagramação profissional.',
           tipoMedida: 'U',
         ),
         _prod(
@@ -1279,21 +1388,24 @@ class CatalogoServicoProduto {
           id: '1761676002265',
           idSubcategoria: '1761674078610',
           nome: 'Cerimonial completo',
-          descricao: 'Equipe no dia, checklist, briefing de fornecedores e condução da cerimônia.',
+          descricao:
+              'Equipe no dia, checklist, briefing de fornecedores e condução da cerimônia.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_cerimonial_hora',
           idSubcategoria: '1761674078610',
           nome: 'Cerimonial por hora',
-          descricao: 'Cerimonialista avulsa para eventos menores ou complementares.',
+          descricao:
+              'Cerimonialista avulsa para eventos menores ou complementares.',
           tipoMedida: 'H',
         ),
         _prod(
           id: 'prod_assessoria_completa',
           idSubcategoria: '1761674113077',
           nome: 'Assessoria completa de festa',
-          descricao: 'Planejamento, cotação de fornecedores, visitas e dia do evento.',
+          descricao:
+              'Planejamento, cotação de fornecedores, visitas e dia do evento.',
           tipoMedida: 'P',
         ),
         _prod(
@@ -1307,28 +1419,32 @@ class CatalogoServicoProduto {
           id: 'prod_producao_evento',
           idSubcategoria: '1761674096559',
           nome: 'Produção e organização do evento',
-          descricao: 'Cronograma, planta, equipe de apoio e acompanhamento de montagem.',
+          descricao:
+              'Cronograma, planta, equipe de apoio e acompanhamento de montagem.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_gestao_fornecedores',
           idSubcategoria: '1761674096559',
           nome: 'Gestão de fornecedores',
-          descricao: 'Contratos, prazos, briefing técnico e conferência no dia.',
+          descricao:
+              'Contratos, prazos, briefing técnico e conferência no dia.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_wedding_planner',
           idSubcategoria: 'sub_wedding_planner',
           nome: 'Wedding planner completo',
-          descricao: 'Conceito, orçamento, fornecedores, ensaios e coordenação do casamento.',
+          descricao:
+              'Conceito, orçamento, fornecedores, ensaios e coordenação do casamento.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_consultoria_casamento',
           idSubcategoria: 'sub_wedding_planner',
           nome: 'Consultoria de casamento',
-          descricao: 'Pacote de reuniões para orientar decisões sem execução total.',
+          descricao:
+              'Pacote de reuniões para orientar decisões sem execução total.',
           tipoMedida: 'H',
         ),
         _prod(
@@ -1342,21 +1458,24 @@ class CatalogoServicoProduto {
           id: 'prod_apresentador_festa',
           idSubcategoria: 'sub_mestre_cerimonias',
           nome: 'Apresentador da festa',
-          descricao: 'Apresentação da debutante, formatura ou premiação corporativa.',
+          descricao:
+              'Apresentação da debutante, formatura ou premiação corporativa.',
           tipoMedida: 'H',
         ),
         _prod(
           id: 'prod_coordenacao_dia',
           idSubcategoria: 'sub_coordenacao_dia',
           nome: 'Coordenação apenas no dia',
-          descricao: 'Equipe no local para executar o roteiro já definido pelos noivos.',
+          descricao:
+              'Equipe no local para executar o roteiro já definido pelos noivos.',
           tipoMedida: 'D',
         ),
         _prod(
           id: 'prod_coordenacao_montagem',
           idSubcategoria: 'sub_coordenacao_dia',
           nome: 'Coordenação de montagem e desmontagem',
-          descricao: 'Acompanhamento de fornecedores na montagem e no encerramento.',
+          descricao:
+              'Acompanhamento de fornecedores na montagem e no encerramento.',
           tipoMedida: 'D',
         ),
 
@@ -1365,7 +1484,8 @@ class CatalogoServicoProduto {
           id: '1761884805538',
           idSubcategoria: '1761674254303',
           nome: 'Kit audiovisual (som, luz e projeção)',
-          descricao: 'PA, microfone, projetor ou TV e operador para palestra ou formatura.',
+          descricao:
+              'PA, microfone, projetor ou TV e operador para palestra ou formatura.',
           tipoMedida: 'D',
         ),
         _prod(
@@ -1407,28 +1527,32 @@ class CatalogoServicoProduto {
           id: '1761884862181',
           idSubcategoria: '1761674269687',
           nome: 'Buffet corporativo e coquetel',
-          descricao: 'Finger food, canapés, bebidas e serviço para convenção ou formatura.',
+          descricao:
+              'Finger food, canapés, bebidas e serviço para convenção ou formatura.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_jantar_executivo',
           idSubcategoria: '1761674269687',
           nome: 'Jantar executivo',
-          descricao: 'Menu empratado ou buffet premium para diretoria e convidados.',
+          descricao:
+              'Menu empratado ou buffet premium para diretoria e convidados.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_coffee_corporativo',
           idSubcategoria: 'sub_coffee_corporativo',
           nome: 'Coffee break corporativo',
-          descricao: 'Duas estações (manhã e tarde) com salgados, bolo e bebidas quentes.',
+          descricao:
+              'Duas estações (manhã e tarde) com salgados, bolo e bebidas quentes.',
           tipoMedida: 'P',
         ),
         _prod(
           id: 'prod_station_cafe',
           idSubcategoria: 'sub_coffee_corporativo',
           nome: 'Station de café e networking',
-          descricao: 'Barista, espresso, cappuccino e mini doces para intervalo.',
+          descricao:
+              'Barista, espresso, cappuccino e mini doces para intervalo.',
           tipoMedida: 'D',
         ),
         _prod(
@@ -1451,7 +1575,8 @@ class CatalogoServicoProduto {
           id: 'prod_seguranca_evento',
           idSubcategoria: 'sub_seguranca',
           nome: 'Segurança patrimonial do evento',
-          descricao: 'Agentes uniformizados, controle de acesso e ronda no espaço.',
+          descricao:
+              'Agentes uniformizados, controle de acesso e ronda no espaço.',
           tipoMedida: 'H',
         ),
         _prod(
@@ -1486,21 +1611,24 @@ class CatalogoServicoProduto {
           id: 'prod_cerimonial_entrada',
           idSubcategoria: 'sub_recepcionistas',
           nome: 'Equipe de boas-vindas',
-          descricao: 'Hostess na entrada, guarda-volumes e orientação de fluxo.',
+          descricao:
+              'Hostess na entrada, guarda-volumes e orientação de fluxo.',
           tipoMedida: 'H',
         ),
         _prod(
           id: 'prod_garcom',
           idSubcategoria: 'sub_garcons',
           nome: 'Garçom para serviço de mesa',
-          descricao: 'Serviço de jantar, coquetel ou champagne, uniforme incluso.',
+          descricao:
+              'Serviço de jantar, coquetel ou champagne, uniforme incluso.',
           tipoMedida: 'H',
         ),
         _prod(
           id: 'prod_copeira',
           idSubcategoria: 'sub_garcons',
           nome: 'Copeira e apoio de copa',
-          descricao: 'Organização de copa, reposição e lavagem de louça no evento.',
+          descricao:
+              'Organização de copa, reposição e lavagem de louça no evento.',
           tipoMedida: 'H',
         ),
         _prod(

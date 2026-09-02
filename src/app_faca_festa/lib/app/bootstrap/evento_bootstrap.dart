@@ -1,19 +1,25 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/evento_controller.dart';
 import '../../data/datasources/remote/evento_remote_ds.dart';
 import '../../data/local/evento_ativo_store.dart';
 import '../../data/repositories_impl/evento_repository_impl.dart';
 import '../../domain/repositories/evento_repository.dart';
 import '../../presentation/coordinators/evento_session_coordinator.dart';
+import '../../presentation/modules/eventos/controllers/home_event_nav_controller.dart';
+import '../../presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
+import '../../presentation/modules/eventos/controllers/evento_controller.dart';
 
 /// Global composition root for the current-event session.
 abstract final class EventoBootstrap {
   static void register() {
     if (!Get.isRegistered<EventoRemoteDatasource>()) {
       Get.put<EventoRemoteDatasource>(
-        EventoRemoteDatasource(FirebaseFirestore.instance),
+        EventoRemoteDatasource(
+          Get.find<FirebaseFirestore>(),
+          storage: Get.find<FirebaseStorage>(),
+        ),
         permanent: true,
       );
     }
@@ -41,6 +47,17 @@ abstract final class EventoBootstrap {
         ),
         permanent: true,
       );
+    }
+
+    if (!Get.isRegistered<EventoCadastroController>()) {
+      Get.put(
+        EventoCadastroController(repository: Get.find<EventoRepository>()),
+        permanent: true,
+      ).carregarTiposEvento();
+    }
+
+    if (!Get.isRegistered<HomeEventNavController>()) {
+      Get.put(HomeEventNavController(), permanent: true);
     }
   }
 }

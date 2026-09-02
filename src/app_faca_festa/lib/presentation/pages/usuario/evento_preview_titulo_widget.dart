@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../../controllers/evento_cadastro_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
 
 class EventoPreviewTituloWidget extends StatelessWidget {
   final String tipoEvento;
@@ -137,8 +137,9 @@ class EventoPreviewTituloWidget extends StatelessWidget {
         break;
 
       default:
-        titulo =
-            nome.isEmpty ? '🎉 Sua celebração começa aqui!' : controller.nomeEventoPreview.value;
+        titulo = nome.isEmpty
+            ? '🎉 Sua celebração começa aqui!'
+            : controller.nomeEventoPreview.value;
         estilo = GoogleFonts.poppins(
           fontSize: 20,
           fontWeight: FontWeight.w600,
@@ -176,7 +177,8 @@ class EventoPreviewTituloWidget extends StatelessWidget {
           // ✨ Animação suave
           .animate()
           .fadeIn(duration: 600.ms, curve: Curves.easeOut)
-          .slideY(begin: 0.4, end: 0, duration: 700.ms, curve: Curves.easeOutBack)
+          .slideY(
+              begin: 0.4, end: 0, duration: 700.ms, curve: Curves.easeOutBack)
           .scaleXY(begin: 0.95, end: 1.0, duration: 500.ms),
     );
   }

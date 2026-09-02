@@ -1,4 +1,4 @@
-import 'package:app_faca_festa/controllers/contacao/cotacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -8,22 +8,22 @@ import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/fornecedor/fornecedor_localizacao_controller.dart';
-import './../../controllers/convidado/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import './../../data/models/DTO/fornecedor_detalhado_dto.dart';
-import './../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './fornecedor/fornecedor_localizacao_screen.dart';
-import './../../controllers/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/orcamento_controller.dart';
 import './fornecedor/fornecedor_detalhe_screen.dart';
-import './../../controllers/tarefa_controller.dart';
-import './../../controllers/evento_controller.dart';
-import './../../controllers/home_event_nav_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/home_event_nav_controller.dart';
 import './../../domain/entities/tipo_evento.dart';
 import './../widgets/menu_drawer_faca_festa.dart';
 import './../widgets/festa_bottom_bar.dart';
 import './../widgets/festa_app_bar.dart';
 import './components/build_animated_header.dart';
-import './../../controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import './fornecedor/painel_cotacao_page.dart';
 import './inspiracao/inspiracao_screen.dart';
 import './../../core/utils/biblioteca.dart';
@@ -91,60 +91,61 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
 
       return AnnotatedRegion<SystemUiOverlayStyle>(
         value: overlay,
-      child: Scaffold(
-        key: _scaffoldKey,
-        backgroundColor: const Color(0xFFF8FAFC),
-        endDrawerEnableOpenDragGesture: false,
-        endDrawer: MenuDrawerFacaFesta(onLogout: appController.logoutFornecedor),
-        body: PageView(
-          controller: pageController,
-          physics: const NeverScrollableScrollPhysics(),
-          onPageChanged: (i) {
-            setState(() => _currentIndex = i);
-          },
-          children: [
-            _buildHome(theme),
-            const FornecedorLocalizacaoScreen(showLeading: false),
-            _buildInspiration(theme),
-          ],
+        child: Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: const Color(0xFFF8FAFC),
+          endDrawerEnableOpenDragGesture: false,
+          endDrawer:
+              MenuDrawerFacaFesta(onLogout: appController.logoutFornecedor),
+          body: PageView(
+            controller: pageController,
+            physics: const NeverScrollableScrollPhysics(),
+            onPageChanged: (i) {
+              setState(() => _currentIndex = i);
+            },
+            children: [
+              _buildHome(theme),
+              const FornecedorLocalizacaoScreen(showLeading: false),
+              _buildInspiration(theme),
+            ],
+          ),
+          bottomNavigationBar: FestaBottomBar(
+            currentIndex: _currentIndex,
+            items: const [
+              FestaNavItem(
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home_rounded,
+                label: 'Home',
+              ),
+              FestaNavItem(
+                icon: Icons.storefront_outlined,
+                activeIcon: Icons.storefront_rounded,
+                label: 'Fornecedores',
+              ),
+              FestaNavItem(
+                icon: Icons.lightbulb_outline_rounded,
+                activeIcon: Icons.lightbulb_rounded,
+                label: 'Inspiração',
+              ),
+              FestaNavItem(
+                icon: Icons.menu_rounded,
+                label: 'Menu',
+                isAction: true,
+              ),
+            ],
+            onTap: (index) {
+              if (index == 3) {
+                _scaffoldKey.currentState?.openEndDrawer();
+                return;
+              }
+              if (_currentIndex != index) {
+                setState(() => _currentIndex = index);
+                pageController.jumpToPage(index);
+              }
+            },
+          ),
         ),
-        bottomNavigationBar: FestaBottomBar(
-        currentIndex: _currentIndex,
-        items: const [
-          FestaNavItem(
-            icon: Icons.home_outlined,
-            activeIcon: Icons.home_rounded,
-            label: 'Home',
-          ),
-          FestaNavItem(
-            icon: Icons.storefront_outlined,
-            activeIcon: Icons.storefront_rounded,
-            label: 'Fornecedores',
-          ),
-          FestaNavItem(
-            icon: Icons.lightbulb_outline_rounded,
-            activeIcon: Icons.lightbulb_rounded,
-            label: 'Inspiração',
-          ),
-          FestaNavItem(
-            icon: Icons.menu_rounded,
-            label: 'Menu',
-            isAction: true,
-          ),
-        ],
-        onTap: (index) {
-          if (index == 3) {
-            _scaffoldKey.currentState?.openEndDrawer();
-            return;
-          }
-          if (_currentIndex != index) {
-            setState(() => _currentIndex = index);
-            pageController.jumpToPage(index);
-          }
-        },
-      ),
-      ),
-    );
+      );
     });
   }
 
@@ -167,39 +168,40 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       return AnnotatedRegion<SystemUiOverlayStyle>(
         value: overlay,
         child: Column(
-        children: [
-          buildAnimatedHeader(context),
-          Expanded(
-            child: CustomScrollView(
-              controller: _scrollControllerHome,
-              slivers: [
-                SliverPersistentHeader(
-                  pinned: true,
-                  floating: false,
-                  delegate: ContadorEventoHeaderDelegate(
-                    scrollController: _scrollControllerHome,
-                    child: ContadorEventoScreen(
-                      key: ValueKey('contador-${eventoModel.idEvento}'),
-                      dataEvento: eventoModel.data,
-                      tipoEvento: tipoEventoModel?.nome ?? eventoModel.nomeEvento,
+          children: [
+            buildAnimatedHeader(context),
+            Expanded(
+              child: CustomScrollView(
+                controller: _scrollControllerHome,
+                slivers: [
+                  SliverPersistentHeader(
+                    pinned: true,
+                    floating: false,
+                    delegate: ContadorEventoHeaderDelegate(
                       scrollController: _scrollControllerHome,
+                      child: ContadorEventoScreen(
+                        key: ValueKey('contador-${eventoModel.idEvento}'),
+                        dataEvento: eventoModel.data,
+                        tipoEvento:
+                            tipoEventoModel?.nome ?? eventoModel.nomeEvento,
+                        scrollController: _scrollControllerHome,
+                      ),
                     ),
                   ),
-                ),
-                _buildDashboardOverview(theme),
-                _buildQuickActions(theme),
-                _buildUpcomingTasks(tarefaController, theme),
-                _buildBudgetChart(
-                  eventoController,
-                  orcamentoController.totalCustoEstimado,
-                  theme,
-                ),
-                _buildSuppliersCarousel(fornecedorController, theme),
-                const SliverToBoxAdapter(child: SizedBox(height: 100)),
-              ],
+                  _buildDashboardOverview(theme),
+                  _buildQuickActions(theme),
+                  _buildUpcomingTasks(tarefaController, theme),
+                  _buildBudgetChart(
+                    eventoController,
+                    orcamentoController.totalCustoEstimado,
+                    theme,
+                  ),
+                  _buildSuppliersCarousel(fornecedorController, theme),
+                  const SliverToBoxAdapter(child: SizedBox(height: 100)),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
         ),
       );
     });
@@ -214,66 +216,67 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 6, 16, 0),
         padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-            ],
-          ),
-          child: Obx(() {
-            final evento = eventoController.eventoAtual.value ?? eventoModel;
-            final totLista = convidadoController.totalConvidados;
-            final totConv = totLista > 0
-                ? totLista
-                : evento.totalConvidadosCalculado;
-            final conf = totLista > 0 ? convidadoController.totalConfirmados : 0;
-            final progConv = totConv > 0 ? conf / totConv : 0.0;
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: Obx(() {
+          final evento = eventoController.eventoAtual.value ?? eventoModel;
+          final totLista = convidadoController.totalConvidados;
+          final totConv =
+              totLista > 0 ? totLista : evento.totalConvidadosCalculado;
+          final conf = totLista > 0 ? convidadoController.totalConfirmados : 0;
+          final progConv = totConv > 0 ? conf / totConv : 0.0;
 
-            // Orçamento: usado (itens) vs teto informado no cadastro.
-            final totOrc = orcamentoController.totalCustoEstimado.value;
-            final limOrc = evento.custoEstimado ?? 0.0;
-            final progOrc = limOrc > 0 ? (totOrc / limOrc).clamp(0.0, 1.0) : 0.0;
+          // Orçamento: usado (itens) vs teto informado no cadastro.
+          final totOrc = orcamentoController.totalCustoEstimado.value;
+          final limOrc = evento.custoEstimado ?? 0.0;
+          final progOrc = limOrc > 0 ? (totOrc / limOrc).clamp(0.0, 1.0) : 0.0;
 
-            // Tarefas
-            final concl = tarefaController.concluidas;
-            final totTar = tarefaController.pendentes + tarefaController.concluidas;
-            final progTar = totTar > 0 ? concl / totTar : 0.0;
+          // Tarefas
+          final concl = tarefaController.concluidas;
+          final totTar =
+              tarefaController.pendentes + tarefaController.concluidas;
+          final progTar = totTar > 0 ? concl / totTar : 0.0;
 
           final secundaria = theme.secondaryColor.value;
-          final destaqueOrcamento =
-              secundaria.computeLuminance() < 0.18 ? Color.lerp(cor, secundaria, 0.4)! : secundaria;
+          final destaqueOrcamento = secundaria.computeLuminance() < 0.18
+              ? Color.lerp(cor, secundaria, 0.4)!
+              : secundaria;
 
-            return Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _MiniCircularIndicator(
-                  title: 'Convidados',
-                  value: '$conf/$totConv',
-                  progress: progConv,
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _MiniCircularIndicator(
+                title: 'Convidados',
+                value: '$conf/$totConv',
+                progress: progConv,
                 color: cor,
-                  onTap: () => Get.to(() => const ConvidadosPage()),
-                ),
-                _MiniCircularIndicator(
-                  title: 'Orçamento',
-                  value: '${(progOrc * 100).toStringAsFixed(0)}%',
-                  progress: progOrc,
+                onTap: () => Get.to(() => const ConvidadosPage()),
+              ),
+              _MiniCircularIndicator(
+                title: 'Orçamento',
+                value: '${(progOrc * 100).toStringAsFixed(0)}%',
+                progress: progOrc,
                 color: destaqueOrcamento,
-                  onTap: () => Get.to(() => const OrcamentoScreen()),
-                ),
-                _MiniCircularIndicator(
-                  title: 'Tarefas',
-                  value: '$concl/$totTar',
-                  progress: progTar,
+                onTap: () => Get.to(() => const OrcamentoScreen()),
+              ),
+              _MiniCircularIndicator(
+                title: 'Tarefas',
+                value: '$concl/$totTar',
+                progress: progTar,
                 color: Color.lerp(cor, destaqueOrcamento, 0.45)!,
-                  onTap: () => Get.to(() => TarefasScreen()),
-                ),
-              ],
-            );
+                onTap: () => Get.to(() => TarefasScreen()),
+              ),
+            ],
+          );
         }),
       ),
     );
@@ -292,7 +295,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       );
     });
   }
-
 }
 
 // 🔹 Ações rápidas mais compactas
@@ -306,7 +308,8 @@ Widget _buildQuickActions(EventThemeController theme) {
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
       child: Obx(() {
         final concluidas = tarefaController.concluidas;
-        final totalTarefa = tarefaController.pendentes + tarefaController.concluidas;
+        final totalTarefa =
+            tarefaController.pendentes + tarefaController.concluidas;
         final progress = totalTarefa > 0 ? concluidas / totalTarefa : 0.0;
         final evento = Get.find<EventoController>().eventoAtual.value;
         final totalListaConvidados = convidadoController.totalConvidados;
@@ -318,7 +321,8 @@ Widget _buildQuickActions(EventThemeController theme) {
         final primaria = theme.primaryColor.value;
         final secundaria = theme.secondaryColor.value;
         final media = Color.lerp(primaria, secundaria, 0.4)!;
-        final destaque = secundaria.computeLuminance() < 0.18 ? media : secundaria;
+        final destaque =
+            secundaria.computeLuminance() < 0.18 ? media : secundaria;
         final itens = [
           {
             'icon': Icons.people_alt_rounded,
@@ -330,8 +334,7 @@ Widget _buildQuickActions(EventThemeController theme) {
             'icon': Icons.payments_rounded,
             'label': 'Orçamento',
             'color': destaque,
-            'val':
-                "R\$ ${Biblioteca.formatarValorDecimal(orcamentoPlanejado)}"
+            'val': "R\$ ${Biblioteca.formatarValorDecimal(orcamentoPlanejado)}"
           },
           {
             'icon': Icons.storefront_rounded,
@@ -400,9 +403,11 @@ Widget _buildQuickActions(EventThemeController theme) {
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration:
-                          BoxDecoration(color: cor.withValues(alpha: 0.15), shape: BoxShape.circle),
-                      child: Icon(item['icon'] as IconData, size: 18, color: cor),
+                      decoration: BoxDecoration(
+                          color: cor.withValues(alpha: 0.15),
+                          shape: BoxShape.circle),
+                      child:
+                          Icon(item['icon'] as IconData, size: 18, color: cor),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -483,7 +488,9 @@ class _MiniCircularIndicator extends StatelessWidget {
             const SizedBox(height: 4),
             Text(title,
                 style: GoogleFonts.poppins(
-                    fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade600)),
           ],
         ),
       ),
@@ -495,7 +502,8 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final ScrollController scrollController;
 
-  ContadorEventoHeaderDelegate({required this.child, required this.scrollController});
+  ContadorEventoHeaderDelegate(
+      {required this.child, required this.scrollController});
 
   @override
   double get minExtent => 76;
@@ -503,14 +511,20 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => 76;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+      BuildContext context, double shrinkOffset, bool overlapsContent) {
     final bannerSumiu = shrinkOffset > 45;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: bannerSumiu ? Colors.white.withValues(alpha: 0.95) : Colors.transparent,
+        color: bannerSumiu
+            ? Colors.white.withValues(alpha: 0.95)
+            : Colors.transparent,
         boxShadow: bannerSumiu
-            ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
+            ? [
+                BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)
+              ]
             : [],
       ),
       child: Center(child: child),
@@ -518,18 +532,16 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(covariant ContadorEventoHeaderDelegate oldDelegate) => true;
+  bool shouldRebuild(covariant ContadorEventoHeaderDelegate oldDelegate) =>
+      true;
 }
 
-Widget _buildBudgetChart(
-    EventoController eventoController,
-    RxDouble totalCustoEstimado,
-    EventThemeController theme) {
+Widget _buildBudgetChart(EventoController eventoController,
+    RxDouble totalCustoEstimado, EventThemeController theme) {
   return SliverToBoxAdapter(
     child: Obx(() {
       final total = totalCustoEstimado.value;
-      final limite =
-          eventoController.eventoAtual.value?.custoEstimado ?? 0.0;
+      final limite = eventoController.eventoAtual.value?.custoEstimado ?? 0.0;
       final usado = limite > 0 ? (total / limite).clamp(0, 1) : 0.0;
       final primary = theme.primaryColor.value;
 
@@ -561,7 +573,10 @@ Widget _buildBudgetChart(
                     borderData: FlBorderData(show: false),
                     sections: [
                       PieChartSectionData(
-                          value: usado * 100, color: primary, radius: 8, showTitle: false),
+                          value: usado * 100,
+                          color: primary,
+                          radius: 8,
+                          showTitle: false),
                       PieChartSectionData(
                           value: (1 - usado) * 100,
                           color: Colors.grey.shade200,
@@ -629,7 +644,8 @@ Widget _buildBudgetChart(
   );
 }
 
-Widget _buildUpcomingTasks(TarefaController tarefaController, EventThemeController theme) {
+Widget _buildUpcomingTasks(
+    TarefaController tarefaController, EventThemeController theme) {
   return SliverToBoxAdapter(
     child: Obx(() {
       final proximas = tarefaController.tarefasProximas().take(2).toList();
@@ -653,7 +669,9 @@ Widget _buildUpcomingTasks(TarefaController tarefaController, EventThemeControll
           children: [
             Text('Próximas tarefas',
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700, fontSize: 14, color: const Color(0xFF1F2937))),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                    color: const Color(0xFF1F2937))),
             const SizedBox(height: 10),
             ...proximas.map((t) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -666,8 +684,8 @@ Widget _buildUpcomingTasks(TarefaController tarefaController, EventThemeControll
                           child: Text(t.titulo,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style:
-                                  GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade800))),
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12, color: Colors.grey.shade800))),
                       Text(_formatarDataTarefa(t.dataPrevista),
                           style: GoogleFonts.poppins(
                               fontSize: 10,
@@ -692,7 +710,8 @@ String _formatarDataTarefa(DateTime? data) {
 }
 
 Widget _buildSuppliersCarousel(
-    FornecedorLocalizacaoController fornecedorController, EventThemeController theme) {
+    FornecedorLocalizacaoController fornecedorController,
+    EventThemeController theme) {
   final cor = theme.primaryColor.value;
 
   return SliverToBoxAdapter(
@@ -703,11 +722,14 @@ Widget _buildSuppliersCarousel(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: Text('Fornecedores na região',
               style: GoogleFonts.poppins(
-                  fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: const Color(0xFF1F2937))),
         ),
         Obx(() {
           final fornecedores = fornecedorController.fornecedoresFiltrados
-              .where((f) => f.fornecedor.ativo && f.fornecedor.aptoParaOperar != false)
+              .where((f) =>
+                  f.fornecedor.ativo && f.fornecedor.aptoParaOperar != false)
               .toList();
           if (fornecedores.isEmpty && !fornecedorController.carregando.value) {
             return const SizedBox.shrink();
@@ -718,7 +740,9 @@ Widget _buildSuppliersCarousel(
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: fornecedorController.carregando.value ? 4 : fornecedores.length,
+              itemCount: fornecedorController.carregando.value
+                  ? 4
+                  : fornecedores.length,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (_, index) {
                 if (fornecedorController.carregando.value) {
@@ -728,9 +752,11 @@ Widget _buildSuppliersCarousel(
                       child: Container(
                           width: 110,
                           decoration: BoxDecoration(
-                              color: Colors.white, borderRadius: BorderRadius.circular(16))));
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16))));
                 }
-                return _fornecedorCard(fornecedorDetalhe: fornecedores[index], cor: cor);
+                return _fornecedorCard(
+                    fornecedorDetalhe: fornecedores[index], cor: cor);
               },
             ),
           );
@@ -740,7 +766,8 @@ Widget _buildSuppliersCarousel(
   );
 }
 
-Widget _fornecedorCard({required FornecedorDetalhadoDto fornecedorDetalhe, required Color cor}) {
+Widget _fornecedorCard(
+    {required FornecedorDetalhadoDto fornecedorDetalhe, required Color cor}) {
   final fornecedor = fornecedorDetalhe.fornecedor;
   return GestureDetector(
     onTap: () => Get.to(() => FornecedorDetalheScreen(

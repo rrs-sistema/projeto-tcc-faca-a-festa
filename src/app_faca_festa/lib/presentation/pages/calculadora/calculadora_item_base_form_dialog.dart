@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/calculadora/calculadora_itens_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_itens_admin_controller.dart';
 import '../../../core/utils/form_validators.dart';
 import '../../../data/models/calculadora/calculadora_item_base_model.dart';
 
@@ -24,10 +24,12 @@ class _CalculadoraItemBaseFormContent extends StatefulWidget {
   const _CalculadoraItemBaseFormContent({this.item});
 
   @override
-  State<_CalculadoraItemBaseFormContent> createState() => _CalculadoraItemBaseFormContentState();
+  State<_CalculadoraItemBaseFormContent> createState() =>
+      _CalculadoraItemBaseFormContentState();
 }
 
-class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFormContent> {
+class _CalculadoraItemBaseFormContentState
+    extends State<_CalculadoraItemBaseFormContent> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nomeController;
@@ -42,7 +44,8 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
   late bool _ativo;
   late String _publicoAlvo;
 
-  CalculadoraItensAdminController get controller => Get.find<CalculadoraItensAdminController>();
+  CalculadoraItensAdminController get controller =>
+      Get.find<CalculadoraItensAdminController>();
 
   bool get isEditing => widget.item != null;
 
@@ -54,9 +57,11 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
 
     _nomeController = TextEditingController(text: item?.nome ?? '');
     _descricaoController = TextEditingController(text: item?.descricao ?? '');
-    _categoriaController = TextEditingController(text: item?.categoriaPadrao ?? '');
+    _categoriaController =
+        TextEditingController(text: item?.categoriaPadrao ?? '');
     _tipoItemController = TextEditingController(text: item?.tipoItem ?? '');
-    _unidadeController = TextEditingController(text: item?.unidadePadrao ?? 'unidade');
+    _unidadeController =
+        TextEditingController(text: item?.unidadePadrao ?? 'unidade');
     _ordemController = TextEditingController(text: '${item?.ordem ?? 0}');
     _tagsController = TextEditingController(text: item?.tags.join(', ') ?? '');
     _iconeController = TextEditingController(text: item?.icone ?? '');
@@ -131,7 +136,8 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
                     const SizedBox(height: 10),
                     Divider(
                       height: 1,
-                      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      color: theme.colorScheme.outlineVariant
+                          .withValues(alpha: 0.5),
                     ),
                     const SizedBox(height: 12),
                     _InfoIdPreview(
@@ -295,10 +301,12 @@ class _CalculadoraItemBaseFormContentState extends State<_CalculadoraItemBaseFor
       keyboardType: keyboardType,
       onChanged: onChanged,
       style: const TextStyle(fontSize: 13), // 🔹 Fonte menor
-      textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
+      textInputAction:
+          maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
       decoration: _decoration(label: label, icon: icon, hint: hint),
       validator: requiredField
-          ? (value) => FormValidators.titulo(value, campo: label.toLowerCase(), minimo: 2)
+          ? (value) => FormValidators.titulo(value,
+              campo: label.toLowerCase(), minimo: 2)
           : null,
     );
   }
@@ -447,7 +455,8 @@ class _InfoIdPreview extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        color:
+            theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
@@ -476,7 +485,8 @@ class _ResponsiveFields extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isWide = constraints.maxWidth >= 620;
-        final itemWidth = isWide ? (constraints.maxWidth - 10) / 2 : constraints.maxWidth;
+        final itemWidth =
+            isWide ? (constraints.maxWidth - 10) / 2 : constraints.maxWidth;
 
         return Wrap(
           spacing: 10,
@@ -568,10 +578,12 @@ class _FooterActions extends StatelessWidget {
         children: [
           Expanded(
             child: OutlinedButton.icon(
-              onPressed: controller.saving.value ? null : () => Get.back<void>(),
+              onPressed:
+                  controller.saving.value ? null : () => Get.back<void>(),
               icon: const Icon(Icons.close, size: 16),
               label: const Text('Cancelar', style: TextStyle(fontSize: 13)),
-              style: OutlinedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+              style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12)),
             ),
           ),
           const SizedBox(width: 10),
@@ -589,7 +601,8 @@ class _FooterActions extends StatelessWidget {
                 controller.saving.value ? 'Salvando...' : 'Salvar',
                 style: const TextStyle(fontSize: 13),
               ),
-              style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 12)),
+              style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12)),
             ),
           ),
         ],

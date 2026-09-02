@@ -10,7 +10,8 @@ Future<AppDatabase> constructDb() async {
     driftWorkerUri: Uri.parse('drift_worker.dart.js'),
   );
 
-  debugPrint('🌐 Drift Web implementação escolhida: ${result.chosenImplementation}');
+  debugPrint(
+      '🌐 Drift Web implementação escolhida: ${result.chosenImplementation}');
 
   if (result.missingFeatures.isNotEmpty) {
     debugPrint('⚠️ Drift Web recursos ausentes: ${result.missingFeatures}');

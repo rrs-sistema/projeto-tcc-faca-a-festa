@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/contacao/solicitacoes_controller.dart';
 import '../../data/datasources/remote/solicitacoes_remote_datasource.dart';
 import '../../data/repositories_impl/solicitacoes_repository_impl.dart';
 import '../../domain/repositories/solicitacoes_repository.dart';
 import '../../domain/usecases/gerenciar_solicitacoes.dart';
+import '../../presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
 
 class SolicitacoesBootstrap {
   SolicitacoesBootstrap._();
@@ -12,7 +13,9 @@ class SolicitacoesBootstrap {
   static void register() {
     if (!Get.isRegistered<SolicitacoesRemoteDatasource>()) {
       Get.lazyPut<SolicitacoesRemoteDatasource>(
-        () => SolicitacoesRemoteDatasource(),
+        () => SolicitacoesRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+        ),
         fenix: true,
       );
     }

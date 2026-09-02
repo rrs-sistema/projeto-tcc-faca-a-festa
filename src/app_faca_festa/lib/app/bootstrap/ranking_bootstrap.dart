@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/ranking_controller.dart';
 import '../../data/datasources/remote/ranking_remote_datasource.dart';
 import '../../data/repositories_impl/ranking_repository_impl.dart';
 import '../../domain/repositories/ranking_repository.dart';
 import '../../domain/usecases/carregar_ranking_servicos.dart';
+import '../../presentation/modules/ranking/controllers/ranking_controller.dart';
 
 class RankingBootstrap {
   RankingBootstrap._();
@@ -12,7 +13,9 @@ class RankingBootstrap {
   static void register() {
     if (!Get.isRegistered<RankingRemoteDatasource>()) {
       Get.lazyPut<RankingRemoteDatasource>(
-        () => RankingRemoteDatasource(),
+        () => RankingRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+        ),
         fenix: true,
       );
     }

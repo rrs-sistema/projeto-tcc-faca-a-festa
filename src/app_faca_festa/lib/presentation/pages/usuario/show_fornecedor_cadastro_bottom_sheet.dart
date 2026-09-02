@@ -48,10 +48,12 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
 
               // 🔹 HEADER COMPACTO
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   children: [
-                    Icon(Icons.storefront_rounded, color: primaryColor, size: 22),
+                    Icon(Icons.storefront_rounded,
+                        color: primaryColor, size: 22),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -189,16 +191,21 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
                                   child: OutlinedButton.icon(
                                     style: OutlinedButton.styleFrom(
                                       foregroundColor: primaryColor,
-                                      side: BorderSide(color: primaryColor.withValues(alpha: 0.55)),
+                                      side: BorderSide(
+                                          color: primaryColor.withValues(
+                                              alpha: 0.55)),
                                       shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10)),
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
                                       padding: EdgeInsets.zero,
                                     ),
                                     onPressed: () => Get.back(),
-                                    icon: const Icon(Icons.close_rounded, size: 18),
+                                    icon: const Icon(Icons.close_rounded,
+                                        size: 18),
                                     label: Text('Cancelar',
                                         style: GoogleFonts.poppins(
-                                            fontWeight: FontWeight.w800, fontSize: 12)),
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 12)),
                                   ),
                                 ),
                               ),
@@ -211,7 +218,8 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
                                       backgroundColor: primaryColor,
                                       foregroundColor: Colors.white,
                                       shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(10)),
+                                          borderRadius:
+                                              BorderRadius.circular(10)),
                                       padding: EdgeInsets.zero,
                                     ),
                                     onPressed: () {
@@ -220,10 +228,12 @@ Future<bool> showFornecedorCadastroBottomSheet(BuildContext context) async {
                                         Navigator.pop(context);
                                       }
                                     },
-                                    icon: const Icon(Icons.check_circle_rounded, size: 18),
+                                    icon: const Icon(Icons.check_circle_rounded,
+                                        size: 18),
                                     label: Text('Cadastrar',
                                         style: GoogleFonts.poppins(
-                                            fontWeight: FontWeight.w800, fontSize: 12)),
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 12)),
                                   ),
                                 ),
                               ),
@@ -256,7 +266,10 @@ class _SectionCard extends StatelessWidget {
   final Color primary;
 
   const _SectionCard(
-      {required this.title, required this.icon, required this.child, required this.primary});
+      {required this.title,
+      required this.icon,
+      required this.child,
+      required this.primary});
 
   @override
   Widget build(BuildContext context) {
@@ -283,7 +296,9 @@ class _SectionCard extends StatelessWidget {
                 child: Text(
                   title,
                   style: GoogleFonts.poppins(
-                      fontSize: 13, fontWeight: FontWeight.w800, color: const Color(0xFF111827)),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: const Color(0xFF111827)),
                 ),
               ),
             ],
@@ -316,31 +331,32 @@ class _CompactField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        maxLength: maxLength,
-        style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
-        decoration: InputDecoration(
-          labelText: label,
-          labelStyle: GoogleFonts.poppins(fontSize: 11),
-          prefixIcon: Icon(icon, size: 16),
-          isDense: true,
-          counterText: "",
-          errorMaxLines: 2,
-          errorStyle: GoogleFonts.poppins(fontSize: 9, height: 1.1),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
-          border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
-          enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Colors.grey.shade200)),
-          focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: BorderSide(color: Theme.of(context).primaryColor)),
-          filled: true,
-          fillColor: Colors.grey.shade50,
-        ),
-        validator: validator,
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLength: maxLength,
+      style: GoogleFonts.poppins(fontSize: 12, fontWeight: FontWeight.w600),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: GoogleFonts.poppins(fontSize: 11),
+        prefixIcon: Icon(icon, size: 16),
+        isDense: true,
+        counterText: "",
+        errorMaxLines: 2,
+        errorStyle: GoogleFonts.poppins(fontSize: 9, height: 1.1),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.grey.shade200)),
+        focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Theme.of(context).primaryColor)),
+        filled: true,
+        fillColor: Colors.grey.shade50,
+      ),
+      validator: validator,
     );
   }
 }

@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../components/show_responder_cotacao_bottom_sheet.dart';
 
 Widget buildCotacaoCard(
@@ -25,9 +25,11 @@ Widget buildCotacaoCard(
       tween: Tween<double>(begin: 0.98, end: 1), // Animação sutil e elegante
       duration: const Duration(milliseconds: 260),
       curve: Curves.easeOutCubic,
-      builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+      builder: (context, scale, child) =>
+          Transform.scale(scale: scale, child: child),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), // Margem compacta
+        margin: const EdgeInsets.symmetric(
+            horizontal: 8, vertical: 4), // Margem compacta
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
@@ -56,11 +58,13 @@ Widget buildCotacaoCard(
                 descricao: servicoMap['descricao'],
                 nomeSolicitante: servicoMap['nomeSolicitante'],
                 dataLimite: dataLimite,
-                ofertaDesejada: Biblioteca.toDouble(servicoMap['valorEstimadoTotal'].toString()),
+                ofertaDesejada: Biblioteca.toDouble(
+                    servicoMap['valorEstimadoTotal'].toString()),
               );
             },
             child: Padding(
-              padding: const EdgeInsets.all(16), // Espaçamento interno mais compacto
+              padding:
+                  const EdgeInsets.all(16), // Espaçamento interno mais compacto
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
@@ -71,7 +75,8 @@ Widget buildCotacaoCard(
                     decoration: BoxDecoration(
                       color: primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: primary.withValues(alpha: 0.15)),
+                      border:
+                          Border.all(color: primary.withValues(alpha: 0.15)),
                     ),
                     child: Icon(temaIcone, color: primary, size: 20),
                   ),
@@ -99,7 +104,8 @@ Widget buildCotacaoCard(
                             ),
                             if (isNova)
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
                                   color: primary,
                                   borderRadius: BorderRadius.circular(4),
@@ -145,7 +151,8 @@ Widget buildCotacaoCard(
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Icon(Icons.chevron_right_rounded, size: 20, color: Colors.grey.shade400),
+                  Icon(Icons.chevron_right_rounded,
+                      size: 20, color: Colors.grey.shade400),
                 ],
               ),
             ),

@@ -66,6 +66,7 @@ class TerritorioModel {
         descricao: map['descricao'],
         ativo: map['ativo'] ?? true,
         tipoCobertura: map['tipo_cobertura'],
-        regioes: (map['regioes'] is List) ? List<String>.from(map['regioes']) : null,
+        regioes:
+            (map['regioes'] is List) ? List<String>.from(map['regioes']) : null,
       );
 }

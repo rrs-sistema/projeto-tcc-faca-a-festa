@@ -31,8 +31,7 @@ void main() {
         'Informe o custo estimado');
     expect(FormValidators.nomeCompleto('', campo: 'o nome do responsável'),
         'Informe o nome do responsável');
-    expect(FormValidators.razaoSocial(''),
-        'Informe a razão social da empresa');
+    expect(FormValidators.razaoSocial(''), 'Informe a razão social da empresa');
     expect(FormValidators.telefone('1099999999'), 'Informe um DDD válido');
     expect(FormValidators.uf('XX'), 'Informe uma UF válida');
     expect(FormValidators.titulo('', campo: 'o nome do presente', minimo: 2),

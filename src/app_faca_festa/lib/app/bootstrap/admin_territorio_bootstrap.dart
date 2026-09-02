@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/admin/admin_territorio_controller.dart';
 import '../../data/datasources/remote/admin_territorio_remote_datasource.dart';
 import '../../data/repositories_impl/admin_territorio_repository_impl.dart';
 import '../../domain/repositories/admin_territorio_repository.dart';
 import '../../domain/usecases/gerenciar_admin_territorios.dart';
+import '../../presentation/modules/admin/controllers/admin_territorio_controller.dart';
 
 class AdminTerritorioBootstrap {
   AdminTerritorioBootstrap._();
@@ -12,7 +13,9 @@ class AdminTerritorioBootstrap {
   static void register() {
     if (!Get.isRegistered<AdminTerritorioRemoteDatasource>()) {
       Get.lazyPut<AdminTerritorioRemoteDatasource>(
-        () => AdminTerritorioRemoteDatasource(),
+        () => AdminTerritorioRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+        ),
         fenix: true,
       );
     }

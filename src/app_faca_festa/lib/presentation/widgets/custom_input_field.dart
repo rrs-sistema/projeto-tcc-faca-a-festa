@@ -5,7 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import './../../controllers/tema/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './../../core/utils/form_masks.dart';
 import './../../core/utils/form_validators.dart';
 
@@ -44,7 +44,8 @@ class CustomInputField extends StatefulWidget {
 
   // Validação
   final String? Function(String?)? validator;
-  final bool isRequired; // <-- Adicionado: Flag para tornar campo obrigatório de forma simplificada
+  final bool
+      isRequired; // <-- Adicionado: Flag para tornar campo obrigatório de forma simplificada
 
   final bool obscureText;
   final double borderRadius;
@@ -193,16 +194,17 @@ class _CustomInputFieldState extends State<CustomInputField> {
             onFocusChange: (f) => setState(() => isFocused = f),
             child: TextFormField(
               controller: widget.controller,
-
               validator: widget.validator ?? _validarPorTipo,
-
               readOnly: widget.readOnly,
               enabled: widget.enabled,
               focusNode: widget.focusNode,
               onTap: widget.onTap,
               maxLength: widget.maxLength,
-              maxLines: widget.maxLines ?? (widget.type == InputType.multiline ? 4 : 1),
-              obscureText: widget.type == InputType.password ? !showPassword : widget.obscureText,
+              maxLines: widget.maxLines ??
+                  (widget.type == InputType.multiline ? 4 : 1),
+              obscureText: widget.type == InputType.password
+                  ? !showPassword
+                  : widget.obscureText,
               keyboardType: finalKeyboardType,
               onChanged: _onChanged,
               cursorColor: iconColor,
@@ -225,25 +227,32 @@ class _CustomInputFieldState extends State<CustomInputField> {
               decoration: InputDecoration(
                 prefixIcon: Padding(
                   padding: const EdgeInsets.all(8),
-                  child: widget.icon != null ? Icon(widget.icon, size: 22, color: iconColor) : null,
+                  child: widget.icon != null
+                      ? Icon(widget.icon, size: 22, color: iconColor)
+                      : null,
                 ),
                 suffixIcon: widget.type == InputType.password
                     ? IconButton(
                         icon: Icon(
-                          showPassword ? Icons.visibility : Icons.visibility_off,
+                          showPassword
+                              ? Icons.visibility
+                              : Icons.visibility_off,
                           color: iconColor,
                         ),
-                        onPressed: () => setState(() => showPassword = !showPassword),
+                        onPressed: () =>
+                            setState(() => showPassword = !showPassword),
                       )
                     : widget.suffixIcon,
                 filled: true,
                 fillColor: bgColor,
                 floatingLabelBehavior: FloatingLabelBehavior.never,
-                hintText: widget.hintlabel ?? "Digite o(a) ${widget.label.toLowerCase()}...",
+                hintText: widget.hintlabel ??
+                    "Digite o(a) ${widget.label.toLowerCase()}...",
                 hintStyle: GoogleFonts.poppins(
                   fontSize: 14,
                   color: textColor.withValues(
-                      alpha: 0.6), // Leve ajuste de opacidade no hint para contraste mais limpo
+                      alpha:
+                          0.6), // Leve ajuste de opacidade no hint para contraste mais limpo
                 ),
                 contentPadding: const EdgeInsets.symmetric(
                   vertical: 10,
@@ -255,10 +264,12 @@ class _CustomInputFieldState extends State<CustomInputField> {
                 ),
                 errorMaxLines: 3,
                 errorBorder: border.copyWith(
-                  borderSide: const BorderSide(color: Colors.redAccent, width: 1.3),
+                  borderSide:
+                      const BorderSide(color: Colors.redAccent, width: 1.3),
                 ),
                 focusedErrorBorder: border.copyWith(
-                  borderSide: const BorderSide(color: Colors.redAccent, width: 1.3),
+                  borderSide:
+                      const BorderSide(color: Colors.redAccent, width: 1.3),
                 ),
               ),
             ),

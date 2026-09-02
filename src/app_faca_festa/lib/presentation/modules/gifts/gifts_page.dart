@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../controllers/gift/gift_controller.dart';
-import '../../../controllers/tema/event_theme_controller.dart';
 import '../../../domain/entities/gift/gift.dart';
+import '../tema/controllers/event_theme_controller.dart';
+import 'controllers/gift_controller.dart';
 
 class GiftsPage extends StatelessWidget {
   final GiftController controller = Get.find();
@@ -87,8 +87,10 @@ class _GuestGiftCard extends StatelessWidget {
                       ? Image.network(
                           gift.imagem!,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              Icon(_tipoIcon(gift.tipo), color: primary, size: 32),
+                          errorBuilder: (_, __, ___) => Icon(
+                              _tipoIcon(gift.tipo),
+                              color: primary,
+                              size: 32),
                         )
                       : Icon(_tipoIcon(gift.tipo), color: primary, size: 34),
                 ),
@@ -107,8 +109,12 @@ class _GuestGiftCard extends StatelessWidget {
                           const SizedBox(width: 6),
                           _Badge(
                             label: reservado ? 'Reservado' : 'Disponível',
-                            icon: reservado ? Icons.lock_clock_rounded : Icons.check_circle_rounded,
-                            color: reservado ? Colors.orange.shade800 : Colors.green.shade700,
+                            icon: reservado
+                                ? Icons.lock_clock_rounded
+                                : Icons.check_circle_rounded,
+                            color: reservado
+                                ? Colors.orange.shade800
+                                : Colors.green.shade700,
                           ),
                         ],
                       ),
@@ -242,7 +248,8 @@ class _GuestGiftEmptyState extends StatelessWidget {
                   color: primary.withValues(alpha: 0.09),
                   borderRadius: BorderRadius.circular(26),
                 ),
-                child: Icon(Icons.card_giftcard_rounded, color: primary, size: 36),
+                child:
+                    Icon(Icons.card_giftcard_rounded, color: primary, size: 36),
               ),
               const SizedBox(height: 16),
               Text(
@@ -328,7 +335,9 @@ String _footerText(Gift gift) {
   if (gift.tipo == GiftType.fisico) {
     final loja = (gift.loja ?? '').trim();
     final link = (gift.link ?? '').trim();
-    if (loja.isNotEmpty && link.isNotEmpty) return 'Loja sugerida: $loja • link informado';
+    if (loja.isNotEmpty && link.isNotEmpty) {
+      return 'Loja sugerida: $loja • link informado';
+    }
     if (loja.isNotEmpty) return 'Loja sugerida: $loja';
     if (link.isNotEmpty) return 'Link de compra informado';
     return 'Presente físico sugerido pelo organizador';

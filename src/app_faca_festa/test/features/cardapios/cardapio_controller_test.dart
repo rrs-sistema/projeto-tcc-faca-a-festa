@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:app_faca_festa/controllers/convidado/cardapio_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/domain/entities/cardapio.dart';
 import 'package:app_faca_festa/domain/entities/cardapio_item.dart';
 import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';

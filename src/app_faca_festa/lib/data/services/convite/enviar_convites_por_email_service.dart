@@ -25,9 +25,8 @@ class EnviarConvitesPorEmailException implements Exception {
 }
 
 class EnviarConvitesPorEmailService {
-  EnviarConvitesPorEmailService({FirebaseFunctions? functions})
-      : _functions = functions ??
-            FirebaseFunctions.instanceFor(region: 'southamerica-east1');
+  EnviarConvitesPorEmailService({required FirebaseFunctions functions})
+      : _functions = functions;
 
   final FirebaseFunctions _functions;
   static const maxPorChamada = 40;

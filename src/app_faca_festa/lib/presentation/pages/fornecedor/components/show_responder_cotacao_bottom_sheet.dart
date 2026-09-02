@@ -1,14 +1,14 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
-import './../../../../controllers/tema/event_theme_controller.dart';
-import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import './../../../../data/models/cotacao/cotacao_chat_model.dart';
+import './../../../../domain/usecases/gerenciar_cotacoes.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import './../../../../core/utils/biblioteca.dart';
 import './../../../../core/utils/form_validators.dart';
-import './../../../../data/datasources/remote/cotacao_functions_datasource.dart';
 
 Future<void> showResponderCotacaoBottomSheet({
   required BuildContext context,
@@ -41,175 +41,313 @@ Future<void> showResponderCotacaoBottomSheet({
         }
 
         return Obx(
-      () => AbsorbPointer(
-        absorbing: carregando.value,
-        child: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
-          ),
-          child: SafeArea(
-            top: false,
+          () => AbsorbPointer(
+            absorbing: carregando.value,
+            child: Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+              ),
+              child: SafeArea(
+                top: false,
                 child: Form(
                   key: formKey,
                   autovalidateMode: autovalidateMode,
                   child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // === Handle bar ===
-                  Center(
-                    child: Container(
-                      width: 60,
-                      height: 5,
-                      margin: const EdgeInsets.only(bottom: 18),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                  ),
-
-                  // === Cabeçalho ===
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(18),
-                    decoration: BoxDecoration(
-                      gradient: gradient,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primary.withValues(alpha: 0.22),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 22, vertical: 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Ícone grande do tema
-                            Container(
-                              width: 52,
-                              height: 52,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: Colors.white.withValues(alpha: 0.20),
-                                border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.35),
-                                  width: 1.4,
-                                ),
-                              ),
-                              child: Icon(
-                                theme.icon.value,
-                                color: Colors.white,
-                                size: 28,
-                              ),
+                        // === Handle bar ===
+                        Center(
+                          child: Container(
+                            width: 60,
+                            height: 5,
+                            margin: const EdgeInsets.only(bottom: 18),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade300,
+                              borderRadius: BorderRadius.circular(4),
                             ),
+                          ),
+                        ),
 
-                            const SizedBox(width: 14),
-
-                            // Títulos e textos
-                            Expanded(
-                              child: Column(
+                        // === Cabeçalho ===
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(18),
+                          decoration: BoxDecoration(
+                            gradient: gradient,
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: primary.withValues(alpha: 0.22),
+                                blurRadius: 14,
+                                offset: const Offset(0, 6),
+                              ),
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    categoriaNome,
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 18,
+                                  // Ícone grande do tema
+                                  Container(
+                                    width: 52,
+                                    height: 52,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color:
+                                          Colors.white.withValues(alpha: 0.20),
+                                      border: Border.all(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.35),
+                                        width: 1.4,
+                                      ),
+                                    ),
+                                    child: Icon(
+                                      theme.icon.value,
                                       color: Colors.white,
-                                      height: 1.2,
+                                      size: 28,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    descricao.isNotEmpty ? descricao : "Sem descrição adicional.",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13.4,
-                                      height: 1.42,
-                                      color: Colors.white.withValues(alpha: 0.92),
+
+                                  const SizedBox(width: 14),
+
+                                  // Títulos e textos
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          categoriaNome,
+                                          style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 18,
+                                            color: Colors.white,
+                                            height: 1.2,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          descricao.isNotEmpty
+                                              ? descricao
+                                              : "Sem descrição adicional.",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13.4,
+                                            height: 1.42,
+                                            color: Colors.white
+                                                .withValues(alpha: 0.92),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
 
-                        const SizedBox(height: 16),
+                              const SizedBox(height: 16),
 
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.white.withValues(alpha: 0.18),
-                                Colors.white.withValues(alpha: 0.05),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(50),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.28),
-                              width: 1.2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              // 🎯 Ícone moderno
                               Container(
-                                padding: const EdgeInsets.all(6),
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 10),
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.20),
-                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.white.withValues(alpha: 0.18),
+                                      Colors.white.withValues(alpha: 0.05),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(50),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.28),
+                                    width: 1.2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.15),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
                                 ),
-                                child: const Icon(
-                                  Icons.attach_money_rounded,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ),
-
-                              const SizedBox(width: 10),
-
-                              // 📝 Texto e valor destacados
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      "Oferta desejada",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 11.5,
-                                        color: Colors.white.withValues(alpha: 0.95),
-                                        fontWeight: FontWeight.w400,
-                                        letterSpacing: 0.2,
+                                    // 🎯 Ícone moderno
+                                    Container(
+                                      padding: const EdgeInsets.all(6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white
+                                            .withValues(alpha: 0.20),
+                                        shape: BoxShape.circle,
+                                      ),
+                                      child: const Icon(
+                                        Icons.attach_money_rounded,
+                                        color: Colors.white,
+                                        size: 18,
                                       ),
                                     ),
-                                    Text(
-                                      "R\$ ${Biblioteca.formatarValorDecimal(ofertaDesejada)}",
-                                      style: GoogleFonts.poppins(
-                                        fontSize: 14.5,
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
+
+                                    const SizedBox(width: 10),
+
+                                    // 📝 Texto e valor destacados
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            "Oferta desejada",
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 11.5,
+                                              color: Colors.white
+                                                  .withValues(alpha: 0.95),
+                                              fontWeight: FontWeight.w400,
+                                              letterSpacing: 0.2,
+                                            ),
+                                          ),
+                                          Text(
+                                            "R\$ ${Biblioteca.formatarValorDecimal(ofertaDesejada)}",
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 14.5,
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Chip "Data" à esquerda e "Solicitado por" à direita
+                              Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 10),
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.white.withValues(alpha: 0.18),
+                                      Colors.white.withValues(alpha: 0.05),
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                  borderRadius: BorderRadius.circular(50),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.28),
+                                    width: 1.2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color:
+                                          Colors.black.withValues(alpha: 0.15),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    // 🔵 Lado ESQUERDO — Data limite
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white
+                                                .withValues(alpha: 0.20),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.calendar_today_rounded,
+                                            color: Colors.white,
+                                            size: 16,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Data limite",
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w400,
+                                                color: Colors.white
+                                                    .withValues(alpha: 0.95),
+                                              ),
+                                            ),
+                                            Text(
+                                              dataLimite, // ← formate antes com DateFormat
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 14.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+
+                                    // 🔵 Lado DIREITO — Solicitante
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white
+                                                .withValues(alpha: 0.20),
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: const Icon(
+                                            Icons.person_rounded,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              "Solicitante",
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 11.5,
+                                                fontWeight: FontWeight.w400,
+                                                color: Colors.white
+                                                    .withValues(alpha: 0.95),
+                                              ),
+                                            ),
+                                            Text(
+                                              nomeSolicitante,
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 14.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -218,213 +356,103 @@ Future<void> showResponderCotacaoBottomSheet({
                           ),
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 22),
 
-                        // Chip "Data" à esquerda e "Solicitado por" à direita
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.white.withValues(alpha: 0.18),
-                                Colors.white.withValues(alpha: 0.05),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
-                            borderRadius: BorderRadius.circular(50),
-                            border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.28),
-                              width: 1.2,
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 12,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+                        // === ITENS DA COTAÇÃO ===
+                        _buildLabel("Itens solicitados", primary),
+                        StreamBuilder<List<CotacaoServicoResumoModel>>(
+                          stream: Get.find<GerenciarCotacoes>()
+                              .observarServicosFornecedorCotacao(
+                            idCotacao: idCotacao,
+                            idFornecedor: Get.find<FornecedorController>()
+                                    .fornecedor
+                                    .value
+                                    ?.idFornecedor ??
+                                '0',
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              // 🔵 Lado ESQUERDO — Data limite
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.20),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.calendar_today_rounded,
-                                      color: Colors.white,
-                                      size: 16,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Data limite",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w400,
-                                          color: Colors.white.withValues(alpha: 0.95),
-                                        ),
-                                      ),
-                                      Text(
-                                        dataLimite, // ← formate antes com DateFormat
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-
-                              // 🔵 Lado DIREITO — Solicitante
-                              Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.20),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Icon(
-                                      Icons.person_rounded,
-                                      color: Colors.white,
-                                      size: 18,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        "Solicitante",
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 11.5,
-                                          fontWeight: FontWeight.w400,
-                                          color: Colors.white.withValues(alpha: 0.95),
-                                        ),
-                                      ),
-                                      Text(
-                                        nomeSolicitante,
-                                        style: GoogleFonts.poppins(
-                                          fontSize: 14.5,
-                                          fontWeight: FontWeight.w700,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 22),
-
-                  // === ITENS DA COTAÇÃO ===
-                  _buildLabel("Itens solicitados", primary),
-                  StreamBuilder<QuerySnapshot>(
-                    stream: FirebaseFirestore.instance
-                        .collection('cotacao')
-                        .doc(idCotacao)
-                        .collection('fornecedores')
-                        .doc(Get.find<FornecedorController>().fornecedor.value?.idFornecedor ?? '0')
-                        .collection('servicos')
-                        .snapshots(),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(12),
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        );
-                      }
-
-                      if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: Text(
-                            "Nenhum item de serviço associado a esta cotação.",
-                            style: GoogleFonts.poppins(
-                              fontSize: 13,
-                              color: Colors.grey.shade600,
-                            ),
-                          ),
-                        );
-                      }
-
-                      final servicos = snapshot.data!.docs;
-
-                      return Column(
-                        children: servicos.map((s) {
-                          final d = s.data() as Map<String, dynamic>;
-                          final nome = d['nome_produto_servico'] ?? 'Serviço';
-                          final qtd = d['quantidade'] ?? 1;
-                          final valor = (d['valor_estimado'] ?? 0) as num;
-
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
-                              border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    "$nome (x$qtd)",
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 13.5,
-                                      color: Colors.grey.shade800,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: Padding(
+                                  padding: EdgeInsets.all(12),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 ),
-                                Text(
-                                  "R\$ ${(valor * qtd).toStringAsFixed(2)}",
+                              );
+                            }
+
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Text(
+                                  "Nenhum item de serviço associado a esta cotação.",
                                   style: GoogleFonts.poppins(
                                     fontSize: 13,
-                                    color: Colors.green.shade700,
-                                    fontWeight: FontWeight.w600,
+                                    color: Colors.grey.shade600,
                                   ),
                                 ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      );
-                    },
-                  ),
+                              );
+                            }
 
-                  const SizedBox(height: 20),
+                            final servicos = snapshot.data!;
 
-                  // === Prazo ===
+                            return Column(
+                              children: servicos.map((s) {
+                                final nome = s.nome;
+                                final qtd = s.quantidade;
+                                final valor = s.valorEstimado;
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 14, vertical: 10),
+                                  decoration: BoxDecoration(
+                                    color: Colors.grey.shade50,
+                                    border: Border.all(
+                                        color: Colors.grey
+                                            .withValues(alpha: 0.15)),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          "$nome (x$qtd)",
+                                          style: GoogleFonts.poppins(
+                                            fontSize: 13.5,
+                                            color: Colors.grey.shade800,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Text(
+                                        "R\$ ${(valor * qtd).toStringAsFixed(2)}",
+                                        style: GoogleFonts.poppins(
+                                          fontSize: 13,
+                                          color: Colors.green.shade700,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // === Prazo ===
                         _buildLabel("Prazo de entrega *", primary),
                         FormField<DateTime>(
                           initialValue: prazoEntregaSelecionado.value,
-                          validator: (value) =>
-                              FormValidators.selecao(value, campo: 'o prazo de entrega'),
+                          validator: (value) => FormValidators.selecao(value,
+                              campo: 'o prazo de entrega'),
                           builder: (state) {
                             return Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -432,7 +460,8 @@ Future<void> showResponderCotacaoBottomSheet({
                                 GestureDetector(
                                   onTap: () async {
                                     final hoje = DateTime.now();
-                                    final limite = hoje.add(const Duration(days: 180));
+                                    final limite =
+                                        hoje.add(const Duration(days: 180));
 
                                     final selecionada = await showDatePicker(
                                       context: Get.context!,
@@ -455,14 +484,15 @@ Future<void> showResponderCotacaoBottomSheet({
                                     );
 
                                     if (selecionada != null) {
-                                      prazoEntregaSelecionado.value = selecionada;
+                                      prazoEntregaSelecionado.value =
+                                          selecionada;
                                       state.didChange(selecionada);
                                     }
                                   },
                                   child: Container(
                                     width: double.infinity,
-                                    padding:
-                                        const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 14),
                                     decoration: BoxDecoration(
                                       border: Border.all(
                                         color: state.hasError
@@ -473,7 +503,8 @@ Future<void> showResponderCotacaoBottomSheet({
                                       color: Colors.grey.shade50,
                                     ),
                                     child: Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Flexible(
                                           child: Text(
@@ -497,7 +528,8 @@ Future<void> showResponderCotacaoBottomSheet({
                                 ),
                                 if (state.hasError)
                                   Padding(
-                                    padding: const EdgeInsets.only(left: 12, top: 6),
+                                    padding:
+                                        const EdgeInsets.only(left: 12, top: 6),
                                     child: Text(
                                       state.errorText!,
                                       style: GoogleFonts.poppins(
@@ -509,14 +541,15 @@ Future<void> showResponderCotacaoBottomSheet({
                               ],
                             );
                           },
-                  ),
+                        ),
 
-                  const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                  // === Condição ===
-                        _buildLabel("Condição de pagamento (opcional)", primary),
+                        // === Condição ===
+                        _buildLabel(
+                            "Condição de pagamento (opcional)", primary),
                         TextFormField(
-                    controller: condicaoController,
+                          controller: condicaoController,
                           validator: (value) => FormValidators.descricao(
                             value,
                             campo: 'a condição de pagamento',
@@ -524,148 +557,165 @@ Future<void> showResponderCotacaoBottomSheet({
                             minimo: 2,
                             maximo: 200,
                           ),
-                    decoration: InputDecoration(
-                      hintText: "Ex: 50% na reserva e 50% na entrega",
-                      prefixIcon: Icon(Icons.payments_outlined, color: primary),
+                          decoration: InputDecoration(
+                            hintText: "Ex: 50% na reserva e 50% na entrega",
+                            prefixIcon:
+                                Icon(Icons.payments_outlined, color: primary),
                             errorMaxLines: 2,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.shade50,
-                    ),
-                  ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
+                          ),
+                        ),
 
-                  const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                  // === Observação ===
-                  _buildLabel("Observações (opcional)", primary),
+                        // === Observação ===
+                        _buildLabel("Observações (opcional)", primary),
                         TextFormField(
-                    controller: observacaoController,
+                          controller: observacaoController,
                           validator: (value) => FormValidators.descricao(
                             value,
                             campo: 'as observações',
                             obrigatorio: false,
                           ),
-                    decoration: InputDecoration(
-                      hintText: "Detalhes adicionais da proposta...",
-                            prefixIcon: Icon(Icons.chat_bubble_outline_rounded, color: primary),
+                          decoration: InputDecoration(
+                            hintText: "Detalhes adicionais da proposta...",
+                            prefixIcon: Icon(Icons.chat_bubble_outline_rounded,
+                                color: primary),
                             errorMaxLines: 2,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey.shade50,
-                    ),
-                    minLines: 3,
-                    maxLines: 4,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // === Botões ===
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: carregando.value
-                              ? null
-                              : () {
-                                        if (!validarFormulario()) return;
-
-                                  _confirmarEnvio(
-                                    context: context,
-                                    onConfirmar: () {
-                                      _enviarResposta(
-                                        aceitou: true,
-                                        idCotacao: idCotacao,
-                                        prazo: prazoEntregaSelecionado.value ?? DateTime.now(),
-                                        condicao: condicaoController.text,
-                                        observacao: observacaoController.text,
-                                        carregando: carregando,
-                                      );
-                                    },
-                                  );
-                                },
-                          icon: const Icon(Icons.send_rounded, color: Colors.white),
-                          label: const Text(
-                            "Responder",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.green.shade600,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                            elevation: 3,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: carregando.value
-                              ? null
-                              : () {
-                                        if (!validarFormulario()) return;
-                                  _enviarResposta(
-                                    aceitou: false,
-                                    idCotacao: idCotacao,
-                                    prazo: prazoEntregaSelecionado.value ?? DateTime.now(),
-                                    condicao: condicaoController.text,
-                                    observacao: observacaoController.text,
-                                    carregando: carregando,
-                                  );
-                                },
-                          icon: Icon(Icons.cancel_outlined, color: Colors.red.shade700),
-                          label: Text(
-                            "Recusar",
-                            style: TextStyle(
-                              color: Colors.red.shade700,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
                             ),
+                            filled: true,
+                            fillColor: Colors.grey.shade50,
                           ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red.shade700,
-                            side: BorderSide(color: Colors.red.shade400),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
+                          minLines: 3,
+                          maxLines: 4,
                         ),
-                      ),
-                    ],
-                  ),
 
-                  const SizedBox(height: 20),
+                        const SizedBox(height: 24),
 
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: () => Get.back(),
-                          icon: const Icon(Icons.cancel_outlined, color: Colors.grey),
-                          label: const Text(
-                            "Sair",
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.grey.shade700,
-                            side: BorderSide(color: Colors.grey.shade400),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                          ),
+                        // === Botões ===
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: carregando.value
+                                    ? null
+                                    : () {
+                                        if (!validarFormulario()) return;
+
+                                        _confirmarEnvio(
+                                          context: context,
+                                          onConfirmar: () {
+                                            _enviarResposta(
+                                              aceitou: true,
+                                              idCotacao: idCotacao,
+                                              prazo: prazoEntregaSelecionado
+                                                      .value ??
+                                                  DateTime.now(),
+                                              condicao: condicaoController.text,
+                                              observacao:
+                                                  observacaoController.text,
+                                              carregando: carregando,
+                                            );
+                                          },
+                                        );
+                                      },
+                                icon: const Icon(Icons.send_rounded,
+                                    color: Colors.white),
+                                label: const Text(
+                                  "Responder",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green.shade600,
+                                  foregroundColor: Colors.white,
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14)),
+                                  elevation: 3,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: carregando.value
+                                    ? null
+                                    : () {
+                                        if (!validarFormulario()) return;
+                                        _enviarResposta(
+                                          aceitou: false,
+                                          idCotacao: idCotacao,
+                                          prazo:
+                                              prazoEntregaSelecionado.value ??
+                                                  DateTime.now(),
+                                          condicao: condicaoController.text,
+                                          observacao: observacaoController.text,
+                                          carregando: carregando,
+                                        );
+                                      },
+                                icon: Icon(Icons.cancel_outlined,
+                                    color: Colors.red.shade700),
+                                label: Text(
+                                  "Recusar",
+                                  style: TextStyle(
+                                    color: Colors.red.shade700,
+                                  ),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.red.shade700,
+                                  side: BorderSide(color: Colors.red.shade400),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14)),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ),
 
-                  if (carregando.value) ...[
-                    const SizedBox(height: 20),
-                    const Center(child: CircularProgressIndicator(strokeWidth: 2)),
-                  ],
+                        const SizedBox(height: 20),
 
-                  const SizedBox(height: 30),
-                ],
-              ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton.icon(
+                                onPressed: () => Get.back(),
+                                icon: const Icon(Icons.cancel_outlined,
+                                    color: Colors.grey),
+                                label: const Text(
+                                  "Sair",
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: Colors.grey.shade700,
+                                  side: BorderSide(color: Colors.grey.shade400),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        if (carregando.value) ...[
+                          const SizedBox(height: 20),
+                          const Center(
+                              child: CircularProgressIndicator(strokeWidth: 2)),
+                        ],
+
+                        const SizedBox(height: 30),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -709,7 +759,8 @@ Future<void> _confirmarEnvio({
         ),
         content: Text(
           "Deseja realmente enviar sua resposta para esta cotação?",
-          style: GoogleFonts.poppins(fontSize: 14.5, color: Colors.grey.shade700),
+          style:
+              GoogleFonts.poppins(fontSize: 14.5, color: Colors.grey.shade700),
         ),
         actionsPadding: const EdgeInsets.only(bottom: 8, right: 8),
         actions: [
@@ -792,11 +843,7 @@ Future<void> _enviarResposta({
   try {
     carregando.value = true;
 
-    final functions = Get.isRegistered<CotacaoFunctionsDatasource>()
-        ? Get.find<CotacaoFunctionsDatasource>()
-        : Get.put(CotacaoFunctionsDatasource(), permanent: true);
-
-    await functions.responderCotacao(
+    await Get.find<GerenciarCotacoes>().responderCotacao(
       idCotacao: idCotacao,
       aceitou: aceitou,
       prazoEntrega: prazo,
@@ -807,16 +854,17 @@ Future<void> _enviarResposta({
     Get.back();
     Get.snackbar(
       aceitou ? 'Resposta enviada' : 'Cotação recusada',
-      aceitou ? 'Sua proposta foi enviada ao organizador.' : 'Você recusou esta solicitação.',
+      aceitou
+          ? 'Sua proposta foi enviada ao organizador.'
+          : 'Você recusou esta solicitação.',
       backgroundColor: aceitou ? Colors.green.shade600 : Colors.red.shade400,
       colorText: Colors.white,
-      icon: Icon(aceitou ? Icons.check_circle_outline : Icons.cancel_rounded, color: Colors.white),
+      icon: Icon(aceitou ? Icons.check_circle_outline : Icons.cancel_rounded,
+          color: Colors.white),
       duration: const Duration(seconds: 3),
       snackPosition: SnackPosition.BOTTOM,
       margin: const EdgeInsets.all(12),
     );
-  } on CotacaoFunctionsException catch (e) {
-    Get.snackbar('Erro', e.message, backgroundColor: Colors.redAccent, colorText: Colors.white);
   } catch (e, s) {
     debugPrint('❌ Erro ao responder cotação: $e\n$s');
     Get.snackbar('Erro', 'Falha ao enviar a resposta. Tente novamente.',

@@ -212,7 +212,7 @@ class _BannerCapaCropPageState extends State<BannerCapaCropPage> {
     var bytes = await gerar(outW);
     // PNG pode passar de 1,5 MB; reduz resolução até caber.
     for (final largura in [1400, 1200, 1000, 800]) {
-      if (bytes == null || bytes.length <= 1_500_000) break;
+      if (bytes == null || bytes.length <= 1500000) break;
       bytes = await gerar(largura);
     }
     return bytes;
@@ -300,7 +300,8 @@ class _BannerCapaCropPageState extends State<BannerCapaCropPage> {
                                 setState(() {
                                   _scale = (_baseScale * details.scale)
                                       .clamp(1.0, 4.0);
-                                  _offset = _baseOffset + details.focalPointDelta;
+                                  _offset =
+                                      _baseOffset + details.focalPointDelta;
                                   _limitarOffset(crop, _scale);
                                 });
                               },
@@ -322,7 +323,8 @@ class _BannerCapaCropPageState extends State<BannerCapaCropPage> {
                                     child: DecoratedBox(
                                       decoration: BoxDecoration(
                                         border: Border.all(
-                                          color: Colors.white.withValues(alpha: 0.35),
+                                          color: Colors.white
+                                              .withValues(alpha: 0.35),
                                           width: 1.5,
                                         ),
                                         borderRadius: BorderRadius.circular(20),
@@ -378,7 +380,8 @@ class _BannerCapaCropPageState extends State<BannerCapaCropPage> {
                                   side: BorderSide(
                                     color: Colors.white.withValues(alpha: 0.35),
                                   ),
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
                                 ),
                                 onPressed: _exportando
                                     ? null
@@ -397,10 +400,12 @@ class _BannerCapaCropPageState extends State<BannerCapaCropPage> {
                               child: FilledButton(
                                 style: FilledButton.styleFrom(
                                   backgroundColor: primary,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
                                 ),
-                                onPressed:
-                                    _exportando || _imagem == null ? null : _confirmar,
+                                onPressed: _exportando || _imagem == null
+                                    ? null
+                                    : _confirmar,
                                 child: Text(
                                   'Usar neste banner',
                                   style: GoogleFonts.poppins(

@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/servico/servico_produto_controller.dart';
 import '../../data/datasources/remote/servico_produto_remote_datasource.dart';
 import '../../data/repositories_impl/servico_produto_repository_impl.dart';
 import '../../domain/repositories/servico_produto_repository.dart';
 import '../../domain/usecases/gerenciar_servicos_produto.dart';
+import '../../presentation/modules/catalogo/controllers/servico_produto_controller.dart';
 
 class ServicoProdutoBootstrap {
   ServicoProdutoBootstrap._();
@@ -12,7 +13,9 @@ class ServicoProdutoBootstrap {
   static void register() {
     if (!Get.isRegistered<ServicoProdutoRemoteDatasource>()) {
       Get.lazyPut<ServicoProdutoRemoteDatasource>(
-        () => ServicoProdutoRemoteDatasource(),
+        () => ServicoProdutoRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+        ),
         fenix: true,
       );
     }

@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../../controllers/app_controller.dart';
-import '../../../../controllers/fornecedor/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import './../../../../core/utils/no_sqflite_cache_manager.dart';
 import 'fornecedor_premium_layout.dart';
 
@@ -23,8 +23,10 @@ class HeaderSection extends StatelessWidget {
       final nome = fornecedor?.razaoSocial.trim().isNotEmpty == true
           ? fornecedor!.razaoSocial.trim()
           : 'Fornecedor Faça a Festa';
-      final contato = _contatoPrincipal(fornecedor?.email, fornecedor?.telefone);
-      final categoria = _categoriaPrincipal(fornecedor?.categorias) ?? 'Categoria não informada';
+      final contato =
+          _contatoPrincipal(fornecedor?.email, fornecedor?.telefone);
+      final categoria = _categoriaPrincipal(fornecedor?.categorias) ??
+          'Categoria não informada';
       final status = _statusText(ativo: ativo, apto: apto);
       final statusColor = _statusColor(ativo: ativo, apto: apto);
 
@@ -58,7 +60,8 @@ class HeaderSection extends StatelessWidget {
             final identity = Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                _LogoFornecedor(url: fornecedor?.bannerUrl, size: compact ? 54 : 64),
+                _LogoFornecedor(
+                    url: fornecedor?.bannerUrl, size: compact ? 54 : 64),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -143,7 +146,10 @@ class HeaderSection extends StatelessWidget {
               children: [
                 Expanded(flex: 5, child: identity),
                 const SizedBox(width: 14),
-                Expanded(flex: 4, child: Align(alignment: Alignment.centerRight, child: chips)),
+                Expanded(
+                    flex: 4,
+                    child:
+                        Align(alignment: Alignment.centerRight, child: chips)),
                 const SizedBox(width: 12),
                 auditoria,
                 const SizedBox(width: 8),
@@ -193,7 +199,8 @@ class HeaderSection extends StatelessWidget {
     return null;
   }
 
-  Future<void> _confirmarLogout(BuildContext context, AppController appController) async {
+  Future<void> _confirmarLogout(
+      BuildContext context, AppController appController) async {
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -215,10 +222,12 @@ class HeaderSection extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: FornecedorPremiumPalette.dark,
               elevation: 0,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10)),
             ),
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Sair', style: GoogleFonts.poppins(color: Colors.white)),
+            child:
+                Text('Sair', style: GoogleFonts.poppins(color: Colors.white)),
           ),
         ],
       ),

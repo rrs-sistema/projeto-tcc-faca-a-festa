@@ -5,11 +5,10 @@ import '../../services/functions/callable_https_client.dart';
 /// Callables do fluxo de cotação (região southamerica-east1).
 class CotacaoFunctionsDatasource {
   CotacaoFunctionsDatasource({
-    FirebaseFunctions? functions,
-    CallableHttpsClient? httpsClient,
-  })  : _functions = functions ??
-            FirebaseFunctions.instanceFor(region: 'southamerica-east1'),
-        _https = httpsClient ?? CallableHttpsClient();
+    required FirebaseFunctions functions,
+    required CallableHttpsClient httpsClient,
+  })  : _functions = functions,
+        _https = httpsClient;
 
   final FirebaseFunctions _functions;
   final CallableHttpsClient _https;

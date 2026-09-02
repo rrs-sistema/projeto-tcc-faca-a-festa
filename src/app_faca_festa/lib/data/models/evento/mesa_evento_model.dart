@@ -54,11 +54,15 @@ class MesaEventoModel {
     return MesaEventoModel(
       idMesa: map['id_mesa']?.toString() ?? '',
       idEvento: map['id_evento']?.toString() ?? '',
-      numeroMesa: map['numero_mesa'] is num ? (map['numero_mesa'] as num).toInt() : 0,
+      numeroMesa:
+          map['numero_mesa'] is num ? (map['numero_mesa'] as num).toInt() : 0,
       nomeMesa: map['nome_mesa']?.toString() ?? '',
-      capacidadeAssentos:
-          map['capacidade_assentos'] is num ? (map['capacidade_assentos'] as num).toInt() : 0,
-      totalOcupados: map['total_ocupados'] is num ? (map['total_ocupados'] as num).toInt() : 0,
+      capacidadeAssentos: map['capacidade_assentos'] is num
+          ? (map['capacidade_assentos'] as num).toInt()
+          : 0,
+      totalOcupados: map['total_ocupados'] is num
+          ? (map['total_ocupados'] as num).toInt()
+          : 0,
       idGrupo: map['id_grupo']?.toString(),
       nomeGrupo: map['nome_grupo']?.toString(),
       corHex: map['cor_hex']?.toString(),

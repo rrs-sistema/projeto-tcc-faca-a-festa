@@ -1,10 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/admin/orcamentos_admin_controller.dart';
 import '../../data/datasources/remote/orcamentos_admin_remote_datasource.dart';
 import '../../data/repositories_impl/orcamentos_admin_repository_impl.dart';
 import '../../domain/repositories/orcamentos_admin_repository.dart';
 import '../../domain/usecases/carregar_orcamentos_admin.dart';
+import '../../presentation/modules/admin/controllers/orcamentos_admin_controller.dart';
 
 class OrcamentosAdminBootstrap {
   OrcamentosAdminBootstrap._();
@@ -12,7 +13,9 @@ class OrcamentosAdminBootstrap {
   static void register() {
     if (!Get.isRegistered<OrcamentosAdminRemoteDatasource>()) {
       Get.lazyPut<OrcamentosAdminRemoteDatasource>(
-        () => OrcamentosAdminRemoteDatasource(),
+        () => OrcamentosAdminRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+        ),
         fenix: true,
       );
     }

@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
-import '../../controllers/app_controller.dart';
+import '../../presentation/modules/app/controllers/app_controller.dart';
 
 class PapelMiddleware extends GetMiddleware {
   PapelMiddleware({required this.tiposPermitidos}) : super(priority: 1);

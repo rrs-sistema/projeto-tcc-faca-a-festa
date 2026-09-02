@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:app_faca_festa/controllers/convidado/grupo_convidado_controller.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
 import 'package:app_faca_festa/domain/repositories/grupo_convidado_repository.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

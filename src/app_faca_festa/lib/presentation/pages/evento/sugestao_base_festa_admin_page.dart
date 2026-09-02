@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../../../controllers/sugestao_base_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/sugestao_base_festa_controller.dart';
 import '../../../data/models/evento/sugestao_base_festa_model.dart';
 import 'sugestao_base_festa_form_dialog.dart';
 
@@ -54,7 +54,8 @@ class SugestaoBaseFestaAdminPage extends GetView<SugestaoBaseFestaController> {
         top: false,
         child: LayoutBuilder(
           builder: (context, constraints) {
-            final maxWidth = constraints.maxWidth >= 1180 ? 1080.0 : constraints.maxWidth;
+            final maxWidth =
+                constraints.maxWidth >= 1180 ? 1080.0 : constraints.maxWidth;
 
             return Align(
               alignment: Alignment.topCenter,
@@ -64,7 +65,8 @@ class SugestaoBaseFestaAdminPage extends GetView<SugestaoBaseFestaController> {
                   onRefresh: controller.carregarSugestoes,
                   child: CustomScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     slivers: [
                       SliverPadding(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 10),
@@ -82,7 +84,8 @@ class SugestaoBaseFestaAdminPage extends GetView<SugestaoBaseFestaController> {
                         if (controller.loading.value) {
                           return const SliverFillRemaining(
                             hasScrollBody: false,
-                            child: Center(child: CircularProgressIndicator.adaptive()),
+                            child: Center(
+                                child: CircularProgressIndicator.adaptive()),
                           );
                         }
 
@@ -119,9 +122,12 @@ class SugestaoBaseFestaAdminPage extends GetView<SugestaoBaseFestaController> {
 
                                 return _SugestaoPremiumCard(
                                   sugestao: sugestao,
-                                  onEdit: () => _abrirFormulario(context, sugestao),
-                                  onToggle: () => controller.ativarDesativar(sugestao),
-                                  onDelete: () => _confirmarExclusao(context, sugestao),
+                                  onEdit: () =>
+                                      _abrirFormulario(context, sugestao),
+                                  onToggle: () =>
+                                      controller.ativarDesativar(sugestao),
+                                  onDelete: () =>
+                                      _confirmarExclusao(context, sugestao),
                                 );
                               },
                               childCount: sugestoes.length * 2 - 1,
@@ -140,7 +146,8 @@ class SugestaoBaseFestaAdminPage extends GetView<SugestaoBaseFestaController> {
     );
   }
 
-  Future<void> _abrirFormulario(BuildContext context, [SugestaoBaseFestaModel? sugestao]) async {
+  Future<void> _abrirFormulario(BuildContext context,
+      [SugestaoBaseFestaModel? sugestao]) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -208,7 +215,8 @@ class _PremiumHeader extends StatelessWidget {
 
     return Obx(() {
       final total = controller.listaSugestoes.length;
-      final ativos = controller.listaSugestoes.where((item) => item.ativo).length;
+      final ativos =
+          controller.listaSugestoes.where((item) => item.ativo).length;
       final inativos = total - ativos;
 
       return Container(
@@ -249,7 +257,8 @@ class _PremiumHeader extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface.withValues(alpha: 0.86),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: primary.withValues(alpha: 0.12)),
+                      border:
+                          Border.all(color: primary.withValues(alpha: 0.12)),
                     ),
                     child: Icon(
                       Icons.psychology_alt_rounded,
@@ -278,7 +287,8 @@ class _PremiumHeader extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
                             height: 1.35,
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.68),
                           ),
                         ),
                       ],
@@ -362,7 +372,8 @@ class _MetricTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.08)),
+        border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.08)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -494,18 +505,21 @@ class _PremiumFiltersCard extends StatelessWidget {
                       ),
               ),
               filled: true,
-              fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+              fillColor: theme.colorScheme.surfaceContainerHighest
+                  .withValues(alpha: 0.35),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
                 borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.12)),
+                borderSide: BorderSide(
+                    color: theme.dividerColor.withValues(alpha: 0.12)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.62)),
+                borderSide: BorderSide(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.62)),
               ),
               isDense: true,
             ),
@@ -514,8 +528,9 @@ class _PremiumFiltersCard extends StatelessWidget {
           LayoutBuilder(
             builder: (context, constraints) {
               final isWide = constraints.maxWidth >= 720;
-              final itemWidth =
-                  isWide ? (constraints.maxWidth - 24) / 4 : (constraints.maxWidth - 8) / 2;
+              final itemWidth = isWide
+                  ? (constraints.maxWidth - 24) / 4
+                  : (constraints.maxWidth - 8) / 2;
 
               return Obx(() {
                 final filtroModulo = controller.filtroModulo.value;
@@ -538,7 +553,8 @@ class _PremiumFiltersCard extends StatelessWidget {
                       label: 'Módulo',
                       value: filtroModulo,
                       values: modulos,
-                      onChanged: (value) => controller.filtroModulo.value = value,
+                      onChanged: (value) =>
+                          controller.filtroModulo.value = value,
                     ),
                     _FilterDropdown(
                       width: itemWidth,
@@ -552,14 +568,16 @@ class _PremiumFiltersCard extends StatelessWidget {
                       label: 'Evento',
                       value: filtroTipoEvento,
                       values: tiposEvento,
-                      onChanged: (value) => controller.filtroTipoEvento.value = value,
+                      onChanged: (value) =>
+                          controller.filtroTipoEvento.value = value,
                     ),
                     _FilterDropdown(
                       width: itemWidth,
                       label: 'Perfil',
                       value: filtroPerfilFesta,
                       values: perfisFesta,
-                      onChanged: (value) => controller.filtroPerfilFesta.value = value,
+                      onChanged: (value) =>
+                          controller.filtroPerfilFesta.value = value,
                     ),
                     _FilterDropdown(
                       width: itemWidth,
@@ -567,14 +585,16 @@ class _PremiumFiltersCard extends StatelessWidget {
                       value: filtroAtivo,
                       values: const ['todos', 'ativos', 'inativos'],
                       allowEmpty: false,
-                      onChanged: (value) => controller.filtroAtivo.value = value,
+                      onChanged: (value) =>
+                          controller.filtroAtivo.value = value,
                     ),
                     SizedBox(
                       width: itemWidth,
                       height: 52,
                       child: OutlinedButton.icon(
                         onPressed: controller.limparFiltros,
-                        icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
+                        icon:
+                            const Icon(Icons.filter_alt_off_rounded, size: 18),
                         label: const Text('Limpar'),
                       ),
                     ),
@@ -616,7 +636,8 @@ class _SugestaoPremiumCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: theme.dividerColor.withValues(alpha: 0.10)),
+            border:
+                Border.all(color: theme.dividerColor.withValues(alpha: 0.10)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.035),
@@ -663,7 +684,8 @@ class _SugestaoPremiumCard extends StatelessWidget {
                                       sugestao.titulo,
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.titleSmall?.copyWith(
+                                      style:
+                                          theme.textTheme.titleSmall?.copyWith(
                                         fontWeight: FontWeight.w900,
                                         letterSpacing: -0.1,
                                       ),
@@ -673,9 +695,11 @@ class _SugestaoPremiumCard extends StatelessWidget {
                                       sugestao.descricao,
                                       maxLines: 3,
                                       overflow: TextOverflow.ellipsis,
-                                      style: theme.textTheme.bodySmall?.copyWith(
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
                                         height: 1.35,
-                                        color: theme.colorScheme.onSurface.withValues(alpha: 0.68),
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.68),
                                       ),
                                     ),
                                   ],
@@ -734,7 +758,8 @@ class _SugestaoPremiumCard extends StatelessWidget {
                             const SizedBox(height: 12),
                             Container(
                               width: double.infinity,
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 9),
                               decoration: BoxDecoration(
                                 color: theme.colorScheme.surfaceContainerHighest
                                     .withValues(alpha: 0.26),
@@ -746,7 +771,8 @@ class _SugestaoPremiumCard extends StatelessWidget {
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.labelSmall?.copyWith(
                                   height: 1.25,
-                                  color: theme.colorScheme.onSurface.withValues(alpha: 0.66),
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.66),
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -806,14 +832,17 @@ class _CardMenu extends StatelessWidget {
         PopupMenuItem(
           value: 'status',
           child: _MenuItem(
-            icon: sugestao.ativo ? Icons.toggle_off_rounded : Icons.toggle_on_rounded,
+            icon: sugestao.ativo
+                ? Icons.toggle_off_rounded
+                : Icons.toggle_on_rounded,
             label: sugestao.ativo ? 'Desativar' : 'Ativar',
           ),
         ),
         const PopupMenuDivider(),
         const PopupMenuItem(
           value: 'excluir',
-          child: _MenuItem(icon: Icons.delete_outline_rounded, label: 'Excluir'),
+          child:
+              _MenuItem(icon: Icons.delete_outline_rounded, label: 'Excluir'),
         ),
       ],
     );
@@ -862,7 +891,8 @@ class _Badge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(999),
-        border: filled ? null : Border.all(color: color.withValues(alpha: 0.10)),
+        border:
+            filled ? null : Border.all(color: color.withValues(alpha: 0.10)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -909,7 +939,8 @@ class _FilterDropdown extends StatelessWidget {
       ...values.where((item) => item.trim().isNotEmpty),
     }.toList();
 
-    final selected = normalizedValues.contains(value) ? value : normalizedValues.first;
+    final selected =
+        normalizedValues.contains(value) ? value : normalizedValues.first;
 
     return SizedBox(
       width: width,
@@ -921,21 +952,25 @@ class _FilterDropdown extends StatelessWidget {
         decoration: InputDecoration(
           labelText: label,
           filled: true,
-          fillColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.28),
+          fillColor:
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.28),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: theme.dividerColor.withValues(alpha: 0.12)),
+            borderSide:
+                BorderSide(color: theme.dividerColor.withValues(alpha: 0.12)),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide(color: theme.colorScheme.primary.withValues(alpha: 0.55)),
+            borderSide: BorderSide(
+                color: theme.colorScheme.primary.withValues(alpha: 0.55)),
           ),
           isDense: true,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
         ),
         items: normalizedValues
             .map(
@@ -1022,11 +1057,13 @@ class _ErrorState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.error_outline_rounded, size: 58, color: theme.colorScheme.error),
+            Icon(Icons.error_outline_rounded,
+                size: 58, color: theme.colorScheme.error),
             const SizedBox(height: 14),
             Text(
               'Erro ao carregar sugestões',
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+              style: theme.textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w900),
             ),
             const SizedBox(height: 8),
             Text(

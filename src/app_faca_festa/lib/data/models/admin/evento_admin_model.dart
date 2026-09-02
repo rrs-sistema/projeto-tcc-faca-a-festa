@@ -19,7 +19,8 @@ class EventoAdminModel {
     required this.aprovado,
   });
 
-  factory EventoAdminModel.fromMap(Map<String, dynamic> map, String id, String tipoNome) {
+  factory EventoAdminModel.fromMap(
+      Map<String, dynamic> map, String id, String tipoNome) {
     return EventoAdminModel(
       id: id,
       nome: map['nome'] ?? 'Sem nome',

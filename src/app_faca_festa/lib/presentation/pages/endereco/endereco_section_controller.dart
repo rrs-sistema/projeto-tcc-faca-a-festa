@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -60,7 +59,7 @@ class EnderecoSectionController {
       'nome_cidade': nomeCidadeController.text.trim(),
       'uf': ufController.text.trim().toUpperCase(),
       'principal': principal ?? false,
-      'data_cadastro': FieldValue.serverTimestamp(),
+      'data_cadastro': DateTime.now(),
     };
   }
 

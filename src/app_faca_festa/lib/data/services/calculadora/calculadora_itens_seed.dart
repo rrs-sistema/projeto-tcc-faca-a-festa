@@ -1117,8 +1117,8 @@ class CalculadoraItensSeedService {
   final FirebaseFirestore _firestore;
 
   CalculadoraItensSeedService({
-    FirebaseFirestore? firestore,
-  }) : _firestore = firestore ?? FirebaseFirestore.instance;
+    required FirebaseFirestore firestore,
+  }) : _firestore = firestore;
 
   Future<void> popularSeeds({
     bool sobrescrever = false,

@@ -32,7 +32,9 @@ extension UnidadeEstimativaExtension on UnidadeEstimativa {
     final normalized = value?.trim().toLowerCase() ?? '';
 
     return UnidadeEstimativa.values.firstWhere(
-      (item) => item.name.toLowerCase() == normalized || item.label.toLowerCase() == normalized,
+      (item) =>
+          item.name.toLowerCase() == normalized ||
+          item.label.toLowerCase() == normalized,
       orElse: () => UnidadeEstimativa.unidade,
     );
   }
@@ -146,8 +148,8 @@ class ItemEstimativaFinanceiraModel {
       tipoItem: tipoItem ?? this.tipoItem,
       publicoAlvo: publicoAlvo ?? this.publicoAlvo,
       unidade: unidade ?? this.unidade,
-      quantidadePorConvidadoEquivalente:
-          quantidadePorConvidadoEquivalente ?? this.quantidadePorConvidadoEquivalente,
+      quantidadePorConvidadoEquivalente: quantidadePorConvidadoEquivalente ??
+          this.quantidadePorConvidadoEquivalente,
       valorUnitarioMedio: valorUnitarioMedio ?? this.valorUnitarioMedio,
       selecionado: selecionado ?? this.selecionado,
     );
@@ -173,24 +175,32 @@ class ItemEstimativaFinanceiraModel {
       id: map['id']?.toString() ?? '',
       categoria: map['categoria']?.toString() ?? 'Recepção',
       nome: map['nome']?.toString() ?? '',
-      tipoItem: map['tipo_item']?.toString() ?? map['tipoItem']?.toString() ?? 'comida',
-      publicoAlvo: map['publico_alvo']?.toString() ?? map['publicoAlvo']?.toString() ?? 'todos',
-      unidade: UnidadeEstimativaExtension.fromString(map['unidade']?.toString()),
+      tipoItem: map['tipo_item']?.toString() ??
+          map['tipoItem']?.toString() ??
+          'comida',
+      publicoAlvo: map['publico_alvo']?.toString() ??
+          map['publicoAlvo']?.toString() ??
+          'todos',
+      unidade:
+          UnidadeEstimativaExtension.fromString(map['unidade']?.toString()),
       quantidadePorConvidadoEquivalente: _asDouble(
-        map['quantidade_por_convidado_equivalente'] ?? map['quantidadePorConvidadoEquivalente'],
+        map['quantidade_por_convidado_equivalente'] ??
+            map['quantidadePorConvidadoEquivalente'],
         0,
       ),
       valorUnitarioMedio: _asDouble(
         map['valor_unitario_medio'] ?? map['valorUnitarioMedio'],
         0,
       ),
-      selecionado: map['selecionado'] is bool ? map['selecionado'] as bool : true,
+      selecionado:
+          map['selecionado'] is bool ? map['selecionado'] as bool : true,
     );
   }
 
   static double _asDouble(dynamic value, double fallback) {
     if (value is num) return value.toDouble();
-    return double.tryParse(value?.toString().replaceAll(',', '.') ?? '') ?? fallback;
+    return double.tryParse(value?.toString().replaceAll(',', '.') ?? '') ??
+        fallback;
   }
 
   static double _fatorDuracao(int duracaoHoras) {
