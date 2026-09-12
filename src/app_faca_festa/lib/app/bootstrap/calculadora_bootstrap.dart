@@ -2,7 +2,10 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/data/datasources/remote/calculadora_festa_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/calculadora_itens_base_remote_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/fornecedor_migracao_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/sugestao_base_festa_remote_datasource.dart';
 import 'package:app_faca_festa/data/repositories_impl/calculadora/calculadora_itens_base_repository_impl.dart';
 import 'package:app_faca_festa/data/repositories_impl/calculadora_festa_repository_impl.dart';
 import 'package:app_faca_festa/data/repositories_impl/fornecedor_migracao_repository_impl.dart';
@@ -45,19 +48,35 @@ abstract final class CalculadoraBootstrap {
       );
     }
 
-    if (!Get.isRegistered<CalculadoraFestaRepository>()) {
-      Get.lazyPut<CalculadoraFestaRepository>(
-        () => CalculadoraFestaRepositoryImpl(
+    if (!Get.isRegistered<CalculadoraFestaRemoteDatasource>()) {
+      Get.lazyPut<CalculadoraFestaRemoteDatasource>(
+        () => CalculadoraFestaRemoteDatasource(
           firestore: Get.find<FirebaseFirestore>(),
         ),
         fenix: true,
       );
     }
+    if (!Get.isRegistered<CalculadoraFestaRepository>()) {
+      Get.lazyPut<CalculadoraFestaRepository>(
+        () => CalculadoraFestaRepositoryImpl(
+          Get.find<CalculadoraFestaRemoteDatasource>(),
+        ),
+        fenix: true,
+      );
+    }
 
+    if (!Get.isRegistered<CalculadoraItensBaseRemoteDatasource>()) {
+      Get.lazyPut<CalculadoraItensBaseRemoteDatasource>(
+        () => CalculadoraItensBaseRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+        ),
+        fenix: true,
+      );
+    }
     if (!Get.isRegistered<CalculadoraItensBaseRepositoryContract>()) {
       Get.lazyPut<CalculadoraItensBaseRepositoryContract>(
         () => CalculadoraItensBaseRepositoryImpl(
-          firestore: Get.find<FirebaseFirestore>(),
+          Get.find<CalculadoraItensBaseRemoteDatasource>(),
         ),
         fenix: true,
       );
@@ -75,10 +94,18 @@ abstract final class CalculadoraBootstrap {
       );
     }
 
+    if (!Get.isRegistered<SugestaoBaseFestaRemoteDatasource>()) {
+      Get.lazyPut<SugestaoBaseFestaRemoteDatasource>(
+        () => SugestaoBaseFestaRemoteDatasource(
+          firestore: Get.find<FirebaseFirestore>(),
+        ),
+        fenix: true,
+      );
+    }
     if (!Get.isRegistered<SugestaoBaseFestaRepositoryContract>()) {
       Get.lazyPut<SugestaoBaseFestaRepositoryContract>(
         () => SugestaoBaseFestaRepositoryImpl(
-          firestore: Get.find<FirebaseFirestore>(),
+          Get.find<SugestaoBaseFestaRemoteDatasource>(),
         ),
         fenix: true,
       );

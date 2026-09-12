@@ -6,7 +6,7 @@ import 'dart:async';
 
 import 'package:app_faca_festa/core/utils/convite_link.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
-import 'package:app_faca_festa/domain/entities/convidado.dart';
+import 'package:app_faca_festa/data/models/convidado/convidado_model.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/data/models/evento/evento_model.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
@@ -518,7 +518,7 @@ class AppController extends GetxController {
       }
 
       final resultado = await _abrirConvitePorTokenService.abrir(token);
-      final convidado = Convidado.fromMap(resultado.convidado);
+      final convidado = ConvidadoModel.fromMap(resultado.convidado);
       final evento = EventoModel.fromMap(resultado.evento);
       if (convidado.idConvidado.isEmpty || evento.idEvento.isEmpty) {
         throw const AbrirConvitePorTokenException('not-found');

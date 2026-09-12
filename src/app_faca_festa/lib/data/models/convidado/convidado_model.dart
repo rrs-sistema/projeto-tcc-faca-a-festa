@@ -106,8 +106,59 @@ class ConvidadoModel extends Convidado {
   }
 
   factory ConvidadoModel.fromMap(Map<String, dynamic> map) {
+    DateTime? parseDate(dynamic value) {
+      if (value is DateTime) return value;
+      if (value is Timestamp) return value.toDate();
+      try {
+        final converted = value?.toDate();
+        if (converted is DateTime) return converted;
+      } catch (_) {
+        // Valor não é um Timestamp-like; tenta parse por texto abaixo.
+      }
+      if (value is String) return DateTime.tryParse(value);
+      return null;
+    }
+
+    final tipo = map['tipo_convidado'] != null
+        ? TipoConvidado.fromString(map['tipo_convidado'])
+        : TipoConvidado.fromLegacyAdulto(map['adulto']);
+
     try {
-      return ConvidadoModel.fromEntity(Convidado.fromMap(map));
+      return ConvidadoModel(
+        idConvidado: map['id_convidado']?.toString() ?? '',
+        idEvento:
+            (map['id_evento'] ?? map['id_evento_evento'] ?? map['evento_id'])
+                    ?.toString() ??
+                '',
+        nome: map['nome']?.toString() ?? '',
+        contato: map['contato']?.toString() ?? '',
+        email: _primeiroTexto(map, const ['email', 'email_usuario']),
+        emailUsuario: _primeiroTexto(map, const ['email_usuario']),
+        emailNormalizado: _primeiroTexto(map, const ['email_normalizado']),
+        status: StatusConvidado.fromString(map['status']),
+        tipoConvidado: tipo,
+        idGrupo: map['id_grupo']?.toString(),
+        nomeGrupo: map['nome_grupo']?.toString(),
+        idMesa: map['id_mesa']?.toString(),
+        numeroMesa: map['numero_mesa'] is num
+            ? (map['numero_mesa'] as num).toInt()
+            : null,
+        ocupaAssento: map['ocupa_assento'] ?? tipo != TipoConvidado.bebe,
+        cuidadoEspecial: map['cuidado_especial'] ?? false,
+        dataEnvio: parseDate(map['data_envio']),
+        dataResposta: parseDate(map['data_resposta']),
+        dataCadastro: parseDate(map['data_cadastro']) ?? DateTime.now(),
+        dataAtualizacao: parseDate(map['data_atualizacao']) ?? DateTime.now(),
+        conviteToken: _primeiroTexto(map, const [
+              'convite_token',
+              'token_convite',
+              'token',
+              'id_convidado',
+            ]) ??
+            '',
+        idUsuario: _primeiroTexto(map, const ['id_usuario', 'idUsuario']),
+        conviteStatus: _primeiroTexto(map, const ['convite_status']),
+      );
     } catch (e) {
       if (kDebugMode) {
         print('Erro ao listar os grupos fromMap: ${e.toString()}');
@@ -174,4 +225,14 @@ class ConvidadoModel extends Convidado {
       emailNormalizado: emailNormalizado ?? this.emailNormalizado,
     );
   }
+}
+
+String? _primeiroTexto(Map<String, dynamic> map, List<String> keys) {
+  for (final key in keys) {
+    final value = map[key];
+    if (value == null) continue;
+    final text = value.toString().trim();
+    if (text.isNotEmpty) return text;
+  }
+  return null;
 }
