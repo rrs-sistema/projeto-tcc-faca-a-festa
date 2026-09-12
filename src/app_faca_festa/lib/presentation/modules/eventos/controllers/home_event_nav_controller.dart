@@ -1,16 +1,9 @@
 import 'package:get/get.dart';
 
-import 'package:flutter/widgets.dart';
-
 /// Navegação da home do organizador (abas Home / Fornecedores / Inspiração).
 class HomeEventNavController extends GetxController {
-  HomeEventNavController({
-    required Widget Function() fornecedoresPageBuilder,
-  }) : _fornecedoresPageBuilder = fornecedoresPageBuilder;
-
   static const int abaFornecedores = 1;
 
-  final Widget Function() _fornecedoresPageBuilder;
   void Function(int index)? _onMudarAba;
 
   void vincular(void Function(int index) onMudarAba) {
@@ -31,11 +24,7 @@ class HomeEventNavController extends GetxController {
       return;
     }
 
-    Get.to(
-      _fornecedoresPageBuilder,
-      routeName: '/fornecedores',
-      preventDuplicates: false,
-    );
+    Get.toNamed('/fornecedores', preventDuplicates: false);
   }
 
   void _voltarParaHomeEventoSeNecessario() {

@@ -203,9 +203,9 @@ class SolicitacaoFornecedorCard extends StatelessWidget {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: solicitacao.servicos.map<Widget>((s) {
-                          final nome = s['nome'] ?? '';
-                          final qtd = s['quantidade'] ?? 0;
-                          final valor = s['valor_estimado'] ?? 0.0;
+                          final nome = s.nome;
+                          final qtd = s.quantidade;
+                          final valor = s.valorEstimado;
                           return Padding(
                             padding: const EdgeInsets.only(bottom: 4),
                             child: Row(

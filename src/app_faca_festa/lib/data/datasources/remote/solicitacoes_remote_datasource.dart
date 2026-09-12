@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/cotacao/cotacao_model.dart';
+import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
 import 'package:app_faca_festa/domain/repositories/solicitacoes_repository.dart';
 
 class SolicitacoesRemoteDatasource {
@@ -32,12 +33,11 @@ class SolicitacoesRemoteDatasource {
             await fornecedorDoc.reference.collection('servicos').get();
         final servicos = servicosSnap.docs.map((doc) {
           final data = doc.data();
-          return {
-            'nome': data['nome_produto_servico'] ?? '',
-            'quantidade': data['quantidade'] ?? 0,
-            'valor_estimado':
-                (data['valor_estimado'] as num?)?.toDouble() ?? 0.0,
-          };
+          return CotacaoServicoResumo(
+            nome: (data['nome_produto_servico'] ?? '').toString(),
+            quantidade: data['quantidade'] ?? 0,
+            valorEstimado: (data['valor_estimado'] as num?)?.toDouble() ?? 0.0,
+          );
         }).toList();
 
         resultado.add(

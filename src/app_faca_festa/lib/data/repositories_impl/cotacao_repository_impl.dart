@@ -103,7 +103,7 @@ class CotacaoRepositoryImpl implements CotacaoRepository {
     required double valorEstimadoTotal,
     required DateTime dataLimiteResposta,
     required List<String> fornecedoresSelecionados,
-    required List<Map<String, dynamic>> servicos,
+    required List<ItemServicoCotacao> servicos,
   }) {
     return remote.criarCotacao(
       idEvento: idEvento,

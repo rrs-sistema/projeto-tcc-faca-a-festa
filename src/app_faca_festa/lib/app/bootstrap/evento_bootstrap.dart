@@ -9,16 +9,12 @@ import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
 import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 import 'package:app_faca_festa/presentation/coordinators/evento_session_coordinator.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
-import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_festa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
-import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
-import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
-import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_recomendacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
@@ -28,7 +24,6 @@ import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/home_event_nav_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
-import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_localizacao_screen.dart';
 
 /// Global composition root for the current-event session.
 abstract final class EventoBootstrap {
@@ -121,20 +116,7 @@ abstract final class EventoBootstrap {
 
     if (!Get.isRegistered<HomeEventNavController>()) {
       Get.put(
-        HomeEventNavController(
-          fornecedoresPageBuilder: () => FornecedorLocalizacaoScreen(
-            showLeading: true,
-            appController: Get.find<AppController>(),
-            themeController: Get.find<EventThemeController>(),
-            controllerLocalizacao: Get.find<FornecedorLocalizacaoController>(),
-            eventoController: Get.find<EventoController>(),
-            recomendacaoController:
-                Get.find<FornecedorRecomendacaoController>(),
-            fornecedorCadastroController: Get.find<FornecedorController>(),
-            avaliacaoController: Get.find<AvaliacaoServicoController>(),
-            cotacoes: Get.find<CotacaoController>().gerenciarCotacoes,
-          ),
-        ),
+        HomeEventNavController(),
         permanent: true,
       );
     }

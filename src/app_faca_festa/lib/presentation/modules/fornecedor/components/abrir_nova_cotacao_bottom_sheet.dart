@@ -2,6 +2,7 @@
 
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/button/botao_cancelar.dart';
@@ -148,15 +149,17 @@ class _CotacaoNovaBottomSheetState extends State<CotacaoNovaBottomSheet> {
     EasyLoading.show(status: 'Enviando cotações...');
 
     try {
-      final servicosPayload = <Map<String, dynamic>>[];
+      final servicosPayload = <ItemServicoCotacao>[];
       for (var i = 0; i < widget.servicosSelecionados.length; i++) {
         final s = widget.servicosSelecionados[i];
         final qtd = int.tryParse(qtdControllers[i].text) ?? s.quantidade;
-        servicosPayload.add({
-          'idFornecedor': s.idFornecedor,
-          'idProdutoServico': s.idProdutoServico,
-          'quantidade': qtd < 1 ? 1 : qtd,
-        });
+        servicosPayload.add(
+          ItemServicoCotacao(
+            idFornecedor: s.idFornecedor,
+            idProdutoServico: s.idProdutoServico,
+            quantidade: qtd < 1 ? 1 : qtd,
+          ),
+        );
       }
 
       await widget.cotacoes.criarCotacao(

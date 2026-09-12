@@ -1,9 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/cotacao.dart';
+import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
 
 export 'package:app_faca_festa/domain/entities/cotacao.dart'
-    show Cotacao, StatusCotacao;
+    show Cotacao, StatusCotacao, ItemServicoCotacao;
 
 class CotacaoModel extends Cotacao {
   CotacaoModel({
@@ -61,8 +62,32 @@ class CotacaoModel extends Cotacao {
           : DateTime.now(),
       status: StatusCotacao.fromString(map['status']),
       fornecedores: [map['id_fornecedor'] ?? ''],
-      servicos: [],
+      servicos: parseServicos(map['servicos']),
     );
+  }
+
+  static List<CotacaoServicoResumo> parseServicos(dynamic raw) {
+    if (raw is! List) return const [];
+
+    return raw.map((item) {
+      if (item is CotacaoServicoResumo) return item;
+      if (item is! Map) {
+        return const CotacaoServicoResumo(
+          nome: '',
+          quantidade: 0,
+          valorEstimado: 0,
+        );
+      }
+
+      final map = Map<String, dynamic>.from(item);
+      return CotacaoServicoResumo(
+        nome: (map['nome'] ?? map['nome_produto_servico'] ?? '').toString(),
+        quantidade: (map['quantidade'] as num?) ?? 0,
+        valorEstimado: (map['valor_estimado'] as num?) ??
+            (map['valorEstimado'] as num?) ??
+            0,
+      );
+    }).toList();
   }
 
   Map<String, dynamic> toMap() => {
@@ -76,6 +101,14 @@ class CotacaoModel extends Cotacao {
         'data_envio': Timestamp.fromDate(dataCadastro),
         'status': status.firestoreValue,
         'fornecedores': fornecedores,
-        'servicos': servicos,
+        'servicos': servicos
+            .map(
+              (s) => {
+                'nome': s.nome,
+                'quantidade': s.quantidade,
+                'valor_estimado': s.valorEstimado,
+              },
+            )
+            .toList(),
       };
 }

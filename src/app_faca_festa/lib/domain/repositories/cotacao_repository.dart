@@ -50,7 +50,7 @@ abstract interface class CotacaoRepository {
     required double valorEstimadoTotal,
     required DateTime dataLimiteResposta,
     required List<String> fornecedoresSelecionados,
-    required List<Map<String, dynamic>> servicos,
+    required List<ItemServicoCotacao> servicos,
   });
 
   Future<void> responderCotacao({

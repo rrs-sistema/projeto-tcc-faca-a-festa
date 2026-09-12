@@ -52,7 +52,7 @@ abstract interface class CotacaoRemoteDatasource {
     required double valorEstimadoTotal,
     required DateTime dataLimiteResposta,
     required List<String> fornecedoresSelecionados,
-    required List<Map<String, dynamic>> servicos,
+    required List<ItemServicoCotacao> servicos,
   });
 
   Future<void> responderCotacao({
@@ -296,7 +296,7 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
     required double valorEstimadoTotal,
     required DateTime dataLimiteResposta,
     required List<String> fornecedoresSelecionados,
-    required List<Map<String, dynamic>> servicos,
+    required List<ItemServicoCotacao> servicos,
   }) {
     return _callable.criarCotacao(
       idEvento: idEvento,
@@ -305,7 +305,15 @@ class FirebaseCotacaoRemoteDatasource implements CotacaoRemoteDatasource {
       valorEstimadoTotal: valorEstimadoTotal,
       dataLimiteResposta: dataLimiteResposta,
       fornecedoresSelecionados: fornecedoresSelecionados,
-      servicos: servicos,
+      servicos: servicos
+          .map(
+            (s) => {
+              'idFornecedor': s.idFornecedor,
+              'idProdutoServico': s.idProdutoServico,
+              'quantidade': s.quantidade,
+            },
+          )
+          .toList(),
     );
   }
 

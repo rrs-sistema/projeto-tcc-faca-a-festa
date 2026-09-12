@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/core/services/calculadora_festa_service.dart';
+import 'package:app_faca_festa/domain/services/calculadora_festa_service.dart';
 import 'package:app_faca_festa/domain/entities/analise_calculadora_ia.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';

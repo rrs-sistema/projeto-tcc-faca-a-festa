@@ -1,3 +1,5 @@
+import 'cotacao_chat.dart';
+
 enum StatusCotacao {
   pendente,
   respondida,
@@ -66,6 +68,18 @@ enum StatusCotacao {
   }
 }
 
+class ItemServicoCotacao {
+  const ItemServicoCotacao({
+    required this.idFornecedor,
+    required this.idProdutoServico,
+    required this.quantidade,
+  });
+
+  final String idFornecedor;
+  final String idProdutoServico;
+  final int quantidade;
+}
+
 class Cotacao {
   const Cotacao({
     required this.id,
@@ -92,7 +106,7 @@ class Cotacao {
   final DateTime dataCadastro;
   final StatusCotacao status;
   final List<String> fornecedores;
-  final List<Map<String, dynamic>> servicos;
+  final List<CotacaoServicoResumo> servicos;
   final double? valorEstimadoTotal;
 
   Cotacao copyWith({
