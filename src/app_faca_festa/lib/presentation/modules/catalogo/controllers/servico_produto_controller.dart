@@ -2,21 +2,33 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import 'package:app_faca_festa/data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import 'package:app_faca_festa/data/models/model.dart';
-import 'package:app_faca_festa/data/services/auditoria/auditoria_app.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
+import 'package:app_faca_festa/domain/entities/servico_produto.dart';
+import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_servicos_produto.dart';
 
 class ServicoProdutoController extends GetxController {
-  ServicoProdutoController({required GerenciarServicosProduto servicos})
-      : _servicos = servicos;
+  ServicoProdutoController({
+    required GerenciarServicosProduto servicos,
+    AuditoriaRegistrar? auditoria,
+    AuditoriaRegistrar? Function()? auditoriaResolver,
+  })  : _servicos = servicos,
+        _auditoria = auditoria,
+        _auditoriaResolver = auditoriaResolver;
 
   final GerenciarServicosProduto _servicos;
+  final AuditoriaRegistrar? _auditoria;
+  final AuditoriaRegistrar? Function()? _auditoriaResolver;
+  AuditoriaRegistrar get _registradorAuditoria =>
+      _auditoria ??
+      _auditoriaResolver?.call() ??
+      const AuditoriaRegistrarVazio();
 
-  final RxList<ServicoProdutoModel> servicos = <ServicoProdutoModel>[].obs;
-  final RxList<FornecedorServicoDetalhadoDto> servicosFornecedor =
-      <FornecedorServicoDetalhadoDto>[].obs;
+  final RxList<ServicoProduto> servicos = <ServicoProduto>[].obs;
+  final RxList<FornecedorServicoDetalhado> servicosFornecedor =
+      <FornecedorServicoDetalhado>[].obs;
   final RxString erro = ''.obs;
 
   StreamSubscription<void>? _servicosSubscription;
@@ -30,8 +42,8 @@ class ServicoProdutoController extends GetxController {
 
   final RxBool carregando = false.obs;
 
-  final RxMap<String, List<ServicoProdutoModel>> servicosPorSubcategoria =
-      <String, List<ServicoProdutoModel>>{}.obs;
+  final RxMap<String, List<ServicoProduto>> servicosPorSubcategoria =
+      <String, List<ServicoProduto>>{}.obs;
 
   @override
   void onClose() {
@@ -80,15 +92,16 @@ class ServicoProdutoController extends GetxController {
     }
   }
 
-  Future<List<ServicoProdutoModel>> carregarServicosPorSubcategoria(
+  Future<List<ServicoProduto>> carregarServicosPorSubcategoria(
       String idSubcategoria) async {
     try {
       carregando.value = true;
       debugPrint(
           '🔹 [SERVIÇOS] Buscando serviços para subcategoria: $idSubcategoria');
 
-      final lista =
+      final entidades =
           await _servicos.listarServicosAtivosPorSubcategoria(idSubcategoria);
+      final lista = entidades.toList();
 
       servicosPorSubcategoria[idSubcategoria] = lista;
       servicos.assignAll(lista);
@@ -121,7 +134,8 @@ class ServicoProdutoController extends GetxController {
   Future<void> carregarServicos() async {
     try {
       carregando.value = true;
-      servicos.assignAll(await _servicos.listarServicos());
+      final entidades = await _servicos.listarServicos();
+      servicos.assignAll(entidades);
     } catch (e) {
       Get.snackbar('Erro', 'Falha ao carregar serviços: $e');
     } finally {
@@ -139,14 +153,14 @@ class ServicoProdutoController extends GetxController {
     debugPrint('🛑 Listener de serviços ADMIN encerrado.');
   }
 
-  ServicoProdutoModel? buscarPorId(String id) {
+  ServicoProduto? buscarPorId(String id) {
     return servicos.firstWhereOrNull((s) => s.id == id);
   }
 
   Future<void> excluirServico(String id) async {
     final atual = buscarPorId(id);
     await _servicos.excluirServico(id);
-    AuditoriaApp.registrar(
+    _registradorAuditoria.registrar(
       acao: 'SERVICO_CATALOGO_EXCLUIDO',
       resumo: 'Serviço removido do catálogo da plataforma.',
       entidadeTipo: 'servico_produto',
@@ -156,9 +170,9 @@ class ServicoProdutoController extends GetxController {
     await carregarServicos();
   }
 
-  Future<void> salvarServico(ServicoProdutoModel model) async {
+  Future<void> salvarServico(ServicoProduto model) async {
     await _servicos.salvarServico(model);
-    AuditoriaApp.registrar(
+    _registradorAuditoria.registrar(
       acao: 'SERVICO_CATALOGO_SALVO',
       resumo: 'Serviço do catálogo salvo.',
       entidadeTipo: 'servico_produto',
@@ -251,7 +265,7 @@ class ServicoProdutoController extends GetxController {
   /// ============================================================
   /// 🔗 Vincular serviço ao fornecedor — VERSÃO CORRIGIDA
   /// ============================================================
-  Future<void> vincularServico(FornecedorProdutoServicoModel model) async {
+  Future<void> vincularServico(FornecedorProdutoServico model) async {
     try {
       carregando.value = true;
 
@@ -276,7 +290,7 @@ class ServicoProdutoController extends GetxController {
       await _servicos.salvarVinculo(model);
 
       debugPrint('🟢 Vínculo salvo com sucesso');
-      AuditoriaApp.registrar(
+      _registradorAuditoria.registrar(
         acao: 'SERVICO_FORNECEDOR_SALVO',
         resumo: 'Serviço do fornecedor publicado ou atualizado.',
         entidadeTipo: 'fornecedor_servico',
@@ -331,7 +345,7 @@ class ServicoProdutoController extends GetxController {
 
   Future<void> excluirVinculo(String id, String idFornecedor) async {
     await _servicos.excluirVinculo(id);
-    AuditoriaApp.registrar(
+    _registradorAuditoria.registrar(
       acao: 'SERVICO_FORNECEDOR_EXCLUIDO',
       resumo: 'Serviço removido do catálogo do fornecedor.',
       entidadeTipo: 'fornecedor_servico',

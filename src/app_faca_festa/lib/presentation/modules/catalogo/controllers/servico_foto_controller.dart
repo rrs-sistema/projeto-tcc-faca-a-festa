@@ -2,9 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:get/get.dart';
-import 'dart:io';
 
-import 'package:app_faca_festa/data/models/servico_produto/servico_foto_model.dart';
+import 'package:app_faca_festa/domain/entities/servico_foto.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_servico_fotos.dart';
 
 class ServicoFotoController extends GetxController {
@@ -15,7 +14,7 @@ class ServicoFotoController extends GetxController {
         picker = picker ?? ImagePicker();
 
   final GerenciarServicoFotos _fotosServico;
-  final fotos = <ServicoFotoModel>[].obs;
+  final fotos = <ServicoFoto>[].obs;
   final ImagePicker picker;
 
   // ============================================================
@@ -39,24 +38,16 @@ class ServicoFotoController extends GetxController {
     required String idProdutoServico,
   }) async {
     try {
-      if (kIsWeb) {
-        _mostrarSnackbar(
-          'Não suportado',
-          'Upload de imagem não disponível no navegador.',
-        );
-        return;
-      }
-
       final picked = await picker.pickImage(source: ImageSource.gallery);
       if (picked == null) return;
 
-      final file = File(picked.path);
+      final bytes = await picked.readAsBytes();
       final nomeArquivo = picked.name;
 
       final foto = await _fotosServico.adicionarFotoArquivo(
         idFornecedor: idFornecedor,
         idProdutoServico: idProdutoServico,
-        arquivo: file,
+        bytes: bytes,
         nomeArquivo: nomeArquivo,
       );
 
@@ -76,7 +67,7 @@ class ServicoFotoController extends GetxController {
     }
   }
 
-  Future<void> adicionarFotoDireto(ServicoFotoModel foto) async {
+  Future<void> adicionarFotoDireto(ServicoFoto foto) async {
     await _fotosServico.adicionarFotoDireto(foto);
     fotos.add(foto);
     _mostrarSnackbar(
@@ -90,7 +81,7 @@ class ServicoFotoController extends GetxController {
   // ============================================================
   // 🔹 Remover foto (Storage + Firestore)
   // ============================================================
-  Future<void> removerFoto(ServicoFotoModel foto) async {
+  Future<void> removerFoto(ServicoFoto foto) async {
     try {
       await _fotosServico.removerFoto(foto);
 

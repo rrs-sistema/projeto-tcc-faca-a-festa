@@ -1,6 +1,9 @@
-import '../../domain/repositories/tema_festa_repository.dart';
+import 'package:app_faca_festa/domain/entities/tema_festa.dart';
+import 'package:app_faca_festa/domain/exceptions/tema_festa_exception.dart';
+import 'package:app_faca_festa/domain/repositories/tema_festa_repository.dart';
 import '../datasources/remote/tema_festa_remote_datasource.dart';
-import '../models/evento/tema_festa_model.dart';
+import '../models/evento/tema_festa_model.dart' hide TemaFesta;
+import '../services/functions/callable_https_client.dart';
 
 class TemaFestaRepositoryImpl implements TemaFestaRepository {
   TemaFestaRepositoryImpl(this.remote);
@@ -8,18 +11,18 @@ class TemaFestaRepositoryImpl implements TemaFestaRepository {
   final TemaFestaRemoteDatasource remote;
 
   @override
-  Future<List<TemaFestaModel>> carregar() {
+  Future<List<TemaFesta>> carregar() {
     return remote.carregar();
   }
 
   @override
-  Future<TemaFestaModel?> buscarPorId(String idTema) {
+  Future<TemaFesta?> buscarPorId(String idTema) {
     return remote.buscarPorId(idTema);
   }
 
   @override
-  Future<void> salvar(TemaFestaModel tema) {
-    return remote.salvar(tema);
+  Future<void> salvar(TemaFesta tema) {
+    return remote.salvar(TemaFestaModel.fromEntity(tema));
   }
 
   @override
@@ -32,22 +35,34 @@ class TemaFestaRepositoryImpl implements TemaFestaRepository {
     required String idTema,
     required List<int> bytes,
   }) {
-    return remote.enviarCapa(idTema: idTema, bytes: bytes);
+    return _traduzirErroCallable(
+      () => remote.enviarCapa(idTema: idTema, bytes: bytes),
+    );
   }
 
   @override
   Future<void> removerCapaStorage({required String idTema}) {
-    return remote.removerCapaStorage(idTema: idTema);
+    return _traduzirErroCallable(
+      () => remote.removerCapaStorage(idTema: idTema),
+    );
   }
 
   @override
   Future<void> popularTemasIniciais({
-    required List<TemaFestaModel> temasIniciais,
-    required List<TemaFestaModel> temasExistentes,
+    required List<TemaFesta> temasIniciais,
+    required List<TemaFesta> temasExistentes,
   }) {
     return remote.popularTemasIniciais(
-      temasIniciais: temasIniciais,
-      temasExistentes: temasExistentes,
+      temasIniciais: temasIniciais.map(TemaFestaModel.fromEntity).toList(),
+      temasExistentes: temasExistentes.map(TemaFestaModel.fromEntity).toList(),
     );
+  }
+
+  Future<T> _traduzirErroCallable<T>(Future<T> Function() action) async {
+    try {
+      return await action();
+    } on CallableHttpsException catch (e) {
+      throw TemaFestaException(e.code, e.message);
+    }
   }
 }

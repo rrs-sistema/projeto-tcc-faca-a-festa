@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/ranking_remote_datasource.dart';
-import '../../data/repositories_impl/ranking_repository_impl.dart';
-import '../../domain/repositories/ranking_repository.dart';
-import '../../domain/usecases/carregar_ranking_servicos.dart';
-import '../../presentation/modules/ranking/controllers/ranking_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/ranking_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/ranking_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/ranking_repository.dart';
+import 'package:app_faca_festa/domain/usecases/carregar_ranking_servicos.dart';
+import 'package:app_faca_festa/presentation/modules/ranking/controllers/ranking_controller.dart';
 
 class RankingBootstrap {
   RankingBootstrap._();

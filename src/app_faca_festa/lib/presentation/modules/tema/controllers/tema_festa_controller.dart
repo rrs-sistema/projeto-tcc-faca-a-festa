@@ -3,33 +3,36 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:app_faca_festa/data/models/evento/tema_festa_model.dart';
-import 'package:app_faca_festa/data/seeds/tema_festa_seed.dart';
-import 'package:app_faca_festa/data/services/functions/callable_https_client.dart';
+import 'package:app_faca_festa/domain/entities/tema_festa.dart';
+import 'package:app_faca_festa/domain/exceptions/tema_festa_exception.dart';
+import 'package:app_faca_festa/domain/seeds/tema_festa_seed.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_temas_festa.dart';
-import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/tema_festa_view_model.dart';
 
 class TemaFestaController extends GetxController {
   TemaFestaController({
     required GerenciarTemasFesta temasFesta,
-  }) : _temasFesta = temasFesta;
+    void Function(TemaFesta tema)? atualizarCacheTema,
+  })  : _temasFesta = temasFesta,
+        _atualizarCacheTema = atualizarCacheTema;
 
   final GerenciarTemasFesta _temasFesta;
+  final void Function(TemaFesta tema)? _atualizarCacheTema;
 
-  final temas = <TemaFestaModel>[].obs;
+  final temas = <TemaFestaViewModel>[].obs;
   final carregando = false.obs;
   final salvando = false.obs;
   final erro = ''.obs;
   final busca = ''.obs;
   final filtroCategoria = 'todos'.obs;
 
-  List<TemaFestaModel> get temasAtivos {
+  List<TemaFestaViewModel> get temasAtivos {
     final lista = temas.where((tema) => tema.ativo).toList();
     lista.sort((a, b) => a.ordem.compareTo(b.ordem));
     return lista;
   }
 
-  List<TemaFestaModel> get temasFiltrados {
+  List<TemaFestaViewModel> get temasFiltrados {
     final termo = busca.value.trim().toLowerCase();
     final categoria = filtroCategoria.value;
     return temas.where((tema) {
@@ -43,7 +46,7 @@ class TemaFestaController extends GetxController {
     }).toList();
   }
 
-  List<TemaFestaModel> temasParaTipo(String? nomeTipoEvento) {
+  List<TemaFestaViewModel> temasParaTipo(String? nomeTipoEvento) {
     return temasAtivos.where((tema) {
       if (tema.compativelComTipo(nomeTipoEvento)) return true;
       final seed = temasFestaIniciais
@@ -57,7 +60,7 @@ class TemaFestaController extends GetxController {
       carregando.value = true;
       erro.value = '';
       final lista = await _temasFesta.carregar();
-      temas.assignAll(lista);
+      temas.assignAll(lista.map(TemaFestaViewModel.fromEntity));
 
       if (popularSeVazio && lista.isEmpty) {
         await popularTemasIniciais();
@@ -70,34 +73,34 @@ class TemaFestaController extends GetxController {
     }
   }
 
-  Future<TemaFestaModel?> buscarPorId(String idTema) async {
+  Future<TemaFestaViewModel?> buscarPorId(String idTema) async {
     final id = idTema.trim();
     if (id.isEmpty) return null;
     final local = temas.firstWhereOrNull((tema) => tema.idTema == id);
     if (local != null) return local;
     try {
-      return _temasFesta.buscarPorId(id);
+      final tema = await _temasFesta.buscarPorId(id);
+      return tema == null ? null : TemaFestaViewModel.fromEntity(tema);
     } catch (e, s) {
       debugPrint('[TemaFestaController] Erro ao buscar $id: $e\n$s');
       return null;
     }
   }
 
-  Future<void> salvar(TemaFestaModel tema) async {
+  Future<void> salvar(TemaFesta tema) async {
     salvando.value = true;
     try {
       await _temasFesta.salvar(tema);
+      final viewModel = TemaFestaViewModel.fromEntity(tema);
       final index = temas.indexWhere((item) => item.idTema == tema.idTema);
       if (index >= 0) {
-        temas[index] = tema;
+        temas[index] = viewModel;
       } else {
-        temas.add(tema);
+        temas.add(viewModel);
       }
       temas.sort((a, b) => a.ordem.compareTo(b.ordem));
       temas.refresh();
-      if (Get.isRegistered<EventThemeController>()) {
-        Get.find<EventThemeController>().atualizarCacheTema(tema);
-      }
+      _atualizarCacheTema?.call(tema);
     } finally {
       salvando.value = false;
     }
@@ -141,7 +144,7 @@ class TemaFestaController extends GetxController {
         return null;
       }
       return url;
-    } on CallableHttpsException catch (e, s) {
+    } on TemaFestaException catch (e, s) {
       debugPrint('[TemaFestaController] Erro ao enviar capa: $e\n$s');
       EasyLoading.showError(
         e.code == 'permission-denied'

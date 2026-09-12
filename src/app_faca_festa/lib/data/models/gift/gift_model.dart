@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import './../../../domain/entities/gift/gift.dart';
+import 'package:app_faca_festa/domain/entities/gift/gift.dart';
 
 class GiftModel extends Gift {
   GiftModel({

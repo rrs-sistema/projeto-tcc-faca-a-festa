@@ -1,15 +1,13 @@
+import 'package:app_faca_festa/domain/entities/fornecedor_estatisticas.dart';
 import '../servico_produto/fornecedor_produto_servico_model.dart';
 
-class FornecedorEstatisticasModel {
-  const FornecedorEstatisticasModel({
-    required this.solicitacoesPendentes,
-    required this.servicosAtivos,
-    required this.mensagensNaoLidas,
-    required this.avaliacaoMedia,
-  });
+export 'package:app_faca_festa/domain/entities/fornecedor_estatisticas.dart';
 
-  final int solicitacoesPendentes;
-  final List<FornecedorProdutoServicoModel> servicosAtivos;
-  final int mensagensNaoLidas;
-  final double avaliacaoMedia;
+class FornecedorEstatisticasModel extends FornecedorEstatisticas {
+  const FornecedorEstatisticasModel({
+    required super.solicitacoesPendentes,
+    required List<FornecedorProdutoServicoModel> servicosAtivos,
+    required super.mensagensNaoLidas,
+    required super.avaliacaoMedia,
+  }) : super(servicosAtivos: servicosAtivos);
 }

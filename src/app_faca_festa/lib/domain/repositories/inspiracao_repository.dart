@@ -1,12 +1,12 @@
-import 'dart:io';
 import 'dart:typed_data';
 
-import '../../data/models/evento/inspiracao_model.dart';
-import '../../data/models/evento/inspiracao_snapshot_item.dart';
-import '../../data/models/fornecedor/fornecedor_model.dart';
+import '../entities/fornecedor.dart';
+import '../entities/inspiracao.dart';
+import '../entities/inspiracao_snapshot.dart';
+import '../entities/referencia_evento.dart';
 
 abstract interface class InspiracaoRepository {
-  Stream<List<InspiracaoSnapshotItem>> observarInspiracoes();
+  Stream<List<InspiracaoSnapshot>> observarInspiracoes();
 
   String criarIdInspiracao();
 
@@ -53,7 +53,7 @@ abstract interface class InspiracaoRepository {
 
   Future<void> removerArquivoStoragePorUrl(String url);
 
-  Stream<List<ReferenciaEventoModel>> observarReferenciasEvento(
+  Stream<List<ReferenciaEvento>> observarReferenciasEvento(
     String eventoId,
   );
 
@@ -61,13 +61,13 @@ abstract interface class InspiracaoRepository {
 
   Stream<List<Map<String, dynamic>>> observarOrcamentoEvento(String eventoId);
 
-  Future<FornecedorModel?> buscarFornecedor(String idFornecedor);
+  Future<Fornecedor?> buscarFornecedor(String idFornecedor);
 
   Future<void> salvarReferenciaInspiracao({
     required String eventoId,
     required String userId,
     required String referenciaId,
-    required InspiracaoModel inspiracao,
+    required Inspiracao inspiracao,
     required bool favorito,
     required String status,
     required String prioridade,
@@ -88,7 +88,8 @@ abstract interface class InspiracaoRepository {
   Future<void> adicionarReferenciaPessoal({
     required String eventoId,
     required String userId,
-    required File imageFile,
+    required List<int> bytes,
+    required String nomeArquivo,
   });
 
   Future<bool> existeDocumentoAtivoDaInspiracao({
@@ -107,14 +108,14 @@ abstract interface class InspiracaoRepository {
   Future<void> criarChecklistDaInspiracao({
     required String eventoId,
     required String userId,
-    required InspiracaoModel inspiracao,
+    required Inspiracao inspiracao,
     required List<Map<String, dynamic>> tarefas,
   });
 
   Future<void> criarOrcamentoDaInspiracao({
     required String eventoId,
     required String userId,
-    required InspiracaoModel inspiracao,
+    required Inspiracao inspiracao,
     required List<Map<String, dynamic>> itens,
   });
 

@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
-import '../../../domain/repositories/autenticacao_repository.dart';
+import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import '../../services/functions/callable_https_client.dart';
 
 class AutenticacaoRemoteException implements Exception {

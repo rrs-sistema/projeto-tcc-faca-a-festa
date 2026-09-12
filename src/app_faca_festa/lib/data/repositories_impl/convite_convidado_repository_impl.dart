@@ -1,5 +1,5 @@
-import '../../domain/entities/convidado.dart';
-import '../../domain/repositories/convite_convidado_repository.dart';
+import 'package:app_faca_festa/domain/entities/convidado.dart';
+import 'package:app_faca_festa/domain/repositories/convite_convidado_repository.dart';
 import '../datasources/remote/convite_convidado_remote_datasource.dart';
 
 class ConviteConvidadoRepositoryImpl implements ConviteConvidadoRepository {

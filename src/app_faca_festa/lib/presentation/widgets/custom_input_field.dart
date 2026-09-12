@@ -3,11 +3,9 @@ import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
-import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
-import './../../core/utils/form_masks.dart';
-import './../../core/utils/form_validators.dart';
+import 'package:app_faca_festa/core/utils/form_masks.dart';
+import 'package:app_faca_festa/core/utils/form_validators.dart';
 
 enum InputType {
   text,
@@ -87,7 +85,6 @@ class CustomInputField extends StatefulWidget {
 }
 
 class _CustomInputFieldState extends State<CustomInputField> {
-  final themeController = Get.find<EventThemeController>();
   bool isFocused = false;
   bool showPassword = false;
 
@@ -167,7 +164,9 @@ class _CustomInputFieldState extends State<CustomInputField> {
   Widget build(BuildContext context) {
     Color bgColor = Colors.white;
     Color textColor = Colors.black87;
-    Color iconColor = widget.colorIcon ?? themeController.primaryColor.value;
+    Color iconColor = widget.colorIcon ??
+        widget.color ??
+        Theme.of(context).colorScheme.primary;
     Color titleColor = widget.titleColor ?? Colors.white;
 
     final border = OutlineInputBorder(

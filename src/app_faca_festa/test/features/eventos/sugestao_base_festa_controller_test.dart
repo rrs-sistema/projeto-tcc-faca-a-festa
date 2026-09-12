@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/sugestao_base_festa_controller.dart';
-import 'package:app_faca_festa/data/models/evento/sugestao_base_festa_model.dart';
+import 'package:app_faca_festa/domain/entities/sugestao_base_festa.dart';
 import 'package:app_faca_festa/domain/repositories/sugestao_base_festa_repository_contract.dart';
 
 void main() {
@@ -65,14 +65,14 @@ void main() {
   });
 }
 
-SugestaoBaseFestaModel _sugestao({
+SugestaoBaseFesta _sugestao({
   required String id,
   required String titulo,
   required String modulo,
   int ordem = 1,
   bool ativo = true,
 }) {
-  return SugestaoBaseFestaModel(
+  return SugestaoBaseFesta(
     id: id,
     titulo: titulo,
     descricao: 'Descrição $titulo',
@@ -92,27 +92,27 @@ SugestaoBaseFestaModel _sugestao({
 class _SugestaoBaseFestaRepositoryFake
     implements SugestaoBaseFestaRepositoryContract {
   var listagens = 0;
-  final salvas = <SugestaoBaseFestaModel>[];
-  final atualizadas = <SugestaoBaseFestaModel>[];
+  final salvas = <SugestaoBaseFesta>[];
+  final atualizadas = <SugestaoBaseFesta>[];
   final statusAlterados = <({String id, bool ativo})>[];
   final exclusoes = <String>[];
   final importados = <({int quantidade, bool sobrescrever})>[];
 
-  List<SugestaoBaseFestaModel> sugestoes = const [];
+  List<SugestaoBaseFesta> sugestoes = const [];
 
   @override
-  Future<List<SugestaoBaseFestaModel>> listarSugestoes() async {
+  Future<List<SugestaoBaseFesta>> listarSugestoes() async {
     listagens++;
     return sugestoes;
   }
 
   @override
-  Future<void> salvarSugestao(SugestaoBaseFestaModel sugestao) async {
+  Future<void> salvarSugestao(SugestaoBaseFesta sugestao) async {
     salvas.add(sugestao);
   }
 
   @override
-  Future<void> atualizarSugestao(SugestaoBaseFestaModel sugestao) async {
+  Future<void> atualizarSugestao(SugestaoBaseFesta sugestao) async {
     atualizadas.add(sugestao);
   }
 

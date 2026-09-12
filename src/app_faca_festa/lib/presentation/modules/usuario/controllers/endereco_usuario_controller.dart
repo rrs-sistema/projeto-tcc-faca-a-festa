@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/endereco/endereco.dart';
+import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/repositories/cep_repository.dart';
 import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dart';
 
@@ -15,7 +15,7 @@ class EnderecoUsuarioController extends GetxController {
   final PerfilUsuarioRepository _perfilRepository;
   final CepRepository _cepRepository;
 
-  final enderecoPrincipal = Rxn<EnderecoUsuarioModel>();
+  final enderecoPrincipal = Rxn<EnderecoUsuario>();
   final carregando = false.obs;
 
   // 🔹 Carrega o endereço principal do usuário
@@ -30,7 +30,7 @@ class EnderecoUsuarioController extends GetxController {
         return;
       }
 
-      enderecoPrincipal.value = EnderecoUsuarioModel.fromEntity(endereco);
+      enderecoPrincipal.value = endereco;
     } catch (e) {
       debugPrint('❌ Erro ao carregar endereço principal: $e');
     } finally {
@@ -53,7 +53,7 @@ class EnderecoUsuarioController extends GetxController {
       carregando.value = true;
 
       // Constrói modelo
-      final novo = EnderecoUsuarioModel(
+      final novo = EnderecoUsuario(
         id: enderecoPrincipal.value?.id ?? _perfilRepository.criarIdEndereco(),
         idUsuario: idUsuario,
         idCidade: 0,

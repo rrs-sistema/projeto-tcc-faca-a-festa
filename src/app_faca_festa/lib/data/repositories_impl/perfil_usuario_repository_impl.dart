@@ -1,4 +1,4 @@
-import '../../domain/repositories/perfil_usuario_repository.dart';
+import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dart';
 import '../datasources/remote/perfil_usuario_remote_datasource.dart';
 import '../models/endereco/endereco_usuario.dart';
 import '../models/usuario/usuario_model.dart';

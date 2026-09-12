@@ -1,6 +1,6 @@
-import '../../domain/entities/cardapio.dart';
-import '../../domain/entities/cardapio_item.dart';
-import '../../domain/repositories/cardapio_repository.dart';
+import 'package:app_faca_festa/domain/entities/cardapio.dart';
+import 'package:app_faca_festa/domain/entities/cardapio_item.dart';
+import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';
 import '../datasources/remote/cardapio_remote_datasource.dart';
 import '../models/cardapio/cardapio_item_model.dart' hide CardapioItem;
 import '../models/cardapio/cardapio_model.dart' hide Cardapio;

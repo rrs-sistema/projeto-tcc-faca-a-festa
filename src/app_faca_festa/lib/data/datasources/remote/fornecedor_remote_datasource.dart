@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -72,8 +71,8 @@ abstract interface class FornecedorRemoteDatasource {
   });
 
   Future<String> uploadBanner({
-    required File imageFile,
-    Uint8List? bytesWeb,
+    required List<int> bytes,
+    required String nomeArquivo,
     required String uid,
   });
 
@@ -548,17 +547,14 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
 
   @override
   Future<String> uploadBanner({
-    required File imageFile,
-    Uint8List? bytesWeb,
+    required List<int> bytes,
+    required String nomeArquivo,
     required String uid,
   }) async {
-    final nomeArquivo = imageFile.path.split(RegExp(r'[\\/]')).last;
     final fileName =
         'banners_fornecedores/$uid/${_now().millisecondsSinceEpoch}_$nomeArquivo';
     final ref = storage.ref().child(fileName);
-    final uploadTask =
-        bytesWeb != null ? ref.putData(bytesWeb) : ref.putFile(imageFile);
-    final snapshot = await uploadTask;
+    final snapshot = await ref.putData(Uint8List.fromList(bytes));
     return snapshot.ref.getDownloadURL();
   }
 

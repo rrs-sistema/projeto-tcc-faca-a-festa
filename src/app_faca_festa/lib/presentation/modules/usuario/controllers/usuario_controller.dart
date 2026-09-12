@@ -3,29 +3,56 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:app_faca_festa/data/models/model.dart';
-import 'package:app_faca_festa/data/services/auditoria/auditoria_app.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
+import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import 'package:app_faca_festa/domain/repositories/foto_perfil_repository.dart';
 import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dart';
+import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
+import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/controllers/endereco_usuario_controller.dart';
-import 'package:app_faca_festa/presentation/pages/endereco/endereco_section_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/components/endereco/endereco_section_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidade_controller.dart';
 
 class UsuarioController extends GetxController {
-  final AutenticacaoRepository _autenticacaoRepository =
-      Get.find<AutenticacaoRepository>();
-  final PerfilUsuarioRepository _perfilRepository =
-      Get.find<PerfilUsuarioRepository>();
-  final FotoPerfilRepository _fotoPerfilRepository =
-      Get.find<FotoPerfilRepository>();
+  UsuarioController({
+    required AutenticacaoRepository autenticacaoRepository,
+    required PerfilUsuarioRepository perfilRepository,
+    required FotoPerfilRepository fotoPerfilRepository,
+    AuditoriaRegistrar? auditoria,
+    AuditoriaRegistrar? Function()? auditoriaResolver,
+    required this.enderecoUsuarioController,
+    required BuscarCepService buscarCepService,
+    required UFCidadeController ufCidadeController,
+    EnderecoSectionController? enderecoController,
+  })  : _autenticacaoRepository = autenticacaoRepository,
+        _perfilRepository = perfilRepository,
+        _fotoPerfilRepository = fotoPerfilRepository,
+        _auditoria = auditoria,
+        _auditoriaResolver = auditoriaResolver,
+        enderecoController = (enderecoController ??
+                EnderecoSectionController(
+                  cepService: buscarCepService,
+                  ufCidadeController: ufCidadeController,
+                ))
+            .obs;
+
+  final AutenticacaoRepository _autenticacaoRepository;
+  final PerfilUsuarioRepository _perfilRepository;
+  final FotoPerfilRepository _fotoPerfilRepository;
+  final AuditoriaRegistrar? _auditoria;
+  final AuditoriaRegistrar? Function()? _auditoriaResolver;
+  AuditoriaRegistrar get _registradorAuditoria =>
+      _auditoria ??
+      _auditoriaResolver?.call() ??
+      const AuditoriaRegistrarVazio();
 
   // LISTA DE USUÁRIOS (já existia)
-  final usuarios = <UsuarioModel>[].obs;
-  final usuariosFiltrados = <UsuarioModel>[].obs;
+  final usuarios = <Usuario>[].obs;
+  final usuariosFiltrados = <Usuario>[].obs;
 
   // NOVOS CAMPOS NECESSÁRIOS
-  final usuario = Rxn<UsuarioModel>(); // 🔹 Usuário logado
+  final usuario = Rxn<Usuario>(); // 🔹 Usuário logado
   final carregandoPerfil = false.obs;
 
   final carregando = false.obs;
@@ -34,8 +61,8 @@ class UsuarioController extends GetxController {
   final senhaVisivel = false.obs;
 
   // CONTROLLER DE ENDEREÇO
-  final enderecoUsuarioController = Get.find<EnderecoUsuarioController>();
-  final enderecoController = EnderecoSectionController().obs;
+  final EnderecoUsuarioController enderecoUsuarioController;
+  final Rx<EnderecoSectionController> enderecoController;
 
   @override
   void onInit() {
@@ -54,7 +81,7 @@ class UsuarioController extends GetxController {
       final usuarioEncontrado = await _perfilRepository.buscarUsuario(uid);
       if (usuarioEncontrado == null) return;
 
-      usuario.value = UsuarioModel.fromEntity(usuarioEncontrado);
+      usuario.value = usuarioEncontrado;
 
       // 🔹 Carrega endereço principal
       await enderecoUsuarioController.carregarEnderecoPrincipal(uid);
@@ -101,7 +128,7 @@ class UsuarioController extends GetxController {
     }
   }
 
-  Future<void> salvarNovoUsuario(UsuarioModel usuario) async {
+  Future<void> salvarNovoUsuario(Usuario usuario) async {
     try {
       final senha = usuario.senhaHash?.trim() ?? '';
       if (senha.length < 6) {
@@ -129,7 +156,7 @@ class UsuarioController extends GetxController {
       await _perfilRepository.salvarEndereco(endereco);
       usuarios.add(novo);
       filtrarUsuarios(buscaCtrl.text);
-      AuditoriaApp.registrar(
+      _registradorAuditoria.registrar(
         acao: 'USUARIO_CRIADO',
         resumo: 'Nova conta cadastrada pelo administrador.',
         entidadeTipo: 'usuario',
@@ -191,7 +218,7 @@ class UsuarioController extends GetxController {
     try {
       carregando.value = true;
       final usuariosEncontrados = await _perfilRepository.listarUsuarios();
-      final lista = usuariosEncontrados.map(UsuarioModel.fromEntity).toList();
+      final lista = usuariosEncontrados.toList();
 
       lista.sort((a, b) {
         final nomeComp = (a.nome.toLowerCase()).compareTo(b.nome.toLowerCase());
@@ -230,7 +257,7 @@ class UsuarioController extends GetxController {
       usuarios[usuarios.indexOf(user)] = user.copyWith(tipo: 'A');
       filtrarUsuarios(buscaCtrl.text);
     }
-    AuditoriaApp.registrar(
+    _registradorAuditoria.registrar(
       acao: 'USUARIO_TIPO_ALTERADO',
       resumo: 'Usuário promovido a administrador.',
       entidadeTipo: 'usuario',
@@ -255,7 +282,7 @@ class UsuarioController extends GetxController {
       usuarios[usuarios.indexOf(user)] = user.copyWith(tipo: 'O');
       filtrarUsuarios(buscaCtrl.text);
     }
-    AuditoriaApp.registrar(
+    _registradorAuditoria.registrar(
       acao: 'USUARIO_TIPO_ALTERADO',
       resumo: 'Privilégio de administrador removido.',
       entidadeTipo: 'usuario',
@@ -284,7 +311,7 @@ class UsuarioController extends GetxController {
         filtrarUsuarios(buscaCtrl.text);
       }
 
-      AuditoriaApp.registrar(
+      _registradorAuditoria.registrar(
         acao: 'USUARIO_STATUS_ALTERADO',
         resumo: novoStatus
             ? 'Conta reativada pelo administrador.'

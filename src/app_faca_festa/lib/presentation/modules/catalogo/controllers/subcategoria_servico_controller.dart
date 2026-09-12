@@ -1,22 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/servico_produto/subcategoria_servico_model.dart';
+import 'package:app_faca_festa/domain/entities/subcategoria_servico.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_catalogo_servico.dart';
-import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categoria_servico_controller.dart';
 
 class SubcategoriaServicoController extends GetxController {
-  SubcategoriaServicoController({required GerenciarCatalogoServico catalogo})
-      : _catalogo = catalogo;
+  SubcategoriaServicoController({
+    required GerenciarCatalogoServico catalogo,
+    FutureOr<void> Function()? sincronizarCategorias,
+  })  : _catalogo = catalogo,
+        _sincronizarCategorias = sincronizarCategorias;
 
   final GerenciarCatalogoServico _catalogo;
+  final FutureOr<void> Function()? _sincronizarCategorias;
 
-  final subcategorias = <SubcategoriaServicoModel>[].obs;
-  final todasSubcategorias = <SubcategoriaServicoModel>[].obs;
-  final subcategoriasFiltradas = <SubcategoriaServicoModel>[].obs;
-  final RxMap<String, List<SubcategoriaServicoModel>>
-      subcategoriasPorCategoria =
-      <String, List<SubcategoriaServicoModel>>{}.obs;
+  final subcategorias = <SubcategoriaServico>[].obs;
+  final todasSubcategorias = <SubcategoriaServico>[].obs;
+  final subcategoriasFiltradas = <SubcategoriaServico>[].obs;
+  final RxMap<String, List<SubcategoriaServico>> subcategoriasPorCategoria =
+      <String, List<SubcategoriaServico>>{}.obs;
   final contagemServicos = <String, int>{}.obs;
   final busca = ''.obs;
   final categoriaAtualId = ''.obs;
@@ -30,7 +34,7 @@ class SubcategoriaServicoController extends GetxController {
     carregarTodasSubcategoria();
   }
 
-  List<SubcategoriaServicoModel> get visiveis {
+  List<SubcategoriaServico> get visiveis {
     final termo = busca.value.trim().toLowerCase();
     var lista = subcategoriasFiltradas.toList();
     if (termo.isNotEmpty) {
@@ -75,7 +79,7 @@ class SubcategoriaServicoController extends GetxController {
       final todas = await _catalogo.listarSubcategorias();
       todasSubcategorias.assignAll(todas);
 
-      List<SubcategoriaServicoModel> lista = todas;
+      List<SubcategoriaServico> lista = todas;
       if (idCategoria != null && idCategoria.isNotEmpty) {
         lista = todas.where((s) => s.idCategoria == idCategoria).toList();
       }
@@ -111,7 +115,7 @@ class SubcategoriaServicoController extends GetxController {
     } catch (_) {}
   }
 
-  Future<void> salvarSubcategoria(SubcategoriaServicoModel model) async {
+  Future<void> salvarSubcategoria(SubcategoriaServico model) async {
     try {
       await _catalogo.salvarSubcategoria(model);
       await carregarSubcategorias(model.idCategoria);
@@ -121,8 +125,7 @@ class SubcategoriaServicoController extends GetxController {
     }
   }
 
-  Future<void> atualizarStatus(
-      SubcategoriaServicoModel model, bool ativo) async {
+  Future<void> atualizarStatus(SubcategoriaServico model, bool ativo) async {
     try {
       await _catalogo.atualizarStatusSubcategoria(model.id, ativo);
       await carregarSubcategorias(model.idCategoria);
@@ -144,8 +147,6 @@ class SubcategoriaServicoController extends GetxController {
   }
 
   Future<void> _sincronizarContagemCategorias() async {
-    if (Get.isRegistered<CategoriaServicoController>()) {
-      await Get.find<CategoriaServicoController>().carregarCategorias();
-    }
+    await Future<void>.sync(_sincronizarCategorias ?? () {});
   }
 }

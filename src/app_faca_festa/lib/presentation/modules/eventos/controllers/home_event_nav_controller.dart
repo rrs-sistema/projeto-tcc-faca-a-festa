@@ -1,16 +1,17 @@
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/presentation/pages/fornecedor/fornecedor_localizacao_screen.dart';
+import 'package:flutter/widgets.dart';
 
 /// Navegação da home do organizador (abas Home / Fornecedores / Inspiração).
 class HomeEventNavController extends GetxController {
+  HomeEventNavController({
+    required Widget Function() fornecedoresPageBuilder,
+  }) : _fornecedoresPageBuilder = fornecedoresPageBuilder;
+
   static const int abaFornecedores = 1;
 
+  final Widget Function() _fornecedoresPageBuilder;
   void Function(int index)? _onMudarAba;
-
-  static HomeEventNavController get to {
-    return Get.find<HomeEventNavController>();
-  }
 
   void vincular(void Function(int index) onMudarAba) {
     _onMudarAba = onMudarAba;
@@ -31,7 +32,7 @@ class HomeEventNavController extends GetxController {
     }
 
     Get.to(
-      () => const FornecedorLocalizacaoScreen(showLeading: true),
+      _fornecedoresPageBuilder,
       routeName: '/fornecedores',
       preventDuplicates: false,
     );

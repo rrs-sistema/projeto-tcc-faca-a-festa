@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../domain/repositories/sugestao_base_festa_repository_contract.dart';
+import 'package:app_faca_festa/domain/repositories/sugestao_base_festa_repository_contract.dart';
 import '../models/evento/sugestao_base_festa_model.dart';
 
 class SugestaoBaseFestaRepositoryImpl
@@ -63,12 +63,13 @@ class SugestaoBaseFestaRepositoryImpl
   }
 
   @override
-  Future<void> atualizarSugestao(SugestaoBaseFestaModel sugestao) async {
+  Future<void> atualizarSugestao(SugestaoBaseFesta sugestao) async {
     if (sugestao.id.trim().isEmpty) {
       throw ArgumentError('ID da sugestão é obrigatório para atualização.');
     }
 
-    final data = sugestao.toMap(includeDates: false);
+    final data =
+        SugestaoBaseFestaModel.fromEntity(sugestao).toMap(includeDates: false);
     data['updated_at'] = FieldValue.serverTimestamp();
 
     await _collection
@@ -141,11 +142,11 @@ class SugestaoBaseFestaRepositoryImpl
   }
 
   @override
-  Future<void> salvarSugestao(SugestaoBaseFestaModel sugestao) async {
+  Future<void> salvarSugestao(SugestaoBaseFesta sugestao) async {
     final id = sugestao.id.trim().isNotEmpty
         ? sugestao.id.trim()
         : _collection.doc().id;
-    final model = sugestao.copyWith(id: id);
+    final model = SugestaoBaseFestaModel.fromEntity(sugestao).copyWith(id: id);
 
     await _collection.doc(id).set(
           model.toMap(includeDates: true),

@@ -8,13 +8,13 @@ import 'package:app_faca_festa/presentation/modules/app/controllers/app_controll
 class TotpMfaController extends GetxController {
   TotpMfaController({
     this.gerarQrNoInicio = false,
-    AutenticacaoRepository? autenticacaoRepository,
-  }) : _autenticacaoRepository =
-            autenticacaoRepository ?? Get.find<AutenticacaoRepository>();
+    required AutenticacaoRepository autenticacaoRepository,
+    required this.appController,
+  }) : _autenticacaoRepository = autenticacaoRepository;
 
   final bool gerarQrNoInicio;
   final AutenticacaoRepository _autenticacaoRepository;
-  final AppController appController = Get.find<AppController>();
+  final AppController appController;
 
   static const etapaEscolha = 'escolha';
   static const etapaTotp = 'totp';

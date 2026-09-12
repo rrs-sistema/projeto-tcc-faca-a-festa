@@ -1,6 +1,6 @@
-import '../../domain/repositories/eventos_admin_repository.dart';
+import 'package:app_faca_festa/domain/entities/evento_admin.dart';
+import 'package:app_faca_festa/domain/repositories/eventos_admin_repository.dart';
 import '../datasources/remote/eventos_admin_remote_datasource.dart';
-import '../models/admin/evento_com_tipo_model.dart';
 
 class EventosAdminRepositoryImpl implements EventosAdminRepository {
   EventosAdminRepositoryImpl(this.remote);
@@ -8,7 +8,7 @@ class EventosAdminRepositoryImpl implements EventosAdminRepository {
   final EventosAdminRemoteDatasource remote;
 
   @override
-  Future<List<EventoComTipoModel>> listarEventosComTipo() {
+  Future<List<EventoAdmin>> listarEventosComTipo() {
     return remote.listarEventosComTipo();
   }
 

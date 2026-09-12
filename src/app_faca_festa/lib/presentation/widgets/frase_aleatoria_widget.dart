@@ -2,12 +2,17 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:get/get.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 class FraseAleatoriaWidget extends StatefulWidget {
   final String tipoEvento;
-  const FraseAleatoriaWidget({super.key, required this.tipoEvento});
+  final EventThemeController themeController;
+
+  const FraseAleatoriaWidget({
+    super.key,
+    required this.tipoEvento,
+    required this.themeController,
+  });
 
   @override
   State<FraseAleatoriaWidget> createState() => _FraseAleatoriaWidgetState();
@@ -19,8 +24,6 @@ class _FraseAleatoriaWidgetState extends State<FraseAleatoriaWidget>
   late String fraseAtual;
   bool visivel = true;
   Timer? _timer;
-
-  final themeController = Get.find<EventThemeController>();
 
   final frasesGerais = [
     "🎉 Cada detalhe é um passo rumo ao seu sonho!",
@@ -196,8 +199,8 @@ class _FraseAleatoriaWidgetState extends State<FraseAleatoriaWidget>
 
   @override
   Widget build(BuildContext context) {
-    final gradient = themeController.gradient.value;
-    final primary = themeController.primaryColor.value;
+    final gradient = widget.themeController.gradient.value;
+    final primary = widget.themeController.primaryColor.value;
 
     return AnimatedOpacity(
       duration: const Duration(seconds: 3),

@@ -1,14 +1,13 @@
-import 'dart:io';
-import 'dart:typed_data';
-
-import '../../domain/repositories/fornecedor_repository.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
+import 'package:app_faca_festa/domain/repositories/fornecedor_repository.dart';
 import '../datasources/remote/fornecedor_remote_datasource.dart';
 import '../models/evento/evento_model.dart';
 import '../models/fornecedor/fornecedor_admin_snapshot.dart';
 import '../models/fornecedor/fornecedor_estatisticas_model.dart';
 import '../models/fornecedor/fornecedor_model.dart';
-import '../models/servico_produto/fornecedor_categoria_model.dart';
-import '../models/servico_produto/fornecedor_produto_servico_model.dart';
+import '../models/servico_produto/fornecedor_categoria_model.dart'
+    hide FornecedorCategoria;
 
 class FornecedorRepositoryImpl implements FornecedorRepository {
   FornecedorRepositoryImpl(this.remote);
@@ -53,14 +52,14 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
   }
 
   @override
-  Stream<List<FornecedorProdutoServicoModel>> observarServicosFornecedor(
+  Stream<List<FornecedorProdutoServico>> observarServicosFornecedor(
     String idFornecedor,
   ) {
     return remote.observarServicosFornecedor(idFornecedor);
   }
 
   @override
-  Future<List<FornecedorProdutoServicoModel>> listarServicosPorEvento(
+  Future<List<FornecedorProdutoServico>> listarServicosPorEvento(
     String idEvento,
   ) {
     return remote.listarServicosPorEvento(idEvento);
@@ -86,18 +85,20 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
   }
 
   @override
-  Future<void> atualizarFornecedor(FornecedorModel fornecedor) {
-    return remote.atualizarFornecedor(fornecedor);
+  Future<void> atualizarFornecedor(Fornecedor fornecedor) {
+    return remote.atualizarFornecedor(FornecedorModel.fromEntity(fornecedor));
   }
 
   @override
-  Future<void> salvarFornecedor(FornecedorModel fornecedor) {
-    return remote.salvarFornecedor(fornecedor);
+  Future<void> salvarFornecedor(Fornecedor fornecedor) {
+    return remote.salvarFornecedor(FornecedorModel.fromEntity(fornecedor));
   }
 
   @override
-  Future<void> salvarCategoriaFornecedor(FornecedorCategoriaModel categoria) {
-    return remote.salvarCategoriaFornecedor(categoria);
+  Future<void> salvarCategoriaFornecedor(FornecedorCategoria categoria) {
+    return remote.salvarCategoriaFornecedor(
+      FornecedorCategoriaModel.fromEntity(categoria),
+    );
   }
 
   @override
@@ -135,13 +136,13 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
 
   @override
   Future<String> uploadBanner({
-    required File imageFile,
-    Uint8List? bytesWeb,
+    required List<int> bytes,
+    required String nomeArquivo,
     required String uid,
   }) {
     return remote.uploadBanner(
-      imageFile: imageFile,
-      bytesWeb: bytesWeb,
+      bytes: bytes,
+      nomeArquivo: nomeArquivo,
       uid: uid,
     );
   }

@@ -1,10 +1,9 @@
-import '../../data/models/comunidade/comunidade_post_model.dart';
-import '../../data/models/comunidade/comunidade_comentario_model.dart';
+import '../entities/comunidade.dart';
 
 abstract class ComunidadeRepository {
-  Stream<List<ComunidadePostModel>> observarPosts();
+  Stream<List<ComunidadePost>> observarPosts();
 
-  Stream<List<ComunidadeComentarioModel>> observarComentarios(String postId);
+  Stream<List<ComunidadeComentario>> observarComentarios(String postId);
 
   Future<void> adicionarPost(
     String texto, {

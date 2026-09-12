@@ -2,8 +2,8 @@ import 'dart:developer' as developer;
 
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/calculadora/calculadora_evento_item_model.dart';
-import 'package:app_faca_festa/data/models/calculadora/calculadora_item_base_model.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_item_base.dart';
 import 'package:app_faca_festa/domain/repositories/calculadora_itens_base_repository_contract.dart';
 
 class CalculadoraItensAdminController extends GetxController {
@@ -16,15 +16,14 @@ class CalculadoraItensAdminController extends GetxController {
   final RxBool loading = false.obs;
   final RxBool saving = false.obs;
 
-  final RxList<CalculadoraItemBaseModel> itensBase =
-      <CalculadoraItemBaseModel>[].obs;
-  final RxList<CalculadoraEventoItemModel> itensEvento =
-      <CalculadoraEventoItemModel>[].obs;
+  final RxList<CalculadoraItemBase> itensBase = <CalculadoraItemBase>[].obs;
+  final RxList<CalculadoraEventoItem> itensEvento =
+      <CalculadoraEventoItem>[].obs;
 
-  final Rxn<CalculadoraItemBaseModel> itemBaseSelecionado =
-      Rxn<CalculadoraItemBaseModel>();
-  final Rxn<CalculadoraEventoItemModel> itemEventoSelecionado =
-      Rxn<CalculadoraEventoItemModel>();
+  final Rxn<CalculadoraItemBase> itemBaseSelecionado =
+      Rxn<CalculadoraItemBase>();
+  final Rxn<CalculadoraEventoItem> itemEventoSelecionado =
+      Rxn<CalculadoraEventoItem>();
 
   final RxString erro = ''.obs;
 
@@ -130,7 +129,7 @@ class CalculadoraItensAdminController extends GetxController {
     }
   }
 
-  Future<void> salvarItemBase(CalculadoraItemBaseModel item) async {
+  Future<void> salvarItemBase(CalculadoraItemBase item) async {
     saving.value = true;
     erro.value = '';
 
@@ -148,7 +147,7 @@ class CalculadoraItensAdminController extends GetxController {
     }
   }
 
-  Future<void> salvarItemEvento(CalculadoraEventoItemModel item) async {
+  Future<void> salvarItemEvento(CalculadoraEventoItem item) async {
     saving.value = true;
     erro.value = '';
 
@@ -167,7 +166,7 @@ class CalculadoraItensAdminController extends GetxController {
   }
 
   Future<void> ativarDesativarItemBase(
-    CalculadoraItemBaseModel item,
+    CalculadoraItemBase item,
     bool ativo,
   ) async {
     saving.value = true;
@@ -195,7 +194,7 @@ class CalculadoraItensAdminController extends GetxController {
   }
 
   Future<void> ativarDesativarItemEvento(
-    CalculadoraEventoItemModel item,
+    CalculadoraEventoItem item,
     bool ativo,
   ) async {
     saving.value = true;
@@ -223,7 +222,7 @@ class CalculadoraItensAdminController extends GetxController {
   }
 
   Future<void> duplicarItemEvento({
-    required CalculadoraEventoItemModel item,
+    required CalculadoraEventoItem item,
     required String novoTipoEvento,
   }) async {
     final tipoEventoSlug = normalizarChave(novoTipoEvento);
@@ -259,11 +258,11 @@ class CalculadoraItensAdminController extends GetxController {
     }
   }
 
-  void selecionarItemBase(CalculadoraItemBaseModel? item) {
+  void selecionarItemBase(CalculadoraItemBase? item) {
     itemBaseSelecionado.value = item;
   }
 
-  void selecionarItemEvento(CalculadoraEventoItemModel? item) {
+  void selecionarItemEvento(CalculadoraEventoItem? item) {
     itemEventoSelecionado.value = item;
   }
 
@@ -278,7 +277,7 @@ class CalculadoraItensAdminController extends GetxController {
     filtroStatusEvento.value = '';
   }
 
-  List<CalculadoraItemBaseModel> get itensBaseFiltrados {
+  List<CalculadoraItemBase> get itensBaseFiltrados {
     final busca = normalizarChave(buscaBase.value);
     final categoria = filtroCategoriaBase.value.trim().toLowerCase();
     final status = filtroStatusBase.value.trim().toLowerCase();
@@ -307,7 +306,7 @@ class CalculadoraItensAdminController extends GetxController {
     return filtrados;
   }
 
-  List<CalculadoraEventoItemModel> get itensEventoFiltrados {
+  List<CalculadoraEventoItem> get itensEventoFiltrados {
     final busca = normalizarChave(buscaEvento.value);
     final tipoEvento = filtroTipoEvento.value.trim();
     final perfil = filtroPerfilFesta.value.trim();
@@ -367,7 +366,7 @@ class CalculadoraItensAdminController extends GetxController {
     return categorias;
   }
 
-  List<CalculadoraItemBaseModel> get itensBaseAtivos {
+  List<CalculadoraItemBase> get itensBaseAtivos {
     final itens = itensBase.where((item) => item.ativo).toList();
     _ordenarItensBase(itens);
     return itens;
@@ -441,7 +440,7 @@ class CalculadoraItensAdminController extends GetxController {
     return result;
   }
 
-  void _ordenarItensBase(List<CalculadoraItemBaseModel> itens) {
+  void _ordenarItensBase(List<CalculadoraItemBase> itens) {
     itens.sort((a, b) {
       final ordem = a.ordem.compareTo(b.ordem);
       if (ordem != 0) return ordem;
@@ -449,7 +448,7 @@ class CalculadoraItensAdminController extends GetxController {
     });
   }
 
-  void _ordenarItensEvento(List<CalculadoraEventoItemModel> itens) {
+  void _ordenarItensEvento(List<CalculadoraEventoItem> itens) {
     itens.sort((a, b) {
       final tipo = a.tipoEvento.compareTo(b.tipoEvento);
       if (tipo != 0) return tipo;

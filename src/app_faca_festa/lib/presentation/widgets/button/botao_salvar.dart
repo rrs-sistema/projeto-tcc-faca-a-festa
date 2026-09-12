@@ -1,8 +1,5 @@
-import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
-
-import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 class BotaoSalvar extends StatelessWidget {
   final String texto;
@@ -20,8 +17,7 @@ class BotaoSalvar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Get.find<EventThemeController>();
-    final corPrincipal = cor ?? theme.primaryColor.value;
+    final corPrincipal = cor ?? Theme.of(context).colorScheme.primary;
 
     return SizedBox(
       width: double.infinity,

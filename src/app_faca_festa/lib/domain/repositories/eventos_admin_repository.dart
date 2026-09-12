@@ -1,7 +1,7 @@
-import '../../data/models/admin/evento_com_tipo_model.dart';
+import '../entities/evento_admin.dart';
 
 abstract class EventosAdminRepository {
-  Future<List<EventoComTipoModel>> listarEventosComTipo();
+  Future<List<EventoAdmin>> listarEventosComTipo();
 
   Future<void> aprovarEvento(String id);
 

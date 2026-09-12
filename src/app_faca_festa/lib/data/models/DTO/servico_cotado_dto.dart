@@ -1,15 +1,25 @@
-class ServicoCotadoDto {
-  final String idProduto;
-  final String nomeProduto;
-  final int quantidade;
-  final double? valor;
+import 'package:app_faca_festa/domain/entities/servico_cotado.dart';
 
-  ServicoCotadoDto({
-    required this.idProduto,
-    required this.nomeProduto,
-    this.quantidade = 1,
-    this.valor,
+export 'package:app_faca_festa/domain/entities/servico_cotado.dart';
+
+class ServicoCotadoDto extends ServicoCotado {
+  const ServicoCotadoDto({
+    required super.idProduto,
+    required super.nomeProduto,
+    super.quantidade = 1,
+    super.valor,
   });
+
+  factory ServicoCotadoDto.fromEntity(ServicoCotado entity) {
+    if (entity is ServicoCotadoDto) return entity;
+
+    return ServicoCotadoDto(
+      idProduto: entity.idProduto,
+      nomeProduto: entity.nomeProduto,
+      quantidade: entity.quantidade,
+      valor: entity.valor,
+    );
+  }
 
   Map<String, dynamic> toMap() => {
         'id_produto': idProduto,

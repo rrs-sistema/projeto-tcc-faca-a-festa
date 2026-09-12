@@ -34,36 +34,57 @@ export const iniciarTotpMfa = onCall(
     await exigirLoginComSenha(perfil.uid);
 
     const chave = exigirChaveMestra();
-    const secret = gerarSecretTotp();
     const record = await admin.auth().getUser(perfil.uid);
     const email = (record.email ?? "").trim().toLowerCase();
+    const referencia = referenciaTotp(perfil.uid);
+    const atual = await referencia.get();
+    const dados = atual.data() ?? {};
+    const secretCifrado =
+      typeof dados.secretCifrado === "string" ? dados.secretCifrado : "";
+    const pendente = dados.pendente === true;
+    const ativo = dados.ativo === true;
 
-    await referenciaTotp(perfil.uid).set(
-      {
-        uid: perfil.uid,
-        secretCifrado: cifrarTexto(secret, chave),
-        pendente: true,
-        ativo: false,
-        tentativas: 0,
-        atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
+    // Reusa o secret pendente para o QR/chave não mudarem a cada abertura
+    // da tela (senão o app autenticador fica com código incompatível).
+    let secret = "";
+    if (pendente && !ativo && secretCifrado) {
+      try {
+        secret = decifrarTexto(secretCifrado, chave);
+      } catch (error) {
+        console.error("[totpMfa] Falha ao reutilizar secret pendente:", error);
+        secret = "";
+      }
+    }
 
-    await registrarAuditTrailSeguro({
-      acao: "MFA_TOTP_INICIADO",
-      operacao: "created",
-      entidadeTipo: "acesso",
-      entidadeId: perfil.uid,
-      entidadeNome: email,
-      actorUid: perfil.uid,
-      actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
-      documentPath: `mfa_totp/${perfil.uid}`,
-      after: {
-        fluxo: "mfa_totp",
-        status: "configuracao_iniciada",
-      },
-    });
+    if (!secret) {
+      secret = gerarSecretTotp();
+      await referencia.set(
+        {
+          uid: perfil.uid,
+          secretCifrado: cifrarTexto(secret, chave),
+          pendente: true,
+          ativo: false,
+          tentativas: 0,
+          atualizadoEm: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true },
+      );
+
+      await registrarAuditTrailSeguro({
+        acao: "MFA_TOTP_INICIADO",
+        operacao: "created",
+        entidadeTipo: "acesso",
+        entidadeId: perfil.uid,
+        entidadeNome: email,
+        actorUid: perfil.uid,
+        actorAuthType: request.auth?.uid ? "unknown" : "unauthenticated",
+        documentPath: `mfa_totp/${perfil.uid}`,
+        after: {
+          fluxo: "mfa_totp",
+          status: "configuracao_iniciada",
+        },
+      });
+    }
 
     return {
       ok: true,

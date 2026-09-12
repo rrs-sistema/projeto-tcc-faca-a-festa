@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../domain/repositories/calculadora_festa_repository.dart';
+import 'package:app_faca_festa/domain/repositories/calculadora_festa_repository.dart';
 import '../models/cardapio/cardapio_item_model.dart';
 import '../models/convidado/convidado_model.dart';
 import '../models/evento/calculadora_festa_item_model.dart';
 import '../models/evento/calculadora_festa_model.dart';
 import '../models/model.dart';
-import '../../domain/entities/cardapio.dart';
+import 'package:app_faca_festa/domain/entities/cardapio.dart';
 
 /// Repository responsável pela persistência das simulações da calculadora.
 ///
@@ -63,23 +63,25 @@ class CalculadoraFestaRepositoryImpl implements CalculadoraFestaRepository {
   /// gravados de forma consistente.
   @override
   Future<void> salvarSimulacao({
-    required CalculadoraFestaModel calculo,
-    required List<CalculadoraFestaItemModel> itens,
+    required CalculadoraFesta calculo,
+    required List<CalculadoraFestaItem> itens,
   }) async {
     if (calculo.idCalculo.trim().isEmpty) {
       throw ArgumentError('idCalculo não pode ser vazio.');
     }
 
+    final calculoModel = CalculadoraFestaModel.fromEntity(calculo);
     final calculoRef = _calculoRef(calculo.idCalculo);
     final batch = _db.batch();
 
     batch.set(
       calculoRef,
-      calculo.toMap(),
+      calculoModel.toMap(),
       SetOptions(merge: true),
     );
 
-    for (final item in itens) {
+    for (final entity in itens) {
+      final item = CalculadoraFestaItemModel.fromEntity(entity);
       if (item.idItemResultado.trim().isEmpty) continue;
 
       batch.set(
@@ -295,17 +297,19 @@ class CalculadoraFestaRepositoryImpl implements CalculadoraFestaRepository {
 
   @override
   Future<Map<String, String>> transformarSimulacaoEmOrcamento({
-    required CalculadoraFestaModel simulacao,
-    required List<CalculadoraFestaItemModel> itensPendentes,
+    required CalculadoraFesta simulacao,
+    required List<CalculadoraFestaItem> itensPendentes,
   }) async {
+    final simulacaoModel = CalculadoraFestaModel.fromEntity(simulacao);
     final agora = DateTime.now();
     WriteBatch batch = _db.batch();
     var operations = 0;
     final idsOrcamentoPorItem = <String, String>{};
 
-    for (final item in itensPendentes) {
+    for (final entity in itensPendentes) {
+      final item = CalculadoraFestaItemModel.fromEntity(entity);
       final idOrcamento = _gerarIdOrcamento(
-        idCalculo: simulacao.idCalculo,
+        idCalculo: simulacaoModel.idCalculo,
         idItemResultado: item.idItemResultado,
         nome: item.nome,
       );
@@ -314,12 +318,12 @@ class CalculadoraFestaRepositoryImpl implements CalculadoraFestaRepository {
       final orcamentoRef =
           _db.collection(collectionOrcamentos).doc(idOrcamento);
       final itemCalculadoraRef =
-          _itensCollection(simulacao.idCalculo).doc(item.idItemResultado);
+          _itensCollection(simulacaoModel.idCalculo).doc(item.idItemResultado);
 
       batch.set(
         orcamentoRef,
         _mapearItemCalculadoraParaOrcamento(
-          simulacao: simulacao,
+          simulacao: simulacaoModel,
           item: item,
           idOrcamento: idOrcamento,
           data: agora,
@@ -349,7 +353,7 @@ class CalculadoraFestaRepositoryImpl implements CalculadoraFestaRepository {
     }
 
     batch.set(
-      _calculoRef(simulacao.idCalculo),
+      _calculoRef(simulacaoModel.idCalculo),
       {
         'status_simulacao':
             StatusSimulacaoCalculadora.convertidaOrcamento.value,
@@ -368,14 +372,15 @@ class CalculadoraFestaRepositoryImpl implements CalculadoraFestaRepository {
 
   @override
   Future<void> enviarResultadoParaCardapio({
-    required CalculadoraFestaModel calculo,
-    required List<CalculadoraFestaItemModel> itens,
+    required CalculadoraFesta calculo,
+    required List<CalculadoraFestaItem> itens,
     required String idCardapio,
   }) async {
     final batch = _db.batch();
     final cardapioRef = _db.collection(collectionCardapios).doc(idCardapio);
 
-    for (final item in itens) {
+    for (final entity in itens) {
+      final item = CalculadoraFestaItemModel.fromEntity(entity);
       final idItemCardapio = _gerarIdItemCardapio(calculo.idCalculo, item.nome);
       final cardapioItem = CardapioItemModel(
         idItem: idItemCardapio,

@@ -1,4 +1,4 @@
-import '../../data/models/cotacao/cotacao_model.dart';
+import '../entities/cotacao.dart';
 
 class SolicitacaoNaoEncontradaException implements Exception {
   const SolicitacaoNaoEncontradaException();
@@ -15,8 +15,7 @@ class SolicitacaoSemFornecedorException implements Exception {
 }
 
 abstract class SolicitacoesRepository {
-  Stream<List<CotacaoModel>> observarSolicitacoesFornecedor(
-      String idFornecedor);
+  Stream<List<Cotacao>> observarSolicitacoesFornecedor(String idFornecedor);
 
   Future<void> cancelarCotacao({
     required String idCotacao,

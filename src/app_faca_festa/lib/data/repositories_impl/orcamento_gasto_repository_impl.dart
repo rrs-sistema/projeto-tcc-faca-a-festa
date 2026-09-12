@@ -1,7 +1,7 @@
-import '../../domain/repositories/orcamento_gasto_repository.dart';
+import 'package:app_faca_festa/domain/repositories/orcamento_gasto_repository.dart';
+import 'package:app_faca_festa/domain/entities/orcamento_gasto.dart';
+import 'package:app_faca_festa/domain/entities/orcamento_validacao_resultado.dart';
 import '../datasources/remote/orcamento_gasto_remote_datasource.dart';
-import '../models/orcamento/orcamento_gasto_model.dart';
-import '../models/orcamento/orcamento_validacao_resultado.dart';
 
 class OrcamentoGastoRepositoryImpl implements OrcamentoGastoRepository {
   OrcamentoGastoRepositoryImpl(this.remote);
@@ -9,7 +9,7 @@ class OrcamentoGastoRepositoryImpl implements OrcamentoGastoRepository {
   final OrcamentoGastoRemoteDatasource remote;
 
   @override
-  Stream<List<OrcamentoGastoModel>> observarGastos(String idOrcamento) {
+  Stream<List<OrcamentoGasto>> observarGastos(String idOrcamento) {
     return remote.observarGastos(idOrcamento);
   }
 

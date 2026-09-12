@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import './../../../core/database/app_database.dart';
-import './../../../domain/entities/gift/gift.dart';
+import 'package:app_faca_festa/core/database/app_database.dart';
+import 'package:app_faca_festa/domain/entities/gift/gift.dart';
 import './gift_model.dart';
 
 extension GiftRowMapper on GiftLocal {

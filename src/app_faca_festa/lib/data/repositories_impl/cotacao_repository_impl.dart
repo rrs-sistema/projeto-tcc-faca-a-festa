@@ -1,4 +1,4 @@
-import '../../domain/repositories/cotacao_repository.dart';
+import 'package:app_faca_festa/domain/repositories/cotacao_repository.dart';
 import '../datasources/remote/cotacao_remote_datasource.dart';
 import '../models/cotacao/cotacao_chat_model.dart';
 import '../models/cotacao/cotacao_model.dart';

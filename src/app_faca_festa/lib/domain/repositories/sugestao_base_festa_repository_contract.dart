@@ -1,11 +1,11 @@
-import '../../data/models/evento/sugestao_base_festa_model.dart';
+import '../entities/sugestao_base_festa.dart';
 
 abstract class SugestaoBaseFestaRepositoryContract {
-  Future<List<SugestaoBaseFestaModel>> listarSugestoes();
+  Future<List<SugestaoBaseFesta>> listarSugestoes();
 
-  Future<void> salvarSugestao(SugestaoBaseFestaModel sugestao);
+  Future<void> salvarSugestao(SugestaoBaseFesta sugestao);
 
-  Future<void> atualizarSugestao(SugestaoBaseFestaModel sugestao);
+  Future<void> atualizarSugestao(SugestaoBaseFesta sugestao);
 
   Future<void> ativarDesativarSugestao({
     required String id,

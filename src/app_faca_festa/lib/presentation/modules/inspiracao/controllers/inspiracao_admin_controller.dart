@@ -5,9 +5,9 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:app_faca_festa/data/models/evento/inspiracao_snapshot_item.dart';
-import 'package:app_faca_festa/data/models/model.dart';
-import 'package:app_faca_festa/data/seeds/inspiracao_seed.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
+import 'package:app_faca_festa/domain/seeds/inspiracao_seed.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
 
 class ImagemGaleriaUploadPendente {
@@ -26,8 +26,10 @@ class ImagemGaleriaUploadPendente {
 
 class InspiracaoAdminController extends GetxController {
   InspiracaoAdminController({
-    GerenciarInspiracoes? inspiracoes,
-  }) : _inspiracoes = inspiracoes ?? Get.find<GerenciarInspiracoes>();
+    required GerenciarInspiracoes inspiracoes,
+    bool Function()? usuarioAutenticado,
+  })  : _inspiracoes = inspiracoes,
+        _usuarioAutenticadoResolver = usuarioAutenticado;
 
   static const String colecaoInspiracoes = 'inspiracoes';
   static const String storageRoot = 'inspiracoes';
@@ -41,9 +43,10 @@ class InspiracaoAdminController extends GetxController {
   static const String statusExcluidas = 'excluidas';
 
   final GerenciarInspiracoes _inspiracoes;
+  final bool Function()? _usuarioAutenticadoResolver;
 
-  final RxList<InspiracaoModel> todasInspiracoes = <InspiracaoModel>[].obs;
-  final RxList<InspiracaoModel> inspiracoesFiltradas = <InspiracaoModel>[].obs;
+  final RxList<Inspiracao> todasInspiracoes = <Inspiracao>[].obs;
+  final RxList<Inspiracao> inspiracoesFiltradas = <Inspiracao>[].obs;
 
   final RxBool loading = false.obs;
   final RxBool salvando = false.obs;
@@ -91,7 +94,7 @@ class InspiracaoAdminController extends GetxController {
 
   final Map<String, Map<String, dynamic>> _dadosPorId =
       <String, Map<String, dynamic>>{};
-  StreamSubscription<List<InspiracaoSnapshotItem>>? _subInspiracoes;
+  StreamSubscription<List<InspiracaoSnapshot>>? _subInspiracoes;
 
   bool get possuiFiltrosAtivos {
     return termoBusca.value.trim().isNotEmpty ||
@@ -126,17 +129,40 @@ class InspiracaoAdminController extends GetxController {
 
   int proximaOrdemSugerida() => _proximaOrdem();
 
-  @override
-  void onInit() {
-    super.onInit();
-    escutarInspiracoes();
-  }
-
   void configurarUsuarioAdmin({required String userId}) {
     usuarioAdminId.value = userId.trim();
   }
 
+  bool get _usuarioAutenticado {
+    return _usuarioAutenticadoResolver?.call() ?? false;
+  }
+
+  /// Garante a escuta administrativa apenas com sessão ativa.
+  Future<void> garantirEscuta({bool mostrarLoading = true}) async {
+    if (!_usuarioAutenticado) {
+      loading.value = false;
+      escutaAtiva.value = false;
+      _log('Escuta de inspirações ignorada: usuário não autenticado.');
+      return;
+    }
+
+    if (escutaAtiva.value && _subInspiracoes != null) {
+      return;
+    }
+
+    await escutarInspiracoes(mostrarLoading: mostrarLoading);
+  }
+
   Future<void> escutarInspiracoes({bool mostrarLoading = true}) async {
+    if (!_usuarioAutenticado) {
+      loading.value = false;
+      escutaAtiva.value = false;
+      await _subInspiracoes?.cancel();
+      _subInspiracoes = null;
+      _log('Escuta de inspirações ignorada: usuário não autenticado.');
+      return;
+    }
+
     try {
       if (mostrarLoading) {
         loading.value = true;
@@ -146,7 +172,7 @@ class InspiracaoAdminController extends GetxController {
 
       _subInspiracoes = _inspiracoes.observarInspiracoes().listen(
         (snapshot) {
-          final lista = <InspiracaoModel>[];
+          final lista = <Inspiracao>[];
           _dadosPorId.clear();
 
           for (final item in snapshot) {
@@ -176,9 +202,15 @@ class InspiracaoAdminController extends GetxController {
         onError: (Object e, StackTrace s) {
           loading.value = false;
           escutaAtiva.value = false;
-          EasyLoading.showError('Erro ao carregar inspirações.');
+          final mensagem = e.toString();
+          final semPermissao = mensagem.contains('permission-denied') ||
+              mensagem.contains('PERMISSION_DENIED');
+          if (!semPermissao) {
+            EasyLoading.showError('Erro ao carregar inspirações.');
+          }
           _log('Erro no snapshots de inspirações: $e', s);
         },
+        cancelOnError: true,
       );
     } catch (e, s) {
       loading.value = false;
@@ -1817,7 +1849,7 @@ class InspiracaoAdminController extends GetxController {
   }
 
   bool _passaBusca(
-    InspiracaoModel inspiracao,
+    Inspiracao inspiracao,
     Map<String, dynamic> data,
     String termo,
   ) {
@@ -1957,7 +1989,7 @@ class InspiracaoAdminController extends GetxController {
     totalExcluidas.value = excluidas;
   }
 
-  int _compararInspiracoes(InspiracaoModel a, InspiracaoModel b) {
+  int _compararInspiracoes(Inspiracao a, Inspiracao b) {
     final dataA = dadosDaInspiracao(a.id);
     final dataB = dadosDaInspiracao(b.id);
 

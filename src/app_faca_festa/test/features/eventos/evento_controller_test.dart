@@ -1,8 +1,8 @@
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
-import 'package:app_faca_festa/data/local/evento_ativo_store.dart';
-import 'package:app_faca_festa/data/models/evento/evento_model.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
+import 'package:app_faca_festa/domain/services/evento_ativo_store.dart';
 import 'package:app_faca_festa/presentation/coordinators/evento_session_coordinator.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -225,13 +225,13 @@ void main() {
     final longe = _evento(
       id: 'evento-longe',
       nome: 'Festa distante',
-      data: DateTime(2028, 12, 20),
+      data: _diasAPartirDeHoje(500),
       cadastro: DateTime(2026, 8, 1),
     );
     final perto = _evento(
       id: 'evento-perto',
       nome: 'Festa próxima',
-      data: DateTime(2026, 9, 1),
+      data: _diasAPartirDeHoje(3),
       cadastro: DateTime(2026, 1, 1),
     );
     repository.eventos = [longe, perto];
@@ -254,13 +254,13 @@ void main() {
     final longe = _evento(
       id: 'evento-longe',
       nome: 'Festa distante',
-      data: DateTime(2028, 12, 20),
+      data: _diasAPartirDeHoje(500),
       cadastro: DateTime(2026, 8, 1),
     );
     final perto = _evento(
       id: 'evento-perto',
       nome: 'Festa próxima',
-      data: DateTime(2026, 9, 1),
+      data: _diasAPartirDeHoje(3),
       cadastro: DateTime(2026, 3, 1),
     );
     repository.eventos = [longe, perto];
@@ -335,13 +335,13 @@ void main() {
   });
 }
 
-EventoModel _evento({
+Evento _evento({
   String id = 'evento-1',
   String nome = 'Festa',
   DateTime? data,
   DateTime? cadastro,
 }) {
-  return EventoModel(
+  return Evento(
     idEvento: id,
     idTipoEvento: 'tipo-1',
     idUsuario: 'usuario-1',
@@ -350,6 +350,12 @@ EventoModel _evento({
     data: data ?? DateTime(2026, 12, 20),
     dataCadastro: cadastro,
   );
+}
+
+DateTime _diasAPartirDeHoje(int dias) {
+  final agora = DateTime.now();
+  final hoje = DateTime(agora.year, agora.month, agora.day);
+  return hoje.add(Duration(days: dias));
 }
 
 class _EventoRepositoryFake implements EventoRepository {

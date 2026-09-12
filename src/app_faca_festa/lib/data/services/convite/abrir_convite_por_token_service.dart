@@ -1,26 +1,10 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:app_faca_festa/domain/services/abrir_convite_por_token.dart';
 import '../functions/callable_https_client.dart';
 
-class AbrirConvitePorTokenException implements Exception {
-  const AbrirConvitePorTokenException(this.codigo, [this.mensagem]);
-
-  final String codigo;
-  final String? mensagem;
-}
-
-class AbrirConvitePorTokenResultado {
-  const AbrirConvitePorTokenResultado({
-    required this.convidado,
-    required this.evento,
-  });
-
-  final Map<String, dynamic> convidado;
-  final Map<String, dynamic> evento;
-}
-
-class AbrirConvitePorTokenService {
+class AbrirConvitePorTokenService implements AbrirConvitePorToken {
   AbrirConvitePorTokenService({
     required FirebaseFunctions functions,
     required FirebaseAuth auth,
@@ -33,6 +17,7 @@ class AbrirConvitePorTokenService {
   final FirebaseAuth _auth;
   final CallableHttpsClient _httpsClient;
 
+  @override
   Future<AbrirConvitePorTokenResultado> abrir(String token) async {
     try {
       final mapa = await _chamar(token.trim());

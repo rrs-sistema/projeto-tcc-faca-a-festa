@@ -1,14 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/tema_festa_remote_datasource.dart';
-import '../../data/repositories_impl/tema_festa_repository_impl.dart';
-import '../../data/services/functions/callable_https_client.dart';
-import '../../domain/repositories/evento_repository.dart';
-import '../../domain/repositories/tema_festa_repository.dart';
-import '../../domain/usecases/gerenciar_temas_festa.dart';
-import '../../presentation/modules/tema/controllers/event_theme_controller.dart';
-import '../../presentation/modules/tema/controllers/tema_festa_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/tema_festa_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/tema_festa_repository_impl.dart';
+import 'package:app_faca_festa/data/services/functions/callable_https_client.dart';
+import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
+import 'package:app_faca_festa/domain/repositories/tema_festa_repository.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_temas_festa.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_controller.dart';
 
 class TemaFestaBootstrap {
   TemaFestaBootstrap._();
@@ -40,7 +40,14 @@ class TemaFestaBootstrap {
 
     if (!Get.isRegistered<TemaFestaController>()) {
       Get.put(
-        TemaFestaController(temasFesta: Get.find<GerenciarTemasFesta>()),
+        TemaFestaController(
+          temasFesta: Get.find<GerenciarTemasFesta>(),
+          atualizarCacheTema: (tema) {
+            if (Get.isRegistered<EventThemeController>()) {
+              Get.find<EventThemeController>().atualizarCacheTema(tema);
+            }
+          },
+        ),
         permanent: true,
       );
     }

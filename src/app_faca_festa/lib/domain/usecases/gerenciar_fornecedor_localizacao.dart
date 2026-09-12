@@ -1,8 +1,8 @@
-import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import '../../data/models/fornecedor/fornecedor_model.dart';
-import '../../data/models/servico_produto/categoria_servico_model.dart';
-import '../../data/models/servico_produto/fornecedor_categoria_model.dart';
-import '../../data/models/fornecedor/territorio_model.dart';
+import '../entities/categoria_servico.dart';
+import '../entities/fornecedor.dart';
+import '../entities/fornecedor_categoria.dart';
+import '../entities/fornecedor_servico_detalhado.dart';
+import '../entities/territorio.dart';
 import '../repositories/fornecedor_localizacao_repository.dart';
 
 class GerenciarFornecedorLocalizacao {
@@ -10,19 +10,19 @@ class GerenciarFornecedorLocalizacao {
 
   final FornecedorLocalizacaoRepository repository;
 
-  Stream<List<CategoriaServicoModel>> observarCategoriasAtivas() {
+  Stream<List<CategoriaServico>> observarCategoriasAtivas() {
     return repository.observarCategoriasAtivas();
   }
 
-  Stream<List<FornecedorModel>> observarFornecedoresAtivos() {
+  Stream<List<Fornecedor>> observarFornecedoresAtivos() {
     return repository.observarFornecedoresAtivos();
   }
 
-  Stream<List<TerritorioModel>> observarTerritoriosAtivos() {
+  Stream<List<Territorio>> observarTerritoriosAtivos() {
     return repository.observarTerritoriosAtivos();
   }
 
-  Stream<List<FornecedorCategoriaModel>> observarCategoriasFornecedor() {
+  Stream<List<FornecedorCategoria>> observarCategoriasFornecedor() {
     return repository.observarCategoriasFornecedor();
   }
 
@@ -30,29 +30,29 @@ class GerenciarFornecedorLocalizacao {
     return repository.observarMediasAvaliacoes();
   }
 
-  Stream<List<FornecedorServicoDetalhadoDto>> observarServicosFornecedor(
+  Stream<List<FornecedorServicoDetalhado>> observarServicosFornecedor(
     String idFornecedor,
   ) {
     return repository.observarServicosFornecedor(idFornecedor);
   }
 
-  Stream<List<FornecedorServicoDetalhadoDto>> observarTodosServicos() {
+  Stream<List<FornecedorServicoDetalhado>> observarTodosServicos() {
     return repository.observarTodosServicos();
   }
 
-  Future<List<FornecedorServicoDetalhadoDto>> listarTodosServicosDoFornecedor(
+  Future<List<FornecedorServicoDetalhado>> listarTodosServicosDoFornecedor(
     String idFornecedor,
   ) {
     return repository.listarTodosServicosDoFornecedor(idFornecedor);
   }
 
-  Future<List<FornecedorServicoDetalhadoDto>> listarServicosPorCategoria(
+  Future<List<FornecedorServicoDetalhado>> listarServicosPorCategoria(
     String idCategoria,
   ) {
     return repository.listarServicosPorCategoria(idCategoria);
   }
 
-  Future<List<FornecedorServicoDetalhadoDto>> listarFornecedoresSemCategoria() {
+  Future<List<FornecedorServicoDetalhado>> listarFornecedoresSemCategoria() {
     return repository.listarFornecedoresSemCategoria();
   }
 }

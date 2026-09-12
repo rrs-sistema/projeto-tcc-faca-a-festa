@@ -4,25 +4,32 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import './../../../domain/entities/gift/gift.dart';
-import '../tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/domain/entities/gift/gift.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import './cadastrar_presente_page.dart';
 import 'controllers/gift_controller.dart';
 
 class GerenciarPresentesPage extends StatefulWidget {
   final String eventoId;
+  final GiftController controller;
+  final EventThemeController themeController;
 
-  const GerenciarPresentesPage({super.key, required this.eventoId});
+  const GerenciarPresentesPage({
+    super.key,
+    required this.eventoId,
+    required this.controller,
+    required this.themeController,
+  });
 
   @override
   State<GerenciarPresentesPage> createState() => _GerenciarPresentesPageState();
 }
 
 class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
-  final GiftController controller = Get.find<GiftController>();
-  final EventThemeController themeController = Get.find<EventThemeController>();
-
   late final TextEditingController _searchCtrl;
+
+  GiftController get controller => widget.controller;
+  EventThemeController get themeController => widget.themeController;
 
   String _busca = '';
   GiftType? _tipoFiltro;
@@ -87,7 +94,11 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
             style: GoogleFonts.poppins(
                 fontSize: 12.5, fontWeight: FontWeight.w800),
           ),
-          onPressed: () => abrirDialogCadastrarPresente(context),
+          onPressed: () => abrirDialogCadastrarPresente(
+            context,
+            controller: controller,
+            themeController: themeController,
+          ),
         ),
         body: CustomScrollView(
           physics: const BouncingScrollPhysics(),
@@ -98,7 +109,11 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
                 primary: primary,
                 stats: stats,
                 onBack: () => Get.back(),
-                onAdd: () => abrirDialogCadastrarPresente(context),
+                onAdd: () => abrirDialogCadastrarPresente(
+                  context,
+                  controller: controller,
+                  themeController: themeController,
+                ),
               ),
             ),
             SliverToBoxAdapter(
@@ -134,7 +149,11 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
                   message:
                       'Cadastre presentes físicos, contribuições por PIX ou presentes coletivos para deixar o espaço dos convidados mais completo.',
                   actionLabel: 'Cadastrar primeiro presente',
-                  onAction: () => abrirDialogCadastrarPresente(context),
+                  onAction: () => abrirDialogCadastrarPresente(
+                    context,
+                    controller: controller,
+                    themeController: themeController,
+                  ),
                 ),
               )
             else if (gifts.isEmpty)
@@ -160,8 +179,12 @@ class _GerenciarPresentesPageState extends State<GerenciarPresentesPage> {
                       return _PremiumGiftCard(
                         gift: gift,
                         primary: primary,
-                        onEdit: () => abrirDialogCadastrarPresente(context,
-                            presente: gift),
+                        onEdit: () => abrirDialogCadastrarPresente(
+                          context,
+                          presente: gift,
+                          controller: controller,
+                          themeController: themeController,
+                        ),
                         onDelete: () =>
                             _confirmarExclusao(context, gift, primary),
                       );

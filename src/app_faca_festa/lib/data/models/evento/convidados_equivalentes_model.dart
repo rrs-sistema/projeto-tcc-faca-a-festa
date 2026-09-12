@@ -1,40 +1,30 @@
-class ConvidadosEquivalentesModel {
-  final int adultos;
-  final int criancas;
-  final int bebes;
+import 'package:app_faca_festa/domain/entities/convidados_equivalentes.dart';
 
-  /// Pesos de consumo usados para transformar pessoas em consumo equivalente.
-  final double pesoAdulto;
-  final double pesoCrianca;
-  final double pesoBebe;
+export 'package:app_faca_festa/domain/entities/convidados_equivalentes.dart';
 
+class ConvidadosEquivalentesModel extends ConvidadosEquivalentes {
   const ConvidadosEquivalentesModel({
-    required this.adultos,
-    required this.criancas,
-    required this.bebes,
-    this.pesoAdulto = 1.0,
-    this.pesoCrianca = 0.6,
-    this.pesoBebe = 0.2,
+    required super.adultos,
+    required super.criancas,
+    required super.bebes,
+    super.pesoAdulto = 1.0,
+    super.pesoCrianca = 0.6,
+    super.pesoBebe = 0.2,
   });
 
-  int get totalInformado => adultos + criancas + bebes;
+  factory ConvidadosEquivalentesModel.fromEntity(
+    ConvidadosEquivalentes entity,
+  ) {
+    if (entity is ConvidadosEquivalentesModel) return entity;
 
-  double get totalEquivalente {
-    return (adultos * pesoAdulto) +
-        (criancas * pesoCrianca) +
-        (bebes * pesoBebe);
-  }
-
-  int get totalEquivalenteArredondado => totalEquivalente.ceil();
-
-  bool get possuiConvidados => totalInformado > 0;
-
-  String get resumoInformado {
-    return '$adultos adultos, $criancas crianças e $bebes bebês';
-  }
-
-  String get resumoEquivalente {
-    return '$totalEquivalenteArredondado convidados equivalentes';
+    return ConvidadosEquivalentesModel(
+      adultos: entity.adultos,
+      criancas: entity.criancas,
+      bebes: entity.bebes,
+      pesoAdulto: entity.pesoAdulto,
+      pesoCrianca: entity.pesoCrianca,
+      pesoBebe: entity.pesoBebe,
+    );
   }
 
   ConvidadosEquivalentesModel copyWith({

@@ -1,15 +1,15 @@
-import '../../data/models/orcamento/orcamento_model.dart';
+import '../entities/orcamento.dart';
 
 abstract class OrcamentoRepository {
-  Future<OrcamentoModel?> buscarPorId(String idOrcamento);
+  Future<Orcamento?> buscarPorId(String idOrcamento);
 
-  Stream<List<OrcamentoModel>> observarOrcamentosDoEvento(String idEvento);
+  Stream<List<Orcamento>> observarOrcamentosDoEvento(String idEvento);
 
-  Stream<List<OrcamentoModel>> observarOrcamentosDoFornecedor(
+  Stream<List<Orcamento>> observarOrcamentosDoFornecedor(
     String idFornecedor,
   );
 
-  Future<void> criarOrcamento(OrcamentoModel model);
+  Future<void> criarOrcamento(Orcamento orcamento);
 
   Future<void> confirmarReserva({
     required String idOrcamento,

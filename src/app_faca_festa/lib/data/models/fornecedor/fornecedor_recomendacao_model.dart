@@ -1,56 +1,35 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class FornecedorRecomendacaoModel {
-  final String id;
-  final String idEvento;
-  final String idUsuario;
-  final String idFornecedor;
-  final String nomeFornecedor;
-  final String? bannerUrl;
-  final String? categoriaPrincipal;
-  final double score;
-  final String nivel;
-  final String? nivelLabelBackend;
-  final String? motivoPrincipal;
-  final double? compatibilidadePercentual;
-  final double mediaAvaliacoes;
-  final int totalAvaliacoes;
-  final double? distanciaKm;
-  final List<String> motivos;
-  final List<String> tipoEventoNomes;
-  final List<String> tipoEventoSlugs;
-  final List<String> tipoEventoIds;
-  final bool tipoEventoInformado;
-  final bool tipoEventoCompativel;
-  final bool tipoEventoIncompativel;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+import 'package:app_faca_festa/domain/entities/fornecedor_recomendacao.dart';
 
+export 'package:app_faca_festa/domain/entities/fornecedor_recomendacao.dart';
+
+class FornecedorRecomendacaoModel extends FornecedorRecomendacao {
   const FornecedorRecomendacaoModel({
-    required this.id,
-    required this.idEvento,
-    required this.idUsuario,
-    required this.idFornecedor,
-    required this.nomeFornecedor,
-    required this.score,
-    required this.nivel,
-    required this.mediaAvaliacoes,
-    required this.totalAvaliacoes,
-    required this.motivos,
-    this.bannerUrl,
-    this.categoriaPrincipal,
-    this.nivelLabelBackend,
-    this.motivoPrincipal,
-    this.compatibilidadePercentual,
-    this.distanciaKm,
-    this.tipoEventoNomes = const [],
-    this.tipoEventoSlugs = const [],
-    this.tipoEventoIds = const [],
-    this.tipoEventoInformado = false,
-    this.tipoEventoCompativel = false,
-    this.tipoEventoIncompativel = false,
-    this.createdAt,
-    this.updatedAt,
+    required super.id,
+    required super.idEvento,
+    required super.idUsuario,
+    required super.idFornecedor,
+    required super.nomeFornecedor,
+    required super.score,
+    required super.nivel,
+    required super.mediaAvaliacoes,
+    required super.totalAvaliacoes,
+    required super.motivos,
+    super.bannerUrl,
+    super.categoriaPrincipal,
+    super.nivelLabelBackend,
+    super.motivoPrincipal,
+    super.compatibilidadePercentual,
+    super.distanciaKm,
+    super.tipoEventoNomes = const [],
+    super.tipoEventoSlugs = const [],
+    super.tipoEventoIds = const [],
+    super.tipoEventoInformado = false,
+    super.tipoEventoCompativel = false,
+    super.tipoEventoIncompativel = false,
+    super.createdAt,
+    super.updatedAt,
   });
 
   factory FornecedorRecomendacaoModel.fromMap(
@@ -200,6 +179,7 @@ class FornecedorRecomendacaoModel {
     };
   }
 
+  @override
   FornecedorRecomendacaoModel copyWith({
     String? id,
     String? idEvento,
@@ -256,87 +236,34 @@ class FornecedorRecomendacaoModel {
     );
   }
 
-  double get compatibilidadeNumero {
-    final value = compatibilidadePercentual ?? score;
-    if (value < 0) return 0;
-    if (value > 100) return 100;
-    return value;
+  factory FornecedorRecomendacaoModel.fromEntity(
+    FornecedorRecomendacao recomendacao,
+  ) {
+    return FornecedorRecomendacaoModel(
+      id: recomendacao.id,
+      idEvento: recomendacao.idEvento,
+      idUsuario: recomendacao.idUsuario,
+      idFornecedor: recomendacao.idFornecedor,
+      nomeFornecedor: recomendacao.nomeFornecedor,
+      bannerUrl: recomendacao.bannerUrl,
+      categoriaPrincipal: recomendacao.categoriaPrincipal,
+      score: recomendacao.score,
+      nivel: recomendacao.nivel,
+      nivelLabelBackend: recomendacao.nivelLabelBackend,
+      motivoPrincipal: recomendacao.motivoPrincipal,
+      compatibilidadePercentual: recomendacao.compatibilidadePercentual,
+      mediaAvaliacoes: recomendacao.mediaAvaliacoes,
+      totalAvaliacoes: recomendacao.totalAvaliacoes,
+      distanciaKm: recomendacao.distanciaKm,
+      motivos: recomendacao.motivos,
+      tipoEventoNomes: recomendacao.tipoEventoNomes,
+      tipoEventoSlugs: recomendacao.tipoEventoSlugs,
+      tipoEventoIds: recomendacao.tipoEventoIds,
+      tipoEventoInformado: recomendacao.tipoEventoInformado,
+      tipoEventoCompativel: recomendacao.tipoEventoCompativel,
+      tipoEventoIncompativel: recomendacao.tipoEventoIncompativel,
+      createdAt: recomendacao.createdAt,
+      updatedAt: recomendacao.updatedAt,
+    );
   }
-
-  String get scorePercentual => '${compatibilidadeNumero.round()}%';
-
-  String get nivelLabel {
-    if (nivelLabelBackend != null && nivelLabelBackend!.trim().isNotEmpty) {
-      return nivelLabelBackend!;
-    }
-
-    switch (nivel) {
-      case 'altamente_recomendado':
-        return 'Altamente recomendado';
-      case 'muito_compativel':
-        return 'Muito compatível';
-      case 'compativel':
-        return 'Compatível';
-      case 'sugestao_complementar':
-      case 'pouca_aderencia':
-        return 'Sugestão complementar';
-      default:
-        if (compatibilidadeNumero >= 85) return 'Altamente recomendado';
-        if (compatibilidadeNumero >= 65) return 'Muito compatível';
-        if (compatibilidadeNumero >= 45) return 'Compatível';
-        return 'Sugestão complementar';
-    }
-  }
-
-  String get motivoPrincipalSeguro {
-    final motivo = motivoPrincipal?.trim();
-    if (motivo != null && motivo.isNotEmpty) return motivo;
-    if (motivos.isNotEmpty) return motivos.first;
-    if (tipoEventoCompativel) return 'Atende o tipo de evento selecionado';
-    if (categoriaPrincipal != null && categoriaPrincipal!.trim().isNotEmpty) {
-      return 'Categoria compatível com seu evento';
-    }
-    return 'Fornecedor recomendado para análise';
-  }
-
-  List<String> get motivosVisiveis {
-    final principal = motivoPrincipalSeguro.trim();
-    final lista = <String>[principal];
-
-    for (final motivo in motivos) {
-      final item = motivo.trim();
-      if (item.isEmpty) continue;
-      if (lista.any((e) => e.toLowerCase() == item.toLowerCase())) continue;
-      lista.add(item);
-    }
-
-    return lista.take(4).toList(growable: false);
-  }
-
-  String get avaliacaoTexto {
-    if (totalAvaliacoes <= 0 || mediaAvaliacoes <= 0) {
-      return 'Sem avaliações';
-    }
-
-    return '${mediaAvaliacoes.toStringAsFixed(1)} ($totalAvaliacoes)';
-  }
-
-  String get distanciaTexto {
-    if (distanciaKm == null) return '';
-    if (distanciaKm! < 1) {
-      return '${(distanciaKm! * 1000).round()} m';
-    }
-    return '${distanciaKm!.toStringAsFixed(1)} km';
-  }
-
-  String get tiposEventoTexto {
-    if (tipoEventoNomes.isEmpty) return '';
-    return tipoEventoNomes.take(3).join(' • ');
-  }
-
-  bool get altaCompatibilidade => compatibilidadeNumero >= 85;
-
-  bool get boaCompatibilidade => compatibilidadeNumero >= 65;
-
-  bool get baixaCompatibilidade => compatibilidadeNumero < 45;
 }

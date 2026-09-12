@@ -2,9 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_controller.dart';
-import 'package:app_faca_festa/data/models/evento/tema_festa_model.dart';
+import 'package:app_faca_festa/domain/entities/tema_festa.dart';
 import 'package:app_faca_festa/domain/repositories/tema_festa_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_temas_festa.dart';
+import 'package:app_faca_festa/presentation/modules/tema/tema_festa_view_model.dart';
 
 void main() {
   late _TemaFestaRepositoryFake repository;
@@ -75,12 +76,12 @@ void main() {
   });
 }
 
-TemaFestaModel _tema({
+TemaFestaViewModel _tema({
   required String id,
   required String nome,
   int ordem = 0,
 }) {
-  return TemaFestaModel(
+  return TemaFestaViewModel(
     idTema: id,
     slug: id,
     nome: nome,
@@ -93,29 +94,29 @@ TemaFestaModel _tema({
 class _TemaFestaRepositoryFake implements TemaFestaRepository {
   var carregarChamadas = 0;
   final buscas = <String>[];
-  final salvos = <TemaFestaModel>[];
+  final salvos = <TemaFesta>[];
   final excluidos = <String>[];
   final capasRemovidas = <String>[];
   final populacoes = <_PopulacaoTemas>[];
 
-  List<TemaFestaModel> temasCarregados = const [];
-  TemaFestaModel? temaBuscado;
+  List<TemaFesta> temasCarregados = const [];
+  TemaFesta? temaBuscado;
   String? capaEnviadaUrl = 'https://example.com/capa.jpg';
 
   @override
-  Future<List<TemaFestaModel>> carregar() async {
+  Future<List<TemaFesta>> carregar() async {
     carregarChamadas++;
     return temasCarregados;
   }
 
   @override
-  Future<TemaFestaModel?> buscarPorId(String idTema) async {
+  Future<TemaFesta?> buscarPorId(String idTema) async {
     buscas.add(idTema);
     return temaBuscado;
   }
 
   @override
-  Future<void> salvar(TemaFestaModel tema) async {
+  Future<void> salvar(TemaFesta tema) async {
     salvos.add(tema);
   }
 
@@ -139,8 +140,8 @@ class _TemaFestaRepositoryFake implements TemaFestaRepository {
 
   @override
   Future<void> popularTemasIniciais({
-    required List<TemaFestaModel> temasIniciais,
-    required List<TemaFestaModel> temasExistentes,
+    required List<TemaFesta> temasIniciais,
+    required List<TemaFesta> temasExistentes,
   }) async {
     populacoes.add(
       _PopulacaoTemas(
@@ -157,6 +158,6 @@ class _PopulacaoTemas {
     required this.temasExistentes,
   });
 
-  final List<TemaFestaModel> temasIniciais;
-  final List<TemaFestaModel> temasExistentes;
+  final List<TemaFesta> temasIniciais;
+  final List<TemaFesta> temasExistentes;
 }

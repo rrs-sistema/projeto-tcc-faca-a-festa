@@ -1,4 +1,4 @@
-import '../../domain/repositories/foto_perfil_repository.dart';
+import 'package:app_faca_festa/domain/repositories/foto_perfil_repository.dart';
 import '../datasources/remote/foto_perfil_remote_datasource.dart';
 
 class FotoPerfilRepositoryImpl implements FotoPerfilRepository {

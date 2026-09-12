@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/eventos_admin_remote_datasource.dart';
-import '../../data/repositories_impl/eventos_admin_repository_impl.dart';
-import '../../domain/repositories/eventos_admin_repository.dart';
-import '../../domain/usecases/gerenciar_eventos_admin.dart';
-import '../../presentation/modules/admin/controllers/eventos_admin_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/eventos_admin_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/eventos_admin_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/eventos_admin_repository.dart';
+import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_eventos_admin.dart';
+import 'package:app_faca_festa/presentation/modules/admin/controllers/eventos_admin_controller.dart';
 
 class EventosAdminBootstrap {
   EventosAdminBootstrap._();
@@ -38,7 +39,15 @@ class EventosAdminBootstrap {
 
     if (!Get.isRegistered<EventosAdminController>()) {
       Get.put(
-        EventosAdminController(eventosAdmin: Get.find<GerenciarEventosAdmin>()),
+        EventosAdminController(
+          eventosAdmin: Get.find<GerenciarEventosAdmin>(),
+          auditoria: Get.isRegistered<AuditoriaRegistrar>()
+              ? Get.find<AuditoriaRegistrar>()
+              : const AuditoriaRegistrarVazio(),
+          auditoriaResolver: () => Get.isRegistered<AuditoriaRegistrar>()
+              ? Get.find<AuditoriaRegistrar>()
+              : null,
+        ),
         permanent: true,
       );
     }

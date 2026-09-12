@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/admin/controllers/orcamentos_admin_controller.dart';
-import 'package:app_faca_festa/data/models/admin/orcamento_admin_model.dart';
+import 'package:app_faca_festa/domain/entities/orcamento_admin.dart';
 import 'package:app_faca_festa/domain/repositories/orcamentos_admin_repository.dart';
 import 'package:app_faca_festa/domain/usecases/carregar_orcamentos_admin.dart';
 
@@ -80,14 +80,14 @@ void main() {
   });
 }
 
-OrcamentoAdminModel _orcamento({
+OrcamentoAdmin _orcamento({
   required String id,
   required String eventoNome,
   required String categoria,
   String cidade = 'Maringa',
   String status = 'Pendente',
 }) {
-  return OrcamentoAdminModel(
+  return OrcamentoAdmin(
     id: id,
     eventoNome: eventoNome,
     tipoEvento: 'Casamento',
@@ -102,11 +102,11 @@ OrcamentoAdminModel _orcamento({
 }
 
 class _OrcamentosAdminRepositoryFake implements OrcamentosAdminRepository {
-  List<OrcamentoAdminModel> orcamentos = [];
+  List<OrcamentoAdmin> orcamentos = [];
   Object? error;
 
   @override
-  Future<List<OrcamentoAdminModel>> listarOrcamentosComEventoDetalhes() async {
+  Future<List<OrcamentoAdmin>> listarOrcamentosComEventoDetalhes() async {
     final currentError = error;
     if (currentError != null) throw currentError;
     return orcamentos;

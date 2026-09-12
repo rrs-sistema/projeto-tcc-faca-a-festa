@@ -3,8 +3,8 @@ import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcate
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/servico_produto/categoria_servico_model.dart';
-import 'package:app_faca_festa/data/models/servico_produto/subcategoria_servico_model.dart';
+import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
+import 'package:app_faca_festa/domain/entities/subcategoria_servico.dart';
 import 'package:app_faca_festa/domain/repositories/catalogo_servico_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_catalogo_servico.dart';
 
@@ -24,13 +24,13 @@ void main() {
       () async {
     final controller = CategoriaServicoController(catalogo: catalogo);
     repository.categorias = [
-      CategoriaServicoModel(
+      const CategoriaServico(
         id: 'buffet',
         nome: 'Buffet',
         descricao: 'Comidas e bebidas',
         ordem: 2,
       ),
-      CategoriaServicoModel(
+      const CategoriaServico(
         id: 'decoracao',
         nome: 'Decoração',
         ativo: false,
@@ -52,19 +52,19 @@ void main() {
       () async {
     final controller = SubcategoriaServicoController(catalogo: catalogo);
     repository.subcategorias = [
-      SubcategoriaServicoModel(
+      const SubcategoriaServico(
         id: 'bolos',
         idCategoria: 'buffet',
         nome: 'Bolos',
         ordem: 2,
       ),
-      SubcategoriaServicoModel(
+      const SubcategoriaServico(
         id: 'doces',
         idCategoria: 'buffet',
         nome: 'Doces',
         ordem: 1,
       ),
-      SubcategoriaServicoModel(
+      const SubcategoriaServico(
         id: 'flores',
         idCategoria: 'decoracao',
         nome: 'Flores',
@@ -84,13 +84,13 @@ void main() {
 }
 
 class _CatalogoServicoRepositoryFake implements CatalogoServicoRepository {
-  List<CategoriaServicoModel> categorias = [];
-  List<SubcategoriaServicoModel> subcategorias = [];
+  List<CategoriaServico> categorias = [];
+  List<SubcategoriaServico> subcategorias = [];
   Map<String, int> contagemSubcategorias = {};
   Map<String, int> contagemServicos = {};
 
   @override
-  Future<List<CategoriaServicoModel>> listarCategorias() async => categorias;
+  Future<List<CategoriaServico>> listarCategorias() async => categorias;
 
   @override
   Future<Map<String, int>> contarSubcategoriasPorCategoria() async {
@@ -98,7 +98,7 @@ class _CatalogoServicoRepositoryFake implements CatalogoServicoRepository {
   }
 
   @override
-  Future<void> salvarCategoria(CategoriaServicoModel categoria) async {}
+  Future<void> salvarCategoria(CategoriaServico categoria) async {}
 
   @override
   Future<void> atualizarStatusCategoria(String idCategoria, bool ativo) async {}
@@ -112,7 +112,7 @@ class _CatalogoServicoRepositoryFake implements CatalogoServicoRepository {
   }
 
   @override
-  Future<List<SubcategoriaServicoModel>> listarSubcategorias({
+  Future<List<SubcategoriaServico>> listarSubcategorias({
     String? idCategoria,
   }) async {
     if (idCategoria == null || idCategoria.isEmpty) return subcategorias;
@@ -126,8 +126,7 @@ class _CatalogoServicoRepositoryFake implements CatalogoServicoRepository {
   }
 
   @override
-  Future<void> salvarSubcategoria(
-      SubcategoriaServicoModel subcategoria) async {}
+  Future<void> salvarSubcategoria(SubcategoriaServico subcategoria) async {}
 
   @override
   Future<void> atualizarStatusSubcategoria(

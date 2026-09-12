@@ -1,6 +1,6 @@
-import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import '../../data/models/servico_produto/fornecedor_produto_servico_model.dart';
-import '../../data/models/servico_produto/servico_produto_model.dart';
+import '../entities/fornecedor_servico_detalhado.dart';
+import '../entities/fornecedor_produto_servico.dart';
+import '../entities/servico_produto.dart';
 import '../repositories/servico_produto_repository.dart';
 
 class GerenciarServicosProduto {
@@ -8,27 +8,27 @@ class GerenciarServicosProduto {
 
   final ServicoProdutoRepository repository;
 
-  Future<List<ServicoProdutoModel>> listarServicos() {
+  Future<List<ServicoProduto>> listarServicos() {
     return repository.listarServicos();
   }
 
-  Future<List<ServicoProdutoModel>> listarServicosAtivos() {
+  Future<List<ServicoProduto>> listarServicosAtivos() {
     return repository.listarServicosAtivos();
   }
 
-  Future<List<ServicoProdutoModel>> listarServicosAtivosPorSubcategoria(
+  Future<List<ServicoProduto>> listarServicosAtivosPorSubcategoria(
     String idSubcategoria,
   ) {
     return repository.listarServicosAtivosPorSubcategoria(idSubcategoria);
   }
 
-  Future<List<ServicoProdutoModel>> listarServicosAtivosPorCategoriasFornecedor(
+  Future<List<ServicoProduto>> listarServicosAtivosPorCategoriasFornecedor(
     String idFornecedor,
   ) {
     return repository.listarServicosAtivosPorCategoriasFornecedor(idFornecedor);
   }
 
-  Future<List<FornecedorServicoDetalhadoDto>> listarServicosComDetalhes({
+  Future<List<FornecedorServicoDetalhado>> listarServicosComDetalhes({
     String? idFornecedor,
   }) {
     return repository.listarServicosComDetalhes(idFornecedor: idFornecedor);
@@ -38,7 +38,7 @@ class GerenciarServicosProduto {
     return repository.excluirServico(id);
   }
 
-  Future<void> salvarServico(ServicoProdutoModel servico) {
+  Future<void> salvarServico(ServicoProduto servico) {
     return repository.salvarServico(servico);
   }
 
@@ -70,7 +70,7 @@ class GerenciarServicosProduto {
     );
   }
 
-  Future<void> salvarVinculo(FornecedorProdutoServicoModel vinculo) {
+  Future<void> salvarVinculo(FornecedorProdutoServico vinculo) {
     return repository.salvarVinculo(vinculo);
   }
 

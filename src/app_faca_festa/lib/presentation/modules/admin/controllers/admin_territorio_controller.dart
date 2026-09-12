@@ -2,7 +2,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/model.dart';
+import 'package:app_faca_festa/domain/entities/territorio.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_admin_territorios.dart';
 
 class AdminTerritorioController extends GetxController {
@@ -13,7 +13,7 @@ class AdminTerritorioController extends GetxController {
   final GerenciarAdminTerritorios _territoriosAdmin;
 
   final mapController = MapController();
-  final territorios = <TerritorioModel>[].obs;
+  final territorios = <Territorio>[].obs;
 
   Future<void> carregarTerritorios() async {
     try {
@@ -23,7 +23,7 @@ class AdminTerritorioController extends GetxController {
     }
   }
 
-  Future<void> toggleAtivo(TerritorioModel t, bool ativo) async {
+  Future<void> toggleAtivo(Territorio t, bool ativo) async {
     await _territoriosAdmin.atualizarAtivo(t.idTerritorio, ativo);
     _mostrarSnackbar(
       ativo ? "Ativado" : "Desativado",
@@ -34,7 +34,7 @@ class AdminTerritorioController extends GetxController {
     await carregarTerritorios();
   }
 
-  Future<void> salvarTerritorio(TerritorioModel t) async {
+  Future<void> salvarTerritorio(Territorio t) async {
     await _territoriosAdmin.salvarTerritorio(t);
     await carregarTerritorios();
     _mostrarSnackbar(

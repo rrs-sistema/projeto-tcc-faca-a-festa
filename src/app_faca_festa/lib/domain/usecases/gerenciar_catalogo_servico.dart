@@ -1,5 +1,5 @@
-import '../../data/models/servico_produto/categoria_servico_model.dart';
-import '../../data/models/servico_produto/subcategoria_servico_model.dart';
+import '../entities/categoria_servico.dart';
+import '../entities/subcategoria_servico.dart';
 import '../repositories/catalogo_servico_repository.dart';
 
 class GerenciarCatalogoServico {
@@ -7,7 +7,7 @@ class GerenciarCatalogoServico {
 
   final CatalogoServicoRepository repository;
 
-  Future<List<CategoriaServicoModel>> listarCategorias() {
+  Future<List<CategoriaServico>> listarCategorias() {
     return repository.listarCategorias();
   }
 
@@ -15,7 +15,7 @@ class GerenciarCatalogoServico {
     return repository.contarSubcategoriasPorCategoria();
   }
 
-  Future<void> salvarCategoria(CategoriaServicoModel categoria) {
+  Future<void> salvarCategoria(CategoriaServico categoria) {
     return repository.salvarCategoria(categoria);
   }
 
@@ -31,7 +31,7 @@ class GerenciarCatalogoServico {
     return repository.popularCatalogoInicial();
   }
 
-  Future<List<SubcategoriaServicoModel>> listarSubcategorias({
+  Future<List<SubcategoriaServico>> listarSubcategorias({
     String? idCategoria,
   }) {
     return repository.listarSubcategorias(idCategoria: idCategoria);
@@ -41,7 +41,7 @@ class GerenciarCatalogoServico {
     return repository.contarServicosPorSubcategoria(ids);
   }
 
-  Future<void> salvarSubcategoria(SubcategoriaServicoModel subcategoria) {
+  Future<void> salvarSubcategoria(SubcategoriaServico subcategoria) {
     return repository.salvarSubcategoria(subcategoria);
   }
 

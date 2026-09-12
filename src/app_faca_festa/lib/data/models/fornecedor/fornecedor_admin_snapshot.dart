@@ -4,25 +4,27 @@ import '../servico_produto/fornecedor_categoria_model.dart';
 import '../servico_produto/fornecedor_produto_servico_model.dart';
 import '../servico_produto/subcategoria_servico_model.dart';
 import 'fornecedor_model.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_admin_snapshot.dart'
+    as domain;
 
-class FornecedorAdminSnapshot {
+export 'package:app_faca_festa/domain/entities/fornecedor_admin_snapshot.dart';
+
+class FornecedorAdminSnapshot extends domain.FornecedorAdminSnapshot {
   const FornecedorAdminSnapshot({
-    required this.fornecedores,
-    required this.enderecos,
-    required this.categoriasFornecedor,
-    required this.categoriasServico,
-    required this.categorias,
-    required this.subcategoriasServico,
-    required this.subcategorias,
-    required this.servicosFornecedor,
-  });
-
-  final List<FornecedorModel> fornecedores;
-  final List<EnderecoUsuarioModel> enderecos;
-  final List<FornecedorCategoriaModel> categoriasFornecedor;
-  final List<Map<String, dynamic>> categoriasServico;
-  final List<CategoriaServicoModel> categorias;
-  final List<Map<String, dynamic>> subcategoriasServico;
-  final List<SubcategoriaServicoModel> subcategorias;
-  final List<FornecedorProdutoServicoModel> servicosFornecedor;
+    required List<FornecedorModel> fornecedores,
+    required List<EnderecoUsuarioModel> enderecos,
+    required List<FornecedorCategoriaModel> categoriasFornecedor,
+    required super.categoriasServico,
+    required List<CategoriaServicoModel> categorias,
+    required super.subcategoriasServico,
+    required List<SubcategoriaServicoModel> subcategorias,
+    required List<FornecedorProdutoServicoModel> servicosFornecedor,
+  }) : super(
+          fornecedores: fornecedores,
+          enderecos: enderecos,
+          categoriasFornecedor: categoriasFornecedor,
+          categorias: categorias,
+          subcategorias: subcategorias,
+          servicosFornecedor: servicosFornecedor,
+        );
 }

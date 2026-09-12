@@ -4,51 +4,94 @@ import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import 'package:app_faca_festa/app/bootstrap/avaliacao_servico_bootstrap.dart';
-import 'package:app_faca_festa/app/bootstrap/auditoria_bootstrap.dart';
-import 'package:app_faca_festa/app/bootstrap/cotacao_bootstrap.dart';
-import 'package:app_faca_festa/app/bootstrap/orcamento_bootstrap.dart';
-import 'package:app_faca_festa/app/bootstrap/servico_produto_bootstrap.dart';
 import 'package:app_faca_festa/core/utils/convite_link.dart';
-import 'package:app_faca_festa/data/models/DTO/servico_cotado_dto.dart';
-import 'package:app_faca_festa/data/models/model.dart';
-import 'package:app_faca_festa/data/services/convite/abrir_convite_por_token_service.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
+import 'package:app_faca_festa/domain/entities/convidado.dart';
+import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
+import 'package:app_faca_festa/data/models/evento/evento_model.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/servico_cotado.dart';
+import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import 'package:app_faca_festa/domain/repositories/convite_convidado_repository.dart';
 import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dart';
 import 'package:app_faca_festa/domain/repositories/push_token_repository.dart';
+import 'package:app_faca_festa/domain/services/abrir_convite_por_token.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_documentos.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
-import 'package:app_faca_festa/presentation/modules/convidado/controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_produto_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_controller.dart';
-import 'package:app_faca_festa/presentation/pages/admin/admin_dashboard_screen.dart';
-import 'package:app_faca_festa/presentation/pages/convidado/area/area_convidado_home_screen.dart';
-import 'package:app_faca_festa/presentation/pages/convidado/convite_nao_encontrado_screen.dart';
-import 'package:app_faca_festa/presentation/pages/fornecedor/fornecedor_aguardando_aprovacao_screen.dart';
-import 'package:app_faca_festa/presentation/pages/fornecedor/fornecedor_home_screen.dart';
-import 'package:app_faca_festa/presentation/pages/home_event_screen.dart';
-import 'package:app_faca_festa/presentation/pages/welcome/welcome_event_screen.dart';
+
+class _DestinoRota {
+  const _DestinoRota(this.nome, [this.argumentos]);
+
+  final String nome;
+  final Map<String, dynamic>? argumentos;
+}
 
 class AppController extends GetxController {
+  AppController({
+    GetStorage? storage,
+    required this.conviteConvidadoRepository,
+    required this.autenticacaoRepository,
+    required this.perfilUsuarioRepository,
+    required this.pushTokenRepository,
+    required this.documentos,
+    required this.fornecedores,
+    required AbrirConvitePorToken abrirConvitePorTokenService,
+    required this.convidadoController,
+    required this.eventoController,
+    required this.orcamentoController,
+    required this.cotacaoController,
+    required this.fornecedorController,
+    required this.tarefaController,
+    required this.avaliacaoController,
+    required this.servicoController,
+    required this.themeController,
+    GerenciarAuditoria? auditoria,
+    GerenciarAuditoria? Function()? auditoriaResolver,
+    OrcamentoGastoController? orcamentoGastoController,
+    OrcamentoGastoController? Function()? orcamentoGastoControllerResolver,
+    FornecedorLocalizacaoController? fornecedorLocalizacaoController,
+    FornecedorLocalizacaoController? Function()?
+        fornecedorLocalizacaoControllerResolver,
+    InspiracaoController? inspiracaoController,
+    InspiracaoController? Function()? inspiracaoControllerResolver,
+    UsuarioController? usuarioController,
+    UsuarioController? Function()? usuarioControllerResolver,
+  })  : _storage = storage ?? GetStorage(),
+        _abrirConvitePorTokenService = abrirConvitePorTokenService,
+        _auditoria = auditoria,
+        _auditoriaResolver = auditoriaResolver,
+        _orcamentoGastoController = orcamentoGastoController,
+        _orcamentoGastoControllerResolver = orcamentoGastoControllerResolver,
+        _fornecedorLocalizacaoController = fornecedorLocalizacaoController,
+        _fornecedorLocalizacaoControllerResolver =
+            fornecedorLocalizacaoControllerResolver,
+        _inspiracaoController = inspiracaoController,
+        _inspiracaoControllerResolver = inspiracaoControllerResolver,
+        _usuarioController = usuarioController,
+        _usuarioControllerResolver = usuarioControllerResolver;
+
   // Estado reativo do usuário
-  final Rx<UsuarioModel?> usuarioLogado = Rx<UsuarioModel?>(null);
-  final Rx<EnderecoUsuarioModel?> enderecoPrincipal =
-      Rx<EnderecoUsuarioModel?>(null);
-  final RxList<EnderecoUsuarioModel> enderecosUsuario =
-      <EnderecoUsuarioModel>[].obs;
+  final Rx<Usuario?> usuarioLogado = Rx<Usuario?>(null);
+  final Rx<EnderecoUsuario?> enderecoPrincipal = Rx<EnderecoUsuario?>(null);
+  final RxList<EnderecoUsuario> enderecosUsuario = <EnderecoUsuario>[].obs;
 
   /// 🔹 Lista global de serviços selecionados para cotação
-  final RxList<ServicoCotadoDto> servicosSelecionados =
-      <ServicoCotadoDto>[].obs;
+  final RxList<ServicoCotado> servicosSelecionados = <ServicoCotado>[].obs;
 
   final RxBool contaIncompleta = false.obs;
   bool conviteProcessado = false;
@@ -68,25 +111,36 @@ class AppController extends GetxController {
   static const String _chaveLoginMetodo = 'login_metodo';
   static const String _metodoSenha = 'senha';
   static const String _metodoGoogle = 'google';
-  final GetStorage _storage = GetStorage();
-  final conviteConvidadoRepository = Get.find<ConviteConvidadoRepository>();
-  final autenticacaoRepository = Get.find<AutenticacaoRepository>();
-  final perfilUsuarioRepository = Get.find<PerfilUsuarioRepository>();
-  final pushTokenRepository = Get.find<PushTokenRepository>();
-  final documentos = Get.find<GerenciarDocumentos>();
-  final fornecedores = Get.find<GerenciarFornecedores>();
-  final _abrirConvitePorTokenService = Get.find<AbrirConvitePorTokenService>();
+  final GetStorage _storage;
+  final ConviteConvidadoRepository conviteConvidadoRepository;
+  final AutenticacaoRepository autenticacaoRepository;
+  final PerfilUsuarioRepository perfilUsuarioRepository;
+  final PushTokenRepository pushTokenRepository;
+  final GerenciarDocumentos documentos;
+  final GerenciarFornecedores fornecedores;
+  final AbrirConvitePorToken _abrirConvitePorTokenService;
 
   // ✅ Injeção de controladores auxiliares
-  final convidadoController = Get.find<ConvidadoController>();
-  final eventoController = Get.find<EventoController>();
-  final orcamentoController = OrcamentoBootstrap.findController();
-  final cotacaoController = CotacaoBootstrap.findController();
-  final fornecedorController = Get.find<FornecedorController>();
-  final tarefaController = Get.find<TarefaController>();
-  final avaliacaoController = AvaliacaoServicoBootstrap.findController();
-  final servicoController = ServicoProdutoBootstrap.findController();
-  final themeController = Get.find<EventThemeController>();
+  final ConvidadoController convidadoController;
+  final EventoController eventoController;
+  final OrcamentoController orcamentoController;
+  final CotacaoController cotacaoController;
+  final FornecedorController fornecedorController;
+  final TarefaController tarefaController;
+  final AvaliacaoServicoController avaliacaoController;
+  final ServicoProdutoController servicoController;
+  final EventThemeController themeController;
+  final GerenciarAuditoria? _auditoria;
+  final GerenciarAuditoria? Function()? _auditoriaResolver;
+  final OrcamentoGastoController? _orcamentoGastoController;
+  final OrcamentoGastoController? Function()? _orcamentoGastoControllerResolver;
+  final FornecedorLocalizacaoController? _fornecedorLocalizacaoController;
+  final FornecedorLocalizacaoController? Function()?
+      _fornecedorLocalizacaoControllerResolver;
+  final InspiracaoController? _inspiracaoController;
+  final InspiracaoController? Function()? _inspiracaoControllerResolver;
+  final UsuarioController? _usuarioController;
+  final UsuarioController? Function()? _usuarioControllerResolver;
 
   @override
   void onInit() {
@@ -106,7 +160,7 @@ class AppController extends GetxController {
   // ------------------------------------------------------------
   // 🔹 Carrega usuário logado e endereço principal
   // ------------------------------------------------------------
-  Future<UsuarioModel?> prepararUsuarioComEndereco() async {
+  Future<Usuario?> prepararUsuarioComEndereco() async {
     try {
       final idUsuario = autenticacaoRepository.idUsuarioAtual;
       if (idUsuario == null) return null;
@@ -149,12 +203,8 @@ class AppController extends GetxController {
   void abrirHomeOrganizador() {
     carregando.value = false;
     if (Get.currentRoute == '/HomeEventScreen') return;
-    Get.offAll(
-      () => const HomeEventScreen(),
-      routeName: '/HomeEventScreen',
-      transition: Transition.fadeIn,
-      duration: const Duration(milliseconds: 450),
-    );
+    _validarDependenciasHomeEvent();
+    Get.offAllNamed('/HomeEventScreen');
   }
 
   void iniciarSessao() {
@@ -267,7 +317,7 @@ class AppController extends GetxController {
           throw Exception('Usuário não encontrado no Firestore.');
         }
 
-        final usuarioTotp = UsuarioModel.fromEntity(perfil.usuario);
+        final usuarioTotp = perfil.usuario;
         if (usuarioTotp.ativo == false) {
           carregando.value = false;
           Get.snackbar(
@@ -302,7 +352,7 @@ class AppController extends GetxController {
         final usuario = _aplicarPerfil(perfil);
         themeController.definirPapelSessao(usuario.tipo);
 
-        Widget destino;
+        _DestinoRota destino;
 
         // ----------------------------------------------------------
         // 🔹 Lógica de roteamento por tipo de usuário
@@ -319,7 +369,8 @@ class AppController extends GetxController {
           case 'A': // 🛠️ Administrador
             themeController.aplicarTemaProduto();
             servicoController.carregarServicosComDetalhesOtimizado();
-            destino = const AdminDashboardScreen();
+            _validarDependenciasAdminDashboard();
+            destino = const _DestinoRota('/admin');
             break;
 
           default: // 🎉 Organizador
@@ -330,14 +381,15 @@ class AppController extends GetxController {
               debugPrint(
                   '🔹 Evento ativo: ${evento.nomeEvento} (${evento.idEvento})');
               cotacaoController.ouvirMinhasCotacoes();
-              destino = HomeEventScreen();
+              _validarDependenciasHomeEvent();
+              destino = const _DestinoRota('/HomeEventScreen');
             } else {
               contaIncompleta.value = true;
               if (Get.currentRoute == '/welcome') {
                 carregando.value = false;
                 return;
               }
-              destino = const WelcomeEventScreen();
+              destino = const _DestinoRota('/welcome');
             }
             break;
         }
@@ -348,12 +400,7 @@ class AppController extends GetxController {
             _usuarioJaNavegandoNaApp(rotaDepois)) {
           return;
         }
-        Get.offAll(
-          () => destino,
-          routeName: _nomeRotaDestino(destino),
-          transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 550),
-        );
+        Get.offAllNamed(destino.nome, arguments: destino.argumentos);
       } catch (e, s) {
         carregando.value = false;
         debugPrint('❌ Erro ao validar sessão: $e\n$s');
@@ -471,7 +518,7 @@ class AppController extends GetxController {
       }
 
       final resultado = await _abrirConvitePorTokenService.abrir(token);
-      final convidado = ConvidadoModel.fromMap(resultado.convidado);
+      final convidado = Convidado.fromMap(resultado.convidado);
       final evento = EventoModel.fromMap(resultado.evento);
       if (convidado.idConvidado.isEmpty || evento.idEvento.isEmpty) {
         throw const AbrirConvitePorTokenException('not-found');
@@ -488,11 +535,12 @@ class AppController extends GetxController {
       conviteTokenProcessado = token;
       convidadoController.convidadoAtual.value = convidado;
 
-      Get.offAll(
-        () => AreaConvidadoHomeScreen(convidado: convidado, evento: evento),
-        routeName: '/areaconvidado',
-        transition: Transition.fadeIn,
-        duration: const Duration(milliseconds: 550),
+      Get.offAllNamed(
+        '/areaconvidado',
+        arguments: {
+          'convidado': convidado,
+          'evento': evento,
+        },
       );
     } on AutenticacaoException catch (e) {
       acessoPorLink.value = false;
@@ -516,18 +564,13 @@ class AppController extends GetxController {
 
   /// Usado também pelo cadastro: depois de criar uma conta do tipo convidado,
   /// vincula convites pendentes pelo token e/ou pelo e-mail do usuário.
-  Future<void> redirecionarConvidadoAposLogin(UsuarioModel usuario,
+  Future<void> redirecionarConvidadoAposLogin(Usuario usuario,
       {String? token}) async {
     carregando.value = true;
     try {
       final destino = await _resolverDestinoConvidado(usuario, token: token);
       carregando.value = false;
-      Get.offAll(
-        () => destino,
-        routeName: _nomeRotaDestino(destino),
-        transition: Transition.fadeIn,
-        duration: const Duration(milliseconds: 550),
-      );
+      Get.offAllNamed(destino.nome, arguments: destino.argumentos);
     } catch (e, s) {
       carregando.value = false;
       debugPrint('$_logTag Erro ao redirecionar convidado: $e\n$s');
@@ -535,7 +578,7 @@ class AppController extends GetxController {
     }
   }
 
-  Future<Widget> _resolverDestinoConvidado(UsuarioModel usuario,
+  Future<_DestinoRota> _resolverDestinoConvidado(Usuario usuario,
       {String? token}) async {
     final tokenLimpo = (token ?? _tokenConviteAtual() ?? '').trim();
     final email = usuario.email.trim();
@@ -564,7 +607,7 @@ class AppController extends GetxController {
 
     if (convidado == null) {
       debugPrint('$_logTag Nenhum convite encontrado para ${usuario.email}.');
-      return const ConviteNaoEncontradoScreen();
+      return const _DestinoRota('/conviteNaoEncontrado');
     }
 
     final evento =
@@ -572,7 +615,7 @@ class AppController extends GetxController {
     if (evento == null) {
       debugPrint(
           '$_logTag Convite encontrado, mas evento não existe: ${convidado.idEvento}.');
-      return const ConviteNaoEncontradoScreen();
+      return const _DestinoRota('/conviteNaoEncontrado');
     }
 
     eventoController.eventoAtual.value = evento;
@@ -582,7 +625,13 @@ class AppController extends GetxController {
       fallbackNomeTipo: eventoController.tipoEventoAtualEntidade?.nome,
     );
 
-    return AreaConvidadoHomeScreen(convidado: convidado, evento: evento);
+    return _DestinoRota(
+      '/areaconvidado',
+      {
+        'convidado': convidado,
+        'evento': evento,
+      },
+    );
   }
 
   Future<Convidado?> _vincularConvitePorToken({
@@ -633,29 +682,29 @@ class AppController extends GetxController {
     );
   }
 
-  Future<Widget> _resolverDestinoFornecedor(String idUsuario) async {
+  Future<_DestinoRota> _resolverDestinoFornecedor(String idUsuario) async {
     final fornecedor = await fornecedores.buscarPorUsuario(idUsuario);
 
     if (fornecedor == null) {
       fornecedorController.fornecedor.value = null;
       fornecedorController.aptoParaOperar.value = false;
-      return const FornecedorAguardandoAprovacaoScreen();
+      return const _DestinoRota('/fornecedor');
     }
 
     fornecedorController.fornecedor.value = fornecedor;
     fornecedorController.aptoParaOperar.value = fornecedor.aptoParaOperar;
 
     if (!fornecedor.aptoParaOperar) {
-      return const FornecedorAguardandoAprovacaoScreen();
+      return const _DestinoRota('/fornecedor');
     }
 
     await _iniciarPainelOperacionalFornecedor(fornecedor);
     themeController.aplicarTemaProduto();
-    return const FornecedorHomeScreen();
+    return const _DestinoRota('/fornecedor');
   }
 
   Future<void> _iniciarPainelOperacionalFornecedor(
-    FornecedorModel fornecedor,
+    Fornecedor fornecedor,
   ) async {
     await atualizarFcmTokenFornecedor(fornecedor.idUsuario);
 
@@ -681,12 +730,7 @@ class AppController extends GetxController {
     try {
       final destino = await _resolverDestinoFornecedor(usuario.idUsuario);
       if (fornecedorController.aptoParaOperar.value) {
-        Get.offAll(
-          () => destino,
-          routeName: _nomeRotaDestino(destino),
-          transition: Transition.fadeIn,
-          duration: const Duration(milliseconds: 450),
-        );
+        Get.offAllNamed(destino.nome, arguments: destino.argumentos);
         return;
       }
 
@@ -749,9 +793,11 @@ class AppController extends GetxController {
 
   Future<void> _registrarLogoutAuditoria() async {
     try {
-      AuditoriaBootstrap.register();
+      final auditoria = _auditoria ?? _auditoriaResolver?.call();
+      if (auditoria == null) return;
+
       final usuario = usuarioLogado.value;
-      await Get.find<GerenciarAuditoria>().registrar(
+      await auditoria.registrar(
         RegistroAuditoria(
           acao: 'LOGOUT_REALIZADO',
           resumo: 'Logout realizado pelo usuário.',
@@ -778,35 +824,26 @@ class AppController extends GetxController {
     await cotacaoController.encerrarEscutas();
     fornecedorController.logoutFornecedor();
 
-    if (Get.isRegistered<OrcamentoGastoController>()) {
-      await Get.find<OrcamentoGastoController>().encerrarEscutas();
-    }
-    if (Get.isRegistered<FornecedorLocalizacaoController>()) {
-      await Get.find<FornecedorLocalizacaoController>().encerrarEscutas();
-    }
-    if (Get.isRegistered<InspiracaoController>()) {
-      await Get.find<InspiracaoController>().encerrarEscutas();
-    }
+    await _resolverOrcamentoGastoController()?.encerrarEscutas();
+    await _resolverFornecedorLocalizacaoController()?.encerrarEscutas();
+    await _resolverInspiracaoController()?.encerrarEscutas();
   }
 
   // ------------------------------------------------------------
   // 🔹 Usuários (CRUD básico)
   // ------------------------------------------------------------
-  Future<void> salvarUsuario(UsuarioModel usuario) async {
+  Future<void> salvarUsuario(Usuario usuario) async {
     await perfilUsuarioRepository.salvarUsuario(usuario);
     usuarioLogado.value = usuario;
   }
 
-  Future<UsuarioModel?> obterUsuario(String id) async {
-    final usuario = await perfilUsuarioRepository.buscarUsuario(id);
-    return usuario == null ? null : UsuarioModel.fromEntity(usuario);
+  Future<Usuario?> obterUsuario(String id) async {
+    return perfilUsuarioRepository.buscarUsuario(id);
   }
 
-  UsuarioModel _aplicarPerfil(PerfilUsuario perfil) {
-    final usuario = UsuarioModel.fromEntity(perfil.usuario);
-    final enderecos = perfil.enderecos
-        .map(EnderecoUsuarioModel.fromEntity)
-        .toList(growable: false);
+  Usuario _aplicarPerfil(PerfilUsuario perfil) {
+    final usuario = perfil.usuario;
+    final enderecos = perfil.enderecos;
 
     enderecosUsuario.assignAll(enderecos);
     if (enderecos.isEmpty) {
@@ -889,27 +926,63 @@ class AppController extends GetxController {
     return true;
   }
 
-  String? _nomeRotaDestino(Widget destino) {
-    if (destino is HomeEventScreen) return '/HomeEventScreen';
-    if (destino is WelcomeEventScreen) return '/welcome';
-    if (destino is FornecedorHomeScreen ||
-        destino is FornecedorAguardandoAprovacaoScreen) {
-      return '/fornecedor';
-    }
-    if (destino is AdminDashboardScreen) return '/admin';
-    if (destino is AreaConvidadoHomeScreen) return '/areaconvidado';
-    if (destino is ConviteNaoEncontradoScreen) return '/conviteNaoEncontrado';
-    return null;
-  }
-
   void _limparEstadoTotp() {
     totpVerificadoNestaSessao = false;
     _storage.remove(_chaveLoginMetodo);
   }
 
-  void _sincronizarUsuarioController(UsuarioModel usuario) {
-    if (!Get.isRegistered<UsuarioController>()) return;
-    Get.find<UsuarioController>().usuario.value = usuario;
+  void _sincronizarUsuarioController(Usuario usuario) {
+    final controller = _resolverUsuarioController();
+    if (controller == null) return;
+    controller.usuario.value = usuario;
+  }
+
+  OrcamentoGastoController? _resolverOrcamentoGastoController() {
+    if (_orcamentoGastoController != null) return _orcamentoGastoController;
+    return _orcamentoGastoControllerResolver?.call();
+  }
+
+  void _validarDependenciasHomeEvent() {
+    final fornecedorLocalizacao = _resolverFornecedorLocalizacaoController();
+    if (fornecedorLocalizacao == null) {
+      throw StateError('FornecedorLocalizacaoController não configurado.');
+    }
+    final inspiracao = _resolverInspiracaoController();
+    if (inspiracao == null) {
+      throw StateError('InspiracaoController não configurado.');
+    }
+    final usuario = _resolverUsuarioController();
+    if (usuario == null) {
+      throw StateError('UsuarioController não configurado.');
+    }
+  }
+
+  void _validarDependenciasAdminDashboard() {
+    final fornecedorLocalizacao = _resolverFornecedorLocalizacaoController();
+    if (fornecedorLocalizacao == null) {
+      throw StateError('FornecedorLocalizacaoController não configurado.');
+    }
+    final usuario = _resolverUsuarioController();
+    if (usuario == null) {
+      throw StateError('UsuarioController não configurado.');
+    }
+  }
+
+  FornecedorLocalizacaoController? _resolverFornecedorLocalizacaoController() {
+    if (_fornecedorLocalizacaoController != null) {
+      return _fornecedorLocalizacaoController;
+    }
+    return _fornecedorLocalizacaoControllerResolver?.call();
+  }
+
+  InspiracaoController? _resolverInspiracaoController() {
+    if (_inspiracaoController != null) return _inspiracaoController;
+    return _inspiracaoControllerResolver?.call();
+  }
+
+  UsuarioController? _resolverUsuarioController() {
+    if (_usuarioController != null) return _usuarioController;
+    return _usuarioControllerResolver?.call();
   }
 
   Future<void> atualizarFcmTokenFornecedor(String idFornecedor) async {
@@ -960,7 +1033,7 @@ class AppController extends GetxController {
   }
 
   /// 🔹 Adiciona serviço à lista (evita duplicatas)
-  void adicionarServico(ServicoCotadoDto servico) {
+  void adicionarServico(ServicoCotado servico) {
     if (!servicosSelecionados.any((s) => s.idProduto == servico.idProduto)) {
       servicosSelecionados.add(servico);
     }

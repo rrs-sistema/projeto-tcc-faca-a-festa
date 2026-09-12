@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-import '../../domain/repositories/cep_repository.dart';
+import 'package:app_faca_festa/domain/repositories/cep_repository.dart';
 
 class ViaCepRepositoryImpl implements CepRepository {
   ViaCepRepositoryImpl({http.Client? client})

@@ -1,53 +1,50 @@
-import 'dart:io';
-import 'dart:typed_data';
-
-import '../../data/models/evento/evento_model.dart';
-import '../../data/models/fornecedor/fornecedor_admin_snapshot.dart';
-import '../../data/models/fornecedor/fornecedor_estatisticas_model.dart';
-import '../../data/models/fornecedor/fornecedor_model.dart';
-import '../../data/models/servico_produto/fornecedor_categoria_model.dart';
-import '../../data/models/servico_produto/fornecedor_produto_servico_model.dart';
+import '../entities/evento.dart';
+import '../entities/fornecedor.dart';
+import '../entities/fornecedor_admin_snapshot.dart';
+import '../entities/fornecedor_categoria.dart';
+import '../entities/fornecedor_estatisticas.dart';
+import '../entities/fornecedor_produto_servico.dart';
 
 abstract interface class FornecedorRepository {
   Future<FornecedorAdminSnapshot> carregarSnapshotAdmin({
     required bool incluirEnderecos,
   });
 
-  Future<FornecedorModel?> buscarPorUsuario(String idUsuario);
+  Future<Fornecedor?> buscarPorUsuario(String idUsuario);
 
-  Future<FornecedorModel?> buscarPorIdUsuario(String idUsuario);
+  Future<Fornecedor?> buscarPorIdUsuario(String idUsuario);
 
-  Future<EventoModel?> buscarEventoPorId(String idEvento);
+  Future<Evento?> buscarEventoPorId(String idEvento);
 
-  Stream<FornecedorModel?> observarFornecedorAtivo(String idFornecedor);
+  Stream<Fornecedor?> observarFornecedorAtivo(String idFornecedor);
 
   Stream<int> observarMensagensNaoLidas(String idFornecedor);
 
   Stream<int> observarSolicitacoesPendentes(String idFornecedor);
 
-  Stream<List<FornecedorProdutoServicoModel>> observarServicosFornecedor(
+  Stream<List<FornecedorProdutoServico>> observarServicosFornecedor(
     String idFornecedor,
   );
 
-  Future<List<FornecedorProdutoServicoModel>> listarServicosPorEvento(
+  Future<List<FornecedorProdutoServico>> listarServicosPorEvento(
     String idEvento,
   );
 
-  Future<List<FornecedorModel>> listarFornecedoresDoEvento(String idEvento);
+  Future<List<Fornecedor>> listarFornecedoresDoEvento(String idEvento);
 
   Future<List<Map<String, dynamic>>> listarSolicitacoesPendentesDetalhadas(
     String idFornecedor,
   );
 
-  Future<FornecedorEstatisticasModel> carregarEstatisticas(
+  Future<FornecedorEstatisticas> carregarEstatisticas(
     String idFornecedor,
   );
 
-  Future<void> atualizarFornecedor(FornecedorModel fornecedor);
+  Future<void> atualizarFornecedor(Fornecedor fornecedor);
 
-  Future<void> salvarFornecedor(FornecedorModel fornecedor);
+  Future<void> salvarFornecedor(Fornecedor fornecedor);
 
-  Future<void> salvarCategoriaFornecedor(FornecedorCategoriaModel categoria);
+  Future<void> salvarCategoriaFornecedor(FornecedorCategoria categoria);
 
   Future<void> atualizarStatusAtivo({
     required String idFornecedor,
@@ -65,8 +62,8 @@ abstract interface class FornecedorRepository {
   });
 
   Future<String> uploadBanner({
-    required File imageFile,
-    Uint8List? bytesWeb,
+    required List<int> bytes,
+    required String nomeArquivo,
     required String uid,
   });
 

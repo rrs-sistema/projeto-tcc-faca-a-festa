@@ -4,7 +4,7 @@ import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicita
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/cotacao/cotacao_model.dart';
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/repositories/solicitacoes_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_solicitacoes.dart';
 
@@ -87,11 +87,11 @@ void main() {
   });
 }
 
-CotacaoModel _cotacao({
+Cotacao _cotacao({
   required String id,
   required DateTime dataCadastro,
 }) {
-  return CotacaoModel(
+  return Cotacao(
     id: id,
     idEvento: 'evento-1',
     idUsuarioSolicitante: 'usuario-1',
@@ -105,12 +105,12 @@ CotacaoModel _cotacao({
 }
 
 class _SolicitacoesRepositoryFake implements SolicitacoesRepository {
-  final _controller = StreamController<List<CotacaoModel>>();
+  final _controller = StreamController<List<Cotacao>>();
   final fornecedoresObservados = <String>[];
   final cancelamentos = <_Cancelamento>[];
   Object? cancelarError;
 
-  void emitir(List<CotacaoModel> solicitacoes) {
+  void emitir(List<Cotacao> solicitacoes) {
     _controller.add(solicitacoes);
   }
 
@@ -123,7 +123,7 @@ class _SolicitacoesRepositoryFake implements SolicitacoesRepository {
   }
 
   @override
-  Stream<List<CotacaoModel>> observarSolicitacoesFornecedor(
+  Stream<List<Cotacao>> observarSolicitacoesFornecedor(
     String idFornecedor,
   ) {
     fornecedoresObservados.add(idFornecedor);

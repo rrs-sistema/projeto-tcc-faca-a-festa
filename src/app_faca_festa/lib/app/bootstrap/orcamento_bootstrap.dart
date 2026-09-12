@@ -2,11 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/orcamento_remote_datasource.dart';
-import '../../data/repositories_impl/orcamento_repository_impl.dart';
-import '../../domain/repositories/orcamento_repository.dart';
-import '../../domain/usecases/gerenciar_orcamentos.dart';
-import '../../presentation/modules/orcamento/orcamento_controller.dart';
+import 'package:app_faca_festa/app/bootstrap/orcamento_gasto_bootstrap.dart';
+import 'package:app_faca_festa/data/datasources/remote/orcamento_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/orcamento_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/orcamento_repository.dart';
+import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_orcamentos.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
 
 class OrcamentoBootstrap {
   OrcamentoBootstrap._();
@@ -38,7 +41,17 @@ class OrcamentoBootstrap {
 
     if (!Get.isRegistered<OrcamentoController>()) {
       Get.put(
-        OrcamentoController(orcamentos: Get.find<GerenciarOrcamentos>()),
+        OrcamentoController(
+          orcamentos: Get.find<GerenciarOrcamentos>(),
+          auditoria: Get.isRegistered<AuditoriaRegistrar>()
+              ? Get.find<AuditoriaRegistrar>()
+              : const AuditoriaRegistrarVazio(),
+          eventoController: Get.isRegistered<EventoController>()
+              ? Get.find<EventoController>()
+              : null,
+          gastoControllerOf: (idOrcamento) =>
+              OrcamentoGastoBootstrap.putController(tag: idOrcamento),
+        ),
         permanent: true,
       );
     }

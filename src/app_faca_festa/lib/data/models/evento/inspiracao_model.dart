@@ -1,57 +1,75 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class InspiracaoModel {
-  final String id;
-  final String tipoEventoId;
-  final String tipoEvento;
-  final String tipoEventoNormalizado;
-  final String titulo;
-  final String descricao;
-  final String imagemUrl;
-  final List<String> tags;
-  final List<String> galeriaUrls;
-  final List<String> paletaCores;
-  final String? categoriaId;
-  final String? categoria;
-  final List<String> fornecedoresRelacionados;
-  final List<String> categoriasFornecedorSugeridas;
-  final List<Map<String, dynamic>> tarefasSugeridas;
-  final List<Map<String, dynamic>> itensOrcamentoSugeridos;
-  final String estilo;
-  final String faixaCusto;
-  final String nivelDificuldade;
-  final bool destaque;
-  final bool ativo;
-  final bool favorito;
-  final DateTime? criadoEm;
-  final DateTime? atualizadoEm;
+import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/referencia_evento.dart';
 
+export 'package:app_faca_festa/domain/entities/inspiracao.dart';
+export 'package:app_faca_festa/domain/entities/referencia_evento.dart';
+
+class InspiracaoModel extends Inspiracao {
   InspiracaoModel({
-    required this.id,
-    this.tipoEventoId = '',
-    this.tipoEvento = '',
-    this.tipoEventoNormalizado = '',
-    required this.titulo,
-    required this.descricao,
-    required this.imagemUrl,
-    this.tags = const [],
-    this.galeriaUrls = const [],
-    this.paletaCores = const [],
-    this.categoriaId,
-    this.categoria,
-    this.fornecedoresRelacionados = const [],
-    this.categoriasFornecedorSugeridas = const [],
-    this.tarefasSugeridas = const [],
-    this.itensOrcamentoSugeridos = const [],
-    this.estilo = '',
-    this.faixaCusto = '',
-    this.nivelDificuldade = '',
-    this.destaque = false,
-    this.ativo = true,
-    this.favorito = false,
-    this.criadoEm,
-    this.atualizadoEm,
+    required super.id,
+    super.tipoEventoId = '',
+    super.tipoEvento = '',
+    super.tipoEventoNormalizado = '',
+    required super.titulo,
+    required super.descricao,
+    required super.imagemUrl,
+    super.tags = const [],
+    super.galeriaUrls = const [],
+    super.paletaCores = const [],
+    super.categoriaId,
+    super.categoria,
+    super.fornecedoresRelacionados = const [],
+    super.categoriasFornecedorSugeridas = const [],
+    super.tarefasSugeridas = const [],
+    super.itensOrcamentoSugeridos = const [],
+    super.estilo = '',
+    super.faixaCusto = '',
+    super.nivelDificuldade = '',
+    super.destaque = false,
+    super.ativo = true,
+    super.favorito = false,
+    super.criadoEm,
+    super.atualizadoEm,
   });
+
+  factory InspiracaoModel.fromEntity(Inspiracao entity) {
+    if (entity is InspiracaoModel) return entity;
+
+    return InspiracaoModel(
+      id: entity.id,
+      tipoEventoId: entity.tipoEventoId,
+      tipoEvento: entity.tipoEvento,
+      tipoEventoNormalizado: entity.tipoEventoNormalizado,
+      titulo: entity.titulo,
+      descricao: entity.descricao,
+      imagemUrl: entity.imagemUrl,
+      tags: List<String>.from(entity.tags),
+      galeriaUrls: List<String>.from(entity.galeriaUrls),
+      paletaCores: List<String>.from(entity.paletaCores),
+      categoriaId: entity.categoriaId,
+      categoria: entity.categoria,
+      fornecedoresRelacionados:
+          List<String>.from(entity.fornecedoresRelacionados),
+      categoriasFornecedorSugeridas:
+          List<String>.from(entity.categoriasFornecedorSugeridas),
+      tarefasSugeridas: entity.tarefasSugeridas
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(),
+      itensOrcamentoSugeridos: entity.itensOrcamentoSugeridos
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList(),
+      estilo: entity.estilo,
+      faixaCusto: entity.faixaCusto,
+      nivelDificuldade: entity.nivelDificuldade,
+      destaque: entity.destaque,
+      ativo: entity.ativo,
+      favorito: entity.favorito,
+      criadoEm: entity.criadoEm,
+      atualizadoEm: entity.atualizadoEm,
+    );
+  }
 
   factory InspiracaoModel.fromFirestore(DocumentSnapshot doc) {
     final data = (doc.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
@@ -164,6 +182,7 @@ class InspiracaoModel {
     };
   }
 
+  @override
   InspiracaoModel copyWith({
     String? id,
     String? tipoEventoId,
@@ -258,52 +277,58 @@ class InspiracaoModel {
   }
 }
 
-class ReferenciaEventoModel {
-  final String id;
-  final String eventoId;
-  final String userId;
-  final String inspiracaoId;
-  final String titulo;
-  final String descricao;
-  final String imagemUrl;
-  final String categoriaId;
-  final String categoria;
-  final List<String> tags;
-  final List<String> galeriaUrls;
-  final List<String> paletaCores;
-  final bool favorito;
-  final String status;
-  final String prioridade;
-  final String origem;
-  final String anotacao;
-  final bool ativo;
-  final bool deletado;
-  final DateTime? criadoEm;
-  final DateTime? atualizadoEm;
-
+class ReferenciaEventoModel extends ReferenciaEvento {
   ReferenciaEventoModel({
-    required this.id,
-    required this.eventoId,
-    required this.userId,
-    required this.inspiracaoId,
-    required this.titulo,
-    required this.descricao,
-    required this.imagemUrl,
-    required this.categoriaId,
-    required this.categoria,
-    required this.tags,
-    required this.galeriaUrls,
-    required this.paletaCores,
-    required this.favorito,
-    required this.status,
-    required this.prioridade,
-    required this.origem,
-    required this.anotacao,
-    required this.ativo,
-    required this.deletado,
-    this.criadoEm,
-    this.atualizadoEm,
+    required super.id,
+    required super.eventoId,
+    required super.userId,
+    required super.inspiracaoId,
+    required super.titulo,
+    required super.descricao,
+    required super.imagemUrl,
+    required super.categoriaId,
+    required super.categoria,
+    required super.tags,
+    required super.galeriaUrls,
+    required super.paletaCores,
+    required super.favorito,
+    required super.status,
+    required super.prioridade,
+    required super.origem,
+    required super.anotacao,
+    required super.ativo,
+    required super.deletado,
+    super.criadoEm,
+    super.atualizadoEm,
   });
+
+  factory ReferenciaEventoModel.fromEntity(ReferenciaEvento entity) {
+    if (entity is ReferenciaEventoModel) return entity;
+
+    return ReferenciaEventoModel(
+      id: entity.id,
+      eventoId: entity.eventoId,
+      userId: entity.userId,
+      inspiracaoId: entity.inspiracaoId,
+      titulo: entity.titulo,
+      descricao: entity.descricao,
+      imagemUrl: entity.imagemUrl,
+      categoriaId: entity.categoriaId,
+      categoria: entity.categoria,
+      tags: List<String>.from(entity.tags),
+      galeriaUrls: List<String>.from(entity.galeriaUrls),
+      paletaCores: List<String>.from(entity.paletaCores),
+      favorito: entity.favorito,
+      status: entity.status,
+      prioridade: entity.prioridade,
+      origem: entity.origem,
+      anotacao: entity.anotacao,
+      ativo: entity.ativo,
+      deletado: entity.deletado,
+      criadoEm: entity.criadoEm,
+      atualizadoEm: entity.atualizadoEm,
+    );
+  }
 
   factory ReferenciaEventoModel.fromFirestore(
       DocumentSnapshot<Map<String, dynamic>> doc) {

@@ -7,9 +7,8 @@ import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart'
 
 class PasswordResetController extends GetxController {
   PasswordResetController({
-    AutenticacaoRepository? autenticacaoRepository,
-  }) : _autenticacaoRepository =
-            autenticacaoRepository ?? Get.find<AutenticacaoRepository>();
+    required AutenticacaoRepository autenticacaoRepository,
+  }) : _autenticacaoRepository = autenticacaoRepository;
 
   final AutenticacaoRepository _autenticacaoRepository;
 

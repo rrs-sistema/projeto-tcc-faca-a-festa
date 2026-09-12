@@ -1,28 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class FornecedorInteracaoModel {
-  final String id;
-  final String idUsuario;
-  final String idEvento;
-  final String idFornecedor;
-  final String acao;
-  final int peso;
-  final String? tipoEventoId;
-  final String? tipoEventoNome;
-  final String? cidade;
-  final DateTime? createdAt;
+import 'package:app_faca_festa/domain/entities/fornecedor_interacao.dart';
 
+export 'package:app_faca_festa/domain/entities/fornecedor_interacao.dart';
+
+class FornecedorInteracaoModel extends FornecedorInteracao {
   const FornecedorInteracaoModel({
-    required this.id,
-    required this.idUsuario,
-    required this.idEvento,
-    required this.idFornecedor,
-    required this.acao,
-    required this.peso,
-    this.tipoEventoId,
-    this.tipoEventoNome,
-    this.cidade,
-    this.createdAt,
+    required super.id,
+    required super.idUsuario,
+    required super.idEvento,
+    required super.idFornecedor,
+    required super.acao,
+    required super.peso,
+    super.tipoEventoId,
+    super.tipoEventoNome,
+    super.cidade,
+    super.createdAt,
   });
 
   factory FornecedorInteracaoModel.fromMap(

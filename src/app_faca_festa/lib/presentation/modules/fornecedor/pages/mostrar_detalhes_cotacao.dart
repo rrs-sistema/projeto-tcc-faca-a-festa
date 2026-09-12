@@ -1,0 +1,734 @@
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:get/get.dart';
+
+import 'package:app_faca_festa/core/utils/biblioteca.dart';
+import 'package:app_faca_festa/domain/entities/avaliacao.dart';
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
+import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/pages/enviar_avaliacao_dialog.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/pages/chat/chat_mensagens_page.dart';
+
+void mostrarDetalhesCotacao(
+  Cotacao cotacao, {
+  required FornecedorController fornecedorController,
+  required CotacaoController cotacaoController,
+  required GerenciarCotacoes cotacoes,
+  required EventThemeController theme,
+  required AvaliacaoServicoController avaliacaoController,
+  required AppController appController,
+  required EventoController eventoController,
+}) {
+  Get.bottomSheet(
+    _DetalhesCotacaoContent(
+      cotacao: cotacao,
+      fornecedorController: fornecedorController,
+      cotacaoController: cotacaoController,
+      cotacoes: cotacoes,
+      theme: theme,
+      avaliacaoController: avaliacaoController,
+      appController: appController,
+      eventoController: eventoController,
+    ),
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+  );
+}
+
+class _DetalhesCotacaoContent extends StatelessWidget {
+  final Cotacao cotacao;
+  final FornecedorController fornecedorController;
+  final CotacaoController cotacaoController;
+  final GerenciarCotacoes cotacoes;
+  final EventThemeController theme;
+  final AvaliacaoServicoController avaliacaoController;
+  final AppController appController;
+  final EventoController eventoController;
+
+  const _DetalhesCotacaoContent({
+    required this.cotacao,
+    required this.fornecedorController,
+    required this.cotacaoController,
+    required this.cotacoes,
+    required this.theme,
+    required this.avaliacaoController,
+    required this.appController,
+    required this.eventoController,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = theme.primaryColor.value;
+    final gradient = theme.gradient.value;
+    final icone = Biblioteca.iconePorCategoria(cotacao.categoriaNome);
+    final corIcone = Biblioteca.corPorCategoria(cotacao.categoriaNome);
+
+    return FractionallySizedBox(
+      heightFactor: 0.88, // 🔹 Padrão limpo anti-overflow
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding:
+                const EdgeInsets.only(top: 12, left: 16, right: 16, bottom: 16),
+            child: Column(
+              children: [
+                // 🔹 Drag Handle
+                Center(
+                  child: Container(
+                    width: 50,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                // 🔹 Cabeçalho padronizado (Igual aos formulários)
+                Row(
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        color: corIcone.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(icone, color: corIcone, size: 20),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            cotacao.categoriaNome?.isNotEmpty == true
+                                ? cotacao.categoriaNome!
+                                : "Detalhes da Cotação",
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w800, fontSize: 15),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            "Informações e respostas",
+                            style: GoogleFonts.poppins(
+                                color: Colors.grey.shade600, fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () => Get.back(),
+                      icon: const Icon(Icons.close, size: 20),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Divider(height: 1, color: Colors.grey.shade200),
+                const SizedBox(height: 14),
+
+                // 🔹 Área de Rolagem do Conteúdo
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // === CARD DE RESUMO (GRADIENTE) ===
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(14), // 🔹 Compacto
+                          decoration: BoxDecoration(
+                            gradient: gradient,
+                            borderRadius: BorderRadius.circular(14),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.black.withValues(alpha: 0.1),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 4))
+                            ],
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.work_outline_rounded,
+                                      color: Colors.white, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text("Status da Cotação",
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white)),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Text("Situação atual:",
+                                      style: GoogleFonts.poppins(
+                                          fontSize: 12, color: Colors.white)),
+                                  const SizedBox(width: 8),
+                                  _buildStatusBadge(cotacao.status,
+                                      invertColors: true),
+                                ],
+                              ),
+                              const SizedBox(height: 10),
+                              Divider(
+                                  color: Colors.white.withValues(alpha: 0.3),
+                                  thickness: 1,
+                                  height: 1),
+                              const SizedBox(height: 10),
+                              _linhaDetalhe(
+                                  Icons.calendar_month_rounded,
+                                  "Prazo:",
+                                  DateFormat("dd/MM/yy").format(
+                                      cotacao.dataLimiteResposta ??
+                                          DateTime.now())),
+                              const SizedBox(height: 6),
+                              _linhaDetalhe(
+                                  Icons.history_rounded,
+                                  "Enviada:",
+                                  DateFormat("dd/MM/yy HH:mm")
+                                      .format(cotacao.dataCadastro)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // === OBSERVAÇÃO ===
+                        if (cotacao.descricao?.isNotEmpty == true) ...[
+                          Row(
+                            children: [
+                              Icon(Icons.edit_note_rounded,
+                                  color: primary, size: 18),
+                              const SizedBox(width: 6),
+                              Text("Observações enviadas",
+                                  style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13,
+                                      color: Colors.grey.shade800)),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              border: Border.all(
+                                  color: primary.withValues(alpha: 0.15)),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              cotacao.descricao!,
+                              style: GoogleFonts.poppins(
+                                  fontSize: 12, color: Colors.grey.shade800),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
+
+                        // === FORNECEDORES ===
+                        Text("Fornecedores participantes",
+                            style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                                color: Colors.grey.shade800)),
+                        const SizedBox(height: 10),
+
+                        StreamBuilder<List<CotacaoFornecedorResumo>>(
+                          stream: cotacoes
+                              .observarFornecedoresDaCotacao(cotacao.id),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData) {
+                              return const Center(
+                                  child: CircularProgressIndicator(
+                                      strokeWidth: 2));
+                            }
+
+                            final docs = snapshot.data!;
+                            if (docs.isEmpty) {
+                              return Text("Nenhum fornecedor vinculado.",
+                                  style: GoogleFonts.poppins(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade600));
+                            }
+
+                            return Column(
+                              children: docs.map((data) {
+                                final idFornecedor = data.idFornecedor;
+                                final fornecedor = fornecedorController
+                                    .fornecedores
+                                    .firstWhereOrNull(
+                                        (f) => f.idFornecedor == idFornecedor);
+                                if (fornecedor == null) {
+                                  return const SizedBox.shrink();
+                                }
+
+                                final status = data.status;
+                                final corStatus =
+                                    _getFornecedorStatusColor(status);
+                                final textoStatus =
+                                    _getFornecedorStatusText(status);
+
+                                final temResposta = data.temResposta;
+
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(
+                                      12), // 🔹 Mais compacto
+                                  decoration: BoxDecoration(
+                                    color: corStatus.withValues(alpha: 0.03),
+                                    border: Border.all(
+                                        color:
+                                            corStatus.withValues(alpha: 0.2)),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      // 🔹 Cabeçalho do Fornecedor
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              fornecedor.razaoSocial,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: GoogleFonts.poppins(
+                                                  fontSize: 13,
+                                                  fontWeight: FontWeight.w700,
+                                                  color: Colors.grey.shade900),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 3),
+                                            decoration: BoxDecoration(
+                                                color: corStatus.withValues(
+                                                    alpha: 0.1),
+                                                borderRadius:
+                                                    BorderRadius.circular(8)),
+                                            child: Text(textoStatus,
+                                                style: GoogleFonts.poppins(
+                                                    fontSize: 10,
+                                                    color: corStatus,
+                                                    fontWeight:
+                                                        FontWeight.w700)),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+
+                                      // 🔹 Respostas
+                                      if (temResposta)
+                                        Container(
+                                          margin: const EdgeInsets.only(
+                                              top: 4, bottom: 8),
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.white,
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            border: Border.all(
+                                                color: Colors.grey.shade200),
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              if (data.observacaoFornecedor
+                                                  .trim()
+                                                  .isNotEmpty)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 6),
+                                                  child: Text(
+                                                      "Obs: ${data.observacaoFornecedor}",
+                                                      style:
+                                                          GoogleFonts.poppins(
+                                                              fontSize: 11.5,
+                                                              color: Colors.grey
+                                                                  .shade800)),
+                                                ),
+                                              if (data.prazoEntrega != null)
+                                                _linhaIconeMenor(
+                                                    Icons.timer_outlined,
+                                                    "Prazo: ${DateFormat("dd/MM/yy").format(data.prazoEntrega!)}"),
+                                              if (data.condicaoPagamento
+                                                      ?.trim()
+                                                      .isNotEmpty ??
+                                                  false)
+                                                _linhaIconeMenor(
+                                                    Icons.payments_outlined,
+                                                    "Pgto: ${data.condicaoPagamento}"),
+                                            ],
+                                          ),
+                                        ),
+
+                                      // 🔹 Serviços
+                                      Builder(
+                                        builder: (context) {
+                                          final servicos = data.servicos;
+                                          if (servicos.isEmpty) {
+                                            return const SizedBox.shrink();
+                                          }
+                                          return Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              const Divider(height: 16),
+                                              Text("Serviços cotados",
+                                                  style: GoogleFonts.poppins(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                      fontSize: 12,
+                                                      color: Colors
+                                                          .grey.shade700)),
+                                              const SizedBox(height: 6),
+                                              ...servicos.map((s) {
+                                                final qtd = s.quantidade;
+                                                final valor = s.valorEstimado;
+                                                return Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 4),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(Icons.check,
+                                                          size: 12,
+                                                          color: corStatus),
+                                                      const SizedBox(width: 4),
+                                                      Expanded(
+                                                          child: Text(
+                                                              "${s.nome} (x$qtd)",
+                                                              style: GoogleFonts
+                                                                  .poppins(
+                                                                      fontSize:
+                                                                          11,
+                                                                      color: Colors
+                                                                          .grey
+                                                                          .shade800),
+                                                              maxLines: 1,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis)),
+                                                      Text(
+                                                          "R\$ ${(valor * qtd).toStringAsFixed(2)}",
+                                                          style: GoogleFonts
+                                                              .poppins(
+                                                                  fontSize: 11,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
+                                                                  color: Colors
+                                                                      .green
+                                                                      .shade700)),
+                                                    ],
+                                                  ),
+                                                );
+                                              }),
+                                            ],
+                                          );
+                                        },
+                                      ),
+
+                                      // 🔹 Botões de Ação (Compactos)
+                                      const SizedBox(height: 10),
+                                      Wrap(
+                                        spacing: 8,
+                                        runSpacing: 8,
+                                        alignment: WrapAlignment.end,
+                                        children: [
+                                          if ([
+                                            'respondido',
+                                            'respondida',
+                                            'recusado',
+                                            'cancelado'
+                                          ].contains(status))
+                                            FutureBuilder<bool>(
+                                              future: avaliacaoController
+                                                  .podeAvaliarCotacao(
+                                                idFornecedor: idFornecedor,
+                                                idEvento: cotacao.idEvento,
+                                                idUsuario: appController
+                                                    .usuarioLogado
+                                                    .value!
+                                                    .idUsuario,
+                                              ),
+                                              builder: (context, snap) {
+                                                if (snap.data == true) {
+                                                  return _btnAcao(
+                                                      Icons.star_rounded,
+                                                      "Avaliar",
+                                                      Colors.amber.shade700,
+                                                      () =>
+                                                          getDialogAvaliacaoFornecedor(
+                                                            fornecedor:
+                                                                fornecedor,
+                                                            appController:
+                                                                appController,
+                                                            eventoController:
+                                                                eventoController,
+                                                            avaliacaoController:
+                                                                avaliacaoController,
+                                                            theme: theme,
+                                                          ));
+                                                }
+                                                return const SizedBox.shrink();
+                                              },
+                                            ),
+                                          if (status == 'respondido' ||
+                                              status == 'respondida')
+                                            _btnAcao(
+                                                Icons.check_circle_outline,
+                                                "Fechar negócio",
+                                                Colors.green.shade600,
+                                                () => cotacaoController
+                                                    .confirmarFornecedorEscolhido(
+                                                        idFornecedor,
+                                                        cotacao.id)),
+                                          if ([
+                                            'respondido',
+                                            'respondida',
+                                            'fechado'
+                                          ].contains(status))
+                                            _btnAcao(
+                                                Icons.chat_rounded,
+                                                "Chat",
+                                                primary,
+                                                () => Get.to(() =>
+                                                    ChatMensagensPage(
+                                                        idCotacao: cotacao.id,
+                                                        idFornecedor:
+                                                            idFornecedor,
+                                                        nomeFornecedor:
+                                                            fornecedor
+                                                                .razaoSocial,
+                                                        dataSolicitacao: cotacao
+                                                            .dataCadastro,
+                                                        cotacoes: cotacoes,
+                                                        theme: theme,
+                                                        usuario: appController
+                                                            .usuarioLogado
+                                                            .value!))),
+                                        ],
+                                      )
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helpers de UI compactos
+  Widget _linhaDetalhe(IconData icon, String label, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white, size: 16),
+        const SizedBox(width: 8),
+        Text(label,
+            style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white)),
+        const SizedBox(width: 4),
+        Expanded(
+            child: Text(value,
+                style: GoogleFonts.poppins(
+                    fontSize: 12, color: Colors.white.withValues(alpha: 0.9)),
+                overflow: TextOverflow.ellipsis)),
+      ],
+    );
+  }
+
+  Widget _linhaIconeMenor(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: Colors.grey.shade600),
+          const SizedBox(width: 6),
+          Expanded(
+              child: Text(text,
+                  style: GoogleFonts.poppins(
+                      fontSize: 11, color: Colors.grey.shade700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis)),
+        ],
+      ),
+    );
+  }
+
+  Widget _btnAcao(
+      IconData icon, String label, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+            color: color, borderRadius: BorderRadius.circular(10)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: Colors.white),
+            const SizedBox(width: 4),
+            Text(label,
+                style: GoogleFonts.poppins(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Color _getFornecedorStatusColor(String status) {
+    return switch (status) {
+      'respondido' || 'respondida' => Colors.green.shade600,
+      'perdeucotacao' || 'perdeucotacao' => Colors.black87,
+      'recusado' ||
+      'recusada' ||
+      'cancelado' ||
+      'cancelada' =>
+        Colors.red.shade600,
+      'concluido' ||
+      'concluida' ||
+      'fechada' ||
+      'fechado' =>
+        Colors.blue.shade700,
+      'parcial' || 'parcialmente' => Colors.orange.shade700,
+      _ => Colors.orange.shade700
+    };
+  }
+
+  String _getFornecedorStatusText(String status) {
+    return switch (status) {
+      'respondido' || 'respondida' => 'Respondido',
+      'recusado' || 'recusada' => 'Recusado',
+      'cancelado' || 'cancelada' => 'Cancelada',
+      'fechado' || 'fechada' => 'Fechado',
+      'parcial' || 'parcialmente' => 'Parcial',
+      'perdeucotacao' || 'perdeucotacao' => 'Perdeu',
+      _ => 'Aguardando'
+    };
+  }
+}
+
+Widget _buildStatusBadge(StatusCotacao status, {bool invertColors = false}) {
+  late Color cor;
+  late String texto;
+  late IconData icone;
+
+  switch (status) {
+    case StatusCotacao.respondida:
+      cor = Colors.green.shade600;
+      texto = 'Respondida';
+      icone = Icons.mark_chat_read_rounded;
+      break;
+    case StatusCotacao.parcial:
+      cor = Colors.orange.shade700;
+      texto = 'Parcial';
+      icone = Icons.hourglass_bottom_rounded;
+      break;
+    case StatusCotacao.concluida:
+      cor = Colors.blue.shade700;
+      texto = 'Concluída';
+      icone = Icons.verified_rounded;
+      break;
+    case StatusCotacao.cancelada:
+      cor = Colors.red.shade700;
+      texto = 'Cancelada';
+      icone = Icons.cancel_rounded;
+      break;
+    default:
+      cor = Colors.grey.shade600;
+      texto = 'Pendente';
+      icone = Icons.schedule_rounded;
+  }
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: invertColors
+          ? Colors.white.withValues(alpha: 0.2)
+          : cor.withValues(alpha: 0.08),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(
+          color: invertColors ? Colors.white54 : cor.withValues(alpha: 0.3)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icone, color: invertColors ? Colors.white : cor, size: 12),
+        const SizedBox(width: 4),
+        Text(texto,
+            style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: invertColors ? Colors.white : cor,
+                fontWeight: FontWeight.w700)),
+      ],
+    ),
+  );
+}
+
+void getDialogAvaliacaoFornecedor({
+  required Fornecedor fornecedor,
+  required AppController appController,
+  required EventoController eventoController,
+  required AvaliacaoServicoController avaliacaoController,
+  required EventThemeController theme,
+}) {
+  final usuario = appController.usuarioLogado.value!;
+  final evento = eventoController.eventoAtualEntidade!;
+
+  Get.dialog(
+    EnviarAvaliacaoDialog(
+      idFornecedor: fornecedor.idFornecedor,
+      tipo: TipoAvaliacao.fornecedor,
+      idServico: null,
+      idCliente: usuario.idUsuario,
+      nomeCliente: usuario.nome,
+      idEvento: evento.idEvento,
+      nomeEventoAtual: evento.nomeEvento,
+      controller: avaliacaoController,
+      themeController: theme,
+    ),
+  );
+}

@@ -1,47 +1,29 @@
-enum TipoPerfilFesta {
-  economico,
-  padrao,
-  premium,
-}
+import 'package:app_faca_festa/domain/entities/perfil_festa.dart';
 
-extension TipoPerfilFestaExtension on TipoPerfilFesta {
-  String get label {
-    switch (this) {
-      case TipoPerfilFesta.economico:
-        return 'Econômico';
-      case TipoPerfilFesta.padrao:
-        return 'Padrão';
-      case TipoPerfilFesta.premium:
-        return 'Premium';
-    }
-  }
-}
+export 'package:app_faca_festa/domain/entities/perfil_festa.dart';
 
-class PerfilFestaModel {
-  final TipoPerfilFesta tipo;
-  final String nome;
-  final String descricao;
-
-  /// Multiplica a quantidade sugerida dos itens.
-  /// Exemplo: premium aumenta a quantidade para evitar falta.
-  final double multiplicadorQuantidade;
-
-  /// Multiplica o custo estimado.
-  /// Exemplo: premium considera fornecedores/itens mais caros.
-  final double multiplicadorCusto;
-
-  /// Margem extra aplicada sobre as quantidades calculadas.
-  /// Exemplo: 0.10 representa 10%.
-  final double margemSegurancaPadrao;
-
+class PerfilFestaModel extends PerfilFesta {
   const PerfilFestaModel({
-    required this.tipo,
-    required this.nome,
-    required this.descricao,
-    required this.multiplicadorQuantidade,
-    required this.multiplicadorCusto,
-    required this.margemSegurancaPadrao,
+    required super.tipo,
+    required super.nome,
+    required super.descricao,
+    required super.multiplicadorQuantidade,
+    required super.multiplicadorCusto,
+    required super.margemSegurancaPadrao,
   });
+
+  factory PerfilFestaModel.fromEntity(PerfilFesta entity) {
+    if (entity is PerfilFestaModel) return entity;
+
+    return PerfilFestaModel(
+      tipo: entity.tipo,
+      nome: entity.nome,
+      descricao: entity.descricao,
+      multiplicadorQuantidade: entity.multiplicadorQuantidade,
+      multiplicadorCusto: entity.multiplicadorCusto,
+      margemSegurancaPadrao: entity.margemSegurancaPadrao,
+    );
+  }
 
   factory PerfilFestaModel.economico() {
     return const PerfilFestaModel(
@@ -105,6 +87,7 @@ class PerfilFestaModel {
     return PerfilFestaModel.fromTipo(tipo);
   }
 
+  @override
   PerfilFestaModel copyWith({
     TipoPerfilFesta? tipo,
     String? nome,

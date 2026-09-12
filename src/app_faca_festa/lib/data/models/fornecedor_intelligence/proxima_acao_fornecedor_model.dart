@@ -1,72 +1,32 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ProximaAcaoFornecedorModel {
-  final String idAcao;
-  final String idFornecedor;
-  final String? idEvento;
-  final String? idCotacao;
+import 'package:app_faca_festa/domain/entities/proxima_acao_fornecedor.dart';
 
-  /// Exemplo: responder_cotacao, enviar_lembrete,
-  /// melhorar_catalogo, pedir_avaliacao, criar_promocao.
-  final String tipoAcao;
+export 'package:app_faca_festa/domain/entities/proxima_acao_fornecedor.dart';
 
-  final String titulo;
-  final String descricao;
-
-  /// Texto do botão ou ação principal.
-  final String acaoPrincipal;
-
-  final List<String> acoesSecundarias;
-  final List<String> motivos;
-
-  /// Prioridade sugerida para ordenação.
-  /// Exemplo: 1 = baixa, 5 = alta.
-  final int prioridade;
-
-  final bool urgente;
-
-  /// Score opcional de 0 a 100.
-  final double? score;
-
-  /// Exemplo: pendente, visualizada, respondida.
-  final String? statusCotacao;
-
-  /// Exemplo: deterministic_rules, generative_ai, hybrid.
-  final String origem;
-
-  final String versaoRegra;
-
-  /// Exemplo: novo, visto, executado, ignorado, expirado.
-  final String status;
-
-  final Map<String, dynamic>? metadados;
-
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-  final DateTime? expiresAt;
-
+class ProximaAcaoFornecedorModel extends ProximaAcaoFornecedor {
   const ProximaAcaoFornecedorModel({
-    required this.idAcao,
-    required this.idFornecedor,
-    required this.tipoAcao,
-    required this.titulo,
-    required this.descricao,
-    required this.acaoPrincipal,
-    required this.prioridade,
-    required this.urgente,
-    required this.origem,
-    required this.versaoRegra,
-    required this.status,
-    required this.createdAt,
-    this.idEvento,
-    this.idCotacao,
-    this.acoesSecundarias = const [],
-    this.motivos = const [],
-    this.score,
-    this.statusCotacao,
-    this.metadados,
-    this.updatedAt,
-    this.expiresAt,
+    required super.idAcao,
+    required super.idFornecedor,
+    required super.tipoAcao,
+    required super.titulo,
+    required super.descricao,
+    required super.acaoPrincipal,
+    required super.prioridade,
+    required super.urgente,
+    required super.origem,
+    required super.versaoRegra,
+    required super.status,
+    required super.createdAt,
+    super.idEvento,
+    super.idCotacao,
+    super.acoesSecundarias,
+    super.motivos,
+    super.score,
+    super.statusCotacao,
+    super.metadados,
+    super.updatedAt,
+    super.expiresAt,
   });
 
   factory ProximaAcaoFornecedorModel.fromMap(

@@ -1,6 +1,6 @@
-import '../../domain/repositories/fornecedor_recomendacao_repository.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_recomendacao.dart';
+import 'package:app_faca_festa/domain/repositories/fornecedor_recomendacao_repository.dart';
 import '../datasources/remote/fornecedor_recomendacao_remote_datasource.dart';
-import '../models/fornecedor/fornecedor_recomendacao_model.dart';
 
 class FornecedorRecomendacaoRepositoryImpl
     implements FornecedorRecomendacaoRepository {
@@ -9,7 +9,7 @@ class FornecedorRecomendacaoRepositoryImpl
   final FornecedorRecomendacaoRemoteDatasource remote;
 
   @override
-  Future<List<FornecedorRecomendacaoModel>> carregarRecomendacoesSalvas({
+  Future<List<FornecedorRecomendacao>> carregarRecomendacoesSalvas({
     required String idEvento,
     required String idUsuario,
     required int limite,
@@ -22,7 +22,7 @@ class FornecedorRecomendacaoRepositoryImpl
   }
 
   @override
-  Future<List<FornecedorRecomendacaoModel>> gerarRecomendacoes({
+  Future<List<FornecedorRecomendacao>> gerarRecomendacoes({
     required String idEvento,
     required int limite,
     required bool modoDemo,

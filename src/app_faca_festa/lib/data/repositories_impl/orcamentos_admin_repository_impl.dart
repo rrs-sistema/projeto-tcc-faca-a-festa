@@ -1,6 +1,6 @@
-import '../../domain/repositories/orcamentos_admin_repository.dart';
+import 'package:app_faca_festa/domain/entities/orcamento_admin.dart';
+import 'package:app_faca_festa/domain/repositories/orcamentos_admin_repository.dart';
 import '../datasources/remote/orcamentos_admin_remote_datasource.dart';
-import '../models/admin/orcamento_admin_model.dart';
 
 class OrcamentosAdminRepositoryImpl implements OrcamentosAdminRepository {
   OrcamentosAdminRepositoryImpl(this.remote);
@@ -8,7 +8,7 @@ class OrcamentosAdminRepositoryImpl implements OrcamentosAdminRepository {
   final OrcamentosAdminRemoteDatasource remote;
 
   @override
-  Future<List<OrcamentoAdminModel>> listarOrcamentosComEventoDetalhes() {
+  Future<List<OrcamentoAdmin>> listarOrcamentosComEventoDetalhes() {
     return remote.listarOrcamentosComEventoDetalhes();
   }
 }

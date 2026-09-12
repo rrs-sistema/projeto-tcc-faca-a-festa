@@ -1,22 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/admin/evento_com_tipo_model.dart';
-import 'package:app_faca_festa/data/services/auditoria/auditoria_app.dart';
+import 'package:app_faca_festa/domain/entities/evento_admin.dart';
+import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_eventos_admin.dart';
 
 class EventosAdminController extends GetxController {
-  EventosAdminController({required GerenciarEventosAdmin eventosAdmin})
-      : _eventosAdmin = eventosAdmin;
+  EventosAdminController({
+    required GerenciarEventosAdmin eventosAdmin,
+    AuditoriaRegistrar? auditoria,
+    AuditoriaRegistrar? Function()? auditoriaResolver,
+  })  : _eventosAdmin = eventosAdmin,
+        _auditoria = auditoria,
+        _auditoriaResolver = auditoriaResolver;
 
   final GerenciarEventosAdmin _eventosAdmin;
+  final AuditoriaRegistrar? _auditoria;
+  final AuditoriaRegistrar? Function()? _auditoriaResolver;
+  AuditoriaRegistrar get _registradorAuditoria =>
+      _auditoria ??
+      _auditoriaResolver?.call() ??
+      const AuditoriaRegistrarVazio();
 
-  final eventos = <EventoComTipoModel>[].obs;
+  final eventos = <EventoAdmin>[].obs;
   final busca = ''.obs;
   final carregando = false.obs;
   final erro = ''.obs;
 
-  List<EventoComTipoModel> get eventosFiltrados {
+  List<EventoAdmin> get eventosFiltrados {
     final termo = busca.value.trim().toLowerCase();
     if (termo.isEmpty) return eventos.toList();
     return eventos.where((e) {
@@ -42,11 +53,11 @@ class EventosAdminController extends GetxController {
     }
   }
 
-  Future<void> acaoEvento(String acao, EventoComTipoModel evento) async {
+  Future<void> acaoEvento(String acao, EventoAdmin evento) async {
     switch (acao) {
       case 'aprovar':
         await _eventosAdmin.aprovarEvento(evento.id);
-        AuditoriaApp.registrar(
+        _registradorAuditoria.registrar(
           acao: 'EVENTO_APROVADO',
           resumo: 'Evento aprovado pelo administrador.',
           entidadeTipo: 'evento',
@@ -92,7 +103,7 @@ class EventosAdminController extends GetxController {
     final evento = eventos.firstWhereOrNull((e) => e.id == id);
     await _eventosAdmin.excluirEvento(id);
     eventos.removeWhere((e) => e.id == id);
-    AuditoriaApp.registrar(
+    _registradorAuditoria.registrar(
       acao: 'EVENTO_EXCLUIDO',
       resumo: 'Evento removido pelo administrador.',
       entidadeTipo: 'evento',

@@ -4,28 +4,56 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_itens_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/fornecedor_migracao_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_admin_controller.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_controller.dart';
-import '../pages/calculadora/calculadora_itens_admin_page.dart';
-import '../pages/inspiracao/inspiracao_admin_page.dart';
-import '../pages/inspiracao/minhas_referencias_evento_screen.dart';
-import './../pages/evento/seletor_evento_bottom_sheet.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/pages/calculadora_itens_admin_page.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/pages/inspiracao_admin_page.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/pages/minhas_referencias_evento_screen.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/pages/seletor_evento_bottom_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
-import './../pages/usuario/edit_usuario_screen.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/pages/edit_usuario_screen.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
-import './../../core/utils/biblioteca.dart';
+import 'package:app_faca_festa/core/utils/biblioteca.dart';
 
 class MenuDrawerFacaFesta extends StatelessWidget {
   final Future<void> Function() onLogout;
+  final EventThemeController themeController;
+  final AppController appController;
+  final EventoController eventoController;
+  final EventoCadastroController eventoCadastroController;
+  final UsuarioController usuarioController;
+  final InspiracaoController inspiracaoController;
+  final CalculadoraFestaController calculadoraController;
+  final CalculadoraItensAdminController calculadoraItensAdminController;
+  final CardapioController cardapioController;
+  final FornecedorMigracaoAdminController fornecedorMigracaoAdminController;
+  final InspiracaoAdminController inspiracaoAdminController;
+  final TemaFestaController temaFestaController;
 
-  MenuDrawerFacaFesta({super.key, required this.onLogout});
-
-  final themeController = Get.find<EventThemeController>();
-  final appController = Get.find<AppController>();
-  final eventoController = Get.find<EventoController>();
-  final usuarioController = Get.find<UsuarioController>();
-  final inspiracaoController = Get.find<InspiracaoController>();
+  const MenuDrawerFacaFesta({
+    super.key,
+    required this.onLogout,
+    required this.themeController,
+    required this.appController,
+    required this.eventoController,
+    required this.eventoCadastroController,
+    required this.usuarioController,
+    required this.inspiracaoController,
+    required this.calculadoraController,
+    required this.calculadoraItensAdminController,
+    required this.cardapioController,
+    required this.fornecedorMigracaoAdminController,
+    required this.inspiracaoAdminController,
+    required this.temaFestaController,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +105,14 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                     onTap: () {
                       Get.back();
                       Future.delayed(const Duration(milliseconds: 120), () {
-                        Get.to(() => const EditUsuarioScreen());
+                        Get.to(
+                          () => EditUsuarioScreen(
+                            userController: usuarioController,
+                            enderecoController:
+                                usuarioController.enderecoUsuarioController,
+                            themeController: themeController,
+                          ),
+                        );
                       });
                     },
                   ),
@@ -535,13 +570,25 @@ class MenuDrawerFacaFesta extends StatelessWidget {
     Future.delayed(const Duration(milliseconds: 160), () {
       final context = Get.context;
       if (context == null) return;
-      showSeletorEventoBottomSheet(context);
+      showSeletorEventoBottomSheet(
+        context,
+        eventoController: eventoController,
+        theme: themeController,
+        appController: appController,
+        eventoCadastroController: eventoCadastroController,
+        calculadoraController: calculadoraController,
+        cardapioController: cardapioController,
+        fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
+        temasController: temaFestaController,
+      );
     });
   }
 
   Future<void> _abrirCalculadoraItensAdmin() async {
     Get.to(
-      () => CalculadoraItensAdminPage(),
+      () => CalculadoraItensAdminPage(
+        controller: calculadoraItensAdminController,
+      ),
       transition: Transition.rightToLeft,
       duration: const Duration(milliseconds: 260),
     );
@@ -549,7 +596,9 @@ class MenuDrawerFacaFesta extends StatelessWidget {
 
   void _abrirIdeiasEInspiracoesAdmin() {
     Get.to(
-      () => const InspiracaoAdminPage(),
+      () => InspiracaoAdminPage(
+        controller: inspiracaoAdminController,
+      ),
       transition: Transition.rightToLeft,
       duration: const Duration(milliseconds: 260),
     );
@@ -586,6 +635,8 @@ class MenuDrawerFacaFesta extends StatelessWidget {
       () => MinhasReferenciasEventoScreen(
         eventoId: evento.idEvento,
         userId: usuarioId,
+        controller: inspiracaoController,
+        themeController: themeController,
       ),
       arguments: {
         'eventoId': evento.idEvento,

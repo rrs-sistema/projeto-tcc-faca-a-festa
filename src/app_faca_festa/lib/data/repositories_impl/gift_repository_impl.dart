@@ -1,12 +1,12 @@
 import 'package:flutter/foundation.dart';
 
 import './../datasources/remote/gift_remote_datasource.dart';
-import './../../domain/entities/gift/gift_contribution.dart';
+import 'package:app_faca_festa/domain/entities/gift/gift_contribution.dart';
 import './../datasources/local/gift_local_datasource.dart';
-import './../../domain/repositories/gift_repository.dart';
+import 'package:app_faca_festa/domain/repositories/gift_repository.dart';
 import './../models/gift/gif_local_converte.dart';
-import './../../core/database/app_database.dart';
-import './../../domain/entities/gift/gift.dart';
+import 'package:app_faca_festa/core/database/app_database.dart';
+import 'package:app_faca_festa/domain/entities/gift/gift.dart';
 import './../models/gift/gift_model.dart';
 
 class GiftRepositoryImpl implements GiftRepository {

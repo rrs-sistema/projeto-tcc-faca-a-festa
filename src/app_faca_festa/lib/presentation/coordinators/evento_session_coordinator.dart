@@ -1,19 +1,17 @@
 import 'dart:async';
 
-import 'package:get/get.dart';
-
-import '../../domain/entities/evento.dart';
-import '../modules/calculadora/controllers/calculadora_festa_controller.dart';
-import '../modules/convidado/controllers/cardapio_controller.dart';
-import '../modules/convidado/controllers/convidado_controller.dart';
-import '../modules/convidado/controllers/grupo_convidado_controller.dart';
-import '../modules/convidado/controllers/tarefa_controller.dart';
-import '../modules/fornecedor/controllers/fornecedor_controller.dart';
-import '../modules/inspiracao/controllers/inspiracao_controller.dart';
-import '../modules/orcamento/controllers/orcamento_gasto_controller.dart';
-import '../modules/orcamento/orcamento_controller.dart';
-import '../modules/tema/controllers/event_theme_controller.dart';
-import '../modules/usuario/controllers/usuario_controller.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_controller.dart';
 
 abstract interface class EventoSessionCoordinator {
   void aplicarTema(String nomeTipoEvento, {Evento? evento});
@@ -28,6 +26,32 @@ abstract interface class EventoSessionCoordinator {
 /// The calls and their order intentionally match the legacy initialization
 /// previously kept inside EventoController.
 class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
+  GetxEventoSessionCoordinator({
+    required this.themeControllerOf,
+    required this.orcamentoControllerOf,
+    required this.convidadoControllerOf,
+    required this.cardapioControllerOf,
+    required this.grupoControllerOf,
+    required this.tarefaControllerOf,
+    required this.inspiracaoControllerOf,
+    required this.usuarioControllerOf,
+    required this.fornecedorControllerOf,
+    required this.orcamentoGastoControllerOf,
+    required this.calculadoraControllerOf,
+  });
+
+  final EventThemeController Function() themeControllerOf;
+  final OrcamentoController? Function() orcamentoControllerOf;
+  final ConvidadoController? Function() convidadoControllerOf;
+  final CardapioController? Function() cardapioControllerOf;
+  final GrupoConvidadoController? Function() grupoControllerOf;
+  final TarefaController? Function() tarefaControllerOf;
+  final InspiracaoController? Function() inspiracaoControllerOf;
+  final UsuarioController? Function() usuarioControllerOf;
+  final FornecedorController? Function() fornecedorControllerOf;
+  final OrcamentoGastoController? Function() orcamentoGastoControllerOf;
+  final CalculadoraFestaController? Function() calculadoraControllerOf;
+
   StreamSubscription<void>? _orcamentosSub;
   StreamSubscription<void>? _convidadosSub;
   StreamSubscription<void>? _cardapiosSub;
@@ -36,7 +60,7 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
 
   @override
   void aplicarTema(String nomeTipoEvento, {Evento? evento}) {
-    final theme = Get.find<EventThemeController>();
+    final theme = themeControllerOf();
     if (evento != null) {
       unawaited(
         theme.aplicarParaEvento(evento, fallbackNomeTipo: nomeTipoEvento),
@@ -52,52 +76,51 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
 
   @override
   Future<void> inicializarModulosRelacionados(Evento evento) async {
-    final orcamentoController = Get.find<OrcamentoController>();
-    final convidadoController = Get.find<ConvidadoController>();
-    final cardapioController = Get.find<CardapioController>();
-    final grupoController = Get.find<GrupoConvidadoController>();
-    final tarefaController = Get.find<TarefaController>();
-    final inspiracaoController = Get.find<InspiracaoController>();
-    final usuarioController = Get.find<UsuarioController>();
+    final orcamentoController = orcamentoControllerOf();
+    final convidadoController = convidadoControllerOf();
+    final cardapioController = cardapioControllerOf();
+    final grupoController = grupoControllerOf();
+    final tarefaController = tarefaControllerOf();
+    final inspiracaoController = inspiracaoControllerOf();
+    final usuarioController = usuarioControllerOf();
 
     _orcamentosSub = orcamentoController
-        .carregarOrcamentosDoEvento(evento.idEvento)
+        ?.carregarOrcamentosDoEvento(evento.idEvento)
         .asStream()
         .listen((_) {});
     _convidadosSub = convidadoController
-        .escutarConvidados(evento.idEvento)
+        ?.escutarConvidados(evento.idEvento)
         .asStream()
         .listen((_) {});
     _cardapiosSub = cardapioController
-        .escutarCardapios(evento.idEvento)
+        ?.escutarCardapios(evento.idEvento)
         .asStream()
         .listen((_) {});
     _gruposSub = grupoController
-        .escutarGrupos(evento.idEvento)
+        ?.escutarGrupos(evento.idEvento)
         .asStream()
         .listen((_) {});
     _tarefasSub = tarefaController
-        .listenTarefas(evento.idEvento)
+        ?.listenTarefas(evento.idEvento)
         .asStream()
         .listen((_) {});
 
-    final usuarioLogado = usuarioController.usuario.value;
+    final usuarioLogado = usuarioController?.usuario.value;
     final userId = (usuarioLogado?.idUsuario ?? '').trim().isNotEmpty
         ? usuarioLogado!.idUsuario
         : evento.idUsuario;
     inspiracaoController
-        .configurarContextoEvento(
+        ?.configurarContextoEvento(
           eventoId: evento.idEvento,
           userId: userId,
         )
         .asStream()
         .listen((_) {});
 
-    if (Get.isRegistered<FornecedorController>()) {
+    final fornecedorController = fornecedorControllerOf();
+    if (fornecedorController != null) {
       unawaited(
-        Get.find<FornecedorController>()
-            .carregarServicosPorEvento(evento.idEvento),
-      );
+          fornecedorController.carregarServicosPorEvento(evento.idEvento));
     }
   }
 
@@ -115,29 +138,13 @@ class GetxEventoSessionCoordinator implements EventoSessionCoordinator {
     _cardapiosSub = null;
     _gruposSub = null;
 
-    if (Get.isRegistered<OrcamentoController>()) {
-      await Get.find<OrcamentoController>().encerrarEscutas();
-    }
-    if (Get.isRegistered<TarefaController>()) {
-      await Get.find<TarefaController>().encerrarEscutas();
-    }
-    if (Get.isRegistered<ConvidadoController>()) {
-      Get.find<ConvidadoController>().limpar();
-    }
-    if (Get.isRegistered<CardapioController>()) {
-      await Get.find<CardapioController>().encerrarEscutas();
-    }
-    if (Get.isRegistered<GrupoConvidadoController>()) {
-      await Get.find<GrupoConvidadoController>().encerrarEscutas();
-    }
-    if (Get.isRegistered<InspiracaoController>()) {
-      await Get.find<InspiracaoController>().encerrarEscutas();
-    }
-    if (Get.isRegistered<OrcamentoGastoController>()) {
-      await Get.find<OrcamentoGastoController>().encerrarEscutas();
-    }
-    if (Get.isRegistered<CalculadoraFestaController>()) {
-      Get.find<CalculadoraFestaController>().limpar();
-    }
+    await orcamentoControllerOf()?.encerrarEscutas();
+    await tarefaControllerOf()?.encerrarEscutas();
+    convidadoControllerOf()?.limpar();
+    await cardapioControllerOf()?.encerrarEscutas();
+    await grupoControllerOf()?.encerrarEscutas();
+    await inspiracaoControllerOf()?.encerrarEscutas();
+    await orcamentoGastoControllerOf()?.encerrarEscutas();
+    calculadoraControllerOf()?.limpar();
   }
 }

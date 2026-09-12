@@ -1,0 +1,300 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
+
+import 'package:app_faca_festa/presentation/modules/auditoria/controllers/auditoria_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/sections/fornecedor_premium_layout.dart';
+import 'package:app_faca_festa/presentation/widgets/auditoria/auditoria_evento_card.dart';
+import 'package:app_faca_festa/presentation/widgets/auditoria/auditoria_filtros.dart';
+
+class AuditoriaFornecedorScreen extends StatelessWidget {
+  const AuditoriaFornecedorScreen({
+    super.key,
+    required this.fornecedorController,
+    this.controller,
+  });
+
+  final FornecedorController fornecedorController;
+  final AuditoriaController? controller;
+
+  static const _theme = AuditoriaVisualTheme(
+    surface: FornecedorPremiumPalette.background,
+    card: FornecedorPremiumPalette.surface,
+    ink: FornecedorPremiumPalette.text,
+    muted: FornecedorPremiumPalette.muted,
+    border: FornecedorPremiumPalette.border,
+    primary: FornecedorPremiumPalette.primary,
+    danger: FornecedorPremiumPalette.rose,
+    warning: FornecedorPremiumPalette.amber,
+    success: FornecedorPremiumPalette.emerald,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final fornecedor = fornecedorController.fornecedor.value;
+    final idFornecedor = (fornecedor?.idFornecedor ?? '').trim();
+    final nome = (fornecedor?.razaoSocial ?? '').trim().isEmpty
+        ? 'seus serviços'
+        : fornecedor!.razaoSocial.trim();
+
+    final controller = this.controller;
+    if (idFornecedor.isEmpty || controller == null) {
+      return Scaffold(
+        backgroundColor: _theme.surface,
+        appBar: AppBar(
+          title: Text(
+            'Auditoria dos serviços',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+          ),
+        ),
+        body: const Center(
+          child: Text('Não foi possível identificar o fornecedor logado.'),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: _theme.surface,
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: FornecedorPremiumPalette.dark,
+        foregroundColor: Colors.white,
+        title: Column(
+          children: [
+            Text(
+              'Auditoria dos serviços',
+              style: GoogleFonts.poppins(
+                fontWeight: FontWeight.w700,
+                fontSize: 16,
+                color: Colors.white,
+              ),
+            ),
+            Text(
+              'Somente o que é da sua operação',
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: Colors.white70,
+              ),
+            ),
+          ],
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            tooltip: 'Exportar PDF',
+            onPressed: () => _exportarPdf(controller),
+            icon: const Icon(Icons.picture_as_pdf_rounded),
+          ),
+          IconButton(
+            tooltip: 'Exportar CSV',
+            onPressed: () => _exportarCsv(controller),
+            icon: const Icon(Icons.download_rounded),
+          ),
+          IconButton(
+            tooltip: 'Atualizar',
+            onPressed: controller.carregar,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
+      ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return Column(
+            children: [
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: constraints.maxHeight * 0.62,
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                  child: Column(
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 11,
+                        ),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(14),
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF0B1220), Color(0xFF2A1748)],
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Histórico · $nome',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Acompanhe quem alterou seus serviços, respostas de orçamento e o status da conta.',
+                              style: GoogleFonts.poppins(
+                                color: Colors.white.withValues(alpha: 0.82),
+                                fontSize: 12,
+                                height: 1.35,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      AuditoriaDashboardPanel(
+                        controller: controller,
+                        theme: _theme,
+                      ),
+                      const SizedBox(height: 8),
+                      AuditoriaFiltrosBar(
+                        controller: controller,
+                        theme: _theme,
+                        buscaHint:
+                            'Buscar nos seus serviços, orçamentos e perfil',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Obx(() {
+                  if (controller.carregando.value) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (controller.erro.isNotEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(
+                          controller.erro.value,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(color: _theme.muted),
+                        ),
+                      ),
+                    );
+                  }
+                  final lista = controller.visiveis;
+                  if (lista.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.policy_outlined,
+                                size: 48, color: _theme.muted),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Nenhuma alteração nos seus serviços ainda',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w700,
+                                color: _theme.ink,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Quando você ou a equipe da plataforma alterar um serviço seu, o registro aparece aqui.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                color: _theme.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return RefreshIndicator(
+                    color: _theme.primary,
+                    onRefresh: controller.carregar,
+                    child: ListView.separated(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.fromLTRB(16, 6, 16, 24),
+                      itemCount:
+                          lista.length + (controller.temMais.value ? 1 : 0),
+                      separatorBuilder: (_, __) => const SizedBox(height: 8),
+                      itemBuilder: (context, i) {
+                        if (i == lista.length) {
+                          return AuditoriaLoadMoreButton(
+                            controller: controller,
+                            theme: _theme,
+                          );
+                        }
+                        return AuditoriaEventoCard(
+                          evento: lista[i],
+                          theme: _theme,
+                        );
+                      },
+                    ),
+                  );
+                }),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Future<void> _exportarPdf(AuditoriaController controller) async {
+    if (controller.visiveis.isEmpty) {
+      Get.snackbar(
+        'Auditoria',
+        'Não há registros visíveis para exportar.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final pdf = await controller.exportarPdfVisivel(
+      titulo: 'Auditoria dos serviços Faça a Festa',
+    );
+    await Share.shareXFiles(
+      [
+        XFile.fromData(
+          pdf,
+          mimeType: 'application/pdf',
+        ),
+      ],
+      subject: 'auditoria-servicos-faca-festa.pdf',
+      text: 'Relatório de auditoria dos serviços no Faça a Festa.',
+      fileNameOverrides: ['auditoria-servicos-faca-festa.pdf'],
+    );
+  }
+
+  Future<void> _exportarCsv(AuditoriaController controller) async {
+    if (controller.visiveis.isEmpty) {
+      Get.snackbar(
+        'Auditoria',
+        'Não há registros visíveis para exportar.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final csv = controller.exportarCsvVisivel();
+    await Share.shareXFiles(
+      [
+        XFile.fromData(
+          Uint8List.fromList(utf8.encode(csv)),
+          mimeType: 'text/csv',
+        ),
+      ],
+      subject: 'auditoria-servicos-faca-festa.csv',
+      text: 'Exportação da auditoria dos serviços no Faça a Festa.',
+      fileNameOverrides: ['auditoria-servicos-faca-festa.csv'],
+    );
+  }
+}

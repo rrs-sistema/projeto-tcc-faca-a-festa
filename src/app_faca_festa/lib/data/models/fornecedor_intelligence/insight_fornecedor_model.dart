@@ -1,67 +1,30 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class InsightFornecedorModel {
-  final String idInsight;
-  final String idFornecedor;
-  final String? idEvento;
-  final String? idCotacao;
+import 'package:app_faca_festa/domain/entities/insight_fornecedor.dart';
 
-  /// Exemplo: oportunidade, proxima_acao, catalogo, reputacao,
-  /// promocao, preco, pacote, resposta_cotacao.
-  final String tipo;
+export 'package:app_faca_festa/domain/entities/insight_fornecedor.dart';
 
-  final String titulo;
-  final String descricao;
-
-  /// Prioridade sugerida para ordenação.
-  /// Exemplo: 1 = baixa, 5 = alta.
-  final int prioridade;
-
-  /// Score opcional de 0 a 100.
-  final double? score;
-
-  /// Exemplo: baixo, medio, alto, critico.
-  final String? nivel;
-
-  final List<String> motivos;
-  final List<String> acoesSugeridas;
-
-  /// Exemplo: deterministic_rules, generative_ai, hybrid.
-  final String origem;
-
-  /// Exemplo: novo, visto, resolvido, ignorado, expirado.
-  final String status;
-
-  final String versaoRegra;
-
-  /// Campo livre para guardar informações complementares
-  /// sem alterar o contrato principal do model.
-  final Map<String, dynamic>? metadados;
-
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-  final DateTime? expiresAt;
-
+class InsightFornecedorModel extends InsightFornecedor {
   const InsightFornecedorModel({
-    required this.idInsight,
-    required this.idFornecedor,
-    required this.tipo,
-    required this.titulo,
-    required this.descricao,
-    required this.prioridade,
-    required this.origem,
-    required this.status,
-    required this.versaoRegra,
-    required this.createdAt,
-    this.idEvento,
-    this.idCotacao,
-    this.score,
-    this.nivel,
-    this.motivos = const [],
-    this.acoesSugeridas = const [],
-    this.metadados,
-    this.updatedAt,
-    this.expiresAt,
+    required super.idInsight,
+    required super.idFornecedor,
+    required super.tipo,
+    required super.titulo,
+    required super.descricao,
+    required super.prioridade,
+    required super.origem,
+    required super.status,
+    required super.versaoRegra,
+    required super.createdAt,
+    super.idEvento,
+    super.idCotacao,
+    super.score,
+    super.nivel,
+    super.motivos,
+    super.acoesSugeridas,
+    super.metadados,
+    super.updatedAt,
+    super.expiresAt,
   });
 
   factory InsightFornecedorModel.fromMap(

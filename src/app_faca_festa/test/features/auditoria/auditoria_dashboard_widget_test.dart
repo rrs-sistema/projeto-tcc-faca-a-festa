@@ -7,7 +7,7 @@ import 'package:app_faca_festa/domain/repositories/auditoria_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 import 'package:app_faca_festa/presentation/modules/auditoria/controllers/auditoria_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
-import 'package:app_faca_festa/presentation/pages/admin/auditoria_dashboard_screen.dart';
+import 'package:app_faca_festa/presentation/modules/admin/pages/auditoria_dashboard_screen.dart';
 import 'package:app_faca_festa/presentation/widgets/auditoria/auditoria_evento_card.dart';
 import 'package:app_faca_festa/presentation/widgets/auditoria/auditoria_filtros.dart';
 
@@ -177,7 +177,13 @@ void main() {
             page: () => const Scaffold(body: Text('Histórico')),
           ),
         ],
-        home: AuditoriaDashboardScreen(),
+        home: AuditoriaDashboardScreen(
+          controller: AuditoriaController(
+            gerenciarAuditoria: GerenciarAuditoria(repository),
+            escopoAdmin: true,
+          ),
+          themeController: Get.find<EventThemeController>(),
+        ),
       ),
     );
     await tester.pumpAndSettle();

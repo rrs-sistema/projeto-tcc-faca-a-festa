@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
-import 'package:app_faca_festa/data/models/evento/tema_festa_model.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
+import 'package:app_faca_festa/domain/entities/tema_festa.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
 import 'package:app_faca_festa/domain/repositories/tema_festa_repository.dart';
@@ -82,7 +82,7 @@ void main() {
   });
 
   test('prefers organizer capa over theme capa', () async {
-    temaRepository.temas['tema-casamento'] = TemaFestaModel(
+    temaRepository.temas['tema-casamento'] = TemaFesta(
       idTema: 'tema-casamento',
       slug: 'tema-casamento',
       nome: 'Romântico',
@@ -113,7 +113,7 @@ void main() {
   });
 
   test('falls back to theme capa when event has none', () async {
-    temaRepository.temas['tema-casamento'] = TemaFestaModel(
+    temaRepository.temas['tema-casamento'] = TemaFesta(
       idTema: 'tema-casamento',
       slug: 'tema-casamento',
       nome: 'Romântico',
@@ -142,7 +142,7 @@ void main() {
   });
 }
 
-TemaFestaModel _tema({
+TemaFesta _tema({
   required String id,
   required String nome,
   String corPrimaria = '#009688',
@@ -150,7 +150,7 @@ TemaFestaModel _tema({
   String icone = 'star',
   bool ativo = true,
 }) {
-  return TemaFestaModel(
+  return TemaFesta(
     idTema: id,
     slug: id,
     nome: nome,
@@ -163,22 +163,22 @@ TemaFestaModel _tema({
 }
 
 class _TemaFestaRepositoryFake implements TemaFestaRepository {
-  final temas = <String, TemaFestaModel>{};
+  final temas = <String, TemaFesta>{};
   final buscasPorId = <String>[];
 
   @override
-  Future<List<TemaFestaModel>> carregar() async {
+  Future<List<TemaFesta>> carregar() async {
     return temas.values.toList();
   }
 
   @override
-  Future<TemaFestaModel?> buscarPorId(String idTema) async {
+  Future<TemaFesta?> buscarPorId(String idTema) async {
     buscasPorId.add(idTema);
     return temas[idTema];
   }
 
   @override
-  Future<void> salvar(TemaFestaModel tema) async {
+  Future<void> salvar(TemaFesta tema) async {
     temas[tema.idTema] = tema;
   }
 
@@ -200,8 +200,8 @@ class _TemaFestaRepositoryFake implements TemaFestaRepository {
 
   @override
   Future<void> popularTemasIniciais({
-    required List<TemaFestaModel> temasIniciais,
-    required List<TemaFestaModel> temasExistentes,
+    required List<TemaFesta> temasIniciais,
+    required List<TemaFesta> temasExistentes,
   }) async {}
 }
 

@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/comunidade_remote_datasource.dart';
-import '../../data/repositories_impl/comunidade_repository_impl.dart';
-import '../../domain/repositories/comunidade_repository.dart';
-import '../../domain/usecases/gerenciar_comunidade.dart';
-import '../../presentation/modules/comunidade/controllers/comunidade_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/comunidade_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/comunidade_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/comunidade_repository.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_comunidade.dart';
+import 'package:app_faca_festa/presentation/modules/comunidade/controllers/comunidade_controller.dart';
 
 class ComunidadeBootstrap {
   ComunidadeBootstrap._();

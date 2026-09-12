@@ -5,52 +5,82 @@ import 'package:get/get.dart';
 import 'dart:io';
 
 import 'package:app_faca_festa/core/utils/form_validators.dart';
-import 'package:app_faca_festa/data/models/model.dart';
-import 'package:app_faca_festa/data/models/servico_produto/categoria_servico_model.dart';
-import 'package:app_faca_festa/data/models/servico_produto/fornecedor_categoria_model.dart';
-import 'package:app_faca_festa/data/models/servico_produto/subcategoria_servico_model.dart';
+import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
+import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
+import 'package:app_faca_festa/domain/entities/servico_produto.dart';
+import 'package:app_faca_festa/domain/entities/subcategoria_servico.dart';
+import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dart';
+import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_catalogo_servico.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_servicos_produto.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
-import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
-import 'package:app_faca_festa/presentation/pages/endereco/endereco_section_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/components/endereco/endereco_section_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidade_controller.dart';
 
 class RegisterController extends GetxController {
-  final AutenticacaoRepository _autenticacaoRepository =
-      Get.find<AutenticacaoRepository>();
-  final PerfilUsuarioRepository _perfilUsuarioRepository =
-      Get.find<PerfilUsuarioRepository>();
-  final GerenciarFornecedores _fornecedores = Get.find<GerenciarFornecedores>();
-  final GerenciarServicosProduto _servicosProduto =
-      Get.find<GerenciarServicosProduto>();
-  final GerenciarCatalogoServico _catalogoServico =
-      Get.find<GerenciarCatalogoServico>();
-  final AppController appController = Get.find<AppController>();
+  RegisterController({
+    required AutenticacaoRepository autenticacaoRepository,
+    required PerfilUsuarioRepository perfilUsuarioRepository,
+    required GerenciarFornecedores fornecedores,
+    required GerenciarServicosProduto servicosProduto,
+    required GerenciarCatalogoServico catalogoServico,
+    required this.appController,
+    required BuscarCepService buscarCepService,
+    required UFCidadeController ufCidadeController,
+    Future<String> Function({
+      required List<int> bytes,
+      required String nomeArquivo,
+      String? uid,
+    })? uploadBanner,
+  })  : _autenticacaoRepository = autenticacaoRepository,
+        _perfilUsuarioRepository = perfilUsuarioRepository,
+        _fornecedores = fornecedores,
+        _servicosProduto = servicosProduto,
+        _catalogoServico = catalogoServico,
+        enderecoController =
+            EnderecoSectionController(
+              cepService: buscarCepService,
+              ufCidadeController: ufCidadeController,
+            ).obs,
+        _uploadBanner = uploadBanner;
+
+  final AutenticacaoRepository _autenticacaoRepository;
+  final PerfilUsuarioRepository _perfilUsuarioRepository;
+  final GerenciarFornecedores _fornecedores;
+  final GerenciarServicosProduto _servicosProduto;
+  final GerenciarCatalogoServico _catalogoServico;
+  final AppController appController;
+  final Future<String> Function({
+    required List<int> bytes,
+    required String nomeArquivo,
+    String? uid,
+  })? _uploadBanner;
 
   static const String _logTag = '[RegisterController]';
   static const String _versaoDiagnostico =
       'v2026-06-16-convidado-sem-endereco-vinculo-convite';
 
   // 🔹 Categorias e subcategorias selecionadas
-  RxList<FornecedorCategoriaModel> categoriasSelecionadas =
-      <FornecedorCategoriaModel>[].obs;
+  RxList<FornecedorCategoria> categoriasSelecionadas =
+      <FornecedorCategoria>[].obs;
 
   // 🆕 Controle reativo de seleção de serviços
   //final RxSet<String> servicosSelecionados = <String>{}.obs;
-  RxList<ServicoProdutoModel> servicosSelecionados =
-      <ServicoProdutoModel>[].obs;
+  RxList<ServicoProduto> servicosSelecionados = <ServicoProduto>[].obs;
 
   // 🔹 Mapa de subcategorias organizadas por categoria
-  final RxMap<String, List<SubcategoriaServicoModel>>
-      subcategoriasPorCategoria =
-      <String, List<SubcategoriaServicoModel>>{}.obs;
+  final RxMap<String, List<SubcategoriaServico>> subcategoriasPorCategoria =
+      <String, List<SubcategoriaServico>>{}.obs;
 
   // 🆕 Nova lista de subcategorias selecionadas
-  final RxList<SubcategoriaServicoModel> subcategoriasSelecionadas =
-      <SubcategoriaServicoModel>[].obs;
+  final RxList<SubcategoriaServico> subcategoriasSelecionadas =
+      <SubcategoriaServico>[].obs;
 
   // 🧠 IA de recomendação: tipos de evento que este fornecedor atende
   final RxList<String> tipoEventoIds = <String>[].obs;
@@ -72,7 +102,7 @@ class RegisterController extends GetxController {
   var carregando = false.obs;
   RxBool exibirSenha = false.obs;
 
-  final enderecoController = EnderecoSectionController().obs;
+  final Rx<EnderecoSectionController> enderecoController;
 
   /// Permite que a tela force o cadastro como convidado quando o tipo não vier
   /// corretamente em Get.arguments.
@@ -183,7 +213,7 @@ class RegisterController extends GetxController {
           'Usuário criado na autenticação: uid=$uid | tipo=$tipo | tipoEfetivo=$tipoEfetivo');
       _logEndereco(endereco, origem: 'registrarUsuario após uid');
 
-      final novoUsuario = UsuarioModel(
+      final novoUsuario = Usuario(
         idUsuario: uid,
         nome: nome.value.trim(),
         email: email.value.trim(),
@@ -213,7 +243,7 @@ class RegisterController extends GetxController {
       }
 
       if (tipoEfetivo == 'F') {
-        final novoFornecedor = FornecedorModel(
+        final novoFornecedor = Fornecedor(
           idFornecedor: uid,
           idUsuario: uid,
           razaoSocial: razaoSocial.value.trim(),
@@ -241,7 +271,7 @@ class RegisterController extends GetxController {
             'Categorias vinculadas ao fornecedor: ${categoriasSelecionadas.length}.');
 
         for (final serv in servicosSelecionados) {
-          final model = FornecedorProdutoServicoModel(
+          final vinculo = FornecedorProdutoServico(
             id: DateTime.now().millisecondsSinceEpoch.toString(),
             idProdutoServico: serv.id,
             idFornecedor: uid,
@@ -251,7 +281,7 @@ class RegisterController extends GetxController {
             idSubcategoria: serv.idSubcategoria,
             precoPromocao: 0.0,
           );
-          await _servicosProduto.salvarVinculo(model);
+          await _servicosProduto.salvarVinculo(vinculo);
         }
         _log(
             'Serviços vinculados ao fornecedor: ${servicosSelecionados.length}.');
@@ -332,10 +362,10 @@ class RegisterController extends GetxController {
       final nomeGoogle = nomeInformado.isNotEmpty
           ? nomeInformado
           : (_autenticacaoRepository.nomeUsuarioAtual?.trim() ?? '');
-      UsuarioModel usuarioParaRoteamento;
+      Usuario usuarioParaRoteamento;
 
       if (usuarioExistente == null) {
-        final novoUsuario = UsuarioModel(
+        final novoUsuario = Usuario(
           idUsuario: uid,
           nome: nomeGoogle.isEmpty ? 'Usuário Google' : nomeGoogle,
           email: emailGoogle,
@@ -355,12 +385,11 @@ class RegisterController extends GetxController {
         usuarioParaRoteamento = novoUsuario;
       } else if ((usuarioExistente.tipo?.toString().trim().isEmpty ?? true)) {
         await _perfilUsuarioRepository.atualizarTipo(uid, tipoEfetivo);
-        usuarioParaRoteamento =
-            UsuarioModel.fromEntity(usuarioExistente).copyWith(
+        usuarioParaRoteamento = usuarioExistente.copyWith(
           tipo: tipoEfetivo,
         );
       } else {
-        usuarioParaRoteamento = UsuarioModel.fromEntity(usuarioExistente);
+        usuarioParaRoteamento = usuarioExistente;
       }
 
       if (deveSalvarEndereco) {
@@ -416,9 +445,9 @@ class RegisterController extends GetxController {
     }
   }
 
-  void adicionarCategoria(CategoriaServicoModel cat) {
+  void adicionarCategoria(CategoriaServico cat) {
     categoriasSelecionadas.add(
-      FornecedorCategoriaModel(
+      FornecedorCategoria(
         idFornecedor: '',
         idCategoria: cat.id,
         nomeCategoria: cat.nome,
@@ -432,8 +461,17 @@ class RegisterController extends GetxController {
 
     try {
       EasyLoading.show(status: 'Enviando banner...');
-      final fornecedorController = Get.find<FornecedorController>();
-      bannerUrl = await fornecedorController.uploadBanner(arquivo, uid: uid);
+      final uploadBanner = _uploadBanner;
+      if (uploadBanner == null) {
+        _log('Upload de banner não configurado para este fluxo.');
+        return;
+      }
+      final nomeArquivo = arquivo.path.split(RegExp(r'[\\/]')).last;
+      bannerUrl = await uploadBanner(
+        bytes: await arquivo.readAsBytes(),
+        nomeArquivo: nomeArquivo.isEmpty ? 'banner.jpg' : nomeArquivo,
+        uid: uid,
+      );
       _log('Banner enviado para o fornecedor $uid.');
     } catch (e, s) {
       _log('Banner não enviado após autenticação: $e');
@@ -451,7 +489,7 @@ class RegisterController extends GetxController {
     required String uid,
     required String email,
   }) async {
-    final novoFornecedor = FornecedorModel(
+    final novoFornecedor = Fornecedor(
       idFornecedor: uid,
       idUsuario: uid,
       razaoSocial: razaoSocial.value.trim(),
@@ -476,7 +514,7 @@ class RegisterController extends GetxController {
     }
 
     for (final serv in servicosSelecionados) {
-      final model = FornecedorProdutoServicoModel(
+      final vinculo = FornecedorProdutoServico(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         idProdutoServico: serv.id,
         idFornecedor: uid,
@@ -486,12 +524,12 @@ class RegisterController extends GetxController {
         idSubcategoria: serv.idSubcategoria,
         precoPromocao: 0.0,
       );
-      await _servicosProduto.salvarVinculo(model);
+      await _servicosProduto.salvarVinculo(vinculo);
     }
   }
 
-  void alternarSubcategoria(FornecedorCategoriaModel catSel,
-      SubcategoriaServicoModel sub, bool selected) {
+  void alternarSubcategoria(
+      FornecedorCategoria catSel, SubcategoriaServico sub, bool selected) {
     final index = categoriasSelecionadas
         .indexWhere((c) => c.idCategoria == catSel.idCategoria);
     if (index == -1) return;
@@ -515,7 +553,7 @@ class RegisterController extends GetxController {
   }
 
   /// 🔹 Alterna o estado de seleção de um serviço
-  void alternarServico(ServicoProdutoModel servico, bool selecionado) {
+  void alternarServico(ServicoProduto servico, bool selecionado) {
     if (selecionado) {
       servicosSelecionados.add(servico);
     } else {
@@ -719,7 +757,7 @@ class RegisterController extends GetxController {
 
   bool _validarCamposCadastroGoogle(
     String tipo,
-    EnderecoUsuarioModel endereco,
+    EnderecoUsuario endereco,
   ) {
     if (_falhou(FormValidators.nomeCompleto(
       nome.value,
@@ -770,7 +808,7 @@ class RegisterController extends GetxController {
     return true;
   }
 
-  bool _validarCamposEndereco(EnderecoUsuarioModel endereco) {
+  bool _validarCamposEndereco(EnderecoUsuario endereco) {
     final erros = <String?>[
       FormValidators.cep(endereco.cep),
       FormValidators.logradouro(endereco.logradouro),
@@ -798,7 +836,7 @@ class RegisterController extends GetxController {
     return true;
   }
 
-  bool _enderecoTemAlgumCampoPreenchido(EnderecoUsuarioModel endereco) {
+  bool _enderecoTemAlgumCampoPreenchido(EnderecoUsuario endereco) {
     // Não considera UF sozinha, porque alguns controllers iniciam com "PR" por padrão.
     return endereco.cep.trim().isNotEmpty ||
         endereco.logradouro.trim().isNotEmpty ||
@@ -889,7 +927,7 @@ class RegisterController extends GetxController {
     return appController.tokenConviteAtual();
   }
 
-  void _logEndereco(EnderecoUsuarioModel endereco, {required String origem}) {
+  void _logEndereco(EnderecoUsuario endereco, {required String origem}) {
     _log(
       'Endereço [$origem]: '
       'id="${endereco.id}" | '

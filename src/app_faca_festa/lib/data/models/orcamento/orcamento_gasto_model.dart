@@ -1,25 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class OrcamentoGastoModel {
-  final String idGasto;
-  final String idOrcamento;
-  final String? idServicoContratado;
-  final String? nomeServicoContratado;
-  final String nome;
-  final double custo;
-  final double pago;
-  final DateTime dataCadastro;
+import 'package:app_faca_festa/domain/entities/orcamento_gasto.dart';
 
+export 'package:app_faca_festa/domain/entities/orcamento_gasto.dart'
+    show OrcamentoGasto;
+
+class OrcamentoGastoModel extends OrcamentoGasto {
   OrcamentoGastoModel({
-    required this.idGasto,
-    required this.idOrcamento,
-    this.idServicoContratado,
-    this.nomeServicoContratado,
-    required this.nome,
-    required this.custo,
-    required this.pago,
-    DateTime? dataCadastro,
-  }) : dataCadastro = dataCadastro ?? DateTime.now();
+    required super.idGasto,
+    required super.idOrcamento,
+    super.idServicoContratado,
+    super.nomeServicoContratado,
+    required super.nome,
+    required super.custo,
+    required super.pago,
+    super.dataCadastro,
+  });
 
   // 🔹 Converter para Map (Firestore)
   Map<String, dynamic> toMap() {
@@ -56,9 +52,4 @@ class OrcamentoGastoModel {
     if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
     return DateTime.now();
   }
-
-  // 🔹 Cálculos auxiliares
-  double get restante => (custo - pago).clamp(0, custo);
-  double get percentualPago =>
-      (custo > 0) ? (pago / custo).clamp(0.0, 1.0) : 0.0;
 }

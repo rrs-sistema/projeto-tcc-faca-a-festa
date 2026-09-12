@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -35,7 +35,7 @@ class ServicoFotoRemoteDatasource {
   Future<ServicoFotoModel> adicionarFotoArquivo({
     required String idFornecedor,
     required String idProdutoServico,
-    required File arquivo,
+    required List<int> bytes,
     required String nomeArquivo,
   }) async {
     final ref = _storage
@@ -45,7 +45,7 @@ class ServicoFotoRemoteDatasource {
         .child(idProdutoServico)
         .child(nomeArquivo);
 
-    final uploadTask = await ref.putFile(arquivo);
+    final uploadTask = await ref.putData(Uint8List.fromList(bytes));
     final downloadUrl = await uploadTask.ref.getDownloadURL();
 
     final foto = ServicoFotoModel(

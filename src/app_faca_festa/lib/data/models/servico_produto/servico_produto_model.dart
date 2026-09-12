@@ -1,20 +1,16 @@
 import '../DTO/fornecedor_servico_detalhado_dto.dart';
+import 'package:app_faca_festa/domain/entities/servico_produto.dart';
 
-class ServicoProdutoModel {
-  final String id;
-  final String nome;
-  final String? tipoMedida; // E.g. 'U' = unidade, 'H' = hora, etc.
-  final String? descricao;
-  final String? idSubcategoria; // 🔹 Novo campo de vínculo
-  final bool ativo;
+export 'package:app_faca_festa/domain/entities/servico_produto.dart';
 
+class ServicoProdutoModel extends ServicoProduto {
   const ServicoProdutoModel({
-    required this.id,
-    required this.nome,
-    this.tipoMedida,
-    this.descricao,
-    this.idSubcategoria,
-    required this.ativo,
+    required super.id,
+    required super.nome,
+    super.tipoMedida,
+    super.descricao,
+    super.idSubcategoria,
+    required super.ativo,
   });
 
   Map<String, dynamic> toMap() {
@@ -39,12 +35,14 @@ class ServicoProdutoModel {
     );
   }
 
-  ServicoProdutoModel copyWith(
-      {String? nome,
-      String? tipoMedida,
-      String? descricao,
-      String? idSubcategoria,
-      bool? ativo}) {
+  @override
+  ServicoProdutoModel copyWith({
+    String? nome,
+    String? tipoMedida,
+    String? descricao,
+    String? idSubcategoria,
+    bool? ativo,
+  }) {
     return ServicoProdutoModel(
       id: id,
       nome: nome ?? this.nome,
@@ -55,9 +53,20 @@ class ServicoProdutoModel {
     );
   }
 
+  factory ServicoProdutoModel.fromEntity(ServicoProduto servico) {
+    return ServicoProdutoModel(
+      id: servico.id,
+      nome: servico.nome,
+      tipoMedida: servico.tipoMedida,
+      descricao: servico.descricao,
+      idSubcategoria: servico.idSubcategoria,
+      ativo: servico.ativo,
+    );
+  }
+
   List<FornecedorServicoDetalhadoDto> converterServicosParaDetalhados(
     String idFornecedor,
-    List<ServicoProdutoModel> servicos,
+    List<ServicoProduto> servicos,
   ) {
     return servicos.map((s) {
       return FornecedorServicoDetalhadoDto(

@@ -1,4 +1,4 @@
-import '../../domain/repositories/ranking_repository.dart';
+import 'package:app_faca_festa/domain/repositories/ranking_repository.dart';
 import '../datasources/remote/ranking_remote_datasource.dart';
 
 class RankingRepositoryImpl implements RankingRepository {

@@ -28,6 +28,7 @@ import 'uf_cidade_bootstrap.dart';
 
 abstract final class AppBootstrap {
   static void registerControllers() {
+    AppControllerBootstrap.registerSharedServices();
     AutenticacaoBootstrap.register();
     DocumentoBootstrap.register();
     ConvidadoBootstrap.register();

@@ -1,6 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
-import '../../domain/repositories/fornecedor_migracao_repository.dart';
+import 'package:app_faca_festa/domain/repositories/fornecedor_migracao_repository.dart';
 import '../datasources/remote/fornecedor_migracao_remote_datasource.dart';
 
 class FornecedorMigracaoRepositoryImpl implements FornecedorMigracaoRepository {

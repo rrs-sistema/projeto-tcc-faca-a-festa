@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/convidado/convidado_model.dart';
 import '../../models/convidado/grupo_convidado_model.dart';
-import '../../../domain/repositories/grupo_convidado_repository.dart';
+import 'package:app_faca_festa/domain/repositories/grupo_convidado_repository.dart';
 
 class GrupoConvidadoRemoteDatasource {
   GrupoConvidadoRemoteDatasource(this.firestore);

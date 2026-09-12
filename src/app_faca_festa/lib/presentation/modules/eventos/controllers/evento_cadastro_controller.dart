@@ -4,21 +4,42 @@ import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
-import 'package:app_faca_festa/data/models/endereco/endereco_usuario.dart';
-import 'package:app_faca_festa/data/models/evento/tema_festa_model.dart';
+import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
+import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
-import 'package:app_faca_festa/presentation/pages/endereco/endereco_section_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/tema_festa_view_model.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/components/endereco/endereco_section_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidade_controller.dart';
 
 class EventoCadastroController extends GetxController {
-  EventoCadastroController({required EventoRepository repository})
-      : _repository = repository;
+  EventoCadastroController({
+    required EventoRepository repository,
+    required BuscarCepService buscarCepService,
+    required UFCidadeController ufCidadeController,
+    AppController? appController,
+    AppController? Function()? appControllerResolver,
+  })  : _repository = repository,
+        _buscarCepService = buscarCepService,
+        _ufCidadeController = ufCidadeController,
+        _appController = appController,
+        _appControllerResolver = appControllerResolver;
 
   final EventoRepository _repository;
+  final BuscarCepService _buscarCepService;
+  final UFCidadeController _ufCidadeController;
+  final AppController? _appController;
+  final AppController? Function()? _appControllerResolver;
   final uuid = const Uuid();
-  AppController get app => Get.find<AppController>();
+  AppController get app {
+    final controller = _appController ?? _appControllerResolver?.call();
+    if (controller == null) {
+      throw StateError('AppController não configurado.');
+    }
+    return controller;
+  }
 
   /// ===============================
   /// 🔹 LISTA E MODELO DE TIPO DE EVENTO
@@ -73,7 +94,10 @@ class EventoCadastroController extends GetxController {
 
   Rx<EnderecoSectionController>? _enderecoController;
   Rx<EnderecoSectionController> get enderecoController =>
-      _enderecoController ??= EnderecoSectionController().obs;
+      _enderecoController ??= EnderecoSectionController(
+        cepService: _buscarCepService,
+        ufCidadeController: _ufCidadeController,
+      ).obs;
   final padrinhos = <String>[].obs;
 
   final formKey = GlobalKey<FormState>();
@@ -144,8 +168,8 @@ class EventoCadastroController extends GetxController {
     }
   }
 
-  String get tokenTipoEvento =>
-      TemaFestaModel.normalizarTipo(tipoEventoSelecionado.value?.nome ?? '');
+  String get tokenTipoEvento => TemaFestaViewModel.normalizarTipo(
+      tipoEventoSelecionado.value?.nome ?? '');
 
   bool get exibeSeletorTemaFesta {
     final token = tokenTipoEvento;
@@ -162,9 +186,9 @@ class EventoCadastroController extends GetxController {
     return token.contains('aniversario') || token.contains('infantil');
   }
 
-  void selecionarTemaFesta(TemaFestaModel? tema, {bool outro = false}) {
-    if (outro || tema?.slug == TemaFestaModel.slugOutro) {
-      idTema.value = TemaFestaModel.slugOutro;
+  void selecionarTemaFesta(TemaFestaViewModel? tema, {bool outro = false}) {
+    if (outro || tema?.slug == TemaFestaViewModel.slugOutro) {
+      idTema.value = TemaFestaViewModel.slugOutro;
       temaLivre.value = true;
       dressCode.value = '';
       return;
@@ -256,7 +280,7 @@ class EventoCadastroController extends GetxController {
     _rotuloBanner = evento.rotuloBanner;
     temaLivre.value = (evento.idTema == null ||
             evento.idTema!.trim().isEmpty ||
-            evento.idTema == TemaFestaModel.slugOutro) &&
+            evento.idTema == TemaFestaViewModel.slugOutro) &&
         (evento.tema ?? '').trim().isNotEmpty;
     dataFesta.text = DateFormat('dd/MM/yyyy', 'pt_BR').format(evento.data);
     horaFesta.text = evento.hora ?? '';
@@ -406,8 +430,8 @@ class EventoCadastroController extends GetxController {
 
     if (temaFestaObrigatorio) {
       final temaInformado = tema.text.trim();
-      final escolheuCatalogo =
-          idTema.value.isNotEmpty && idTema.value != TemaFestaModel.slugOutro;
+      final escolheuCatalogo = idTema.value.isNotEmpty &&
+          idTema.value != TemaFestaViewModel.slugOutro;
       if (!escolheuCatalogo && temaInformado.length < 2) {
         Get.snackbar(
           'Atenção',
@@ -611,7 +635,7 @@ class EventoCadastroController extends GetxController {
     return int.tryParse(raw) ?? 0;
   }
 
-  bool _enderecoTemAlgumCampoPreenchido(EnderecoUsuarioModel endereco) {
+  bool _enderecoTemAlgumCampoPreenchido(EnderecoUsuario endereco) {
     // Não considera a UF sozinha, porque o controller inicia com "PR" por padrão.
     return endereco.cep.trim().isNotEmpty ||
         endereco.logradouro.trim().isNotEmpty ||
@@ -621,7 +645,7 @@ class EventoCadastroController extends GetxController {
         (endereco.nomeCidade?.trim().isNotEmpty ?? false);
   }
 
-  bool _validarCamposEndereco(EnderecoUsuarioModel endereco) {
+  bool _validarCamposEndereco(EnderecoUsuario endereco) {
     _logEndereco(endereco, origem: '_validarCamposEndereco');
 
     // ------------------------------
@@ -757,7 +781,7 @@ class EventoCadastroController extends GetxController {
     }
   }
 
-  void _logEndereco(EnderecoUsuarioModel endereco, {required String origem}) {
+  void _logEndereco(EnderecoUsuario endereco, {required String origem}) {
     _log(
       'Endereço [$origem]: '
       'cep="${endereco.cep}" | '

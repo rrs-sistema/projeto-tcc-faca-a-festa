@@ -1,26 +1,26 @@
-import '../../data/models/convidado/convidado_model.dart';
-import '../../data/models/evento/calculadora_festa_item_model.dart';
-import '../../data/models/evento/calculadora_festa_model.dart';
+import '../entities/calculadora_festa.dart';
+import '../entities/calculadora_festa_item.dart';
+import '../entities/convidado.dart';
 
 abstract interface class CalculadoraFestaRepository {
-  Future<List<ConvidadoModel>> listarConvidadosDoEvento(String idEvento);
+  Future<List<Convidado>> listarConvidadosDoEvento(String idEvento);
 
   Future<void> salvarSimulacao({
-    required CalculadoraFestaModel calculo,
-    required List<CalculadoraFestaItemModel> itens,
+    required CalculadoraFesta calculo,
+    required List<CalculadoraFestaItem> itens,
   });
 
-  Future<List<CalculadoraFestaModel>> listarSimulacoesPorEvento(
+  Future<List<CalculadoraFesta>> listarSimulacoesPorEvento(
     String idEvento,
   );
 
-  Stream<List<CalculadoraFestaModel>> observarSimulacoesPorEvento(
+  Stream<List<CalculadoraFesta>> observarSimulacoesPorEvento(
     String idEvento,
   );
 
-  Future<CalculadoraFestaModel?> buscarSimulacaoPorId(String idCalculo);
+  Future<CalculadoraFesta?> buscarSimulacaoPorId(String idCalculo);
 
-  Future<List<CalculadoraFestaItemModel>> listarItensDaSimulacao(
+  Future<List<CalculadoraFestaItem>> listarItensDaSimulacao(
     String idCalculo,
   );
 
@@ -45,13 +45,13 @@ abstract interface class CalculadoraFestaRepository {
   });
 
   Future<Map<String, String>> transformarSimulacaoEmOrcamento({
-    required CalculadoraFestaModel simulacao,
-    required List<CalculadoraFestaItemModel> itensPendentes,
+    required CalculadoraFesta simulacao,
+    required List<CalculadoraFestaItem> itensPendentes,
   });
 
   Future<void> enviarResultadoParaCardapio({
-    required CalculadoraFestaModel calculo,
-    required List<CalculadoraFestaItemModel> itens,
+    required CalculadoraFesta calculo,
+    required List<CalculadoraFestaItem> itens,
     required String idCardapio,
   });
 

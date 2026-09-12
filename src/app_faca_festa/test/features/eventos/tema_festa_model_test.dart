@@ -1,4 +1,5 @@
 import 'package:app_faca_festa/data/models/evento/tema_festa_model.dart';
+import 'package:app_faca_festa/presentation/modules/tema/tema_festa_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -44,9 +45,11 @@ void main() {
       expect(parsed.tiposEvento, ['festa_infantil']);
       expect(parsed.corPrimaria, '#8D6E63');
     });
+  });
 
+  group('TemaFestaViewModel', () {
     test('derives a light surface and readable contrast from the palette', () {
-      const safari = TemaFestaModel(
+      const safari = TemaFestaViewModel(
         idTema: 'safari',
         slug: 'safari',
         nome: 'Safári',
@@ -57,7 +60,7 @@ void main() {
       expect(safari.fundoClaro.computeLuminance(), greaterThan(0.7));
       expect(safari.onPrimary, const Color(0xFFFFFFFF));
 
-      const claro = TemaFestaModel(
+      const claro = TemaFestaViewModel(
         idTema: 'claro',
         slug: 'claro',
         nome: 'Claro',

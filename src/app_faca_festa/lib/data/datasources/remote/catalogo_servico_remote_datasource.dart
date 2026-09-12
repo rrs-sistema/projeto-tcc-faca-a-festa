@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/servico_produto/categoria_servico_model.dart';
 import '../../models/servico_produto/subcategoria_servico_model.dart';
 import '../../seeds/categoria_servico_seed.dart';
-import '../../../domain/repositories/catalogo_servico_repository.dart';
+import 'package:app_faca_festa/domain/repositories/catalogo_servico_repository.dart';
 
 class CatalogoServicoRemoteDatasource {
   CatalogoServicoRemoteDatasource({required FirebaseFirestore firestore})

@@ -1,6 +1,6 @@
-import '../../data/models/evento/analise_calculadora_ia_model.dart';
-import '../../data/models/evento/calculadora_festa_item_model.dart';
-import '../../data/models/evento/estimativa_financeira_model.dart';
+import '../entities/analise_calculadora_ia.dart';
+import '../entities/calculadora_festa_item.dart';
+import '../entities/estimativa_financeira.dart';
 
 /// Contrato oficial da IA da calculadora.
 ///
@@ -8,9 +8,9 @@ import '../../data/models/evento/estimativa_financeira_model.dart';
 /// Hoje podemos usar a IA local baseada em regras e, futuramente,
 /// trocar por uma implementação remota via backend sem alterar o controller.
 abstract class ICalculadoraFestaAIService {
-  Future<AnaliseCalculadoraIAModel> analisarEstimativa({
-    required EstimativaFinanceiraModel estimativa,
-    required List<CalculadoraFestaItemModel> itensCalculados,
+  Future<AnaliseCalculadoraIA> analisarEstimativa({
+    required EstimativaFinanceira estimativa,
+    required List<CalculadoraFestaItem> itensCalculados,
     required String tipoEvento,
     double? orcamentoDisponivel,
   });

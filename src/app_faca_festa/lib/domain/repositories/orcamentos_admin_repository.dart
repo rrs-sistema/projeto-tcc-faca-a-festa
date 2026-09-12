@@ -1,5 +1,5 @@
-import '../../data/models/admin/orcamento_admin_model.dart';
+import '../entities/orcamento_admin.dart';
 
 abstract class OrcamentosAdminRepository {
-  Future<List<OrcamentoAdminModel>> listarOrcamentosComEventoDetalhes();
+  Future<List<OrcamentoAdmin>> listarOrcamentosComEventoDetalhes();
 }

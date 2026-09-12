@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/evento/sugestao_base_festa_model.dart';
+import 'package:app_faca_festa/domain/entities/sugestao_base_festa.dart';
 import 'package:app_faca_festa/domain/repositories/sugestao_base_festa_repository_contract.dart';
 
 class SugestaoBaseFestaController extends GetxController {
@@ -15,10 +15,8 @@ class SugestaoBaseFestaController extends GetxController {
   final RxBool saving = false.obs;
   final RxString error = ''.obs;
 
-  final RxList<SugestaoBaseFestaModel> listaSugestoes =
-      <SugestaoBaseFestaModel>[].obs;
-  final RxList<SugestaoBaseFestaModel> listaFiltrada =
-      <SugestaoBaseFestaModel>[].obs;
+  final RxList<SugestaoBaseFesta> listaSugestoes = <SugestaoBaseFesta>[].obs;
+  final RxList<SugestaoBaseFesta> listaFiltrada = <SugestaoBaseFesta>[].obs;
 
   final RxString filtroModulo = ''.obs;
   final RxString filtroTema = ''.obs;
@@ -27,8 +25,7 @@ class SugestaoBaseFestaController extends GetxController {
   final RxString filtroAtivo = 'todos'.obs;
   final RxString buscaTexto = ''.obs;
 
-  final Rxn<SugestaoBaseFestaModel> sugestaoSelecionada =
-      Rxn<SugestaoBaseFestaModel>();
+  final Rxn<SugestaoBaseFesta> sugestaoSelecionada = Rxn<SugestaoBaseFesta>();
 
   final TextEditingController buscaController = TextEditingController();
 
@@ -2967,7 +2964,7 @@ class SugestaoBaseFestaController extends GetxController {
     aplicarFiltros();
   }
 
-  Future<void> salvar(SugestaoBaseFestaModel sugestao) async {
+  Future<void> salvar(SugestaoBaseFesta sugestao) async {
     try {
       saving.value = true;
       error.value = '';
@@ -3000,11 +2997,11 @@ class SugestaoBaseFestaController extends GetxController {
     }
   }
 
-  Future<void> editar(SugestaoBaseFestaModel sugestao) async {
+  Future<void> editar(SugestaoBaseFesta sugestao) async {
     sugestaoSelecionada.value = sugestao;
   }
 
-  Future<void> ativarDesativar(SugestaoBaseFestaModel sugestao) async {
+  Future<void> ativarDesativar(SugestaoBaseFesta sugestao) async {
     try {
       await _repository.ativarDesativarSugestao(
         id: sugestao.id,
@@ -3028,7 +3025,7 @@ class SugestaoBaseFestaController extends GetxController {
     }
   }
 
-  Future<void> excluirLogicamente(SugestaoBaseFestaModel sugestao) async {
+  Future<void> excluirLogicamente(SugestaoBaseFesta sugestao) async {
     try {
       await _repository.excluirLogicamente(sugestao.id);
       await carregarSugestoes();

@@ -31,18 +31,18 @@ class FestaBottomBar extends StatelessWidget {
     required this.currentIndex,
     required this.onTap,
     required this.items,
+    required this.theme,
   });
 
   final int currentIndex;
   final ValueChanged<int> onTap;
   final List<FestaNavItem> items;
+  final EventThemeController theme;
 
   static const _topRadius = BorderRadius.vertical(top: Radius.circular(20));
 
   @override
   Widget build(BuildContext context) {
-    final theme = Get.find<EventThemeController>();
-
     return Obx(() {
       final primary = theme.primaryColor.value;
       final secondary = theme.secondaryColor.value;

@@ -1,22 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:app_faca_festa/domain/entities/servico_foto.dart';
+
+export 'package:app_faca_festa/domain/entities/servico_foto.dart';
+
 /// Representa uma foto associada a um serviço específico de um fornecedor.
 ///
 /// As imagens podem ser usadas para exibir o portfólio visual de cada serviço.
-class ServicoFotoModel {
-  final String id;
-  final String idProdutoServico;
-  final String idFornecedor;
-  final String url;
-  final DateTime dataUpload;
-
+class ServicoFotoModel extends ServicoFoto {
   ServicoFotoModel({
-    required this.id,
-    required this.idProdutoServico,
-    required this.idFornecedor,
-    required this.url,
-    DateTime? dataUpload,
-  }) : dataUpload = dataUpload ?? DateTime.now();
+    required super.id,
+    required super.idProdutoServico,
+    required super.idFornecedor,
+    required super.url,
+    super.dataUpload,
+  });
 
   // ===========================================================
   // 🔹 Conversão para Firestore
@@ -49,6 +47,7 @@ class ServicoFotoModel {
   // ===========================================================
   // 🔹 Cópia com atualização parcial
   // ===========================================================
+  @override
   ServicoFotoModel copyWith({
     String? idProdutoServico,
     String? idFornecedor,
@@ -61,6 +60,16 @@ class ServicoFotoModel {
       idFornecedor: idFornecedor ?? this.idFornecedor,
       url: url ?? this.url,
       dataUpload: dataUpload ?? this.dataUpload,
+    );
+  }
+
+  factory ServicoFotoModel.fromEntity(ServicoFoto foto) {
+    return ServicoFotoModel(
+      id: foto.id,
+      idProdutoServico: foto.idProdutoServico,
+      idFornecedor: foto.idFornecedor,
+      url: foto.url,
+      dataUpload: foto.dataUpload,
     );
   }
 }

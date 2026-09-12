@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class CalculadoraItemBaseModel {
+import 'package:app_faca_festa/domain/entities/calculadora_item_base.dart';
+
+export 'package:app_faca_festa/domain/entities/calculadora_item_base.dart';
+
+class CalculadoraItemBaseModel extends CalculadoraItemBase {
   static const String collectionName = 'calculadora_itens_base';
 
   static const String fieldId = 'id';
@@ -17,35 +21,43 @@ class CalculadoraItemBaseModel {
   static const String fieldCreatedAt = 'created_at';
   static const String fieldUpdatedAt = 'updated_at';
 
-  final String id;
-  final String nome;
-  final String descricao;
-  final String categoriaPadrao;
-  final String tipoItem;
-  final String unidadePadrao;
-  final String publicoAlvo;
-  final bool ativo;
-  final int ordem;
-  final String icone;
-  final List<String> tags;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
   const CalculadoraItemBaseModel({
-    required this.id,
-    required this.nome,
-    required this.descricao,
-    required this.categoriaPadrao,
-    required this.tipoItem,
-    required this.unidadePadrao,
-    required this.publicoAlvo,
-    required this.ativo,
-    required this.ordem,
-    required this.icone,
-    required this.tags,
-    required this.createdAt,
-    required this.updatedAt,
+    required super.id,
+    required super.nome,
+    required super.descricao,
+    required super.categoriaPadrao,
+    required super.tipoItem,
+    required super.unidadePadrao,
+    required super.publicoAlvo,
+    required super.ativo,
+    required super.ordem,
+    required super.icone,
+    required super.tags,
+    required super.createdAt,
+    required super.updatedAt,
   });
+
+  factory CalculadoraItemBaseModel.fromEntity(CalculadoraItemBase entity) {
+    if (entity is CalculadoraItemBaseModel) {
+      return entity;
+    }
+
+    return CalculadoraItemBaseModel(
+      id: entity.id,
+      nome: entity.nome,
+      descricao: entity.descricao,
+      categoriaPadrao: entity.categoriaPadrao,
+      tipoItem: entity.tipoItem,
+      unidadePadrao: entity.unidadePadrao,
+      publicoAlvo: entity.publicoAlvo,
+      ativo: entity.ativo,
+      ordem: entity.ordem,
+      icone: entity.icone,
+      tags: List<String>.from(entity.tags),
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    );
+  }
 
   factory CalculadoraItemBaseModel.fromMap(Map<String, dynamic> map) {
     final now = DateTime.now();
@@ -131,6 +143,7 @@ class CalculadoraItemBaseModel {
     return toMap();
   }
 
+  @override
   CalculadoraItemBaseModel copyWith({
     String? id,
     String? nome,
@@ -163,6 +176,7 @@ class CalculadoraItemBaseModel {
     );
   }
 
+  @override
   CalculadoraItemBaseModel marcarComoAtivo() {
     return copyWith(
       ativo: true,
@@ -170,6 +184,7 @@ class CalculadoraItemBaseModel {
     );
   }
 
+  @override
   CalculadoraItemBaseModel marcarComoInativo() {
     return copyWith(
       ativo: false,
@@ -177,36 +192,49 @@ class CalculadoraItemBaseModel {
     );
   }
 
+  @override
   bool get inativo => !ativo;
 
+  @override
   bool get possuiId => id.trim().isNotEmpty;
 
+  @override
   bool get possuiNome => nome.trim().isNotEmpty;
 
+  @override
   bool get possuiDescricao => descricao.trim().isNotEmpty;
 
+  @override
   bool get possuiIcone => icone.trim().isNotEmpty;
 
+  @override
   bool get possuiTags => tags.isNotEmpty;
 
+  @override
   String get nomeNormalizado => nome.trim().toLowerCase();
 
+  @override
   String get tipoItemNormalizado => tipoItem.trim().toLowerCase();
 
+  @override
   String get categoriaNormalizada => categoriaPadrao.trim().toLowerCase();
 
+  @override
   String get unidadeNormalizada => unidadePadrao.trim().toLowerCase();
 
+  @override
   bool get isPublicoTodos {
     return publicoAlvo.trim().toLowerCase() == 'todos';
   }
 
+  @override
   bool get isPublicoAdulto {
     final value = publicoAlvo.trim().toLowerCase();
 
     return value == 'adulto' || value == 'adultos';
   }
 
+  @override
   bool get isPublicoCrianca {
     final value = publicoAlvo.trim().toLowerCase();
 
@@ -216,6 +244,7 @@ class CalculadoraItemBaseModel {
         value == 'crianças';
   }
 
+  @override
   bool contemTag(String tag) {
     final tagNormalizada = tag.trim().toLowerCase();
 

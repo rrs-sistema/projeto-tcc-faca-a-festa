@@ -3,17 +3,24 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/fornecedor_localizacao_remote_datasource.dart';
-import '../../data/datasources/remote/fornecedor_remote_datasource.dart';
-import '../../data/repositories_impl/fornecedor_localizacao_repository_impl.dart';
-import '../../data/repositories_impl/fornecedor_repository_impl.dart';
-import '../../data/services/fornecedor_ai_generativa_service.dart';
-import '../../domain/repositories/fornecedor_localizacao_repository.dart';
-import '../../domain/repositories/fornecedor_repository.dart';
-import '../../domain/usecases/gerenciar_fornecedor_localizacao.dart';
-import '../../domain/usecases/gerenciar_fornecedores.dart';
-import '../../presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
-import '../../presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/fornecedor_localizacao_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/fornecedor_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/fornecedor_localizacao_repository_impl.dart';
+import 'package:app_faca_festa/data/repositories_impl/fornecedor_repository_impl.dart';
+import 'package:app_faca_festa/data/services/fornecedor_ai_service.dart';
+import 'package:app_faca_festa/data/services/fornecedor_ai_generativa_service.dart';
+import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
+import 'package:app_faca_festa/domain/repositories/fornecedor_localizacao_repository.dart';
+import 'package:app_faca_festa/domain/repositories/fornecedor_repository.dart';
+import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
+import 'package:app_faca_festa/domain/services/fornecedor_ai.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_servico_fotos.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedor_localizacao.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_servicos_produto.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 
 abstract final class FornecedorBootstrap {
   static void register() {
@@ -38,19 +45,53 @@ abstract final class FornecedorBootstrap {
         permanent: true,
       );
     }
-    if (!Get.isRegistered<FornecedorAiGenerativaService>()) {
-      Get.lazyPut<FornecedorAiGenerativaService>(
+    if (!Get.isRegistered<FornecedorAiGenerativoService>()) {
+      Get.lazyPut<FornecedorAiGenerativoService>(
         () => FornecedorAiGenerativaService(
           functions: Get.find<FirebaseFunctions>(),
         ),
         fenix: true,
       );
     }
+    if (!Get.isRegistered<FornecedorAiRegrasService>()) {
+      Get.lazyPut<FornecedorAiRegrasService>(
+        () => FornecedorAiService(),
+        fenix: true,
+      );
+    }
     if (!Get.isRegistered<FornecedorController>()) {
       Get.put(
         FornecedorController(
+          autenticacaoRepository: Get.isRegistered<AutenticacaoRepository>()
+              ? Get.find<AutenticacaoRepository>()
+              : null,
+          gerenciarFornecedores: Get.find<GerenciarFornecedores>(),
+          gerenciarServicosProduto: Get.isRegistered<GerenciarServicosProduto>()
+              ? Get.find<GerenciarServicosProduto>()
+              : null,
+          gerenciarServicosProdutoResolver: () =>
+              Get.isRegistered<GerenciarServicosProduto>()
+                  ? Get.find<GerenciarServicosProduto>()
+                  : null,
+          gerenciarServicoFotos: Get.isRegistered<GerenciarServicoFotos>()
+              ? Get.find<GerenciarServicoFotos>()
+              : null,
+          gerenciarServicoFotosResolver: () =>
+              Get.isRegistered<GerenciarServicoFotos>()
+                  ? Get.find<GerenciarServicoFotos>()
+                  : null,
+          fornecedorAiService: Get.find<FornecedorAiRegrasService>(),
           fornecedorAiGenerativaService:
-              Get.find<FornecedorAiGenerativaService>(),
+              Get.find<FornecedorAiGenerativoService>(),
+          auditoria: Get.isRegistered<AuditoriaRegistrar>()
+              ? Get.find<AuditoriaRegistrar>()
+              : const AuditoriaRegistrarVazio(),
+          auditoriaResolver: () => Get.isRegistered<AuditoriaRegistrar>()
+              ? Get.find<AuditoriaRegistrar>()
+              : null,
+          appControllerResolver: () => Get.isRegistered<AppController>()
+              ? Get.find<AppController>()
+              : null,
         ),
         permanent: true,
       );

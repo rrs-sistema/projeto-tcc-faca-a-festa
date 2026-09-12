@@ -2,14 +2,33 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/evento_remote_ds.dart';
-import '../../data/local/evento_ativo_store.dart';
-import '../../data/repositories_impl/evento_repository_impl.dart';
-import '../../domain/repositories/evento_repository.dart';
-import '../../presentation/coordinators/evento_session_coordinator.dart';
-import '../../presentation/modules/eventos/controllers/home_event_nav_controller.dart';
-import '../../presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
-import '../../presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/evento_remote_ds.dart';
+import 'package:app_faca_festa/data/local/evento_ativo_store.dart';
+import 'package:app_faca_festa/data/repositories_impl/evento_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
+import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
+import 'package:app_faca_festa/presentation/coordinators/evento_session_coordinator.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
+import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_recomendacao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidade_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/home_event_nav_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_localizacao_screen.dart';
 
 /// Global composition root for the current-event session.
 abstract final class EventoBootstrap {
@@ -33,7 +52,41 @@ abstract final class EventoBootstrap {
 
     if (!Get.isRegistered<EventoSessionCoordinator>()) {
       Get.put<EventoSessionCoordinator>(
-        GetxEventoSessionCoordinator(),
+        GetxEventoSessionCoordinator(
+          themeControllerOf: () => Get.find<EventThemeController>(),
+          orcamentoControllerOf: () => Get.isRegistered<OrcamentoController>()
+              ? Get.find<OrcamentoController>()
+              : null,
+          convidadoControllerOf: () => Get.isRegistered<ConvidadoController>()
+              ? Get.find<ConvidadoController>()
+              : null,
+          cardapioControllerOf: () => Get.isRegistered<CardapioController>()
+              ? Get.find<CardapioController>()
+              : null,
+          grupoControllerOf: () => Get.isRegistered<GrupoConvidadoController>()
+              ? Get.find<GrupoConvidadoController>()
+              : null,
+          tarefaControllerOf: () => Get.isRegistered<TarefaController>()
+              ? Get.find<TarefaController>()
+              : null,
+          inspiracaoControllerOf: () => Get.isRegistered<InspiracaoController>()
+              ? Get.find<InspiracaoController>()
+              : null,
+          usuarioControllerOf: () => Get.isRegistered<UsuarioController>()
+              ? Get.find<UsuarioController>()
+              : null,
+          fornecedorControllerOf: () => Get.isRegistered<FornecedorController>()
+              ? Get.find<FornecedorController>()
+              : null,
+          orcamentoGastoControllerOf: () =>
+              Get.isRegistered<OrcamentoGastoController>()
+                  ? Get.find<OrcamentoGastoController>()
+                  : null,
+          calculadoraControllerOf: () =>
+              Get.isRegistered<CalculadoraFestaController>()
+                  ? Get.find<CalculadoraFestaController>()
+                  : null,
+        ),
         permanent: true,
       );
     }
@@ -51,13 +104,39 @@ abstract final class EventoBootstrap {
 
     if (!Get.isRegistered<EventoCadastroController>()) {
       Get.put(
-        EventoCadastroController(repository: Get.find<EventoRepository>()),
+        EventoCadastroController(
+          repository: Get.find<EventoRepository>(),
+          buscarCepService: Get.find<BuscarCepService>(),
+          ufCidadeController: Get.find<UFCidadeController>(),
+          appController: Get.isRegistered<AppController>()
+              ? Get.find<AppController>()
+              : null,
+          appControllerResolver: () => Get.isRegistered<AppController>()
+              ? Get.find<AppController>()
+              : null,
+        ),
         permanent: true,
       ).carregarTiposEvento();
     }
 
     if (!Get.isRegistered<HomeEventNavController>()) {
-      Get.put(HomeEventNavController(), permanent: true);
+      Get.put(
+        HomeEventNavController(
+          fornecedoresPageBuilder: () => FornecedorLocalizacaoScreen(
+            showLeading: true,
+            appController: Get.find<AppController>(),
+            themeController: Get.find<EventThemeController>(),
+            controllerLocalizacao: Get.find<FornecedorLocalizacaoController>(),
+            eventoController: Get.find<EventoController>(),
+            recomendacaoController:
+                Get.find<FornecedorRecomendacaoController>(),
+            fornecedorCadastroController: Get.find<FornecedorController>(),
+            avaliacaoController: Get.find<AvaliacaoServicoController>(),
+            cotacoes: Get.find<CotacaoController>().gerenciarCotacoes,
+          ),
+        ),
+        permanent: true,
+      );
     }
   }
 }

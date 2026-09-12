@@ -1,9 +1,9 @@
-import '../../data/models/fornecedor/territorio_model.dart';
+import '../entities/territorio.dart';
 
 abstract class AdminTerritorioRepository {
-  Future<List<TerritorioModel>> listarTerritorios();
+  Future<List<Territorio>> listarTerritorios();
 
-  Future<void> salvarTerritorio(TerritorioModel territorio);
+  Future<void> salvarTerritorio(Territorio territorio);
 
   Future<void> atualizarAtivo(String idTerritorio, bool ativo);
 }

@@ -1,4 +1,4 @@
-import '../../data/models/admin/evento_com_tipo_model.dart';
+import '../entities/evento_admin.dart';
 import '../repositories/eventos_admin_repository.dart';
 
 class GerenciarEventosAdmin {
@@ -6,7 +6,7 @@ class GerenciarEventosAdmin {
 
   final EventosAdminRepository repository;
 
-  Future<List<EventoComTipoModel>> listarEventosComTipo() {
+  Future<List<EventoAdmin>> listarEventosComTipo() {
     return repository.listarEventosComTipo();
   }
 

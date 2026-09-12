@@ -1,24 +1,36 @@
-import '../model.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_detalhado.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/territorio.dart';
 
-class FornecedorDetalhadoDto {
-  final FornecedorModel fornecedor;
-  final TerritorioModel? territorio;
-  final String categoriaId;
-  final String categoriaNome;
-  final double? distanciaKm;
+export 'package:app_faca_festa/domain/entities/fornecedor_detalhado.dart';
 
+class FornecedorDetalhadoDto extends FornecedorDetalhado {
   FornecedorDetalhadoDto({
-    required this.fornecedor,
-    required this.categoriaId,
-    required this.categoriaNome,
-    this.territorio,
-    this.distanciaKm,
+    required super.fornecedor,
+    required super.categoriaId,
+    required super.categoriaNome,
+    super.territorio,
+    super.distanciaKm,
   });
 
-  // 🔹 Método copyWith elegante e completo
+  factory FornecedorDetalhadoDto.fromEntity(FornecedorDetalhado entity) {
+    if (entity is FornecedorDetalhadoDto) {
+      return entity;
+    }
+
+    return FornecedorDetalhadoDto(
+      fornecedor: entity.fornecedor,
+      categoriaId: entity.categoriaId,
+      categoriaNome: entity.categoriaNome,
+      territorio: entity.territorio,
+      distanciaKm: entity.distanciaKm,
+    );
+  }
+
+  @override
   FornecedorDetalhadoDto copyWith({
-    FornecedorModel? fornecedor,
-    TerritorioModel? territorio,
+    Fornecedor? fornecedor,
+    Territorio? territorio,
     String? categoriaId,
     String? categoriaNome,
     double? distanciaKm,

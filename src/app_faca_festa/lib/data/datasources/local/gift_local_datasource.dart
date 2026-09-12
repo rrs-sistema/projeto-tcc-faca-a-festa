@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
-import './../../../domain/entities/gift/gift_contribution.dart';
-import './../../../core/database/app_database.dart';
+import 'package:app_faca_festa/domain/entities/gift/gift_contribution.dart';
+import 'package:app_faca_festa/core/database/app_database.dart';
 
 class GiftLocalDatasource {
   final AppDatabase db;

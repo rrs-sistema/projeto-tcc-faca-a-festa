@@ -1,13 +1,13 @@
-import '../../data/models/fornecedor/fornecedor_recomendacao_model.dart';
+import '../entities/fornecedor_recomendacao.dart';
 
 abstract class FornecedorRecomendacaoRepository {
-  Future<List<FornecedorRecomendacaoModel>> carregarRecomendacoesSalvas({
+  Future<List<FornecedorRecomendacao>> carregarRecomendacoesSalvas({
     required String idEvento,
     required String idUsuario,
     required int limite,
   });
 
-  Future<List<FornecedorRecomendacaoModel>> gerarRecomendacoes({
+  Future<List<FornecedorRecomendacao>> gerarRecomendacoes({
     required String idEvento,
     required int limite,
     required bool modoDemo,

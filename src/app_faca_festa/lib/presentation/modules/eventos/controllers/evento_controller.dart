@@ -2,10 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import 'package:app_faca_festa/data/local/evento_ativo_store.dart';
-import 'package:app_faca_festa/data/models/evento/evento_model.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
+import 'package:app_faca_festa/domain/services/evento_ativo_store.dart';
 import 'package:app_faca_festa/presentation/coordinators/evento_session_coordinator.dart';
 
 class EventoController extends GetxController {
@@ -426,7 +426,7 @@ class EventoController extends GetxController {
   Future<void> _aplicarCapaLocal(String? url) async {
     final atual = eventoAtual.value;
     if (atual == null) return;
-    final atualizado = EventoModel.fromEntity(atual).copyWith(
+    final atualizado = atual.copyWith(
       imagemCapaUrl: url,
       limparImagemCapaUrl: url == null || url.trim().isEmpty,
     );
@@ -449,7 +449,7 @@ class EventoController extends GetxController {
         idEvento: id,
         rotuloBanner: texto.isEmpty ? null : texto,
       );
-      final atualizado = EventoModel.fromEntity(evento).copyWith(
+      final atualizado = evento.copyWith(
         rotuloBanner: texto.isEmpty ? null : texto,
         limparRotuloBanner: texto.isEmpty,
       );

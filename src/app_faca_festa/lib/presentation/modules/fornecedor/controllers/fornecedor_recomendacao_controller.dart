@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/fornecedor/fornecedor_recomendacao_model.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_recomendacao.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedor_recomendacoes.dart';
 
 class FornecedorRecomendacaoController extends GetxController {
@@ -14,8 +14,8 @@ class FornecedorRecomendacaoController extends GetxController {
   final RxBool carregando = false.obs;
   final RxBool gerando = false.obs;
   final RxString erro = ''.obs;
-  final RxList<FornecedorRecomendacaoModel> recomendacoes =
-      <FornecedorRecomendacaoModel>[].obs;
+  final RxList<FornecedorRecomendacao> recomendacoes =
+      <FornecedorRecomendacao>[].obs;
 
   String? _eventoCarregado;
   String? _usuarioCarregado;

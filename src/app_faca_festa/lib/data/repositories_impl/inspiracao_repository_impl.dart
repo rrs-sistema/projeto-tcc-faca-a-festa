@@ -1,7 +1,6 @@
-import 'dart:io';
 import 'dart:typed_data';
 
-import '../../domain/repositories/inspiracao_repository.dart';
+import 'package:app_faca_festa/domain/repositories/inspiracao_repository.dart';
 import '../datasources/remote/inspiracao_remote_datasource.dart';
 import '../models/evento/inspiracao_model.dart';
 import '../models/evento/inspiracao_snapshot_item.dart';
@@ -138,7 +137,7 @@ class InspiracaoRepositoryImpl implements InspiracaoRepository {
     required String eventoId,
     required String userId,
     required String referenciaId,
-    required InspiracaoModel inspiracao,
+    required Inspiracao inspiracao,
     required bool favorito,
     required String status,
     required String prioridade,
@@ -148,7 +147,7 @@ class InspiracaoRepositoryImpl implements InspiracaoRepository {
       eventoId: eventoId,
       userId: userId,
       referenciaId: referenciaId,
-      inspiracao: inspiracao,
+      inspiracao: InspiracaoModel.fromEntity(inspiracao),
       favorito: favorito,
       status: status,
       prioridade: prioridade,
@@ -184,12 +183,14 @@ class InspiracaoRepositoryImpl implements InspiracaoRepository {
   Future<void> adicionarReferenciaPessoal({
     required String eventoId,
     required String userId,
-    required File imageFile,
+    required List<int> bytes,
+    required String nomeArquivo,
   }) {
     return remote.adicionarReferenciaPessoal(
       eventoId: eventoId,
       userId: userId,
-      imageFile: imageFile,
+      bytes: bytes,
+      nomeArquivo: nomeArquivo,
     );
   }
 
@@ -225,13 +226,13 @@ class InspiracaoRepositoryImpl implements InspiracaoRepository {
   Future<void> criarChecklistDaInspiracao({
     required String eventoId,
     required String userId,
-    required InspiracaoModel inspiracao,
+    required Inspiracao inspiracao,
     required List<Map<String, dynamic>> tarefas,
   }) {
     return remote.criarChecklistDaInspiracao(
       eventoId: eventoId,
       userId: userId,
-      inspiracao: inspiracao,
+      inspiracao: InspiracaoModel.fromEntity(inspiracao),
       tarefas: tarefas,
     );
   }
@@ -240,13 +241,13 @@ class InspiracaoRepositoryImpl implements InspiracaoRepository {
   Future<void> criarOrcamentoDaInspiracao({
     required String eventoId,
     required String userId,
-    required InspiracaoModel inspiracao,
+    required Inspiracao inspiracao,
     required List<Map<String, dynamic>> itens,
   }) {
     return remote.criarOrcamentoDaInspiracao(
       eventoId: eventoId,
       userId: userId,
-      inspiracao: inspiracao,
+      inspiracao: InspiracaoModel.fromEntity(inspiracao),
       itens: itens,
     );
   }

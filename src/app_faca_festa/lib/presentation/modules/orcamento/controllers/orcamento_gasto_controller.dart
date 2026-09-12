@@ -2,19 +2,22 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import 'package:app_faca_festa/data/models/orcamento/orcamento_gasto_model.dart';
-import 'package:app_faca_festa/data/models/orcamento/orcamento_validacao_resultado.dart';
+import 'package:app_faca_festa/domain/entities/orcamento_gasto.dart';
+import 'package:app_faca_festa/domain/entities/orcamento_validacao_resultado.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_orcamento_gastos.dart';
-import 'package:app_faca_festa/presentation/modules/orcamento/orcamento_controller.dart';
 
 class OrcamentoGastoController extends GetxController {
-  OrcamentoGastoController({required GerenciarOrcamentoGastos gastosOrcamento})
-      : _gastosOrcamento = gastosOrcamento;
+  OrcamentoGastoController({
+    required GerenciarOrcamentoGastos gastosOrcamento,
+    FutureOr<void> Function()? atualizarResumoGeral,
+  })  : _gastosOrcamento = gastosOrcamento,
+        _atualizarResumoGeralCallback = atualizarResumoGeral;
 
   final GerenciarOrcamentoGastos _gastosOrcamento;
+  final FutureOr<void> Function()? _atualizarResumoGeralCallback;
 
-  final RxList<OrcamentoGastoModel> gastos = <OrcamentoGastoModel>[].obs;
-  StreamSubscription<List<OrcamentoGastoModel>>? _gastosSub;
+  final RxList<OrcamentoGasto> gastos = <OrcamentoGasto>[].obs;
+  StreamSubscription<List<OrcamentoGasto>>? _gastosSub;
 
   /// Escuta os gastos de um orçamento específico
   void escutarGastos(String idOrcamento) {
@@ -86,9 +89,9 @@ class OrcamentoGastoController extends GetxController {
   /// 🔥 NOVO: Atualiza RESUMO DO EVENTO automaticamente
   /// ==========================================================
   void _atualizarResumoGeral() {
-    if (Get.isRegistered<OrcamentoController>()) {
-      final c = Get.find<OrcamentoController>();
-      c.calcularTotalPagoGeral(); // método já existente no OrcamentoController
+    final callback = _atualizarResumoGeralCallback;
+    if (callback != null) {
+      unawaited(Future<void>.sync(callback));
     }
   }
 }

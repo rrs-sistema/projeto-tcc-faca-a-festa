@@ -1,8 +1,8 @@
-import '../../data/models/orcamento/orcamento_gasto_model.dart';
-import '../../data/models/orcamento/orcamento_validacao_resultado.dart';
+import '../entities/orcamento_gasto.dart';
+import '../entities/orcamento_validacao_resultado.dart';
 
 abstract class OrcamentoGastoRepository {
-  Stream<List<OrcamentoGastoModel>> observarGastos(String idOrcamento);
+  Stream<List<OrcamentoGasto>> observarGastos(String idOrcamento);
 
   Future<OrcamentoValidacaoResultado> adicionarGasto({
     required String idOrcamento,

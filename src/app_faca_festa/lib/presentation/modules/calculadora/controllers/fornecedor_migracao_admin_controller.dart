@@ -6,9 +6,8 @@ import 'package:app_faca_festa/domain/usecases/executar_migracao_fornecedores.da
 
 class FornecedorMigracaoAdminController extends GetxController {
   FornecedorMigracaoAdminController({
-    ExecutarMigracaoFornecedores? migracaoFornecedores,
-  }) : _migracaoFornecedores =
-            migracaoFornecedores ?? Get.find<ExecutarMigracaoFornecedores>();
+    required ExecutarMigracaoFornecedores migracaoFornecedores,
+  }) : _migracaoFornecedores = migracaoFornecedores;
 
   final ExecutarMigracaoFornecedores _migracaoFornecedores;
 

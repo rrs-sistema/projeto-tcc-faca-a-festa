@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/documento_remote_datasource.dart';
-import '../../data/repositories_impl/documento_repository_impl.dart';
-import '../../domain/repositories/documento_repository.dart';
-import '../../domain/usecases/gerenciar_documentos.dart';
+import 'package:app_faca_festa/data/datasources/remote/documento_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/documento_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/documento_repository.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_documentos.dart';
 
 abstract final class DocumentoBootstrap {
   static void register() {

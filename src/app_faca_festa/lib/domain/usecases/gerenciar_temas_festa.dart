@@ -1,4 +1,4 @@
-import '../../data/models/evento/tema_festa_model.dart';
+import '../entities/tema_festa.dart';
 import '../repositories/tema_festa_repository.dart';
 
 class GerenciarTemasFesta {
@@ -6,15 +6,15 @@ class GerenciarTemasFesta {
 
   final TemaFestaRepository repository;
 
-  Future<List<TemaFestaModel>> carregar() {
+  Future<List<TemaFesta>> carregar() {
     return repository.carregar();
   }
 
-  Future<TemaFestaModel?> buscarPorId(String idTema) {
+  Future<TemaFesta?> buscarPorId(String idTema) {
     return repository.buscarPorId(idTema);
   }
 
-  Future<void> salvar(TemaFestaModel tema) {
+  Future<void> salvar(TemaFesta tema) {
     return repository.salvar(tema);
   }
 
@@ -34,8 +34,8 @@ class GerenciarTemasFesta {
   }
 
   Future<void> popularTemasIniciais({
-    required List<TemaFestaModel> temasIniciais,
-    required List<TemaFestaModel> temasExistentes,
+    required List<TemaFesta> temasIniciais,
+    required List<TemaFesta> temasExistentes,
   }) {
     return repository.popularTemasIniciais(
       temasIniciais: temasIniciais,

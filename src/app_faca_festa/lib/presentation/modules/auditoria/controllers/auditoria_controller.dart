@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
-import 'package:app_faca_festa/data/models/auditoria/auditoria_catalogo.dart';
+import 'package:app_faca_festa/domain/entities/auditoria_catalogo.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 

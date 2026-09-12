@@ -1,5 +1,4 @@
-import '../../data/models/comunidade/comunidade_comentario_model.dart';
-import '../../data/models/comunidade/comunidade_post_model.dart';
+import '../entities/comunidade.dart';
 import '../repositories/comunidade_repository.dart';
 
 class GerenciarComunidade {
@@ -7,11 +6,11 @@ class GerenciarComunidade {
 
   final ComunidadeRepository repository;
 
-  Stream<List<ComunidadePostModel>> observarPosts() {
+  Stream<List<ComunidadePost>> observarPosts() {
     return repository.observarPosts();
   }
 
-  Stream<List<ComunidadeComentarioModel>> observarComentarios(String postId) {
+  Stream<List<ComunidadeComentario>> observarComentarios(String postId) {
     return repository.observarComentarios(postId);
   }
 

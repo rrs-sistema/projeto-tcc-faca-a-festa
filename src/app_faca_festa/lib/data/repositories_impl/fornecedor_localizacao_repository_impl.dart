@@ -1,10 +1,10 @@
-import '../../domain/repositories/fornecedor_localizacao_repository.dart';
+import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
+import 'package:app_faca_festa/domain/entities/territorio.dart';
+import 'package:app_faca_festa/domain/repositories/fornecedor_localizacao_repository.dart';
 import '../datasources/remote/fornecedor_localizacao_remote_datasource.dart';
 import '../models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../models/fornecedor/fornecedor_model.dart';
-import '../models/servico_produto/categoria_servico_model.dart';
-import '../models/servico_produto/fornecedor_categoria_model.dart';
-import '../models/fornecedor/territorio_model.dart';
 
 class FornecedorLocalizacaoRepositoryImpl
     implements FornecedorLocalizacaoRepository {
@@ -13,7 +13,7 @@ class FornecedorLocalizacaoRepositoryImpl
   final FornecedorLocalizacaoRemoteDatasource remote;
 
   @override
-  Stream<List<CategoriaServicoModel>> observarCategoriasAtivas() {
+  Stream<List<CategoriaServico>> observarCategoriasAtivas() {
     return remote.observarCategoriasAtivas();
   }
 
@@ -23,12 +23,12 @@ class FornecedorLocalizacaoRepositoryImpl
   }
 
   @override
-  Stream<List<TerritorioModel>> observarTerritoriosAtivos() {
+  Stream<List<Territorio>> observarTerritoriosAtivos() {
     return remote.observarTerritoriosAtivos();
   }
 
   @override
-  Stream<List<FornecedorCategoriaModel>> observarCategoriasFornecedor() {
+  Stream<List<FornecedorCategoria>> observarCategoriasFornecedor() {
     return remote.observarCategoriasFornecedor();
   }
 

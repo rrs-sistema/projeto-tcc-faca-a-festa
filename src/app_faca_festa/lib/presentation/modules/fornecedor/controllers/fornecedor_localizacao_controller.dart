@@ -1,25 +1,23 @@
-import 'package:geolocator/geolocator.dart';
-import 'package:flutter/foundation.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:get/get.dart';
 import 'dart:async';
 import 'dart:math';
 
-import 'package:app_faca_festa/data/models/DTO/fornecedor_detalhado_dto.dart';
-import 'package:app_faca_festa/data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import 'package:app_faca_festa/data/models/model.dart';
-import 'package:app_faca_festa/data/models/servico_produto/categoria_servico_model.dart';
-import 'package:app_faca_festa/data/models/servico_produto/fornecedor_categoria_model.dart';
+import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:get/get.dart';
+import 'package:latlong2/latlong.dart';
+
+import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_detalhado.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
+import 'package:app_faca_festa/domain/entities/territorio.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedor_localizacao.dart';
 
 class FornecedorLocalizacaoController extends GetxController {
   FornecedorLocalizacaoController({
-    GerenciarFornecedorLocalizacao? localizacao,
-  }) : _localizacao = localizacao ?? Get.find<GerenciarFornecedorLocalizacao>();
-
-  static FornecedorLocalizacaoController get to {
-    return Get.find<FornecedorLocalizacaoController>();
-  }
+    required GerenciarFornecedorLocalizacao localizacao,
+  }) : _localizacao = localizacao;
 
   final GerenciarFornecedorLocalizacao _localizacao;
 
@@ -38,23 +36,23 @@ class FornecedorLocalizacaoController extends GetxController {
   var raio = 10.0.obs;
 
   // Listas brutas (para reatividade)
-  final _fornecedoresRaw = <FornecedorModel>[].obs;
-  final _relacoesRaw = <FornecedorCategoriaModel>[].obs;
-  final territoriosFornecedores = <TerritorioModel>[].obs;
+  final _fornecedoresRaw = <Fornecedor>[].obs;
+  final _relacoesRaw = <FornecedorCategoria>[].obs;
+  final territoriosFornecedores = <Territorio>[].obs;
 
   // Listas principais
-  var fornecedores = <FornecedorDetalhadoDto>[].obs;
-  var fornecedoresFiltrados = <FornecedorDetalhadoDto>[].obs;
-  var categorias = <CategoriaServicoModel>[].obs;
-  var servicosFornecedor = <FornecedorServicoDetalhadoDto>[].obs;
-  var servicosPorCategoria = <FornecedorServicoDetalhadoDto>[].obs;
-  var allService = <FornecedorServicoDetalhadoDto>[].obs;
+  var fornecedores = <FornecedorDetalhado>[].obs;
+  var fornecedoresFiltrados = <FornecedorDetalhado>[].obs;
+  var categorias = <CategoriaServico>[].obs;
+  var servicosFornecedor = <FornecedorServicoDetalhado>[].obs;
+  var servicosPorCategoria = <FornecedorServicoDetalhado>[].obs;
+  var allService = <FornecedorServicoDetalhado>[].obs;
   var carregandoServicosFornecedor = false.obs;
   final RxnString servicoSelecionadoId = RxnString();
 
   // Listas auxiliares
-  var fornecedoresProximos = <FornecedorDetalhadoDto>[].obs;
-  var fornecedoresDestaque = <FornecedorDetalhadoDto>[].obs;
+  var fornecedoresProximos = <FornecedorDetalhado>[].obs;
+  var fornecedoresDestaque = <FornecedorDetalhado>[].obs;
 
   // Mapa auxiliar de médias de avaliações
   var mediasAvaliacoes = <String, double>{}.obs;
@@ -289,7 +287,7 @@ class FornecedorLocalizacaoController extends GetxController {
     final userLat = userLatitude.value;
     final userLon = userLongitude.value;
 
-    final relacoesPorFornecedor = <String, List<FornecedorCategoriaModel>>{};
+    final relacoesPorFornecedor = <String, List<FornecedorCategoria>>{};
     for (final r in _relacoesRaw) {
       relacoesPorFornecedor.putIfAbsent(r.idFornecedor, () => []).add(r);
     }
@@ -299,7 +297,7 @@ class FornecedorLocalizacaoController extends GetxController {
       for (var t in territoriosFornecedores) t.idFornecedor.trim(): t
     };
 
-    final List<FornecedorDetalhadoDto> listaDetalhada = [];
+    final List<FornecedorDetalhado> listaDetalhada = [];
 
     for (final f in _fornecedoresRaw) {
       final relacoesFornecedor = relacoesPorFornecedor[f.idFornecedor] ?? [];
@@ -342,7 +340,7 @@ class FornecedorLocalizacaoController extends GetxController {
       }
 
       listaDetalhada.add(
-        FornecedorDetalhadoDto(
+        FornecedorDetalhado(
           fornecedor: f,
           categoriaNome: nomeCategoria,
           categoriaId: relacoesFornecedor.first.idCategoria,
@@ -392,7 +390,7 @@ class FornecedorLocalizacaoController extends GetxController {
     }
   }
 
-  Future<List<FornecedorServicoDetalhadoDto>> escutarTodosServicosDoFornecedor(
+  Future<List<FornecedorServicoDetalhado>> escutarTodosServicosDoFornecedor(
       String idFornecedor) async {
     carregandoServicosFornecedor.value = true;
 
@@ -404,7 +402,7 @@ class FornecedorLocalizacaoController extends GetxController {
     } catch (e, s) {
       debugPrint(
           '❌ [FornecedorController] Erro ao escutar serviços fornecedor: $e\n$s');
-      return <FornecedorServicoDetalhadoDto>[];
+      return <FornecedorServicoDetalhado>[];
     } finally {
       carregandoServicosFornecedor.value = false;
     }

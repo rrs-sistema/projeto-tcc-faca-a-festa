@@ -1,31 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum TipoAvaliacao {
-  fornecedor,
-  servico,
-}
+import 'package:app_faca_festa/domain/entities/avaliacao.dart';
 
-class AvaliacaoModel {
-  final String id;
-  final String idCliente;
-  final String nomeCliente;
-  final String idFornecedor;
-  final String? nomeFornecedor;
-  final String evento;
-  final int nota;
-  final String comentario;
-  final DateTime data;
+export 'package:app_faca_festa/domain/entities/avaliacao.dart';
 
-  AvaliacaoModel({
-    required this.id,
-    required this.idCliente,
-    required this.nomeCliente,
-    required this.idFornecedor,
-    this.nomeFornecedor,
-    required this.evento,
-    required this.nota,
-    required this.comentario,
-    required this.data,
+class AvaliacaoModel extends Avaliacao {
+  const AvaliacaoModel({
+    required super.id,
+    required super.idCliente,
+    required super.nomeCliente,
+    required super.idFornecedor,
+    super.nomeFornecedor,
+    required super.evento,
+    required super.nota,
+    required super.comentario,
+    required super.data,
   });
 
   /// 🔹 Converte o modelo para Map (para salvar no Firestore)
@@ -67,6 +56,7 @@ class AvaliacaoModel {
   }
 
   /// 🔹 Copia o modelo alterando campos específicos (imutabilidade)
+  @override
   AvaliacaoModel copyWith({
     String? id,
     String? idCliente,

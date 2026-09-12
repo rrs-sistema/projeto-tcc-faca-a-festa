@@ -1,36 +1,8 @@
-enum TipoSugestaoCalculadoraIA {
-  economia,
-  alerta,
-  melhoria,
-  excesso,
-  falta,
-  planejamento,
-}
+import 'package:app_faca_festa/domain/entities/analise_calculadora_ia.dart';
 
-enum PrioridadeSugestaoCalculadoraIA {
-  baixa,
-  media,
-  alta,
-}
+export 'package:app_faca_festa/domain/entities/analise_calculadora_ia.dart';
 
-extension TipoSugestaoCalculadoraIAExtension on TipoSugestaoCalculadoraIA {
-  String get label {
-    switch (this) {
-      case TipoSugestaoCalculadoraIA.economia:
-        return 'Economia';
-      case TipoSugestaoCalculadoraIA.alerta:
-        return 'Alerta';
-      case TipoSugestaoCalculadoraIA.melhoria:
-        return 'Melhoria';
-      case TipoSugestaoCalculadoraIA.excesso:
-        return 'Excesso';
-      case TipoSugestaoCalculadoraIA.falta:
-        return 'Falta';
-      case TipoSugestaoCalculadoraIA.planejamento:
-        return 'Planejamento';
-    }
-  }
-
+extension TipoSugestaoCalculadoraIAModelExtension on TipoSugestaoCalculadoraIA {
   static TipoSugestaoCalculadoraIA fromString(String? value) {
     final normalized = value?.trim().toLowerCase() ?? '';
 
@@ -53,19 +25,8 @@ extension TipoSugestaoCalculadoraIAExtension on TipoSugestaoCalculadoraIA {
   }
 }
 
-extension PrioridadeSugestaoCalculadoraIAExtension
+extension PrioridadeSugestaoCalculadoraIAModelExtension
     on PrioridadeSugestaoCalculadoraIA {
-  String get label {
-    switch (this) {
-      case PrioridadeSugestaoCalculadoraIA.baixa:
-        return 'Baixa';
-      case PrioridadeSugestaoCalculadoraIA.media:
-        return 'Média';
-      case PrioridadeSugestaoCalculadoraIA.alta:
-        return 'Alta';
-    }
-  }
-
   static PrioridadeSugestaoCalculadoraIA fromString(String? value) {
     final normalized = value?.trim().toLowerCase() ?? '';
 
@@ -80,24 +41,30 @@ extension PrioridadeSugestaoCalculadoraIAExtension
   }
 }
 
-class SugestaoCalculadoraIAModel {
-  final String id;
-  final String titulo;
-  final String descricao;
-  final TipoSugestaoCalculadoraIA tipo;
-  final PrioridadeSugestaoCalculadoraIA prioridade;
-  final String? itemRelacionado;
-  final double impactoEstimado;
-
+class SugestaoCalculadoraIAModel extends SugestaoCalculadoraIA {
   const SugestaoCalculadoraIAModel({
-    required this.id,
-    required this.titulo,
-    required this.descricao,
-    required this.tipo,
-    required this.prioridade,
-    this.itemRelacionado,
-    this.impactoEstimado = 0,
+    required super.id,
+    required super.titulo,
+    required super.descricao,
+    required super.tipo,
+    required super.prioridade,
+    super.itemRelacionado,
+    super.impactoEstimado = 0,
   });
+
+  factory SugestaoCalculadoraIAModel.fromEntity(SugestaoCalculadoraIA entity) {
+    if (entity is SugestaoCalculadoraIAModel) return entity;
+
+    return SugestaoCalculadoraIAModel(
+      id: entity.id,
+      titulo: entity.titulo,
+      descricao: entity.descricao,
+      tipo: entity.tipo,
+      prioridade: entity.prioridade,
+      itemRelacionado: entity.itemRelacionado,
+      impactoEstimado: entity.impactoEstimado,
+    );
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -122,10 +89,10 @@ class SugestaoCalculadoraIAModel {
           : _gerarIdPorTitulo(titulo),
       titulo: titulo,
       descricao: map['descricao']?.toString() ?? '',
-      tipo: TipoSugestaoCalculadoraIAExtension.fromString(
+      tipo: TipoSugestaoCalculadoraIAModelExtension.fromString(
         map['tipo']?.toString(),
       ),
-      prioridade: PrioridadeSugestaoCalculadoraIAExtension.fromString(
+      prioridade: PrioridadeSugestaoCalculadoraIAModelExtension.fromString(
         map['prioridade']?.toString(),
       ),
       itemRelacionado: _asNullableString(
@@ -183,127 +150,66 @@ class SugestaoCalculadoraIAModel {
   }
 }
 
-class AnaliseCalculadoraIAModel {
-  final String titulo;
-  final String resumo;
-
-  /// Índices de 0 a 100 para exibição visual.
-  final double indiceEconomia;
-  final double indiceRiscoFaltarItens;
-  final double indiceConforto;
-
-  final double custoTotalEstimado;
-  final double? orcamentoDisponivel;
-  final double diferencaOrcamento;
-  final DateTime dataAnalise;
-  final List<SugestaoCalculadoraIAModel> sugestoes;
-
-  /// Campos retornados pela Cloud Function/IA generativa.
-  ///
-  /// Mantidos opcionais para não quebrar o layout compacto atual.
-  final String fonte;
-  final String versaoSchema;
-  final String versaoPrompt;
-  final String nomePrompt;
-  final String modeloIAUtilizado;
-  final List<String> idsSugestoesBaseUtilizadas;
-  final Map<String, int> versoesSugestoesBaseUtilizadas;
-  final int totalSugestoesBaseUtilizadas;
-  final DateTime? dataProcessamento;
-  final String diagnosticoFinanceiro;
-  final String diagnosticoConsumo;
-  final String recomendacaoFinal;
-  final List<String> pontosDeAtencao;
-  final List<String> proximasAcoes;
-
+class AnaliseCalculadoraIAModel extends AnaliseCalculadoraIA {
   const AnaliseCalculadoraIAModel({
-    required this.titulo,
-    required this.resumo,
-    required this.indiceEconomia,
-    required this.indiceRiscoFaltarItens,
-    required this.indiceConforto,
-    required this.custoTotalEstimado,
-    required this.orcamentoDisponivel,
-    required this.diferencaOrcamento,
-    required this.dataAnalise,
-    required this.sugestoes,
-    this.fonte = 'local',
-    this.versaoSchema = '1.0.0',
-    this.versaoPrompt = 'local',
-    this.nomePrompt = 'analise_calculadora_local',
-    this.modeloIAUtilizado = 'local',
-    this.idsSugestoesBaseUtilizadas = const [],
-    this.versoesSugestoesBaseUtilizadas = const <String, int>{},
-    this.totalSugestoesBaseUtilizadas = 0,
-    this.dataProcessamento,
-    this.diagnosticoFinanceiro = '',
-    this.diagnosticoConsumo = '',
-    this.recomendacaoFinal = '',
-    this.pontosDeAtencao = const [],
-    this.proximasAcoes = const [],
+    required super.titulo,
+    required super.resumo,
+    required super.indiceEconomia,
+    required super.indiceRiscoFaltarItens,
+    required super.indiceConforto,
+    required super.custoTotalEstimado,
+    required super.orcamentoDisponivel,
+    required super.diferencaOrcamento,
+    required super.dataAnalise,
+    required List<SugestaoCalculadoraIAModel> super.sugestoes,
+    super.fonte = 'local',
+    super.versaoSchema = '1.0.0',
+    super.versaoPrompt = 'local',
+    super.nomePrompt = 'analise_calculadora_local',
+    super.modeloIAUtilizado = 'local',
+    super.idsSugestoesBaseUtilizadas = const [],
+    super.versoesSugestoesBaseUtilizadas = const <String, int>{},
+    super.totalSugestoesBaseUtilizadas = 0,
+    super.dataProcessamento,
+    super.diagnosticoFinanceiro = '',
+    super.diagnosticoConsumo = '',
+    super.recomendacaoFinal = '',
+    super.pontosDeAtencao = const [],
+    super.proximasAcoes = const [],
   });
 
-  bool get possuiSugestoes => sugestoes.isNotEmpty;
+  factory AnaliseCalculadoraIAModel.fromEntity(AnaliseCalculadoraIA entity) {
+    if (entity is AnaliseCalculadoraIAModel) return entity;
 
-  bool get possuiOrcamento =>
-      orcamentoDisponivel != null && orcamentoDisponivel! > 0;
-
-  bool get acimaDoOrcamento => possuiOrcamento && diferencaOrcamento > 0;
-
-  bool get dentroDoOrcamento => possuiOrcamento && diferencaOrcamento <= 0;
-
-  bool get geradaPorIAGenerativa =>
-      fonte.trim().toLowerCase() == 'ia_generativa';
-
-  bool get geradaPorFallbackLocal =>
-      fonte.trim().toLowerCase() == 'fallback_local';
-
-  bool get possuiRastreabilidadeIA {
-    return versaoPrompt.trim().isNotEmpty ||
-        versaoSchema.trim().isNotEmpty ||
-        idsSugestoesBaseUtilizadas.isNotEmpty ||
-        modeloIAUtilizado.trim().isNotEmpty;
-  }
-
-  String get fonteLabel {
-    if (geradaPorIAGenerativa) return 'IA generativa';
-    if (geradaPorFallbackLocal) return 'Análise local';
-    return 'Análise automática';
-  }
-
-  String get resumoPrincipal {
-    if (resumo.trim().isNotEmpty) return resumo;
-    if (diagnosticoFinanceiro.trim().isNotEmpty) return diagnosticoFinanceiro;
-    if (diagnosticoConsumo.trim().isNotEmpty) return diagnosticoConsumo;
-    if (recomendacaoFinal.trim().isNotEmpty) return recomendacaoFinal;
-    return statusOrcamento;
-  }
-
-  String get statusOrcamento {
-    if (!possuiOrcamento) return 'Sem orçamento informado';
-    return acimaDoOrcamento ? 'Acima do orçamento' : 'Dentro do orçamento';
-  }
-
-  String get rastreabilidadeResumo {
-    final partes = <String>[];
-
-    if (versaoPrompt.trim().isNotEmpty) {
-      partes.add('Prompt $versaoPrompt');
-    }
-
-    if (versaoSchema.trim().isNotEmpty) {
-      partes.add('Schema $versaoSchema');
-    }
-
-    if (modeloIAUtilizado.trim().isNotEmpty) {
-      partes.add('Modelo $modeloIAUtilizado');
-    }
-
-    if (totalSugestoesBaseUtilizadas > 0) {
-      partes.add('$totalSugestoesBaseUtilizadas sugestões base');
-    }
-
-    return partes.join(' • ');
+    return AnaliseCalculadoraIAModel(
+      titulo: entity.titulo,
+      resumo: entity.resumo,
+      indiceEconomia: entity.indiceEconomia,
+      indiceRiscoFaltarItens: entity.indiceRiscoFaltarItens,
+      indiceConforto: entity.indiceConforto,
+      custoTotalEstimado: entity.custoTotalEstimado,
+      orcamentoDisponivel: entity.orcamentoDisponivel,
+      diferencaOrcamento: entity.diferencaOrcamento,
+      dataAnalise: entity.dataAnalise,
+      sugestoes:
+          entity.sugestoes.map(SugestaoCalculadoraIAModel.fromEntity).toList(),
+      fonte: entity.fonte,
+      versaoSchema: entity.versaoSchema,
+      versaoPrompt: entity.versaoPrompt,
+      nomePrompt: entity.nomePrompt,
+      modeloIAUtilizado: entity.modeloIAUtilizado,
+      idsSugestoesBaseUtilizadas:
+          List<String>.from(entity.idsSugestoesBaseUtilizadas),
+      versoesSugestoesBaseUtilizadas:
+          Map<String, int>.from(entity.versoesSugestoesBaseUtilizadas),
+      totalSugestoesBaseUtilizadas: entity.totalSugestoesBaseUtilizadas,
+      dataProcessamento: entity.dataProcessamento,
+      diagnosticoFinanceiro: entity.diagnosticoFinanceiro,
+      diagnosticoConsumo: entity.diagnosticoConsumo,
+      recomendacaoFinal: entity.recomendacaoFinal,
+      pontosDeAtencao: List<String>.from(entity.pontosDeAtencao),
+      proximasAcoes: List<String>.from(entity.proximasAcoes),
+    );
   }
 
   Map<String, dynamic> toMap() {
@@ -319,7 +225,10 @@ class AnaliseCalculadoraIAModel {
       'diferenca_orcamento': diferencaOrcamento,
       'status_orcamento': statusOrcamento,
       'data_analise': dataAnalise.toIso8601String(),
-      'sugestoes': sugestoes.map((item) => item.toMap()).toList(),
+      'sugestoes': sugestoes
+          .map(SugestaoCalculadoraIAModel.fromEntity)
+          .map((item) => item.toMap())
+          .toList(),
       'fonte': fonte,
       'fonte_label': fonteLabel,
       'versao_prompt': versaoPrompt,
@@ -488,7 +397,8 @@ class AnaliseCalculadoraIAModel {
           : (orcamentoDisponivel ?? this.orcamentoDisponivel),
       diferencaOrcamento: diferencaOrcamento ?? this.diferencaOrcamento,
       dataAnalise: dataAnalise ?? this.dataAnalise,
-      sugestoes: sugestoes ?? this.sugestoes,
+      sugestoes: sugestoes ??
+          this.sugestoes.map(SugestaoCalculadoraIAModel.fromEntity).toList(),
       fonte: fonte ?? this.fonte,
       versaoSchema: versaoSchema ?? this.versaoSchema,
       versaoPrompt: versaoPrompt ?? this.versaoPrompt,

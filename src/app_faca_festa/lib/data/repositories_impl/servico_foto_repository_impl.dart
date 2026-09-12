@@ -1,8 +1,7 @@
-import 'dart:io';
-
-import '../../domain/repositories/servico_foto_repository.dart';
+import 'package:app_faca_festa/domain/entities/servico_foto.dart';
+import 'package:app_faca_festa/domain/repositories/servico_foto_repository.dart';
 import '../datasources/remote/servico_foto_remote_datasource.dart';
-import '../models/servico_produto/servico_foto_model.dart';
+import '../models/servico_produto/servico_foto_model.dart' hide ServicoFoto;
 
 class ServicoFotoRepositoryImpl implements ServicoFotoRepository {
   ServicoFotoRepositoryImpl(this.remote);
@@ -10,7 +9,7 @@ class ServicoFotoRepositoryImpl implements ServicoFotoRepository {
   final ServicoFotoRemoteDatasource remote;
 
   @override
-  Future<List<ServicoFotoModel>> carregarFotos({
+  Future<List<ServicoFoto>> carregarFotos({
     required String idFornecedor,
     required String idProdutoServico,
   }) {
@@ -21,27 +20,27 @@ class ServicoFotoRepositoryImpl implements ServicoFotoRepository {
   }
 
   @override
-  Future<ServicoFotoModel> adicionarFotoArquivo({
+  Future<ServicoFoto> adicionarFotoArquivo({
     required String idFornecedor,
     required String idProdutoServico,
-    required File arquivo,
+    required List<int> bytes,
     required String nomeArquivo,
   }) {
     return remote.adicionarFotoArquivo(
       idFornecedor: idFornecedor,
       idProdutoServico: idProdutoServico,
-      arquivo: arquivo,
+      bytes: bytes,
       nomeArquivo: nomeArquivo,
     );
   }
 
   @override
-  Future<void> adicionarFotoDireto(ServicoFotoModel foto) {
-    return remote.adicionarFotoDireto(foto);
+  Future<void> adicionarFotoDireto(ServicoFoto foto) {
+    return remote.adicionarFotoDireto(ServicoFotoModel.fromEntity(foto));
   }
 
   @override
-  Future<void> removerFoto(ServicoFotoModel foto) {
-    return remote.removerFoto(foto);
+  Future<void> removerFoto(ServicoFoto foto) {
+    return remote.removerFoto(ServicoFotoModel.fromEntity(foto));
   }
 }

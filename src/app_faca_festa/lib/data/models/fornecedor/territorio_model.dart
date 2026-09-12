@@ -1,26 +1,21 @@
-class TerritorioModel {
-  final String idTerritorio;
-  final String idFornecedor;
-  final double? latitude;
-  final double? longitude;
-  final double? raioKm;
-  final String? descricao;
-  final bool ativo;
-  final String? tipoCobertura;
-  final List<String>? regioes;
+import 'package:app_faca_festa/domain/entities/territorio.dart';
 
+export 'package:app_faca_festa/domain/entities/territorio.dart' show Territorio;
+
+class TerritorioModel extends Territorio {
   const TerritorioModel({
-    required this.idTerritorio,
-    required this.idFornecedor,
-    this.latitude,
-    this.longitude,
-    this.raioKm,
-    this.descricao,
-    this.ativo = true,
-    this.tipoCobertura,
-    this.regioes,
+    required super.idTerritorio,
+    required super.idFornecedor,
+    super.latitude,
+    super.longitude,
+    super.raioKm,
+    super.descricao,
+    super.ativo = true,
+    super.tipoCobertura,
+    super.regioes,
   });
 
+  @override
   TerritorioModel copyWith({
     String? idTerritorio,
     String? idFornecedor,
@@ -69,4 +64,20 @@ class TerritorioModel {
         regioes:
             (map['regioes'] is List) ? List<String>.from(map['regioes']) : null,
       );
+
+  factory TerritorioModel.fromEntity(Territorio territorio) {
+    if (territorio is TerritorioModel) return territorio;
+
+    return TerritorioModel(
+      idTerritorio: territorio.idTerritorio,
+      idFornecedor: territorio.idFornecedor,
+      latitude: territorio.latitude,
+      longitude: territorio.longitude,
+      raioKm: territorio.raioKm,
+      descricao: territorio.descricao,
+      ativo: territorio.ativo,
+      tipoCobertura: territorio.tipoCobertura,
+      regioes: territorio.regioes,
+    );
+  }
 }

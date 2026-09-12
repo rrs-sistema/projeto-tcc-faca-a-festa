@@ -1,5 +1,5 @@
-import '../../data/models/cotacao/cotacao_chat_model.dart';
-import '../../data/models/cotacao/cotacao_model.dart';
+import '../entities/cotacao.dart';
+import '../entities/cotacao_chat.dart';
 import '../repositories/cotacao_repository.dart';
 
 class GerenciarCotacoes {
@@ -7,7 +7,7 @@ class GerenciarCotacoes {
 
   final CotacaoRepository repository;
 
-  Stream<List<CotacaoModel>> observarMinhasCotacoes(String idUsuario) {
+  Stream<List<Cotacao>> observarMinhasCotacoes(String idUsuario) {
     return repository.observarMinhasCotacoes(idUsuario);
   }
 
@@ -15,13 +15,13 @@ class GerenciarCotacoes {
     return repository.observarCotacaoTemResposta(idCotacao);
   }
 
-  Stream<List<CotacaoConversaModel>> observarConversasFornecedor(
+  Stream<List<CotacaoConversa>> observarConversasFornecedor(
     String idFornecedor,
   ) {
     return repository.observarConversasFornecedor(idFornecedor);
   }
 
-  Stream<List<CotacaoMensagemModel>> observarMensagens({
+  Stream<List<CotacaoMensagem>> observarMensagens({
     required String idCotacao,
     required String idFornecedor,
   }) {
@@ -31,13 +31,13 @@ class GerenciarCotacoes {
     );
   }
 
-  Stream<List<CotacaoFornecedorResumoModel>> observarFornecedoresDaCotacao(
+  Stream<List<CotacaoFornecedorResumo>> observarFornecedoresDaCotacao(
     String idCotacao,
   ) {
     return repository.observarFornecedoresDaCotacao(idCotacao);
   }
 
-  Stream<List<CotacaoServicoResumoModel>> observarServicosFornecedorCotacao({
+  Stream<List<CotacaoServicoResumo>> observarServicosFornecedorCotacao({
     required String idCotacao,
     required String idFornecedor,
   }) {
@@ -47,7 +47,7 @@ class GerenciarCotacoes {
     );
   }
 
-  Future<CotacaoConversaModel?> buscarConversaFornecedor({
+  Future<CotacaoConversa?> buscarConversaFornecedor({
     required String idCotacao,
     required String idFornecedor,
   }) {

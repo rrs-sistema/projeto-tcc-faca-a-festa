@@ -1,62 +1,29 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class SugestaoRespostaCotacaoModel {
-  final String idSugestao;
-  final String idCotacao;
-  final String idFornecedor;
-  final String? idEvento;
+import 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao.dart';
 
-  final String titulo;
+export 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao.dart';
 
-  /// Mensagem pronta para o fornecedor revisar/copiar/enviar.
-  final String mensagem;
-
-  /// Exemplo: profissional, cordial, urgente, premium, economico.
-  final String tom;
-
-  /// Chave do template usado.
-  /// Exemplo: cotacao_nova, evento_urgente, pacote_economico.
-  final String templateKey;
-
-  final List<String> camposUsados;
-  final List<String> camposAusentes;
-
-  /// Indica se a sugestão precisa de revisão antes do envio.
-  final bool precisaRevisao;
-
-  /// Exemplo: deterministic_rules, generative_ai, hybrid.
-  final String origem;
-
-  final String versaoRegra;
-
-  /// Exemplo: nova, usada, editada, enviada, ignorada.
-  final String status;
-
-  final Map<String, dynamic>? metadados;
-
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-  final DateTime? expiresAt;
-
+class SugestaoRespostaCotacaoModel extends SugestaoRespostaCotacao {
   const SugestaoRespostaCotacaoModel({
-    required this.idSugestao,
-    required this.idCotacao,
-    required this.idFornecedor,
-    required this.titulo,
-    required this.mensagem,
-    required this.tom,
-    required this.templateKey,
-    required this.precisaRevisao,
-    required this.origem,
-    required this.versaoRegra,
-    required this.status,
-    required this.createdAt,
-    this.idEvento,
-    this.camposUsados = const [],
-    this.camposAusentes = const [],
-    this.metadados,
-    this.updatedAt,
-    this.expiresAt,
+    required super.idSugestao,
+    required super.idCotacao,
+    required super.idFornecedor,
+    required super.titulo,
+    required super.mensagem,
+    required super.tom,
+    required super.templateKey,
+    required super.precisaRevisao,
+    required super.origem,
+    required super.versaoRegra,
+    required super.status,
+    required super.createdAt,
+    super.idEvento,
+    super.camposUsados,
+    super.camposAusentes,
+    super.metadados,
+    super.updatedAt,
+    super.expiresAt,
   });
 
   factory SugestaoRespostaCotacaoModel.fromMap(

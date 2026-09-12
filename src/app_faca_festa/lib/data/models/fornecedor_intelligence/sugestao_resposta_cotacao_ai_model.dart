@@ -1,32 +1,19 @@
 import 'dart:convert';
 
-class SugestaoRespostaCotacaoAiModel {
-  final String respostaSugerida;
-  final String versaoCurta;
-  final List<String> pontosParaRevisar;
-  final List<String> perguntasFaltantes;
-  final List<String> dadosUtilizados;
-  final List<String> alertas;
+import 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao_ai.dart';
 
-  /// Valores aceitos:
-  /// - alto
-  /// - medio
-  /// - baixo
-  ///
-  /// Qualquer valor inválido será convertido para "baixo".
-  final String nivelConfianca;
+export 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao_ai.dart';
 
-  final String motivoNivelConfianca;
-
+class SugestaoRespostaCotacaoAiModel extends SugestaoRespostaCotacaoAi {
   const SugestaoRespostaCotacaoAiModel({
-    required this.respostaSugerida,
-    required this.versaoCurta,
-    required this.pontosParaRevisar,
-    required this.perguntasFaltantes,
-    required this.dadosUtilizados,
-    required this.alertas,
-    required this.nivelConfianca,
-    required this.motivoNivelConfianca,
+    required super.respostaSugerida,
+    required super.versaoCurta,
+    required super.pontosParaRevisar,
+    required super.perguntasFaltantes,
+    required super.dadosUtilizados,
+    required super.alertas,
+    required super.nivelConfianca,
+    required super.motivoNivelConfianca,
   });
 
   factory SugestaoRespostaCotacaoAiModel.empty() {

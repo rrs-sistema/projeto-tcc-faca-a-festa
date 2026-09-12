@@ -1,14 +1,13 @@
-import '../../data/models/evento/calculadora_festa_item_model.dart';
-import '../../data/models/evento/calculadora_festa_model.dart';
-import '../../data/models/evento/convidados_equivalentes_model.dart';
-import '../../data/models/evento/estimativa_financeira_model.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
+import 'package:app_faca_festa/domain/entities/convidados_equivalentes.dart';
+import 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
 
 class CalculadoraFestaService {
   const CalculadoraFestaService();
 
-  static List<ItemEstimativaFinanceiraModel> get itensPadraoEstimativa =>
-      const [
-        ItemEstimativaFinanceiraModel(
+  static List<ItemEstimativaFinanceira> get itensPadraoEstimativa => const [
+        ItemEstimativaFinanceira(
           id: 'salgadinhos',
           categoria: 'Recepção',
           nome: 'Salgadinhos',
@@ -18,7 +17,7 @@ class CalculadoraFestaService {
           quantidadePorConvidadoEquivalente: 12,
           valorUnitarioMedio: 0.90,
         ),
-        ItemEstimativaFinanceiraModel(
+        ItemEstimativaFinanceira(
           id: 'docinhos',
           categoria: 'Recepção',
           nome: 'Docinhos',
@@ -28,7 +27,7 @@ class CalculadoraFestaService {
           quantidadePorConvidadoEquivalente: 6,
           valorUnitarioMedio: 1.20,
         ),
-        ItemEstimativaFinanceiraModel(
+        ItemEstimativaFinanceira(
           id: 'bolo',
           categoria: 'Recepção',
           nome: 'Bolo',
@@ -38,7 +37,7 @@ class CalculadoraFestaService {
           quantidadePorConvidadoEquivalente: 0.10,
           valorUnitarioMedio: 80.00,
         ),
-        ItemEstimativaFinanceiraModel(
+        ItemEstimativaFinanceira(
           id: 'refrigerante',
           categoria: 'Bebidas',
           nome: 'Refrigerante',
@@ -48,7 +47,7 @@ class CalculadoraFestaService {
           quantidadePorConvidadoEquivalente: 0.60,
           valorUnitarioMedio: 8.00,
         ),
-        ItemEstimativaFinanceiraModel(
+        ItemEstimativaFinanceira(
           id: 'agua',
           categoria: 'Bebidas',
           nome: 'Água',
@@ -58,7 +57,7 @@ class CalculadoraFestaService {
           quantidadePorConvidadoEquivalente: 0.30,
           valorUnitarioMedio: 3.00,
         ),
-        ItemEstimativaFinanceiraModel(
+        ItemEstimativaFinanceira(
           id: 'suco',
           categoria: 'Bebidas',
           nome: 'Suco',
@@ -69,7 +68,7 @@ class CalculadoraFestaService {
           valorUnitarioMedio: 7.00,
           selecionado: false,
         ),
-        ItemEstimativaFinanceiraModel(
+        ItemEstimativaFinanceira(
           id: 'descartaveis',
           categoria: 'Estrutura',
           nome: 'Descartáveis',
@@ -79,7 +78,7 @@ class CalculadoraFestaService {
           quantidadePorConvidadoEquivalente: 0.08,
           valorUnitarioMedio: 12.00,
         ),
-        ItemEstimativaFinanceiraModel(
+        ItemEstimativaFinanceira(
           id: 'lembrancinhas',
           categoria: 'Lembrancinhas',
           nome: 'Lembrancinhas',
@@ -92,17 +91,17 @@ class CalculadoraFestaService {
         ),
       ];
 
-  EstimativaFinanceiraModel calcularEstimativa({
-    required CalculadoraFestaModel calculo,
-    List<ItemEstimativaFinanceiraModel>? itensBase,
+  EstimativaFinanceira calcularEstimativa({
+    required CalculadoraFesta calculo,
+    List<ItemEstimativaFinanceira>? itensBase,
   }) {
-    final convidados = ConvidadosEquivalentesModel(
+    final convidados = ConvidadosEquivalentes(
       adultos: calculo.totalAdultos,
       criancas: calculo.totalCriancas,
       bebes: calculo.totalBebes,
     );
 
-    return EstimativaFinanceiraModel(
+    return EstimativaFinanceira(
       idEvento: calculo.idEvento,
       perfil: calculo.perfilFesta,
       convidados: convidados,
@@ -113,9 +112,9 @@ class CalculadoraFestaService {
     );
   }
 
-  List<CalculadoraFestaItemModel> calcularItens({
-    required CalculadoraFestaModel calculo,
-    List<ItemEstimativaFinanceiraModel>? itensBase,
+  List<CalculadoraFestaItem> calcularItens({
+    required CalculadoraFesta calculo,
+    List<ItemEstimativaFinanceira>? itensBase,
   }) {
     if (calculo.totalConvidados <= 0) return [];
 
@@ -146,7 +145,7 @@ class CalculadoraFestaService {
         margemPersonalizada: estimativa.margemPersonalizada,
       );
 
-      return CalculadoraFestaItemModel(
+      return CalculadoraFestaItem(
         idItemResultado: '${calculo.idCalculo}_${item.id}',
         idCalculo: calculo.idCalculo,
         idEvento: calculo.idEvento,
@@ -169,8 +168,8 @@ class CalculadoraFestaService {
   }
 
   double calcularCustoTotal({
-    required CalculadoraFestaModel calculo,
-    List<ItemEstimativaFinanceiraModel>? itensBase,
+    required CalculadoraFesta calculo,
+    List<ItemEstimativaFinanceira>? itensBase,
   }) {
     final estimativa = calcularEstimativa(
       calculo: calculo,
@@ -182,7 +181,7 @@ class CalculadoraFestaService {
   }
 
   Map<String, double> calcularCustoPorCategoria({
-    required List<CalculadoraFestaItemModel> itens,
+    required List<CalculadoraFestaItem> itens,
   }) {
     final result = <String, double>{};
 

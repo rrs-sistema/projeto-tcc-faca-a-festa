@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/admin/controllers/eventos_admin_controller.dart';
-import 'package:app_faca_festa/data/models/admin/evento_com_tipo_model.dart';
+import 'package:app_faca_festa/domain/entities/evento_admin.dart';
 import 'package:app_faca_festa/domain/repositories/eventos_admin_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_eventos_admin.dart';
 
@@ -103,7 +103,7 @@ void main() {
   });
 }
 
-EventoComTipoModel _evento({
+EventoAdmin _evento({
   required String id,
   required String nome,
   String tipoNome = 'Casamento',
@@ -111,7 +111,7 @@ EventoComTipoModel _evento({
   String? cidade,
   String status = 'confirmado',
 }) {
-  return EventoComTipoModel(
+  return EventoAdmin(
     id: id,
     nome: nome,
     tipoNome: tipoNome,
@@ -122,13 +122,13 @@ EventoComTipoModel _evento({
 }
 
 class _EventosAdminRepositoryFake implements EventosAdminRepository {
-  List<EventoComTipoModel> eventos = [];
+  List<EventoAdmin> eventos = [];
   final eventosAprovados = <String>[];
   final eventosExcluidos = <String>[];
   Object? error;
 
   @override
-  Future<List<EventoComTipoModel>> listarEventosComTipo() async {
+  Future<List<EventoAdmin>> listarEventosComTipo() async {
     final currentError = error;
     if (currentError != null) throw currentError;
     return eventos;

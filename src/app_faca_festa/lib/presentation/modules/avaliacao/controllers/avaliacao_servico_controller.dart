@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/model.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_avaliacoes_servico.dart';
 
 class AvaliacaoServicoController extends GetxController {
@@ -181,7 +181,7 @@ class AvaliacaoServicoController extends GetxController {
   // 4) Selos, ranking, etc. (mantido igual)
   // ======================================================
 
-  List<String> getSelosFornecedor(FornecedorModel fornecedor) {
+  List<String> getSelosFornecedor(Fornecedor fornecedor) {
     final selos = <String>[];
 
     final media = fornecedor.mediaAvaliacoes;

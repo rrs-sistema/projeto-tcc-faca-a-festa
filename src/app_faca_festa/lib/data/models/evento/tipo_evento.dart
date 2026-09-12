@@ -1,5 +1,6 @@
-import '../../../domain/entities/tipo_evento.dart';
-export '../../../domain/entities/tipo_evento.dart' show TipoEvento;
+import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
+export 'package:app_faca_festa/domain/entities/tipo_evento.dart'
+    show TipoEvento;
 
 class TipoEventoModel extends TipoEvento {
   const TipoEventoModel({

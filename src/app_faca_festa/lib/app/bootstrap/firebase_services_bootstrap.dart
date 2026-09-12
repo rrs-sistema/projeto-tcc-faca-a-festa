@@ -1,13 +1,27 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
-import '../../data/services/functions/callable_https_client.dart';
+import 'package:app_faca_festa/data/services/functions/callable_https_client.dart';
+import 'package:app_faca_festa/firebase_options.dart';
 
 abstract final class FirebaseServicesBootstrap {
+  static Future<void> initialize() async {
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      ).timeout(const Duration(seconds: 10));
+    } catch (e, s) {
+      debugPrint('⚠️ Firebase.initializeApp: $e\n$s');
+    }
+    register();
+  }
+
   static void register() {
     if (!Get.isRegistered<FirebaseFirestore>()) {
       Get.put<FirebaseFirestore>(FirebaseFirestore.instance, permanent: true);

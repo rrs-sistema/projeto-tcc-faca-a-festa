@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../../domain/entities/convidado.dart';
-export '../../../domain/entities/convidado.dart';
+import 'package:app_faca_festa/domain/entities/convidado.dart';
+export 'package:app_faca_festa/domain/entities/convidado.dart';
 
 extension StatusConvidadoFirestore on StatusConvidado {
   String get firestoreValue => name;
@@ -106,53 +106,8 @@ class ConvidadoModel extends Convidado {
   }
 
   factory ConvidadoModel.fromMap(Map<String, dynamic> map) {
-    DateTime? parseDate(dynamic value) {
-      if (value is Timestamp) return value.toDate();
-      if (value is String) return DateTime.tryParse(value);
-      return null;
-    }
-
-    final tipoConvidado = map['tipo_convidado'] != null
-        ? TipoConvidado.fromString(map['tipo_convidado'])
-        : TipoConvidado.fromLegacyAdulto(map['adulto']);
-
     try {
-      return ConvidadoModel(
-        idConvidado: map['id_convidado']?.toString() ?? '',
-        idEvento:
-            (map['id_evento'] ?? map['id_evento_evento'] ?? map['evento_id'])
-                    ?.toString() ??
-                '',
-        nome: map['nome']?.toString() ?? '',
-        contato: map['contato']?.toString() ?? '',
-        email: _primeiroTexto(map, const ['email', 'email_usuario']),
-        emailUsuario: _primeiroTexto(map, const ['email_usuario']),
-        emailNormalizado: _primeiroTexto(map, const ['email_normalizado']),
-        status: StatusConvidado.fromString(map['status']),
-        tipoConvidado: tipoConvidado,
-        idGrupo: map['id_grupo']?.toString(),
-        nomeGrupo: map['nome_grupo']?.toString(),
-        idMesa: map['id_mesa']?.toString(),
-        numeroMesa: map['numero_mesa'] is num
-            ? (map['numero_mesa'] as num).toInt()
-            : null,
-        ocupaAssento:
-            map['ocupa_assento'] ?? tipoConvidado != TipoConvidado.bebe,
-        cuidadoEspecial: map['cuidado_especial'] ?? false,
-        dataEnvio: parseDate(map['data_envio']),
-        dataResposta: parseDate(map['data_resposta']),
-        dataCadastro: parseDate(map['data_cadastro']) ?? DateTime.now(),
-        dataAtualizacao: parseDate(map['data_atualizacao']) ?? DateTime.now(),
-        conviteToken: _primeiroTexto(map, const [
-              'convite_token',
-              'token_convite',
-              'token',
-              'id_convidado',
-            ]) ??
-            '',
-        idUsuario: _primeiroTexto(map, const ['id_usuario', 'idUsuario']),
-        conviteStatus: _primeiroTexto(map, const ['convite_status']),
-      );
+      return ConvidadoModel.fromEntity(Convidado.fromMap(map));
     } catch (e) {
       if (kDebugMode) {
         print('Erro ao listar os grupos fromMap: ${e.toString()}');
@@ -219,14 +174,4 @@ class ConvidadoModel extends Convidado {
       emailNormalizado: emailNormalizado ?? this.emailNormalizado,
     );
   }
-}
-
-String? _primeiroTexto(Map<String, dynamic> map, List<String> campos) {
-  for (final campo in campos) {
-    final valor = map[campo];
-    if (valor != null && valor.toString().trim().isNotEmpty) {
-      return valor.toString().trim();
-    }
-  }
-  return null;
 }

@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../../domain/entities/endereco_usuario.dart';
+import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 
-export '../../../domain/entities/endereco_usuario.dart';
+export 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 
 class EnderecoUsuarioModel extends EnderecoUsuario {
   const EnderecoUsuarioModel({

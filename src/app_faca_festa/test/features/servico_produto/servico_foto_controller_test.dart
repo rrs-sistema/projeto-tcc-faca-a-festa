@@ -1,10 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_foto_controller.dart';
-import 'package:app_faca_festa/data/models/servico_produto/servico_foto_model.dart';
+import 'package:app_faca_festa/domain/entities/servico_foto.dart';
 import 'package:app_faca_festa/domain/repositories/servico_foto_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_servico_fotos.dart';
 
@@ -58,11 +56,11 @@ void main() {
   });
 }
 
-ServicoFotoModel _foto({
+ServicoFoto _foto({
   required String id,
   required String url,
 }) {
-  return ServicoFotoModel(
+  return ServicoFoto(
     id: id,
     idFornecedor: 'fornecedor-1',
     idProdutoServico: 'servico-1',
@@ -73,14 +71,14 @@ ServicoFotoModel _foto({
 
 class _ServicoFotoRepositoryFake implements ServicoFotoRepository {
   final carregamentos = <_CarregamentoFotos>[];
-  final fotosDiretas = <ServicoFotoModel>[];
-  final fotosRemovidas = <ServicoFotoModel>[];
+  final fotosDiretas = <ServicoFoto>[];
+  final fotosRemovidas = <ServicoFoto>[];
   final uploads = <_UploadFoto>[];
 
-  List<ServicoFotoModel> fotosCarregadas = const [];
+  List<ServicoFoto> fotosCarregadas = const [];
 
   @override
-  Future<List<ServicoFotoModel>> carregarFotos({
+  Future<List<ServicoFoto>> carregarFotos({
     required String idFornecedor,
     required String idProdutoServico,
   }) async {
@@ -94,10 +92,10 @@ class _ServicoFotoRepositoryFake implements ServicoFotoRepository {
   }
 
   @override
-  Future<ServicoFotoModel> adicionarFotoArquivo({
+  Future<ServicoFoto> adicionarFotoArquivo({
     required String idFornecedor,
     required String idProdutoServico,
-    required File arquivo,
+    required List<int> bytes,
     required String nomeArquivo,
   }) async {
     uploads.add(
@@ -111,12 +109,12 @@ class _ServicoFotoRepositoryFake implements ServicoFotoRepository {
   }
 
   @override
-  Future<void> adicionarFotoDireto(ServicoFotoModel foto) async {
+  Future<void> adicionarFotoDireto(ServicoFoto foto) async {
     fotosDiretas.add(foto);
   }
 
   @override
-  Future<void> removerFoto(ServicoFotoModel foto) async {
+  Future<void> removerFoto(ServicoFoto foto) async {
     fotosRemovidas.add(foto);
   }
 }

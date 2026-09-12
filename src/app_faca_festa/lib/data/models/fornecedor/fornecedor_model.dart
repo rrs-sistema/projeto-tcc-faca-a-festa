@@ -1,73 +1,71 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class FornecedorModel {
-  final String idFornecedor;
-  final String idUsuario;
-  final String razaoSocial;
-  final String? cnpj;
-  final String telefone;
-  final String email;
-  final String? descricao;
-  final bool aptoParaOperar;
-  final bool ativo;
-  final DateTime dataCadastro;
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 
-  final String? bannerUrl;
+export 'package:app_faca_festa/domain/entities/fornecedor.dart';
 
-  /// Lista de categorias e subcategorias do fornecedor.
-  final List<Map<String, dynamic>> categorias;
-
-  /// Campos usados pela IA de recomendação para identificar em quais tipos
-  /// de evento o fornecedor é compatível.
-  ///
-  /// Exemplo:
-  /// tipoEventoIds: ["302191a2-dbf3-4ac6-ba53-08273b384cab"]
-  /// tipoEventoSlugs: ["casamento"]
-  /// tipoEventoNomes: ["Casamento"]
-  final List<String> tipoEventoIds;
-  final List<String> tipoEventoSlugs;
-  final List<String> tipoEventoNomes;
-
-  /// Campos opcionais para melhorar a recomendação por orçamento.
-  final double? precoMinimo;
-  final double? precoMaximo;
-  final double? precoMedio;
-
-  /// Métricas de qualidade e confiança.
-  final double mediaAvaliacoes;
-  final int totalAvaliacoes;
-  final bool isTopCategoria;
-  final int totalContratacoes;
-  final double? tempoMedioRespostaHoras;
-
-  final String? fcmToken;
-
+class FornecedorModel extends Fornecedor {
   const FornecedorModel({
-    required this.idFornecedor,
-    required this.idUsuario,
-    required this.razaoSocial,
-    required this.telefone,
-    required this.email,
-    this.cnpj,
-    this.descricao,
-    this.aptoParaOperar = false,
-    this.ativo = true,
-    required this.dataCadastro,
-    this.bannerUrl,
-    this.categorias = const [],
-    this.tipoEventoIds = const [],
-    this.tipoEventoSlugs = const [],
-    this.tipoEventoNomes = const [],
-    this.precoMinimo,
-    this.precoMaximo,
-    this.precoMedio,
-    this.mediaAvaliacoes = 0.0,
-    this.totalAvaliacoes = 0,
-    this.isTopCategoria = false,
-    this.totalContratacoes = 0,
-    this.tempoMedioRespostaHoras,
-    this.fcmToken,
+    required super.idFornecedor,
+    required super.idUsuario,
+    required super.razaoSocial,
+    required super.telefone,
+    required super.email,
+    super.cnpj,
+    super.descricao,
+    super.aptoParaOperar = false,
+    super.ativo = true,
+    required super.dataCadastro,
+    super.bannerUrl,
+    super.categorias = const [],
+    super.tipoEventoIds = const [],
+    super.tipoEventoSlugs = const [],
+    super.tipoEventoNomes = const [],
+    super.precoMinimo,
+    super.precoMaximo,
+    super.precoMedio,
+    super.mediaAvaliacoes = 0.0,
+    super.totalAvaliacoes = 0,
+    super.isTopCategoria = false,
+    super.totalContratacoes = 0,
+    super.tempoMedioRespostaHoras,
+    super.fcmToken,
   });
+
+  factory FornecedorModel.fromEntity(Fornecedor entity) {
+    if (entity is FornecedorModel) {
+      return entity;
+    }
+
+    return FornecedorModel(
+      idFornecedor: entity.idFornecedor,
+      idUsuario: entity.idUsuario,
+      razaoSocial: entity.razaoSocial,
+      telefone: entity.telefone,
+      email: entity.email,
+      cnpj: entity.cnpj,
+      descricao: entity.descricao,
+      aptoParaOperar: entity.aptoParaOperar,
+      ativo: entity.ativo,
+      dataCadastro: entity.dataCadastro,
+      bannerUrl: entity.bannerUrl,
+      categorias: entity.categorias
+          .map((categoria) => Map<String, dynamic>.from(categoria))
+          .toList(),
+      tipoEventoIds: List<String>.from(entity.tipoEventoIds),
+      tipoEventoSlugs: List<String>.from(entity.tipoEventoSlugs),
+      tipoEventoNomes: List<String>.from(entity.tipoEventoNomes),
+      precoMinimo: entity.precoMinimo,
+      precoMaximo: entity.precoMaximo,
+      precoMedio: entity.precoMedio,
+      mediaAvaliacoes: entity.mediaAvaliacoes,
+      totalAvaliacoes: entity.totalAvaliacoes,
+      isTopCategoria: entity.isTopCategoria,
+      totalContratacoes: entity.totalContratacoes,
+      tempoMedioRespostaHoras: entity.tempoMedioRespostaHoras,
+      fcmToken: entity.fcmToken,
+    );
+  }
 
   factory FornecedorModel.novo({
     required String idFornecedor,
@@ -248,6 +246,7 @@ class FornecedorModel {
     );
   }
 
+  @override
   FornecedorModel copyWith({
     String? idFornecedor,
     String? idUsuario,

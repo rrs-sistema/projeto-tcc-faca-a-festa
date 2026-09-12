@@ -1,32 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/material.dart';
 
-import 'categoria_servico_model.dart';
+import 'package:app_faca_festa/domain/entities/subcategoria_servico.dart';
 
-class SubcategoriaServicoModel {
-  final String id;
-  final String idCategoria;
-  final String nome;
-  final String? descricao;
-  final bool ativo;
-  final int ordem;
-  final String icone;
-  final DateTime? dataCadastro;
-  final DateTime? dataAtualizacao;
+export 'package:app_faca_festa/domain/entities/subcategoria_servico.dart';
 
+class SubcategoriaServicoModel extends SubcategoriaServico {
   SubcategoriaServicoModel({
-    required this.id,
-    required this.idCategoria,
-    required this.nome,
-    this.descricao,
-    this.ativo = true,
-    this.ordem = 0,
-    this.icone = 'category',
-    this.dataCadastro,
-    this.dataAtualizacao,
+    required super.id,
+    required super.idCategoria,
+    required super.nome,
+    super.descricao,
+    super.ativo = true,
+    super.ordem = 0,
+    super.icone = 'category',
+    super.dataCadastro,
+    super.dataAtualizacao,
   });
-
-  IconData get iconData => CategoriaIcones.de(icone);
 
   Map<String, dynamic> toMap() => {
         'id': id,
@@ -57,6 +46,7 @@ class SubcategoriaServicoModel {
     );
   }
 
+  @override
   SubcategoriaServicoModel copyWith({
     String? idCategoria,
     String? nome,
@@ -77,6 +67,22 @@ class SubcategoriaServicoModel {
       icone: icone ?? this.icone,
       dataCadastro: dataCadastro ?? this.dataCadastro,
       dataAtualizacao: dataAtualizacao ?? this.dataAtualizacao,
+    );
+  }
+
+  factory SubcategoriaServicoModel.fromEntity(
+    SubcategoriaServico subcategoria,
+  ) {
+    return SubcategoriaServicoModel(
+      id: subcategoria.id,
+      idCategoria: subcategoria.idCategoria,
+      nome: subcategoria.nome,
+      descricao: subcategoria.descricao,
+      ativo: subcategoria.ativo,
+      ordem: subcategoria.ordem,
+      icone: subcategoria.icone,
+      dataCadastro: subcategoria.dataCadastro,
+      dataAtualizacao: subcategoria.dataAtualizacao,
     );
   }
 }

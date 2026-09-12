@@ -1,4 +1,4 @@
-import '../../data/models/admin/orcamento_admin_model.dart';
+import '../entities/orcamento_admin.dart';
 import '../repositories/orcamentos_admin_repository.dart';
 
 class CarregarOrcamentosAdmin {
@@ -6,7 +6,7 @@ class CarregarOrcamentosAdmin {
 
   final OrcamentosAdminRepository repository;
 
-  Future<List<OrcamentoAdminModel>> call() {
+  Future<List<OrcamentoAdmin>> call() {
     return repository.listarOrcamentosComEventoDetalhes();
   }
 }

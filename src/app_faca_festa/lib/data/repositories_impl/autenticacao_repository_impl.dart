@@ -1,4 +1,4 @@
-import '../../domain/repositories/autenticacao_repository.dart';
+import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import '../datasources/remote/autenticacao_remote_datasource.dart';
 
 class AutenticacaoRepositoryImpl implements AutenticacaoRepository {

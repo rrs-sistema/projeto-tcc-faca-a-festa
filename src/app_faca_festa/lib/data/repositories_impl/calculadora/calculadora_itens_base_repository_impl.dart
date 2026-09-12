@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:developer' as developer;
 
-import '../../../domain/repositories/calculadora_itens_base_repository_contract.dart';
+import 'package:app_faca_festa/domain/repositories/calculadora_itens_base_repository_contract.dart';
 import '../../models/calculadora/calculadora_evento_item_model.dart';
 import '../../models/calculadora/calculadora_item_base_model.dart';
 
@@ -242,7 +242,7 @@ class CalculadoraItensBaseRepositoryImpl
   }
 
   @override
-  Future<void> salvarItemBase(CalculadoraItemBaseModel item) async {
+  Future<void> salvarItemBase(CalculadoraItemBase item) async {
     final documentId = item.id.trim();
 
     if (documentId.isEmpty) {
@@ -252,7 +252,7 @@ class CalculadoraItensBaseRepositoryImpl
     }
 
     try {
-      final itemToSave = item.copyWith(
+      final itemToSave = CalculadoraItemBaseModel.fromEntity(item).copyWith(
         updatedAt: DateTime.now(),
       );
 
@@ -272,7 +272,7 @@ class CalculadoraItensBaseRepositoryImpl
   }
 
   @override
-  Future<void> salvarItemEvento(CalculadoraEventoItemModel item) async {
+  Future<void> salvarItemEvento(CalculadoraEventoItem item) async {
     final documentId = item.id.trim();
 
     if (documentId.isEmpty) {
@@ -282,7 +282,7 @@ class CalculadoraItensBaseRepositoryImpl
     }
 
     try {
-      final itemToSave = item.copyWith(
+      final itemToSave = CalculadoraEventoItemModel.fromEntity(item).copyWith(
         tipoEvento: _normalizarChave(item.tipoEvento),
         perfisFesta: item.perfisFesta.map(_normalizarChave).toList(),
         updatedAt: DateTime.now(),

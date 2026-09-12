@@ -1,49 +1,58 @@
 // lib/data/models/fornecedor_servico_detalhado_model.dart
 
-class FornecedorServicoDetalhadoDto {
-  final String id;
-  final String idFornecedor;
-  final String idProdutoServico;
-  final String? idSubcategoria;
-  final String? nomeServico;
-  final String? nomeFornecedor;
-  final String? descricaoServico;
-  final double preco;
-  final int quantidade;
-  final double? precoPromocao;
-  final String? nomeSubcategoria;
-  final String? nomeCategoria;
-  final String? imagemUrl;
-  final String? tipoMedida;
-  final bool ativo;
+import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
 
-  /// Preço exibido e cotado (promoção quando válida).
-  double get precoEfetivo {
-    if (precoPromocao != null && precoPromocao! > 0) return precoPromocao!;
-    return preco;
-  }
+export 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
 
+class FornecedorServicoDetalhadoDto extends FornecedorServicoDetalhado {
   FornecedorServicoDetalhadoDto({
-    required this.id,
-    required this.idFornecedor,
-    required this.idProdutoServico,
-    this.idSubcategoria,
-    this.nomeServico,
-    this.nomeFornecedor,
-    this.descricaoServico,
-    required this.preco,
-    required this.quantidade,
-    this.precoPromocao,
-    this.nomeSubcategoria,
-    this.nomeCategoria,
-    this.imagemUrl,
-    this.tipoMedida,
-    required this.ativo,
+    required super.id,
+    required super.idFornecedor,
+    required super.idProdutoServico,
+    super.idSubcategoria,
+    super.nomeServico,
+    super.nomeFornecedor,
+    super.descricaoServico,
+    required super.preco,
+    required super.quantidade,
+    super.precoPromocao,
+    super.nomeSubcategoria,
+    super.nomeCategoria,
+    super.imagemUrl,
+    super.tipoMedida,
+    required super.ativo,
   });
+
+  factory FornecedorServicoDetalhadoDto.fromEntity(
+    FornecedorServicoDetalhado entity,
+  ) {
+    if (entity is FornecedorServicoDetalhadoDto) {
+      return entity;
+    }
+
+    return FornecedorServicoDetalhadoDto(
+      id: entity.id,
+      idFornecedor: entity.idFornecedor,
+      idProdutoServico: entity.idProdutoServico,
+      idSubcategoria: entity.idSubcategoria,
+      nomeServico: entity.nomeServico,
+      nomeFornecedor: entity.nomeFornecedor,
+      descricaoServico: entity.descricaoServico,
+      preco: entity.preco,
+      quantidade: entity.quantidade,
+      precoPromocao: entity.precoPromocao,
+      nomeSubcategoria: entity.nomeSubcategoria,
+      nomeCategoria: entity.nomeCategoria,
+      imagemUrl: entity.imagemUrl,
+      tipoMedida: entity.tipoMedida,
+      ativo: entity.ativo,
+    );
+  }
 
   // ============================================================
   // ✅ MÉTODO copyWith — cria nova instância mantendo valores atuais
   // ============================================================
+  @override
   FornecedorServicoDetalhadoDto copyWith({
     String? id,
     String? idFornecedor,

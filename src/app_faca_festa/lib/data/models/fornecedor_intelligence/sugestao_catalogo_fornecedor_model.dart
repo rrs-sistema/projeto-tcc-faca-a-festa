@@ -1,75 +1,33 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class SugestaoCatalogoFornecedorModel {
-  final String idSugestao;
-  final String idFornecedor;
+import 'package:app_faca_festa/domain/entities/sugestao_catalogo_fornecedor.dart';
 
-  /// Score de saúde do catálogo de 0 a 100.
-  final double scoreCatalogo;
+export 'package:app_faca_festa/domain/entities/sugestao_catalogo_fornecedor.dart';
 
-  /// Exemplo: fraco, basico, bom, completo.
-  final String nivelCatalogo;
-
-  final String titulo;
-  final String descricao;
-
-  final List<String> pendencias;
-  final List<String> melhoriasPrioritarias;
-  final List<String> camposAusentes;
-
-  /// Lista flexível para serviços com problema.
-  /// Exemplo:
-  /// {
-  ///   "id_servico": "abc",
-  ///   "nome_servico": "Bolo personalizado",
-  ///   "alertas": ["sem_imagem", "sem_descricao"]
-  /// }
-  final List<Map<String, dynamic>> servicosComAlerta;
-
-  final List<String> categoriasSemServico;
-
-  final int totalServicosAtivos;
-  final int totalServicosSemImagem;
-  final int totalServicosSemPreco;
-  final int totalServicosSemDescricao;
-
-  /// Exemplo: deterministic_rules, generative_ai, hybrid.
-  final String origem;
-
-  final String versaoRegra;
-
-  /// Exemplo: nova, vista, aplicada, ignorada.
-  final String status;
-
-  final Map<String, dynamic>? metadados;
-
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-  final DateTime? expiresAt;
-
+class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
   const SugestaoCatalogoFornecedorModel({
-    required this.idSugestao,
-    required this.idFornecedor,
-    required this.scoreCatalogo,
-    required this.nivelCatalogo,
-    required this.titulo,
-    required this.descricao,
-    required this.totalServicosAtivos,
-    required this.totalServicosSemImagem,
-    required this.totalServicosSemPreco,
-    required this.totalServicosSemDescricao,
-    required this.origem,
-    required this.versaoRegra,
-    required this.status,
-    required this.createdAt,
-    this.pendencias = const [],
-    this.melhoriasPrioritarias = const [],
-    this.camposAusentes = const [],
-    this.servicosComAlerta = const [],
-    this.categoriasSemServico = const [],
-    this.metadados,
-    this.updatedAt,
-    this.expiresAt,
+    required super.idSugestao,
+    required super.idFornecedor,
+    required super.scoreCatalogo,
+    required super.nivelCatalogo,
+    required super.titulo,
+    required super.descricao,
+    required super.totalServicosAtivos,
+    required super.totalServicosSemImagem,
+    required super.totalServicosSemPreco,
+    required super.totalServicosSemDescricao,
+    required super.origem,
+    required super.versaoRegra,
+    required super.status,
+    required super.createdAt,
+    super.pendencias,
+    super.melhoriasPrioritarias,
+    super.camposAusentes,
+    super.servicosComAlerta,
+    super.categoriasSemServico,
+    super.metadados,
+    super.updatedAt,
+    super.expiresAt,
   });
 
   factory SugestaoCatalogoFornecedorModel.fromMap(

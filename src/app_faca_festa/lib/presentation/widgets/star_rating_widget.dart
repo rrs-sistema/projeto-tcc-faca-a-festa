@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-
-import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 
 class StarRatingWidget extends StatelessWidget {
   final double rating;
@@ -19,8 +16,14 @@ class StarRatingWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Get.find<EventThemeController>();
-    final primaryGradient = gradient ?? theme.gradient.value;
+    final primary = Theme.of(context).colorScheme.primary;
+    final primaryGradient = gradient ??
+        LinearGradient(
+          colors: [
+            primary,
+            primary.withValues(alpha: 0.72),
+          ],
+        );
 
     return Row(
       mainAxisSize: MainAxisSize.min,

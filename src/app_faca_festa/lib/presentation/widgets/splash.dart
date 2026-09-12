@@ -7,7 +7,12 @@ import 'package:app_faca_festa/presentation/modules/app/controllers/app_controll
 import './festa_app_bar.dart';
 
 class Splash extends StatefulWidget {
-  const Splash({super.key});
+  const Splash({
+    super.key,
+    required this.appController,
+  });
+
+  final AppController appController;
 
   @override
   State<Splash> createState() => _SplashState();
@@ -16,8 +21,6 @@ class Splash extends StatefulWidget {
 class _SplashState extends State<Splash> with TickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-
-  final appController = Get.find<AppController>();
 
   @override
   void initState() {
@@ -41,7 +44,7 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
     // este widget sem o nome `/splash`.
     Future.delayed(const Duration(milliseconds: 600), () {
       if (!mounted) return;
-      appController.iniciarSessao();
+      widget.appController.iniciarSessao();
     });
   }
 
@@ -102,11 +105,11 @@ class _SplashState extends State<Splash> with TickerProviderStateMixin {
                   ),
                   const SizedBox(height: 16),
                   Obx(() {
-                    final token = appController.conviteToken.value;
+                    final token = widget.appController.conviteToken.value;
                     return Text(
                       token.isNotEmpty
                           ? "Carregando seu convite..."
-                          : appController.carregando.value
+                          : widget.appController.carregando.value
                               ? "Carregando seus dados..."
                               : "Preparando sua experiência...",
                       style: TextStyle(

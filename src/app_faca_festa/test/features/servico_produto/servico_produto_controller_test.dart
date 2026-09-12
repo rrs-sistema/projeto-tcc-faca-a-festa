@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_produto_controller.dart';
-import 'package:app_faca_festa/data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import 'package:app_faca_festa/data/models/servico_produto/fornecedor_produto_servico_model.dart';
-import 'package:app_faca_festa/data/models/servico_produto/servico_produto_model.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
+import 'package:app_faca_festa/domain/entities/servico_produto.dart';
 import 'package:app_faca_festa/domain/repositories/servico_produto_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_servicos_produto.dart';
 
@@ -33,7 +33,7 @@ void main() {
   test('loads services by subcategory and updates the presentation cache',
       () async {
     repository.servicosPorSubcategoria['doces'] = [
-      const ServicoProdutoModel(
+      const ServicoProduto(
         id: 'bolo-chocolate',
         nome: 'Bolo de chocolate',
         idSubcategoria: 'doces',
@@ -50,7 +50,7 @@ void main() {
 
   test('loads detailed supplier services through the use case', () async {
     repository.detalhados = [
-      FornecedorServicoDetalhadoDto(
+      const FornecedorServicoDetalhado(
         id: 'bolo-chocolate',
         idFornecedor: 'fornecedor-1',
         idProdutoServico: 'bolo-chocolate',
@@ -75,7 +75,7 @@ void main() {
     repository.subcategoriaValida = false;
 
     await controller.vincularServico(
-      FornecedorProdutoServicoModel(
+      FornecedorProdutoServico(
         id: 'fornecedor-1_bolo-chocolate',
         idFornecedor: 'fornecedor-1',
         idProdutoServico: 'bolo-chocolate',
@@ -90,39 +90,39 @@ void main() {
 }
 
 class _ServicoProdutoRepositoryFake implements ServicoProdutoRepository {
-  final Map<String, List<ServicoProdutoModel>> servicosPorSubcategoria = {};
+  final Map<String, List<ServicoProduto>> servicosPorSubcategoria = {};
   final _streamController = StreamController<void>.broadcast();
 
-  List<ServicoProdutoModel> servicos = [];
-  List<FornecedorServicoDetalhadoDto> detalhados = [];
+  List<ServicoProduto> servicos = [];
+  List<FornecedorServicoDetalhado> detalhados = [];
   String? ultimoFornecedorDetalhes;
   bool subcategoriaValida = true;
   (String, String)? subcategoriaAdicionada;
-  FornecedorProdutoServicoModel? vinculoSalvo;
+  FornecedorProdutoServico? vinculoSalvo;
 
   Future<void> close() => _streamController.close();
 
   @override
-  Future<List<ServicoProdutoModel>> listarServicos() async => servicos;
+  Future<List<ServicoProduto>> listarServicos() async => servicos;
 
   @override
-  Future<List<ServicoProdutoModel>> listarServicosAtivos() async => servicos;
+  Future<List<ServicoProduto>> listarServicosAtivos() async => servicos;
 
   @override
-  Future<List<ServicoProdutoModel>> listarServicosAtivosPorSubcategoria(
+  Future<List<ServicoProduto>> listarServicosAtivosPorSubcategoria(
     String idSubcategoria,
   ) async {
     return servicosPorSubcategoria[idSubcategoria] ?? [];
   }
 
   @override
-  Future<List<ServicoProdutoModel>> listarServicosAtivosPorCategoriasFornecedor(
+  Future<List<ServicoProduto>> listarServicosAtivosPorCategoriasFornecedor(
       String idFornecedor) async {
     return servicos;
   }
 
   @override
-  Future<List<FornecedorServicoDetalhadoDto>> listarServicosComDetalhes({
+  Future<List<FornecedorServicoDetalhado>> listarServicosComDetalhes({
     String? idFornecedor,
   }) async {
     ultimoFornecedorDetalhes = idFornecedor;
@@ -133,7 +133,7 @@ class _ServicoProdutoRepositoryFake implements ServicoProdutoRepository {
   Future<void> excluirServico(String id) async {}
 
   @override
-  Future<void> salvarServico(ServicoProdutoModel servico) async {}
+  Future<void> salvarServico(ServicoProduto servico) async {}
 
   @override
   Future<int> popularCatalogoInicial() async => 0;
@@ -160,7 +160,7 @@ class _ServicoProdutoRepositoryFake implements ServicoProdutoRepository {
   }
 
   @override
-  Future<void> salvarVinculo(FornecedorProdutoServicoModel vinculo) async {
+  Future<void> salvarVinculo(FornecedorProdutoServico vinculo) async {
     vinculoSalvo = vinculo;
   }
 

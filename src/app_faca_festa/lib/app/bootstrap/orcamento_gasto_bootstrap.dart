@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/orcamento_gasto_remote_datasource.dart';
-import '../../data/repositories_impl/orcamento_gasto_repository_impl.dart';
-import '../../domain/repositories/orcamento_gasto_repository.dart';
-import '../../domain/usecases/gerenciar_orcamento_gastos.dart';
-import '../../presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/orcamento_gasto_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/orcamento_gasto_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/orcamento_gasto_repository.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_orcamento_gastos.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
 
 class OrcamentoGastoBootstrap {
   OrcamentoGastoBootstrap._();
@@ -68,6 +69,11 @@ class OrcamentoGastoBootstrap {
   static OrcamentoGastoController _novoController() {
     return OrcamentoGastoController(
       gastosOrcamento: Get.find<GerenciarOrcamentoGastos>(),
+      atualizarResumoGeral: () async {
+        if (Get.isRegistered<OrcamentoController>()) {
+          await Get.find<OrcamentoController>().calcularTotalPagoGeral();
+        }
+      },
     );
   }
 }

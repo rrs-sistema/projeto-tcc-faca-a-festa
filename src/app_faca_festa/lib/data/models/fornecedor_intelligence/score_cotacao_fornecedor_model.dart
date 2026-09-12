@@ -1,61 +1,32 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ScoreCotacaoFornecedorModel {
-  final String idScore;
-  final String idCotacao;
-  final String idFornecedor;
-  final String idEvento;
+import 'package:app_faca_festa/domain/entities/score_cotacao_fornecedor.dart';
 
-  /// Score final de 0 a 100.
-  final double score;
+export 'package:app_faca_festa/domain/entities/score_cotacao_fornecedor.dart';
 
-  /// Exemplo: baixo, medio, alto.
-  final String nivel;
-
-  final double compatibilidadeTipoEvento;
-  final double compatibilidadeCategoria;
-  final double compatibilidadeOrcamento;
-  final double compatibilidadeLocalizacao;
-  final double scoreUrgencia;
-  final double scoreInteracao;
-  final double scoreReputacao;
-
-  final List<String> motivosPositivos;
-  final List<String> alertas;
-  final List<String> penalidades;
-
-  /// Exemplo: deterministic_rules, generative_ai, hybrid.
-  final String origem;
-
-  final String versaoRegra;
-
-  final Map<String, dynamic>? metadados;
-
-  final DateTime calculadoEm;
-  final DateTime? expiresAt;
-
+class ScoreCotacaoFornecedorModel extends ScoreCotacaoFornecedor {
   const ScoreCotacaoFornecedorModel({
-    required this.idScore,
-    required this.idCotacao,
-    required this.idFornecedor,
-    required this.idEvento,
-    required this.score,
-    required this.nivel,
-    required this.compatibilidadeTipoEvento,
-    required this.compatibilidadeCategoria,
-    required this.compatibilidadeOrcamento,
-    required this.compatibilidadeLocalizacao,
-    required this.scoreUrgencia,
-    required this.scoreInteracao,
-    required this.scoreReputacao,
-    required this.origem,
-    required this.versaoRegra,
-    required this.calculadoEm,
-    this.motivosPositivos = const [],
-    this.alertas = const [],
-    this.penalidades = const [],
-    this.metadados,
-    this.expiresAt,
+    required super.idScore,
+    required super.idCotacao,
+    required super.idFornecedor,
+    required super.idEvento,
+    required super.score,
+    required super.nivel,
+    required super.compatibilidadeTipoEvento,
+    required super.compatibilidadeCategoria,
+    required super.compatibilidadeOrcamento,
+    required super.compatibilidadeLocalizacao,
+    required super.scoreUrgencia,
+    required super.scoreInteracao,
+    required super.scoreReputacao,
+    required super.origem,
+    required super.versaoRegra,
+    required super.calculadoEm,
+    super.motivosPositivos,
+    super.alertas,
+    super.penalidades,
+    super.metadados,
+    super.expiresAt,
   });
 
   factory ScoreCotacaoFornecedorModel.fromMap(

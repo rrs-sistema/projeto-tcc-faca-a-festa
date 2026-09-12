@@ -4,40 +4,55 @@ import 'package:get/get.dart';
 import 'dart:async';
 
 import 'package:app_faca_festa/core/utils/convite_link.dart';
-import 'package:app_faca_festa/data/services/convite/enviar_convites_por_email_service.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/repositories/convidado_repository.dart';
 import 'package:app_faca_festa/domain/repositories/presente_reservation_repository.dart';
+import 'package:app_faca_festa/domain/services/convite_email_service.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
 
 class ConvidadoController extends GetxController {
   ConvidadoController({
     required ConvidadoRepository repository,
     required PresenteReservationRepository presenteReservationRepository,
-    EnviarConvitesPorEmailService? conviteEmailService,
+    ConviteEmailService? conviteEmailService,
+    GrupoConvidadoController? grupoController,
+    GrupoConvidadoController? Function()? grupoControllerResolver,
   })  : _repository = repository,
         _presenteReservationRepository = presenteReservationRepository,
-        _conviteEmailService = conviteEmailService;
+        _conviteEmailService = conviteEmailService,
+        _grupoController = grupoController,
+        _grupoControllerResolver = grupoControllerResolver;
 
   final ConvidadoRepository _repository;
   final PresenteReservationRepository _presenteReservationRepository;
-  final EnviarConvitesPorEmailService? _conviteEmailService;
+  final ConviteEmailService? _conviteEmailService;
+  final GrupoConvidadoController? Function()? _grupoControllerResolver;
 
-  EnviarConvitesPorEmailService get _emailService =>
-      _conviteEmailService ?? Get.find<EnviarConvitesPorEmailService>();
+  ConviteEmailService get _emailService {
+    final service = _conviteEmailService;
+    if (service == null) {
+      throw const EnviarConvitesPorEmailException(
+        'failed-precondition',
+        'Serviço de envio de convites não configurado.',
+      );
+    }
+    return service;
+  }
 
   // 🔹 Lista completa de convidados do evento atual
   final RxList<Convidado> convidados = <Convidado>[].obs;
 
-  GrupoConvidadoController? _grupoController;
+  final GrupoConvidadoController? _grupoController;
   GrupoConvidadoController get grupoController {
     final existente = _grupoController;
     if (existente != null) return existente;
 
-    final criado = Get.find<GrupoConvidadoController>();
-    _grupoController = criado;
-    return criado;
+    final resolved = _grupoControllerResolver?.call();
+    if (resolved == null) {
+      throw StateError('GrupoConvidadoController não configurado.');
+    }
+    return resolved;
   }
 
   // 🔹 Estados de carregamento e erro

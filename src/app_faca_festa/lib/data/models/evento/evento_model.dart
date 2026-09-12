@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../../domain/entities/evento.dart';
-export '../../../domain/entities/evento.dart'
+import 'package:app_faca_festa/domain/entities/evento.dart';
+export 'package:app_faca_festa/domain/entities/evento.dart'
     show Evento, StatusEvento, StatusEventoExtension;
 
 // ======================================================
@@ -166,20 +166,34 @@ class EventoModel extends Evento {
   // 🔹 Conversão do Firestore
   // ======================================================
   factory EventoModel.fromMap(Map<String, dynamic> map) {
+    DateTime? parseDate(dynamic value) {
+      if (value is DateTime) return value;
+      if (value is Timestamp) return value.toDate();
+      try {
+        final converted = value?.toDate();
+        if (converted is DateTime) return converted;
+      } catch (_) {
+        // Valor não é um Timestamp-like; tenta parse por texto abaixo.
+      }
+      if (value is String) return DateTime.tryParse(value);
+      return null;
+    }
+
     return EventoModel(
-      idEvento: map['id_evento'] ?? '',
-      idTipoEvento: map['id_tipo_evento'] ?? '',
-      idUsuario: map['id_usuario'] ?? '',
+      idEvento: map['id_evento']?.toString() ?? '',
+      idTipoEvento: map['id_tipo_evento']?.toString() ?? '',
+      idUsuario: map['id_usuario']?.toString() ?? '',
       idCidade: map['id_cidade']?.toString(),
-      nomeCidade: map['nome_cidade'],
-      uf: map['uf'],
-      nomeEvento: map['nome_evento'] ?? map['nome'] ?? '',
-      nomePessoalPrincipal: map['nome_pessoa_principal'] ?? '',
-      localEvento: map['local_evento'] ?? map['logradouro'] ?? '',
-      data: map['data'] is Timestamp
-          ? (map['data'] as Timestamp).toDate()
-          : DateTime.tryParse(map['data']?.toString() ?? '') ?? DateTime.now(),
-      hora: map['hora'],
+      nomeCidade: map['nome_cidade']?.toString(),
+      uf: map['uf']?.toString(),
+      nomeEvento:
+          map['nome_evento']?.toString() ?? map['nome']?.toString() ?? '',
+      nomePessoalPrincipal: map['nome_pessoa_principal']?.toString() ?? '',
+      localEvento: map['local_evento']?.toString() ??
+          map['logradouro']?.toString() ??
+          '',
+      data: parseDate(map['data']) ?? DateTime.now(),
+      hora: map['hora']?.toString(),
       custoEstimado: map['custo_estimado'] != null
           ? (map['custo_estimado'] as num).toDouble()
           : null,
@@ -188,45 +202,38 @@ class EventoModel extends Evento {
       totalCriancas: _parseIntNullable(map['total_criancas']),
       totalBebes: _parseIntNullable(map['total_bebes']),
       status: _parseStatus(map['status']),
-      descricao: map['descricao'],
-      mensagemConvidado: map['mensagem'] ?? map['mensagem_convidado'],
-      cep: map['cep'],
-      logradouro: map['logradouro'],
-      numero: map['numero'],
-      complemento: map['complemento'],
-      bairro: map['bairro'],
+      descricao: map['descricao']?.toString(),
+      mensagemConvidado:
+          map['mensagem']?.toString() ?? map['mensagem_convidado']?.toString(),
+      cep: map['cep']?.toString(),
+      logradouro: map['logradouro']?.toString(),
+      numero: map['numero']?.toString(),
+      complemento: map['complemento']?.toString(),
+      bairro: map['bairro']?.toString(),
       ativo: map['ativo'] ?? true,
-      dataCadastro: map['data_cadastro'] is Timestamp
-          ? (map['data_cadastro'] as Timestamp).toDate()
-          : DateTime.now(),
-      nomeNoiva: map['nome_noiva'],
-      nomeNoivo: map['nome_noivo'],
-      tipoCerimonia: map['tipo_cerimonia'],
-      estiloCasamento: map['estilo_casamento'],
+      dataCadastro: parseDate(map['data_cadastro']) ?? DateTime.now(),
+      nomeNoiva: map['nome_noiva']?.toString(),
+      nomeNoivo: map['nome_noivo']?.toString(),
+      tipoCerimonia: map['tipo_cerimonia']?.toString(),
+      estiloCasamento: map['estilo_casamento']?.toString(),
       padrinhos:
           map['padrinhos'] != null ? List<String>.from(map['padrinhos']) : null,
-      nomeAniversariante: map['nome_aniversariante'],
-      idade: map['idade'],
+      nomeAniversariante: map['nome_aniversariante']?.toString(),
+      idade: _parseIntNullable(map['idade']),
       idTema: map['id_tema']?.toString(),
-      tema: map['tema'],
+      tema: map['tema']?.toString(),
       imagemCapaUrl: map['imagem_capa_url']?.toString(),
       rotuloBanner: map['rotulo_banner']?.toString(),
-      nomeResponsavel: map['nome_responsavel'],
-      nomeGestante: map['nome_gestante'],
-      nomeBebe: map['nome_bebe'],
-      tipoCha: map['tipo_cha'],
-      dataPrevistaNascimento: map['data_prevista_nascimento'] is Timestamp
-          ? (map['data_prevista_nascimento'] as Timestamp).toDate()
-          : null,
-      hashtagEvento: map['hashtag_evento'],
-      siteEvento: map['site_evento'],
-      dressCode: map['dress_code'],
+      nomeResponsavel: map['nome_responsavel']?.toString(),
+      nomeGestante: map['nome_gestante']?.toString(),
+      nomeBebe: map['nome_bebe']?.toString(),
+      tipoCha: map['tipo_cha']?.toString(),
+      dataPrevistaNascimento: parseDate(map['data_prevista_nascimento']),
+      hashtagEvento: map['hashtag_evento']?.toString(),
+      siteEvento: map['site_evento']?.toString(),
+      dressCode: map['dress_code']?.toString(),
     );
   }
-
-  // ======================================================
-  // 🔹 Funções auxiliares
-  // ======================================================
 
   static int? _parseIntNullable(dynamic value) {
     if (value == null) return null;
@@ -245,9 +252,6 @@ class EventoModel extends Evento {
     return adultos + criancas + bebes;
   }
 
-  // ======================================================
-  // 🔹 Função auxiliar - converte string em enum
-  // ======================================================
   static StatusEvento _parseStatus(dynamic value) {
     if (value == null) return StatusEvento.planejamento;
     final str = value.toString().toLowerCase();
@@ -260,103 +264,158 @@ class EventoModel extends Evento {
   // ======================================================
   // 🔹 copyWith
   // ======================================================
+  @override
   EventoModel copyWith({
+    String? idEvento,
     String? idTipoEvento,
     String? idUsuario,
     String? idCidade,
+    bool limparIdCidade = false,
     String? nomeCidade,
+    bool limparNomeCidade = false,
     String? uf,
+    bool limparUf = false,
+    String? cep,
+    bool limparCep = false,
+    String? logradouro,
+    bool limparLogradouro = false,
+    String? numero,
+    bool limparNumero = false,
+    String? complemento,
+    bool limparComplemento = false,
+    String? bairro,
+    bool limparBairro = false,
     String? nomeEvento,
     String? nomePessoalPrincipal,
+    bool limparNomePessoalPrincipal = false,
     String? localEvento,
     DateTime? data,
     String? hora,
+    bool limparHora = false,
     double? custoEstimado,
+    bool limparCustoEstimado = false,
     int? totalConvidados,
+    bool limparTotalConvidados = false,
     int? totalAdultos,
+    bool limparTotalAdultos = false,
     int? totalCriancas,
+    bool limparTotalCriancas = false,
     int? totalBebes,
+    bool limparTotalBebes = false,
     StatusEvento? status,
     String? descricao,
+    bool limparDescricao = false,
     String? mensagemConvidado,
-    String? cep,
-    String? logradouro,
-    String? numero,
-    String? complemento,
-    String? bairro,
+    bool limparMensagemConvidado = false,
     bool? ativo,
     DateTime? dataCadastro,
     String? nomeNoiva,
+    bool limparNomeNoiva = false,
     String? nomeNoivo,
+    bool limparNomeNoivo = false,
     String? tipoCerimonia,
+    bool limparTipoCerimonia = false,
     String? estiloCasamento,
+    bool limparEstiloCasamento = false,
     List<String>? padrinhos,
+    bool limparPadrinhos = false,
     String? nomeAniversariante,
+    bool limparNomeAniversariante = false,
     int? idade,
+    bool limparIdade = false,
     String? idTema,
+    bool limparIdTema = false,
     String? tema,
+    bool limparTema = false,
     String? imagemCapaUrl,
     bool limparImagemCapaUrl = false,
     String? rotuloBanner,
     bool limparRotuloBanner = false,
     String? nomeResponsavel,
+    bool limparNomeResponsavel = false,
     String? nomeGestante,
+    bool limparNomeGestante = false,
     String? nomeBebe,
+    bool limparNomeBebe = false,
     String? tipoCha,
+    bool limparTipoCha = false,
     DateTime? dataPrevistaNascimento,
+    bool limparDataPrevistaNascimento = false,
     String? hashtagEvento,
+    bool limparHashtagEvento = false,
     String? siteEvento,
+    bool limparSiteEvento = false,
     String? dressCode,
+    bool limparDressCode = false,
   }) {
     return EventoModel(
-      idEvento: idEvento,
+      idEvento: idEvento ?? this.idEvento,
       idTipoEvento: idTipoEvento ?? this.idTipoEvento,
       idUsuario: idUsuario ?? this.idUsuario,
-      idCidade: idCidade ?? this.idCidade,
-      nomeCidade: nomeCidade ?? this.nomeCidade,
-      uf: uf ?? this.uf,
-      nomePessoalPrincipal: nomePessoalPrincipal ?? this.nomePessoalPrincipal,
+      idCidade: limparIdCidade ? null : (idCidade ?? this.idCidade),
+      nomeCidade: limparNomeCidade ? null : (nomeCidade ?? this.nomeCidade),
+      uf: limparUf ? null : (uf ?? this.uf),
+      nomePessoalPrincipal: limparNomePessoalPrincipal
+          ? null
+          : (nomePessoalPrincipal ?? this.nomePessoalPrincipal),
       nomeEvento: nomeEvento ?? this.nomeEvento,
       localEvento: localEvento ?? this.localEvento,
       data: data ?? this.data,
-      hora: hora ?? this.hora,
-      custoEstimado: custoEstimado ?? this.custoEstimado,
-      totalConvidados: totalConvidados ?? this.totalConvidados,
-      totalAdultos: totalAdultos ?? this.totalAdultos,
-      totalCriancas: totalCriancas ?? this.totalCriancas,
-      totalBebes: totalBebes ?? this.totalBebes,
+      hora: limparHora ? null : (hora ?? this.hora),
+      custoEstimado:
+          limparCustoEstimado ? null : (custoEstimado ?? this.custoEstimado),
+      totalConvidados: limparTotalConvidados
+          ? null
+          : (totalConvidados ?? this.totalConvidados),
+      totalAdultos:
+          limparTotalAdultos ? null : (totalAdultos ?? this.totalAdultos),
+      totalCriancas:
+          limparTotalCriancas ? null : (totalCriancas ?? this.totalCriancas),
+      totalBebes: limparTotalBebes ? null : (totalBebes ?? this.totalBebes),
       status: status ?? this.status,
-      descricao: descricao ?? this.descricao,
-      mensagemConvidado: mensagemConvidado ?? this.mensagemConvidado,
-      cep: cep ?? this.cep,
-      logradouro: logradouro ?? this.logradouro,
-      numero: numero ?? this.numero,
-      complemento: complemento ?? this.complemento,
-      bairro: bairro ?? this.bairro,
+      descricao: limparDescricao ? null : (descricao ?? this.descricao),
+      mensagemConvidado: limparMensagemConvidado
+          ? null
+          : (mensagemConvidado ?? this.mensagemConvidado),
+      cep: limparCep ? null : (cep ?? this.cep),
+      logradouro: limparLogradouro ? null : (logradouro ?? this.logradouro),
+      numero: limparNumero ? null : (numero ?? this.numero),
+      complemento: limparComplemento ? null : (complemento ?? this.complemento),
+      bairro: limparBairro ? null : (bairro ?? this.bairro),
       ativo: ativo ?? this.ativo,
       dataCadastro: dataCadastro ?? this.dataCadastro,
-      nomeNoiva: nomeNoiva ?? this.nomeNoiva,
-      nomeNoivo: nomeNoivo ?? this.nomeNoivo,
-      tipoCerimonia: tipoCerimonia ?? this.tipoCerimonia,
-      estiloCasamento: estiloCasamento ?? this.estiloCasamento,
-      padrinhos: padrinhos ?? this.padrinhos,
-      nomeAniversariante: nomeAniversariante ?? this.nomeAniversariante,
-      idade: idade ?? this.idade,
-      idTema: idTema ?? this.idTema,
-      tema: tema ?? this.tema,
+      nomeNoiva: limparNomeNoiva ? null : (nomeNoiva ?? this.nomeNoiva),
+      nomeNoivo: limparNomeNoivo ? null : (nomeNoivo ?? this.nomeNoivo),
+      tipoCerimonia:
+          limparTipoCerimonia ? null : (tipoCerimonia ?? this.tipoCerimonia),
+      estiloCasamento: limparEstiloCasamento
+          ? null
+          : (estiloCasamento ?? this.estiloCasamento),
+      padrinhos: limparPadrinhos ? null : (padrinhos ?? this.padrinhos),
+      nomeAniversariante: limparNomeAniversariante
+          ? null
+          : (nomeAniversariante ?? this.nomeAniversariante),
+      idade: limparIdade ? null : (idade ?? this.idade),
+      idTema: limparIdTema ? null : (idTema ?? this.idTema),
+      tema: limparTema ? null : (tema ?? this.tema),
       imagemCapaUrl:
           limparImagemCapaUrl ? null : (imagemCapaUrl ?? this.imagemCapaUrl),
       rotuloBanner:
           limparRotuloBanner ? null : (rotuloBanner ?? this.rotuloBanner),
-      nomeResponsavel: nomeResponsavel ?? this.nomeResponsavel,
-      nomeGestante: nomeGestante ?? this.nomeGestante,
-      nomeBebe: nomeBebe ?? this.nomeBebe,
-      tipoCha: tipoCha ?? this.tipoCha,
-      dataPrevistaNascimento:
-          dataPrevistaNascimento ?? this.dataPrevistaNascimento,
-      hashtagEvento: hashtagEvento ?? this.hashtagEvento,
-      siteEvento: siteEvento ?? this.siteEvento,
-      dressCode: dressCode ?? this.dressCode,
+      nomeResponsavel: limparNomeResponsavel
+          ? null
+          : (nomeResponsavel ?? this.nomeResponsavel),
+      nomeGestante:
+          limparNomeGestante ? null : (nomeGestante ?? this.nomeGestante),
+      nomeBebe: limparNomeBebe ? null : (nomeBebe ?? this.nomeBebe),
+      tipoCha: limparTipoCha ? null : (tipoCha ?? this.tipoCha),
+      dataPrevistaNascimento: limparDataPrevistaNascimento
+          ? null
+          : (dataPrevistaNascimento ?? this.dataPrevistaNascimento),
+      hashtagEvento:
+          limparHashtagEvento ? null : (hashtagEvento ?? this.hashtagEvento),
+      siteEvento: limparSiteEvento ? null : (siteEvento ?? this.siteEvento),
+      dressCode: limparDressCode ? null : (dressCode ?? this.dressCode),
     );
   }
 }

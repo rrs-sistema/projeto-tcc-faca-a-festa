@@ -1,21 +1,19 @@
-import 'dart:io';
-
-import '../../data/models/servico_produto/servico_foto_model.dart';
+import '../entities/servico_foto.dart';
 
 abstract class ServicoFotoRepository {
-  Future<List<ServicoFotoModel>> carregarFotos({
+  Future<List<ServicoFoto>> carregarFotos({
     required String idFornecedor,
     required String idProdutoServico,
   });
 
-  Future<ServicoFotoModel> adicionarFotoArquivo({
+  Future<ServicoFoto> adicionarFotoArquivo({
     required String idFornecedor,
     required String idProdutoServico,
-    required File arquivo,
+    required List<int> bytes,
     required String nomeArquivo,
   });
 
-  Future<void> adicionarFotoDireto(ServicoFotoModel foto);
+  Future<void> adicionarFotoDireto(ServicoFoto foto);
 
-  Future<void> removerFoto(ServicoFotoModel foto);
+  Future<void> removerFoto(ServicoFoto foto);
 }

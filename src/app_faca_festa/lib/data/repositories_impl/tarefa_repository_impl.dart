@@ -1,5 +1,5 @@
-import '../../domain/entities/tarefa.dart';
-import '../../domain/repositories/tarefa_repository.dart';
+import 'package:app_faca_festa/domain/entities/tarefa.dart';
+import 'package:app_faca_festa/domain/repositories/tarefa_repository.dart';
 import '../datasources/remote/tarefa_remote_datasource.dart';
 import '../models/tarefa/tarefa_model.dart' hide Tarefa, StatusTarefa;
 

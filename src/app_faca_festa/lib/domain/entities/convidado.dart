@@ -111,6 +111,73 @@ class Convidado {
     this.emailNormalizado,
   });
 
+  factory Convidado.fromMap(Map<String, dynamic> map) {
+    DateTime? parseDate(dynamic value) {
+      if (value is DateTime) return value;
+      final dynamicValue = value;
+      try {
+        final converted = dynamicValue?.toDate();
+        if (converted is DateTime) return converted;
+      } catch (_) {
+        // Valor não é um Timestamp-like; tenta parse por texto abaixo.
+      }
+      if (value is String) return DateTime.tryParse(value);
+      return null;
+    }
+
+    final tipo = map['tipo_convidado'] != null
+        ? TipoConvidado.fromString(map['tipo_convidado'])
+        : TipoConvidado.fromLegacyAdulto(map['adulto']);
+
+    try {
+      return Convidado(
+        idConvidado: map['id_convidado']?.toString() ?? '',
+        idEvento:
+            (map['id_evento'] ?? map['id_evento_evento'] ?? map['evento_id'])
+                    ?.toString() ??
+                '',
+        nome: map['nome']?.toString() ?? '',
+        contato: map['contato']?.toString() ?? '',
+        email: _primeiroTexto(map, const ['email', 'email_usuario']),
+        emailUsuario: _primeiroTexto(map, const ['email_usuario']),
+        emailNormalizado: _primeiroTexto(map, const ['email_normalizado']),
+        status: StatusConvidado.fromString(map['status']),
+        tipoConvidado: tipo,
+        idGrupo: map['id_grupo']?.toString(),
+        nomeGrupo: map['nome_grupo']?.toString(),
+        idMesa: map['id_mesa']?.toString(),
+        numeroMesa: map['numero_mesa'] is num
+            ? (map['numero_mesa'] as num).toInt()
+            : null,
+        ocupaAssento: map['ocupa_assento'] ?? tipo != TipoConvidado.bebe,
+        cuidadoEspecial: map['cuidado_especial'] ?? false,
+        dataEnvio: parseDate(map['data_envio']),
+        dataResposta: parseDate(map['data_resposta']),
+        dataCadastro: parseDate(map['data_cadastro']) ?? DateTime.now(),
+        dataAtualizacao: parseDate(map['data_atualizacao']) ?? DateTime.now(),
+        conviteToken: _primeiroTexto(map, const [
+              'convite_token',
+              'token_convite',
+              'token',
+              'id_convidado',
+            ]) ??
+            '',
+        idUsuario: _primeiroTexto(map, const ['id_usuario', 'idUsuario']),
+        conviteStatus: _primeiroTexto(map, const ['convite_status']),
+      );
+    } catch (_) {
+      final now = DateTime.now();
+      return Convidado(
+        idConvidado: '',
+        idEvento: '',
+        nome: '',
+        contato: '',
+        dataCadastro: now,
+        dataAtualizacao: now,
+      );
+    }
+  }
+
   bool get adulto => tipoConvidado == TipoConvidado.adulto;
   bool get crianca => tipoConvidado == TipoConvidado.crianca;
   bool get bebe => tipoConvidado == TipoConvidado.bebe;
@@ -180,6 +247,16 @@ class Convidado {
   static bool _pareceEmail(String? value) {
     final texto = (value ?? '').trim();
     return texto.contains('@') && texto.contains('.');
+  }
+
+  static String? _primeiroTexto(Map<String, dynamic> map, List<String> keys) {
+    for (final key in keys) {
+      final value = map[key];
+      if (value == null) continue;
+      final text = value.toString().trim();
+      if (text.isNotEmpty) return text;
+    }
+    return null;
   }
 
   Convidado comTokenConvite() {

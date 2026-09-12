@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../../domain/entities/admin_dashboard_stats.dart';
+import 'package:app_faca_festa/domain/entities/admin_dashboard_stats.dart';
 import '../../models/evento/tema_festa_model.dart';
 
 class AdminDashboardRemoteDatasource {

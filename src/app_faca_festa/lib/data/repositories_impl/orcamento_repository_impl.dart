@@ -1,6 +1,8 @@
-import '../../domain/repositories/orcamento_repository.dart';
+import 'package:app_faca_festa/domain/repositories/orcamento_repository.dart';
+import 'package:app_faca_festa/domain/entities/orcamento.dart';
 import '../datasources/remote/orcamento_remote_datasource.dart';
-import '../models/orcamento/orcamento_model.dart';
+import '../models/orcamento/orcamento_model.dart'
+    hide Orcamento, StatusOrcamento;
 
 class OrcamentoRepositoryImpl implements OrcamentoRepository {
   OrcamentoRepositoryImpl(this.remote);
@@ -8,25 +10,25 @@ class OrcamentoRepositoryImpl implements OrcamentoRepository {
   final OrcamentoRemoteDatasource remote;
 
   @override
-  Future<OrcamentoModel?> buscarPorId(String idOrcamento) {
+  Future<Orcamento?> buscarPorId(String idOrcamento) {
     return remote.buscarPorId(idOrcamento);
   }
 
   @override
-  Stream<List<OrcamentoModel>> observarOrcamentosDoEvento(String idEvento) {
+  Stream<List<Orcamento>> observarOrcamentosDoEvento(String idEvento) {
     return remote.observarOrcamentosDoEvento(idEvento);
   }
 
   @override
-  Stream<List<OrcamentoModel>> observarOrcamentosDoFornecedor(
+  Stream<List<Orcamento>> observarOrcamentosDoFornecedor(
     String idFornecedor,
   ) {
     return remote.observarOrcamentosDoFornecedor(idFornecedor);
   }
 
   @override
-  Future<void> criarOrcamento(OrcamentoModel model) {
-    return remote.criarOrcamento(model);
+  Future<void> criarOrcamento(Orcamento orcamento) {
+    return remote.criarOrcamento(OrcamentoModel.fromEntity(orcamento));
   }
 
   @override

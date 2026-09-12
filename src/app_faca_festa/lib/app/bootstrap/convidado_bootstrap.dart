@@ -2,28 +2,31 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/convidado_remote_datasource.dart';
-import '../../data/datasources/remote/convite_convidado_remote_datasource.dart';
-import '../../data/datasources/remote/cardapio_remote_datasource.dart';
-import '../../data/datasources/remote/grupo_convidado_remote_datasource.dart';
-import '../../data/datasources/remote/tarefa_remote_datasource.dart';
-import '../../data/repositories_impl/convidado_repository_impl.dart';
-import '../../data/repositories_impl/convite_convidado_repository_impl.dart';
-import '../../data/repositories_impl/cardapio_repository_impl.dart';
-import '../../data/repositories_impl/grupo_convidado_repository_impl.dart';
-import '../../data/repositories_impl/tarefa_repository_impl.dart';
-import '../../data/repositories_impl/presente_reservation_repository_impl.dart';
-import '../../data/services/convite/enviar_convites_por_email_service.dart';
-import '../../domain/repositories/convidado_repository.dart';
-import '../../domain/repositories/convite_convidado_repository.dart';
-import '../../domain/repositories/cardapio_repository.dart';
-import '../../domain/repositories/grupo_convidado_repository.dart';
-import '../../domain/repositories/tarefa_repository.dart';
-import '../../domain/repositories/presente_reservation_repository.dart';
-import '../../presentation/modules/convidado/controllers/cardapio_controller.dart';
-import '../../presentation/modules/convidado/controllers/convidado_controller.dart';
-import '../../presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
-import '../../presentation/modules/convidado/controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/convidado_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/convite_convidado_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/cardapio_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/grupo_convidado_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/tarefa_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/convidado_repository_impl.dart';
+import 'package:app_faca_festa/data/repositories_impl/convite_convidado_repository_impl.dart';
+import 'package:app_faca_festa/data/repositories_impl/cardapio_repository_impl.dart';
+import 'package:app_faca_festa/data/repositories_impl/grupo_convidado_repository_impl.dart';
+import 'package:app_faca_festa/data/repositories_impl/tarefa_repository_impl.dart';
+import 'package:app_faca_festa/data/repositories_impl/presente_reservation_repository_impl.dart';
+import 'package:app_faca_festa/data/services/convite/enviar_convites_por_email_service.dart';
+import 'package:app_faca_festa/domain/repositories/convidado_repository.dart';
+import 'package:app_faca_festa/domain/repositories/convite_convidado_repository.dart';
+import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';
+import 'package:app_faca_festa/domain/repositories/grupo_convidado_repository.dart';
+import 'package:app_faca_festa/domain/repositories/tarefa_repository.dart';
+import 'package:app_faca_festa/domain/repositories/presente_reservation_repository.dart';
+import 'package:app_faca_festa/domain/services/convite_email_service.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
+import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 
 abstract final class ConvidadoBootstrap {
   static void register() {
@@ -97,6 +100,25 @@ abstract final class ConvidadoBootstrap {
         TarefaController(
           repository: Get.find<TarefaRepository>(),
           convidadoRepository: Get.find<ConvidadoRepository>(),
+          eventoController: Get.isRegistered<EventoController>()
+              ? Get.find<EventoController>()
+              : null,
+          eventoControllerResolver: () => Get.isRegistered<EventoController>()
+              ? Get.find<EventoController>()
+              : null,
+          convidadoController: Get.isRegistered<ConvidadoController>()
+              ? Get.find<ConvidadoController>()
+              : null,
+          convidadoControllerResolver: () =>
+              Get.isRegistered<ConvidadoController>()
+                  ? Get.find<ConvidadoController>()
+                  : null,
+          appController: Get.isRegistered<AppController>()
+              ? Get.find<AppController>()
+              : null,
+          appControllerResolver: () => Get.isRegistered<AppController>()
+              ? Get.find<AppController>()
+              : null,
         ),
         permanent: true,
       );
@@ -134,8 +156,8 @@ abstract final class ConvidadoBootstrap {
       );
     }
 
-    if (!Get.isRegistered<EnviarConvitesPorEmailService>()) {
-      Get.put<EnviarConvitesPorEmailService>(
+    if (!Get.isRegistered<ConviteEmailService>()) {
+      Get.put<ConviteEmailService>(
         EnviarConvitesPorEmailService(
           functions: Get.find<FirebaseFunctions>(),
         ),
@@ -149,7 +171,12 @@ abstract final class ConvidadoBootstrap {
           repository: Get.find<ConvidadoRepository>(),
           presenteReservationRepository:
               Get.find<PresenteReservationRepository>(),
-          conviteEmailService: Get.find<EnviarConvitesPorEmailService>(),
+          conviteEmailService: Get.find<ConviteEmailService>(),
+          grupoController: Get.find<GrupoConvidadoController>(),
+          grupoControllerResolver: () =>
+              Get.isRegistered<GrupoConvidadoController>()
+                  ? Get.find<GrupoConvidadoController>()
+                  : null,
         ),
         permanent: true,
       );

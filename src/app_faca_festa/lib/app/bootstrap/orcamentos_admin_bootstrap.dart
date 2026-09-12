@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/orcamentos_admin_remote_datasource.dart';
-import '../../data/repositories_impl/orcamentos_admin_repository_impl.dart';
-import '../../domain/repositories/orcamentos_admin_repository.dart';
-import '../../domain/usecases/carregar_orcamentos_admin.dart';
-import '../../presentation/modules/admin/controllers/orcamentos_admin_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/orcamentos_admin_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/orcamentos_admin_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/orcamentos_admin_repository.dart';
+import 'package:app_faca_festa/domain/usecases/carregar_orcamentos_admin.dart';
+import 'package:app_faca_festa/presentation/modules/admin/controllers/orcamentos_admin_controller.dart';
 
 class OrcamentosAdminBootstrap {
   OrcamentosAdminBootstrap._();

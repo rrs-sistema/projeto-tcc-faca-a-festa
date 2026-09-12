@@ -1,5 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:app_faca_festa/domain/entities/sugestao_base_festa.dart';
+
+export 'package:app_faca_festa/domain/entities/sugestao_base_festa.dart';
+
 enum ModuloSugestaoIA {
   calculadora('calculadora'),
   orcamento('orcamento'),
@@ -89,71 +93,64 @@ enum StatusRevisaoSugestaoIA {
   }
 }
 
-class SugestaoBaseFestaModel {
-  final String id;
-  final String titulo;
-  final String descricao;
-  final String modulo;
-  final String tema;
-  final List<String> tipoEvento;
-  final List<String> perfisFesta;
-  final String categoria;
-  final String prioridade;
-  final Map<String, dynamic> gatilhos;
-  final List<String> tags;
-  final bool ativo;
-  final bool excluido;
-  final int ordem;
-
-  /// Versão editorial da sugestão base.
-  ///
-  /// Sempre que o conteúdo/gatilhos da sugestão mudar de forma relevante,
-  /// incremente esta versão para preservar rastreabilidade das análises antigas.
-  final int versao;
-
-  /// Origem do cadastro: seed_inicial, admin, importacao, migracao, etc.
-  final String origem;
-
-  /// Usuário, papel ou identificador de quem revisou/aprovou a sugestão.
-  final String revisadoPor;
-
-  final DateTime? dataRevisao;
-  final DateTime? dataPublicacao;
-
-  /// Status editorial da sugestão.
-  ///
-  /// Apenas sugestões aprovadas devem ser usadas como contexto da IA.
-  final String statusRevisao;
-  final String observacaoRevisao;
-
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
-
+class SugestaoBaseFestaModel extends SugestaoBaseFesta {
   const SugestaoBaseFestaModel({
-    required this.id,
-    required this.titulo,
-    required this.descricao,
-    required this.modulo,
-    required this.tema,
-    required this.tipoEvento,
-    required this.perfisFesta,
-    required this.categoria,
-    required this.prioridade,
-    required this.gatilhos,
-    required this.tags,
-    required this.ativo,
-    this.excluido = false,
-    required this.ordem,
-    this.versao = 1,
-    this.origem = 'manual',
-    this.revisadoPor = '',
-    this.dataRevisao,
-    this.dataPublicacao,
-    this.statusRevisao = 'aprovada',
-    this.observacaoRevisao = '',
-    this.createdAt,
-    this.updatedAt,
+    required super.id,
+    required super.titulo,
+    required super.descricao,
+    required super.modulo,
+    required super.tema,
+    required super.tipoEvento,
+    required super.perfisFesta,
+    required super.categoria,
+    required super.prioridade,
+    required super.gatilhos,
+    required super.tags,
+    required super.ativo,
+    super.excluido = false,
+    required super.ordem,
+    super.versao = 1,
+    super.origem = 'manual',
+    super.revisadoPor = '',
+    super.dataRevisao,
+    super.dataPublicacao,
+    super.statusRevisao = 'aprovada',
+    super.observacaoRevisao = '',
+    super.createdAt,
+    super.updatedAt,
   });
+
+  factory SugestaoBaseFestaModel.fromEntity(SugestaoBaseFesta entity) {
+    if (entity is SugestaoBaseFestaModel) {
+      return entity;
+    }
+
+    return SugestaoBaseFestaModel(
+      id: entity.id,
+      titulo: entity.titulo,
+      descricao: entity.descricao,
+      modulo: entity.modulo,
+      tema: entity.tema,
+      tipoEvento: List<String>.from(entity.tipoEvento),
+      perfisFesta: List<String>.from(entity.perfisFesta),
+      categoria: entity.categoria,
+      prioridade: entity.prioridade,
+      gatilhos: Map<String, dynamic>.from(entity.gatilhos),
+      tags: List<String>.from(entity.tags),
+      ativo: entity.ativo,
+      excluido: entity.excluido,
+      ordem: entity.ordem,
+      versao: entity.versao,
+      origem: entity.origem,
+      revisadoPor: entity.revisadoPor,
+      dataRevisao: entity.dataRevisao,
+      dataPublicacao: entity.dataPublicacao,
+      statusRevisao: entity.statusRevisao,
+      observacaoRevisao: entity.observacaoRevisao,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    );
+  }
 
   factory SugestaoBaseFestaModel.empty() {
     return const SugestaoBaseFestaModel(
@@ -276,6 +273,7 @@ class SugestaoBaseFestaModel {
     };
   }
 
+  @override
   Map<String, dynamic> toContextMap() {
     return <String, dynamic>{
       'id': id,
@@ -297,6 +295,7 @@ class SugestaoBaseFestaModel {
     };
   }
 
+  @override
   SugestaoBaseFestaModel copyWith({
     String? id,
     String? titulo,
@@ -352,35 +351,53 @@ class SugestaoBaseFestaModel {
     );
   }
 
+  @override
   bool get isNew => id.trim().isEmpty;
+  @override
   bool get isInactive => !ativo;
+  @override
   bool get isCritica => prioridade == PrioridadeSugestaoIA.critica.value;
+  @override
   bool get isAlta => prioridade == PrioridadeSugestaoIA.alta.value;
+  @override
   bool get isAprovada =>
       statusRevisao == StatusRevisaoSugestaoIA.aprovada.value;
+  @override
   bool get isPendente =>
       statusRevisao == StatusRevisaoSugestaoIA.pendente.value;
+  @override
   bool get isReprovada =>
       statusRevisao == StatusRevisaoSugestaoIA.reprovada.value;
+  @override
   bool get isArquivada =>
       statusRevisao == StatusRevisaoSugestaoIA.arquivada.value;
+  @override
   bool get possuiRevisao =>
       revisadoPor.trim().isNotEmpty || dataRevisao != null;
+  @override
   bool get possuiPublicacao => dataPublicacao != null;
+  @override
   bool get possuiObservacaoRevisao => observacaoRevisao.trim().isNotEmpty;
 
+  @override
   bool get podeSerUsadaComoContextoIA {
     return ativo && !excluido && isAprovada;
   }
 
+  @override
   String get tipoEventoLabel =>
       tipoEvento.isEmpty ? 'todos' : tipoEvento.join(', ');
+  @override
   String get perfisFestaLabel =>
       perfisFesta.isEmpty ? 'todos' : perfisFesta.join(', ');
+  @override
   String get tagsLabel => tags.join(', ');
+  @override
   String get versaoLabel => 'v$versao';
+  @override
   String get rastreioLabel => '$id@$versaoLabel';
 
+  @override
   String get statusRevisaoLabel {
     switch (statusRevisao) {
       case 'rascunho':
@@ -400,13 +417,16 @@ class SugestaoBaseFestaModel {
 
   static String normalizeToken(String value) => _normalizeToken(value);
 
+  @override
   bool get isCalculadora => modulo == ModuloSugestaoIA.calculadora.value;
 
+  @override
   bool get prioridadeAlta {
     return prioridade == PrioridadeSugestaoIA.alta.value ||
         prioridade == PrioridadeSugestaoIA.critica.value;
   }
 
+  @override
   bool aceitaTipoEvento(String? tipo) {
     final normalized = _normalizeToken(tipo ?? '');
     return normalized.isEmpty ||
@@ -415,6 +435,7 @@ class SugestaoBaseFestaModel {
         tipoEvento.contains('todos');
   }
 
+  @override
   bool aceitaPerfilFesta(String? perfil) {
     final normalized = _normalizeToken(perfil ?? '');
     return normalized.isEmpty ||

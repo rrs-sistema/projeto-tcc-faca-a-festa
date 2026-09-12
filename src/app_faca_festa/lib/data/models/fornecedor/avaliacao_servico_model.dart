@@ -1,26 +1,20 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class AvaliacaoServicoModel {
-  final String id;
-  final String idFornecedorServico;
-  final String idCliente;
-  final String nomeCliente;
-  final int nota;
-  final String comentario;
-  final DateTime data;
-  final String? idEvento;
-  final String? nomeEvento;
+import 'package:app_faca_festa/domain/entities/avaliacao_servico.dart';
 
+export 'package:app_faca_festa/domain/entities/avaliacao_servico.dart';
+
+class AvaliacaoServicoModel extends AvaliacaoServico {
   AvaliacaoServicoModel({
-    required this.id,
-    required this.idFornecedorServico,
-    required this.idCliente,
-    required this.nomeCliente,
-    required this.nota,
-    required this.comentario,
-    required this.data,
-    this.idEvento,
-    this.nomeEvento,
+    required super.id,
+    required super.idFornecedorServico,
+    required super.idCliente,
+    required super.nomeCliente,
+    required super.nota,
+    required super.comentario,
+    required super.data,
+    super.idEvento,
+    super.nomeEvento,
   });
 
   Map<String, dynamic> toMap() {

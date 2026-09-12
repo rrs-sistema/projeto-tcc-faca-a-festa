@@ -1,5 +1,5 @@
-import '../../domain/entities/auditoria_evento.dart';
-import '../../domain/repositories/auditoria_repository.dart';
+import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
+import 'package:app_faca_festa/domain/repositories/auditoria_repository.dart';
 import '../datasources/remote/auditoria_remote_datasource.dart';
 
 class AuditoriaRepositoryImpl implements AuditoriaRepository {

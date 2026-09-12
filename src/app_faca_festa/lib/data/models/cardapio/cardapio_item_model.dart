@@ -1,7 +1,7 @@
-import '../../../domain/entities/cardapio_item.dart';
+import 'package:app_faca_festa/domain/entities/cardapio_item.dart';
 import 'cardapio_model.dart';
 
-export '../../../domain/entities/cardapio_item.dart';
+export 'package:app_faca_festa/domain/entities/cardapio_item.dart';
 
 extension TipoItemCardapioPersistence on TipoItemCardapio {
   String get firestoreValue => name;

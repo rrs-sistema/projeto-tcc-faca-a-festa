@@ -1,6 +1,6 @@
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/admin/orcamento_admin_model.dart';
+import 'package:app_faca_festa/domain/entities/orcamento_admin.dart';
 import 'package:app_faca_festa/domain/usecases/carregar_orcamentos_admin.dart';
 
 import 'package:flutter/foundation.dart';
@@ -12,13 +12,13 @@ class OrcamentosAdminController extends GetxController {
 
   final CarregarOrcamentosAdmin _carregarOrcamentos;
 
-  final orcamentos = <OrcamentoAdminModel>[].obs;
+  final orcamentos = <OrcamentoAdmin>[].obs;
   final detalhesVisiveis = <String, bool>{}.obs;
   final busca = ''.obs;
   final carregando = false.obs;
   final erro = ''.obs;
 
-  List<OrcamentoAdminModel> get orcamentosFiltrados {
+  List<OrcamentoAdmin> get orcamentosFiltrados {
     final termo = busca.value.trim().toLowerCase();
     if (termo.isEmpty) return orcamentos.toList();
     return orcamentos.where((o) {

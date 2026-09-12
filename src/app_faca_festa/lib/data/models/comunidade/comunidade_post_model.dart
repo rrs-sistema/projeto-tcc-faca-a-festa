@@ -1,20 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ComunidadePostModel {
-  final String id;
-  final String autor;
-  final String? imagem;
-  final String texto;
-  final DateTime data;
-  final int curtidas;
+import 'package:app_faca_festa/domain/entities/comunidade.dart';
 
+export 'package:app_faca_festa/domain/entities/comunidade.dart'
+    show ComunidadePost;
+
+class ComunidadePostModel extends ComunidadePost {
   ComunidadePostModel({
-    required this.id,
-    required this.autor,
-    required this.texto,
-    required this.data,
-    this.imagem,
-    this.curtidas = 0,
+    required super.id,
+    required super.autor,
+    required super.texto,
+    required super.data,
+    super.imagem,
+    super.curtidas = 0,
   });
 
   /// 🔹 Cria uma instância a partir do Firestore
@@ -42,6 +40,7 @@ class ComunidadePostModel {
   }
 
   /// 🔹 Cria uma cópia com modificações
+  @override
   ComunidadePostModel copyWith({
     String? autor,
     String? imagem,

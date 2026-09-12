@@ -2,17 +2,17 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'dart:convert';
 import 'dart:async';
 
-import '../models/DTO/fornecedor_servico_detalhado_dto.dart';
-import '../models/evento/evento.dart';
-import '../models/fornecedor/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/services/fornecedor_ai.dart';
 import '../models/fornecedor_intelligence/sugestao_resposta_cotacao_ai_model.dart';
-import 'fornecedor_ai_service.dart';
 
 typedef FornecedorAiBackendCaller = Future<dynamic> Function(
   Map<String, dynamic> payload,
 );
 
-class FornecedorAiGenerativaService {
+class FornecedorAiGenerativaService implements FornecedorAiGenerativoService {
   final FirebaseFunctions? _functions;
   final String functionName;
   final Duration timeout;
@@ -25,11 +25,12 @@ class FornecedorAiGenerativaService {
     this.backendCaller,
   }) : _functions = functions;
 
+  @override
   Future<SugestaoRespostaCotacaoAiModel> gerarSugestaoRespostaCotacao({
-    required FornecedorModel fornecedor,
-    EventoModel? evento,
+    required Fornecedor fornecedor,
+    Evento? evento,
     FornecedorAiCotacaoInput? cotacao,
-    List<FornecedorServicoDetalhadoDto> servicosFornecedor = const [],
+    List<FornecedorServicoDetalhado> servicosFornecedor = const [],
   }) async {
     final payload = montarPayload(
       fornecedor: fornecedor,
@@ -83,10 +84,10 @@ class FornecedorAiGenerativaService {
   }
 
   Map<String, dynamic> montarPayload({
-    required FornecedorModel fornecedor,
-    EventoModel? evento,
+    required Fornecedor fornecedor,
+    Evento? evento,
     FornecedorAiCotacaoInput? cotacao,
-    List<FornecedorServicoDetalhadoDto> servicosFornecedor = const [],
+    List<FornecedorServicoDetalhado> servicosFornecedor = const [],
   }) {
     final dadosEvento = _mapEvento(evento);
     final dadosCotacao = _mapCotacao(cotacao);
@@ -321,8 +322,8 @@ Se não houver serviço solicitado, pergunte qual serviço o organizador deseja.
 
   SugestaoRespostaCotacaoAiModel _fallback({
     required String motivo,
-    required FornecedorModel fornecedor,
-    EventoModel? evento,
+    required Fornecedor fornecedor,
+    Evento? evento,
     FornecedorAiCotacaoInput? cotacao,
   }) {
     final perguntas = <String>[];
@@ -399,7 +400,7 @@ Se não houver serviço solicitado, pergunte qual serviço o organizador deseja.
   }
 
   String _montarMensagemFallback({
-    required FornecedorModel fornecedor,
+    required Fornecedor fornecedor,
     required String nomeEvento,
     required String dataEvento,
     required String cidade,
@@ -470,7 +471,7 @@ Se não houver serviço solicitado, pergunte qual serviço o organizador deseja.
     return 'Olá, tudo bem? Recebi sua solicitação para $servico. Vou revisar os detalhes e confirmar as condições para te passar uma proposta.';
   }
 
-  Map<String, dynamic> _mapEvento(EventoModel? evento) {
+  Map<String, dynamic> _mapEvento(Evento? evento) {
     if (evento == null) {
       return {
         'id_evento': '',
@@ -552,7 +553,7 @@ Se não houver serviço solicitado, pergunte qual serviço o organizador deseja.
     };
   }
 
-  Map<String, dynamic> _mapFornecedor(FornecedorModel fornecedor) {
+  Map<String, dynamic> _mapFornecedor(Fornecedor fornecedor) {
     return {
       'id_fornecedor': _safeString(fornecedor.idFornecedor),
       'razao_social': _safeString(fornecedor.razaoSocial),
@@ -574,7 +575,7 @@ Se não houver serviço solicitado, pergunte qual serviço o organizador deseja.
     };
   }
 
-  Map<String, dynamic> _mapServico(FornecedorServicoDetalhadoDto servico) {
+  Map<String, dynamic> _mapServico(FornecedorServicoDetalhado servico) {
     return {
       'id_servico': _safeString(servico.id),
       'nome_servico': _safeString(servico.nomeServico),

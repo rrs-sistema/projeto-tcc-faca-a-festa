@@ -1,9 +1,11 @@
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:app_faca_festa/data/models/evento/evento.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
+import 'package:app_faca_festa/domain/entities/tema_festa.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_temas_festa.dart';
+import 'package:app_faca_festa/presentation/modules/tema/tema_festa_view_model.dart';
 
 class EventThemeController extends GetxController {
   EventThemeController({
@@ -29,7 +31,7 @@ class EventThemeController extends GetxController {
   final Rx<IconData> icon = Icons.star.obs;
   final RxString tituloCabecalho = "Sua Festa Incrível".obs;
   final RxnString papelSessao = RxnString();
-  final Rxn<TemaFestaModel> temaFestaAtual = Rxn<TemaFestaModel>();
+  final Rxn<TemaFestaViewModel> temaFestaAtual = Rxn<TemaFestaViewModel>();
   final RxnString capaUrl = RxnString();
   final RxnString capaTemaUrl = RxnString();
   final RxnString capaEventoUrl = RxnString();
@@ -37,22 +39,14 @@ class EventThemeController extends GetxController {
   final GerenciarTemasFesta? _temasFesta;
   final EventoRepository? _eventoRepository;
   final Map<String, String> _cacheTiposEvento = {};
-  final Map<String, TemaFestaModel> _cacheTemasFesta = {};
+  final Map<String, TemaFestaViewModel> _cacheTemasFesta = {};
 
   GerenciarTemasFesta? get _temasFestaService {
-    if (_temasFesta != null) return _temasFesta;
-    if (Get.isRegistered<GerenciarTemasFesta>()) {
-      return Get.find<GerenciarTemasFesta>();
-    }
-    return null;
+    return _temasFesta;
   }
 
   EventoRepository? get _eventosRepository {
-    if (_eventoRepository != null) return _eventoRepository;
-    if (Get.isRegistered<EventoRepository>()) {
-      return Get.find<EventoRepository>();
-    }
-    return null;
+    return _eventoRepository;
   }
 
   bool get temCapaTema {
@@ -81,10 +75,11 @@ class EventThemeController extends GetxController {
     capaUrl.value = doTema.isEmpty ? null : doTema;
   }
 
-  void atualizarCacheTema(TemaFestaModel tema) {
-    _cacheTemasFesta[tema.idTema] = tema;
+  void atualizarCacheTema(TemaFesta tema) {
+    final viewModel = TemaFestaViewModel.fromEntity(tema);
+    _cacheTemasFesta[tema.idTema] = viewModel;
     if (temaFestaAtual.value?.idTema == tema.idTema) {
-      aplicarTemaFesta(tema);
+      aplicarTemaFesta(viewModel);
     }
   }
 
@@ -131,7 +126,7 @@ class EventThemeController extends GetxController {
     _definirCapaEvento(evento.imagemCapaUrl);
 
     final idTema = (evento.idTema ?? '').trim();
-    if (idTema.isNotEmpty && idTema != TemaFestaModel.slugOutro) {
+    if (idTema.isNotEmpty && idTema != TemaFesta.slugOutro) {
       final aplicado = await aplicarTemaFestaPorId(
         idTema,
         nomeTipo: fallbackNomeTipo ?? '',
@@ -165,8 +160,9 @@ class EventThemeController extends GetxController {
       if (tema == null) return false;
       if (!tema.ativo) return false;
 
-      _cacheTemasFesta[idTema] = tema;
-      aplicarTemaFesta(tema, nomeTipo: nomeTipo);
+      final viewModel = TemaFestaViewModel.fromEntity(tema);
+      _cacheTemasFesta[idTema] = viewModel;
+      aplicarTemaFesta(viewModel, nomeTipo: nomeTipo);
       return true;
     } catch (e, s) {
       debugPrint('[Theme] Erro ao aplicar tema da festa $idTema: $e\n$s');
@@ -174,23 +170,26 @@ class EventThemeController extends GetxController {
     }
   }
 
-  void aplicarTemaFesta(TemaFestaModel tema, {String nomeTipo = ''}) {
-    temaFestaAtual.value = tema;
+  void aplicarTemaFesta(TemaFesta tema, {String nomeTipo = ''}) {
+    final viewModel =
+        tema is TemaFestaViewModel ? tema : TemaFestaViewModel.fromEntity(tema);
+    temaFestaAtual.value = viewModel;
     final tipo = nomeTipo.trim();
-    final titulo =
-        tipo.isEmpty ? tema.nome : '${_tituloAmigavel(tipo)} · ${tema.nome}';
+    final titulo = tipo.isEmpty
+        ? viewModel.nome
+        : '${_tituloAmigavel(tipo)} · ${viewModel.nome}';
     _setTheme(
-      primary: tema.primaryColor,
-      secondary: tema.secondaryColor,
-      gradient: tema.gradient,
-      icone: tema.iconData,
+      primary: viewModel.primaryColor,
+      secondary: viewModel.secondaryColor,
+      gradient: viewModel.gradient,
+      icone: viewModel.iconData,
       titulo: titulo,
-      capaUrl: tema.capaEfetiva,
+      capaUrl: viewModel.capaEfetiva,
     );
   }
 
   String _tituloAmigavel(String nomeTipo) {
-    switch (TemaFestaModel.normalizarTipo(nomeTipo)) {
+    switch (TemaFesta.normalizarTipo(nomeTipo)) {
       case 'casamento':
         return 'Casamento';
       case 'festa_infantil':
@@ -365,9 +364,9 @@ class EventThemeController extends GetxController {
       montarThemeData(primaryColor.value, secondaryColor.value);
 
   static ThemeData montarThemeData(Color primary, Color secondary) {
-    final onPrimary = TemaFestaModel.contrasteSobre(primary);
-    final onSecondary = TemaFestaModel.contrasteSobre(secondary);
-    final surface = TemaFestaModel.misturarComBranco(primary, 0.92);
+    final onPrimary = TemaFestaViewModel.contrasteSobre(primary);
+    final onSecondary = TemaFestaViewModel.contrasteSobre(secondary);
+    final surface = TemaFestaViewModel.misturarComBranco(primary, 0.92);
     final scheme = ColorScheme.fromSeed(
       seedColor: primary,
       brightness: Brightness.light,
@@ -424,8 +423,8 @@ class EventThemeController extends GetxController {
   }) {
     primaryColor.value = primary;
     secondaryColor.value = secondary;
-    surfaceColor.value = TemaFestaModel.misturarComBranco(primary, 0.92);
-    onPrimaryColor.value = TemaFestaModel.contrasteSobre(primary);
+    surfaceColor.value = TemaFestaViewModel.misturarComBranco(primary, 0.92);
+    onPrimaryColor.value = TemaFestaViewModel.contrasteSobre(primary);
     this.gradient.value = gradient;
     icon.value = icone;
     tituloCabecalho.value = titulo;

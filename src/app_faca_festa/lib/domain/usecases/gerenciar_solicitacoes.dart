@@ -1,4 +1,4 @@
-import '../../data/models/cotacao/cotacao_model.dart';
+import '../entities/cotacao.dart';
 import '../repositories/solicitacoes_repository.dart';
 
 class GerenciarSolicitacoes {
@@ -6,7 +6,7 @@ class GerenciarSolicitacoes {
 
   final SolicitacoesRepository repository;
 
-  Stream<List<CotacaoModel>> observarSolicitacoesFornecedor(
+  Stream<List<Cotacao>> observarSolicitacoesFornecedor(
     String idFornecedor,
   ) {
     return repository.observarSolicitacoesFornecedor(idFornecedor);

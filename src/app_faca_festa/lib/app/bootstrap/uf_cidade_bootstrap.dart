@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/uf_cidade_remote_datasource.dart';
-import '../../data/repositories_impl/uf_cidade_repository_impl.dart';
-import '../../domain/repositories/uf_cidade_repository.dart';
-import '../../domain/usecases/gerenciar_ufs_cidades.dart';
-import '../../presentation/modules/usuario/controllers/uf_cidade_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/uf_cidade_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/uf_cidade_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/uf_cidade_repository.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_ufs_cidades.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidade_controller.dart';
 
 class UfCidadeBootstrap {
   UfCidadeBootstrap._();

@@ -1,64 +1,32 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ResumoReputacaoFornecedorModel {
-  final String idResumo;
-  final String idFornecedor;
+import 'package:app_faca_festa/domain/entities/resumo_reputacao_fornecedor.dart';
 
-  final double mediaGeral;
-  final int totalAvaliacoes;
+export 'package:app_faca_festa/domain/entities/resumo_reputacao_fornecedor.dart';
 
-  final double percentualPositivas;
-  final double percentualNeutras;
-  final double percentualNegativas;
-
-  final double? mediaUltimos90Dias;
-
-  /// Exemplo: subindo, estavel, caindo, insuficiente.
-  final String tendencia;
-
-  final String resumo;
-
-  final List<String> pontosFortes;
-  final List<String> pontosAtencao;
-
-  final String? servicoMelhorAvaliado;
-  final String? servicoComAlerta;
-
-  final int totalComentariosAnalisados;
-
-  /// Exemplo: deterministic_rules, generative_ai, hybrid.
-  final String origem;
-
-  final String versaoRegra;
-
-  final Map<String, dynamic>? metadados;
-
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-  final DateTime? expiresAt;
-
+class ResumoReputacaoFornecedorModel extends ResumoReputacaoFornecedor {
   const ResumoReputacaoFornecedorModel({
-    required this.idResumo,
-    required this.idFornecedor,
-    required this.mediaGeral,
-    required this.totalAvaliacoes,
-    required this.percentualPositivas,
-    required this.percentualNeutras,
-    required this.percentualNegativas,
-    required this.tendencia,
-    required this.resumo,
-    required this.totalComentariosAnalisados,
-    required this.origem,
-    required this.versaoRegra,
-    required this.createdAt,
-    this.mediaUltimos90Dias,
-    this.pontosFortes = const [],
-    this.pontosAtencao = const [],
-    this.servicoMelhorAvaliado,
-    this.servicoComAlerta,
-    this.metadados,
-    this.updatedAt,
-    this.expiresAt,
+    required super.idResumo,
+    required super.idFornecedor,
+    required super.mediaGeral,
+    required super.totalAvaliacoes,
+    required super.percentualPositivas,
+    required super.percentualNeutras,
+    required super.percentualNegativas,
+    required super.tendencia,
+    required super.resumo,
+    required super.totalComentariosAnalisados,
+    required super.origem,
+    required super.versaoRegra,
+    required super.createdAt,
+    super.mediaUltimos90Dias,
+    super.pontosFortes,
+    super.pontosAtencao,
+    super.servicoMelhorAvaliado,
+    super.servicoComAlerta,
+    super.metadados,
+    super.updatedAt,
+    super.expiresAt,
   });
 
   factory ResumoReputacaoFornecedorModel.fromMap(

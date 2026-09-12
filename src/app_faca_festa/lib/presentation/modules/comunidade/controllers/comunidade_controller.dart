@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/comunidade/comunidade_comentario_model.dart';
-import 'package:app_faca_festa/data/models/comunidade/comunidade_post_model.dart';
+import 'package:app_faca_festa/domain/entities/comunidade.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_comunidade.dart';
 
 class ComunidadeController extends GetxController {
@@ -12,10 +11,10 @@ class ComunidadeController extends GetxController {
 
   final GerenciarComunidade _comunidade;
 
-  final posts = <ComunidadePostModel>[].obs;
+  final posts = <ComunidadePost>[].obs;
   final loading = false.obs;
 
-  StreamSubscription<List<ComunidadePostModel>>? _postsSubscription;
+  StreamSubscription<List<ComunidadePost>>? _postsSubscription;
 
   @override
   void onInit() {
@@ -30,11 +29,11 @@ class ComunidadeController extends GetxController {
     });
   }
 
-  Stream<List<ComunidadePostModel>> observarPosts() {
+  Stream<List<ComunidadePost>> observarPosts() {
     return _comunidade.observarPosts();
   }
 
-  Stream<List<ComunidadeComentarioModel>> observarComentarios(String postId) {
+  Stream<List<ComunidadeComentario>> observarComentarios(String postId) {
     return _comunidade.observarComentarios(postId);
   }
 

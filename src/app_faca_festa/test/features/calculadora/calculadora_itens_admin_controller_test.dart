@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_itens_admin_controller.dart';
-import 'package:app_faca_festa/data/models/calculadora/calculadora_evento_item_model.dart';
-import 'package:app_faca_festa/data/models/calculadora/calculadora_item_base_model.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_item_base.dart';
 import 'package:app_faca_festa/domain/repositories/calculadora_itens_base_repository_contract.dart';
 
 void main() {
@@ -96,7 +96,7 @@ void main() {
   });
 }
 
-CalculadoraItemBaseModel _itemBase({
+CalculadoraItemBase _itemBase({
   required String id,
   required String nome,
   String categoria = 'doces',
@@ -105,7 +105,7 @@ CalculadoraItemBaseModel _itemBase({
 }) {
   final now = DateTime(2026);
 
-  return CalculadoraItemBaseModel(
+  return CalculadoraItemBase(
     id: id,
     nome: nome,
     descricao: 'Descrição $nome',
@@ -122,7 +122,7 @@ CalculadoraItemBaseModel _itemBase({
   );
 }
 
-CalculadoraEventoItemModel _itemEvento({
+CalculadoraEventoItem _itemEvento({
   required String id,
   required String nome,
   String tipoEvento = 'casamento',
@@ -132,7 +132,7 @@ CalculadoraEventoItemModel _itemEvento({
 }) {
   final now = DateTime(2026);
 
-  return CalculadoraEventoItemModel(
+  return CalculadoraEventoItem(
     id: id,
     idItemBase: nome.toLowerCase(),
     tipoEvento: tipoEvento,
@@ -159,36 +159,36 @@ class _CalculadoraItensBaseRepositoryFake
   var listagensEvento = 0;
   final statusBaseAlterados = <({String id, bool ativo})>[];
   final statusEventoAlterados = <({String id, bool ativo})>[];
-  final itensBaseSalvos = <CalculadoraItemBaseModel>[];
-  final itensEventoSalvos = <CalculadoraEventoItemModel>[];
+  final itensBaseSalvos = <CalculadoraItemBase>[];
+  final itensEventoSalvos = <CalculadoraEventoItem>[];
 
-  List<CalculadoraItemBaseModel> itensBase = const [];
-  List<CalculadoraEventoItemModel> itensEvento = const [];
+  List<CalculadoraItemBase> itensBase = const [];
+  List<CalculadoraEventoItem> itensEvento = const [];
 
   @override
-  Future<List<CalculadoraItemBaseModel>> listarItensBase() async {
+  Future<List<CalculadoraItemBase>> listarItensBase() async {
     listagensBase++;
     return itensBase;
   }
 
   @override
-  Future<List<CalculadoraEventoItemModel>> listarItensEvento() async {
+  Future<List<CalculadoraEventoItem>> listarItensEvento() async {
     listagensEvento++;
     return itensEvento;
   }
 
   @override
-  Future<List<CalculadoraItemBaseModel>> listarItensBaseAtivos() async {
+  Future<List<CalculadoraItemBase>> listarItensBaseAtivos() async {
     return itensBase.where((item) => item.ativo).toList();
   }
 
   @override
-  Future<List<CalculadoraEventoItemModel>> listarItensEventoAtivos() async {
+  Future<List<CalculadoraEventoItem>> listarItensEventoAtivos() async {
     return itensEvento.where((item) => item.ativo).toList();
   }
 
   @override
-  Future<List<CalculadoraEventoItemModel>> buscarItensPorTipoEvento({
+  Future<List<CalculadoraEventoItem>> buscarItensPorTipoEvento({
     required String tipoEvento,
     String? perfilFesta,
   }) async {
@@ -196,7 +196,7 @@ class _CalculadoraItensBaseRepositoryFake
   }
 
   @override
-  Future<List<CalculadoraEventoItemModel>> buscarItensPorTipoEventoComFallback({
+  Future<List<CalculadoraEventoItem>> buscarItensPorTipoEventoComFallback({
     required String tipoEvento,
     String? perfilFesta,
   }) {
@@ -207,17 +207,17 @@ class _CalculadoraItensBaseRepositoryFake
   }
 
   @override
-  Future<CalculadoraEventoItemModel?> buscarItemEventoPorId(String id) async {
+  Future<CalculadoraEventoItem?> buscarItemEventoPorId(String id) async {
     return itensEvento.firstWhereOrNull((item) => item.id == id);
   }
 
   @override
-  Future<void> salvarItemBase(CalculadoraItemBaseModel item) async {
+  Future<void> salvarItemBase(CalculadoraItemBase item) async {
     itensBaseSalvos.add(item);
   }
 
   @override
-  Future<void> salvarItemEvento(CalculadoraEventoItemModel item) async {
+  Future<void> salvarItemEvento(CalculadoraEventoItem item) async {
     itensEventoSalvos.add(item);
   }
 

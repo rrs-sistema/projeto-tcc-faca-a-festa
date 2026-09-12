@@ -1,12 +1,9 @@
-import 'dart:io';
-import 'dart:typed_data';
-
-import '../../data/models/evento/evento_model.dart';
-import '../../data/models/fornecedor/fornecedor_admin_snapshot.dart';
-import '../../data/models/fornecedor/fornecedor_estatisticas_model.dart';
-import '../../data/models/fornecedor/fornecedor_model.dart';
-import '../../data/models/servico_produto/fornecedor_categoria_model.dart';
-import '../../data/models/servico_produto/fornecedor_produto_servico_model.dart';
+import '../entities/evento.dart';
+import '../entities/fornecedor.dart';
+import '../entities/fornecedor_admin_snapshot.dart';
+import '../entities/fornecedor_categoria.dart';
+import '../entities/fornecedor_estatisticas.dart';
+import '../entities/fornecedor_produto_servico.dart';
 import '../repositories/fornecedor_repository.dart';
 
 class GerenciarFornecedores {
@@ -22,19 +19,19 @@ class GerenciarFornecedores {
     );
   }
 
-  Future<FornecedorModel?> buscarPorUsuario(String idUsuario) {
+  Future<Fornecedor?> buscarPorUsuario(String idUsuario) {
     return repository.buscarPorUsuario(idUsuario);
   }
 
-  Future<FornecedorModel?> buscarPorIdUsuario(String idUsuario) {
+  Future<Fornecedor?> buscarPorIdUsuario(String idUsuario) {
     return repository.buscarPorIdUsuario(idUsuario);
   }
 
-  Future<EventoModel?> buscarEventoPorId(String idEvento) {
+  Future<Evento?> buscarEventoPorId(String idEvento) {
     return repository.buscarEventoPorId(idEvento);
   }
 
-  Stream<FornecedorModel?> observarFornecedorAtivo(String idFornecedor) {
+  Stream<Fornecedor?> observarFornecedorAtivo(String idFornecedor) {
     return repository.observarFornecedorAtivo(idFornecedor);
   }
 
@@ -46,19 +43,19 @@ class GerenciarFornecedores {
     return repository.observarSolicitacoesPendentes(idFornecedor);
   }
 
-  Stream<List<FornecedorProdutoServicoModel>> observarServicosFornecedor(
+  Stream<List<FornecedorProdutoServico>> observarServicosFornecedor(
     String idFornecedor,
   ) {
     return repository.observarServicosFornecedor(idFornecedor);
   }
 
-  Future<List<FornecedorProdutoServicoModel>> listarServicosPorEvento(
+  Future<List<FornecedorProdutoServico>> listarServicosPorEvento(
     String idEvento,
   ) {
     return repository.listarServicosPorEvento(idEvento);
   }
 
-  Future<List<FornecedorModel>> listarFornecedoresDoEvento(String idEvento) {
+  Future<List<Fornecedor>> listarFornecedoresDoEvento(String idEvento) {
     return repository.listarFornecedoresDoEvento(idEvento);
   }
 
@@ -68,21 +65,21 @@ class GerenciarFornecedores {
     return repository.listarSolicitacoesPendentesDetalhadas(idFornecedor);
   }
 
-  Future<FornecedorEstatisticasModel> carregarEstatisticas(
+  Future<FornecedorEstatisticas> carregarEstatisticas(
     String idFornecedor,
   ) {
     return repository.carregarEstatisticas(idFornecedor);
   }
 
-  Future<void> atualizarFornecedor(FornecedorModel fornecedor) {
+  Future<void> atualizarFornecedor(Fornecedor fornecedor) {
     return repository.atualizarFornecedor(fornecedor);
   }
 
-  Future<void> salvarFornecedor(FornecedorModel fornecedor) {
+  Future<void> salvarFornecedor(Fornecedor fornecedor) {
     return repository.salvarFornecedor(fornecedor);
   }
 
-  Future<void> salvarCategoriaFornecedor(FornecedorCategoriaModel categoria) {
+  Future<void> salvarCategoriaFornecedor(FornecedorCategoria categoria) {
     return repository.salvarCategoriaFornecedor(categoria);
   }
 
@@ -117,13 +114,13 @@ class GerenciarFornecedores {
   }
 
   Future<String> uploadBanner({
-    required File imageFile,
-    Uint8List? bytesWeb,
+    required List<int> bytes,
+    required String nomeArquivo,
     required String uid,
   }) {
     return repository.uploadBanner(
-      imageFile: imageFile,
-      bytesWeb: bytesWeb,
+      bytes: bytes,
+      nomeArquivo: nomeArquivo,
       uid: uid,
     );
   }

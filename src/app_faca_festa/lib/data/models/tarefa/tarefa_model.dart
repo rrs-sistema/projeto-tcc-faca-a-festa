@@ -1,9 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../../domain/entities/convidado.dart';
-import '../../../domain/entities/tarefa.dart';
+import 'package:app_faca_festa/domain/entities/convidado.dart';
+import 'package:app_faca_festa/domain/entities/tarefa.dart';
 
-export '../../../domain/entities/tarefa.dart';
+export 'package:app_faca_festa/domain/entities/tarefa.dart';
 
 extension StatusTarefaPersistence on StatusTarefa {
   String get firestoreValue {

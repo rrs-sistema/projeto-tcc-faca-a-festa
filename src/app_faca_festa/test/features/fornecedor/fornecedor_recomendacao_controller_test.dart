@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_recomendacao_controller.dart';
-import 'package:app_faca_festa/data/models/fornecedor/fornecedor_recomendacao_model.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_recomendacao.dart';
 import 'package:app_faca_festa/domain/repositories/fornecedor_recomendacao_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedor_recomendacoes.dart';
 
@@ -102,12 +102,12 @@ void main() {
   });
 }
 
-FornecedorRecomendacaoModel _recomendacao({
+FornecedorRecomendacao _recomendacao({
   required String id,
   String idFornecedor = 'fornecedor-1',
   double score = 90,
 }) {
-  return FornecedorRecomendacaoModel(
+  return FornecedorRecomendacao(
     id: id,
     idEvento: 'evento-1',
     idUsuario: 'usuario-1',
@@ -127,11 +127,11 @@ class _FornecedorRecomendacaoRepositoryFake
   final geracoes = <_Geracao>[];
   final interacoes = <_Interacao>[];
 
-  List<FornecedorRecomendacaoModel> salvas = const [];
-  List<FornecedorRecomendacaoModel> geradas = const [];
+  List<FornecedorRecomendacao> salvas = const [];
+  List<FornecedorRecomendacao> geradas = const [];
 
   @override
-  Future<List<FornecedorRecomendacaoModel>> carregarRecomendacoesSalvas({
+  Future<List<FornecedorRecomendacao>> carregarRecomendacoesSalvas({
     required String idEvento,
     required String idUsuario,
     required int limite,
@@ -147,7 +147,7 @@ class _FornecedorRecomendacaoRepositoryFake
   }
 
   @override
-  Future<List<FornecedorRecomendacaoModel>> gerarRecomendacoes({
+  Future<List<FornecedorRecomendacao>> gerarRecomendacoes({
     required String idEvento,
     required int limite,
     required bool modoDemo,

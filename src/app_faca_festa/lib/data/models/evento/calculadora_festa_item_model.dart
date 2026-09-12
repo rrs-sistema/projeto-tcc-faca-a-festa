@@ -1,63 +1,70 @@
-class CalculadoraFestaItemModel {
-  final String idItemResultado;
-  final String idCalculo;
-  final String idEvento;
-  final String categoria;
-  final String nome;
-  final String tipoItem;
-  final String publicoAlvo;
-  final double quantidade;
-  final String unidade;
-  final String regraAplicada;
+import 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
 
-  /// Mantido por compatibilidade com o fluxo atual de cardápio.
-  final bool adicionadoAoCardapio;
+export 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
 
-  /// Controle para evitar duplicidade quando a simulação virar orçamento.
-  final bool adicionadoAoOrcamento;
-  final String? idOrcamentoGerado;
-  final DateTime? dataAdicionadoAoOrcamento;
-
-  /// Campos da estimativa financeira.
-  final double valorUnitarioMedio;
-  final double custoEstimado;
-  final double quantidadePorConvidadoEquivalente;
-
+class CalculadoraFestaItemModel extends CalculadoraFestaItem {
   const CalculadoraFestaItemModel({
-    required this.idItemResultado,
-    required this.idCalculo,
-    required this.idEvento,
-    required this.categoria,
-    required this.nome,
-    required this.tipoItem,
-    required this.publicoAlvo,
-    required this.quantidade,
-    required this.unidade,
-    required this.regraAplicada,
-    this.adicionadoAoCardapio = false,
-    this.adicionadoAoOrcamento = false,
-    this.idOrcamentoGerado,
-    this.dataAdicionadoAoOrcamento,
-    this.valorUnitarioMedio = 0,
-    this.custoEstimado = 0,
-    this.quantidadePorConvidadoEquivalente = 0,
+    required super.idItemResultado,
+    required super.idCalculo,
+    required super.idEvento,
+    required super.categoria,
+    required super.nome,
+    required super.tipoItem,
+    required super.publicoAlvo,
+    required super.quantidade,
+    required super.unidade,
+    required super.regraAplicada,
+    super.adicionadoAoCardapio = false,
+    super.adicionadoAoOrcamento = false,
+    super.idOrcamentoGerado,
+    super.dataAdicionadoAoOrcamento,
+    super.valorUnitarioMedio = 0,
+    super.custoEstimado = 0,
+    super.quantidadePorConvidadoEquivalente = 0,
   });
 
-  bool get podeAdicionarAoOrcamento => !adicionadoAoOrcamento;
+  factory CalculadoraFestaItemModel.fromEntity(CalculadoraFestaItem entity) {
+    if (entity is CalculadoraFestaItemModel) return entity;
 
+    return CalculadoraFestaItemModel(
+      idItemResultado: entity.idItemResultado,
+      idCalculo: entity.idCalculo,
+      idEvento: entity.idEvento,
+      categoria: entity.categoria,
+      nome: entity.nome,
+      tipoItem: entity.tipoItem,
+      publicoAlvo: entity.publicoAlvo,
+      quantidade: entity.quantidade,
+      unidade: entity.unidade,
+      regraAplicada: entity.regraAplicada,
+      adicionadoAoCardapio: entity.adicionadoAoCardapio,
+      adicionadoAoOrcamento: entity.adicionadoAoOrcamento,
+      idOrcamentoGerado: entity.idOrcamentoGerado,
+      dataAdicionadoAoOrcamento: entity.dataAdicionadoAoOrcamento,
+      valorUnitarioMedio: entity.valorUnitarioMedio,
+      custoEstimado: entity.custoEstimado,
+      quantidadePorConvidadoEquivalente:
+          entity.quantidadePorConvidadoEquivalente,
+    );
+  }
+
+  @override
   String get quantidadeFormatada {
     final valor = quantidade.ceil();
     return '$valor $unidade';
   }
 
+  @override
   String get custoEstimadoFormatado {
     return _formatMoney(custoEstimado);
   }
 
+  @override
   String get valorUnitarioFormatado {
     return _formatMoney(valorUnitarioMedio);
   }
 
+  @override
   CalculadoraFestaItemModel copyWith({
     String? idItemResultado,
     String? idCalculo,

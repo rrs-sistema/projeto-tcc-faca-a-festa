@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -275,13 +274,16 @@ class InspiracaoRemoteDatasource {
   Future<void> adicionarReferenciaPessoal({
     required String eventoId,
     required String userId,
-    required File imageFile,
+    required List<int> bytes,
+    required String nomeArquivo,
   }) async {
-    final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+    final fileName = nomeArquivo.trim().isEmpty
+        ? '${DateTime.now().millisecondsSinceEpoch}.jpg'
+        : nomeArquivo;
     final storageRef = _storage.ref().child(
-          'eventos/$eventoId/referencias/$userId/$fileName.jpg',
+          'eventos/$eventoId/referencias/$userId/$fileName',
         );
-    await storageRef.putFile(imageFile);
+    await storageRef.putData(Uint8List.fromList(bytes));
     final url = await storageRef.getDownloadURL();
 
     final docRef = _subcolecao(eventoId, subReferencias).doc();

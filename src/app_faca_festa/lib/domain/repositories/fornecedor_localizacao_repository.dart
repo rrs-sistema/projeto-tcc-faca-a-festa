@@ -1,33 +1,33 @@
-import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import '../../data/models/fornecedor/fornecedor_model.dart';
-import '../../data/models/servico_produto/categoria_servico_model.dart';
-import '../../data/models/servico_produto/fornecedor_categoria_model.dart';
-import '../../data/models/fornecedor/territorio_model.dart';
+import '../entities/categoria_servico.dart';
+import '../entities/fornecedor.dart';
+import '../entities/fornecedor_categoria.dart';
+import '../entities/fornecedor_servico_detalhado.dart';
+import '../entities/territorio.dart';
 
 abstract interface class FornecedorLocalizacaoRepository {
-  Stream<List<CategoriaServicoModel>> observarCategoriasAtivas();
+  Stream<List<CategoriaServico>> observarCategoriasAtivas();
 
-  Stream<List<FornecedorModel>> observarFornecedoresAtivos();
+  Stream<List<Fornecedor>> observarFornecedoresAtivos();
 
-  Stream<List<TerritorioModel>> observarTerritoriosAtivos();
+  Stream<List<Territorio>> observarTerritoriosAtivos();
 
-  Stream<List<FornecedorCategoriaModel>> observarCategoriasFornecedor();
+  Stream<List<FornecedorCategoria>> observarCategoriasFornecedor();
 
   Stream<Map<String, double>> observarMediasAvaliacoes();
 
-  Stream<List<FornecedorServicoDetalhadoDto>> observarServicosFornecedor(
+  Stream<List<FornecedorServicoDetalhado>> observarServicosFornecedor(
     String idFornecedor,
   );
 
-  Stream<List<FornecedorServicoDetalhadoDto>> observarTodosServicos();
+  Stream<List<FornecedorServicoDetalhado>> observarTodosServicos();
 
-  Future<List<FornecedorServicoDetalhadoDto>> listarTodosServicosDoFornecedor(
+  Future<List<FornecedorServicoDetalhado>> listarTodosServicosDoFornecedor(
     String idFornecedor,
   );
 
-  Future<List<FornecedorServicoDetalhadoDto>> listarServicosPorCategoria(
+  Future<List<FornecedorServicoDetalhado>> listarServicosPorCategoria(
     String idCategoria,
   );
 
-  Future<List<FornecedorServicoDetalhadoDto>> listarFornecedoresSemCategoria();
+  Future<List<FornecedorServicoDetalhado>> listarFornecedoresSemCategoria();
 }

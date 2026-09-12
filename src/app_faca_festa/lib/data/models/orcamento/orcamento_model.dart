@@ -1,119 +1,35 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-/// ===========================================================
-/// 🔹 Enum de Status do Orçamento
-/// ===========================================================
-enum StatusOrcamento {
-  pendente,
-  emNegociacao,
-  fechado,
-  cancelado;
+import 'package:app_faca_festa/domain/entities/orcamento.dart';
 
-  /// Retorna uma string legível para exibir na UI
-  String get label {
-    switch (this) {
-      case StatusOrcamento.pendente:
-        return 'Pendente';
-      case StatusOrcamento.emNegociacao:
-        return 'Em negociação';
-      case StatusOrcamento.fechado:
-        return 'Fechado';
-      case StatusOrcamento.cancelado:
-        return 'Cancelado';
-    }
-  }
-
-  /// Retorna o nome usado no Firestore
-  String get firestoreValue {
-    switch (this) {
-      case StatusOrcamento.pendente:
-        return 'pendente';
-      case StatusOrcamento.emNegociacao:
-        return 'em_negociacao';
-      case StatusOrcamento.fechado:
-        return 'fechado';
-      case StatusOrcamento.cancelado:
-        return 'cancelado';
-    }
-  }
-
-  /// Converte uma string do Firestore em enum
-  static StatusOrcamento fromString(String? value) {
-    if (value == null) return StatusOrcamento.pendente;
-
-    final normalized = value.trim().toLowerCase();
-
-    switch (normalized) {
-      case 'em_negociacao':
-      case 'em negociação':
-        return StatusOrcamento.emNegociacao;
-
-      case 'fechado':
-      case 'concluido':
-      case 'contratado':
-        return StatusOrcamento.fechado;
-
-      case 'cancelado':
-      case 'cancelada':
-        return StatusOrcamento.cancelado;
-
-      case 'pendente':
-      default:
-        return StatusOrcamento.pendente;
-    }
-  }
-}
+export 'package:app_faca_festa/domain/entities/orcamento.dart'
+    show Orcamento, StatusOrcamento;
 
 /// ===========================================================
 /// 🔹 Modelo OrcamentoModel completo com melhorias
 /// ===========================================================
-class OrcamentoModel {
-  final String idOrcamento;
-  final String idEvento;
-  final String? idFornecedor;
-  final String? nomeFornecedor;
-  final String? idSolicitante;
-  final String? nomeSolicitante;
-  final String? idServicoFornecido;
-  final String? idCategoria;
-  final String? idTipoPagamento;
-  final double? custoEstimado;
-  final bool orcamentoFechado;
-  final String? anotacoes;
-  final StatusOrcamento status;
-  final DateTime dataCadastro;
-  final DateTime? dataFechamento;
-  final String? fechadoPor;
-
+class OrcamentoModel extends Orcamento {
   /// ===========================================================
   /// 🔸 Construtor principal
   /// ===========================================================
   OrcamentoModel({
-    required this.idOrcamento,
-    required this.idEvento,
-    required this.idServicoFornecido,
-    this.idFornecedor,
-    this.nomeFornecedor,
-    this.idSolicitante,
-    this.nomeSolicitante,
-    this.idCategoria,
-    this.idTipoPagamento,
-    this.custoEstimado,
-    this.orcamentoFechado = false,
-    this.anotacoes,
-    this.status = StatusOrcamento.pendente,
-    DateTime? dataCadastro,
-    this.dataFechamento,
-    this.fechadoPor,
-  }) : dataCadastro = dataCadastro ?? DateTime.now();
-
-  /// ===========================================================
-  /// 🔸 Helpers de negócio
-  /// ===========================================================
-  bool get isFechado => status == StatusOrcamento.fechado;
-
-  /// Usa dataFechamento se existir; senão, dataCadastro
-  DateTime get dataEfetivaFechamento => dataFechamento ?? dataCadastro;
+    required super.idOrcamento,
+    required super.idEvento,
+    required super.idServicoFornecido,
+    super.idFornecedor,
+    super.nomeFornecedor,
+    super.idSolicitante,
+    super.nomeSolicitante,
+    super.idCategoria,
+    super.idTipoPagamento,
+    super.custoEstimado,
+    super.orcamentoFechado = false,
+    super.anotacoes,
+    super.status = StatusOrcamento.pendente,
+    super.dataCadastro,
+    super.dataFechamento,
+    super.fechadoPor,
+  });
 
   /// ===========================================================
   /// 🔸 Conversão para Firestore
@@ -166,6 +82,29 @@ class OrcamentoModel {
     );
   }
 
+  factory OrcamentoModel.fromEntity(Orcamento entity) {
+    if (entity is OrcamentoModel) return entity;
+
+    return OrcamentoModel(
+      idOrcamento: entity.idOrcamento,
+      idEvento: entity.idEvento,
+      idServicoFornecido: entity.idServicoFornecido,
+      idFornecedor: entity.idFornecedor,
+      nomeFornecedor: entity.nomeFornecedor,
+      idSolicitante: entity.idSolicitante,
+      nomeSolicitante: entity.nomeSolicitante,
+      idCategoria: entity.idCategoria,
+      idTipoPagamento: entity.idTipoPagamento,
+      custoEstimado: entity.custoEstimado,
+      orcamentoFechado: entity.orcamentoFechado,
+      anotacoes: entity.anotacoes,
+      status: entity.status,
+      dataCadastro: entity.dataCadastro,
+      dataFechamento: entity.dataFechamento,
+      fechadoPor: entity.fechadoPor,
+    );
+  }
+
   /// ===========================================================
   /// 🔸 Conversores de data (Timestamp / String)
   /// ===========================================================
@@ -186,6 +125,7 @@ class OrcamentoModel {
   /// ===========================================================
   /// 🔸 Atualização parcial (para update no Firestore)
   /// ===========================================================
+  @override
   OrcamentoModel copyWith({
     String? idFornecedor,
     String? nomeFornecedor,

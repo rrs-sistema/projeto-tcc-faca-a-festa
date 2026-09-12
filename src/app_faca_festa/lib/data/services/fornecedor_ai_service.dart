@@ -4,12 +4,14 @@ import '../models/fornecedor_intelligence/sugestao_resposta_cotacao_model.dart';
 import '../models/fornecedor_intelligence/score_cotacao_fornecedor_model.dart';
 import '../models/fornecedor_intelligence/proxima_acao_fornecedor_model.dart';
 import '../models/fornecedor_intelligence/insight_fornecedor_model.dart';
-import '../models/fornecedor/fornecedor_interacao_model.dart';
-import '../models/DTO/fornecedor_servico_detalhado_dto.dart';
-import '../models/fornecedor/avaliacao_servico_model.dart';
-import '../models/model.dart';
+import 'package:app_faca_festa/domain/entities/avaliacao_servico.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_interacao.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/services/fornecedor_ai.dart';
 
-class FornecedorAiService {
+class FornecedorAiService implements FornecedorAiRegrasService {
   final DateTime Function() _clock;
   final String versaoRegra;
 
@@ -22,14 +24,15 @@ class FornecedorAiService {
   // 1. ANÁLISE COMPLETA DA COTAÇÃO
   // ============================================================
 
+  @override
   FornecedorAiAnaliseCotacao gerarAnaliseCotacao({
-    required FornecedorModel fornecedor,
-    EventoModel? evento,
+    required Fornecedor fornecedor,
+    Evento? evento,
     FornecedorAiCotacaoInput? cotacao,
-    List<FornecedorServicoDetalhadoDto> servicos = const [],
-    List<FornecedorInteracaoModel> interacoes = const [],
-    SugestaoCatalogoFornecedorModel? catalogo,
-    ResumoReputacaoFornecedorModel? reputacao,
+    List<FornecedorServicoDetalhado> servicos = const [],
+    List<FornecedorInteracao> interacoes = const [],
+    SugestaoCatalogoFornecedor? catalogo,
+    ResumoReputacaoFornecedor? reputacao,
   }) {
     final score = gerarScoreCotacao(
       fornecedor: fornecedor,
@@ -67,10 +70,11 @@ class FornecedorAiService {
   // 2. ANÁLISE GERAL DO FORNECEDOR
   // ============================================================
 
+  @override
   FornecedorAiAnaliseFornecedor gerarAnaliseFornecedor({
-    required FornecedorModel fornecedor,
-    List<FornecedorServicoDetalhadoDto> servicos = const [],
-    List<AvaliacaoServicoModel> avaliacoes = const [],
+    required Fornecedor fornecedor,
+    List<FornecedorServicoDetalhado> servicos = const [],
+    List<AvaliacaoServico> avaliacoes = const [],
   }) {
     final catalogo = gerarSugestaoMelhoriaCatalogo(
       fornecedor: fornecedor,
@@ -98,13 +102,14 @@ class FornecedorAiService {
   // 3. PRÓXIMA AÇÃO INTELIGENTE
   // ============================================================
 
+  @override
   ProximaAcaoFornecedorModel gerarProximaAcaoInteligente({
-    required FornecedorModel fornecedor,
-    EventoModel? evento,
+    required Fornecedor fornecedor,
+    Evento? evento,
     FornecedorAiCotacaoInput? cotacao,
-    ScoreCotacaoFornecedorModel? scoreCotacao,
-    SugestaoCatalogoFornecedorModel? catalogo,
-    ResumoReputacaoFornecedorModel? reputacao,
+    ScoreCotacaoFornecedor? scoreCotacao,
+    SugestaoCatalogoFornecedor? catalogo,
+    ResumoReputacaoFornecedor? reputacao,
   }) {
     final now = _clock();
     final motivos = <String>[];
@@ -243,11 +248,11 @@ class FornecedorAiService {
   // ============================================================
 
   ScoreCotacaoFornecedorModel gerarScoreCotacao({
-    required FornecedorModel fornecedor,
-    EventoModel? evento,
+    required Fornecedor fornecedor,
+    Evento? evento,
     FornecedorAiCotacaoInput? cotacao,
-    List<FornecedorServicoDetalhadoDto> servicos = const [],
-    List<FornecedorInteracaoModel> interacoes = const [],
+    List<FornecedorServicoDetalhado> servicos = const [],
+    List<FornecedorInteracao> interacoes = const [],
   }) {
     final now = _clock();
 
@@ -505,10 +510,10 @@ class FornecedorAiService {
   // ============================================================
 
   SugestaoRespostaCotacaoModel gerarSugestaoBasicaResposta({
-    required FornecedorModel fornecedor,
-    EventoModel? evento,
+    required Fornecedor fornecedor,
+    Evento? evento,
     FornecedorAiCotacaoInput? cotacao,
-    List<FornecedorServicoDetalhadoDto> servicos = const [],
+    List<FornecedorServicoDetalhado> servicos = const [],
   }) {
     final now = _clock();
 
@@ -641,8 +646,8 @@ class FornecedorAiService {
   // ============================================================
 
   SugestaoCatalogoFornecedorModel gerarSugestaoMelhoriaCatalogo({
-    required FornecedorModel fornecedor,
-    List<FornecedorServicoDetalhadoDto> servicos = const [],
+    required Fornecedor fornecedor,
+    List<FornecedorServicoDetalhado> servicos = const [],
   }) {
     final now = _clock();
 
@@ -807,8 +812,8 @@ class FornecedorAiService {
   // ============================================================
 
   ResumoReputacaoFornecedorModel gerarResumoSimplesReputacao({
-    required FornecedorModel fornecedor,
-    List<AvaliacaoServicoModel> avaliacoes = const [],
+    required Fornecedor fornecedor,
+    List<AvaliacaoServico> avaliacoes = const [],
   }) {
     final now = _clock();
 
@@ -903,8 +908,8 @@ class FornecedorAiService {
   // ============================================================
 
   List<InsightFornecedorModel> gerarAlertasPerfilIncompleto({
-    required FornecedorModel fornecedor,
-    List<FornecedorServicoDetalhadoDto> servicos = const [],
+    required Fornecedor fornecedor,
+    List<FornecedorServicoDetalhado> servicos = const [],
   }) {
     final now = _clock();
     final insights = <InsightFornecedorModel>[];
@@ -1048,8 +1053,8 @@ class FornecedorAiService {
   // ============================================================
 
   bool _fornecedorAtendeTipoEvento(
-    FornecedorModel fornecedor,
-    EventoModel evento,
+    Fornecedor fornecedor,
+    Evento evento,
   ) {
     final idTipoEvento = _normalize(evento.idTipoEvento);
 
@@ -1075,8 +1080,8 @@ class FornecedorAiService {
   }
 
   bool _temServicoOuCategoriaCompativel({
-    required FornecedorModel fornecedor,
-    required List<FornecedorServicoDetalhadoDto> servicos,
+    required Fornecedor fornecedor,
+    required List<FornecedorServicoDetalhado> servicos,
     String? categoriaSolicitada,
     String? subcategoriaSolicitada,
   }) {
@@ -1119,8 +1124,8 @@ class FornecedorAiService {
     return false;
   }
 
-  FornecedorServicoDetalhadoDto? _primeiroServicoCompativel({
-    required List<FornecedorServicoDetalhadoDto> servicos,
+  FornecedorServicoDetalhado? _primeiroServicoCompativel({
+    required List<FornecedorServicoDetalhado> servicos,
     String? categoriaSolicitada,
     String? subcategoriaSolicitada,
   }) {
@@ -1155,7 +1160,7 @@ class FornecedorAiService {
   }
 
   bool _valorDentroDaFaixaFornecedor(
-    FornecedorModel fornecedor,
+    Fornecedor fornecedor,
     double valor,
   ) {
     final minimo = fornecedor.precoMinimo;
@@ -1177,7 +1182,7 @@ class FornecedorAiService {
   }
 
   bool _valorProximoDaFaixaFornecedor(
-    FornecedorModel fornecedor,
+    Fornecedor fornecedor,
     double valor,
   ) {
     final minimo = fornecedor.precoMinimo;
@@ -1217,7 +1222,7 @@ class FornecedorAiService {
     return false;
   }
 
-  List<String> _extrairCategoriasFornecedor(FornecedorModel fornecedor) {
+  List<String> _extrairCategoriasFornecedor(Fornecedor fornecedor) {
     final termos = <String>[];
 
     for (final categoria in fornecedor.categorias) {
@@ -1242,8 +1247,8 @@ class FornecedorAiService {
   }
 
   List<String> _categoriasSemServico({
-    required FornecedorModel fornecedor,
-    required List<FornecedorServicoDetalhadoDto> servicos,
+    required Fornecedor fornecedor,
+    required List<FornecedorServicoDetalhado> servicos,
   }) {
     final categoriasFornecedor = _extrairCategoriasFornecedor(fornecedor);
     final categoriasServicos = servicos
@@ -1348,7 +1353,7 @@ class FornecedorAiService {
   }
 
   String _templateRespostaKey({
-    EventoModel? evento,
+    Evento? evento,
     FornecedorAiCotacaoInput? cotacao,
     required List<String> camposAusentes,
   }) {
@@ -1392,7 +1397,7 @@ class FornecedorAiService {
     return fim.difference(inicio).inMinutes / 60;
   }
 
-  double _mediaAvaliacoes(List<AvaliacaoServicoModel> avaliacoes) {
+  double _mediaAvaliacoes(List<AvaliacaoServico> avaliacoes) {
     if (avaliacoes.isEmpty) return 0.0;
 
     final total = avaliacoes.fold<int>(
@@ -1472,130 +1477,4 @@ class FornecedorAiService {
     final cleanRelacionado = _hasText(idRelacionado) ? '_$idRelacionado' : '';
     return '${prefix}_$cleanFornecedor$cleanRelacionado';
   }
-}
-
-// ============================================================
-// DTO DE ENTRADA DA COTAÇÃO
-// ============================================================
-
-class FornecedorAiCotacaoInput {
-  final String idCotacao;
-  final String? idEvento;
-  final String? idFornecedor;
-  final String? idOrganizador;
-
-  final String? categoriaSolicitada;
-  final String? subcategoriaSolicitada;
-  final String? mensagemCliente;
-
-  /// Exemplo: pendente, visualizada, respondida, aceita, recusada.
-  final String? statusCotacao;
-
-  /// Valor de referência informado na cotação ou proposta.
-  /// O service não altera preço automaticamente.
-  final double? valorReferencia;
-
-  final String? cidadeEvento;
-  final String? ufEvento;
-
-  /// Dados opcionais de território já carregados por outro service/repository.
-  /// Este service não consulta Firestore.
-  final List<String> cidadesAtendidas;
-  final List<String> ufsAtendidas;
-
-  final DateTime? dataSolicitacao;
-  final DateTime? visualizadoEm;
-  final DateTime? dataResposta;
-
-  const FornecedorAiCotacaoInput({
-    required this.idCotacao,
-    this.idEvento,
-    this.idFornecedor,
-    this.idOrganizador,
-    this.categoriaSolicitada,
-    this.subcategoriaSolicitada,
-    this.mensagemCliente,
-    this.statusCotacao,
-    this.valorReferencia,
-    this.cidadeEvento,
-    this.ufEvento,
-    this.cidadesAtendidas = const [],
-    this.ufsAtendidas = const [],
-    this.dataSolicitacao,
-    this.visualizadoEm,
-    this.dataResposta,
-  });
-
-  FornecedorAiCotacaoInput copyWith({
-    String? idCotacao,
-    String? idEvento,
-    String? idFornecedor,
-    String? idOrganizador,
-    String? categoriaSolicitada,
-    String? subcategoriaSolicitada,
-    String? mensagemCliente,
-    String? statusCotacao,
-    double? valorReferencia,
-    String? cidadeEvento,
-    String? ufEvento,
-    List<String>? cidadesAtendidas,
-    List<String>? ufsAtendidas,
-    DateTime? dataSolicitacao,
-    DateTime? visualizadoEm,
-    DateTime? dataResposta,
-  }) {
-    return FornecedorAiCotacaoInput(
-      idCotacao: idCotacao ?? this.idCotacao,
-      idEvento: idEvento ?? this.idEvento,
-      idFornecedor: idFornecedor ?? this.idFornecedor,
-      idOrganizador: idOrganizador ?? this.idOrganizador,
-      categoriaSolicitada: categoriaSolicitada ?? this.categoriaSolicitada,
-      subcategoriaSolicitada:
-          subcategoriaSolicitada ?? this.subcategoriaSolicitada,
-      mensagemCliente: mensagemCliente ?? this.mensagemCliente,
-      statusCotacao: statusCotacao ?? this.statusCotacao,
-      valorReferencia: valorReferencia ?? this.valorReferencia,
-      cidadeEvento: cidadeEvento ?? this.cidadeEvento,
-      ufEvento: ufEvento ?? this.ufEvento,
-      cidadesAtendidas: cidadesAtendidas ?? this.cidadesAtendidas,
-      ufsAtendidas: ufsAtendidas ?? this.ufsAtendidas,
-      dataSolicitacao: dataSolicitacao ?? this.dataSolicitacao,
-      visualizadoEm: visualizadoEm ?? this.visualizadoEm,
-      dataResposta: dataResposta ?? this.dataResposta,
-    );
-  }
-}
-
-// ============================================================
-// DTO DE RESULTADO DA ANÁLISE DA COTAÇÃO
-// ============================================================
-
-class FornecedorAiAnaliseCotacao {
-  final ScoreCotacaoFornecedorModel scoreCotacao;
-  final ProximaAcaoFornecedorModel proximaAcao;
-  final List<String> motivosOportunidade;
-  final SugestaoRespostaCotacaoModel sugestaoResposta;
-
-  const FornecedorAiAnaliseCotacao({
-    required this.scoreCotacao,
-    required this.proximaAcao,
-    required this.motivosOportunidade,
-    required this.sugestaoResposta,
-  });
-}
-
-// ============================================================
-// DTO DE RESULTADO DA ANÁLISE GERAL DO FORNECEDOR
-// ============================================================
-
-class FornecedorAiAnaliseFornecedor {
-  final SugestaoCatalogoFornecedorModel sugestaoCatalogo;
-  final ResumoReputacaoFornecedorModel resumoReputacao;
-  final List<InsightFornecedorModel> alertasPerfilIncompleto;
-
-  const FornecedorAiAnaliseFornecedor({
-    required this.sugestaoCatalogo,
-    required this.resumoReputacao,
-    required this.alertasPerfilIncompleto,
-  });
 }

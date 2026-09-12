@@ -1,4 +1,4 @@
-import '../../domain/repositories/documento_repository.dart';
+import 'package:app_faca_festa/domain/repositories/documento_repository.dart';
 import '../datasources/remote/documento_remote_datasource.dart';
 
 class DocumentoRepositoryImpl implements DocumentoRepository {

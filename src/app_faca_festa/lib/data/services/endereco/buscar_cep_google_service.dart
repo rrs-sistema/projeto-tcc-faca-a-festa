@@ -4,23 +4,14 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import '../../models/endereco/endereco_cep_resultado.dart';
-
-class BuscarCepException implements Exception {
-  final String mensagem;
-  final int? statusCode;
-
-  const BuscarCepException(this.mensagem, {this.statusCode});
-
-  @override
-  String toString() => mensagem;
-}
+import 'package:app_faca_festa/domain/entities/endereco_cep_resultado.dart';
+import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 
 /// Cliente HTTP da function `buscarCepGoogle` (onRequest, southamerica-east1).
 ///
 /// Usada no cadastro, ainda sem sessão Firebase — por isso não depende de
 /// `httpsCallable`.
-class BuscarCepGoogleService {
+class BuscarCepGoogleService implements BuscarCepService {
   static const String _regiao = 'southamerica-east1';
   static const String _nomeFunction = 'buscarCepGoogle';
   static const Duration _timeout = Duration(seconds: 20);
@@ -39,6 +30,7 @@ class BuscarCepGoogleService {
     );
   }
 
+  @override
   Future<EnderecoCepResultado> buscar({required String cep}) async {
     final cepLimpo = cep.replaceAll(RegExp(r'\D'), '');
     if (cepLimpo.length != 8) {

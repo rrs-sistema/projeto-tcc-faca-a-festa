@@ -1,11 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/solicitacoes_remote_datasource.dart';
-import '../../data/repositories_impl/solicitacoes_repository_impl.dart';
-import '../../domain/repositories/solicitacoes_repository.dart';
-import '../../domain/usecases/gerenciar_solicitacoes.dart';
-import '../../presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/solicitacoes_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/solicitacoes_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/solicitacoes_repository.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_solicitacoes.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
 
 class SolicitacoesBootstrap {
   SolicitacoesBootstrap._();
@@ -40,6 +41,10 @@ class SolicitacoesBootstrap {
       Get.put(
         SolicitacoesController(
           solicitacoesFornecedor: Get.find<GerenciarSolicitacoes>(),
+          nomeUsuarioAtual: () => Get.isRegistered<AppController>()
+              ? Get.find<AppController>().usuarioLogado.value?.nome ??
+                  'Desconhecido'
+              : 'Desconhecido',
         ),
         permanent: true,
       );

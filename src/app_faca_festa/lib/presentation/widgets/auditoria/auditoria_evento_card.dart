@@ -5,8 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import '../../../data/models/auditoria/auditoria_catalogo.dart';
-import '../../../domain/entities/auditoria_evento.dart';
+import 'package:app_faca_festa/domain/entities/auditoria_catalogo.dart';
+import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 
 class AuditoriaVisualTheme {
   const AuditoriaVisualTheme({

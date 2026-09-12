@@ -1,30 +1,30 @@
-import '../../data/models/cotacao/cotacao_chat_model.dart';
-import '../../data/models/cotacao/cotacao_model.dart';
+import '../entities/cotacao.dart';
+import '../entities/cotacao_chat.dart';
 
 abstract interface class CotacaoRepository {
-  Stream<List<CotacaoModel>> observarMinhasCotacoes(String idUsuario);
+  Stream<List<Cotacao>> observarMinhasCotacoes(String idUsuario);
 
   Stream<bool> observarCotacaoTemResposta(String idCotacao);
 
-  Stream<List<CotacaoConversaModel>> observarConversasFornecedor(
+  Stream<List<CotacaoConversa>> observarConversasFornecedor(
     String idFornecedor,
   );
 
-  Stream<List<CotacaoMensagemModel>> observarMensagens({
+  Stream<List<CotacaoMensagem>> observarMensagens({
     required String idCotacao,
     required String idFornecedor,
   });
 
-  Stream<List<CotacaoFornecedorResumoModel>> observarFornecedoresDaCotacao(
+  Stream<List<CotacaoFornecedorResumo>> observarFornecedoresDaCotacao(
     String idCotacao,
   );
 
-  Stream<List<CotacaoServicoResumoModel>> observarServicosFornecedorCotacao({
+  Stream<List<CotacaoServicoResumo>> observarServicosFornecedorCotacao({
     required String idCotacao,
     required String idFornecedor,
   });
 
-  Future<CotacaoConversaModel?> buscarConversaFornecedor({
+  Future<CotacaoConversa?> buscarConversaFornecedor({
     required String idCotacao,
     required String idFornecedor,
   });

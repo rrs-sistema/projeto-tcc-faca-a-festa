@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../domain/repositories/presente_reservation_repository.dart';
+import 'package:app_faca_festa/domain/repositories/presente_reservation_repository.dart';
 
 class PresenteReservationRepositoryImpl
     implements PresenteReservationRepository {

@@ -1,7 +1,8 @@
 import '../../models/evento/analise_calculadora_ia_model.dart';
 import '../../models/evento/calculadora_festa_item_model.dart';
 import '../../models/evento/estimativa_financeira_model.dart';
-import '../../../domain/services/calculadora_festa_ai_service.dart';
+import '../../models/evento/perfil_festa_model.dart';
+import 'package:app_faca_festa/domain/services/calculadora_festa_ai_service.dart';
 
 /// Função responsável por chamar o backend de IA.
 ///
@@ -26,8 +27,8 @@ class CalculadoraFestaRemoteAIService implements ICalculadoraFestaAIService {
 
   @override
   Future<AnaliseCalculadoraIAModel> analisarEstimativa({
-    required EstimativaFinanceiraModel estimativa,
-    required List<CalculadoraFestaItemModel> itensCalculados,
+    required EstimativaFinanceira estimativa,
+    required List<CalculadoraFestaItem> itensCalculados,
     required String tipoEvento,
     double? orcamentoDisponivel,
   }) async {
@@ -45,49 +46,54 @@ class CalculadoraFestaRemoteAIService implements ICalculadoraFestaAIService {
   }
 
   Map<String, dynamic> _montarPayload({
-    required EstimativaFinanceiraModel estimativa,
-    required List<CalculadoraFestaItemModel> itensCalculados,
+    required EstimativaFinanceira estimativa,
+    required List<CalculadoraFestaItem> itensCalculados,
     required String tipoEvento,
     double? orcamentoDisponivel,
   }) {
-    final custoTotal = itensCalculados.fold<double>(
+    final estimativaModel = EstimativaFinanceiraModel.fromEntity(estimativa);
+    final itensCalculadosModel =
+        itensCalculados.map(CalculadoraFestaItemModel.fromEntity).toList();
+
+    final custoTotal = itensCalculadosModel.fold<double>(
       0,
       (total, item) => total + item.custoEstimado,
     );
 
-    final margem = estimativa.margemPersonalizada ??
-        estimativa.perfil.margemSegurancaPadrao;
+    final margem = estimativaModel.margemPersonalizada ??
+        estimativaModel.perfil.margemSegurancaPadrao;
 
     return {
-      'id_evento': estimativa.idEvento,
+      'id_evento': estimativaModel.idEvento,
       'tipo_evento': tipoEvento,
 
       // Mantém compatibilidade com validadores que aceitam perfil como objeto.
-      'perfil_festa': estimativa.perfil.toMap(),
-      'perfil_festa_nome': estimativa.perfil.nome,
-      'perfil_festa_tipo': estimativa.perfil.tipo.name,
+      'perfil_festa':
+          PerfilFestaModel.fromEntity(estimativaModel.perfil).toMap(),
+      'perfil_festa_nome': estimativaModel.perfil.nome,
+      'perfil_festa_tipo': estimativaModel.perfil.tipo.name,
 
       // Mantém compatibilidade com validadores que aceitam convidados aninhados.
       'convidados': {
-        'adultos': estimativa.convidados.adultos,
-        'criancas': estimativa.convidados.criancas,
-        'bebes': estimativa.convidados.bebes,
-        'total_informado': estimativa.convidados.totalInformado,
-        'total_equivalente': estimativa.convidados.totalEquivalente,
+        'adultos': estimativaModel.convidados.adultos,
+        'criancas': estimativaModel.convidados.criancas,
+        'bebes': estimativaModel.convidados.bebes,
+        'total_informado': estimativaModel.convidados.totalInformado,
+        'total_equivalente': estimativaModel.convidados.totalEquivalente,
         'total_equivalente_arredondado':
-            estimativa.convidados.totalEquivalenteArredondado,
+            estimativaModel.convidados.totalEquivalenteArredondado,
       },
 
       // Campos planos para compatibilidade com a versão atual do backend.
-      'adultos': estimativa.convidados.adultos,
-      'criancas': estimativa.convidados.criancas,
-      'bebes': estimativa.convidados.bebes,
-      'total_informado': estimativa.convidados.totalInformado,
-      'total_equivalente': estimativa.convidados.totalEquivalente,
+      'adultos': estimativaModel.convidados.adultos,
+      'criancas': estimativaModel.convidados.criancas,
+      'bebes': estimativaModel.convidados.bebes,
+      'total_informado': estimativaModel.convidados.totalInformado,
+      'total_equivalente': estimativaModel.convidados.totalEquivalente,
       'total_equivalente_arredondado':
-          estimativa.convidados.totalEquivalenteArredondado,
+          estimativaModel.convidados.totalEquivalenteArredondado,
 
-      'duracao_horas': estimativa.duracaoHoras,
+      'duracao_horas': estimativaModel.duracaoHoras,
       'margem': margem,
       'orcamento_disponivel': orcamentoDisponivel,
       'custo_total_estimado': custoTotal,
@@ -100,7 +106,7 @@ class CalculadoraFestaRemoteAIService implements ICalculadoraFestaAIService {
         'conforto': 0,
       },
 
-      'itens': itensCalculados.map((item) => item.toMap()).toList(),
+      'itens': itensCalculadosModel.map((item) => item.toMap()).toList(),
     };
   }
 

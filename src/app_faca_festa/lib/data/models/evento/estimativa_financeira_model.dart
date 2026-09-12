@@ -1,33 +1,11 @@
 import 'convidados_equivalentes_model.dart';
 import 'perfil_festa_model.dart';
 
-enum UnidadeEstimativa {
-  unidade,
-  cento,
-  quilo,
-  litro,
-  garrafa,
-  pacote,
-}
+import 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
 
-extension UnidadeEstimativaExtension on UnidadeEstimativa {
-  String get label {
-    switch (this) {
-      case UnidadeEstimativa.unidade:
-        return 'un';
-      case UnidadeEstimativa.cento:
-        return 'cento';
-      case UnidadeEstimativa.quilo:
-        return 'kg';
-      case UnidadeEstimativa.litro:
-        return 'L';
-      case UnidadeEstimativa.garrafa:
-        return 'garrafa';
-      case UnidadeEstimativa.pacote:
-        return 'pacote';
-    }
-  }
+export 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
 
+extension UnidadeEstimativaModelExtension on UnidadeEstimativa {
   static UnidadeEstimativa fromString(String? value) {
     final normalized = value?.trim().toLowerCase() ?? '';
 
@@ -40,96 +18,39 @@ extension UnidadeEstimativaExtension on UnidadeEstimativa {
   }
 }
 
-class ItemEstimativaFinanceiraModel {
-  final String id;
-  final String categoria;
-  final String nome;
-  final String tipoItem;
-  final String publicoAlvo;
-  final UnidadeEstimativa unidade;
-
-  /// Quantidade base por convidado equivalente.
-  /// Exemplo: salgadinhos = 12 unidades por convidado equivalente.
-  final double quantidadePorConvidadoEquivalente;
-
-  /// Valor médio por unidade usada no cálculo.
-  final double valorUnitarioMedio;
-
-  final bool selecionado;
-
+class ItemEstimativaFinanceiraModel extends ItemEstimativaFinanceira {
   const ItemEstimativaFinanceiraModel({
-    required this.id,
-    required this.categoria,
-    required this.nome,
-    required this.tipoItem,
-    required this.publicoAlvo,
-    required this.unidade,
-    required this.quantidadePorConvidadoEquivalente,
-    required this.valorUnitarioMedio,
-    this.selecionado = true,
+    required super.id,
+    required super.categoria,
+    required super.nome,
+    required super.tipoItem,
+    required super.publicoAlvo,
+    required super.unidade,
+    required super.quantidadePorConvidadoEquivalente,
+    required super.valorUnitarioMedio,
+    super.selecionado = true,
   });
 
-  double calcularQuantidade({
-    required ConvidadosEquivalentesModel convidados,
-    required PerfilFestaModel perfil,
-    int duracaoHoras = 4,
-  }) {
-    final fatorDuracao = _fatorDuracao(duracaoHoras);
+  factory ItemEstimativaFinanceiraModel.fromEntity(
+    ItemEstimativaFinanceira entity,
+  ) {
+    if (entity is ItemEstimativaFinanceiraModel) return entity;
 
-    return convidados.totalEquivalente *
-        quantidadePorConvidadoEquivalente *
-        perfil.multiplicadorQuantidade *
-        fatorDuracao;
-  }
-
-  double calcularQuantidadeComMargem({
-    required ConvidadosEquivalentesModel convidados,
-    required PerfilFestaModel perfil,
-    int duracaoHoras = 4,
-    double? margemPersonalizada,
-  }) {
-    final margem = margemPersonalizada ?? perfil.margemSegurancaPadrao;
-    final quantidadeBase = calcularQuantidade(
-      convidados: convidados,
-      perfil: perfil,
-      duracaoHoras: duracaoHoras,
+    return ItemEstimativaFinanceiraModel(
+      id: entity.id,
+      categoria: entity.categoria,
+      nome: entity.nome,
+      tipoItem: entity.tipoItem,
+      publicoAlvo: entity.publicoAlvo,
+      unidade: entity.unidade,
+      quantidadePorConvidadoEquivalente:
+          entity.quantidadePorConvidadoEquivalente,
+      valorUnitarioMedio: entity.valorUnitarioMedio,
+      selecionado: entity.selecionado,
     );
-
-    return quantidadeBase + (quantidadeBase * margem);
   }
 
-  int calcularQuantidadeArredondada({
-    required ConvidadosEquivalentesModel convidados,
-    required PerfilFestaModel perfil,
-    int duracaoHoras = 4,
-    double? margemPersonalizada,
-  }) {
-    return calcularQuantidadeComMargem(
-      convidados: convidados,
-      perfil: perfil,
-      duracaoHoras: duracaoHoras,
-      margemPersonalizada: margemPersonalizada,
-    ).ceil();
-  }
-
-  double calcularCusto({
-    required ConvidadosEquivalentesModel convidados,
-    required PerfilFestaModel perfil,
-    int duracaoHoras = 4,
-    double? margemPersonalizada,
-  }) {
-    if (!selecionado) return 0;
-
-    final quantidade = calcularQuantidadeComMargem(
-      convidados: convidados,
-      perfil: perfil,
-      duracaoHoras: duracaoHoras,
-      margemPersonalizada: margemPersonalizada,
-    );
-
-    return quantidade * valorUnitarioMedio * perfil.multiplicadorCusto;
-  }
-
+  @override
   ItemEstimativaFinanceiraModel copyWith({
     String? id,
     String? categoria,
@@ -181,8 +102,8 @@ class ItemEstimativaFinanceiraModel {
       publicoAlvo: map['publico_alvo']?.toString() ??
           map['publicoAlvo']?.toString() ??
           'todos',
-      unidade:
-          UnidadeEstimativaExtension.fromString(map['unidade']?.toString()),
+      unidade: UnidadeEstimativaModelExtension.fromString(
+          map['unidade']?.toString()),
       quantidadePorConvidadoEquivalente: _asDouble(
         map['quantidade_por_convidado_equivalente'] ??
             map['quantidadePorConvidadoEquivalente'],
@@ -202,56 +123,41 @@ class ItemEstimativaFinanceiraModel {
     return double.tryParse(value?.toString().replaceAll(',', '.') ?? '') ??
         fallback;
   }
-
-  static double _fatorDuracao(int duracaoHoras) {
-    if (duracaoHoras <= 2) return 0.85;
-    if (duracaoHoras == 3) return 0.95;
-    if (duracaoHoras == 4) return 1.00;
-    if (duracaoHoras == 5) return 1.08;
-    if (duracaoHoras == 6) return 1.15;
-    return 1.25;
-  }
 }
 
-class EstimativaFinanceiraModel {
-  final String? idEvento;
-  final PerfilFestaModel perfil;
-  final ConvidadosEquivalentesModel convidados;
-  final List<ItemEstimativaFinanceiraModel> itens;
-  final DateTime dataSimulacao;
-  final int duracaoHoras;
-  final double? margemPersonalizada;
-
+class EstimativaFinanceiraModel extends EstimativaFinanceira {
   const EstimativaFinanceiraModel({
-    this.idEvento,
-    required this.perfil,
-    required this.convidados,
-    required this.itens,
-    required this.dataSimulacao,
-    this.duracaoHoras = 4,
-    this.margemPersonalizada,
+    super.idEvento,
+    required PerfilFestaModel super.perfil,
+    required ConvidadosEquivalentesModel super.convidados,
+    required List<ItemEstimativaFinanceiraModel> super.itens,
+    required super.dataSimulacao,
+    super.duracaoHoras = 4,
+    super.margemPersonalizada,
   });
 
+  factory EstimativaFinanceiraModel.fromEntity(EstimativaFinanceira entity) {
+    if (entity is EstimativaFinanceiraModel) return entity;
+
+    return EstimativaFinanceiraModel(
+      idEvento: entity.idEvento,
+      perfil: PerfilFestaModel.fromEntity(entity.perfil),
+      convidados: ConvidadosEquivalentesModel.fromEntity(entity.convidados),
+      itens:
+          entity.itens.map(ItemEstimativaFinanceiraModel.fromEntity).toList(),
+      dataSimulacao: entity.dataSimulacao,
+      duracaoHoras: entity.duracaoHoras,
+      margemPersonalizada: entity.margemPersonalizada,
+    );
+  }
+
+  @override
   List<ItemEstimativaFinanceiraModel> get itensSelecionados {
-    return itens.where((item) => item.selecionado).toList();
-  }
-
-  double get custoTotal {
-    return itensSelecionados.fold<double>(0, (total, item) {
-      return total +
-          item.calcularCusto(
-            convidados: convidados,
-            perfil: perfil,
-            duracaoHoras: duracaoHoras,
-            margemPersonalizada: margemPersonalizada,
-          );
-    });
-  }
-
-  int get totalItensSelecionados => itensSelecionados.length;
-
-  bool get podeCalcular {
-    return convidados.possuiConvidados && itensSelecionados.isNotEmpty;
+    return itens.map(ItemEstimativaFinanceiraModel.fromEntity).where(
+      (item) {
+        return item.selecionado;
+      },
+    ).toList();
   }
 
   List<ResumoItemEstimativaModel> gerarResumoItens() {
@@ -285,8 +191,8 @@ class EstimativaFinanceiraModel {
   Map<String, dynamic> toMap() {
     return {
       'id_evento': idEvento,
-      'perfil': perfil.toMap(),
-      'convidados': convidados.toMap(),
+      'perfil': PerfilFestaModel.fromEntity(perfil).toMap(),
+      'convidados': ConvidadosEquivalentesModel.fromEntity(convidados).toMap(),
       'duracao_horas': duracaoHoras,
       'margem_personalizada': margemPersonalizada,
       'custo_total': custoTotal,

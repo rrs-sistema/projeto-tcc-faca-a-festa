@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/cotacao/cotacao_model.dart';
-import '../../../domain/repositories/solicitacoes_repository.dart';
+import 'package:app_faca_festa/domain/repositories/solicitacoes_repository.dart';
 
 class SolicitacoesRemoteDatasource {
   SolicitacoesRemoteDatasource({required FirebaseFirestore firestore})

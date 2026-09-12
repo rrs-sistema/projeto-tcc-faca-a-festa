@@ -61,6 +61,8 @@ class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double altura;
   final Widget? tituloExtra;
   final PreferredSizeWidget? bottom;
+  final EventThemeController? themeController;
+  final Gradient? gradient;
 
   const FestaAppBar({
     super.key,
@@ -70,6 +72,8 @@ class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.altura = 65,
     this.tituloExtra,
     this.bottom,
+    this.themeController,
+    this.gradient,
   });
 
   @override
@@ -77,9 +81,24 @@ class FestaAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeController = Get.find<EventThemeController>();
-    final gradiente = themeController.gradient.value;
+    final controller = themeController;
+    if (controller != null) {
+      return Obx(() => _buildBar(context, controller.gradient.value));
+    }
 
+    final fallbackGradient = gradient ??
+        LinearGradient(
+          colors: [
+            Theme.of(context).colorScheme.primary,
+            Theme.of(context).colorScheme.primary.withValues(alpha: 0.78),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        );
+    return _buildBar(context, fallbackGradient);
+  }
+
+  Widget _buildBar(BuildContext context, Gradient gradiente) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: FestaSystemUi.fundoEscuro,
       child: ClipRRect(

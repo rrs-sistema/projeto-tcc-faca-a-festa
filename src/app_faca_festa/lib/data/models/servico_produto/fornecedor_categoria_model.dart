@@ -1,18 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class FornecedorCategoriaModel {
-  final String idFornecedor;
-  final String idCategoria;
-  final String? nomeCategoria;
-  final List<Map<String, dynamic>> subcategorias;
-  final DateTime? dataCadastro;
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
 
+export 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
+
+class FornecedorCategoriaModel extends FornecedorCategoria {
   FornecedorCategoriaModel({
-    required this.idFornecedor,
-    required this.idCategoria,
-    this.nomeCategoria,
-    this.subcategorias = const [],
-    this.dataCadastro,
+    required super.idFornecedor,
+    required super.idCategoria,
+    super.nomeCategoria,
+    super.subcategorias = const [],
+    super.dataCadastro,
   });
 
   Map<String, dynamic> toMap() {
@@ -42,6 +40,7 @@ class FornecedorCategoriaModel {
     );
   }
 
+  @override
   FornecedorCategoriaModel copyWith({
     String? idFornecedor,
     String? idCategoria,
@@ -55,6 +54,16 @@ class FornecedorCategoriaModel {
       nomeCategoria: nomeCategoria ?? this.nomeCategoria,
       subcategorias: subcategorias ?? this.subcategorias,
       dataCadastro: dataCadastro ?? this.dataCadastro,
+    );
+  }
+
+  factory FornecedorCategoriaModel.fromEntity(FornecedorCategoria categoria) {
+    return FornecedorCategoriaModel(
+      idFornecedor: categoria.idFornecedor,
+      idCategoria: categoria.idCategoria,
+      nomeCategoria: categoria.nomeCategoria,
+      subcategorias: categoria.subcategorias,
+      dataCadastro: categoria.dataCadastro,
     );
   }
 }

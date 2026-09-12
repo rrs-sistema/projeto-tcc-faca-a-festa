@@ -1,7 +1,7 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 
-import '../../domain/repositories/push_token_repository.dart';
+import 'package:app_faca_festa/domain/repositories/push_token_repository.dart';
 
 class FirebasePushTokenRepository implements PushTokenRepository {
   FirebasePushTokenRepository({required FirebaseMessaging messaging})

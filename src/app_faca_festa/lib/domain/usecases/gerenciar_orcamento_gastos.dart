@@ -1,5 +1,5 @@
-import '../../data/models/orcamento/orcamento_gasto_model.dart';
-import '../../data/models/orcamento/orcamento_validacao_resultado.dart';
+import '../entities/orcamento_gasto.dart';
+import '../entities/orcamento_validacao_resultado.dart';
 import '../repositories/orcamento_gasto_repository.dart';
 
 class GerenciarOrcamentoGastos {
@@ -7,7 +7,7 @@ class GerenciarOrcamentoGastos {
 
   final OrcamentoGastoRepository repository;
 
-  Stream<List<OrcamentoGastoModel>> observarGastos(String idOrcamento) {
+  Stream<List<OrcamentoGasto>> observarGastos(String idOrcamento) {
     return repository.observarGastos(idOrcamento);
   }
 

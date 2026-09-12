@@ -1,11 +1,11 @@
-import '../../data/models/evento/tema_festa_model.dart';
+import '../entities/tema_festa.dart';
 
 abstract class TemaFestaRepository {
-  Future<List<TemaFestaModel>> carregar();
+  Future<List<TemaFesta>> carregar();
 
-  Future<TemaFestaModel?> buscarPorId(String idTema);
+  Future<TemaFesta?> buscarPorId(String idTema);
 
-  Future<void> salvar(TemaFestaModel tema);
+  Future<void> salvar(TemaFesta tema);
 
   Future<void> excluir(String idTema);
 
@@ -17,7 +17,7 @@ abstract class TemaFestaRepository {
   Future<void> removerCapaStorage({required String idTema});
 
   Future<void> popularTemasIniciais({
-    required List<TemaFestaModel> temasIniciais,
-    required List<TemaFestaModel> temasExistentes,
+    required List<TemaFesta> temasIniciais,
+    required List<TemaFesta> temasExistentes,
   });
 }

@@ -1,33 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class OrcamentoAdminModel {
-  final String id;
-  final String eventoNome;
-  final String tipoEvento;
-  final String cidade;
-  final DateTime? dataEvento;
-  final String categoria;
-  final double custoEstimado; // total cotado
-  final double pago;
-  final String status;
-  final double custoTotalEvento; // 🔹 novo: orçamento geral planejado
+import 'package:app_faca_festa/domain/entities/orcamento_admin.dart';
 
+export 'package:app_faca_festa/domain/entities/orcamento_admin.dart'
+    show OrcamentoAdmin;
+
+class OrcamentoAdminModel extends OrcamentoAdmin {
   OrcamentoAdminModel({
-    required this.id,
-    required this.eventoNome,
-    required this.tipoEvento,
-    required this.cidade,
-    required this.dataEvento,
-    required this.categoria,
-    required this.custoEstimado,
-    required this.pago,
-    required this.status,
-    this.custoTotalEvento = 0.0,
+    required super.id,
+    required super.eventoNome,
+    required super.tipoEvento,
+    required super.cidade,
+    required super.dataEvento,
+    required super.categoria,
+    required super.custoEstimado,
+    required super.pago,
+    required super.status,
+    super.custoTotalEvento = 0.0,
   });
-
-  double get pendente => (custoEstimado > pago) ? custoEstimado - pago : 0;
-  double get percentualPago =>
-      (custoEstimado > 0) ? (pago / custoEstimado).clamp(0, 1) : 0.0;
 
   /// 🔹 Criação a partir de Map genérico (por exemplo, Firestore)
   factory OrcamentoAdminModel.fromMap(Map<String, dynamic> map, String id) {

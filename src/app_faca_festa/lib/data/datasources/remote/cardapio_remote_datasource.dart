@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/cardapio/cardapio_item_model.dart';
 import '../../models/cardapio/cardapio_model.dart';
-import '../../../domain/repositories/cardapio_repository.dart';
+import 'package:app_faca_festa/domain/repositories/cardapio_repository.dart';
 
 class CardapioRemoteDatasource {
   CardapioRemoteDatasource(this.firestore);

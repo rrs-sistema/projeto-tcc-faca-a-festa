@@ -1,36 +1,15 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
-class ResultadoEnvioConviteEmail {
-  const ResultadoEnvioConviteEmail({
-    required this.enviados,
-    required this.semEmail,
-    required this.falhas,
-  });
+import 'package:app_faca_festa/domain/services/convite_email_service.dart';
 
-  final int enviados;
-  final List<String> semEmail;
-  final List<String> falhas;
-}
-
-class EnviarConvitesPorEmailException implements Exception {
-  const EnviarConvitesPorEmailException(this.codigo, [this.mensagem]);
-
-  final String codigo;
-  final String? mensagem;
-
-  @override
-  String toString() => mensagem?.trim().isNotEmpty == true
-      ? mensagem!
-      : 'Não foi possível enviar os convites.';
-}
-
-class EnviarConvitesPorEmailService {
+class EnviarConvitesPorEmailService implements ConviteEmailService {
   EnviarConvitesPorEmailService({required FirebaseFunctions functions})
       : _functions = functions;
 
   final FirebaseFunctions _functions;
   static const maxPorChamada = 40;
 
+  @override
   Future<ResultadoEnvioConviteEmail> enviar({
     required String idEvento,
     required List<String> idsConvidados,

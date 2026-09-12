@@ -2,11 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/servico_foto_remote_datasource.dart';
-import '../../data/repositories_impl/servico_foto_repository_impl.dart';
-import '../../domain/repositories/servico_foto_repository.dart';
-import '../../domain/usecases/gerenciar_servico_fotos.dart';
-import '../../presentation/modules/catalogo/controllers/servico_foto_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/servico_foto_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/servico_foto_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/servico_foto_repository.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_servico_fotos.dart';
+import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_foto_controller.dart';
 
 class ServicoFotoBootstrap {
   ServicoFotoBootstrap._();

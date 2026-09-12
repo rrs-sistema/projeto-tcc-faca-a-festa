@@ -1,16 +1,27 @@
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/servico_produto/categoria_servico_model.dart';
-import 'package:app_faca_festa/data/services/auditoria/auditoria_app.dart';
+import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
+import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_catalogo_servico.dart';
 
 class CategoriaServicoController extends GetxController {
-  CategoriaServicoController({required GerenciarCatalogoServico catalogo})
-      : _catalogo = catalogo;
+  CategoriaServicoController({
+    required GerenciarCatalogoServico catalogo,
+    AuditoriaRegistrar? auditoria,
+    AuditoriaRegistrar? Function()? auditoriaResolver,
+  })  : _catalogo = catalogo,
+        _auditoria = auditoria,
+        _auditoriaResolver = auditoriaResolver;
 
   final GerenciarCatalogoServico _catalogo;
+  final AuditoriaRegistrar? _auditoria;
+  final AuditoriaRegistrar? Function()? _auditoriaResolver;
+  AuditoriaRegistrar get _registradorAuditoria =>
+      _auditoria ??
+      _auditoriaResolver?.call() ??
+      const AuditoriaRegistrarVazio();
 
-  final categorias = <CategoriaServicoModel>[].obs;
+  final categorias = <CategoriaServico>[].obs;
   final contagemSubcategorias = <String, int>{}.obs;
   final busca = ''.obs;
   final filtroAtivo = RxnBool();
@@ -23,7 +34,7 @@ class CategoriaServicoController extends GetxController {
     carregarCategorias();
   }
 
-  List<CategoriaServicoModel> get categoriasFiltradas {
+  List<CategoriaServico> get categoriasFiltradas {
     final termo = busca.value.trim().toLowerCase();
     var lista = categorias.toList();
 
@@ -72,9 +83,9 @@ class CategoriaServicoController extends GetxController {
     } catch (_) {}
   }
 
-  Future<void> salvarCategoria(CategoriaServicoModel model) async {
+  Future<void> salvarCategoria(CategoriaServico model) async {
     await _catalogo.salvarCategoria(model);
-    AuditoriaApp.registrar(
+    _registradorAuditoria.registrar(
       acao: 'CATEGORIA_SALVA',
       resumo: 'Categoria de serviço salva no catálogo.',
       entidadeTipo: 'categoria_servico',
@@ -84,7 +95,7 @@ class CategoriaServicoController extends GetxController {
     await carregarCategorias();
   }
 
-  Future<void> atualizarStatus(CategoriaServicoModel model, bool ativo) async {
+  Future<void> atualizarStatus(CategoriaServico model, bool ativo) async {
     await _catalogo.atualizarStatusCategoria(model.id, ativo);
     final idx = categorias.indexWhere((c) => c.id == model.id);
     if (idx >= 0) {
@@ -104,7 +115,7 @@ class CategoriaServicoController extends GetxController {
   Future<void> excluirCategoria(String id) async {
     final atual = categorias.firstWhereOrNull((c) => c.id == id);
     await _catalogo.excluirCategoria(id);
-    AuditoriaApp.registrar(
+    _registradorAuditoria.registrar(
       acao: 'CATEGORIA_EXCLUIDA',
       resumo: 'Categoria removida do catálogo.',
       entidadeTipo: 'categoria_servico',

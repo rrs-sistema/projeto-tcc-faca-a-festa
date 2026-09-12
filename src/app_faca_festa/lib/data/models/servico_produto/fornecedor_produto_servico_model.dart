@@ -1,47 +1,24 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
+
+export 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
+
 /// Representa o vínculo entre um fornecedor e um serviço/produto.
 /// Cada fornecedor pode oferecer múltiplos serviços com preços próprios.
-class FornecedorProdutoServicoModel {
-  /// Identificador único do vínculo (documento Firestore)
-  final String id;
-
-  /// ID do produto/serviço base (FK para servico_produto)
-  final String idProdutoServico;
-
-  /// ID do fornecedor (FK para fornecedor)
-  final String idFornecedor;
-
-  /// ID da subcategoria (FK para subcategoria_servico)
-  final String? idSubcategoria; // 🔹 novo campo
-
-  /// Preço padrão do serviço
-  final double preco;
-
-  /// Preço promocional (opcional)
-  final double? precoPromocao;
-
-  /// Indica se o vínculo está ativo
-  final bool ativo;
-
-  /// Data de cadastro (útil para relatórios)
-  final DateTime dataCadastro;
-
-  final double? mediaServico;
-  final int? totalAvaliacoesServico;
-
+class FornecedorProdutoServicoModel extends FornecedorProdutoServico {
   FornecedorProdutoServicoModel({
-    required this.id,
-    required this.idProdutoServico,
-    required this.idFornecedor,
-    required this.preco,
-    this.idSubcategoria,
-    this.mediaServico,
-    this.totalAvaliacoesServico,
-    this.precoPromocao,
-    this.ativo = true,
-    DateTime? dataCadastro,
-  }) : dataCadastro = dataCadastro ?? DateTime.now();
+    required super.id,
+    required super.idProdutoServico,
+    required super.idFornecedor,
+    required super.preco,
+    super.idSubcategoria,
+    super.mediaServico,
+    super.totalAvaliacoesServico,
+    super.precoPromocao,
+    super.ativo = true,
+    super.dataCadastro,
+  });
 
   // ===========================================================
   // 🔹 Conversão para Firestore
@@ -84,6 +61,7 @@ class FornecedorProdutoServicoModel {
   // ===========================================================
   // 🔹 Atualização parcial
   // ===========================================================
+  @override
   FornecedorProdutoServicoModel copyWith({
     double? preco,
     double? precoPromocao,
@@ -99,6 +77,25 @@ class FornecedorProdutoServicoModel {
       ativo: ativo ?? this.ativo,
       idSubcategoria: idSubcategoria ?? this.idSubcategoria,
       dataCadastro: dataCadastro,
+      mediaServico: mediaServico,
+      totalAvaliacoesServico: totalAvaliacoesServico,
+    );
+  }
+
+  factory FornecedorProdutoServicoModel.fromEntity(
+    FornecedorProdutoServico vinculo,
+  ) {
+    return FornecedorProdutoServicoModel(
+      id: vinculo.id,
+      idProdutoServico: vinculo.idProdutoServico,
+      idFornecedor: vinculo.idFornecedor,
+      idSubcategoria: vinculo.idSubcategoria,
+      preco: vinculo.preco,
+      precoPromocao: vinculo.precoPromocao,
+      ativo: vinculo.ativo,
+      dataCadastro: vinculo.dataCadastro,
+      mediaServico: vinculo.mediaServico,
+      totalAvaliacoesServico: vinculo.totalAvaliacoesServico,
     );
   }
 

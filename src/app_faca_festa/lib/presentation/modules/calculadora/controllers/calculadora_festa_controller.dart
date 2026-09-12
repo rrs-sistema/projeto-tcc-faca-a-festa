@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/core/services/calculadora_festa_ai_service.dart';
 import 'package:app_faca_festa/core/services/calculadora_festa_service.dart';
-import 'package:app_faca_festa/data/models/calculadora/calculadora_evento_item_model.dart';
-import 'package:app_faca_festa/data/models/evento/analise_calculadora_ia_model.dart';
-import 'package:app_faca_festa/data/models/evento/calculadora_festa_item_model.dart';
-import 'package:app_faca_festa/data/models/evento/calculadora_festa_model.dart';
-import 'package:app_faca_festa/data/models/evento/convidados_equivalentes_model.dart';
-import 'package:app_faca_festa/data/models/evento/estimativa_financeira_model.dart';
-import 'package:app_faca_festa/data/models/evento/perfil_festa_model.dart';
-import 'package:app_faca_festa/data/models/model.dart';
+import 'package:app_faca_festa/domain/entities/analise_calculadora_ia.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
+import 'package:app_faca_festa/domain/entities/convidado.dart';
+import 'package:app_faca_festa/domain/entities/convidados_equivalentes.dart';
+import 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
+import 'package:app_faca_festa/domain/entities/perfil_festa.dart';
 import 'package:app_faca_festa/domain/repositories/calculadora_festa_repository.dart';
 import 'package:app_faca_festa/domain/repositories/calculadora_itens_base_repository_contract.dart';
 import 'package:app_faca_festa/domain/services/calculadora_festa_ai_service.dart';
@@ -39,14 +38,13 @@ class CalculadoraFestaController extends GetxController {
 
   CalculadoraFestaController({
     CalculadoraFestaService? service,
-    ICalculadoraFestaAIService? aiService,
-    CalculadoraFestaRepository? repository,
-    CalculadoraItensBaseRepositoryContract? itensBaseRepository,
+    required ICalculadoraFestaAIService aiService,
+    required CalculadoraFestaRepository repository,
+    required CalculadoraItensBaseRepositoryContract itensBaseRepository,
   })  : _service = service ?? const CalculadoraFestaService(),
-        _aiService = aiService ?? const CalculadoraFestaAIService(),
-        _repository = repository ?? Get.find<CalculadoraFestaRepository>(),
-        _itensBaseRepository = itensBaseRepository ??
-            Get.find<CalculadoraItensBaseRepositoryContract>();
+        _aiService = aiService,
+        _repository = repository,
+        _itensBaseRepository = itensBaseRepository;
 
   final RxBool loading = false.obs;
   final RxBool salvando = false.obs;
@@ -80,7 +78,7 @@ class CalculadoraFestaController extends GetxController {
   final RxBool estimativaSemEvento = false.obs;
 
   final Rx<BaseCalculoFesta> baseCalculo = BaseCalculoFesta.todosConvidados.obs;
-  final Rx<PerfilFestaModel> perfilSelecionado = PerfilFestaModel.padrao().obs;
+  final Rx<PerfilFesta> perfilSelecionado = PerfilFesta.padrao().obs;
 
   final RxInt totalAdultos = 0.obs;
   final RxInt totalCriancas = 0.obs;
@@ -104,20 +102,17 @@ class CalculadoraFestaController extends GetxController {
   final RxInt _versaoAnaliseIA = 0.obs;
   Worker? _workerAnaliseIA;
 
-  final RxList<ConvidadoModel> convidados = <ConvidadoModel>[].obs;
-  final RxList<ItemEstimativaFinanceiraModel> itensEstimativa =
-      CalculadoraFestaService.itensPadraoEstimativa.obs;
-  final RxList<CalculadoraFestaItemModel> itensCalculados =
-      <CalculadoraFestaItemModel>[].obs;
-  final RxList<CalculadoraFestaModel> simulacoesSalvas =
-      <CalculadoraFestaModel>[].obs;
+  final RxList<Convidado> convidados = <Convidado>[].obs;
+  final RxList<ItemEstimativaFinanceira> itensEstimativa =
+      CalculadoraFestaService.itensPadraoEstimativa.toList().obs;
+  final RxList<CalculadoraFestaItem> itensCalculados =
+      <CalculadoraFestaItem>[].obs;
+  final RxList<CalculadoraFesta> simulacoesSalvas = <CalculadoraFesta>[].obs;
   final RxBool carregandoSimulacoes = false.obs;
 
-  final Rxn<CalculadoraFestaModel> calculoAtual = Rxn<CalculadoraFestaModel>();
-  final Rxn<EstimativaFinanceiraModel> estimativaAtual =
-      Rxn<EstimativaFinanceiraModel>();
-  final Rxn<AnaliseCalculadoraIAModel> analiseIA =
-      Rxn<AnaliseCalculadoraIAModel>();
+  final Rxn<CalculadoraFesta> calculoAtual = Rxn<CalculadoraFesta>();
+  final Rxn<EstimativaFinanceira> estimativaAtual = Rxn<EstimativaFinanceira>();
+  final Rxn<AnaliseCalculadoraIA> analiseIA = Rxn<AnaliseCalculadoraIA>();
 
   int get totalConvidados =>
       totalAdultos.value + totalCriancas.value + totalBebes.value;
@@ -138,8 +133,7 @@ class CalculadoraFestaController extends GetxController {
         possuiTotaisDoEvento;
   }
 
-  ConvidadosEquivalentesModel get convidadosEquivalentes =>
-      ConvidadosEquivalentesModel(
+  ConvidadosEquivalentes get convidadosEquivalentes => ConvidadosEquivalentes(
         adultos: totalAdultos.value,
         criancas: totalCriancas.value,
         bebes: totalBebes.value,
@@ -210,7 +204,7 @@ class CalculadoraFestaController extends GetxController {
         tipoEvento.trim().isEmpty ? 'Evento' : tipoEvento.trim();
     estimativaSemEvento.value = modoEstimativa;
     baseCalculo.value = modoEstimativa ? BaseCalculoFesta.manual : base;
-    perfilSelecionado.value = PerfilFestaModel.fromTipo(perfilInicial);
+    perfilSelecionado.value = PerfilFesta.fromTipo(perfilInicial);
     duracaoHoras.value = duracaoInicialHoras <= 0 ? 4 : duracaoInicialHoras;
     _registrarTotaisDoEvento(
       adultos: adultosEvento,
@@ -286,7 +280,7 @@ class CalculadoraFestaController extends GetxController {
     }
 
     if (!manterPerfil) {
-      perfilSelecionado.value = PerfilFestaModel.padrao();
+      perfilSelecionado.value = PerfilFesta.padrao();
       margemPersonalizada.value = null;
     }
 
@@ -391,7 +385,9 @@ class CalculadoraFestaController extends GetxController {
     erroItensBase.value = motivo;
     itensOrigemRemota.value = false;
     origemItensCalculadora.value = OrigemItensCalculadora.fallbackLocal;
-    itensEstimativa.assignAll(CalculadoraFestaService.itensPadraoEstimativa);
+    itensEstimativa.assignAll(
+      CalculadoraFestaService.itensPadraoEstimativa,
+    );
 
     debugPrint(
       '[CalculadoraFestaController] $motivo '
@@ -403,44 +399,24 @@ class CalculadoraFestaController extends GetxController {
     }
   }
 
-  ItemEstimativaFinanceiraModel _converterItemEventoParaEstimativa(
-    CalculadoraEventoItemModel item,
+  ItemEstimativaFinanceira _converterItemEventoParaEstimativa(
+    CalculadoraEventoItem item,
   ) {
     final selecionado = item.obrigatorio || item.selecionadoPadrao;
 
-    return ItemEstimativaFinanceiraModel.fromMap({
-      'id': item.id,
-      'id_item_base': item.idItemBase,
-      'idItemBase': item.idItemBase,
-      'nome': item.nome,
-      'categoria': item.categoria,
-      'tipo_item': item.idItemBase.trim().isNotEmpty
+    return ItemEstimativaFinanceira(
+      id: item.id,
+      categoria: item.categoria,
+      nome: item.nome,
+      tipoItem: item.idItemBase.trim().isNotEmpty
           ? item.idItemBase
           : _normalizarSlug(item.nome),
-      'tipoItem': item.idItemBase.trim().isNotEmpty
-          ? item.idItemBase
-          : _normalizarSlug(item.nome),
-      'unidade': item.unidade,
-      'publico_alvo': item.publicoAlvo,
-      'publicoAlvo': item.publicoAlvo,
-      'quantidade_por_convidado_equivalente':
-          item.quantidadePorConvidadoEquivalente,
-      'quantidadePorConvidadoEquivalente':
-          item.quantidadePorConvidadoEquivalente,
-      'quantidade_por_convidado': item.quantidadePorConvidadoEquivalente,
-      'quantidadePorConvidado': item.quantidadePorConvidadoEquivalente,
-      'valor_unitario_medio': item.valorUnitarioMedio,
-      'valorUnitarioMedio': item.valorUnitarioMedio,
-      'perfis_festa': item.perfisFesta,
-      'perfisFesta': item.perfisFesta,
-      'selecionado': selecionado,
-      'selecionado_padrao': item.selecionadoPadrao,
-      'selecionadoPadrao': item.selecionadoPadrao,
-      'obrigatorio': item.obrigatorio,
-      'ativo': item.ativo,
-      'ordem': item.ordem,
-      'observacao': item.observacao,
-    });
+      publicoAlvo: item.publicoAlvo,
+      unidade: _unidadeEstimativaFromString(item.unidade),
+      quantidadePorConvidadoEquivalente: item.quantidadePorConvidadoEquivalente,
+      valorUnitarioMedio: item.valorUnitarioMedio,
+      selecionado: selecionado,
+    );
   }
 
   Future<void> carregarConvidadosDoEvento(String idEvento) async {
@@ -466,7 +442,7 @@ class CalculadoraFestaController extends GetxController {
   }
 
   void aplicarTotaisDosConvidados() {
-    Iterable<ConvidadoModel> base = convidados;
+    Iterable<Convidado> base = convidados;
 
     if (baseCalculo.value == BaseCalculoFesta.apenasConfirmados) {
       base = convidados.where((c) => c.status == StatusConvidado.confirmado);
@@ -510,7 +486,7 @@ class CalculadoraFestaController extends GetxController {
   }
 
   void selecionarPerfil(TipoPerfilFesta tipo) {
-    perfilSelecionado.value = PerfilFestaModel.fromTipo(tipo);
+    perfilSelecionado.value = PerfilFesta.fromTipo(tipo);
     margemPersonalizada.value = null;
 
     // O perfil pode alterar os itens retornados pelo Firestore
@@ -586,7 +562,7 @@ class CalculadoraFestaController extends GetxController {
     final idCalculo = calculoAtual.value?.idCalculo ??
         '${prefixo}_${idBaseCalculo}_${agora.microsecondsSinceEpoch}';
 
-    final calculoBase = CalculadoraFestaModel(
+    final calculoBase = CalculadoraFesta(
       idCalculo: idCalculo,
       idEvento:
           possuiEventoVinculado ? idEventoAtual.value : 'estimativa_temporaria',
@@ -777,8 +753,8 @@ class CalculadoraFestaController extends GetxController {
     }
   }
 
-  Future<List<CalculadoraFestaItemModel>> listarItensDaSimulacao(
-      String idCalculo) {
+  Future<List<CalculadoraFestaItem>> listarItensDaSimulacao(
+      String idCalculo) async {
     return _repository.listarItensDaSimulacao(idCalculo);
   }
 
@@ -786,13 +762,13 @@ class CalculadoraFestaController extends GetxController {
   ///
   /// Uso principal: BottomSheet "Minhas simulações". O usuário abre um cenário
   /// antigo, revisa os itens e pode continuar trabalhando sobre ele.
-  Future<void> carregarSimulacaoNoEditor(
-      CalculadoraFestaModel simulacao) async {
+  Future<void> carregarSimulacaoNoEditor(CalculadoraFesta simulacao) async {
     try {
       loading.value = true;
 
-      final itens =
-          await _repository.listarItensDaSimulacao(simulacao.idCalculo);
+      final itens = await _repository.listarItensDaSimulacao(
+        simulacao.idCalculo,
+      );
 
       idEventoAtual.value = simulacao.idEvento;
       tipoEventoAtual.value = simulacao.tipoEvento;
@@ -881,7 +857,7 @@ class CalculadoraFestaController extends GetxController {
   /// 4. Marca os itens da calculadora como enviados para orçamento.
   /// 5. Marca a simulação como convertida.
   Future<void> transformarSimulacaoEmOrcamento(
-      CalculadoraFestaModel simulacao) async {
+      CalculadoraFesta simulacao) async {
     if (simulacao.idEvento.trim().isEmpty ||
         simulacao.idEvento == 'estimativa_temporaria') {
       Get.snackbar(
@@ -918,8 +894,9 @@ class CalculadoraFestaController extends GetxController {
     try {
       convertendoOrcamento.value = true;
 
-      final itens =
-          await _repository.listarItensDaSimulacao(simulacao.idCalculo);
+      final itens = await _repository.listarItensDaSimulacao(
+        simulacao.idCalculo,
+      );
       final itensPendentes =
           itens.where((item) => !item.adicionadoAoOrcamento).toList();
 
@@ -1056,7 +1033,7 @@ class CalculadoraFestaController extends GetxController {
     tipoEventoAtual.value = '';
     estimativaSemEvento.value = false;
     baseCalculo.value = BaseCalculoFesta.todosConvidados;
-    perfilSelecionado.value = PerfilFestaModel.padrao();
+    perfilSelecionado.value = PerfilFesta.padrao();
     margemPersonalizada.value = null;
     orcamentoDisponivel.value = null;
     totalAdultos.value = 0;
@@ -1067,7 +1044,9 @@ class CalculadoraFestaController extends GetxController {
     totalBebesEvento.value = 0;
     duracaoHoras.value = 4;
     convidados.clear();
-    itensEstimativa.assignAll(CalculadoraFestaService.itensPadraoEstimativa);
+    itensEstimativa.assignAll(
+      CalculadoraFestaService.itensPadraoEstimativa,
+    );
     itensCalculados.clear();
     simulacoesSalvas.clear();
     carregandoSimulacoes.value = false;
@@ -1163,6 +1142,17 @@ class CalculadoraFestaController extends GetxController {
     }
 
     return slug.isEmpty ? 'padrao' : slug;
+  }
+
+  UnidadeEstimativa _unidadeEstimativaFromString(String? value) {
+    final normalized = value?.trim().toLowerCase() ?? '';
+
+    return UnidadeEstimativa.values.firstWhere(
+      (item) =>
+          item.name.toLowerCase() == normalized ||
+          item.label.toLowerCase() == normalized,
+      orElse: () => UnidadeEstimativa.unidade,
+    );
   }
 
   String _normalizarSlug(String value) {

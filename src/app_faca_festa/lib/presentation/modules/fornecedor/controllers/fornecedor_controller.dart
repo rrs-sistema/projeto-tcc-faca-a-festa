@@ -7,78 +7,109 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
-import 'dart:io';
 
-import 'package:app_faca_festa/data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import 'package:app_faca_festa/data/models/fornecedor/avaliacao_servico_model.dart';
-import 'package:app_faca_festa/data/models/fornecedor/fornecedor_interacao_model.dart';
-import 'package:app_faca_festa/data/models/fornecedor_intelligence/insight_fornecedor_model.dart';
-import 'package:app_faca_festa/data/models/fornecedor_intelligence/proxima_acao_fornecedor_model.dart';
-import 'package:app_faca_festa/data/models/fornecedor_intelligence/resumo_reputacao_fornecedor_model.dart';
-import 'package:app_faca_festa/data/models/fornecedor_intelligence/score_cotacao_fornecedor_model.dart';
-import 'package:app_faca_festa/data/models/fornecedor_intelligence/sugestao_resposta_cotacao_ai_model.dart';
-import 'package:app_faca_festa/data/models/model.dart';
-import 'package:app_faca_festa/data/models/servico_produto/categoria_servico_model.dart';
-import 'package:app_faca_festa/data/models/servico_produto/fornecedor_categoria_model.dart';
-import 'package:app_faca_festa/data/models/servico_produto/servico_foto_model.dart';
-import 'package:app_faca_festa/data/models/servico_produto/subcategoria_servico_model.dart';
-import 'package:app_faca_festa/data/services/auditoria/auditoria_app.dart';
-import 'package:app_faca_festa/data/services/fornecedor_ai_generativa_service.dart';
-import 'package:app_faca_festa/data/services/fornecedor_ai_service.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
+import 'package:app_faca_festa/domain/entities/avaliacao_servico.dart';
+import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
+import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_interacao.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
+import 'package:app_faca_festa/domain/entities/insight_fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/orcamento.dart';
+import 'package:app_faca_festa/domain/entities/proxima_acao_fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/resumo_reputacao_fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/score_cotacao_fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/servico_foto.dart';
+import 'package:app_faca_festa/domain/entities/servico_produto.dart';
+import 'package:app_faca_festa/domain/entities/sugestao_catalogo_fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao_ai.dart';
+import 'package:app_faca_festa/domain/entities/subcategoria_servico.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
+import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
+import 'package:app_faca_festa/domain/services/fornecedor_ai.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_orcamentos.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_servico_fotos.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_servicos_produto.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
-import 'package:app_faca_festa/presentation/dialogs/show_novo_orcamento_bottom_sheet.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/dialogs/show_novo_orcamento_bottom_sheet.dart';
 
 class FornecedorController extends GetxController {
   FornecedorController({
     AutenticacaoRepository? autenticacaoRepository,
     GerenciarFornecedores? gerenciarFornecedores,
     GerenciarServicosProduto? gerenciarServicosProduto,
-    FornecedorAiGenerativaService? fornecedorAiGenerativaService,
+    GerenciarServicosProduto? Function()? gerenciarServicosProdutoResolver,
+    GerenciarServicoFotos? gerenciarServicoFotos,
+    GerenciarServicoFotos? Function()? gerenciarServicoFotosResolver,
+    FornecedorAiRegrasService? fornecedorAiService,
+    FornecedorAiGenerativoService? fornecedorAiGenerativaService,
+    AuditoriaRegistrar? auditoria,
+    AuditoriaRegistrar? Function()? auditoriaResolver,
+    AppController? appController,
+    AppController? Function()? appControllerResolver,
   })  : _autenticacaoRepository = autenticacaoRepository,
         _gerenciarFornecedores = gerenciarFornecedores,
         _gerenciarServicosProduto = gerenciarServicosProduto,
-        _fornecedorAiGenerativaService = fornecedorAiGenerativaService;
+        _gerenciarServicosProdutoResolver = gerenciarServicosProdutoResolver,
+        _gerenciarServicoFotos = gerenciarServicoFotos,
+        _gerenciarServicoFotosResolver = gerenciarServicoFotosResolver,
+        _fornecedorAiService = fornecedorAiService,
+        _fornecedorAiGenerativaService = fornecedorAiGenerativaService,
+        _appController = appController,
+        _appControllerResolver = appControllerResolver,
+        _auditoria = auditoria,
+        _auditoriaResolver = auditoriaResolver;
 
   final AutenticacaoRepository? _autenticacaoRepository;
   final GerenciarFornecedores? _gerenciarFornecedores;
   final GerenciarServicosProduto? _gerenciarServicosProduto;
-  final FornecedorAiGenerativaService? _fornecedorAiGenerativaService;
+  final GerenciarServicosProduto? Function()? _gerenciarServicosProdutoResolver;
+  final GerenciarServicoFotos? _gerenciarServicoFotos;
+  final GerenciarServicoFotos? Function()? _gerenciarServicoFotosResolver;
+  final FornecedorAiRegrasService? _fornecedorAiService;
+  final FornecedorAiGenerativoService? _fornecedorAiGenerativaService;
+  final AppController? _appController;
+  final AppController? Function()? _appControllerResolver;
+  final AuditoriaRegistrar? _auditoria;
+  final AuditoriaRegistrar? Function()? _auditoriaResolver;
+  AuditoriaRegistrar get _registradorAuditoria =>
+      _auditoria ??
+      _auditoriaResolver?.call() ??
+      const AuditoriaRegistrarVazio();
 
   /// 🔹 Dados principais do fornecedor logado
-  final Rx<FornecedorModel?> fornecedor = Rx<FornecedorModel?>(null);
-  final RxList<FornecedorModel> fornecedores = <FornecedorModel>[].obs;
+  final Rx<Fornecedor?> fornecedor = Rx<Fornecedor?>(null);
+  final RxList<Fornecedor> fornecedores = <Fornecedor>[].obs;
 
   /// 🔹 Serviços (coleção `fornecedor_servico`)
-  final RxList<FornecedorProdutoServicoModel> servicosFornecedor =
-      <FornecedorProdutoServicoModel>[].obs;
+  final RxList<FornecedorProdutoServico> servicosFornecedor =
+      <FornecedorProdutoServico>[].obs;
 
-  final RxList<FornecedorServicoDetalhadoDto> servicosDetalhado =
-      <FornecedorServicoDetalhadoDto>[].obs;
+  final RxList<FornecedorServicoDetalhado> servicosDetalhado =
+      <FornecedorServicoDetalhado>[].obs;
 
-  final RxList<FornecedorProdutoServicoModel> allServicosFornecedor =
-      <FornecedorProdutoServicoModel>[].obs;
+  final RxList<FornecedorProdutoServico> allServicosFornecedor =
+      <FornecedorProdutoServico>[].obs;
 
   /// 🔹 Catálogo global (`servico_produto`)
-  final RxList<ServicoProdutoModel> catalogoServicos =
-      <ServicoProdutoModel>[].obs;
+  final RxList<ServicoProduto> catalogoServicos = <ServicoProduto>[].obs;
 
   /// 🔹 Fotos dos serviços (`servico_foto`)
-  final RxList<ServicoFotoModel> fotosServico = <ServicoFotoModel>[].obs;
+  final RxList<ServicoFoto> fotosServico = <ServicoFoto>[].obs;
 
-  final RxList<CategoriaServicoModel> categorias =
-      <CategoriaServicoModel>[].obs;
+  final RxList<CategoriaServico> categorias = <CategoriaServico>[].obs;
 
-  final RxList<SubcategoriaServicoModel> subCategorias =
-      <SubcategoriaServicoModel>[].obs;
+  final RxList<SubcategoriaServico> subCategorias = <SubcategoriaServico>[].obs;
 
   final categoriasServico = <Map<String, dynamic>>[].obs;
   final subcategoriasServico = <Map<String, dynamic>>[].obs;
-  StreamSubscription<FornecedorModel?>? _fornecedorSubscription;
+  StreamSubscription<Fornecedor?>? _fornecedorSubscription;
 
   //tempoMedioResposta
 
@@ -87,8 +118,7 @@ class FornecedorController extends GetxController {
 
   StreamSubscription? _solicitacoesSub;
   StreamSubscription<int>? _fornecedorCotacoesSub;
-  StreamSubscription<List<FornecedorProdutoServicoModel>>?
-      _servicosFornecedorSub;
+  StreamSubscription<List<FornecedorProdutoServico>>? _servicosFornecedorSub;
   String? _servicosEscutandoId;
   final Map<String, int> _mensagensNaoLidasPorCotacao = {};
 
@@ -112,8 +142,6 @@ class FornecedorController extends GetxController {
   int get totalPendentes =>
       fornecedores.where((f) => f.ativo && !f.aptoParaOperar).length;
   int get totalInativos => fornecedores.where((f) => !f.ativo).length;
-  late AppController appController; // 🔹 Define, mas sem inicializar aqui
-
   final filtroNome = ''.obs;
   final filtroCidade = RxnString();
   final filtroCategoria = RxnString();
@@ -122,26 +150,35 @@ class FornecedorController extends GetxController {
 
   final filtroAvaliacaoMinima = 0.0.obs;
   // 🔹 Dados auxiliares carregados de outras coleções
-  final enderecos = <EnderecoUsuarioModel>[].obs;
-  final categoriasFornecedor = <FornecedorCategoriaModel>[].obs;
+  final enderecos = <EnderecoUsuario>[].obs;
+  final categoriasFornecedor = <FornecedorCategoria>[].obs;
   final List<StreamSubscription> _mensagemListeners = [];
 
   // ============================================================
   // 🔹 IA LOCAL DO FORNECEDOR (sem API externa / sem Firestore)
   // ============================================================
-  final FornecedorAiService _fornecedorAiService = FornecedorAiService();
+  FornecedorAiRegrasService get _aiRegrasService {
+    final service = _fornecedorAiService;
+    if (service == null) {
+      throw StateError('FornecedorAiRegrasService não configurado.');
+    }
+    return service;
+  }
 
   // ============================================================
   // 🔹 IA GENERATIVA - resposta sugerida para cotação
   // ============================================================
-  FornecedorAiGenerativaService get _aiGenerativaService =>
-      _fornecedorAiGenerativaService ??
-      Get.find<FornecedorAiGenerativaService>();
+  FornecedorAiGenerativoService get _aiGenerativaService {
+    final service = _fornecedorAiGenerativaService;
+    if (service == null) {
+      throw StateError('FornecedorAiGenerativoService não configurado.');
+    }
+    return service;
+  }
 
   /// Cache local em memória por cotação. Não grava no Firestore.
-  final RxMap<String, SugestaoRespostaCotacaoAiModel>
-      sugestoesRespostaCotacaoAi =
-      <String, SugestaoRespostaCotacaoAiModel>{}.obs;
+  final RxMap<String, SugestaoRespostaCotacaoAi> sugestoesRespostaCotacaoAi =
+      <String, SugestaoRespostaCotacaoAi>{}.obs;
 
   /// Loading individual por cotação. Evita bloquear todos os cards.
   final RxMap<String, bool> carregandoRespostaCotacaoAi = <String, bool>{}.obs;
@@ -149,21 +186,20 @@ class FornecedorController extends GetxController {
   /// Loading geral para algum painel que queira observar a geração.
   final RxBool isLoadingRespostaCotacaoAi = false.obs;
 
-  final Rxn<ProximaAcaoFornecedorModel> proximaAcaoFornecedor =
-      Rxn<ProximaAcaoFornecedorModel>();
+  final Rxn<ProximaAcaoFornecedor> proximaAcaoFornecedor =
+      Rxn<ProximaAcaoFornecedor>();
 
-  final RxList<InsightFornecedorModel> insightsFornecedor =
-      <InsightFornecedorModel>[].obs;
+  final RxList<InsightFornecedor> insightsFornecedor =
+      <InsightFornecedor>[].obs;
 
   /// Score calculado por cotação. Chave: idCotacao.
-  final RxMap<String, ScoreCotacaoFornecedorModel> scoresCotacoes =
-      <String, ScoreCotacaoFornecedorModel>{}.obs;
+  final RxMap<String, ScoreCotacaoFornecedor> scoresCotacoes =
+      <String, ScoreCotacaoFornecedor>{}.obs;
 
-  final Rxn<ResumoReputacaoFornecedorModel> resumoReputacao =
-      Rxn<ResumoReputacaoFornecedorModel>();
+  final Rxn<ResumoReputacaoFornecedor> resumoReputacao =
+      Rxn<ResumoReputacaoFornecedor>();
 
-  final RxList<InsightFornecedorModel> alertasPerfil =
-      <InsightFornecedorModel>[].obs;
+  final RxList<InsightFornecedor> alertasPerfil = <InsightFornecedor>[].obs;
 
   final RxBool isLoadingAi = false.obs;
 
@@ -213,7 +249,8 @@ class FornecedorController extends GetxController {
     super.onInit();
 
     Future.delayed(Duration.zero, () {
-      appController = Get.find<AppController>();
+      final appController = _resolverAppController();
+      if (appController == null) return;
       ever(appController.usuarioLogado, (usuario) async {
         if (usuario == null) return;
         await carregarTodosFornecedores();
@@ -281,11 +318,12 @@ class FornecedorController extends GetxController {
     _limparDadosAi();
   }
 
-  Future<List<ServicoProdutoModel>> buscarServicosFornecedorPorCategorias(
+  Future<List<ServicoProduto>> buscarServicosFornecedorPorCategorias(
       String idFornecedor) async {
     try {
-      return await _servicosProduto
+      final entidades = await _servicosProduto
           .listarServicosAtivosPorCategoriasFornecedor(idFornecedor);
+      return entidades;
     } catch (e, s) {
       debugPrint('Erro ao buscar serviços do fornecedor: $e\n$s');
       return [];
@@ -293,10 +331,10 @@ class FornecedorController extends GetxController {
   }
 
   /// 🔹 Atualiza os dados de um fornecedor existente no Firestore
-  Future<void> atualizarFornecedor(FornecedorModel fornecedor) async {
+  Future<void> atualizarFornecedor(Fornecedor fornecedor) async {
     try {
       await _fornecedores.atualizarFornecedor(fornecedor);
-      AuditoriaApp.registrar(
+      _registradorAuditoria.registrar(
         acao: 'FORNECEDOR_EDITADO',
         resumo: 'Perfil do fornecedor atualizado.',
         entidadeTipo: 'fornecedor',
@@ -311,9 +349,9 @@ class FornecedorController extends GetxController {
 
   /// 🔹 Faz upload de imagem para o Firebase Storage e retorna a URL pública.
   /// Exige usuário autenticado (regras de `banners_fornecedores`).
-  Future<String> uploadBanner(
-    File imageFile, {
-    Uint8List? bytesWeb,
+  Future<String> uploadBanner({
+    required List<int> bytes,
+    required String nomeArquivo,
     String? uid,
   }) async {
     final userId = uid ?? _idUsuarioAtual;
@@ -325,8 +363,8 @@ class FornecedorController extends GetxController {
 
     try {
       return await _fornecedores.uploadBanner(
-        imageFile: imageFile,
-        bytesWeb: bytesWeb,
+        bytes: bytes,
+        nomeArquivo: nomeArquivo,
         uid: userId,
       );
     } catch (e) {
@@ -335,21 +373,36 @@ class FornecedorController extends GetxController {
   }
 
   String? get _idUsuarioAtual {
-    if (_autenticacaoRepository != null) {
-      return _autenticacaoRepository.idUsuarioAtual;
-    }
-    if (!Get.isRegistered<AutenticacaoRepository>()) return null;
-    return Get.find<AutenticacaoRepository>().idUsuarioAtual;
+    return _autenticacaoRepository?.idUsuarioAtual;
   }
 
   GerenciarFornecedores get _fornecedores {
-    if (_gerenciarFornecedores != null) return _gerenciarFornecedores;
-    return Get.find<GerenciarFornecedores>();
+    final service = _gerenciarFornecedores;
+    if (service == null) {
+      throw StateError('GerenciarFornecedores não configurado.');
+    }
+    return service;
   }
 
   GerenciarServicosProduto get _servicosProduto {
-    if (_gerenciarServicosProduto != null) return _gerenciarServicosProduto;
-    return Get.find<GerenciarServicosProduto>();
+    final service = _gerenciarServicosProduto;
+    if (service != null) return service;
+    final resolved = _gerenciarServicosProdutoResolver?.call();
+    if (resolved != null) return resolved;
+    throw StateError('GerenciarServicosProduto não configurado.');
+  }
+
+  GerenciarServicoFotos get _servicoFotos {
+    final service = _gerenciarServicoFotos;
+    if (service != null) return service;
+    final resolved = _gerenciarServicoFotosResolver?.call();
+    if (resolved != null) return resolved;
+    throw StateError('GerenciarServicoFotos não configurado.');
+  }
+
+  AppController? _resolverAppController() {
+    if (_appController != null) return _appController;
+    return _appControllerResolver?.call();
   }
 
   Future<void> carregarTodosFornecedores() async {
@@ -357,9 +410,7 @@ class FornecedorController extends GetxController {
       carregando.value = true;
       erro.value = '';
 
-      final tipo = Get.isRegistered<AppController>()
-          ? Get.find<AppController>().usuarioLogado.value?.tipo
-          : null;
+      final tipo = _resolverAppController()?.usuarioLogado.value?.tipo;
       final snapshot = await _fornecedores.carregarSnapshotAdmin(
         incluirEnderecos: tipo == 'A',
       );
@@ -379,9 +430,10 @@ class FornecedorController extends GetxController {
     }
   }
 
-  Future<FornecedorModel?> buscarFornecedor(String idUsuario) async {
+  Future<Fornecedor?> buscarFornecedor(String idUsuario) async {
     try {
-      return await _fornecedores.buscarPorIdUsuario(idUsuario);
+      final fornecedor = await _fornecedores.buscarPorIdUsuario(idUsuario);
+      return fornecedor;
     } catch (e) {
       debugPrint("❌ Erro ao buscar último evento: $e");
       return null;
@@ -390,7 +442,7 @@ class FornecedorController extends GetxController {
 
   bool _usuarioLogadoEhFornecedor() {
     try {
-      return Get.find<AppController>().usuarioLogado.value?.tipo == 'F';
+      return _resolverAppController()?.usuarioLogado.value?.tipo == 'F';
     } catch (_) {
       return false;
     }
@@ -423,7 +475,7 @@ class FornecedorController extends GetxController {
   // =============================================================
   // 🔸 LISTA FILTRADA
   // =============================================================
-  List<FornecedorModel> get fornecedoresFiltrados {
+  List<Fornecedor> get fornecedoresFiltrados {
     final resultado = fornecedores.where((f) {
       // 🔹 Busca endereço e categoria vinculados
       final endereco =
@@ -469,14 +521,14 @@ class FornecedorController extends GetxController {
     return resultado;
   }
 
-  String cidadeDoFornecedor(FornecedorModel f) {
+  String cidadeDoFornecedor(Fornecedor f) {
     return enderecos
             .firstWhereOrNull((e) => e.idUsuario == f.idUsuario)
             ?.nomeCidade ??
         '';
   }
 
-  List<String> nomesCategoriasDoFornecedor(FornecedorModel f) {
+  List<String> nomesCategoriasDoFornecedor(Fornecedor f) {
     return categoriasFornecedor
         .where((c) => c.idFornecedor == f.idFornecedor)
         .map((c) => (c.nomeCategoria ?? '').trim())
@@ -485,7 +537,7 @@ class FornecedorController extends GetxController {
         .toList();
   }
 
-  int servicosDoFornecedor(FornecedorModel f) {
+  int servicosDoFornecedor(Fornecedor f) {
     return allServicosFornecedor
         .where((s) => s.idFornecedor == f.idFornecedor)
         .length;
@@ -532,7 +584,7 @@ class FornecedorController extends GetxController {
         ativo: false,
       );
       fornecedores.removeWhere((f) => f.idFornecedor == idFornecedor);
-      AuditoriaApp.registrar(
+      _registradorAuditoria.registrar(
         acao: 'FORNECEDOR_DESATIVADO',
         resumo: 'Fornecedor desativado pelo administrador.',
         entidadeTipo: 'fornecedor',
@@ -573,7 +625,7 @@ class FornecedorController extends GetxController {
         fornecedores[i] = fornecedores[i].copyWith(aptoParaOperar: apto);
       }
       fornecedores.refresh();
-      AuditoriaApp.registrar(
+      _registradorAuditoria.registrar(
         acao: apto ? 'FORNECEDOR_APROVADO' : 'FORNECEDOR_REPROVADO',
         resumo: apto
             ? 'Fornecedor liberado para operar na plataforma.'
@@ -608,7 +660,7 @@ class FornecedorController extends GetxController {
       if (f != null) {
         fornecedores[fornecedores.indexOf(f)] = f.copyWith(ativo: true);
       }
-      AuditoriaApp.registrar(
+      _registradorAuditoria.registrar(
         acao: 'FORNECEDOR_ATIVADO',
         resumo: 'Fornecedor reativado pelo administrador.',
         entidadeTipo: 'fornecedor',
@@ -727,10 +779,10 @@ class FornecedorController extends GetxController {
 
     try {
       isLoadingFotos.value = true;
-      final fotos = <ServicoFotoModel>[];
+      final fotos = <ServicoFoto>[];
       for (final idProduto in idsUnicos) {
         fotos.addAll(
-          await Get.find<GerenciarServicoFotos>().carregarFotos(
+          await _servicoFotos.carregarFotos(
             idFornecedor: idFornecedor,
             idProdutoServico: idProduto,
           ),
@@ -748,7 +800,7 @@ class FornecedorController extends GetxController {
   // ==========================================================
   // === 🔹 Busca um serviço pelo ID
   // ==========================================================
-  ServicoProdutoModel? buscarServicoPorId(String idProdutoServico) {
+  ServicoProduto? buscarServicoPorId(String idProdutoServico) {
     return catalogoServicos.firstWhereOrNull((s) => s.id == idProdutoServico);
   }
 
@@ -758,7 +810,9 @@ class FornecedorController extends GetxController {
   Future<void> abrirCotacao({
     required BuildContext context,
     required String idEvento,
-    required FornecedorProdutoServicoModel servicoFornecedor,
+    required FornecedorProdutoServico servicoFornecedor,
+    required GerenciarOrcamentos orcamentos,
+    required EventThemeController themeController,
     String acao = 'solicitar',
     String? idOrcamento,
   }) async {
@@ -786,6 +840,10 @@ class FornecedorController extends GetxController {
       idFornecedor: servicoFornecedor.idFornecedor,
       servico: servicoFornecedor,
       statusInicial: statusInicial,
+      orcamentos: orcamentos,
+      fornecedorController: this,
+      themeController: themeController,
+      idSolicitante: _resolverAppController()?.usuarioLogado.value?.idUsuario,
       idOrcamento: idOrcamento,
     );
   }
@@ -849,7 +907,7 @@ class FornecedorController extends GetxController {
     return carregandoRespostaCotacaoAi[idCotacao] == true;
   }
 
-  SugestaoRespostaCotacaoAiModel? sugestaoRespostaAiDaCotacao(
+  SugestaoRespostaCotacaoAi? sugestaoRespostaAiDaCotacao(
     String idCotacao,
   ) {
     if (idCotacao.trim().isEmpty) return null;
@@ -859,7 +917,7 @@ class FornecedorController extends GetxController {
   /// Gera apenas uma sugestão para revisão do fornecedor.
   ///
   /// Não envia mensagem, não confirma contratação e não grava no Firestore.
-  Future<SugestaoRespostaCotacaoAiModel> gerarRespostaCotacaoComIa({
+  Future<SugestaoRespostaCotacaoAi> gerarRespostaCotacaoComIa({
     required dynamic solicitacao,
     bool forceRefresh = false,
   }) async {
@@ -932,12 +990,13 @@ class FornecedorController extends GetxController {
     }
   }
 
-  Future<EventoModel?> _buscarEventoParaRespostaAi(String? idEvento) async {
+  Future<Evento?> _buscarEventoParaRespostaAi(String? idEvento) async {
     final id = idEvento?.trim() ?? '';
     if (id.isEmpty) return null;
 
     try {
-      return _fornecedores.buscarEventoPorId(id);
+      final evento = await _fornecedores.buscarEventoPorId(id);
+      return evento;
     } catch (e) {
       debugPrint('⚠️ Não foi possível carregar evento para IA da cotação: $e');
       return null;
@@ -1026,8 +1085,8 @@ class FornecedorController extends GetxController {
     );
   }
 
-  SugestaoRespostaCotacaoAiModel _fallbackRespostaCotacaoAi(String motivo) {
-    return SugestaoRespostaCotacaoAiModel(
+  SugestaoRespostaCotacaoAi _fallbackRespostaCotacaoAi(String motivo) {
+    return SugestaoRespostaCotacaoAi(
       respostaSugerida:
           'Olá, tudo bem? Recebi sua solicitação de orçamento. Para preparar uma proposta adequada, poderia me confirmar o serviço desejado, a data, o local do evento e a quantidade de convidados?',
       versaoCurta:
@@ -1242,10 +1301,10 @@ class FornecedorController extends GetxController {
   ///
   /// Não consulta Firestore, não grava dados e não envia mensagens.
   Future<void> carregarAiFornecedorComDadosAtuais({
-    List<AvaliacaoServicoModel> avaliacoes = const [],
+    List<AvaliacaoServico> avaliacoes = const [],
     List<FornecedorAiCotacaoInput> cotacoes = const [],
-    List<EventoModel> eventos = const [],
-    List<FornecedorInteracaoModel> interacoes = const [],
+    List<Evento> eventos = const [],
+    List<FornecedorInteracao> interacoes = const [],
     bool forceRefresh = false,
   }) async {
     final f = fornecedor.value;
@@ -1274,7 +1333,7 @@ class FornecedorController extends GetxController {
       _carregandoAiInterno = true;
       isLoadingAi.value = true;
 
-      final analiseFornecedor = _fornecedorAiService.gerarAnaliseFornecedor(
+      final analiseFornecedor = _aiRegrasService.gerarAnaliseFornecedor(
         fornecedor: f,
         servicos: servicosDetalhado,
         avaliacoes: avaliacoes,
@@ -1283,7 +1342,7 @@ class FornecedorController extends GetxController {
       resumoReputacao.value = analiseFornecedor.resumoReputacao;
       alertasPerfil.assignAll(analiseFornecedor.alertasPerfilIncompleto);
 
-      final novosInsights = <InsightFornecedorModel>[
+      final novosInsights = <InsightFornecedor>[
         ...analiseFornecedor.alertasPerfilIncompleto,
         _catalogoParaInsight(
           f.idFornecedor,
@@ -1295,8 +1354,8 @@ class FornecedorController extends GetxController {
         ),
       ];
 
-      final novosScores = <String, ScoreCotacaoFornecedorModel>{};
-      ProximaAcaoFornecedorModel? melhorAcao;
+      final novosScores = <String, ScoreCotacaoFornecedor>{};
+      ProximaAcaoFornecedor? melhorAcao;
 
       for (final cotacao in cotacoes) {
         final evento = _buscarEventoDaCotacao(
@@ -1304,7 +1363,7 @@ class FornecedorController extends GetxController {
           eventos: eventos,
         );
 
-        final analiseCotacao = _fornecedorAiService.gerarAnaliseCotacao(
+        final analiseCotacao = _aiRegrasService.gerarAnaliseCotacao(
           fornecedor: f,
           evento: evento,
           cotacao: cotacao,
@@ -1332,7 +1391,7 @@ class FornecedorController extends GetxController {
 
       scoresCotacoes.assignAll(novosScores);
 
-      melhorAcao ??= _fornecedorAiService.gerarProximaAcaoInteligente(
+      melhorAcao ??= _aiRegrasService.gerarProximaAcaoInteligente(
         fornecedor: f,
         catalogo: analiseFornecedor.sugestaoCatalogo,
         reputacao: analiseFornecedor.resumoReputacao,
@@ -1355,10 +1414,10 @@ class FornecedorController extends GetxController {
 
   /// Atalho para recalcular a IA ignorando o cache local.
   Future<void> recalcularAiFornecedor({
-    List<AvaliacaoServicoModel> avaliacoes = const [],
+    List<AvaliacaoServico> avaliacoes = const [],
     List<FornecedorAiCotacaoInput> cotacoes = const [],
-    List<EventoModel> eventos = const [],
-    List<FornecedorInteracaoModel> interacoes = const [],
+    List<Evento> eventos = const [],
+    List<FornecedorInteracao> interacoes = const [],
   }) async {
     await carregarAiFornecedorComDadosAtuais(
       avaliacoes: avaliacoes,
@@ -1372,10 +1431,10 @@ class FornecedorController extends GetxController {
   /// Inicializa a IA somente uma vez. Útil para tela que chama o controller
   /// no initState/onReady e não quer recalcular a cada rebuild.
   Future<void> inicializarAiFornecedorUmaVez({
-    List<AvaliacaoServicoModel> avaliacoes = const [],
+    List<AvaliacaoServico> avaliacoes = const [],
     List<FornecedorAiCotacaoInput> cotacoes = const [],
-    List<EventoModel> eventos = const [],
-    List<FornecedorInteracaoModel> interacoes = const [],
+    List<Evento> eventos = const [],
+    List<FornecedorInteracao> interacoes = const [],
   }) async {
     if (_aiInicializada) return;
 
@@ -1393,9 +1452,9 @@ class FornecedorController extends GetxController {
   /// Use apenas quando a tela realmente precisar dos scores de cotação,
   /// pois este método usa a busca já existente de solicitações detalhadas.
   Future<void> carregarAiDasSolicitacoesPendentes({
-    List<AvaliacaoServicoModel> avaliacoes = const [],
-    List<EventoModel> eventos = const [],
-    List<FornecedorInteracaoModel> interacoes = const [],
+    List<AvaliacaoServico> avaliacoes = const [],
+    List<Evento> eventos = const [],
+    List<FornecedorInteracao> interacoes = const [],
     bool forceRefresh = false,
   }) async {
     final f = fornecedor.value;
@@ -1455,12 +1514,12 @@ class FornecedorController extends GetxController {
   }
 
   String _gerarChaveCacheAi({
-    required FornecedorModel fornecedor,
-    required List<FornecedorServicoDetalhadoDto> servicos,
-    required List<AvaliacaoServicoModel> avaliacoes,
+    required Fornecedor fornecedor,
+    required List<FornecedorServicoDetalhado> servicos,
+    required List<AvaliacaoServico> avaliacoes,
     required List<FornecedorAiCotacaoInput> cotacoes,
-    required List<EventoModel> eventos,
-    required List<FornecedorInteracaoModel> interacoes,
+    required List<Evento> eventos,
+    required List<FornecedorInteracao> interacoes,
   }) {
     final partes = <String>[
       fornecedor.idFornecedor,
@@ -1493,9 +1552,9 @@ class FornecedorController extends GetxController {
     return partes.join('#');
   }
 
-  EventoModel? _buscarEventoDaCotacao({
+  Evento? _buscarEventoDaCotacao({
     required FornecedorAiCotacaoInput cotacao,
-    required List<EventoModel> eventos,
+    required List<Evento> eventos,
   }) {
     final idEvento = cotacao.idEvento;
 
@@ -1506,9 +1565,9 @@ class FornecedorController extends GetxController {
     return eventos.firstWhereOrNull((evento) => evento.idEvento == idEvento);
   }
 
-  ProximaAcaoFornecedorModel _selecionarMelhorAcao({
-    required ProximaAcaoFornecedorModel? atual,
-    required ProximaAcaoFornecedorModel candidata,
+  ProximaAcaoFornecedor _selecionarMelhorAcao({
+    required ProximaAcaoFornecedor? atual,
+    required ProximaAcaoFornecedor candidata,
   }) {
     if (atual == null) return candidata;
 
@@ -1531,8 +1590,8 @@ class FornecedorController extends GetxController {
     return atual;
   }
 
-  List<InsightFornecedorModel> _ordenarInsights(
-    List<InsightFornecedorModel> insights,
+  List<InsightFornecedor> _ordenarInsights(
+    List<InsightFornecedor> insights,
   ) {
     final filtrados =
         insights.where((item) => item.titulo.trim().isNotEmpty).toList();
@@ -1553,11 +1612,11 @@ class FornecedorController extends GetxController {
     return filtrados;
   }
 
-  InsightFornecedorModel _catalogoParaInsight(
+  InsightFornecedor _catalogoParaInsight(
     String idFornecedor,
-    dynamic catalogo,
+    SugestaoCatalogoFornecedor catalogo,
   ) {
-    return InsightFornecedorModel(
+    return InsightFornecedor(
       idInsight: 'insight_catalogo_$idFornecedor',
       idFornecedor: idFornecedor,
       tipo: 'catalogo',
@@ -1576,14 +1635,14 @@ class FornecedorController extends GetxController {
     );
   }
 
-  InsightFornecedorModel _reputacaoParaInsight(
+  InsightFornecedor _reputacaoParaInsight(
     String idFornecedor,
-    ResumoReputacaoFornecedorModel reputacao,
+    ResumoReputacaoFornecedor reputacao,
   ) {
     final prioridade =
         reputacao.totalAvaliacoes < 5 || reputacao.mediaGeral < 4 ? 4 : 2;
 
-    return InsightFornecedorModel(
+    return InsightFornecedor(
       idInsight: 'insight_reputacao_$idFornecedor',
       idFornecedor: idFornecedor,
       tipo: 'reputacao',
@@ -1607,9 +1666,9 @@ class FornecedorController extends GetxController {
     );
   }
 
-  InsightFornecedorModel _scoreCotacaoParaInsight(
+  InsightFornecedor _scoreCotacaoParaInsight(
     String idFornecedor,
-    ScoreCotacaoFornecedorModel score,
+    ScoreCotacaoFornecedor score,
     List<String> motivos,
   ) {
     final prioridade = score.score >= 75
@@ -1624,7 +1683,7 @@ class FornecedorController extends GetxController {
             ? 'Cotação com oportunidade moderada'
             : 'Cotação com baixa compatibilidade';
 
-    return InsightFornecedorModel(
+    return InsightFornecedor(
       idInsight: 'insight_score_${score.idCotacao}',
       idFornecedor: idFornecedor,
       idEvento: score.idEvento.trim().isEmpty ? null : score.idEvento,
@@ -1694,10 +1753,10 @@ class FornecedorController extends GetxController {
     return DateTime.tryParse(value.toString());
   }
 
-  void _aplicarFallbackAi(FornecedorModel fornecedor) {
+  void _aplicarFallbackAi(Fornecedor fornecedor) {
     final now = DateTime.now();
 
-    proximaAcaoFornecedor.value = ProximaAcaoFornecedorModel(
+    proximaAcaoFornecedor.value = ProximaAcaoFornecedor(
       idAcao: 'acao_fallback_${fornecedor.idFornecedor}',
       idFornecedor: fornecedor.idFornecedor,
       tipoAcao: 'fallback',
@@ -1715,7 +1774,7 @@ class FornecedorController extends GetxController {
     );
 
     insightsFornecedor.assignAll([
-      InsightFornecedorModel(
+      InsightFornecedor(
         idInsight: 'insight_fallback_${fornecedor.idFornecedor}',
         idFornecedor: fornecedor.idFornecedor,
         tipo: 'fallback',

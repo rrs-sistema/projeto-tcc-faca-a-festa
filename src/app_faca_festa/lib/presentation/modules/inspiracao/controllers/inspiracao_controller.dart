@@ -1,34 +1,32 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:app_faca_festa/data/models/evento/inspiracao_model.dart';
-import 'package:app_faca_festa/data/models/evento/inspiracao_snapshot_item.dart';
-import 'package:app_faca_festa/data/models/fornecedor/fornecedor_model.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
+import 'package:app_faca_festa/domain/entities/referencia_evento.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
 
 class InspiracaoController extends GetxController {
   InspiracaoController({
-    GerenciarInspiracoes? inspiracoes,
-  }) : _inspiracoes = inspiracoes ?? Get.find<GerenciarInspiracoes>();
+    required GerenciarInspiracoes inspiracoes,
+  }) : _inspiracoes = inspiracoes;
 
   final GerenciarInspiracoes _inspiracoes;
 
-  final RxList<InspiracaoModel> todasInspiracoes = <InspiracaoModel>[].obs;
-  final RxList<InspiracaoModel> inspiracoesFiltradas = <InspiracaoModel>[].obs;
-  final RxList<ReferenciaEventoModel> referenciasEvento =
-      <ReferenciaEventoModel>[].obs;
+  final RxList<Inspiracao> todasInspiracoes = <Inspiracao>[].obs;
+  final RxList<Inspiracao> inspiracoesFiltradas = <Inspiracao>[].obs;
+  final RxList<ReferenciaEvento> referenciasEvento = <ReferenciaEvento>[].obs;
 
   final RxList<Map<String, dynamic>> tarefasInspiracaoEvento =
       <Map<String, dynamic>>[].obs;
   final RxList<Map<String, dynamic>> orcamentosInspiracaoEvento =
       <Map<String, dynamic>>[].obs;
-  final RxList<FornecedorModel> fornecedoresRelacionados =
-      <FornecedorModel>[].obs;
+  final RxList<Fornecedor> fornecedoresRelacionados = <Fornecedor>[].obs;
 
   final RxSet<String> referenciasSalvasIds = <String>{}.obs;
   final RxSet<String> favoritasIds = <String>{}.obs;
@@ -38,8 +36,8 @@ class InspiracaoController extends GetxController {
   final RxBool salvando = false.obs;
   final RxString categoriaSelecionada = 'Tudo'.obs;
 
-  StreamSubscription<List<InspiracaoSnapshotItem>>? _subInspiracoes;
-  StreamSubscription<List<ReferenciaEventoModel>>? _subReferencias;
+  StreamSubscription<List<InspiracaoSnapshot>>? _subInspiracoes;
+  StreamSubscription<List<ReferenciaEvento>>? _subReferencias;
   StreamSubscription<List<Map<String, dynamic>>>? _subTarefas;
   StreamSubscription<List<Map<String, dynamic>>>? _subOrcamento;
 
@@ -223,7 +221,7 @@ class InspiracaoController extends GetxController {
     }
   }
 
-  FornecedorModel? fornecedorRelacionadoPorId(String id) {
+  Fornecedor? fornecedorRelacionadoPorId(String id) {
     final alvo = id.trim();
     if (alvo.isEmpty) return null;
     for (final fornecedor in fornecedoresRelacionados) {
@@ -232,8 +230,8 @@ class InspiracaoController extends GetxController {
     return null;
   }
 
-  List<FornecedorModel> fornecedoresDaInspiracao(InspiracaoModel inspiracao) {
-    final lista = <FornecedorModel>[];
+  List<Fornecedor> fornecedoresDaInspiracao(Inspiracao inspiracao) {
+    final lista = <Fornecedor>[];
     final vistos = <String>{};
     for (final raw in inspiracao.fornecedoresRelacionados) {
       final fornecedor = fornecedorRelacionadoPorId(raw);
@@ -244,8 +242,8 @@ class InspiracaoController extends GetxController {
     return lista;
   }
 
-  List<FornecedorModel> fornecedoresDasInspiracoesFiltradas() {
-    final lista = <FornecedorModel>[];
+  List<Fornecedor> fornecedoresDasInspiracoesFiltradas() {
+    final lista = <Fornecedor>[];
     final vistos = <String>{};
     for (final inspiracao in inspiracoesFiltradas) {
       for (final fornecedor in fornecedoresDaInspiracao(inspiracao)) {
@@ -270,7 +268,7 @@ class InspiracaoController extends GetxController {
       return;
     }
 
-    final lista = <FornecedorModel>[];
+    final lista = <Fornecedor>[];
     for (final id in ids) {
       try {
         final fornecedor = await _inspiracoes.buscarFornecedor(id);
@@ -287,7 +285,7 @@ class InspiracaoController extends GetxController {
   }
 
   Future<void> salvarInspiracaoNoEvento(
-    InspiracaoModel inspiracao, {
+    Inspiracao inspiracao, {
     bool favorito = false,
     bool showSuccessMessage = true,
     String status = 'salva',
@@ -426,7 +424,8 @@ class InspiracaoController extends GetxController {
       await _inspiracoes.adicionarReferenciaPessoal(
         eventoId: _eventoIdAtual!,
         userId: _userIdAtual!,
-        imageFile: File(image.path),
+        bytes: await image.readAsBytes(),
+        nomeArquivo: image.name,
       );
 
       EasyLoading.showSuccess('Referência adicionada ao evento ✨');
@@ -480,7 +479,7 @@ class InspiracaoController extends GetxController {
   }
 
   Future<void> _atualizarIndicadoresReferencia({
-    required InspiracaoModel inspiracao,
+    required Inspiracao inspiracao,
     bool? checklistCriado,
     bool? orcamentoCriado,
   }) async {
@@ -494,7 +493,7 @@ class InspiracaoController extends GetxController {
     );
   }
 
-  Future<void> gerarChecklistDaInspiracao(InspiracaoModel inspiracao) async {
+  Future<void> gerarChecklistDaInspiracao(Inspiracao inspiracao) async {
     if (!_temContextoEvento) {
       EasyLoading.showInfo('Carregue o evento antes de criar checklist.');
       return;
@@ -561,7 +560,7 @@ class InspiracaoController extends GetxController {
     }
   }
 
-  Future<void> gerarOrcamentoDaInspiracao(InspiracaoModel inspiracao) async {
+  Future<void> gerarOrcamentoDaInspiracao(Inspiracao inspiracao) async {
     if (!_temContextoEvento) {
       EasyLoading.showInfo('Carregue o evento antes de criar orçamento.');
       return;

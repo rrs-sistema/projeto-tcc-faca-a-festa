@@ -5,17 +5,17 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:uuid/uuid.dart';
 
-import './../../../core/utils/form_validators.dart';
-import './../../../domain/entities/gift/gift.dart';
-import '../tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/core/utils/form_validators.dart';
+import 'package:app_faca_festa/domain/entities/gift/gift.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'controllers/gift_controller.dart';
 
 void abrirDialogCadastrarPresente(
   BuildContext context, {
   Gift? presente,
+  required GiftController controller,
+  required EventThemeController themeController,
 }) {
-  final themeController = Get.find<EventThemeController>();
-  final controller = Get.find<GiftController>();
   final uuid = const Uuid();
   final bool editando = presente != null;
 

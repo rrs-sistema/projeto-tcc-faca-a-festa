@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/convidado/convidado_model.dart';
-import '../../../domain/repositories/convite_convidado_repository.dart';
+import 'package:app_faca_festa/domain/repositories/convite_convidado_repository.dart';
 
 abstract interface class ConviteConvidadoRemoteDatasource {
   Future<ConvidadoModel?> vincularPorToken({

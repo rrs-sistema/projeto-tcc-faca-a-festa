@@ -1,7 +1,11 @@
-import '../../domain/repositories/catalogo_servico_repository.dart';
+import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
+import 'package:app_faca_festa/domain/entities/subcategoria_servico.dart';
+import 'package:app_faca_festa/domain/repositories/catalogo_servico_repository.dart';
 import '../datasources/remote/catalogo_servico_remote_datasource.dart';
-import '../models/servico_produto/categoria_servico_model.dart';
-import '../models/servico_produto/subcategoria_servico_model.dart';
+import '../models/servico_produto/categoria_servico_model.dart'
+    hide CategoriaServico;
+import '../models/servico_produto/subcategoria_servico_model.dart'
+    hide SubcategoriaServico;
 
 class CatalogoServicoRepositoryImpl implements CatalogoServicoRepository {
   CatalogoServicoRepositoryImpl(this.remote);
@@ -9,7 +13,7 @@ class CatalogoServicoRepositoryImpl implements CatalogoServicoRepository {
   final CatalogoServicoRemoteDatasource remote;
 
   @override
-  Future<List<CategoriaServicoModel>> listarCategorias() {
+  Future<List<CategoriaServico>> listarCategorias() {
     return remote.listarCategorias();
   }
 
@@ -19,8 +23,8 @@ class CatalogoServicoRepositoryImpl implements CatalogoServicoRepository {
   }
 
   @override
-  Future<void> salvarCategoria(CategoriaServicoModel categoria) {
-    return remote.salvarCategoria(categoria);
+  Future<void> salvarCategoria(CategoriaServico categoria) {
+    return remote.salvarCategoria(CategoriaServicoModel.fromEntity(categoria));
   }
 
   @override
@@ -39,7 +43,7 @@ class CatalogoServicoRepositoryImpl implements CatalogoServicoRepository {
   }
 
   @override
-  Future<List<SubcategoriaServicoModel>> listarSubcategorias({
+  Future<List<SubcategoriaServico>> listarSubcategorias({
     String? idCategoria,
   }) {
     return remote.listarSubcategorias(idCategoria: idCategoria);
@@ -51,8 +55,10 @@ class CatalogoServicoRepositoryImpl implements CatalogoServicoRepository {
   }
 
   @override
-  Future<void> salvarSubcategoria(SubcategoriaServicoModel subcategoria) {
-    return remote.salvarSubcategoria(subcategoria);
+  Future<void> salvarSubcategoria(SubcategoriaServico subcategoria) {
+    return remote.salvarSubcategoria(
+      SubcategoriaServicoModel.fromEntity(subcategoria),
+    );
   }
 
   @override

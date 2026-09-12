@@ -1,4 +1,4 @@
-import '../../data/models/fornecedor/territorio_model.dart';
+import '../entities/territorio.dart';
 import '../repositories/admin_territorio_repository.dart';
 
 class GerenciarAdminTerritorios {
@@ -6,11 +6,11 @@ class GerenciarAdminTerritorios {
 
   final AdminTerritorioRepository repository;
 
-  Future<List<TerritorioModel>> listarTerritorios() {
+  Future<List<Territorio>> listarTerritorios() {
     return repository.listarTerritorios();
   }
 
-  Future<void> salvarTerritorio(TerritorioModel territorio) {
+  Future<void> salvarTerritorio(Territorio territorio) {
     return repository.salvarTerritorio(territorio);
   }
 

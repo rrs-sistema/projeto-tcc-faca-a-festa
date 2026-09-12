@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../models/auditoria/auditoria_evento_model.dart';
 import '../../services/functions/callable_https_client.dart';
-import '../../../domain/entities/auditoria_evento.dart';
+import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 
 class AuditoriaRemoteDatasource {
   AuditoriaRemoteDatasource({

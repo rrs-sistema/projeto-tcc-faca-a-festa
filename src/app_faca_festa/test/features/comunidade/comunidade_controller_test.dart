@@ -4,8 +4,7 @@ import 'package:app_faca_festa/presentation/modules/comunidade/controllers/comun
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/data/models/comunidade/comunidade_post_model.dart';
-import 'package:app_faca_festa/data/models/comunidade/comunidade_comentario_model.dart';
+import 'package:app_faca_festa/domain/entities/comunidade.dart';
 import 'package:app_faca_festa/domain/repositories/comunidade_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_comunidade.dart';
 
@@ -61,11 +60,11 @@ void main() {
   });
 }
 
-ComunidadePostModel _post({
+ComunidadePost _post({
   required String id,
   required String texto,
 }) {
-  return ComunidadePostModel(
+  return ComunidadePost(
     id: id,
     autor: 'Usuario',
     texto: texto,
@@ -74,11 +73,11 @@ ComunidadePostModel _post({
 }
 
 class _ComunidadeRepositoryFake implements ComunidadeRepository {
-  final _controller = StreamController<List<ComunidadePostModel>>();
+  final _controller = StreamController<List<ComunidadePost>>();
   final postsCriados = <_PostCriado>[];
   final comentariosCriados = <_ComentarioCriado>[];
 
-  void emitir(List<ComunidadePostModel> posts) {
+  void emitir(List<ComunidadePost> posts) {
     _controller.add(posts);
   }
 
@@ -87,12 +86,12 @@ class _ComunidadeRepositoryFake implements ComunidadeRepository {
   }
 
   @override
-  Stream<List<ComunidadePostModel>> observarPosts() {
+  Stream<List<ComunidadePost>> observarPosts() {
     return _controller.stream;
   }
 
   @override
-  Stream<List<ComunidadeComentarioModel>> observarComentarios(String postId) {
+  Stream<List<ComunidadeComentario>> observarComentarios(String postId) {
     return const Stream.empty();
   }
 

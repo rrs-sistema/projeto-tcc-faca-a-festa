@@ -1,11 +1,21 @@
 import 'inspiracao_model.dart';
 
-class InspiracaoSnapshotItem {
-  const InspiracaoSnapshotItem({
-    required this.inspiracao,
-    required this.data,
-  });
+import 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
 
-  final InspiracaoModel inspiracao;
-  final Map<String, dynamic> data;
+export 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
+
+class InspiracaoSnapshotItem extends InspiracaoSnapshot {
+  const InspiracaoSnapshotItem({
+    required InspiracaoModel inspiracao,
+    required super.data,
+  }) : super(inspiracao: inspiracao);
+
+  factory InspiracaoSnapshotItem.fromEntity(InspiracaoSnapshot entity) {
+    if (entity is InspiracaoSnapshotItem) return entity;
+
+    return InspiracaoSnapshotItem(
+      inspiracao: InspiracaoModel.fromEntity(entity.inspiracao),
+      data: Map<String, dynamic>.from(entity.data),
+    );
+  }
 }

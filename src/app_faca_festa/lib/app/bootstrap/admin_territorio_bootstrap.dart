@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/admin_territorio_remote_datasource.dart';
-import '../../data/repositories_impl/admin_territorio_repository_impl.dart';
-import '../../domain/repositories/admin_territorio_repository.dart';
-import '../../domain/usecases/gerenciar_admin_territorios.dart';
-import '../../presentation/modules/admin/controllers/admin_territorio_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/admin_territorio_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/admin_territorio_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/admin_territorio_repository.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_admin_territorios.dart';
+import 'package:app_faca_festa/presentation/modules/admin/controllers/admin_territorio_controller.dart';
 
 class AdminTerritorioBootstrap {
   AdminTerritorioBootstrap._();

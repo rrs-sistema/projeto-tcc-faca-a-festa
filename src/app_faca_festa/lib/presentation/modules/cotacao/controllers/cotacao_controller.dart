@@ -4,24 +4,45 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import 'package:app_faca_festa/data/models/model.dart';
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
-import 'package:app_faca_festa/presentation/modules/orcamento/orcamento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
 
 class CotacaoController extends GetxController {
-  CotacaoController({GerenciarCotacoes? gerenciarCotacoes})
-      : _gerenciarCotacoes = gerenciarCotacoes ?? Get.find<GerenciarCotacoes>();
+  CotacaoController({
+    required GerenciarCotacoes gerenciarCotacoes,
+    AppController? appController,
+    AppController? Function()? appControllerResolver,
+    FornecedorController? fornecedorController,
+    FornecedorController? Function()? fornecedorControllerResolver,
+    OrcamentoController? orcamentoController,
+    OrcamentoController? Function()? orcamentoControllerResolver,
+  })  : _gerenciarCotacoes = gerenciarCotacoes,
+        _appController = appController,
+        _fornecedorController = fornecedorController,
+        _orcamentoController = orcamentoController,
+        _appControllerResolver = appControllerResolver,
+        _fornecedorControllerResolver = fornecedorControllerResolver,
+        _orcamentoControllerResolver = orcamentoControllerResolver;
 
   final GerenciarCotacoes _gerenciarCotacoes;
-  final cotacoes = <CotacaoModel>[].obs;
+  final AppController? _appController;
+  final FornecedorController? _fornecedorController;
+  final OrcamentoController? _orcamentoController;
+  final AppController? Function()? _appControllerResolver;
+  final FornecedorController? Function()? _fornecedorControllerResolver;
+  final OrcamentoController? Function()? _orcamentoControllerResolver;
+  final cotacoes = <Cotacao>[].obs;
   final carregando = false.obs;
 
   StreamSubscription? _cotacaoStream;
   final Map<String, StreamSubscription> _subStreams = {};
   final RxInt totalCount = 0.obs;
   final RxInt contratadosCount = 0.obs;
+
+  GerenciarCotacoes get gerenciarCotacoes => _gerenciarCotacoes;
 
   void _atualizarContagens() {
     contratadosCount.value =
@@ -33,7 +54,7 @@ class CotacaoController extends GetxController {
   // 🔹 Escuta todas as cotações do organizador logado
   // ============================================================
   void ouvirMinhasCotacoes() async {
-    final idUsuario = Get.find<AppController>().usuarioLogado.value?.idUsuario;
+    final idUsuario = _resolverAppController()?.usuarioLogado.value?.idUsuario;
     if (idUsuario == null) return;
 
     carregando.value = true;
@@ -97,8 +118,17 @@ class CotacaoController extends GetxController {
 
   Future<void> confirmarFornecedorEscolhido(
       String idFornecedor, String idCotacao) async {
-    final fornecedorController = Get.find<FornecedorController>();
-    final appController = Get.find<AppController>();
+    final fornecedorController = _resolverFornecedorController();
+    final appController = _resolverAppController();
+    if (fornecedorController == null || appController == null) {
+      Get.snackbar(
+        'Erro',
+        'Não foi possível carregar os dados para fechar o negócio.',
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+      return;
+    }
     final fornecedor = fornecedorController.fornecedores
         .firstWhere((f) => f.idFornecedor == idFornecedor);
 
@@ -131,7 +161,7 @@ class CotacaoController extends GetxController {
 
       // Atualizar listas
       ouvirMinhasCotacoes();
-      Get.find<OrcamentoController>().carregarOrcamentosDoEvento(idEvento);
+      _resolverOrcamentoController()?.carregarOrcamentosDoEvento(idEvento);
     } catch (e) {
       EasyLoading.dismiss();
       Get.snackbar(
@@ -141,6 +171,21 @@ class CotacaoController extends GetxController {
         colorText: Colors.white,
       );
     }
+  }
+
+  AppController? _resolverAppController() {
+    if (_appController != null) return _appController;
+    return _appControllerResolver?.call();
+  }
+
+  FornecedorController? _resolverFornecedorController() {
+    if (_fornecedorController != null) return _fornecedorController;
+    return _fornecedorControllerResolver?.call();
+  }
+
+  OrcamentoController? _resolverOrcamentoController() {
+    if (_orcamentoController != null) return _orcamentoController;
+    return _orcamentoControllerResolver?.call();
   }
 
   void _cancelarSubStreams() {

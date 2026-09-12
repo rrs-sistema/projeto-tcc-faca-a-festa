@@ -1,7 +1,12 @@
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
+import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidade_controller.dart';
+import 'package:app_faca_festa/domain/entities/endereco_cep_resultado.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
+import 'package:app_faca_festa/domain/repositories/uf_cidade_repository.dart';
+import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_ufs_cidades.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -10,7 +15,13 @@ void main() {
 
   setUp(() {
     repository = _EventoRepositoryFake();
-    controller = EventoCadastroController(repository: repository);
+    controller = EventoCadastroController(
+      repository: repository,
+      buscarCepService: _BuscarCepServiceFake(),
+      ufCidadeController: UFCidadeController(
+        ufsCidades: GerenciarUfsCidades(_UfCidadeRepositoryFake()),
+      ),
+    );
   });
 
   tearDown(() {
@@ -45,6 +56,25 @@ void main() {
 
     expect(controller.tiposEvento, [same(existente)]);
   });
+}
+
+class _BuscarCepServiceFake implements BuscarCepService {
+  @override
+  Future<EnderecoCepResultado> buscar({required String cep}) async {
+    return EnderecoCepResultado(
+      cep: cep,
+      formatado: cep,
+      logradouro: '',
+      numero: '',
+      bairro: '',
+      cidade: '',
+      uf: '',
+      latitude: null,
+      longitude: null,
+      possuiCoordenadas: false,
+      origemCalculo: '',
+    );
+  }
 }
 
 class _EventoRepositoryFake implements EventoRepository {
@@ -107,4 +137,13 @@ class _EventoRepositoryFake implements EventoRepository {
     required String idEvento,
     String? rotuloBanner,
   }) async {}
+}
+
+class _UfCidadeRepositoryFake implements UfCidadeRepository {
+  @override
+  Future<List<Map<String, dynamic>>> carregarEstados() async => const [];
+
+  @override
+  Future<List<Map<String, dynamic>>> carregarCidades(String idEstado) async =>
+      const [];
 }

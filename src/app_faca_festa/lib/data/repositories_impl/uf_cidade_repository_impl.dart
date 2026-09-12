@@ -1,4 +1,4 @@
-import '../../domain/repositories/uf_cidade_repository.dart';
+import 'package:app_faca_festa/domain/repositories/uf_cidade_repository.dart';
 import '../datasources/remote/uf_cidade_remote_datasource.dart';
 
 class UfCidadeRepositoryImpl implements UfCidadeRepository {

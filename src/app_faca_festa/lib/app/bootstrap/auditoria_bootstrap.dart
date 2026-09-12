@@ -2,12 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/auditoria_remote_datasource.dart';
-import '../../data/repositories_impl/auditoria_repository_impl.dart';
-import '../../data/services/functions/callable_https_client.dart';
-import '../../domain/repositories/auditoria_repository.dart';
-import '../../domain/usecases/gerenciar_auditoria.dart';
-import '../../presentation/modules/auditoria/controllers/auditoria_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/auditoria_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/auditoria_repository_impl.dart';
+import 'package:app_faca_festa/data/services/auditoria/auditoria_registrar_app.dart';
+import 'package:app_faca_festa/data/services/functions/callable_https_client.dart';
+import 'package:app_faca_festa/domain/repositories/auditoria_repository.dart';
+import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
+import 'package:app_faca_festa/presentation/modules/auditoria/controllers/auditoria_controller.dart';
 
 class AuditoriaBootstrap {
   AuditoriaBootstrap._();
@@ -34,6 +36,13 @@ class AuditoriaBootstrap {
     if (!Get.isRegistered<GerenciarAuditoria>()) {
       Get.lazyPut<GerenciarAuditoria>(
         () => GerenciarAuditoria(Get.find<AuditoriaRepository>()),
+        fenix: true,
+      );
+    }
+
+    if (!Get.isRegistered<AuditoriaRegistrar>()) {
+      Get.lazyPut<AuditoriaRegistrar>(
+        () => AuditoriaRegistrarApp(Get.find<GerenciarAuditoria>()),
         fenix: true,
       );
     }

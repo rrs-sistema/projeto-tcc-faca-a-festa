@@ -1,9 +1,9 @@
-import 'dart:io';
 import 'dart:typed_data';
 
-import '../../data/models/evento/inspiracao_model.dart';
-import '../../data/models/evento/inspiracao_snapshot_item.dart';
-import '../../data/models/fornecedor/fornecedor_model.dart';
+import '../entities/fornecedor.dart';
+import '../entities/inspiracao.dart';
+import '../entities/inspiracao_snapshot.dart';
+import '../entities/referencia_evento.dart';
 import '../repositories/inspiracao_repository.dart';
 
 class GerenciarInspiracoes {
@@ -14,7 +14,7 @@ class GerenciarInspiracoes {
 
   final InspiracaoRepository repository;
 
-  Stream<List<InspiracaoSnapshotItem>> observarInspiracoes() {
+  Stream<List<InspiracaoSnapshot>> observarInspiracoes() {
     return repository.observarInspiracoes();
   }
 
@@ -106,7 +106,7 @@ class GerenciarInspiracoes {
     return repository.removerArquivoStoragePorUrl(url);
   }
 
-  Stream<List<ReferenciaEventoModel>> observarReferenciasEvento(
+  Stream<List<ReferenciaEvento>> observarReferenciasEvento(
     String eventoId,
   ) {
     return repository.observarReferenciasEvento(eventoId);
@@ -120,7 +120,7 @@ class GerenciarInspiracoes {
     return repository.observarOrcamentoEvento(eventoId);
   }
 
-  Future<FornecedorModel?> buscarFornecedor(String idFornecedor) {
+  Future<Fornecedor?> buscarFornecedor(String idFornecedor) {
     return repository.buscarFornecedor(idFornecedor);
   }
 
@@ -128,7 +128,7 @@ class GerenciarInspiracoes {
     required String eventoId,
     required String userId,
     required String referenciaId,
-    required InspiracaoModel inspiracao,
+    required Inspiracao inspiracao,
     required bool favorito,
     required String status,
     required String prioridade,
@@ -171,12 +171,14 @@ class GerenciarInspiracoes {
   Future<void> adicionarReferenciaPessoal({
     required String eventoId,
     required String userId,
-    required File imageFile,
+    required List<int> bytes,
+    required String nomeArquivo,
   }) {
     return repository.adicionarReferenciaPessoal(
       eventoId: eventoId,
       userId: userId,
-      imageFile: imageFile,
+      bytes: bytes,
+      nomeArquivo: nomeArquivo,
     );
   }
 
@@ -209,7 +211,7 @@ class GerenciarInspiracoes {
   Future<void> criarChecklistDaInspiracao({
     required String eventoId,
     required String userId,
-    required InspiracaoModel inspiracao,
+    required Inspiracao inspiracao,
     required List<Map<String, dynamic>> tarefas,
   }) {
     return repository.criarChecklistDaInspiracao(
@@ -223,7 +225,7 @@ class GerenciarInspiracoes {
   Future<void> criarOrcamentoDaInspiracao({
     required String eventoId,
     required String userId,
-    required InspiracaoModel inspiracao,
+    required Inspiracao inspiracao,
     required List<Map<String, dynamic>> itens,
   }) {
     return repository.criarOrcamentoDaInspiracao(

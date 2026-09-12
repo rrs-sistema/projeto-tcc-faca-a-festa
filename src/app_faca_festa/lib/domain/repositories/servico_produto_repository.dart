@@ -1,26 +1,26 @@
-import '../../data/models/DTO/fornecedor_servico_detalhado_dto.dart';
-import '../../data/models/servico_produto/fornecedor_produto_servico_model.dart';
-import '../../data/models/servico_produto/servico_produto_model.dart';
+import '../entities/fornecedor_servico_detalhado.dart';
+import '../entities/fornecedor_produto_servico.dart';
+import '../entities/servico_produto.dart';
 
 abstract interface class ServicoProdutoRepository {
-  Future<List<ServicoProdutoModel>> listarServicos();
+  Future<List<ServicoProduto>> listarServicos();
 
-  Future<List<ServicoProdutoModel>> listarServicosAtivos();
+  Future<List<ServicoProduto>> listarServicosAtivos();
 
-  Future<List<ServicoProdutoModel>> listarServicosAtivosPorSubcategoria(
+  Future<List<ServicoProduto>> listarServicosAtivosPorSubcategoria(
     String idSubcategoria,
   );
 
-  Future<List<ServicoProdutoModel>> listarServicosAtivosPorCategoriasFornecedor(
+  Future<List<ServicoProduto>> listarServicosAtivosPorCategoriasFornecedor(
       String idFornecedor);
 
-  Future<List<FornecedorServicoDetalhadoDto>> listarServicosComDetalhes({
+  Future<List<FornecedorServicoDetalhado>> listarServicosComDetalhes({
     String? idFornecedor,
   });
 
   Future<void> excluirServico(String id);
 
-  Future<void> salvarServico(ServicoProdutoModel servico);
+  Future<void> salvarServico(ServicoProduto servico);
 
   Future<int> popularCatalogoInicial();
 
@@ -36,7 +36,7 @@ abstract interface class ServicoProdutoRepository {
     String idSubcategoria,
   );
 
-  Future<void> salvarVinculo(FornecedorProdutoServicoModel vinculo);
+  Future<void> salvarVinculo(FornecedorProdutoServico vinculo);
 
   Future<void> excluirVinculo(String id);
 }

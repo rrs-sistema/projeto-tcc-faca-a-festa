@@ -1,25 +1,11 @@
 import 'analise_calculadora_ia_model.dart';
 import 'convidados_equivalentes_model.dart';
 import 'perfil_festa_model.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 
-enum BaseCalculoFesta {
-  todosConvidados,
-  apenasConfirmados,
-  manual,
-}
+export 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 
-extension BaseCalculoFestaExtension on BaseCalculoFesta {
-  String get label {
-    switch (this) {
-      case BaseCalculoFesta.todosConvidados:
-        return 'Todos';
-      case BaseCalculoFesta.apenasConfirmados:
-        return 'Confirmados';
-      case BaseCalculoFesta.manual:
-        return 'Manual';
-    }
-  }
-
+extension BaseCalculoFestaModelExtension on BaseCalculoFesta {
   static BaseCalculoFesta fromString(String? value) {
     final normalized = value?.trim().toLowerCase() ?? '';
 
@@ -30,40 +16,8 @@ extension BaseCalculoFestaExtension on BaseCalculoFesta {
   }
 }
 
-enum StatusSimulacaoCalculadora {
-  rascunho,
-  aprovada,
-  convertidaOrcamento,
-  cancelada,
-}
-
-extension StatusSimulacaoCalculadoraExtension on StatusSimulacaoCalculadora {
-  String get value {
-    switch (this) {
-      case StatusSimulacaoCalculadora.rascunho:
-        return 'rascunho';
-      case StatusSimulacaoCalculadora.aprovada:
-        return 'aprovada';
-      case StatusSimulacaoCalculadora.convertidaOrcamento:
-        return 'convertida_orcamento';
-      case StatusSimulacaoCalculadora.cancelada:
-        return 'cancelada';
-    }
-  }
-
-  String get label {
-    switch (this) {
-      case StatusSimulacaoCalculadora.rascunho:
-        return 'Rascunho';
-      case StatusSimulacaoCalculadora.aprovada:
-        return 'Aprovada';
-      case StatusSimulacaoCalculadora.convertidaOrcamento:
-        return 'Convertida em orçamento';
-      case StatusSimulacaoCalculadora.cancelada:
-        return 'Cancelada';
-    }
-  }
-
+extension StatusSimulacaoCalculadoraModelExtension
+    on StatusSimulacaoCalculadora {
   static StatusSimulacaoCalculadora fromString(String? value) {
     final normalized = value?.trim().toLowerCase() ?? '';
 
@@ -82,51 +36,19 @@ extension StatusSimulacaoCalculadoraExtension on StatusSimulacaoCalculadora {
   }
 }
 
-class CalculadoraFestaModel {
-  final String idCalculo;
-  final String idEvento;
-  final String tipoEvento;
-  final BaseCalculoFesta baseCalculo;
-  final int totalAdultos;
-  final int totalCriancas;
-  final int totalBebes;
-  final int duracaoHoras;
-  final DateTime dataCalculo;
-  final DateTime dataAtualizacao;
-
-  /// Campos da calculadora inteligente.
-  final PerfilFestaModel perfilFesta;
-  final double? margemPersonalizada;
-  final double custoTotalEstimado;
-
-  /// Metadados da simulação.
-  ///
-  /// São opcionais para manter compatibilidade com o controller/telas compactas
-  /// já existentes. Assim, chamadas antigas do construtor continuam válidas.
-  final String? idUsuario;
-  final String? nomeEvento;
-  final double? orcamentoDisponivel;
-  final StatusSimulacaoCalculadora statusSimulacao;
-  final bool convertidoEmOrcamento;
-  final DateTime? dataConversaoOrcamento;
-
-  /// Análise retornada pela IA local ou pela IA generativa remota.
-  ///
-  /// Esse campo apenas persiste o retorno; não altera layout/telas.
-  final AnaliseCalculadoraIAModel? analiseIA;
-
+class CalculadoraFestaModel extends CalculadoraFesta {
   const CalculadoraFestaModel({
-    required this.idCalculo,
-    required this.idEvento,
-    required this.tipoEvento,
-    required this.baseCalculo,
-    required this.totalAdultos,
-    required this.totalCriancas,
-    required this.totalBebes,
-    required this.duracaoHoras,
-    required this.dataCalculo,
-    required this.dataAtualizacao,
-    this.perfilFesta = const PerfilFestaModel(
+    required super.idCalculo,
+    required super.idEvento,
+    required super.tipoEvento,
+    required super.baseCalculo,
+    required super.totalAdultos,
+    required super.totalCriancas,
+    required super.totalBebes,
+    required super.duracaoHoras,
+    required super.dataCalculo,
+    required super.dataAtualizacao,
+    super.perfilFesta = const PerfilFestaModel(
       tipo: TipoPerfilFesta.padrao,
       nome: 'Padrão',
       descricao: 'Estimativa equilibrada para a maioria dos eventos.',
@@ -134,38 +56,47 @@ class CalculadoraFestaModel {
       multiplicadorCusto: 1.00,
       margemSegurancaPadrao: 0.10,
     ),
-    this.margemPersonalizada,
-    this.custoTotalEstimado = 0,
-    this.idUsuario,
-    this.nomeEvento,
-    this.orcamentoDisponivel,
-    this.statusSimulacao = StatusSimulacaoCalculadora.rascunho,
-    this.convertidoEmOrcamento = false,
-    this.dataConversaoOrcamento,
-    this.analiseIA,
+    super.margemPersonalizada,
+    super.custoTotalEstimado = 0,
+    super.idUsuario,
+    super.nomeEvento,
+    super.orcamentoDisponivel,
+    super.statusSimulacao = StatusSimulacaoCalculadora.rascunho,
+    super.convertidoEmOrcamento = false,
+    super.dataConversaoOrcamento,
+    super.analiseIA,
   });
 
-  int get totalConvidados => totalAdultos + totalCriancas + totalBebes;
+  factory CalculadoraFestaModel.fromEntity(CalculadoraFesta entity) {
+    if (entity is CalculadoraFestaModel) return entity;
 
-  bool get possuiAnaliseIA => analiseIA != null;
-
-  String get fonteAnaliseIALabel => analiseIA?.fonteLabel ?? 'Sem análise';
-
-  bool get aprovada => statusSimulacao == StatusSimulacaoCalculadora.aprovada;
-
-  bool get convertidaEmOrcamento {
-    return convertidoEmOrcamento ||
-        statusSimulacao == StatusSimulacaoCalculadora.convertidaOrcamento;
-  }
-
-  ConvidadosEquivalentesModel get convidadosEquivalentes {
-    return ConvidadosEquivalentesModel(
-      adultos: totalAdultos,
-      criancas: totalCriancas,
-      bebes: totalBebes,
+    return CalculadoraFestaModel(
+      idCalculo: entity.idCalculo,
+      idEvento: entity.idEvento,
+      tipoEvento: entity.tipoEvento,
+      baseCalculo: entity.baseCalculo,
+      totalAdultos: entity.totalAdultos,
+      totalCriancas: entity.totalCriancas,
+      totalBebes: entity.totalBebes,
+      duracaoHoras: entity.duracaoHoras,
+      dataCalculo: entity.dataCalculo,
+      dataAtualizacao: entity.dataAtualizacao,
+      perfilFesta: PerfilFestaModel.fromEntity(entity.perfilFesta),
+      margemPersonalizada: entity.margemPersonalizada,
+      custoTotalEstimado: entity.custoTotalEstimado,
+      idUsuario: entity.idUsuario,
+      nomeEvento: entity.nomeEvento,
+      orcamentoDisponivel: entity.orcamentoDisponivel,
+      statusSimulacao: entity.statusSimulacao,
+      convertidoEmOrcamento: entity.convertidoEmOrcamento,
+      dataConversaoOrcamento: entity.dataConversaoOrcamento,
+      analiseIA: entity.analiseIA == null
+          ? null
+          : AnaliseCalculadoraIAModel.fromEntity(entity.analiseIA!),
     );
   }
 
+  @override
   CalculadoraFestaModel copyWith({
     String? idCalculo,
     String? idEvento,
@@ -177,7 +108,7 @@ class CalculadoraFestaModel {
     int? duracaoHoras,
     DateTime? dataCalculo,
     DateTime? dataAtualizacao,
-    PerfilFestaModel? perfilFesta,
+    PerfilFesta? perfilFesta,
     double? margemPersonalizada,
     bool limparMargemPersonalizada = false,
     double? custoTotalEstimado,
@@ -191,7 +122,7 @@ class CalculadoraFestaModel {
     bool? convertidoEmOrcamento,
     DateTime? dataConversaoOrcamento,
     bool limparDataConversaoOrcamento = false,
-    AnaliseCalculadoraIAModel? analiseIA,
+    AnaliseCalculadoraIA? analiseIA,
     bool limparAnaliseIA = false,
   }) {
     return CalculadoraFestaModel(
@@ -205,7 +136,9 @@ class CalculadoraFestaModel {
       duracaoHoras: duracaoHoras ?? this.duracaoHoras,
       dataCalculo: dataCalculo ?? this.dataCalculo,
       dataAtualizacao: dataAtualizacao ?? this.dataAtualizacao,
-      perfilFesta: perfilFesta ?? this.perfilFesta,
+      perfilFesta: perfilFesta == null
+          ? PerfilFestaModel.fromEntity(this.perfilFesta)
+          : PerfilFestaModel.fromEntity(perfilFesta),
       margemPersonalizada: limparMargemPersonalizada
           ? null
           : (margemPersonalizada ?? this.margemPersonalizada),
@@ -221,11 +154,24 @@ class CalculadoraFestaModel {
       dataConversaoOrcamento: limparDataConversaoOrcamento
           ? null
           : (dataConversaoOrcamento ?? this.dataConversaoOrcamento),
-      analiseIA: limparAnaliseIA ? null : (analiseIA ?? this.analiseIA),
+      analiseIA: limparAnaliseIA
+          ? null
+          : (analiseIA == null
+              ? (this.analiseIA == null
+                  ? null
+                  : AnaliseCalculadoraIAModel.fromEntity(this.analiseIA!))
+              : AnaliseCalculadoraIAModel.fromEntity(analiseIA)),
     );
   }
 
   Map<String, dynamic> toMap() {
+    final convidadosEquivalentesModel =
+        ConvidadosEquivalentesModel.fromEntity(convidadosEquivalentes);
+    final perfilFestaModel = PerfilFestaModel.fromEntity(perfilFesta);
+    final analiseIAModel = analiseIA == null
+        ? null
+        : AnaliseCalculadoraIAModel.fromEntity(analiseIA!);
+
     return {
       'id_calculo': idCalculo,
       'id_evento': idEvento,
@@ -236,12 +182,12 @@ class CalculadoraFestaModel {
       'total_criancas': totalCriancas,
       'total_bebes': totalBebes,
       'total_convidados': totalConvidados,
-      'convidados_equivalentes': convidadosEquivalentes.toMap(),
-      'total_equivalente': convidadosEquivalentes.totalEquivalente,
+      'convidados_equivalentes': convidadosEquivalentesModel.toMap(),
+      'total_equivalente': convidadosEquivalentesModel.totalEquivalente,
       'total_equivalente_arredondado':
-          convidadosEquivalentes.totalEquivalenteArredondado,
+          convidadosEquivalentesModel.totalEquivalenteArredondado,
       'duracao_horas': duracaoHoras,
-      'perfil_festa': perfilFesta.toMap(),
+      'perfil_festa': perfilFestaModel.toMap(),
       'margem_personalizada': margemPersonalizada,
       'custo_total_estimado': custoTotalEstimado,
       'orcamento_disponivel': orcamentoDisponivel,
@@ -253,10 +199,10 @@ class CalculadoraFestaModel {
       'data_conversao_orcamento': dataConversaoOrcamento?.toIso8601String(),
       'data_calculo': dataCalculo.toIso8601String(),
       'data_atualizacao': dataAtualizacao.toIso8601String(),
-      if (analiseIA != null) 'analise_ia': analiseIA!.toMap(),
-      if (analiseIA != null) 'fonte_analise_ia': analiseIA!.fonte,
-      if (analiseIA != null)
-        'data_analise_ia': analiseIA!.dataAnalise.toIso8601String(),
+      if (analiseIAModel != null) 'analise_ia': analiseIAModel.toMap(),
+      if (analiseIAModel != null) 'fonte_analise_ia': analiseIAModel.fonte,
+      if (analiseIAModel != null)
+        'data_analise_ia': analiseIAModel.dataAnalise.toIso8601String(),
     };
   }
 
@@ -281,7 +227,7 @@ class CalculadoraFestaModel {
     final adultosNormalizados =
         totalPorTipo == 0 && totalLegado > 0 ? totalLegado : adultos;
 
-    final status = StatusSimulacaoCalculadoraExtension.fromString(
+    final status = StatusSimulacaoCalculadoraModelExtension.fromString(
       map['status_simulacao']?.toString(),
     );
 
@@ -292,8 +238,9 @@ class CalculadoraFestaModel {
       idCalculo: map['id_calculo']?.toString() ?? map['id']?.toString() ?? '',
       idEvento: map['id_evento']?.toString() ?? '',
       tipoEvento: map['tipo_evento']?.toString() ?? 'Evento',
-      baseCalculo:
-          BaseCalculoFestaExtension.fromString(map['base_calculo']?.toString()),
+      baseCalculo: BaseCalculoFestaModelExtension.fromString(
+        map['base_calculo']?.toString(),
+      ),
       totalAdultos: adultosNormalizados,
       totalCriancas: criancas,
       totalBebes: bebes,

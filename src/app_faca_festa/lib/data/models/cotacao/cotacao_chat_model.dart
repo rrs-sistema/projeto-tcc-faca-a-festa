@@ -1,75 +1,51 @@
-class CotacaoConversaModel {
+import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
+
+export 'package:app_faca_festa/domain/entities/cotacao_chat.dart'
+    show
+        CotacaoConversa,
+        CotacaoFornecedorResumo,
+        CotacaoMensagem,
+        CotacaoServicoResumo;
+
+class CotacaoConversaModel extends CotacaoConversa {
   const CotacaoConversaModel({
-    required this.idCotacao,
-    required this.idFornecedor,
-    required this.categoria,
-    required this.idEvento,
-    required this.nomeSolicitante,
-    required this.dataSolicitacao,
-    required this.ultimaMensagem,
-    required this.ultimaMensagemEm,
-    required this.naoLidas,
+    required super.idCotacao,
+    required super.idFornecedor,
+    required super.categoria,
+    required super.idEvento,
+    required super.nomeSolicitante,
+    required super.dataSolicitacao,
+    required super.ultimaMensagem,
+    required super.ultimaMensagemEm,
+    required super.naoLidas,
   });
-
-  final String idCotacao;
-  final String idFornecedor;
-  final String categoria;
-  final String idEvento;
-  final String nomeSolicitante;
-  final DateTime dataSolicitacao;
-  final String ultimaMensagem;
-  final DateTime? ultimaMensagemEm;
-  final int naoLidas;
 }
 
-class CotacaoMensagemModel {
+class CotacaoMensagemModel extends CotacaoMensagem {
   const CotacaoMensagemModel({
-    required this.idUsuario,
-    required this.nomeUsuario,
-    required this.mensagem,
-    required this.enviadoEm,
-    required this.lido,
+    required super.idUsuario,
+    required super.nomeUsuario,
+    required super.mensagem,
+    required super.enviadoEm,
+    required super.lido,
   });
-
-  final String idUsuario;
-  final String nomeUsuario;
-  final String mensagem;
-  final DateTime enviadoEm;
-  final bool lido;
 }
 
-class CotacaoServicoResumoModel {
+class CotacaoServicoResumoModel extends CotacaoServicoResumo {
   const CotacaoServicoResumoModel({
-    required this.nome,
-    required this.quantidade,
-    required this.valorEstimado,
+    required super.nome,
+    required super.quantidade,
+    required super.valorEstimado,
   });
-
-  final String nome;
-  final num quantidade;
-  final num valorEstimado;
 }
 
-class CotacaoFornecedorResumoModel {
+class CotacaoFornecedorResumoModel extends CotacaoFornecedorResumo {
   const CotacaoFornecedorResumoModel({
-    required this.idFornecedor,
-    required this.status,
-    required this.observacaoFornecedor,
-    required this.prazoEntrega,
-    required this.condicaoPagamento,
-    required this.servicos,
+    required super.idFornecedor,
+    required super.status,
+    required super.observacaoFornecedor,
+    required super.prazoEntrega,
+    required super.condicaoPagamento,
+    required List<CotacaoServicoResumoModel> super.servicos,
   });
-
-  final String idFornecedor;
-  final String status;
-  final String observacaoFornecedor;
-  final DateTime? prazoEntrega;
-  final String? condicaoPagamento;
-  final List<CotacaoServicoResumoModel> servicos;
-
-  bool get temResposta {
-    return observacaoFornecedor.trim().isNotEmpty ||
-        prazoEntrega != null ||
-        (condicaoPagamento?.trim().isNotEmpty ?? false);
-  }
 }

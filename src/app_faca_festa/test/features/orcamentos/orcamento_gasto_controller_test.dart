@@ -4,8 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_gasto_controller.dart';
-import 'package:app_faca_festa/data/models/orcamento/orcamento_gasto_model.dart';
-import 'package:app_faca_festa/data/models/orcamento/orcamento_validacao_resultado.dart';
+import 'package:app_faca_festa/domain/entities/orcamento_gasto.dart';
+import 'package:app_faca_festa/domain/entities/orcamento_validacao_resultado.dart';
 import 'package:app_faca_festa/domain/repositories/orcamento_gasto_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_orcamento_gastos.dart';
 
@@ -75,12 +75,12 @@ void main() {
   });
 }
 
-OrcamentoGastoModel _gasto({
+OrcamentoGasto _gasto({
   required String id,
   double custo = 100,
   double pago = 0,
 }) {
-  return OrcamentoGastoModel(
+  return OrcamentoGasto(
     idGasto: id,
     idOrcamento: 'orcamento-1',
     nome: 'Gasto $id',
@@ -91,7 +91,7 @@ OrcamentoGastoModel _gasto({
 }
 
 class _OrcamentoGastoRepositoryFake implements OrcamentoGastoRepository {
-  final _controller = StreamController<List<OrcamentoGastoModel>>();
+  final _controller = StreamController<List<OrcamentoGasto>>();
 
   final orcamentosObservados = <String>[];
   final adicionados = <_AdicionarGasto>[];
@@ -101,7 +101,7 @@ class _OrcamentoGastoRepositoryFake implements OrcamentoGastoRepository {
   OrcamentoValidacaoResultado resultadoAdicionar =
       OrcamentoValidacaoResultado.ok();
 
-  void emitir(List<OrcamentoGastoModel> gastos) {
+  void emitir(List<OrcamentoGasto> gastos) {
     _controller.add(gastos);
   }
 
@@ -110,7 +110,7 @@ class _OrcamentoGastoRepositoryFake implements OrcamentoGastoRepository {
   }
 
   @override
-  Stream<List<OrcamentoGastoModel>> observarGastos(String idOrcamento) {
+  Stream<List<OrcamentoGasto>> observarGastos(String idOrcamento) {
     orcamentosObservados.add(idOrcamento);
     return _controller.stream;
   }

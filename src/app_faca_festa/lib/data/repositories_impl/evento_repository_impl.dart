@@ -1,6 +1,6 @@
-import '../../domain/repositories/evento_repository.dart';
-import '../../domain/entities/evento.dart';
-import '../../domain/entities/tipo_evento.dart';
+import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
+import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import '../datasources/remote/evento_remote_ds.dart';
 import '../models/evento/evento_model.dart' show EventoModel;
 

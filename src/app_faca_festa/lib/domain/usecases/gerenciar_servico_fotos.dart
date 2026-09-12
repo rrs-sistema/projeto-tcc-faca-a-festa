@@ -1,6 +1,4 @@
-import 'dart:io';
-
-import '../../data/models/servico_produto/servico_foto_model.dart';
+import '../entities/servico_foto.dart';
 import '../repositories/servico_foto_repository.dart';
 
 class GerenciarServicoFotos {
@@ -8,7 +6,7 @@ class GerenciarServicoFotos {
 
   final ServicoFotoRepository repository;
 
-  Future<List<ServicoFotoModel>> carregarFotos({
+  Future<List<ServicoFoto>> carregarFotos({
     required String idFornecedor,
     required String idProdutoServico,
   }) {
@@ -18,25 +16,25 @@ class GerenciarServicoFotos {
     );
   }
 
-  Future<ServicoFotoModel> adicionarFotoArquivo({
+  Future<ServicoFoto> adicionarFotoArquivo({
     required String idFornecedor,
     required String idProdutoServico,
-    required File arquivo,
+    required List<int> bytes,
     required String nomeArquivo,
   }) {
     return repository.adicionarFotoArquivo(
       idFornecedor: idFornecedor,
       idProdutoServico: idProdutoServico,
-      arquivo: arquivo,
+      bytes: bytes,
       nomeArquivo: nomeArquivo,
     );
   }
 
-  Future<void> adicionarFotoDireto(ServicoFotoModel foto) {
+  Future<void> adicionarFotoDireto(ServicoFoto foto) {
     return repository.adicionarFotoDireto(foto);
   }
 
-  Future<void> removerFoto(ServicoFotoModel foto) {
+  Future<void> removerFoto(ServicoFoto foto) {
     return repository.removerFoto(foto);
   }
 }

@@ -1,16 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class ComunidadeComentarioModel {
-  final String id;
-  final String autor;
-  final String texto;
-  final DateTime data;
+import 'package:app_faca_festa/domain/entities/comunidade.dart';
 
+export 'package:app_faca_festa/domain/entities/comunidade.dart'
+    show ComunidadeComentario;
+
+class ComunidadeComentarioModel extends ComunidadeComentario {
   ComunidadeComentarioModel({
-    required this.id,
-    required this.autor,
-    required this.texto,
-    required this.data,
+    required super.id,
+    required super.autor,
+    required super.texto,
+    required super.data,
   });
 
   factory ComunidadeComentarioModel.fromFirestore(DocumentSnapshot doc) {

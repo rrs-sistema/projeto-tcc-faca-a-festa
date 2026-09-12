@@ -1,14 +1,14 @@
-import '../../data/models/servico_produto/categoria_servico_model.dart';
-import '../../data/models/servico_produto/subcategoria_servico_model.dart';
+import '../entities/categoria_servico.dart';
+import '../entities/subcategoria_servico.dart';
 
 typedef CatalogoServicoSeedResultado = ({int categorias, int subcategorias});
 
 abstract interface class CatalogoServicoRepository {
-  Future<List<CategoriaServicoModel>> listarCategorias();
+  Future<List<CategoriaServico>> listarCategorias();
 
   Future<Map<String, int>> contarSubcategoriasPorCategoria();
 
-  Future<void> salvarCategoria(CategoriaServicoModel categoria);
+  Future<void> salvarCategoria(CategoriaServico categoria);
 
   Future<void> atualizarStatusCategoria(String idCategoria, bool ativo);
 
@@ -16,13 +16,13 @@ abstract interface class CatalogoServicoRepository {
 
   Future<CatalogoServicoSeedResultado> popularCatalogoInicial();
 
-  Future<List<SubcategoriaServicoModel>> listarSubcategorias({
+  Future<List<SubcategoriaServico>> listarSubcategorias({
     String? idCategoria,
   });
 
   Future<Map<String, int>> contarServicosPorSubcategoria(List<String> ids);
 
-  Future<void> salvarSubcategoria(SubcategoriaServicoModel subcategoria);
+  Future<void> salvarSubcategoria(SubcategoriaServico subcategoria);
 
   Future<void> atualizarStatusSubcategoria(String idSubcategoria, bool ativo);
 

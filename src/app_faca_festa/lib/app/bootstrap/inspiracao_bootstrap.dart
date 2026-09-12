@@ -2,12 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 
-import '../../data/datasources/remote/inspiracao_remote_datasource.dart';
-import '../../data/repositories_impl/inspiracao_repository_impl.dart';
-import '../../domain/repositories/inspiracao_repository.dart';
-import '../../domain/usecases/gerenciar_inspiracoes.dart';
-import '../../presentation/modules/inspiracao/controllers/inspiracao_admin_controller.dart';
-import '../../presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
+import 'package:app_faca_festa/data/datasources/remote/inspiracao_remote_datasource.dart';
+import 'package:app_faca_festa/data/repositories_impl/inspiracao_repository_impl.dart';
+import 'package:app_faca_festa/domain/repositories/inspiracao_repository.dart';
+import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_admin_controller.dart';
+import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_controller.dart';
 
 abstract final class InspiracaoBootstrap {
   static void register() {
@@ -33,10 +34,24 @@ abstract final class InspiracaoBootstrap {
       );
     }
     if (!Get.isRegistered<InspiracaoController>()) {
-      Get.put(InspiracaoController(), permanent: true);
+      Get.put(
+        InspiracaoController(
+          inspiracoes: Get.find<GerenciarInspiracoes>(),
+        ),
+        permanent: true,
+      );
     }
     if (!Get.isRegistered<InspiracaoAdminController>()) {
-      Get.put(InspiracaoAdminController(), permanent: true);
+      // Lazy: evita criar o controller (e qualquer efeito colateral) antes do login.
+      Get.lazyPut<InspiracaoAdminController>(
+        () => InspiracaoAdminController(
+          inspiracoes: Get.find<GerenciarInspiracoes>(),
+          usuarioAutenticado: () =>
+              Get.isRegistered<AppController>() &&
+              Get.find<AppController>().usuarioLogado.value != null,
+        ),
+        fenix: true,
+      );
     }
   }
 }

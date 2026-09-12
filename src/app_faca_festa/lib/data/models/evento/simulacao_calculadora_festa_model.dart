@@ -69,7 +69,9 @@ class SimulacaoCalculadoraFestaModel {
       dataConversaoOrcamento: calculo.dataConversaoOrcamento,
       dataCriacao: calculo.dataCalculo,
       dataAtualizacao: calculo.dataAtualizacao,
-      analiseIA: calculo.analiseIA,
+      analiseIA: calculo.analiseIA == null
+          ? null
+          : AnaliseCalculadoraIAModel.fromEntity(calculo.analiseIA!),
     );
   }
 
@@ -128,7 +130,7 @@ class SimulacaoCalculadoraFestaModel {
           map['analysis'],
     );
 
-    final status = StatusSimulacaoCalculadoraExtension.fromString(
+    final status = StatusSimulacaoCalculadoraModelExtension.fromString(
       map['status_simulacao']?.toString(),
     );
 

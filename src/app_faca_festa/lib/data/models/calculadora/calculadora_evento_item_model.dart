@@ -1,6 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class CalculadoraEventoItemModel {
+import 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
+
+export 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
+
+class CalculadoraEventoItemModel extends CalculadoraEventoItem {
   static const String collectionName = 'calculadora_evento_itens';
 
   static const String fieldId = 'id';
@@ -22,43 +26,52 @@ class CalculadoraEventoItemModel {
   static const String fieldCreatedAt = 'created_at';
   static const String fieldUpdatedAt = 'updated_at';
 
-  final String id;
-  final String idItemBase;
-  final String tipoEvento;
-  final String nome;
-  final String categoria;
-  final String unidade;
-  final String publicoAlvo;
-  final double quantidadePorConvidadoEquivalente;
-  final double valorUnitarioMedio;
-  final List<String> perfisFesta;
-  final bool selecionadoPadrao;
-  final bool obrigatorio;
-  final bool ativo;
-  final int ordem;
-  final String observacao;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-
   const CalculadoraEventoItemModel({
-    required this.id,
-    required this.idItemBase,
-    required this.tipoEvento,
-    required this.nome,
-    required this.categoria,
-    required this.unidade,
-    required this.publicoAlvo,
-    required this.quantidadePorConvidadoEquivalente,
-    required this.valorUnitarioMedio,
-    required this.perfisFesta,
-    required this.selecionadoPadrao,
-    required this.obrigatorio,
-    required this.ativo,
-    required this.ordem,
-    required this.observacao,
-    required this.createdAt,
-    required this.updatedAt,
+    required super.id,
+    required super.idItemBase,
+    required super.tipoEvento,
+    required super.nome,
+    required super.categoria,
+    required super.unidade,
+    required super.publicoAlvo,
+    required super.quantidadePorConvidadoEquivalente,
+    required super.valorUnitarioMedio,
+    required super.perfisFesta,
+    required super.selecionadoPadrao,
+    required super.obrigatorio,
+    required super.ativo,
+    required super.ordem,
+    required super.observacao,
+    required super.createdAt,
+    required super.updatedAt,
   });
+
+  factory CalculadoraEventoItemModel.fromEntity(CalculadoraEventoItem entity) {
+    if (entity is CalculadoraEventoItemModel) {
+      return entity;
+    }
+
+    return CalculadoraEventoItemModel(
+      id: entity.id,
+      idItemBase: entity.idItemBase,
+      tipoEvento: entity.tipoEvento,
+      nome: entity.nome,
+      categoria: entity.categoria,
+      unidade: entity.unidade,
+      publicoAlvo: entity.publicoAlvo,
+      quantidadePorConvidadoEquivalente:
+          entity.quantidadePorConvidadoEquivalente,
+      valorUnitarioMedio: entity.valorUnitarioMedio,
+      perfisFesta: List<String>.from(entity.perfisFesta),
+      selecionadoPadrao: entity.selecionadoPadrao,
+      obrigatorio: entity.obrigatorio,
+      ativo: entity.ativo,
+      ordem: entity.ordem,
+      observacao: entity.observacao,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    );
+  }
 
   factory CalculadoraEventoItemModel.fromMap(Map<String, dynamic> map) {
     final now = DateTime.now();
@@ -163,6 +176,7 @@ class CalculadoraEventoItemModel {
     return toMap();
   }
 
+  @override
   CalculadoraEventoItemModel copyWith({
     String? id,
     String? idItemBase,
@@ -204,6 +218,7 @@ class CalculadoraEventoItemModel {
     );
   }
 
+  @override
   CalculadoraEventoItemModel marcarComoAtivo() {
     return copyWith(
       ativo: true,
@@ -211,6 +226,7 @@ class CalculadoraEventoItemModel {
     );
   }
 
+  @override
   CalculadoraEventoItemModel marcarComoInativo() {
     return copyWith(
       ativo: false,
@@ -218,6 +234,7 @@ class CalculadoraEventoItemModel {
     );
   }
 
+  @override
   CalculadoraEventoItemModel selecionarComoPadrao() {
     return copyWith(
       selecionadoPadrao: true,
@@ -225,6 +242,7 @@ class CalculadoraEventoItemModel {
     );
   }
 
+  @override
   CalculadoraEventoItemModel removerSelecaoPadrao() {
     if (obrigatorio) {
       return this;
@@ -236,49 +254,68 @@ class CalculadoraEventoItemModel {
     );
   }
 
+  @override
   bool get inativo => !ativo;
 
+  @override
   bool get possuiId => id.trim().isNotEmpty;
 
+  @override
   bool get possuiItemBase => idItemBase.trim().isNotEmpty;
 
+  @override
   bool get possuiTipoEvento => tipoEvento.trim().isNotEmpty;
 
+  @override
   bool get possuiNome => nome.trim().isNotEmpty;
 
+  @override
   bool get possuiCategoria => categoria.trim().isNotEmpty;
 
+  @override
   bool get possuiUnidade => unidade.trim().isNotEmpty;
 
+  @override
   bool get possuiObservacao => observacao.trim().isNotEmpty;
 
+  @override
   bool get possuiPerfisFesta => perfisFesta.isNotEmpty;
 
+  @override
   bool get possuiValorUnitarioMedio => valorUnitarioMedio > 0;
 
+  @override
   bool get possuiQuantidadePorConvidado {
     return quantidadePorConvidadoEquivalente > 0;
   }
 
+  @override
   String get nomeNormalizado => nome.trim().toLowerCase();
 
+  @override
   String get tipoEventoNormalizado => tipoEvento.trim().toLowerCase();
 
+  @override
   String get categoriaNormalizada => categoria.trim().toLowerCase();
 
+  @override
   String get unidadeNormalizada => unidade.trim().toLowerCase();
 
+  @override
   String get publicoAlvoNormalizado => publicoAlvo.trim().toLowerCase();
 
+  @override
   bool get isPublicoTodos {
     return publicoAlvoNormalizado == 'todos';
   }
 
+  @override
   bool get isPublicoAdulto {
     return publicoAlvoNormalizado == 'adulto' ||
         publicoAlvoNormalizado == 'adultos';
   }
 
+  @override
   bool get isPublicoCrianca {
     return publicoAlvoNormalizado == 'crianca' ||
         publicoAlvoNormalizado == 'criança' ||
@@ -286,10 +323,12 @@ class CalculadoraEventoItemModel {
         publicoAlvoNormalizado == 'crianças';
   }
 
+  @override
   bool get isObrigatorioOuSelecionado {
     return obrigatorio || selecionadoPadrao;
   }
 
+  @override
   bool pertenceAoPerfil(String perfil) {
     final perfilNormalizado = perfil.trim().toLowerCase();
 
@@ -302,6 +341,7 @@ class CalculadoraEventoItemModel {
     );
   }
 
+  @override
   double calcularQuantidadeEstimativa({
     required int adultos,
     required int criancas,
@@ -314,6 +354,7 @@ class CalculadoraEventoItemModel {
     return totalEquivalente * quantidadePorConvidadoEquivalente;
   }
 
+  @override
   double calcularValorEstimado({
     required int adultos,
     required int criancas,
@@ -326,6 +367,7 @@ class CalculadoraEventoItemModel {
     return quantidade * valorUnitarioMedio;
   }
 
+  @override
   int calcularTotalConvidadosEquivalente({
     required int adultos,
     required int criancas,
@@ -344,6 +386,7 @@ class CalculadoraEventoItemModel {
     return totalAdultos + totalCriancas;
   }
 
+  @override
   Map<String, dynamic> toItemEstimativaFinanceiraMap({
     required int adultos,
     required int criancas,
@@ -383,6 +426,7 @@ class CalculadoraEventoItemModel {
     };
   }
 
+  @override
   Map<String, dynamic> toCalculadoraFestaItemMap({
     required int adultos,
     required int criancas,
@@ -418,6 +462,7 @@ class CalculadoraEventoItemModel {
     };
   }
 
+  @override
   T toItemEstimativaFinanceiraModel<T>({
     required int adultos,
     required int criancas,
@@ -433,6 +478,7 @@ class CalculadoraEventoItemModel {
     );
   }
 
+  @override
   T toCalculadoraFestaItemModel<T>({
     required int adultos,
     required int criancas,

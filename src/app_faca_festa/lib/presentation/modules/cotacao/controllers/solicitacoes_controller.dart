@@ -3,10 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import 'package:app_faca_festa/data/models/model.dart';
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/repositories/solicitacoes_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_solicitacoes.dart';
-import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 
 class SolicitacoesController extends GetxController {
   SolicitacoesController({
@@ -18,12 +17,12 @@ class SolicitacoesController extends GetxController {
   final GerenciarSolicitacoes _solicitacoesFornecedor;
   final String Function()? _nomeUsuarioAtual;
 
-  final solicitacoes = <CotacaoModel>[].obs;
+  final solicitacoes = <Cotacao>[].obs;
   final carregando = false.obs;
   final erro = ''.obs;
 
   bool _streamAtiva = false;
-  StreamSubscription<List<CotacaoModel>>? _solicitacoesSub;
+  StreamSubscription<List<Cotacao>>? _solicitacoesSub;
 
   void inicializar(String idFornecedor) {
     if (_streamAtiva) return; // evita múltiplas ligações
@@ -44,9 +43,7 @@ class SolicitacoesController extends GetxController {
 
   Future<void> cancelarCotacao(String idCotacao) async {
     try {
-      final canceladoPor = _nomeUsuarioAtual?.call() ??
-          Get.find<AppController>().usuarioLogado.value?.nome ??
-          'Desconhecido';
+      final canceladoPor = _nomeUsuarioAtual?.call() ?? 'Desconhecido';
 
       await _solicitacoesFornecedor.cancelarCotacao(
         idCotacao: idCotacao,

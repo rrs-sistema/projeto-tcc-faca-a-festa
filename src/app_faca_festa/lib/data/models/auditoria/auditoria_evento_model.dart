@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import '../../../domain/entities/auditoria_evento.dart';
+import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 
 class AuditoriaEventoModel extends AuditoriaEvento {
   const AuditoriaEventoModel({

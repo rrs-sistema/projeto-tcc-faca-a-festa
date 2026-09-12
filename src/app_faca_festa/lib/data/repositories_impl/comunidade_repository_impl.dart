@@ -1,7 +1,6 @@
-import '../../domain/repositories/comunidade_repository.dart';
+import 'package:app_faca_festa/domain/entities/comunidade.dart';
+import 'package:app_faca_festa/domain/repositories/comunidade_repository.dart';
 import '../datasources/remote/comunidade_remote_datasource.dart';
-import '../models/comunidade/comunidade_comentario_model.dart';
-import '../models/comunidade/comunidade_post_model.dart';
 
 class ComunidadeRepositoryImpl implements ComunidadeRepository {
   ComunidadeRepositoryImpl(this.remote);
@@ -9,12 +8,12 @@ class ComunidadeRepositoryImpl implements ComunidadeRepository {
   final ComunidadeRemoteDatasource remote;
 
   @override
-  Stream<List<ComunidadePostModel>> observarPosts() {
+  Stream<List<ComunidadePost>> observarPosts() {
     return remote.observarPosts();
   }
 
   @override
-  Stream<List<ComunidadeComentarioModel>> observarComentarios(String postId) {
+  Stream<List<ComunidadeComentario>> observarComentarios(String postId) {
     return remote.observarComentarios(postId);
   }
 

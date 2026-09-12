@@ -2,7 +2,6 @@ import 'package:get/get.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
 import 'package:app_faca_festa/core/utils/form_validators.dart';
-import 'package:app_faca_festa/app/bootstrap/auditoria_bootstrap.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
@@ -12,15 +11,25 @@ import 'package:app_faca_festa/presentation/modules/app/controllers/app_controll
 
 class LoginController extends GetxController {
   LoginController({
-    AutenticacaoRepository? autenticacaoRepository,
-    PerfilUsuarioRepository? perfilRepository,
-  })  : _autenticacaoRepository =
-            autenticacaoRepository ?? Get.find<AutenticacaoRepository>(),
-        _perfilRepository =
-            perfilRepository ?? Get.find<PerfilUsuarioRepository>();
+    required AutenticacaoRepository autenticacaoRepository,
+    required PerfilUsuarioRepository perfilRepository,
+    AppController? appController,
+    AppController? Function()? appControllerResolver,
+    GerenciarAuditoria? gerenciarAuditoria,
+    GerenciarAuditoria? Function()? gerenciarAuditoriaResolver,
+  })  : _autenticacaoRepository = autenticacaoRepository,
+        _perfilRepository = perfilRepository,
+        _appController = appController,
+        _appControllerResolver = appControllerResolver,
+        _gerenciarAuditoria = gerenciarAuditoria,
+        _gerenciarAuditoriaResolver = gerenciarAuditoriaResolver;
 
   final AutenticacaoRepository _autenticacaoRepository;
   final PerfilUsuarioRepository _perfilRepository;
+  final AppController? _appController;
+  final AppController? Function()? _appControllerResolver;
+  final GerenciarAuditoria? _gerenciarAuditoria;
+  final GerenciarAuditoria? Function()? _gerenciarAuditoriaResolver;
 
   var email = ''.obs;
   var senha = ''.obs;
@@ -29,8 +38,9 @@ class LoginController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    if (Get.isRegistered<AppController>()) {
-      _capturarTokenDosArgumentos(Get.find<AppController>());
+    final app = _resolverAppControllerOrNull();
+    if (app != null) {
+      _capturarTokenDosArgumentos(app);
     }
   }
 
@@ -48,7 +58,7 @@ class LoginController extends GetxController {
 
     try {
       carregando.value = true;
-      final app = Get.find<AppController>();
+      final app = _resolverAppController();
       _capturarTokenDosArgumentos(app);
       app.marcarLoginComSenha();
       await _autenticacaoRepository.entrar(
@@ -75,7 +85,7 @@ class LoginController extends GetxController {
   Future<void> loginComGoogle() async {
     try {
       carregando.value = true;
-      final app = Get.find<AppController>();
+      final app = _resolverAppController();
       _capturarTokenDosArgumentos(app);
       app.marcarLoginComGoogle();
       final autenticou = await _autenticacaoRepository.entrarComGoogle();
@@ -136,7 +146,7 @@ class LoginController extends GetxController {
   /// Conta nova no fluxo de convite é tipo C. Sem token, Google não vira O
   /// só porque o login não passou por `/register`.
   String _tipoPerfilInicial() {
-    final app = Get.find<AppController>();
+    final app = _resolverAppController();
     if (app.fluxoConviteAtivo) return 'C';
     return 'O';
   }
@@ -157,8 +167,9 @@ class LoginController extends GetxController {
     required String metodo,
   }) async {
     try {
-      AuditoriaBootstrap.register();
-      await Get.find<GerenciarAuditoria>().registrar(
+      final auditoria = _resolverGerenciarAuditoria();
+      if (auditoria == null) return;
+      await auditoria.registrar(
         RegistroAuditoria(
           acao: acao,
           resumo: resumo,
@@ -182,8 +193,9 @@ class LoginController extends GetxController {
     required String metodo,
   }) async {
     try {
-      AuditoriaBootstrap.register();
-      await Get.find<GerenciarAuditoria>().registrarFalhaLogin(
+      final auditoria = _resolverGerenciarAuditoria();
+      if (auditoria == null) return;
+      await auditoria.registrarFalhaLogin(
         RegistroFalhaLogin(
           email: email.value.trim(),
           codigo: codigo,
@@ -194,6 +206,22 @@ class LoginController extends GetxController {
     } catch (_) {
       // Falha ao auditar tentativa recusada não pode mascarar o erro de login.
     }
+  }
+
+  AppController _resolverAppController() {
+    final app = _resolverAppControllerOrNull();
+    if (app == null) {
+      throw StateError('AppController não configurado.');
+    }
+    return app;
+  }
+
+  AppController? _resolverAppControllerOrNull() {
+    return _appController ?? _appControllerResolver?.call();
+  }
+
+  GerenciarAuditoria? _resolverGerenciarAuditoria() {
+    return _gerenciarAuditoria ?? _gerenciarAuditoriaResolver?.call();
   }
 
   String _traduzErro(String code) {

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/presentation/modules/orcamento/orcamento_controller.dart';
-import 'package:app_faca_festa/data/models/orcamento/orcamento_model.dart';
+import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
+import 'package:app_faca_festa/domain/entities/orcamento.dart';
 import 'package:app_faca_festa/domain/repositories/orcamento_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_orcamentos.dart';
 
@@ -90,7 +90,7 @@ void main() {
   });
 }
 
-OrcamentoModel _orcamento({
+Orcamento _orcamento({
   required String id,
   String idEvento = 'evento-1',
   String? idFornecedor = 'fornecedor-1',
@@ -98,7 +98,7 @@ OrcamentoModel _orcamento({
   double? custoEstimado = 100,
   StatusOrcamento status = StatusOrcamento.pendente,
 }) {
-  return OrcamentoModel(
+  return Orcamento(
     idOrcamento: id,
     idEvento: idEvento,
     idServicoFornecido: idServicoFornecido,
@@ -111,20 +111,20 @@ OrcamentoModel _orcamento({
 }
 
 class _OrcamentoRepositoryFake implements OrcamentoRepository {
-  final _eventosController = StreamController<List<OrcamentoModel>>();
-  final _fornecedoresController = StreamController<List<OrcamentoModel>>();
+  final _eventosController = StreamController<List<Orcamento>>();
+  final _fornecedoresController = StreamController<List<Orcamento>>();
 
   final eventosObservados = <String>[];
   final fornecedoresObservados = <String>[];
-  final criados = <OrcamentoModel>[];
+  final criados = <Orcamento>[];
   final respostas = <_RespostaOrcamento>[];
   final excluidos = <String>[];
 
-  void emitirEvento(List<OrcamentoModel> orcamentos) {
+  void emitirEvento(List<Orcamento> orcamentos) {
     _eventosController.add(orcamentos);
   }
 
-  void emitirFornecedor(List<OrcamentoModel> orcamentos) {
+  void emitirFornecedor(List<Orcamento> orcamentos) {
     _fornecedoresController.add(orcamentos);
   }
 
@@ -134,13 +134,13 @@ class _OrcamentoRepositoryFake implements OrcamentoRepository {
   }
 
   @override
-  Stream<List<OrcamentoModel>> observarOrcamentosDoEvento(String idEvento) {
+  Stream<List<Orcamento>> observarOrcamentosDoEvento(String idEvento) {
     eventosObservados.add(idEvento);
     return _eventosController.stream;
   }
 
   @override
-  Stream<List<OrcamentoModel>> observarOrcamentosDoFornecedor(
+  Stream<List<Orcamento>> observarOrcamentosDoFornecedor(
     String idFornecedor,
   ) {
     fornecedoresObservados.add(idFornecedor);
@@ -148,12 +148,12 @@ class _OrcamentoRepositoryFake implements OrcamentoRepository {
   }
 
   @override
-  Future<void> criarOrcamento(OrcamentoModel model) async {
+  Future<void> criarOrcamento(Orcamento model) async {
     criados.add(model);
   }
 
   @override
-  Future<OrcamentoModel?> buscarPorId(String idOrcamento) async {
+  Future<Orcamento?> buscarPorId(String idOrcamento) async {
     return null;
   }
 
