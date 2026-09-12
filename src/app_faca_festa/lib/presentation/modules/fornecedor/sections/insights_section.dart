@@ -16,11 +16,11 @@ class InsightsSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final insights = controller.insightsFornecedor
+      final insights = controller.ai.insightsFornecedor
           .where((i) => i.status != 'resolvido' && i.status != 'ignorado')
           .toList();
-      final alertas = controller.alertasPerfil.toList();
-      final loading = controller.isLoadingAi.value;
+      final alertas = controller.ai.alertasPerfil.toList();
+      final loading = controller.ai.isLoadingAi.value;
 
       final merged = <InsightFornecedor>[
         ...insights,
@@ -94,7 +94,7 @@ class InsightsSection extends StatelessWidget {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2))
                     : OutlinedButton.icon(
-                        onPressed: () => controller.recalcularAiFornecedor(),
+                        onPressed: () => controller.ai.recalcularAiFornecedor(),
                         icon: const Icon(Icons.refresh_rounded, size: 16),
                         label: Text('Recalcular',
                             style: GoogleFonts.poppins(

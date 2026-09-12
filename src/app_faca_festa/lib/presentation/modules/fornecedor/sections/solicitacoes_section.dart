@@ -74,7 +74,7 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
       }
 
       final lista = solicitacoesController.solicitacoes;
-      final quentes = fornecedorController.scoresCotacoes.values
+      final quentes = fornecedorController.ai.scoresCotacoes.values
           .where((s) => s.score >= 75)
           .length;
 
@@ -83,7 +83,7 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
         quentes: quentes,
         onAtualizarIa: lista.isEmpty
             ? null
-            : () => fornecedorController.carregarAiDasSolicitacoesPendentes(
+            : () => fornecedorController.ai.carregarAiDasSolicitacoesPendentes(
                 forceRefresh: true),
         child: lista.isEmpty
             ? const _MensagemEstado(
@@ -131,9 +131,9 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
     final idCotacao =
         _readString(item, const ['idCotacao', 'id_cotacao', 'id']) ??
             'cotacao_$index';
-    final score = fornecedorController.scoresCotacoes[idCotacao];
+    final score = fornecedorController.ai.scoresCotacoes[idCotacao];
     final isGerando =
-        fornecedorController.isGerandoRespostaCotacaoAi(idCotacao);
+        fornecedorController.ai.isGerandoRespostaCotacaoAi(idCotacao);
 
     return _CotacaoInteligenteCard(
       solicitacao: item,
@@ -147,7 +147,7 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
           ? null
           : () async {
               final sugestao =
-                  await fornecedorController.gerarRespostaCotacaoComIa(
+                  await fornecedorController.ai.gerarRespostaCotacaoComIa(
                 solicitacao: item,
                 forceRefresh: true,
               );

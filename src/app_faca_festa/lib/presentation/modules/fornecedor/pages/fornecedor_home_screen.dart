@@ -161,7 +161,7 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                   await controller
                       .escutarSolicitacoesPendentes(atual.idFornecedor);
                   await controller.listarServicosFornecedor(atual.idFornecedor);
-                  await controller.carregarAiDasSolicitacoesPendentes(
+                  await controller.ai.carregarAiDasSolicitacoesPendentes(
                       forceRefresh: true);
                 }
               },
@@ -297,8 +297,8 @@ class _ProximaAcaoInteligenteSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final action = controller.proximaAcaoFornecedor.value;
-      final loading = controller.isLoadingAi.value;
+      final action = controller.ai.proximaAcaoFornecedor.value;
+      final loading = controller.ai.isLoadingAi.value;
 
       if (loading && action == null) {
         return _PremiumActionShell(
@@ -392,7 +392,7 @@ class _ProximaAcaoInteligenteSection extends StatelessWidget {
         );
         return;
       default:
-        controller.recalcularAiFornecedor();
+        controller.ai.recalcularAiFornecedor();
         Get.snackbar(
           'Painel inteligente',
           'Análise local atualizada. Nenhuma mensagem foi enviada automaticamente.',

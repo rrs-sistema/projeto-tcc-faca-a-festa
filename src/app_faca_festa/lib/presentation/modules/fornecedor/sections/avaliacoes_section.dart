@@ -19,7 +19,7 @@ class AvaliacoesSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Obx(() {
-      final reputacao = fornecedorController.resumoReputacao.value;
+      final reputacao = fornecedorController.ai.resumoReputacao.value;
       final fornecedor = fornecedorController.fornecedor.value;
       final mediaController = avaliacaoController.mediaFornecedor.value;
       final totalController = avaliacaoController.avaliacoesFornecedor.length;

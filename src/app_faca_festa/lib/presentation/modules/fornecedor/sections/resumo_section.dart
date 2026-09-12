@@ -50,7 +50,7 @@ class ResumoSection extends StatelessWidget {
           ? servicosAtivosDetalhados
           : servicosAtivosBasicos;
 
-      final reputacao = controller.resumoReputacao.value;
+      final reputacao = controller.ai.resumoReputacao.value;
       final media = reputacao?.mediaGeral ??
           (controller.avaliacaoMedia.value > 0
               ? controller.avaliacaoMedia.value
@@ -64,7 +64,7 @@ class ResumoSection extends StatelessWidget {
       final contratacoes = fornecedor?.totalContratacoes ?? 0;
       final perfilCompleto = _calcularPerfilCompleto(controller);
       final oportunidadesQuentes =
-          controller.scoresCotacoes.values.where((s) => s.score >= 75).length;
+          controller.ai.scoresCotacoes.values.where((s) => s.score >= 75).length;
 
       final cards = [
         _MetricData(
@@ -173,14 +173,14 @@ class ResumoSection extends StatelessWidget {
       return _SectionShell(
         title: 'Visão operacional',
         subtitle: 'Indicadores essenciais sem repetir dados do cabeçalho.',
-        action: controller.isLoadingAi.value
+        action: controller.ai.isLoadingAi.value
             ? const SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(strokeWidth: 2),
               )
             : TextButton.icon(
-                onPressed: () => controller.recalcularAiFornecedor(),
+                onPressed: () => controller.ai.recalcularAiFornecedor(),
                 icon: const Icon(Icons.auto_awesome_rounded, size: 17),
                 label: Text(
                   'Atualizar IA',

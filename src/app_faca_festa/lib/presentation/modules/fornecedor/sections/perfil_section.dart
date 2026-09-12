@@ -31,11 +31,11 @@ class PerfilSection extends StatelessWidget {
           .where((s) => (s.descricaoServico ?? '').trim().isEmpty)
           .length;
 
-      final catalogoInsight = controller.insightsFornecedor.firstWhereOrNull(
+      final catalogoInsight = controller.ai.insightsFornecedor.firstWhereOrNull(
         (i) => i.tipo == 'catalogo',
       );
       final sugestoes = catalogoInsight?.acoesSugeridas ?? const <String>[];
-      final pendencias = controller.alertasPerfil
+      final pendencias = controller.ai.alertasPerfil
           .where(
               (a) => a.tipo.contains('catalogo') || a.tipo.contains('perfil'))
           .expand((a) => a.acoesSugeridas)

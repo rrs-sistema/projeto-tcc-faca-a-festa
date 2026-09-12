@@ -19,6 +19,7 @@ import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedor_localizacao.
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_servicos_produto.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_ai_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 
@@ -59,6 +60,16 @@ abstract final class FornecedorBootstrap {
         fenix: true,
       );
     }
+    if (!Get.isRegistered<FornecedorAiController>()) {
+      Get.put(
+        FornecedorAiController(
+          regras: Get.find<FornecedorAiRegrasService>(),
+          generativa: Get.find<FornecedorAiGenerativoService>(),
+          gerenciarFornecedores: Get.find<GerenciarFornecedores>(),
+        ),
+        permanent: true,
+      );
+    }
     if (!Get.isRegistered<FornecedorController>()) {
       Get.put(
         FornecedorController(
@@ -80,9 +91,7 @@ abstract final class FornecedorBootstrap {
               Get.isRegistered<GerenciarServicoFotos>()
                   ? Get.find<GerenciarServicoFotos>()
                   : null,
-          fornecedorAiService: Get.find<FornecedorAiRegrasService>(),
-          fornecedorAiGenerativaService:
-              Get.find<FornecedorAiGenerativoService>(),
+          ai: Get.find<FornecedorAiController>(),
           auditoria: Get.isRegistered<AuditoriaRegistrar>()
               ? Get.find<AuditoriaRegistrar>()
               : const AuditoriaRegistrarVazio(),
