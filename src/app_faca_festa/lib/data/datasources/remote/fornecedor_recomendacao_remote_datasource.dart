@@ -1,6 +1,7 @@
+import 'dart:developer' as developer;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../models/fornecedor/fornecedor_recomendacao_model.dart';
 
@@ -29,9 +30,10 @@ class FornecedorRecomendacaoRemoteDatasource {
           .limit(limite)
           .get();
     } catch (e) {
-      debugPrint(
-        '⚠️ [FornecedorRecomendacao] Falha na consulta com orderBy. '
-        'Tentando sem ordenação no servidor. Erro: $e',
+      developer.log(
+        'Falha na consulta com orderBy. Tentando sem ordenação no servidor.',
+        name: 'FornecedorRecomendacaoRemoteDatasource',
+        error: e,
       );
 
       snapshot = await _colecao

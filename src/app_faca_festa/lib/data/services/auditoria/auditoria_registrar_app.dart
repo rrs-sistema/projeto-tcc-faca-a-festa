@@ -1,6 +1,6 @@
+import 'dart:developer' as developer;
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
@@ -53,7 +53,12 @@ class AuditoriaRegistrarApp implements AuditoriaRegistrar {
     try {
       await _gerenciarAuditoria.registrar(registro);
     } catch (e, s) {
-      debugPrint('⚠️ Auditoria não registrada ($e)\n$s');
+      developer.log(
+        'Auditoria não registrada',
+        name: 'AuditoriaRegistrarApp',
+        error: e,
+        stackTrace: s,
+      );
     }
   }
 }

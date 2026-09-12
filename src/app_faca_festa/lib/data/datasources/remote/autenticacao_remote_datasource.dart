@@ -3,6 +3,7 @@ import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:developer' as developer;
 
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import '../../services/functions/callable_https_client.dart';
@@ -183,44 +184,44 @@ class FirebaseAutenticacaoRemoteDatasource
       rethrow;
     } on GoogleSignInException catch (erro) {
       if (_googleNativoFoiCancelado(erro)) {
-        debugPrint(
+        developer.log(
           '[AutenticacaoRemote] Google cancelado pelo usuário: '
           '${erro.code.name}',
         );
         return false;
       }
-      debugPrint(
+      developer.log(
         '[AutenticacaoRemote] GoogleSignInException: '
         'code=${erro.code.name} | description=${erro.description}',
       );
       throw AutenticacaoRemoteException(erro.code.name);
     } on FirebaseAuthException catch (erro) {
       if (autenticacaoFoiCancelada(erro.code)) {
-        debugPrint(
+        developer.log(
           '[AutenticacaoRemote] Google cancelado pelo usuário: ${erro.code}',
         );
         return false;
       }
-      debugPrint(
+      developer.log(
         '[AutenticacaoRemote] FirebaseAuthException Google: '
         'code=${erro.code} | message=${erro.message}',
       );
       throw AutenticacaoRemoteException(erro.code);
     } on PlatformException catch (erro) {
       if (autenticacaoFoiCancelada(erro.code)) {
-        debugPrint(
+        developer.log(
           '[AutenticacaoRemote] Google cancelado pelo usuário: ${erro.code}',
         );
         return false;
       }
-      debugPrint(
+      developer.log(
         '[AutenticacaoRemote] PlatformException Google: '
         'code=${erro.code} | message=${erro.message}',
       );
       throw const AutenticacaoRemoteException('google-unexpected-error');
     } catch (erro, stack) {
-      debugPrint('[AutenticacaoRemote] Erro inesperado no Google: $erro');
-      debugPrint('$stack');
+      developer.log('[AutenticacaoRemote] Erro inesperado no Google: $erro');
+      developer.log('$stack');
       throw const AutenticacaoRemoteException('google-unexpected-error');
     }
   }
@@ -264,7 +265,7 @@ class FirebaseAutenticacaoRemoteDatasource
       return true;
     } on GoogleSignInException catch (erro) {
       if (_googleNativoFoiCancelado(erro)) {
-        debugPrint(
+        developer.log(
           '[AutenticacaoRemote] Seletor Google fechado sem conta: '
           '${erro.description}',
         );

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/usuario/controllers/endereco_usuario_controller.dart';
+import 'package:app_faca_festa/domain/entities/endereco_cep_resultado.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/cep_repository.dart';
@@ -70,20 +71,26 @@ void main() {
     expect(controller.carregando.value, isFalse);
   });
 
-  test('delegates CEP lookup to repository preserving map contract', () async {
-    cepRepository.resultado = {
-      'cep': '87000-000',
-      'logradouro': 'Rua Teste',
-      'bairro': 'Centro',
-      'localidade': 'Maringá',
-      'uf': 'PR',
-    };
+  test('delegates CEP lookup to repository as typed address result', () async {
+    cepRepository.resultado = const EnderecoCepResultado(
+      cep: '87000-000',
+      logradouro: 'Rua Teste',
+      numero: '',
+      bairro: 'Centro',
+      cidade: 'Maringá',
+      uf: 'PR',
+      latitude: null,
+      longitude: null,
+      formatado: 'Rua Teste, Centro, Maringá, PR',
+      origemCalculo: 'viacep',
+      possuiCoordenadas: false,
+    );
 
     final resultado = await controller.buscarCep('87000-000');
 
     expect(cepRepository.cepsConsultados, ['87000-000']);
-    expect(resultado?['logradouro'], 'Rua Teste');
-    expect(resultado?['uf'], 'PR');
+    expect(resultado?.logradouro, 'Rua Teste');
+    expect(resultado?.uf, 'PR');
   });
 }
 
@@ -110,10 +117,10 @@ EnderecoUsuario _endereco({
 
 class _CepRepositoryFake implements CepRepository {
   final cepsConsultados = <String>[];
-  Map<String, dynamic>? resultado;
+  EnderecoCepResultado? resultado;
 
   @override
-  Future<Map<String, dynamic>?> buscarCep(String cep) async {
+  Future<EnderecoCepResultado?> buscarCep(String cep) async {
     cepsConsultados.add(cep);
     return resultado;
   }

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'package:app_faca_festa/data/models/endereco/endereco_cep_resultado.dart';
 import 'package:app_faca_festa/domain/repositories/cep_repository.dart';
 
 class ViaCepRepositoryImpl implements CepRepository {
@@ -11,7 +12,7 @@ class ViaCepRepositoryImpl implements CepRepository {
   final http.Client _client;
 
   @override
-  Future<Map<String, dynamic>?> buscarCep(String cep) async {
+  Future<EnderecoCepResultado?> buscarCep(String cep) async {
     final cepLimpo = cep.replaceAll(RegExp(r'\D'), '');
     if (cepLimpo.length != 8) return null;
 
@@ -29,6 +30,9 @@ class ViaCepRepositoryImpl implements CepRepository {
 
     if (data['erro'] == true) return null;
 
-    return data;
+    return EnderecoCepResultadoModel.fromViaCep({
+      ...data,
+      'cep': data['cep'] ?? cepLimpo,
+    });
   }
 }

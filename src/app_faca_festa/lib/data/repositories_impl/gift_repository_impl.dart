@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'dart:developer' as developer;
 
 import './../datasources/remote/gift_remote_datasource.dart';
 import 'package:app_faca_festa/domain/entities/gift/gift_contribution.dart';
@@ -158,9 +158,11 @@ class GiftRepositoryImpl implements GiftRepository {
 
       await local.markSynced(localGift.giftId);
     } catch (e) {
-      if (kDebugMode) {
-        print('Erro sync gift ${localGift.giftId}: $e');
-      }
+      developer.log(
+        'Erro sync gift ${localGift.giftId}',
+        name: 'GiftRepositoryImpl',
+        error: e,
+      );
     } finally {
       _syncing = false;
     }

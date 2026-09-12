@@ -1,10 +1,10 @@
 import 'dart:convert';
+import 'dart:developer' as developer;
 
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:app_faca_festa/domain/entities/endereco_cep_resultado.dart';
+import 'package:app_faca_festa/data/models/endereco/endereco_cep_resultado.dart';
 import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 
 /// Cliente HTTP da function `buscarCepGoogle` (onRequest, southamerica-east1).
@@ -52,7 +52,7 @@ class BuscarCepGoogleService implements BuscarCepService {
       final body = _decodificar(response.body);
 
       if (response.statusCode == 200 && body['sucesso'] == true) {
-        return EnderecoCepResultado.fromMap(body);
+        return EnderecoCepResultadoModel.fromMap(body);
       }
 
       throw BuscarCepException(
@@ -64,8 +64,12 @@ class BuscarCepGoogleService implements BuscarCepService {
     } on BuscarCepException {
       rethrow;
     } catch (e, s) {
-      debugPrint('[BuscarCepGoogleService] falha: $e');
-      debugPrint('$s');
+      developer.log(
+        'Falha ao consultar CEP',
+        name: 'BuscarCepGoogleService',
+        error: e,
+        stackTrace: s,
+      );
       throw const BuscarCepException(
         'Falha ao consultar o CEP. Tente novamente.',
       );

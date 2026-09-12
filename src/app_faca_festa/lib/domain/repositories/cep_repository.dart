@@ -1,3 +1,5 @@
+import '../entities/endereco_cep_resultado.dart';
+
 abstract interface class CepRepository {
-  Future<Map<String, dynamic>?> buscarCep(String cep);
+  Future<EnderecoCepResultado?> buscarCep(String cep);
 }

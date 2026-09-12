@@ -1,6 +1,7 @@
+import 'dart:developer' as developer;
+
 import 'package:app_faca_festa/core/database/app_database.dart';
 import 'package:app_faca_festa/domain/entities/gift/gift_contribution.dart';
-import 'package:flutter/foundation.dart';
 
 import './../../datasources/remote/gift_remote_datasource.dart';
 import './../../datasources/local/gift_local_datasource.dart';
@@ -28,9 +29,11 @@ class GiftSyncService {
 
         await local.markSynced(gift.giftId);
       } catch (e) {
-        if (kDebugMode) {
-          print('Erro ao sincronizar gift ${gift.giftId}: $e');
-        }
+        developer.log(
+          'Erro ao sincronizar gift ${gift.giftId}',
+          name: 'GiftSyncService',
+          error: e,
+        );
         continue;
       }
     }
@@ -51,11 +54,11 @@ class GiftSyncService {
 
         await local.markContributionSynced(contribution.contributionId);
       } catch (e) {
-        if (kDebugMode) {
-          print(
-            'Erro ao sincronizar contribution ${contribution.contributionId}: $e',
-          );
-        }
+        developer.log(
+          'Erro ao sincronizar contribution ${contribution.contributionId}',
+          name: 'GiftSyncService',
+          error: e,
+        );
         continue;
       }
     }

@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+import 'dart:developer' as developer;
 
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 export 'package:app_faca_festa/domain/entities/convidado.dart';
@@ -98,9 +98,10 @@ class ConvidadoModel extends Convidado {
               (emailNormalizado ?? emailDaConta).trim().toLowerCase(),
       };
     } catch (e) {
-      if (kDebugMode) {
-        print('Erro ao listar os grupos toMap: ${e.toString()}');
-      }
+      developer.log(
+        'Erro ao listar os grupos toMap: $e',
+        name: 'ConvidadoModel',
+      );
       return {};
     }
   }
@@ -160,9 +161,10 @@ class ConvidadoModel extends Convidado {
         conviteStatus: _primeiroTexto(map, const ['convite_status']),
       );
     } catch (e) {
-      if (kDebugMode) {
-        print('Erro ao listar os grupos fromMap: ${e.toString()}');
-      }
+      developer.log(
+        'Erro ao listar os grupos fromMap: $e',
+        name: 'ConvidadoModel',
+      );
       final now = DateTime.now();
       return ConvidadoModel(
         idConvidado: '',

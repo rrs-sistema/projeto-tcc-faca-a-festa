@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/domain/entities/endereco_cep_resultado.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/repositories/cep_repository.dart';
 import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dart';
@@ -102,8 +103,7 @@ class EnderecoUsuarioController extends GetxController {
     }
   }
 
-  // 🔹 Busca dados do CEP usando ViaCEP
-  Future<Map<String, dynamic>?> buscarCep(String cep) async {
+  Future<EnderecoCepResultado?> buscarCep(String cep) async {
     try {
       return _cepRepository.buscarCep(cep);
     } catch (e) {

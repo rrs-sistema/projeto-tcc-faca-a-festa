@@ -24,27 +24,4 @@ class EnderecoCepResultado {
     required this.origemCalculo,
     required this.possuiCoordenadas,
   });
-
-  factory EnderecoCepResultado.fromMap(Map<String, dynamic> map) {
-    return EnderecoCepResultado(
-      cep: _texto(map['cep']),
-      logradouro: _texto(map['logradouro']),
-      numero: _texto(map['numero']),
-      bairro: _texto(map['bairro']),
-      cidade: _texto(map['cidade']),
-      uf: _texto(map['uf']).toUpperCase(),
-      latitude: _numero(map['latitude']),
-      longitude: _numero(map['longitude']),
-      formatado: _texto(map['formatado']),
-      origemCalculo: _texto(map['origemCalculo']),
-      possuiCoordenadas: map['possuiCoordenadas'] == true,
-    );
-  }
-
-  static String _texto(dynamic value) => (value ?? '').toString().trim();
-
-  static double? _numero(dynamic value) {
-    if (value is num) return value.toDouble();
-    return double.tryParse(value?.toString() ?? '');
-  }
 }

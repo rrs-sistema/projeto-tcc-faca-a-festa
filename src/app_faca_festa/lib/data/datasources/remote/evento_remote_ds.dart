@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/foundation.dart';
+import 'dart:typed_data';
 
 import '../../models/evento/evento_model.dart';
 import '../../models/evento/tipo_evento.dart';

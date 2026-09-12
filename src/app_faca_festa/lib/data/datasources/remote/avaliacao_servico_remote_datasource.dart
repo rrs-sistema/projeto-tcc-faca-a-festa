@@ -1,5 +1,6 @@
+import 'dart:developer' as developer;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
 
 class AvaliacaoServicoRemoteDatasource {
   AvaliacaoServicoRemoteDatasource({required FirebaseFirestore firestore})
@@ -158,7 +159,12 @@ class AvaliacaoServicoRemoteDatasource {
 
       return orcamentos.docs.isNotEmpty;
     } catch (e, s) {
-      debugPrint('❌ Erro ao verificar se pode avaliar fornecedor: $e\n$s');
+      developer.log(
+        'Erro ao verificar se pode avaliar fornecedor',
+        name: 'AvaliacaoServicoRemoteDatasource',
+        error: e,
+        stackTrace: s,
+      );
       return false;
     }
   }
@@ -179,7 +185,12 @@ class AvaliacaoServicoRemoteDatasource {
 
       return jaAvaliou.docs.isEmpty;
     } catch (e, s) {
-      debugPrint('❌ Erro ao verificar se pode avaliar cotação: $e\n$s');
+      developer.log(
+        'Erro ao verificar se pode avaliar cotação',
+        name: 'AvaliacaoServicoRemoteDatasource',
+        error: e,
+        stackTrace: s,
+      );
       return false;
     }
   }
