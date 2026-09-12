@@ -4,24 +4,21 @@ import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import 'package:app_faca_festa/core/utils/convite_link.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
-import 'package:app_faca_festa/data/models/convidado/convidado_model.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
-import 'package:app_faca_festa/data/models/evento/evento_model.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/servico_cotado.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
-import 'package:app_faca_festa/domain/repositories/convite_convidado_repository.dart';
 import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dart';
 import 'package:app_faca_festa/domain/repositories/push_token_repository.dart';
-import 'package:app_faca_festa/domain/services/abrir_convite_por_token.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_documentos.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_convite_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_destino_rota.dart';
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
-import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
@@ -34,24 +31,15 @@ import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_controller.dart';
 
-class _DestinoRota {
-  const _DestinoRota(this.nome, [this.argumentos]);
-
-  final String nome;
-  final Map<String, dynamic>? argumentos;
-}
-
 class AppController extends GetxController {
   AppController({
     GetStorage? storage,
-    required this.conviteConvidadoRepository,
     required this.autenticacaoRepository,
     required this.perfilUsuarioRepository,
     required this.pushTokenRepository,
     required this.documentos,
     required this.fornecedores,
-    required AbrirConvitePorToken abrirConvitePorTokenService,
-    required this.convidadoController,
+    required this.convite,
     required this.eventoController,
     required this.orcamentoController,
     required this.cotacaoController,
@@ -72,7 +60,6 @@ class AppController extends GetxController {
     UsuarioController? usuarioController,
     UsuarioController? Function()? usuarioControllerResolver,
   })  : _storage = storage ?? GetStorage(),
-        _abrirConvitePorTokenService = abrirConvitePorTokenService,
         _auditoria = auditoria,
         _auditoriaResolver = auditoriaResolver,
         _orcamentoGastoController = orcamentoGastoController,
@@ -83,7 +70,12 @@ class AppController extends GetxController {
         _inspiracaoController = inspiracaoController,
         _inspiracaoControllerResolver = inspiracaoControllerResolver,
         _usuarioController = usuarioController,
-        _usuarioControllerResolver = usuarioControllerResolver;
+        _usuarioControllerResolver = usuarioControllerResolver {
+    convite.vincular(
+      obterUsuario: obterUsuario,
+      carregando: carregando,
+    );
+  }
 
   // Estado reativo do usuário
   final Rx<Usuario?> usuarioLogado = Rx<Usuario?>(null);
@@ -94,10 +86,6 @@ class AppController extends GetxController {
   final RxList<ServicoCotado> servicosSelecionados = <ServicoCotado>[].obs;
 
   final RxBool contaIncompleta = false.obs;
-  bool conviteProcessado = false;
-  String conviteTokenProcessado = '';
-  RxString conviteToken = ''.obs;
-  final RxBool acessoPorLink = false.obs;
   final RxBool carregando = false.obs;
   final RxBool encerrandoSessao = false.obs;
   StreamSubscription<SessaoUsuario?>? _sessaoSub;
@@ -112,16 +100,14 @@ class AppController extends GetxController {
   static const String _metodoSenha = 'senha';
   static const String _metodoGoogle = 'google';
   final GetStorage _storage;
-  final ConviteConvidadoRepository conviteConvidadoRepository;
   final AutenticacaoRepository autenticacaoRepository;
   final PerfilUsuarioRepository perfilUsuarioRepository;
   final PushTokenRepository pushTokenRepository;
   final GerenciarDocumentos documentos;
   final GerenciarFornecedores fornecedores;
-  final AbrirConvitePorToken _abrirConvitePorTokenService;
+  final AppConviteController convite;
 
   // ✅ Injeção de controladores auxiliares
-  final ConvidadoController convidadoController;
   final EventoController eventoController;
   final OrcamentoController orcamentoController;
   final CotacaoController cotacaoController;
@@ -148,11 +134,7 @@ class AppController extends GetxController {
 
     // O token do link é a credencial. Auth anônimo + callable abrem a área
     // sem cadastro; id_usuario só é gravado depois de conta real.
-    final token = obterTokenConvite();
-    if (token != null && token.isNotEmpty) {
-      conviteToken.value = token;
-      debugPrint('$_logTag Token de convite capturado no onInit: $token');
-    }
+    convite.capturarTokenInicial();
 
     _monitorarSessao();
   }
@@ -250,9 +232,9 @@ class AppController extends GetxController {
     try {
       await Future.delayed(
           const Duration(milliseconds: 300)); // ✅ pequeno delay
-      final token = _tokenConviteAtual();
+      final token = convite.tokenConviteAtual();
 
-      if (acessoPorLink.value &&
+      if (convite.acessoPorLink.value &&
           (user == null ||
               autenticacaoRepository.sessaoAnonima ||
               autenticacaoRepository.sessaoVisitanteConvite)) {
@@ -261,17 +243,17 @@ class AppController extends GetxController {
         return;
       }
 
-      if (acessoPorLink.value &&
+      if (convite.acessoPorLink.value &&
           user != null &&
           !autenticacaoRepository.sessaoAnonima &&
           !autenticacaoRepository.sessaoVisitanteConvite) {
-        acessoPorLink.value = false;
+        convite.acessoPorLink.value = false;
       }
 
       if (user == null) {
         _limparEstadoTotp();
         if (token != null && token.isNotEmpty) {
-          conviteToken.value = token;
+          convite.guardarTokenConvite(token);
           debugPrint(
               '$_logTag Token de convite pendente; a tela de convite conduz: $token');
           return;
@@ -352,7 +334,7 @@ class AppController extends GetxController {
         final usuario = _aplicarPerfil(perfil);
         themeController.definirPapelSessao(usuario.tipo);
 
-        _DestinoRota destino;
+        AppDestinoRota destino;
 
         // ----------------------------------------------------------
         // 🔹 Lógica de roteamento por tipo de usuário
@@ -363,14 +345,14 @@ class AppController extends GetxController {
             break;
 
           case 'C': // 🎁 Convidado
-            destino = await _resolverDestinoConvidado(usuario, token: token);
+            destino = await convite.resolverDestinoConvidado(usuario, token: token);
             break;
 
           case 'A': // 🛠️ Administrador
             themeController.aplicarTemaProduto();
             servicoController.carregarServicosComDetalhesOtimizado();
             _validarDependenciasAdminDashboard();
-            destino = const _DestinoRota('/admin');
+            destino = const AppDestinoRota('/admin');
             break;
 
           default: // 🎉 Organizador
@@ -382,14 +364,14 @@ class AppController extends GetxController {
                   '🔹 Evento ativo: ${evento.nomeEvento} (${evento.idEvento})');
               cotacaoController.ouvirMinhasCotacoes();
               _validarDependenciasHomeEvent();
-              destino = const _DestinoRota('/HomeEventScreen');
+              destino = const AppDestinoRota('/HomeEventScreen');
             } else {
               contaIncompleta.value = true;
               if (Get.currentRoute == '/welcome') {
                 carregando.value = false;
                 return;
               }
-              destino = const _DestinoRota('/welcome');
+              destino = const AppDestinoRota('/welcome');
             }
             break;
         }
@@ -442,265 +424,44 @@ class AppController extends GetxController {
     return null;
   }
 
-  String? obterTokenConvite() {
-    return ConviteLink.tokenDaUrl();
-  }
+  RxString get conviteToken => convite.conviteToken;
+  RxBool get acessoPorLink => convite.acessoPorLink;
+  bool get fluxoConviteAtivo => convite.fluxoConviteAtivo;
 
-  /// Token do link `/convite/:token` (URL ou memória). Credencial do convidado.
-  String? tokenConviteAtual() => _tokenConviteAtual();
+  String? obterTokenConvite() => convite.obterTokenConvite();
 
-  /// Há convite pendente: o login/cadastro Google deve criar tipo C, não O.
-  bool get fluxoConviteAtivo {
-    final token = _tokenConviteAtual();
-    return token != null && token.isNotEmpty;
-  }
+  String? tokenConviteAtual() => convite.tokenConviteAtual();
 
-  void guardarTokenConvite(String token) {
-    final tokenLimpo = token.trim();
-    if (tokenLimpo.isEmpty) return;
-    conviteToken.value = tokenLimpo;
-  }
+  void guardarTokenConvite(String token) =>
+      convite.guardarTokenConvite(token);
 
-  String? _tokenConviteAtual() {
-    final tokenUrl = obterTokenConvite();
-    if (tokenUrl != null && tokenUrl.isNotEmpty) {
-      conviteToken.value = tokenUrl;
-      return tokenUrl;
-    }
+  Future<void> abrirConvite(String token) => convite.abrirConvite(token);
 
-    final tokenMemoria = conviteToken.value.trim();
-    return tokenMemoria.isEmpty ? null : tokenMemoria;
-  }
+  Future<void> redirecionarConvidadoAposLogin(
+    Usuario usuario, {
+    String? token,
+  }) =>
+      convite.redirecionarConvidadoAposLogin(usuario, token: token);
 
-  /// Abre o convite. Sem conta real, entra como visitante (auth anônimo).
-  /// Conta tipo C vincula o token ao UID. Outros papéis são recusados.
-  Future<void> abrirConvite(String token) async {
-    final tokenLimpo = token.trim();
-    if (tokenLimpo.isEmpty) return;
-
-    conviteToken.value = tokenLimpo;
-    conviteProcessado = false;
-    conviteTokenProcessado = '';
-
-    final idUsuario = autenticacaoRepository.idUsuarioAtual;
-    final anonimo = autenticacaoRepository.sessaoAnonima;
-
-    if (idUsuario != null && !anonimo) {
-      final usuario = await obterUsuario(idUsuario);
-      if (usuario == null) {
-        await _abrirConviteComoVisitante(tokenLimpo);
-        return;
-      }
-
-      if (usuario.tipo != 'C') {
-        Get.snackbar(
-          'Convite de convidado',
-          'Este link deve ser acessado por uma conta de convidado.',
-          backgroundColor: Colors.orange.shade600,
-          colorText: Colors.white,
-        );
-        return;
-      }
-
-      acessoPorLink.value = false;
-      await redirecionarConvidadoAposLogin(usuario, token: tokenLimpo);
-      return;
-    }
-
-    await _abrirConviteComoVisitante(tokenLimpo);
-  }
-
-  Future<void> _abrirConviteComoVisitante(String token) async {
-    acessoPorLink.value = true;
-    try {
-      if (autenticacaoRepository.idUsuarioAtual == null) {
-        await autenticacaoRepository.entrarAnonimamente();
-      }
-
-      final resultado = await _abrirConvitePorTokenService.abrir(token);
-      final convidado = ConvidadoModel.fromMap(resultado.convidado);
-      final evento = EventoModel.fromMap(resultado.evento);
-      if (convidado.idConvidado.isEmpty || evento.idEvento.isEmpty) {
-        throw const AbrirConvitePorTokenException('not-found');
-      }
-
-      eventoController.eventoAtual.value = evento;
-      await eventoController.buscarTipoEvento(evento.idTipoEvento);
-      await themeController.aplicarParaEvento(
-        evento,
-        fallbackNomeTipo: eventoController.tipoEventoAtualEntidade?.nome,
-      );
-
-      conviteProcessado = true;
-      conviteTokenProcessado = token;
-      convidadoController.convidadoAtual.value = convidado;
-
-      Get.offAllNamed(
-        '/areaconvidado',
-        arguments: {
-          'convidado': convidado,
-          'evento': evento,
-        },
-      );
-    } on AutenticacaoException catch (e) {
-      acessoPorLink.value = false;
-      debugPrint('$_logTag Auth ao abrir convite: ${e.codigo}');
-      Get.snackbar(
-        'Convite',
-        e.codigo == 'operation-not-allowed' ||
-                e.codigo == 'admin-restricted-operation'
-            ? 'Acesso pelo link está temporariamente indisponível.'
-            : 'Não foi possível abrir o convite. Tente novamente.',
-        backgroundColor: Colors.orange.shade700,
-        colorText: Colors.white,
-      );
-      Get.offAllNamed('/conviteNaoEncontrado');
-    } catch (e, s) {
-      acessoPorLink.value = false;
-      debugPrint('$_logTag Erro ao abrir convite como visitante: $e\n$s');
-      Get.offAllNamed('/conviteNaoEncontrado');
-    }
-  }
-
-  /// Usado também pelo cadastro: depois de criar uma conta do tipo convidado,
-  /// vincula convites pendentes pelo token e/ou pelo e-mail do usuário.
-  Future<void> redirecionarConvidadoAposLogin(Usuario usuario,
-      {String? token}) async {
-    carregando.value = true;
-    try {
-      final destino = await _resolverDestinoConvidado(usuario, token: token);
-      carregando.value = false;
-      Get.offAllNamed(destino.nome, arguments: destino.argumentos);
-    } catch (e, s) {
-      carregando.value = false;
-      debugPrint('$_logTag Erro ao redirecionar convidado: $e\n$s');
-      Get.offAllNamed('/conviteNaoEncontrado');
-    }
-  }
-
-  Future<_DestinoRota> _resolverDestinoConvidado(Usuario usuario,
-      {String? token}) async {
-    final tokenLimpo = (token ?? _tokenConviteAtual() ?? '').trim();
-    final email = usuario.email.trim();
-
-    debugPrint(
-      '$_logTag Resolvendo destino do convidado | uid=${usuario.idUsuario} | '
-      "email=$email | token=${tokenLimpo.isEmpty ? 'sem token' : tokenLimpo}",
-    );
-
-    Convidado? convidado;
-
-    if (tokenLimpo.isNotEmpty && conviteTokenProcessado != tokenLimpo) {
-      convidado = await _vincularConvitePorToken(
-        token: tokenLimpo,
-        uid: usuario.idUsuario,
-        email: email,
-      );
-      conviteProcessado = convidado != null;
-      if (convidado != null) conviteTokenProcessado = tokenLimpo;
-    }
-
-    convidado ??= await _buscarOuVincularConvitePorUsuario(
-      uid: usuario.idUsuario,
-      email: email,
-    );
-
-    if (convidado == null) {
-      debugPrint('$_logTag Nenhum convite encontrado para ${usuario.email}.');
-      return const _DestinoRota('/conviteNaoEncontrado');
-    }
-
-    final evento =
-        await eventoController.buscarEventoPeloIdEvento(convidado.idEvento);
-    if (evento == null) {
-      debugPrint(
-          '$_logTag Convite encontrado, mas evento não existe: ${convidado.idEvento}.');
-      return const _DestinoRota('/conviteNaoEncontrado');
-    }
-
-    eventoController.eventoAtual.value = evento;
-    await eventoController.buscarTipoEvento(evento.idTipoEvento);
-    await themeController.aplicarParaEvento(
-      evento,
-      fallbackNomeTipo: eventoController.tipoEventoAtualEntidade?.nome,
-    );
-
-    return _DestinoRota(
-      '/areaconvidado',
-      {
-        'convidado': convidado,
-        'evento': evento,
-      },
-    );
-  }
-
-  Future<Convidado?> _vincularConvitePorToken({
-    required String token,
-    required String uid,
-    required String email,
-  }) async {
-    try {
-      return await conviteConvidadoRepository.vincularPorToken(
-        token: token,
-        uid: uid,
-        email: email,
-      );
-    } on ConviteJaVinculadoException {
-      _mostrarConviteJaVinculado();
-      return null;
-    } catch (e, s) {
-      debugPrint('$_logTag Erro ao vincular convite por token: $e\n$s');
-      return null;
-    }
-  }
-
-  Future<Convidado?> _buscarOuVincularConvitePorUsuario({
-    required String uid,
-    required String email,
-  }) async {
-    try {
-      return await conviteConvidadoRepository.buscarOuVincularPorUsuario(
-        uid: uid,
-        email: email,
-      );
-    } on ConviteJaVinculadoException {
-      _mostrarConviteJaVinculado();
-      return null;
-    } catch (e, s) {
-      debugPrint(
-          '$_logTag Erro ao buscar/vincular convite por usuário: $e\n$s');
-      return null;
-    }
-  }
-
-  void _mostrarConviteJaVinculado() {
-    Get.snackbar(
-      'Convite já vinculado',
-      'Este convite já está associado a outra conta.',
-      backgroundColor: Colors.orange.shade600,
-      colorText: Colors.white,
-    );
-  }
-
-  Future<_DestinoRota> _resolverDestinoFornecedor(String idUsuario) async {
+  Future<AppDestinoRota> _resolverDestinoFornecedor(String idUsuario) async {
     final fornecedor = await fornecedores.buscarPorUsuario(idUsuario);
 
     if (fornecedor == null) {
       fornecedorController.fornecedor.value = null;
       fornecedorController.aptoParaOperar.value = false;
-      return const _DestinoRota('/fornecedor');
+      return const AppDestinoRota('/fornecedor');
     }
 
     fornecedorController.fornecedor.value = fornecedor;
     fornecedorController.aptoParaOperar.value = fornecedor.aptoParaOperar;
 
     if (!fornecedor.aptoParaOperar) {
-      return const _DestinoRota('/fornecedor');
+      return const AppDestinoRota('/fornecedor');
     }
 
     await _iniciarPainelOperacionalFornecedor(fornecedor);
     themeController.aplicarTemaProduto();
-    return const _DestinoRota('/fornecedor');
+    return const AppDestinoRota('/fornecedor');
   }
 
   Future<void> _iniciarPainelOperacionalFornecedor(
@@ -777,10 +538,7 @@ class AppController extends GetxController {
       enderecoPrincipal.value = null;
       enderecosUsuario.clear();
       servicosSelecionados.clear();
-      conviteProcessado = false;
-      conviteTokenProcessado = '';
-      conviteToken.value = '';
-      acessoPorLink.value = false;
+      convite.limpar();
       _limparEstadoTotp();
       themeController.definirPapelSessao(null);
       themeController.aplicarTemaProduto();

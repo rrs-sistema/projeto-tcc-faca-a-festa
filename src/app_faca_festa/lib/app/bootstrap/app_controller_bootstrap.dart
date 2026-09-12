@@ -17,6 +17,7 @@ import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_documentos.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_convite_controller.dart';
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_produto_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
@@ -63,17 +64,29 @@ abstract final class AppControllerBootstrap {
       );
     }
 
+    if (!Get.isRegistered<AppConviteController>()) {
+      Get.lazyPut<AppConviteController>(
+        () => AppConviteController(
+          autenticacao: Get.find<AutenticacaoRepository>(),
+          abrirConvitePorToken: Get.find<AbrirConvitePorToken>(),
+          convites: Get.find<ConviteConvidadoRepository>(),
+          eventos: Get.find<EventoController>(),
+          theme: Get.find<EventThemeController>(),
+          convidados: Get.find<ConvidadoController>(),
+        ),
+        fenix: true,
+      );
+    }
+
     if (!Get.isRegistered<AppController>()) {
       Get.lazyPut<AppController>(
         () => AppController(
-          conviteConvidadoRepository: Get.find<ConviteConvidadoRepository>(),
           autenticacaoRepository: Get.find<AutenticacaoRepository>(),
           perfilUsuarioRepository: Get.find<PerfilUsuarioRepository>(),
           pushTokenRepository: Get.find<PushTokenRepository>(),
           documentos: Get.find<GerenciarDocumentos>(),
           fornecedores: Get.find<GerenciarFornecedores>(),
-          abrirConvitePorTokenService: Get.find<AbrirConvitePorToken>(),
-          convidadoController: Get.find<ConvidadoController>(),
+          convite: Get.find<AppConviteController>(),
           eventoController: Get.find<EventoController>(),
           orcamentoController: Get.find<OrcamentoController>(),
           cotacaoController: Get.find<CotacaoController>(),
