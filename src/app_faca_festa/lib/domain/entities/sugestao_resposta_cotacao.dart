@@ -13,7 +13,6 @@ class SugestaoRespostaCotacao {
   final String origem;
   final String versaoRegra;
   final String status;
-  final Map<String, dynamic>? metadados;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final DateTime? expiresAt;
@@ -34,7 +33,6 @@ class SugestaoRespostaCotacao {
     this.idEvento,
     this.camposUsados = const [],
     this.camposAusentes = const [],
-    this.metadados,
     this.updatedAt,
     this.expiresAt,
   });

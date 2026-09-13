@@ -1,74 +1,31 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class SugestaoPacoteFornecedorModel {
-  final String idSugestao;
-  final String idFornecedor;
-  final String? idEvento;
-  final String? idCotacao;
+import 'package:app_faca_festa/domain/entities/item_pacote_fornecedor_sugerido.dart';
+import 'package:app_faca_festa/domain/entities/sugestao_pacote_fornecedor.dart';
 
-  /// Exemplo: economico, padrao, premium.
-  final String tipoPacote;
-
-  final String nomePacote;
-  final String descricao;
-
-  /// Lista flexível para itens do pacote.
-  /// Exemplo:
-  /// {
-  ///   "nome": "Docinhos tradicionais",
-  ///   "quantidade": 100,
-  ///   "tipo_medida": "unidade",
-  ///   "valor": 250.0
-  /// }
-  final List<Map<String, dynamic>> itensSugeridos;
-
-  final double? valorMinimo;
-  final double? valorEstimado;
-  final double? valorMaximo;
-
-  final int? quantidadeBase;
-  final double? totalConvidadosEquivalentes;
-
-  final List<String> motivos;
-  final List<String> alertas;
-
-  /// Exemplo: deterministic_rules, generative_ai, hybrid.
-  final String origem;
-
-  final String versaoRegra;
-
-  /// Exemplo: nova, aplicada, editada, ignorada.
-  final String status;
-
-  final Map<String, dynamic>? metadados;
-
-  final DateTime createdAt;
-  final DateTime? updatedAt;
-  final DateTime? expiresAt;
-
+class SugestaoPacoteFornecedorModel extends SugestaoPacoteFornecedor {
   const SugestaoPacoteFornecedorModel({
-    required this.idSugestao,
-    required this.idFornecedor,
-    required this.tipoPacote,
-    required this.nomePacote,
-    required this.descricao,
-    required this.origem,
-    required this.versaoRegra,
-    required this.status,
-    required this.createdAt,
-    this.idEvento,
-    this.idCotacao,
-    this.itensSugeridos = const [],
-    this.valorMinimo,
-    this.valorEstimado,
-    this.valorMaximo,
-    this.quantidadeBase,
-    this.totalConvidadosEquivalentes,
-    this.motivos = const [],
-    this.alertas = const [],
-    this.metadados,
-    this.updatedAt,
-    this.expiresAt,
+    required super.idSugestao,
+    required super.idFornecedor,
+    required super.tipoPacote,
+    required super.nomePacote,
+    required super.descricao,
+    required super.origem,
+    required super.versaoRegra,
+    required super.status,
+    required super.createdAt,
+    super.idEvento,
+    super.idCotacao,
+    super.itensSugeridos,
+    super.valorMinimo,
+    super.valorEstimado,
+    super.valorMaximo,
+    super.quantidadeBase,
+    super.totalConvidadosEquivalentes,
+    super.motivos,
+    super.alertas,
+    super.updatedAt,
+    super.expiresAt,
   });
 
   factory SugestaoPacoteFornecedorModel.fromMap(
@@ -104,7 +61,7 @@ class SugestaoPacoteFornecedorModel {
         fallback: 'Pacote sugerido',
       ),
       descricao: _readString(map, ['descricao']),
-      itensSugeridos: _readMapList(
+      itensSugeridos: _readItens(
         map['itens_sugeridos'] ?? map['itensSugeridos'],
       ),
       valorMinimo: _readNullableDouble(
@@ -143,7 +100,6 @@ class SugestaoPacoteFornecedorModel {
         fallback: '1.0.0',
       ),
       status: _readString(map, ['status'], fallback: 'nova'),
-      metadados: _readNullableMap(map['metadados'] ?? map['metadata']),
       createdAt: _readDate(
         map,
         ['created_at', 'createdAt'],
@@ -163,7 +119,7 @@ class SugestaoPacoteFornecedorModel {
       'tipo_pacote': tipoPacote,
       'nome_pacote': nomePacote,
       'descricao': descricao,
-      'itens_sugeridos': itensSugeridos,
+      'itens_sugeridos': itensSugeridos.map((item) => item.toMap()).toList(),
       'valor_minimo': valorMinimo,
       'valor_estimado': valorEstimado,
       'valor_maximo': valorMaximo,
@@ -174,7 +130,6 @@ class SugestaoPacoteFornecedorModel {
       'origem': origem,
       'versao_regra': versaoRegra,
       'status': status,
-      'metadados': metadados,
       'created_at': Timestamp.fromDate(createdAt),
       'updated_at': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
       'expires_at': expiresAt == null ? null : Timestamp.fromDate(expiresAt!),
@@ -189,7 +144,7 @@ class SugestaoPacoteFornecedorModel {
     String? tipoPacote,
     String? nomePacote,
     String? descricao,
-    List<Map<String, dynamic>>? itensSugeridos,
+    List<ItemPacoteFornecedorSugerido>? itensSugeridos,
     double? valorMinimo,
     double? valorEstimado,
     double? valorMaximo,
@@ -200,7 +155,6 @@ class SugestaoPacoteFornecedorModel {
     String? origem,
     String? versaoRegra,
     String? status,
-    Map<String, dynamic>? metadados,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? expiresAt,
@@ -225,7 +179,6 @@ class SugestaoPacoteFornecedorModel {
       origem: origem ?? this.origem,
       versaoRegra: versaoRegra ?? this.versaoRegra,
       status: status ?? this.status,
-      metadados: metadados ?? this.metadados,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       expiresAt: expiresAt ?? this.expiresAt,
@@ -310,12 +263,15 @@ class SugestaoPacoteFornecedorModel {
     return <String>[];
   }
 
-  static List<Map<String, dynamic>> _readMapList(dynamic value) {
-    if (value is! List) return <Map<String, dynamic>>[];
+  static List<ItemPacoteFornecedorSugerido> _readItens(dynamic value) {
+    if (value is! List) return const [];
 
     return value
         .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
+        .map((item) => ItemPacoteFornecedorSugerido.fromMap(
+              Map<String, dynamic>.from(item),
+            ))
+        .where((item) => item.nome.isNotEmpty)
         .toList();
   }
 
@@ -341,13 +297,6 @@ class SugestaoPacoteFornecedorModel {
       }
     }
 
-    return null;
-  }
-
-  static Map<String, dynamic>? _readNullableMap(dynamic value) {
-    if (value is Map) {
-      return Map<String, dynamic>.from(value);
-    }
     return null;
   }
 }

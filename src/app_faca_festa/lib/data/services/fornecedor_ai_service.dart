@@ -10,6 +10,7 @@ import 'package:app_faca_festa/domain/entities/fornecedor_interacao.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/services/fornecedor_ai.dart';
+import 'package:app_faca_festa/domain/entities/servico_catalogo_alerta.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_catalogo_fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/resumo_reputacao_fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/score_cotacao_fornecedor.dart';
@@ -658,7 +659,7 @@ class FornecedorAiService implements FornecedorAiRegrasService {
     final pendencias = <String>[];
     final melhorias = <String>[];
     final camposAusentes = <String>[];
-    final servicosComAlerta = <Map<String, dynamic>>[];
+    final servicosComAlerta = <ServicoCatalogoAlerta>[];
 
     if (_hasText(fornecedor.bannerUrl)) {
       score += 10;
@@ -770,11 +771,13 @@ class FornecedorAiService implements FornecedorAiRegrasService {
         if (!_hasText(servico.tipoMedida)) alertas.add('sem_tipo_medida');
 
         if (alertas.isNotEmpty) {
-          servicosComAlerta.add({
-            'id_servico': servico.id,
-            'nome_servico': servico.nomeServico,
-            'alertas': alertas,
-          });
+          servicosComAlerta.add(
+            ServicoCatalogoAlerta(
+              idServico: servico.id,
+              nomeServico: servico.nomeServico ?? '',
+              alertas: alertas,
+            ),
+          );
         }
       }
     }

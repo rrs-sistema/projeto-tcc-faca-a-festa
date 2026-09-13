@@ -23,7 +23,6 @@ class ProximaAcaoFornecedorModel extends ProximaAcaoFornecedor {
     super.motivos,
     super.score,
     super.statusCotacao,
-    super.metadados,
     super.updatedAt,
     super.expiresAt,
   });
@@ -84,7 +83,6 @@ class ProximaAcaoFornecedorModel extends ProximaAcaoFornecedor {
         fallback: '1.0.0',
       ),
       status: _readString(map, ['status'], fallback: 'novo'),
-      metadados: _readNullableMap(map['metadados'] ?? map['metadata']),
       createdAt: _readDate(
         map,
         ['created_at', 'createdAt'],
@@ -114,7 +112,6 @@ class ProximaAcaoFornecedorModel extends ProximaAcaoFornecedor {
       'origem': origem,
       'versao_regra': versaoRegra,
       'status': status,
-      'metadados': metadados,
       'created_at': Timestamp.fromDate(createdAt),
       'updated_at': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
       'expires_at': expiresAt == null ? null : Timestamp.fromDate(expiresAt!),
@@ -139,7 +136,6 @@ class ProximaAcaoFornecedorModel extends ProximaAcaoFornecedor {
     String? origem,
     String? versaoRegra,
     String? status,
-    Map<String, dynamic>? metadados,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? expiresAt,
@@ -162,7 +158,6 @@ class ProximaAcaoFornecedorModel extends ProximaAcaoFornecedor {
       origem: origem ?? this.origem,
       versaoRegra: versaoRegra ?? this.versaoRegra,
       status: status ?? this.status,
-      metadados: metadados ?? this.metadados,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       expiresAt: expiresAt ?? this.expiresAt,
@@ -295,10 +290,4 @@ class ProximaAcaoFornecedorModel extends ProximaAcaoFornecedor {
     return null;
   }
 
-  static Map<String, dynamic>? _readNullableMap(dynamic value) {
-    if (value is Map) {
-      return Map<String, dynamic>.from(value);
-    }
-    return null;
-  }
 }

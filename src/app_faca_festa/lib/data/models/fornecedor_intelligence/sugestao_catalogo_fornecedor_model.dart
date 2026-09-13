@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:app_faca_festa/domain/entities/servico_catalogo_alerta.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_catalogo_fornecedor.dart';
 
 
@@ -24,7 +25,6 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
     super.camposAusentes,
     super.servicosComAlerta,
     super.categoriasSemServico,
-    super.metadados,
     super.updatedAt,
     super.expiresAt,
   });
@@ -67,7 +67,7 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
         map,
         ['campos_ausentes', 'camposAusentes'],
       ),
-      servicosComAlerta: _readMapList(
+      servicosComAlerta: _readAlertaList(
         map['servicos_com_alerta'] ?? map['servicosComAlerta'],
       ),
       categoriasSemServico: _readStringList(
@@ -101,7 +101,6 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
         fallback: '1.0.0',
       ),
       status: _readString(map, ['status'], fallback: 'nova'),
-      metadados: _readNullableMap(map['metadados'] ?? map['metadata']),
       createdAt: _readDate(
         map,
         ['created_at', 'createdAt'],
@@ -123,7 +122,8 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
       'pendencias': pendencias,
       'melhorias_prioritarias': melhoriasPrioritarias,
       'campos_ausentes': camposAusentes,
-      'servicos_com_alerta': servicosComAlerta,
+      'servicos_com_alerta':
+          servicosComAlerta.map((item) => item.toMap()).toList(),
       'categorias_sem_servico': categoriasSemServico,
       'total_servicos_ativos': totalServicosAtivos,
       'total_servicos_sem_imagem': totalServicosSemImagem,
@@ -132,7 +132,6 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
       'origem': origem,
       'versao_regra': versaoRegra,
       'status': status,
-      'metadados': metadados,
       'created_at': Timestamp.fromDate(createdAt),
       'updated_at': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
       'expires_at': expiresAt == null ? null : Timestamp.fromDate(expiresAt!),
@@ -149,7 +148,7 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
     List<String>? pendencias,
     List<String>? melhoriasPrioritarias,
     List<String>? camposAusentes,
-    List<Map<String, dynamic>>? servicosComAlerta,
+    List<ServicoCatalogoAlerta>? servicosComAlerta,
     List<String>? categoriasSemServico,
     int? totalServicosAtivos,
     int? totalServicosSemImagem,
@@ -158,7 +157,6 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
     String? origem,
     String? versaoRegra,
     String? status,
-    Map<String, dynamic>? metadados,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? expiresAt,
@@ -186,7 +184,6 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
       origem: origem ?? this.origem,
       versaoRegra: versaoRegra ?? this.versaoRegra,
       status: status ?? this.status,
-      metadados: metadados ?? this.metadados,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       expiresAt: expiresAt ?? this.expiresAt,
@@ -265,12 +262,14 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
     return <String>[];
   }
 
-  static List<Map<String, dynamic>> _readMapList(dynamic value) {
-    if (value is! List) return <Map<String, dynamic>>[];
+  static List<ServicoCatalogoAlerta> _readAlertaList(dynamic value) {
+    if (value is! List) return const [];
 
     return value
         .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
+        .map((item) => ServicoCatalogoAlerta.fromMap(
+              Map<String, dynamic>.from(item),
+            ))
         .toList();
   }
 
@@ -296,13 +295,6 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
       }
     }
 
-    return null;
-  }
-
-  static Map<String, dynamic>? _readNullableMap(dynamic value) {
-    if (value is Map) {
-      return Map<String, dynamic>.from(value);
-    }
     return null;
   }
 }

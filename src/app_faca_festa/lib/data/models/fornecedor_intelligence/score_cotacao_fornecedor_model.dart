@@ -24,7 +24,6 @@ class ScoreCotacaoFornecedorModel extends ScoreCotacaoFornecedor {
     super.motivosPositivos,
     super.alertas,
     super.penalidades,
-    super.metadados,
     super.expiresAt,
   });
 
@@ -96,7 +95,6 @@ class ScoreCotacaoFornecedorModel extends ScoreCotacaoFornecedor {
         ['versao_regra', 'versaoRegra'],
         fallback: '1.0.0',
       ),
-      metadados: _readNullableMap(map['metadados'] ?? map['metadata']),
       calculadoEm: _readDate(
         map,
         ['calculado_em', 'calculadoEm'],
@@ -126,7 +124,6 @@ class ScoreCotacaoFornecedorModel extends ScoreCotacaoFornecedor {
       'penalidades': penalidades,
       'origem': origem,
       'versao_regra': versaoRegra,
-      'metadados': metadados,
       'calculado_em': Timestamp.fromDate(calculadoEm),
       'expires_at': expiresAt == null ? null : Timestamp.fromDate(expiresAt!),
     };
@@ -151,7 +148,6 @@ class ScoreCotacaoFornecedorModel extends ScoreCotacaoFornecedor {
     List<String>? penalidades,
     String? origem,
     String? versaoRegra,
-    Map<String, dynamic>? metadados,
     DateTime? calculadoEm,
     DateTime? expiresAt,
   }) {
@@ -178,7 +174,6 @@ class ScoreCotacaoFornecedorModel extends ScoreCotacaoFornecedor {
       penalidades: penalidades ?? this.penalidades,
       origem: origem ?? this.origem,
       versaoRegra: versaoRegra ?? this.versaoRegra,
-      metadados: metadados ?? this.metadados,
       calculadoEm: calculadoEm ?? this.calculadoEm,
       expiresAt: expiresAt ?? this.expiresAt,
     );
@@ -265,10 +260,4 @@ class ScoreCotacaoFornecedorModel extends ScoreCotacaoFornecedor {
     return null;
   }
 
-  static Map<String, dynamic>? _readNullableMap(dynamic value) {
-    if (value is Map) {
-      return Map<String, dynamic>.from(value);
-    }
-    return null;
-  }
 }

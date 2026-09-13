@@ -14,7 +14,6 @@ class InsightFornecedor {
   final String origem;
   final String status;
   final String versaoRegra;
-  final Map<String, dynamic>? metadados;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final DateTime? expiresAt;
@@ -36,7 +35,6 @@ class InsightFornecedor {
     this.nivel,
     this.motivos = const [],
     this.acoesSugeridas = const [],
-    this.metadados,
     this.updatedAt,
     this.expiresAt,
   });

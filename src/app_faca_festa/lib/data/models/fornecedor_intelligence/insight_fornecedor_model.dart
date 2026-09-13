@@ -21,7 +21,6 @@ class InsightFornecedorModel extends InsightFornecedor {
     super.nivel,
     super.motivos,
     super.acoesSugeridas,
-    super.metadados,
     super.updatedAt,
     super.expiresAt,
   });
@@ -70,7 +69,6 @@ class InsightFornecedorModel extends InsightFornecedor {
         ['versao_regra', 'versaoRegra'],
         fallback: '1.0.0',
       ),
-      metadados: _readNullableMap(map['metadados'] ?? map['metadata']),
       createdAt: _readDate(
         map,
         ['created_at', 'createdAt'],
@@ -98,7 +96,6 @@ class InsightFornecedorModel extends InsightFornecedor {
       'origem': origem,
       'status': status,
       'versao_regra': versaoRegra,
-      'metadados': metadados,
       'created_at': Timestamp.fromDate(createdAt),
       'updated_at': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
       'expires_at': expiresAt == null ? null : Timestamp.fromDate(expiresAt!),
@@ -121,7 +118,6 @@ class InsightFornecedorModel extends InsightFornecedor {
     String? origem,
     String? status,
     String? versaoRegra,
-    Map<String, dynamic>? metadados,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? expiresAt,
@@ -142,7 +138,6 @@ class InsightFornecedorModel extends InsightFornecedor {
       origem: origem ?? this.origem,
       status: status ?? this.status,
       versaoRegra: versaoRegra ?? this.versaoRegra,
-      metadados: metadados ?? this.metadados,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       expiresAt: expiresAt ?? this.expiresAt,
@@ -253,10 +248,4 @@ class InsightFornecedorModel extends InsightFornecedor {
     return null;
   }
 
-  static Map<String, dynamic>? _readNullableMap(dynamic value) {
-    if (value is Map) {
-      return Map<String, dynamic>.from(value);
-    }
-    return null;
-  }
 }

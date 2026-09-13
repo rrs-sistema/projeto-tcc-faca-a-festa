@@ -16,7 +16,6 @@ class ResumoReputacaoFornecedor {
   final int totalComentariosAnalisados;
   final String origem;
   final String versaoRegra;
-  final Map<String, dynamic>? metadados;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final DateTime? expiresAt;
@@ -40,7 +39,6 @@ class ResumoReputacaoFornecedor {
     this.pontosAtencao = const [],
     this.servicoMelhorAvaliado,
     this.servicoComAlerta,
-    this.metadados,
     this.updatedAt,
     this.expiresAt,
   });

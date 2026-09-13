@@ -1,3 +1,5 @@
+import 'package:app_faca_festa/domain/entities/servico_catalogo_alerta.dart';
+
 class SugestaoCatalogoFornecedor {
   final String idSugestao;
   final String idFornecedor;
@@ -8,7 +10,7 @@ class SugestaoCatalogoFornecedor {
   final List<String> pendencias;
   final List<String> melhoriasPrioritarias;
   final List<String> camposAusentes;
-  final List<Map<String, dynamic>> servicosComAlerta;
+  final List<ServicoCatalogoAlerta> servicosComAlerta;
   final List<String> categoriasSemServico;
   final int totalServicosAtivos;
   final int totalServicosSemImagem;
@@ -17,7 +19,6 @@ class SugestaoCatalogoFornecedor {
   final String origem;
   final String versaoRegra;
   final String status;
-  final Map<String, dynamic>? metadados;
   final DateTime createdAt;
   final DateTime? updatedAt;
   final DateTime? expiresAt;
@@ -42,7 +43,6 @@ class SugestaoCatalogoFornecedor {
     this.camposAusentes = const [],
     this.servicosComAlerta = const [],
     this.categoriasSemServico = const [],
-    this.metadados,
     this.updatedAt,
     this.expiresAt,
   });

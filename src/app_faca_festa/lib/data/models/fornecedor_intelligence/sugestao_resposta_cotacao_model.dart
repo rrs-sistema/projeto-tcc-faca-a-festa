@@ -20,7 +20,6 @@ class SugestaoRespostaCotacaoModel extends SugestaoRespostaCotacao {
     super.idEvento,
     super.camposUsados,
     super.camposAusentes,
-    super.metadados,
     super.updatedAt,
     super.expiresAt,
   });
@@ -79,7 +78,6 @@ class SugestaoRespostaCotacaoModel extends SugestaoRespostaCotacao {
         fallback: '1.0.0',
       ),
       status: _readString(map, ['status'], fallback: 'nova'),
-      metadados: _readNullableMap(map['metadados'] ?? map['metadata']),
       createdAt: _readDate(
         map,
         ['created_at', 'createdAt'],
@@ -106,7 +104,6 @@ class SugestaoRespostaCotacaoModel extends SugestaoRespostaCotacao {
       'origem': origem,
       'versao_regra': versaoRegra,
       'status': status,
-      'metadados': metadados,
       'created_at': Timestamp.fromDate(createdAt),
       'updated_at': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
       'expires_at': expiresAt == null ? null : Timestamp.fromDate(expiresAt!),
@@ -128,7 +125,6 @@ class SugestaoRespostaCotacaoModel extends SugestaoRespostaCotacao {
     String? origem,
     String? versaoRegra,
     String? status,
-    Map<String, dynamic>? metadados,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? expiresAt,
@@ -148,7 +144,6 @@ class SugestaoRespostaCotacaoModel extends SugestaoRespostaCotacao {
       origem: origem ?? this.origem,
       versaoRegra: versaoRegra ?? this.versaoRegra,
       status: status ?? this.status,
-      metadados: metadados ?? this.metadados,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       expiresAt: expiresAt ?? this.expiresAt,
@@ -250,10 +245,4 @@ class SugestaoRespostaCotacaoModel extends SugestaoRespostaCotacao {
     return null;
   }
 
-  static Map<String, dynamic>? _readNullableMap(dynamic value) {
-    if (value is Map) {
-      return Map<String, dynamic>.from(value);
-    }
-    return null;
-  }
 }

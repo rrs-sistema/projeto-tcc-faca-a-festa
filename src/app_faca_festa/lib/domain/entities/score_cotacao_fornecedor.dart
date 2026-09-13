@@ -17,7 +17,6 @@ class ScoreCotacaoFornecedor {
   final List<String> penalidades;
   final String origem;
   final String versaoRegra;
-  final Map<String, dynamic>? metadados;
   final DateTime calculadoEm;
   final DateTime? expiresAt;
 
@@ -41,7 +40,6 @@ class ScoreCotacaoFornecedor {
     this.motivosPositivos = const [],
     this.alertas = const [],
     this.penalidades = const [],
-    this.metadados,
     this.expiresAt,
   });
 }

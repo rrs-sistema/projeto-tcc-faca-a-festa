@@ -23,7 +23,6 @@ class ResumoReputacaoFornecedorModel extends ResumoReputacaoFornecedor {
     super.pontosAtencao,
     super.servicoMelhorAvaliado,
     super.servicoComAlerta,
-    super.metadados,
     super.updatedAt,
     super.expiresAt,
   });
@@ -105,7 +104,6 @@ class ResumoReputacaoFornecedorModel extends ResumoReputacaoFornecedor {
         ['versao_regra', 'versaoRegra'],
         fallback: '1.0.0',
       ),
-      metadados: _readNullableMap(map['metadados'] ?? map['metadata']),
       createdAt: _readDate(
         map,
         ['created_at', 'createdAt'],
@@ -135,7 +133,6 @@ class ResumoReputacaoFornecedorModel extends ResumoReputacaoFornecedor {
       'total_comentarios_analisados': totalComentariosAnalisados,
       'origem': origem,
       'versao_regra': versaoRegra,
-      'metadados': metadados,
       'created_at': Timestamp.fromDate(createdAt),
       'updated_at': updatedAt == null ? null : Timestamp.fromDate(updatedAt!),
       'expires_at': expiresAt == null ? null : Timestamp.fromDate(expiresAt!),
@@ -160,7 +157,6 @@ class ResumoReputacaoFornecedorModel extends ResumoReputacaoFornecedor {
     int? totalComentariosAnalisados,
     String? origem,
     String? versaoRegra,
-    Map<String, dynamic>? metadados,
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? expiresAt,
@@ -185,7 +181,6 @@ class ResumoReputacaoFornecedorModel extends ResumoReputacaoFornecedor {
           totalComentariosAnalisados ?? this.totalComentariosAnalisados,
       origem: origem ?? this.origem,
       versaoRegra: versaoRegra ?? this.versaoRegra,
-      metadados: metadados ?? this.metadados,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       expiresAt: expiresAt ?? this.expiresAt,
@@ -304,10 +299,4 @@ class ResumoReputacaoFornecedorModel extends ResumoReputacaoFornecedor {
     return null;
   }
 
-  static Map<String, dynamic>? _readNullableMap(dynamic value) {
-    if (value is Map) {
-      return Map<String, dynamic>.from(value);
-    }
-    return null;
-  }
 }
