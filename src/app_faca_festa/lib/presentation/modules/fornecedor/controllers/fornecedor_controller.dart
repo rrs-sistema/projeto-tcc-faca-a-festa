@@ -3,10 +3,8 @@
 // ================================
 // ignore_for_file: avoid_print
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:async';
 
 import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
@@ -26,7 +24,9 @@ import 'package:app_faca_festa/domain/usecases/gerenciar_servico_fotos.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_servicos_produto.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_ai_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_catalogo.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_lista_admin.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_painel_ao_vivo.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/dialogs/show_novo_orcamento_bottom_sheet.dart';
 
@@ -74,6 +74,38 @@ class FornecedorController extends GetxController {
       carregando: carregando,
       erro: erro,
     );
+    catalogo = FornecedorCatalogo(
+      servicosFornecedor: servicosFornecedor,
+      servicosDetalhado: servicosDetalhado,
+      catalogoServicos: catalogoServicos,
+      fotosServico: fotosServico,
+      isLoadingFotos: isLoadingFotos,
+      carregando: carregando,
+      erro: erro,
+      fornecedores: () => _fornecedores,
+      servicosProduto: () => _servicosProduto,
+      fotos: () => _servicoFotos,
+      recarregarAi: ai.carregarAiFornecedorComDadosAtuais,
+    );
+    painel = FornecedorPainelAoVivo(
+      fornecedor: fornecedor,
+      aptoParaOperar: aptoParaOperar,
+      solicitacoesPendentes: solicitacoesPendentes,
+      mensagensNaoLidas: mensagensNaoLidas,
+      avaliacaoMedia: avaliacaoMedia,
+      servicosFornecedor: servicosFornecedor,
+      erro: erro,
+      usecase: () => _fornecedores,
+      usuarioEhFornecedor: _usuarioLogadoEhFornecedor,
+      aoAtualizar: (atualizado) {
+        if (atualizado.aptoParaOperar) {
+          ai.carregarAiFornecedorComDadosAtuais();
+        } else {
+          ai.limparAiFornecedor();
+        }
+      },
+      aoLimpar: ai.limparAiFornecedor,
+    );
     ai.vincular(
       fornecedorAtual: () => fornecedor.value,
       servicosDetalhados: () => servicosDetalhado.toList(),
@@ -89,6 +121,8 @@ class FornecedorController extends GetxController {
   final GerenciarServicoFotos? Function()? _gerenciarServicoFotosResolver;
   final FornecedorAiController ai;
   late final FornecedorListaAdmin listaAdmin;
+  late final FornecedorCatalogo catalogo;
+  late final FornecedorPainelAoVivo painel;
   final AppController? _appController;
   final AppController? Function()? _appControllerResolver;
   final AuditoriaRegistrar? _auditoria;
@@ -98,11 +132,9 @@ class FornecedorController extends GetxController {
       _auditoriaResolver?.call() ??
       const AuditoriaRegistrarVazio();
 
-  /// 🔹 Dados principais do fornecedor logado
   final Rx<Fornecedor?> fornecedor = Rx<Fornecedor?>(null);
   final RxList<Fornecedor> fornecedores = <Fornecedor>[].obs;
 
-  /// 🔹 Serviços (coleção `fornecedor_servico`)
   final RxList<FornecedorProdutoServico> servicosFornecedor =
       <FornecedorProdutoServico>[].obs;
 
@@ -112,10 +144,8 @@ class FornecedorController extends GetxController {
   final RxList<FornecedorProdutoServico> allServicosFornecedor =
       <FornecedorProdutoServico>[].obs;
 
-  /// 🔹 Catálogo global (`servico_produto`)
   final RxList<ServicoProduto> catalogoServicos = <ServicoProduto>[].obs;
 
-  /// 🔹 Fotos dos serviços (`servico_foto`)
   final RxList<ServicoFoto> fotosServico = <ServicoFoto>[].obs;
 
   final RxList<CategoriaServico> categorias = <CategoriaServico>[].obs;
@@ -124,21 +154,11 @@ class FornecedorController extends GetxController {
 
   final categoriasServico = <Map<String, dynamic>>[].obs;
   final subcategoriasServico = <Map<String, dynamic>>[].obs;
-  StreamSubscription<Fornecedor?>? _fornecedorSubscription;
-
-  //tempoMedioResposta
 
   final isLoadingServicos = false.obs;
   final isLoadingFotos = false.obs;
 
-  StreamSubscription? _solicitacoesSub;
-  StreamSubscription<int>? _fornecedorCotacoesSub;
-  StreamSubscription<List<FornecedorProdutoServico>>? _servicosFornecedorSub;
-  String? _servicosEscutandoId;
-  final Map<String, int> _mensagensNaoLidasPorCotacao = {};
-
-  /// 🔹 Estatísticas do painel
-  final ordenacaoSelecionada = 'status'.obs; // status | nome | recentes
+  final ordenacaoSelecionada = 'status'.obs;
   final RxInt solicitacoesPendentes = 0.obs;
   final RxInt mensagensNaoLidas = 0.obs;
   final RxDouble avaliacaoMedia = 0.0.obs;
@@ -147,7 +167,6 @@ class FornecedorController extends GetxController {
   final RxInt totalFotos = 0.obs;
   final RxDouble tempoMedioResposta = 0.0.obs;
 
-  /// 🔹 Estado geral
   final RxBool aptoParaOperar = false.obs;
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
@@ -162,14 +181,11 @@ class FornecedorController extends GetxController {
   final filtroAtivo = RxnBool();
 
   final filtroAvaliacaoMinima = 0.0.obs;
-  // 🔹 Dados auxiliares carregados de outras coleções
   final enderecos = <EnderecoUsuario>[].obs;
   final categoriasFornecedor = <FornecedorCategoria>[].obs;
-  final List<StreamSubscription> _mensagemListeners = [];
 
   Future<void> logoutFornecedor() async {
     fornecedores.clear();
-    servicosFornecedor.clear();
     servicosFornecedor.clear();
     servicosDetalhado.clear();
     allServicosFornecedor.clear();
@@ -179,17 +195,8 @@ class FornecedorController extends GetxController {
     subCategorias.clear();
     categoriasServico.clear();
     subcategoriasServico.clear();
-    await _fornecedorSubscription?.cancel();
-    _fornecedorSubscription = null;
-    await _solicitacoesSub?.cancel();
-    await _fornecedorCotacoesSub?.cancel();
-    await _servicosFornecedorSub?.cancel();
-    for (final listener in _mensagemListeners) {
-      await listener.cancel();
-    }
-    _mensagemListeners.clear();
-    _mensagensNaoLidasPorCotacao.clear();
-    mensagensNaoLidas.value = 0;
+    await catalogo.cancelarEscuta();
+    await painel.cancelarEscutas();
     ai.limparAiFornecedor();
     fornecedor.value = null;
     aptoParaOperar.value = false;
@@ -209,79 +216,19 @@ class FornecedorController extends GetxController {
     });
   }
 
-  Future<void> ouvirMensagensNaoLidas(String idFornecedor) async {
-    if (idFornecedor.trim().isEmpty) return;
-    if (!_usuarioLogadoEhFornecedor()) return;
+  Future<void> ouvirMensagensNaoLidas(String idFornecedor) =>
+      painel.ouvirMensagensNaoLidas(idFornecedor);
 
-    debugPrint(
-        '\n📡 [MSG] Iniciando listener de mensagens NÃO lidas para $idFornecedor');
+  void iniciarListenerFornecedor(String idFornecedor) =>
+      painel.iniciarListenerFornecedor(idFornecedor);
 
-    await _fornecedorCotacoesSub?.cancel();
-    for (final listener in _mensagemListeners) {
-      await listener.cancel();
-    }
-    _mensagemListeners.clear();
-    _mensagensNaoLidasPorCotacao.clear();
-    mensagensNaoLidas.value = 0;
-
-    _fornecedorCotacoesSub =
-        _fornecedores.observarMensagensNaoLidas(idFornecedor).listen((total) {
-      mensagensNaoLidas.value = total;
-    }, onError: (e) {
-      debugPrint('❌ Erro ao escutar cotações do fornecedor para mensagens: $e');
-    });
-  }
-
-  /// 🟢 Inicia o listener do fornecedor logado
-  void iniciarListenerFornecedor(String idFornecedor) {
-    print('📡 Iniciando listener para fornecedor $idFornecedor...');
-
-    // Cancela qualquer listener anterior
-    _fornecedorSubscription?.cancel();
-
-    _fornecedorSubscription = _fornecedores
-        .observarFornecedorAtivo(idFornecedor)
-        .listen((atualizado) {
-      if (atualizado != null) {
-        fornecedor.value = atualizado;
-        aptoParaOperar.value = atualizado.aptoParaOperar;
-        print('✅ Fornecedor atualizado: ${atualizado.razaoSocial}');
-        if (atualizado.aptoParaOperar) {
-          ai.carregarAiFornecedorComDadosAtuais();
-        } else {
-          ai.limparAiFornecedor();
-        }
-      } else {
-        print('⚠️ Nenhum fornecedor ativo encontrado.');
-        fornecedor.value = null;
-      }
-    }, onError: (e) {
-      print('❌ Erro ao escutar fornecedor: $e');
-    });
-  }
-
-  /// 🛑 Cancela o listener (ex: ao sair da conta)
-  Future<void> pararListenerFornecedor() async {
-    print('🛑 Parando listener de fornecedor...');
-    await _fornecedorSubscription?.cancel();
-    _fornecedorSubscription = null;
-    fornecedor.value = null;
-    ai.limparAiFornecedor();
-  }
+  Future<void> pararListenerFornecedor() => painel.pararListenerFornecedor();
 
   Future<List<ServicoProduto>> buscarServicosFornecedorPorCategorias(
-      String idFornecedor) async {
-    try {
-      final entidades = await _servicosProduto
-          .listarServicosAtivosPorCategoriasFornecedor(idFornecedor);
-      return entidades;
-    } catch (e, s) {
-      debugPrint('Erro ao buscar serviços do fornecedor: $e\n$s');
-      return [];
-    }
-  }
+    String idFornecedor,
+  ) =>
+      catalogo.listarAtivosPorCategorias(idFornecedor);
 
-  /// 🔹 Atualiza os dados de um fornecedor existente no Firestore
   Future<void> atualizarFornecedor(Fornecedor fornecedor) async {
     try {
       await _fornecedores.atualizarFornecedor(fornecedor);
@@ -298,8 +245,6 @@ class FornecedorController extends GetxController {
     }
   }
 
-  /// 🔹 Faz upload de imagem para o Firebase Storage e retorna a URL pública.
-  /// Exige usuário autenticado (regras de `banners_fornecedores`).
   Future<String> uploadBanner({
     required List<int> bytes,
     required String nomeArquivo,
@@ -376,29 +321,8 @@ class FornecedorController extends GetxController {
     }
   }
 
-  /// 🔹 Escuta em tempo real todas as solicitações com status = 'aguardando'
-  Future<void> escutarSolicitacoesPendentes(String? idFornecedor) async {
-    if (idFornecedor == null) return;
-    if (!_usuarioLogadoEhFornecedor()) return;
-
-    // Cancela a escuta anterior, se já existir
-    await _solicitacoesSub?.cancel();
-
-    try {
-      erro.value = '';
-
-      _solicitacoesSub = _fornecedores
-          .observarSolicitacoesPendentes(idFornecedor)
-          .listen((total) {
-        solicitacoesPendentes.value = total;
-      }, onError: (e) {
-        debugPrint('❌ Erro ao escutar solicitações pendentes: $e');
-      });
-    } catch (e, s) {
-      debugPrint('❌ Erro ao escutar solicitações pendentes: $e\n$s');
-      erro.value = 'Erro ao escutar solicitações pendentes';
-    }
-  }
+  Future<void> escutarSolicitacoesPendentes(String? idFornecedor) =>
+      painel.escutarSolicitacoesPendentes(idFornecedor);
 
   List<Fornecedor> get fornecedoresFiltrados => listaAdmin.filtrados;
 
@@ -423,137 +347,26 @@ class FornecedorController extends GetxController {
   Future<void> ativarFornecedor(String idFornecedor) =>
       listaAdmin.ativar(idFornecedor);
 
-  // ==========================================================
-  // === 🔹 1. Busca produtos do fornecedor pelo CÓDIGO DO EVENTO
-  // ==========================================================
-  Future<void> carregarServicosPorEvento(String idEvento) async {
-    try {
-      carregando.value = true;
-      erro.value = '';
+  Future<void> carregarServicosPorEvento(String idEvento) =>
+      catalogo.carregarPorEvento(idEvento);
 
-      final listaServicos =
-          await _fornecedores.listarServicosPorEvento(idEvento);
-      servicosFornecedor.assignAll(listaServicos);
-      if (listaServicos.isEmpty) return;
+  Future<void> escutarServicosFornecedor(String idFornecedor) =>
+      catalogo.escutar(idFornecedor);
 
-      // 🔹 Carrega catálogo e fotos
-      final idsProdutos = listaServicos.map((s) => s.idProdutoServico).toList();
-      await carregarCatalogoServicos();
+  Future<void> listarServicosFornecedor(String idFornecedor) =>
+      catalogo.listarComDetalhes(idFornecedor);
 
-      for (final fornecedorId
-          in listaServicos.map((s) => s.idFornecedor).toSet()) {
-        await carregarFotosServicos(idsProdutos, fornecedorId);
-      }
-    } catch (e, s) {
-      erro.value = 'Erro ao carregar serviços do evento: $e';
-      debugPrint('❌ $e\n$s');
-    } finally {
-      carregando.value = false;
-    }
-  }
+  Future<void> carregarCatalogoServicos() => catalogo.carregarCatalogo();
 
-  // ==========================================================
-  // === 🔹 Escuta os serviços de um fornecedor específico
-  // ==========================================================
-  Future<void> escutarServicosFornecedor(String idFornecedor) async {
-    if (idFornecedor.trim().isEmpty) return;
-    if (_servicosEscutandoId == idFornecedor &&
-        _servicosFornecedorSub != null) {
-      return;
-    }
-
-    await _servicosFornecedorSub?.cancel();
-    _servicosEscutandoId = idFornecedor;
-
-    _servicosFornecedorSub = _fornecedores
-        .observarServicosFornecedor(idFornecedor)
-        .listen((lista) async {
-      servicosFornecedor.assignAll(lista);
-
-      final ids = lista
-          .map((e) => e.idProdutoServico)
-          .where((id) => id.trim().isNotEmpty)
-          .toSet()
-          .toList();
-
-      await carregarCatalogoServicos();
-      await carregarFotosServicos(ids, idFornecedor);
-    }, onError: (e, s) {
-      erro.value = 'Erro ao escutar serviços do fornecedor';
-      debugPrint('❌ Erro ao escutar serviços do fornecedor: $e\n$s');
-    });
-  }
-
-  Future<void> listarServicosFornecedor(String idFornecedor) async {
-    try {
-      carregando.value = true;
-      erro.value = '';
-      servicosDetalhado.clear();
-
-      final lista = await _servicosProduto.listarServicosComDetalhes(
-        idFornecedor: idFornecedor,
-      );
-      servicosDetalhado.assignAll(lista);
-      await ai.carregarAiFornecedorComDadosAtuais();
-    } catch (e, s) {
-      erro.value = 'Erro ao carregar serviços: $e';
-      debugPrint('❌ Erro ao listar serviços: $e\n$s');
-    } finally {
-      carregando.value = false;
-    }
-  }
-
-  // ==========================================================
-  // === 🔹 Carrega catálogo de serviços (coleção: servico_produto)
-  // ==========================================================
-  Future<void> carregarCatalogoServicos() async {
-    final lista = await _servicosProduto.listarServicosAtivos();
-    catalogoServicos.assignAll(lista);
-  }
-
-  // ==========================================================
-  // === 🔹 Carrega fotos dos serviços
-  // ==========================================================
   Future<void> carregarFotosServicos(
-      List<String> idsProdutoServico, String idFornecedor) async {
-    final idsUnicos =
-        idsProdutoServico.where((id) => id.trim().isNotEmpty).toSet().toList();
+    List<String> idsProdutoServico,
+    String idFornecedor,
+  ) =>
+      catalogo.carregarFotos(idsProdutoServico, idFornecedor);
 
-    if (idsUnicos.isEmpty || idFornecedor.trim().isEmpty) {
-      fotosServico.clear();
-      return;
-    }
+  ServicoProduto? buscarServicoPorId(String idProdutoServico) =>
+      catalogo.buscarPorId(idProdutoServico);
 
-    try {
-      isLoadingFotos.value = true;
-      final fotos = <ServicoFoto>[];
-      for (final idProduto in idsUnicos) {
-        fotos.addAll(
-          await _servicoFotos.carregarFotos(
-            idFornecedor: idFornecedor,
-            idProdutoServico: idProduto,
-          ),
-        );
-      }
-
-      fotosServico.assignAll(fotos);
-    } catch (e, s) {
-      if (kDebugMode) debugPrint('Erro ao carregar fotos: $e\n$s');
-    } finally {
-      isLoadingFotos.value = false;
-    }
-  }
-
-  // ==========================================================
-  // === 🔹 Busca um serviço pelo ID
-  // ==========================================================
-  ServicoProduto? buscarServicoPorId(String idProdutoServico) {
-    return catalogoServicos.firstWhereOrNull((s) => s.id == idProdutoServico);
-  }
-
-  // ==========================================================
-  // === 🔹 Abre o BottomSheet para orçamento
-  // ==========================================================
   Future<void> abrirCotacao({
     required BuildContext context,
     required String idEvento,
@@ -617,37 +430,13 @@ class FornecedorController extends GetxController {
     print('🧹 Limpeza concluída! Duplicatas removidas: $duplicatasRemovidas');
   }
 
-  // ==========================================================
-  // === 🔹 Estatísticas básicas
-  // ==========================================================
-
-  Future<void> atualizarEstatisticasFornecedor() async {
-    final f = fornecedor.value;
-    if (f == null) return;
-
-    try {
-      final estatisticas =
-          await _fornecedores.carregarEstatisticas(f.idFornecedor);
-      solicitacoesPendentes.value = estatisticas.solicitacoesPendentes;
-      servicosFornecedor.assignAll(estatisticas.servicosAtivos);
-      mensagensNaoLidas.value = estatisticas.mensagensNaoLidas;
-      avaliacaoMedia.value = estatisticas.avaliacaoMedia;
-    } catch (e, s) {
-      debugPrint('❌ Erro ao atualizar estatísticas: $e\n$s');
-    }
-  }
+  Future<void> atualizarEstatisticasFornecedor() =>
+      painel.atualizarEstatisticas();
 
   Future<List<Map<String, dynamic>>>
-      buscarSolicitacoesPendentesDetalhadas() async {
-    final f = fornecedor.value;
-    if (f == null) return [];
+      buscarSolicitacoesPendentesDetalhadas() =>
+          painel.listarSolicitacoesPendentesDetalhadas();
 
-    return _fornecedores.listarSolicitacoesPendentesDetalhadas(f.idFornecedor);
-  }
-
-  // =============================================================
-  // 🔸 FILTROS
-  // =============================================================
   void aplicarFiltros({
     String? nome,
     String? cidade,
@@ -671,18 +460,10 @@ class FornecedorController extends GetxController {
 
   @override
   void onClose() {
-    _solicitacoesSub?.cancel();
-    _fornecedorCotacoesSub?.cancel();
-    _servicosFornecedorSub?.cancel();
-
-    for (final listener in _mensagemListeners) {
-      listener.cancel();
-    }
-    _mensagemListeners.clear();
-
-    _mensagensNaoLidasPorCotacao.clear();
+    catalogo.cancelarEscuta();
+    painel.cancelarEscutas();
     ai.limparAiFornecedor();
-    pararListenerFornecedor();
+    painel.pararListenerFornecedor();
     super.onClose();
   }
 }
