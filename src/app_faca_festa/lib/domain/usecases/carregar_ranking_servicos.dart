@@ -1,3 +1,4 @@
+import '../entities/ranking_servico.dart';
 import '../repositories/ranking_repository.dart';
 
 class CarregarRankingServicos {
@@ -5,7 +6,7 @@ class CarregarRankingServicos {
 
   final RankingRepository repository;
 
-  Future<List<Map<String, dynamic>>> call(String idSubcategoria) {
+  Future<List<RankingServico>> call(String idSubcategoria) {
     return repository.carregarRanking(idSubcategoria);
   }
 }
