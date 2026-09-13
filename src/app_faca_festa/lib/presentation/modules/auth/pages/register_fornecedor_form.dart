@@ -1,8 +1,8 @@
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:io';
 
 import './components/categoria_subcategoria_servico_section.dart';
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categoria_servico_controller.dart';
@@ -19,8 +19,8 @@ class RegisterFornecedorForm extends StatefulWidget {
   final RegisterController controller;
   final FornecedorController fornecedorController;
   final ImagePicker picker;
-  final File? bannerFile;
-  final Function(File) onImageSelected;
+  final Uint8List? bannerBytes;
+  final Future<void> Function(XFile arquivo, Uint8List bytes) onBannerSelected;
   final Color primary;
   final CategoriaServicoController categoriaController;
   final SubcategoriaServicoController subcategoriaController;
@@ -31,8 +31,8 @@ class RegisterFornecedorForm extends StatefulWidget {
     required this.controller,
     required this.fornecedorController,
     required this.picker,
-    required this.bannerFile,
-    required this.onImageSelected,
+    required this.bannerBytes,
+    required this.onBannerSelected,
     required this.primary,
     required this.categoriaController,
     required this.subcategoriaController,
@@ -138,7 +138,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
 
     final controller = widget.controller;
     _aplicarTiposEventoNoController(controller);
-    controller.bannerFile = widget.bannerFile;
+    controller.bannerBytes = widget.bannerBytes;
 
     if (comGoogle) {
       await controller.registrarComGoogle();
@@ -367,23 +367,26 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
           final picked = await widget.picker.pickImage(
             source: ImageSource.gallery,
           );
-          if (picked != null) widget.onImageSelected(File(picked.path));
+          if (picked != null) {
+            final bytes = await picked.readAsBytes();
+            await widget.onBannerSelected(picked, bytes);
+          }
         },
         child: Container(
           width: double.infinity,
-          height: widget.bannerFile == null ? null : 120,
+          height: widget.bannerBytes == null ? null : 120,
           decoration: BoxDecoration(
             border: Border.all(
               color: color.withValues(alpha: 0.4),
-              style: widget.bannerFile == null
+              style: widget.bannerBytes == null
                   ? BorderStyle.solid
                   : BorderStyle.none,
             ),
             borderRadius: BorderRadius.circular(14),
             color: Colors.white.withValues(alpha: 0.9),
-            image: widget.bannerFile != null
+            image: widget.bannerBytes != null
                 ? DecorationImage(
-                    image: FileImage(widget.bannerFile!),
+                    image: MemoryImage(widget.bannerBytes!),
                     fit: BoxFit.cover,
                     colorFilter: ColorFilter.mode(
                       Colors.black.withValues(alpha: 0.4),
@@ -392,10 +395,10 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                   )
                 : null,
           ),
-          padding: widget.bannerFile == null
+          padding: widget.bannerBytes == null
               ? const EdgeInsets.all(16)
               : EdgeInsets.zero,
-          child: widget.bannerFile == null
+          child: widget.bannerBytes == null
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

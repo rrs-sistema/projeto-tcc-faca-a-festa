@@ -2,7 +2,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
@@ -98,7 +98,8 @@ class RegisterController extends GetxController {
   var categoriaSelecionada = ''.obs;
   var subcategoriaSelecionada = ''.obs;
   String? bannerUrl;
-  File? bannerFile;
+  XFile? bannerArquivo;
+  Uint8List? bannerBytes;
 
   var carregando = false.obs;
   RxBool exibirSenha = false.obs;
@@ -457,8 +458,8 @@ class RegisterController extends GetxController {
   }
 
   Future<void> _enviarBannerAposAutenticacao(String uid) async {
-    final arquivo = bannerFile;
-    if (arquivo == null) return;
+    final bytes = bannerBytes;
+    if (bytes == null || bytes.isEmpty) return;
 
     try {
       EasyLoading.show(status: 'Enviando banner...');
@@ -467,9 +468,9 @@ class RegisterController extends GetxController {
         _log('Upload de banner não configurado para este fluxo.');
         return;
       }
-      final nomeArquivo = arquivo.path.split(RegExp(r'[\\/]')).last;
+      final nomeArquivo = (bannerArquivo?.name ?? '').trim();
       bannerUrl = await uploadBanner(
-        bytes: await arquivo.readAsBytes(),
+        bytes: bytes,
         nomeArquivo: nomeArquivo.isEmpty ? 'banner.jpg' : nomeArquivo,
         uid: uid,
       );

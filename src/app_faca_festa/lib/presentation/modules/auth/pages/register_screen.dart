@@ -1,9 +1,9 @@
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'dart:io';
 import 'dart:ui';
 
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categoria_servico_controller.dart';
@@ -43,7 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   late final RegisterController controller;
   late final FornecedorController fornecedorController;
   final picker = ImagePicker();
-  File? bannerFile;
+  Uint8List? bannerBytes;
 
   @override
   void initState() {
@@ -172,9 +172,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             controller: controller,
                             fornecedorController: fornecedorController,
                             picker: picker,
-                            bannerFile: bannerFile,
-                            onImageSelected: (file) =>
-                                setState(() => bannerFile = file),
+                            bannerBytes: bannerBytes,
+                            onBannerSelected: (arquivo, bytes) async {
+                              setState(() => bannerBytes = bytes);
+                              controller.bannerArquivo = arquivo;
+                              controller.bannerBytes = bytes;
+                            },
                             primary: theme.primaryColor.value,
                             categoriaController: widget.categoriaController,
                             subcategoriaController:
