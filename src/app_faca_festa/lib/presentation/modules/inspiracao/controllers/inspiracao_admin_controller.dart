@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/data/seeds/inspiracao_seed.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
 
@@ -66,17 +67,15 @@ class InspiracaoAdminController extends GetxController {
 
   /// Lista reativa usada pelo formulário administrativo para cadastrar
   /// tarefas que serão sugeridas ao organizador quando ele salvar a inspiração.
-  ///
-  /// Mantemos como Map para ficar 100% compatível com Firestore e com os
-  /// métodos existentes que já consomem `tarefasSugeridas`.
-  final RxList<Map<String, dynamic>> tarefasSugeridasFormulario =
-      <Map<String, dynamic>>[].obs;
+  final RxList<TarefaInspiracaoSugerida> tarefasSugeridasFormulario =
+      <TarefaInspiracaoSugerida>[].obs;
 
   /// Lista reativa usada pelo formulário administrativo para cadastrar
   /// itens de orçamento que poderão ser criados automaticamente para
   /// o organizador ao salvar uma inspiração no evento.
-  final RxList<Map<String, dynamic>> itensOrcamentoSugeridosFormulario =
-      <Map<String, dynamic>>[].obs;
+  final RxList<ItemOrcamentoInspiracaoSugerido>
+      itensOrcamentoSugeridosFormulario =
+      <ItemOrcamentoInspiracaoSugerido>[].obs;
 
   final RxString termoBusca = ''.obs;
   final RxString tipoEventoSelecionado = 'Todos'.obs;
@@ -119,8 +118,7 @@ class InspiracaoAdminController extends GetxController {
   double get totalEstimadoItensOrcamentoSugeridos {
     return itensOrcamentoSugeridosFormulario.fold<double>(
       0.0,
-      (total, item) =>
-          total + _readDouble(item, 'custoEstimado', defaultValue: 0.0),
+      (total, item) => total + item.custoEstimado,
     );
   }
 
@@ -777,13 +775,13 @@ class InspiracaoAdminController extends GetxController {
     tarefasSugeridasFormulario.clear();
   }
 
-  void adicionarTarefaSugerida(Map<String, dynamic> tarefa) {
-    final normalizada = _normalizarTarefaSugerida(
+  void adicionarTarefaSugerida(TarefaInspiracaoSugerida tarefa) {
+    final normalizada = _aplicarPadroesTarefa(
       tarefa,
       ordemPadrao: tarefasSugeridasFormulario.length + 1,
     );
 
-    if (_readString(normalizada, 'titulo').isEmpty) {
+    if (normalizada.titulo.isEmpty) {
       EasyLoading.showInfo('Informe o título da tarefa sugerida.');
       return;
     }
@@ -792,24 +790,18 @@ class InspiracaoAdminController extends GetxController {
     _reordenarTarefasSugeridasInternamente();
   }
 
-  void editarTarefaSugerida(int index, Map<String, dynamic> tarefa) {
+  void editarTarefaSugerida(int index, TarefaInspiracaoSugerida tarefa) {
     if (index < 0 || index >= tarefasSugeridasFormulario.length) {
       EasyLoading.showInfo('Tarefa inválida para edição.');
       return;
     }
 
-    final ordemAtual = _readInt(
-      tarefasSugeridasFormulario[index],
-      'ordem',
-      defaultValue: index + 1,
-    );
-
-    final normalizada = _normalizarTarefaSugerida(
+    final normalizada = _aplicarPadroesTarefa(
       tarefa,
-      ordemPadrao: ordemAtual,
+      ordemPadrao: tarefasSugeridasFormulario[index].ordem,
     );
 
-    if (_readString(normalizada, 'titulo').isEmpty) {
+    if (normalizada.titulo.isEmpty) {
       EasyLoading.showInfo('Informe o título da tarefa sugerida.');
       return;
     }
@@ -851,23 +843,27 @@ class InspiracaoAdminController extends GetxController {
   }
 
   List<Map<String, dynamic>> tarefasSugeridasParaFirestore() {
-    return _normalizarTarefasSugeridas(tarefasSugeridasFormulario);
+    return tarefasSugeridasFormulario
+        .asMap()
+        .entries
+        .map(
+          (entry) => _tarefaToMap(
+            entry.value.copyWith(ordem: entry.key + 1),
+          ),
+        )
+        .toList();
   }
 
   String? validarTarefasSugeridasFormulario() {
     for (var i = 0; i < tarefasSugeridasFormulario.length; i++) {
       final tarefa = tarefasSugeridasFormulario[i];
-      final titulo = _readString(tarefa, 'titulo');
 
-      if (titulo.isEmpty) {
+      if (tarefa.titulo.trim().isEmpty) {
         return 'A tarefa sugerida ${i + 1} precisa ter título.';
       }
 
-      final dias = tarefa['diasAntesEvento'];
-      if (dias != null &&
-          dias is! int &&
-          int.tryParse(dias.toString().trim()) == null) {
-        return 'O campo dias antes do evento da tarefa "$titulo" precisa ser um número inteiro.';
+      if (tarefa.diasAntesEvento < 0) {
+        return 'O campo dias antes do evento da tarefa "${tarefa.titulo}" precisa ser um número inteiro.';
       }
     }
 
@@ -894,8 +890,8 @@ class InspiracaoAdminController extends GetxController {
     itensOrcamentoSugeridosFormulario.clear();
   }
 
-  void adicionarItemOrcamentoSugerido(Map<String, dynamic> item) {
-    final normalizado = _normalizarItemOrcamentoSugerido(
+  void adicionarItemOrcamentoSugerido(ItemOrcamentoInspiracaoSugerido item) {
+    final normalizado = _aplicarPadroesItemOrcamento(
       item,
       ordemPadrao: itensOrcamentoSugeridosFormulario.length + 1,
     );
@@ -910,21 +906,18 @@ class InspiracaoAdminController extends GetxController {
     _reordenarItensOrcamentoSugeridosInternamente();
   }
 
-  void editarItemOrcamentoSugerido(int index, Map<String, dynamic> item) {
+  void editarItemOrcamentoSugerido(
+    int index,
+    ItemOrcamentoInspiracaoSugerido item,
+  ) {
     if (index < 0 || index >= itensOrcamentoSugeridosFormulario.length) {
       EasyLoading.showInfo('Item de orçamento inválido para edição.');
       return;
     }
 
-    final ordemAtual = _readInt(
-      itensOrcamentoSugeridosFormulario[index],
-      'ordem',
-      defaultValue: index + 1,
-    );
-
-    final normalizado = _normalizarItemOrcamentoSugerido(
+    final normalizado = _aplicarPadroesItemOrcamento(
       item,
-      ordemPadrao: ordemAtual,
+      ordemPadrao: itensOrcamentoSugeridosFormulario[index].ordem,
     );
 
     final erro = _validarItemOrcamentoSugerido(normalizado);
@@ -970,14 +963,23 @@ class InspiracaoAdminController extends GetxController {
   }
 
   List<Map<String, dynamic>> itensOrcamentoSugeridosParaFirestore() {
-    return _normalizarItensOrcamentoSugeridos(
-        itensOrcamentoSugeridosFormulario);
+    return itensOrcamentoSugeridosFormulario
+        .asMap()
+        .entries
+        .map(
+          (entry) => _itemOrcamentoToMap(
+            entry.value.copyWith(ordem: entry.key + 1),
+          ),
+        )
+        .toList();
   }
 
   String? validarItensOrcamentoSugeridosFormulario() {
     for (var i = 0; i < itensOrcamentoSugeridosFormulario.length; i++) {
-      final item = itensOrcamentoSugeridosFormulario[i];
-      final erro = _validarItemOrcamentoSugerido(item, indice: i);
+      final erro = _validarItemOrcamentoSugerido(
+        itensOrcamentoSugeridosFormulario[i],
+        indice: i,
+      );
       if (erro != null) {
         return erro;
       }
@@ -1777,10 +1779,10 @@ class InspiracaoAdminController extends GetxController {
         _readStringList(payload, 'categoriasFornecedorSugeridas');
     payload['tarefasSugeridas'] = _normalizarTarefasSugeridas(
       _readMapList(payload, 'tarefasSugeridas'),
-    );
+    ).map(_tarefaToMap).toList();
     payload['itensOrcamentoSugeridos'] = _normalizarItensOrcamentoSugeridos(
       _readMapList(payload, 'itensOrcamentoSugeridos'),
-    );
+    ).map(_itemOrcamentoToMap).toList();
     payload['ordem'] =
         _readInt(payload, 'ordem', defaultValue: _proximaOrdem());
 
@@ -2230,20 +2232,19 @@ class InspiracaoAdminController extends GetxController {
     return <Map<String, dynamic>>[];
   }
 
-  List<Map<String, dynamic>> _normalizarItensOrcamentoSugeridos(
+  List<ItemOrcamentoInspiracaoSugerido> _normalizarItensOrcamentoSugeridos(
     Iterable<Map<String, dynamic>> itens,
   ) {
-    final normalizados = <Map<String, dynamic>>[];
+    final normalizados = <ItemOrcamentoInspiracaoSugerido>[];
 
     var ordem = 1;
     for (final item in itens) {
-      final normalizado = _normalizarItemOrcamentoSugerido(
+      final normalizado = _itemOrcamentoFromMap(
         item,
         ordemPadrao: ordem,
       );
 
-      if (_readString(normalizado, 'categoria').isNotEmpty &&
-          _readString(normalizado, 'item').isNotEmpty) {
+      if (normalizado.categoria.isNotEmpty && normalizado.item.isNotEmpty) {
         normalizados.add(normalizado);
         ordem++;
       }
@@ -2252,53 +2253,92 @@ class InspiracaoAdminController extends GetxController {
     return normalizados;
   }
 
-  Map<String, dynamic> _normalizarItemOrcamentoSugerido(
+  ItemOrcamentoInspiracaoSugerido _itemOrcamentoFromMap(
     Map<String, dynamic> item, {
     required int ordemPadrao,
   }) {
-    final categoria = _readString(item, 'categoria', defaultValue: 'Geral');
-    final nomeItem = _readString(
-      item,
-      'item',
-      defaultValue: _readString(item, 'nome'),
+    return _aplicarPadroesItemOrcamento(
+      ItemOrcamentoInspiracaoSugerido(
+        item: _readString(
+          item,
+          'item',
+          defaultValue: _readString(item, 'nome'),
+        ),
+        categoria: _readString(item, 'categoria'),
+        descricao: _readString(item, 'descricao'),
+        custoEstimado: _readDouble(
+          item,
+          'custoEstimado',
+          defaultValue: _readDouble(item, 'valorEstimado', defaultValue: 0.0),
+        ),
+        custoReal: _readDouble(item, 'custoReal', defaultValue: 0.0),
+        custoMinimo: _readDouble(item, 'custoMinimo', defaultValue: 0.0),
+        custoMaximo: _readDouble(item, 'custoMaximo', defaultValue: 0.0),
+        unidade: _readString(item, 'unidade', defaultValue: 'unidade'),
+        quantidadeBase:
+            _readDouble(item, 'quantidadeBase', defaultValue: 1.0),
+        custoPorConvidado:
+            _readDouble(item, 'custoPorConvidado', defaultValue: 0.0),
+        obrigatorio: _readBool(item, 'obrigatorio', defaultValue: false),
+        ordem: _readInt(item, 'ordem', defaultValue: ordemPadrao),
+        statusPagamento:
+            _readString(item, 'statusPagamento', defaultValue: 'pendente'),
+        origem: _readString(item, 'origem'),
+      ),
+      ordemPadrao: ordemPadrao,
     );
+  }
 
-    final custoEstimado = _readDouble(
-      item,
-      'custoEstimado',
-      defaultValue: _readDouble(item, 'valorEstimado', defaultValue: 0.0),
+  ItemOrcamentoInspiracaoSugerido _aplicarPadroesItemOrcamento(
+    ItemOrcamentoInspiracaoSugerido item, {
+    required int ordemPadrao,
+  }) {
+    final categoria = item.categoria.trim();
+    final unidade = item.unidade.trim();
+    final statusPagamento = item.statusPagamento.trim();
+    final origem = item.origem.trim();
+
+    return item.copyWith(
+      item: item.item.trim(),
+      categoria: categoria.isEmpty ? 'Geral' : categoria,
+      descricao: item.descricao.trim(),
+      unidade: unidade.isEmpty ? 'unidade' : unidade,
+      ordem: item.ordem > 0 ? item.ordem : ordemPadrao,
+      statusPagamento: statusPagamento.isEmpty ? 'pendente' : statusPagamento,
+      origem: origem.isEmpty ? 'inspiracao_admin' : origem,
     );
+  }
 
+  Map<String, dynamic> _itemOrcamentoToMap(
+    ItemOrcamentoInspiracaoSugerido item,
+  ) {
     return <String, dynamic>{
-      'categoria': categoria.isEmpty ? 'Geral' : categoria,
-      'item': nomeItem,
-      // Campos de compatibilidade com rotinas antigas de orçamento.
-      'nome': nomeItem,
-      'descricao': _readString(item, 'descricao'),
-      'custoEstimado': custoEstimado,
-      'valorEstimado': custoEstimado,
-      'custoMinimo': _readDouble(item, 'custoMinimo', defaultValue: 0.0),
-      'custoMaximo': _readDouble(item, 'custoMaximo', defaultValue: 0.0),
-      'unidade': _readString(item, 'unidade', defaultValue: 'unidade'),
-      'quantidadeBase': _readDouble(item, 'quantidadeBase', defaultValue: 1.0),
-      'custoPorConvidado':
-          _readDouble(item, 'custoPorConvidado', defaultValue: 0.0),
-      'obrigatorio': _readBool(item, 'obrigatorio', defaultValue: false),
-      'ordem': _readInt(item, 'ordem', defaultValue: ordemPadrao),
-      'custoReal': _readDouble(item, 'custoReal', defaultValue: 0.0),
-      'statusPagamento':
-          _readString(item, 'statusPagamento', defaultValue: 'pendente'),
-      'origem': _readString(item, 'origem', defaultValue: 'inspiracao_admin'),
+      'categoria': item.categoria,
+      'item': item.item,
+      'nome': item.item,
+      'descricao': item.descricao,
+      'custoEstimado': item.custoEstimado,
+      'valorEstimado': item.custoEstimado,
+      'custoMinimo': item.custoMinimo,
+      'custoMaximo': item.custoMaximo,
+      'unidade': item.unidade,
+      'quantidadeBase': item.quantidadeBase,
+      'custoPorConvidado': item.custoPorConvidado,
+      'obrigatorio': item.obrigatorio,
+      'ordem': item.ordem,
+      'custoReal': item.custoReal,
+      'statusPagamento': item.statusPagamento,
+      'origem': item.origem,
     };
   }
 
   String? _validarItemOrcamentoSugerido(
-    Map<String, dynamic> item, {
+    ItemOrcamentoInspiracaoSugerido item, {
     int? indice,
   }) {
     final posicao = indice == null ? '' : ' ${indice + 1}';
-    final categoria = _readString(item, 'categoria');
-    final nomeItem = _readString(item, 'item');
+    final categoria = item.categoria.trim();
+    final nomeItem = item.item.trim();
 
     if (categoria.isEmpty) {
       return 'Informe a categoria do item de orçamento$posicao.';
@@ -2308,31 +2348,20 @@ class InspiracaoAdminController extends GetxController {
       return 'Informe o nome do item de orçamento$posicao.';
     }
 
-    final camposMonetarios = <String>[
-      'custoEstimado',
-      'custoMinimo',
-      'custoMaximo',
-      'custoPorConvidado',
-    ];
+    final camposMonetarios = <String, double>{
+      'custoEstimado': item.custoEstimado,
+      'custoMinimo': item.custoMinimo,
+      'custoMaximo': item.custoMaximo,
+      'custoPorConvidado': item.custoPorConvidado,
+    };
 
-    for (final campo in camposMonetarios) {
-      final valorOriginal = item[campo];
-      if (valorOriginal == null || valorOriginal.toString().trim().isEmpty) {
-        continue;
-      }
-
-      final valor = _readDouble(item, campo, defaultValue: double.nan);
-      if (valor.isNaN) {
-        return 'O campo $campo do item "$nomeItem" precisa ser um valor numérico.';
-      }
-
-      if (valor < 0) {
-        return 'O campo $campo do item "$nomeItem" não pode ser negativo.';
+    for (final entrada in camposMonetarios.entries) {
+      if (entrada.value < 0) {
+        return 'O campo ${entrada.key} do item "$nomeItem" não pode ser negativo.';
       }
     }
 
-    final quantidade = _readDouble(item, 'quantidadeBase', defaultValue: 0.0);
-    if (quantidade < 0) {
+    if (item.quantidadeBase < 0) {
       return 'A quantidade base do item "$nomeItem" não pode ser negativa.';
     }
 
@@ -2340,33 +2369,30 @@ class InspiracaoAdminController extends GetxController {
   }
 
   void _reordenarItensOrcamentoSugeridosInternamente() {
-    final lista = <Map<String, dynamic>>[];
+    final lista = <ItemOrcamentoInspiracaoSugerido>[];
 
     for (var i = 0; i < itensOrcamentoSugeridosFormulario.length; i++) {
       lista.add(
-        _normalizarItemOrcamentoSugerido(
-          itensOrcamentoSugeridosFormulario[i],
-          ordemPadrao: i + 1,
-        )..['ordem'] = i + 1,
+        itensOrcamentoSugeridosFormulario[i].copyWith(ordem: i + 1),
       );
     }
 
     itensOrcamentoSugeridosFormulario.assignAll(lista);
   }
 
-  List<Map<String, dynamic>> _normalizarTarefasSugeridas(
+  List<TarefaInspiracaoSugerida> _normalizarTarefasSugeridas(
     Iterable<Map<String, dynamic>> tarefas,
   ) {
-    final normalizadas = <Map<String, dynamic>>[];
+    final normalizadas = <TarefaInspiracaoSugerida>[];
 
     var ordem = 1;
     for (final tarefa in tarefas) {
-      final normalizada = _normalizarTarefaSugerida(
+      final normalizada = _tarefaFromMap(
         tarefa,
         ordemPadrao: ordem,
       );
 
-      if (_readString(normalizada, 'titulo').isNotEmpty) {
+      if (normalizada.titulo.isNotEmpty) {
         normalizadas.add(normalizada);
         ordem++;
       }
@@ -2375,38 +2401,66 @@ class InspiracaoAdminController extends GetxController {
     return normalizadas;
   }
 
-  Map<String, dynamic> _normalizarTarefaSugerida(
+  TarefaInspiracaoSugerida _tarefaFromMap(
     Map<String, dynamic> tarefa, {
     required int ordemPadrao,
   }) {
-    final titulo = _readString(
-      tarefa,
-      'titulo',
-      defaultValue: _readString(tarefa, 'nome'),
-    );
-
-    final descricao = _readString(tarefa, 'descricao');
-    final categoria = _readString(tarefa, 'categoria', defaultValue: 'Geral');
-    final prioridade = _normalizarPrioridadeTarefa(
-      _readString(tarefa, 'prioridade', defaultValue: 'media'),
-    );
-
-    return <String, dynamic>{
-      'titulo': titulo,
-      // Campo mantido para compatibilidade com rotinas antigas que esperam `nome`.
-      'nome': titulo,
-      'descricao': descricao,
-      'categoria': categoria.isEmpty ? 'Geral' : categoria,
-      'diasAntesEvento': _readInt(
-        tarefa,
-        'diasAntesEvento',
-        defaultValue: _readInt(tarefa, 'diasAntes', defaultValue: 30),
+    return _aplicarPadroesTarefa(
+      TarefaInspiracaoSugerida(
+        titulo: _readString(
+          tarefa,
+          'titulo',
+          defaultValue: _readString(tarefa, 'nome'),
+        ),
+        descricao: _readString(tarefa, 'descricao'),
+        categoria: _readString(tarefa, 'categoria'),
+        diasAntesEvento: _readInt(
+          tarefa,
+          'diasAntesEvento',
+          defaultValue: _readInt(tarefa, 'diasAntes', defaultValue: 30),
+        ),
+        prioridade: _readString(tarefa, 'prioridade', defaultValue: 'media'),
+        obrigatoria: _readBool(tarefa, 'obrigatoria', defaultValue: false),
+        ordem: _readInt(tarefa, 'ordem', defaultValue: ordemPadrao),
+        status: _readString(tarefa, 'status', defaultValue: 'pendente'),
+        origem: _readString(tarefa, 'origem'),
       ),
-      'prioridade': prioridade,
-      'obrigatoria': _readBool(tarefa, 'obrigatoria', defaultValue: false),
-      'ordem': _readInt(tarefa, 'ordem', defaultValue: ordemPadrao),
-      'status': _readString(tarefa, 'status', defaultValue: 'pendente'),
-      'origem': _readString(tarefa, 'origem', defaultValue: 'inspiracao_admin'),
+      ordemPadrao: ordemPadrao,
+    );
+  }
+
+  TarefaInspiracaoSugerida _aplicarPadroesTarefa(
+    TarefaInspiracaoSugerida tarefa, {
+    required int ordemPadrao,
+  }) {
+    final titulo = tarefa.titulo.trim();
+    final categoria = tarefa.categoria.trim();
+    final status = tarefa.status.trim();
+    final origem = tarefa.origem.trim();
+
+    return tarefa.copyWith(
+      titulo: titulo,
+      descricao: tarefa.descricao.trim(),
+      categoria: categoria.isEmpty ? 'Geral' : categoria,
+      prioridade: _normalizarPrioridadeTarefa(tarefa.prioridade),
+      ordem: tarefa.ordem > 0 ? tarefa.ordem : ordemPadrao,
+      status: status.isEmpty ? 'pendente' : status,
+      origem: origem.isEmpty ? 'inspiracao_admin' : origem,
+    );
+  }
+
+  Map<String, dynamic> _tarefaToMap(TarefaInspiracaoSugerida tarefa) {
+    return <String, dynamic>{
+      'titulo': tarefa.titulo,
+      'nome': tarefa.titulo,
+      'descricao': tarefa.descricao,
+      'categoria': tarefa.categoria,
+      'diasAntesEvento': tarefa.diasAntesEvento,
+      'prioridade': tarefa.prioridade,
+      'obrigatoria': tarefa.obrigatoria,
+      'ordem': tarefa.ordem,
+      'status': tarefa.status,
+      'origem': tarefa.origem,
     };
   }
 
@@ -2425,15 +2479,10 @@ class InspiracaoAdminController extends GetxController {
   }
 
   void _reordenarTarefasSugeridasInternamente() {
-    final lista = <Map<String, dynamic>>[];
+    final lista = <TarefaInspiracaoSugerida>[];
 
     for (var i = 0; i < tarefasSugeridasFormulario.length; i++) {
-      lista.add(
-        _normalizarTarefaSugerida(
-          tarefasSugeridasFormulario[i],
-          ordemPadrao: i + 1,
-        )..['ordem'] = i + 1,
-      );
+      lista.add(tarefasSugeridasFormulario[i].copyWith(ordem: i + 1));
     }
 
     tarefasSugeridasFormulario.assignAll(lista);

@@ -20,6 +20,30 @@ class TarefaInspiracaoSugerida {
   final int ordem;
   final String status;
   final String origem;
+
+  TarefaInspiracaoSugerida copyWith({
+    String? titulo,
+    String? descricao,
+    String? categoria,
+    int? diasAntesEvento,
+    String? prioridade,
+    bool? obrigatoria,
+    int? ordem,
+    String? status,
+    String? origem,
+  }) {
+    return TarefaInspiracaoSugerida(
+      titulo: titulo ?? this.titulo,
+      descricao: descricao ?? this.descricao,
+      categoria: categoria ?? this.categoria,
+      diasAntesEvento: diasAntesEvento ?? this.diasAntesEvento,
+      prioridade: prioridade ?? this.prioridade,
+      obrigatoria: obrigatoria ?? this.obrigatoria,
+      ordem: ordem ?? this.ordem,
+      status: status ?? this.status,
+      origem: origem ?? this.origem,
+    );
+  }
 }
 
 class ItemOrcamentoInspiracaoSugerido {
@@ -54,4 +78,38 @@ class ItemOrcamentoInspiracaoSugerido {
   final int ordem;
   final String statusPagamento;
   final String origem;
+
+  ItemOrcamentoInspiracaoSugerido copyWith({
+    String? item,
+    String? categoria,
+    String? descricao,
+    double? custoEstimado,
+    double? custoReal,
+    double? custoMinimo,
+    double? custoMaximo,
+    String? unidade,
+    double? quantidadeBase,
+    double? custoPorConvidado,
+    bool? obrigatorio,
+    int? ordem,
+    String? statusPagamento,
+    String? origem,
+  }) {
+    return ItemOrcamentoInspiracaoSugerido(
+      item: item ?? this.item,
+      categoria: categoria ?? this.categoria,
+      descricao: descricao ?? this.descricao,
+      custoEstimado: custoEstimado ?? this.custoEstimado,
+      custoReal: custoReal ?? this.custoReal,
+      custoMinimo: custoMinimo ?? this.custoMinimo,
+      custoMaximo: custoMaximo ?? this.custoMaximo,
+      unidade: unidade ?? this.unidade,
+      quantidadeBase: quantidadeBase ?? this.quantidadeBase,
+      custoPorConvidado: custoPorConvidado ?? this.custoPorConvidado,
+      obrigatorio: obrigatorio ?? this.obrigatorio,
+      ordem: ordem ?? this.ordem,
+      statusPagamento: statusPagamento ?? this.statusPagamento,
+      origem: origem ?? this.origem,
+    );
+  }
 }

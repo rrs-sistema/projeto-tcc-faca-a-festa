@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_admin_controller.dart';
 
 class InspiracaoAdminFormPage extends StatefulWidget {
@@ -272,15 +273,15 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     _tipoEventoNomesController.text =
         _readStringList(data, 'tipoEventoNomes').join(', ');
 
-    _tarefasSugeridasController.text =
-        _formatarTarefas(_readMapList(data, 'tarefasSugeridas'));
     controller.prepararTarefasSugeridasFormulario(
         _readMapList(data, 'tarefasSugeridas'));
-    _itensOrcamentoSugeridosController.text = _formatarItensOrcamento(
-      _readMapList(data, 'itensOrcamentoSugeridos'),
-    );
+    _tarefasSugeridasController.text =
+        _formatarTarefas(controller.tarefasSugeridasFormulario);
     controller.prepararItensOrcamentoSugeridosFormulario(
       _readMapList(data, 'itensOrcamentoSugeridos'),
+    );
+    _itensOrcamentoSugeridosController.text = _formatarItensOrcamento(
+      controller.itensOrcamentoSugeridosFormulario,
     );
     _categoriasFornecedorSugeridasController.text = _readStringList(
       data,
@@ -1012,7 +1013,7 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                 itemBuilder: (context, index) {
                   final tarefa = tarefas[index];
                   final key = ValueKey(
-                      'tarefa_${index}_${tarefa['titulo']}_${tarefa['ordem']}');
+                      'tarefa_${index}_${tarefa.titulo}_${tarefa.ordem}');
 
                   return _buildTarefaSugeridaTile(
                     key: key,
@@ -1076,15 +1077,15 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   Widget _buildTarefaSugeridaTile({
     required Key key,
     required int index,
-    required Map<String, dynamic> tarefa,
+    required TarefaInspiracaoSugerida tarefa,
   }) {
-    final titulo =
-        _readString(tarefa, 'titulo', fallback: _readString(tarefa, 'nome'));
-    final descricao = _readString(tarefa, 'descricao');
-    final categoria = _readString(tarefa, 'categoria', fallback: 'Geral');
-    final prioridade = _readString(tarefa, 'prioridade', fallback: 'media');
-    final diasAntesEvento = _readInt(tarefa, 'diasAntesEvento', fallback: 30);
-    final obrigatoria = _readBool(tarefa, 'obrigatoria', fallback: false);
+    final titulo = tarefa.titulo;
+    final descricao = tarefa.descricao;
+    final categoria =
+        tarefa.categoria.trim().isEmpty ? 'Geral' : tarefa.categoria;
+    final prioridade = tarefa.prioridade;
+    final diasAntesEvento = tarefa.diasAntesEvento;
+    final obrigatoria = tarefa.obrigatoria;
 
     final prioridadeColor = prioridade == 'alta'
         ? _danger
@@ -1300,7 +1301,7 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                 itemBuilder: (context, index) {
                   final item = itens[index];
                   final key = ValueKey(
-                      'item_orcamento_${index}_${item['item']}_${item['ordem']}');
+                      'item_orcamento_${index}_${item.item}_${item.ordem}');
 
                   return _buildItemOrcamentoSugeridoTile(
                     key: key,
@@ -1365,19 +1366,18 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   Widget _buildItemOrcamentoSugeridoTile({
     required Key key,
     required int index,
-    required Map<String, dynamic> item,
+    required ItemOrcamentoInspiracaoSugerido item,
   }) {
-    final categoria = _readString(item, 'categoria', fallback: 'Geral');
-    final nomeItem =
-        _readString(item, 'item', fallback: _readString(item, 'nome'));
-    final descricao = _readString(item, 'descricao');
-    final custoEstimado = _readDouble(item, 'custoEstimado');
-    final custoMinimo = _readDouble(item, 'custoMinimo');
-    final custoMaximo = _readDouble(item, 'custoMaximo');
-    final unidade = _readString(item, 'unidade', fallback: 'unidade');
-    final quantidadeBase = _readDouble(item, 'quantidadeBase', fallback: 1.0);
-    final custoPorConvidado = _readDouble(item, 'custoPorConvidado');
-    final obrigatorio = _readBool(item, 'obrigatorio', fallback: false);
+    final categoria = item.categoria.trim().isEmpty ? 'Geral' : item.categoria;
+    final nomeItem = item.item;
+    final descricao = item.descricao;
+    final custoEstimado = item.custoEstimado;
+    final custoMinimo = item.custoMinimo;
+    final custoMaximo = item.custoMaximo;
+    final unidade = item.unidade;
+    final quantidadeBase = item.quantidadeBase;
+    final custoPorConvidado = item.custoPorConvidado;
+    final obrigatorio = item.obrigatorio;
 
     return Container(
       key: key,
@@ -1530,46 +1530,32 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
 
   Future<void> _abrirTarefaSugeridaDialog({
     int? index,
-    Map<String, dynamic>? tarefa,
+    TarefaInspiracaoSugerida? tarefa,
   }) async {
     final formKey = GlobalKey<FormState>();
-    final tituloController = TextEditingController(
-      text: _readString(tarefa ?? const <String, dynamic>{}, 'titulo',
-          fallback: _readString(tarefa ?? const <String, dynamic>{}, 'nome')),
-    );
-    final descricaoController = TextEditingController(
-      text: _readString(tarefa ?? const <String, dynamic>{}, 'descricao'),
-    );
+    final tituloController = TextEditingController(text: tarefa?.titulo ?? '');
+    final descricaoController =
+        TextEditingController(text: tarefa?.descricao ?? '');
     final diasController = TextEditingController(
-      text: _readInt(tarefa ?? const <String, dynamic>{}, 'diasAntesEvento',
-              fallback: 30)
-          .toString(),
+      text: (tarefa?.diasAntesEvento ?? 30).toString(),
     );
     final ordemController = TextEditingController(
-      text: _readInt(tarefa ?? const <String, dynamic>{}, 'ordem',
-              fallback:
-                  (index ?? controller.tarefasSugeridasFormulario.length) + 1)
+      text: (tarefa?.ordem ??
+              ((index ?? controller.tarefasSugeridasFormulario.length) + 1))
           .toString(),
     );
 
-    var categoria = _readString(
-        tarefa ?? const <String, dynamic>{}, 'categoria',
-        fallback: _categoriaController.text.trim());
+    var categoria = (tarefa?.categoria ?? _categoriaController.text).trim();
     if (!_categoriasTarefaSugerida.contains(categoria)) {
       categoria = categoria.isEmpty ? 'Geral' : categoria;
     }
 
-    var prioridade = _readString(
-            tarefa ?? const <String, dynamic>{}, 'prioridade',
-            fallback: 'media')
-        .toLowerCase();
+    var prioridade = (tarefa?.prioridade ?? 'media').toLowerCase();
     if (!_prioridadesTarefaSugerida.contains(prioridade)) {
       prioridade = 'media';
     }
 
-    var obrigatoria = _readBool(
-        tarefa ?? const <String, dynamic>{}, 'obrigatoria',
-        fallback: false);
+    var obrigatoria = tarefa?.obrigatoria ?? false;
 
     try {
       await Get.dialog<void>(
@@ -1788,24 +1774,24 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                       return;
                                     }
 
-                                    final dados = <String, dynamic>{
-                                      'titulo': tituloController.text.trim(),
-                                      'descricao':
+                                    final dados = TarefaInspiracaoSugerida(
+                                      titulo: tituloController.text.trim(),
+                                      descricao:
                                           descricaoController.text.trim(),
-                                      'categoria': categoria,
-                                      'diasAntesEvento': int.tryParse(
+                                      categoria: categoria,
+                                      diasAntesEvento: int.tryParse(
                                               diasController.text.trim()) ??
                                           30,
-                                      'prioridade': prioridade,
-                                      'obrigatoria': obrigatoria,
-                                      'ordem': int.tryParse(
+                                      prioridade: prioridade,
+                                      obrigatoria: obrigatoria,
+                                      ordem: int.tryParse(
                                               ordemController.text.trim()) ??
                                           ((index ??
                                                   controller
                                                       .tarefasSugeridasFormulario
                                                       .length) +
                                               1),
-                                    };
+                                    );
 
                                     if (index == null) {
                                       controller.adicionarTarefaSugerida(dados);
@@ -1853,44 +1839,36 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
 
   Future<void> _abrirItemOrcamentoSugeridoDialog({
     int? index,
-    Map<String, dynamic>? item,
+    ItemOrcamentoInspiracaoSugerido? item,
   }) async {
     final formKey = GlobalKey<FormState>();
-    final dados = item ?? const <String, dynamic>{};
 
-    final itemController = TextEditingController(
-      text: _readString(dados, 'item', fallback: _readString(dados, 'nome')),
-    );
-    final descricaoController = TextEditingController(
-      text: _readString(dados, 'descricao'),
-    );
+    final itemController = TextEditingController(text: item?.item ?? '');
+    final descricaoController =
+        TextEditingController(text: item?.descricao ?? '');
     final custoEstimadoController = TextEditingController(
-      text: _formatarNumeroParaCampo(_readDouble(dados, 'custoEstimado')),
+      text: _formatarNumeroParaCampo(item?.custoEstimado ?? 0),
     );
     final custoMinimoController = TextEditingController(
-      text: _formatarNumeroParaCampo(_readDouble(dados, 'custoMinimo')),
+      text: _formatarNumeroParaCampo(item?.custoMinimo ?? 0),
     );
     final custoMaximoController = TextEditingController(
-      text: _formatarNumeroParaCampo(_readDouble(dados, 'custoMaximo')),
+      text: _formatarNumeroParaCampo(item?.custoMaximo ?? 0),
     );
     final quantidadeBaseController = TextEditingController(
-      text: _formatarNumeroParaCampo(
-          _readDouble(dados, 'quantidadeBase', fallback: 1.0)),
+      text: _formatarNumeroParaCampo(item?.quantidadeBase ?? 1.0),
     );
     final custoPorConvidadoController = TextEditingController(
-      text: _formatarNumeroParaCampo(_readDouble(dados, 'custoPorConvidado')),
+      text: _formatarNumeroParaCampo(item?.custoPorConvidado ?? 0),
     );
     final ordemController = TextEditingController(
-      text: _readInt(
-        dados,
-        'ordem',
-        fallback:
-            (index ?? controller.itensOrcamentoSugeridosFormulario.length) + 1,
-      ).toString(),
+      text: (item?.ordem ??
+              ((index ?? controller.itensOrcamentoSugeridosFormulario.length) +
+                  1))
+          .toString(),
     );
 
-    var categoria = _readString(dados, 'categoria',
-        fallback: _categoriaController.text.trim());
+    var categoria = (item?.categoria ?? _categoriaController.text).trim();
     if (!_categoriasOrcamentoSugerido.contains(categoria)) {
       categoria = categoria.isEmpty ? 'Geral' : categoria;
       if (!_categoriasOrcamentoSugerido.contains(categoria)) {
@@ -1898,12 +1876,12 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       }
     }
 
-    var unidade = _readString(dados, 'unidade', fallback: 'unidade');
+    var unidade = item?.unidade ?? 'unidade';
     if (!_unidadesOrcamentoSugerido.contains(unidade)) {
       unidade = 'unidade';
     }
 
-    var obrigatorio = _readBool(dados, 'obrigatorio', fallback: false);
+    var obrigatorio = item?.obrigatorio ?? false;
 
     try {
       await Get.dialog<void>(
@@ -2167,31 +2145,32 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
                                       return;
                                     }
 
-                                    final dados = <String, dynamic>{
-                                      'categoria': categoria,
-                                      'item': itemController.text.trim(),
-                                      'descricao':
+                                    final dados =
+                                        ItemOrcamentoInspiracaoSugerido(
+                                      categoria: categoria,
+                                      item: itemController.text.trim(),
+                                      descricao:
                                           descricaoController.text.trim(),
-                                      'custoEstimado': _parseDoubleBr(
+                                      custoEstimado: _parseDoubleBr(
                                           custoEstimadoController.text),
-                                      'custoMinimo': _parseDoubleBr(
+                                      custoMinimo: _parseDoubleBr(
                                           custoMinimoController.text),
-                                      'custoMaximo': _parseDoubleBr(
+                                      custoMaximo: _parseDoubleBr(
                                           custoMaximoController.text),
-                                      'unidade': unidade,
-                                      'quantidadeBase': _parseDoubleBr(
+                                      unidade: unidade,
+                                      quantidadeBase: _parseDoubleBr(
                                           quantidadeBaseController.text),
-                                      'custoPorConvidado': _parseDoubleBr(
+                                      custoPorConvidado: _parseDoubleBr(
                                           custoPorConvidadoController.text),
-                                      'obrigatorio': obrigatorio,
-                                      'ordem': int.tryParse(
+                                      obrigatorio: obrigatorio,
+                                      ordem: int.tryParse(
                                               ordemController.text.trim()) ??
                                           ((index ??
                                                   controller
                                                       .itensOrcamentoSugeridosFormulario
                                                       .length) +
                                               1),
-                                    };
+                                    );
 
                                     if (index == null) {
                                       controller.adicionarItemOrcamentoSugerido(
@@ -3217,19 +3196,6 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     return _tryParseDoubleBr(value) ?? 0.0;
   }
 
-  double _readDouble(
-    Map<String, dynamic> data,
-    String key, {
-    double fallback = 0.0,
-  }) {
-    final value = data[key];
-    if (value == null) return fallback;
-    if (value is double) return value;
-    if (value is int) return value.toDouble();
-    if (value is num) return value.toDouble();
-    return _tryParseDoubleBr(value.toString()) ?? fallback;
-  }
-
   String _formatarMoeda(double value) {
     final fixed = value.toStringAsFixed(2);
     final parts = fixed.split('.');
@@ -3254,14 +3220,10 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     return text.endsWith(',00') ? text.substring(0, text.length - 3) : text;
   }
 
-  String _formatarTarefas(List<Map<String, dynamic>> tarefas) {
+  String _formatarTarefas(List<TarefaInspiracaoSugerida> tarefas) {
     return tarefas
         .map((tarefa) {
-          final titulo =
-              (tarefa['titulo'] ?? tarefa['nome'] ?? '').toString().trim();
-          final categoria = (tarefa['categoria'] ?? '').toString().trim();
-          final descricao = (tarefa['descricao'] ?? '').toString().trim();
-          return <String>[titulo, categoria, descricao]
+          return <String>[tarefa.titulo, tarefa.categoria, tarefa.descricao]
               .where((e) => e.trim().isNotEmpty)
               .join(' | ');
         })
@@ -3269,15 +3231,12 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
         .join('\n');
   }
 
-  String _formatarItensOrcamento(List<Map<String, dynamic>> itens) {
+  String _formatarItensOrcamento(List<ItemOrcamentoInspiracaoSugerido> itens) {
     return itens
         .map((item) {
-          final categoria = (item['categoria'] ?? '').toString().trim();
-          final nome = (item['item'] ?? item['nome'] ?? '').toString().trim();
-          final valor = (item['custoEstimado'] ?? item['valorEstimado'] ?? '')
-              .toString()
-              .trim();
-          return <String>[categoria, nome, valor]
+          final valor =
+              item.custoEstimado == 0 ? '' : item.custoEstimado.toString();
+          return <String>[item.categoria, item.item, valor]
               .where((e) => e.trim().isNotEmpty)
               .join(' | ');
         })
