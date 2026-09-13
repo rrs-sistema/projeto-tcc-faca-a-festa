@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:developer' as developer;
 
@@ -207,19 +206,14 @@ class FirebaseAutenticacaoRemoteDatasource
         'code=${erro.code} | message=${erro.message}',
       );
       throw AutenticacaoRemoteException(erro.code);
-    } on PlatformException catch (erro) {
-      if (autenticacaoFoiCancelada(erro.code)) {
+    } catch (erro, stack) {
+      if (_canceladoNoCanal(erro)) {
         developer.log(
-          '[AutenticacaoRemote] Google cancelado pelo usuário: ${erro.code}',
+          '[AutenticacaoRemote] Google cancelado pelo usuário: '
+          '${_codigoDeCanal(erro)}',
         );
         return false;
       }
-      developer.log(
-        '[AutenticacaoRemote] PlatformException Google: '
-        'code=${erro.code} | message=${erro.message}',
-      );
-      throw const AutenticacaoRemoteException('google-unexpected-error');
-    } catch (erro, stack) {
       developer.log('[AutenticacaoRemote] Erro inesperado no Google: $erro');
       developer.log('$stack');
       throw const AutenticacaoRemoteException('google-unexpected-error');
@@ -301,11 +295,6 @@ class FirebaseAutenticacaoRemoteDatasource
         return false;
       }
       rethrow;
-    } on PlatformException catch (erro) {
-      if (autenticacaoFoiCancelada(erro.code)) {
-        return false;
-      }
-      rethrow;
     }
   }
 
@@ -329,6 +318,21 @@ class FirebaseAutenticacaoRemoteDatasource
   bool _googleNativoFoiCancelado(GoogleSignInException erro) {
     return erro.code == GoogleSignInExceptionCode.canceled ||
         autenticacaoFoiCancelada(erro.code.name);
+  }
+
+  bool _canceladoNoCanal(Object erro) {
+    final codigo = _codigoDeCanal(erro);
+    return codigo != null && autenticacaoFoiCancelada(codigo);
+  }
+
+  String? _codigoDeCanal(Object erro) {
+    try {
+      final codigo = (erro as dynamic).code;
+      if (codigo is String && codigo.trim().isNotEmpty) {
+        return codigo;
+      }
+    } catch (_) {}
+    return null;
   }
 
   Future<void> _inicializarGoogleSignIn() async {
