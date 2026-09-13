@@ -1,6 +1,7 @@
 import 'package:app_faca_festa/data/models/tarefa/tarefa_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:app_faca_festa/domain/entities/tarefa.dart';
 
 void main() {
   test('task map preserves the current Firestore contract', () {

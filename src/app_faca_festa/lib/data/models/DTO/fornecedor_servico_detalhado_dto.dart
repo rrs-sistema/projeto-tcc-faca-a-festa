@@ -2,7 +2,6 @@
 
 import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
 
-export 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
 
 class FornecedorServicoDetalhadoDto extends FornecedorServicoDetalhado {
   FornecedorServicoDetalhadoDto({

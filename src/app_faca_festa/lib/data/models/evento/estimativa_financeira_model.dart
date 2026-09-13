@@ -3,7 +3,6 @@ import 'perfil_festa_model.dart';
 
 import 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
 
-export 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
 
 extension UnidadeEstimativaModelExtension on UnidadeEstimativa {
   static UnidadeEstimativa fromString(String? value) {

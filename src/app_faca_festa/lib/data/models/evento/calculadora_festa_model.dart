@@ -2,8 +2,9 @@ import 'analise_calculadora_ia_model.dart';
 import 'convidados_equivalentes_model.dart';
 import 'perfil_festa_model.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
+import 'package:app_faca_festa/domain/entities/analise_calculadora_ia.dart';
+import 'package:app_faca_festa/domain/entities/perfil_festa.dart';
 
-export 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 
 extension BaseCalculoFestaModelExtension on BaseCalculoFesta {
   static BaseCalculoFesta fromString(String? value) {

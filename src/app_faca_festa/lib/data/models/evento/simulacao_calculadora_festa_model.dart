@@ -1,5 +1,6 @@
 import 'analise_calculadora_ia_model.dart';
 import 'calculadora_festa_model.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 
 class SimulacaoCalculadoraFestaModel {
   final String id;

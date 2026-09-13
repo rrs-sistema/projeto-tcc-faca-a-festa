@@ -7,7 +7,6 @@ import 'fornecedor_model.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_admin_snapshot.dart'
     as domain;
 
-export 'package:app_faca_festa/domain/entities/fornecedor_admin_snapshot.dart';
 
 class FornecedorAdminSnapshot extends domain.FornecedorAdminSnapshot {
   const FornecedorAdminSnapshot({

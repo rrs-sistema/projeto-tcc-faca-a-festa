@@ -1,7 +1,7 @@
 import 'package:app_faca_festa/domain/entities/servico_foto.dart';
 import 'package:app_faca_festa/domain/repositories/servico_foto_repository.dart';
 import '../datasources/remote/servico_foto_remote_datasource.dart';
-import '../models/servico_produto/servico_foto_model.dart' hide ServicoFoto;
+import '../models/servico_produto/servico_foto_model.dart';
 
 class ServicoFotoRepositoryImpl implements ServicoFotoRepository {
   ServicoFotoRepositoryImpl(this.remote);

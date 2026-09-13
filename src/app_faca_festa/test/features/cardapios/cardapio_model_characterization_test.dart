@@ -1,6 +1,8 @@
 import 'package:app_faca_festa/data/models/cardapio/cardapio_item_model.dart';
 import 'package:app_faca_festa/data/models/cardapio/cardapio_model.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:app_faca_festa/domain/entities/cardapio_item.dart';
+import 'package:app_faca_festa/domain/entities/cardapio.dart';
 
 void main() {
   test('menu map preserves the Firestore field contract', () {

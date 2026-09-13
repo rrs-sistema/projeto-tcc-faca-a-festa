@@ -2,6 +2,8 @@ import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dar
 import '../datasources/remote/perfil_usuario_remote_datasource.dart';
 import '../models/endereco/endereco_usuario.dart';
 import '../models/usuario/usuario_model.dart';
+import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
+import 'package:app_faca_festa/domain/entities/usuario.dart';
 
 class PerfilUsuarioRepositoryImpl implements PerfilUsuarioRepository {
   PerfilUsuarioRepositoryImpl(this.remote);

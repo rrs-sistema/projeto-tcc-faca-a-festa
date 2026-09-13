@@ -1,6 +1,5 @@
 import 'package:app_faca_festa/domain/entities/analise_calculadora_ia.dart';
 
-export 'package:app_faca_festa/domain/entities/analise_calculadora_ia.dart';
 
 extension TipoSugestaoCalculadoraIAModelExtension on TipoSugestaoCalculadoraIA {
   static TipoSugestaoCalculadoraIA fromString(String? value) {

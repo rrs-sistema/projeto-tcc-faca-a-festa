@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:developer' as developer;
 
 import 'package:app_faca_festa/domain/entities/convidado.dart';
-export 'package:app_faca_festa/domain/entities/convidado.dart';
 
 extension StatusConvidadoFirestore on StatusConvidado {
   String get firestoreValue => name;

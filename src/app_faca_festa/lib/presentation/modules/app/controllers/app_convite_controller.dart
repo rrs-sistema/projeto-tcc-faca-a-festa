@@ -12,6 +12,7 @@ import 'package:app_faca_festa/presentation/modules/app/controllers/app_destino_
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/domain/entities/convidado.dart';
 
 class AppConviteController extends GetxController {
   AppConviteController({

@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/score_cotacao_fornecedor.dart';
 
-export 'package:app_faca_festa/domain/entities/score_cotacao_fornecedor.dart';
 
 class ScoreCotacaoFornecedorModel extends ScoreCotacaoFornecedor {
   const ScoreCotacaoFornecedorModel({

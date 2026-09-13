@@ -1,8 +1,7 @@
 import 'package:app_faca_festa/domain/repositories/orcamento_repository.dart';
 import 'package:app_faca_festa/domain/entities/orcamento.dart';
 import '../datasources/remote/orcamento_remote_datasource.dart';
-import '../models/orcamento/orcamento_model.dart'
-    hide Orcamento, StatusOrcamento;
+import '../models/orcamento/orcamento_model.dart';
 
 class OrcamentoRepositoryImpl implements OrcamentoRepository {
   OrcamentoRepositoryImpl(this.remote);

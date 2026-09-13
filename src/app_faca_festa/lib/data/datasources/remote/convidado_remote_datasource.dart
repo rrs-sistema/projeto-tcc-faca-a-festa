@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/convidado/convidado_model.dart';
 import 'package:app_faca_festa/domain/repositories/convidado_repository.dart';
+import 'package:app_faca_festa/domain/entities/convidado.dart';
 
 class ConvidadoRemoteDatasource {
   ConvidadoRemoteDatasource(this.firestore);

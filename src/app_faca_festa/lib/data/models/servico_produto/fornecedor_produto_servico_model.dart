@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
 
-export 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
 
 /// Representa o vínculo entre um fornecedor e um serviço/produto.
 /// Cada fornecedor pode oferecer múltiplos serviços com preços próprios.

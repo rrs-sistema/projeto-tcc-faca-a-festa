@@ -3,10 +3,8 @@ import 'package:app_faca_festa/domain/entities/servico_produto.dart';
 import 'package:app_faca_festa/domain/repositories/servico_produto_repository.dart';
 import '../datasources/remote/servico_produto_remote_datasource.dart';
 import '../models/DTO/fornecedor_servico_detalhado_dto.dart';
-import '../models/servico_produto/fornecedor_produto_servico_model.dart'
-    hide FornecedorProdutoServico;
-import '../models/servico_produto/servico_produto_model.dart'
-    hide ServicoProduto;
+import '../models/servico_produto/fornecedor_produto_servico_model.dart';
+import '../models/servico_produto/servico_produto_model.dart';
 
 class ServicoProdutoRepositoryImpl implements ServicoProdutoRepository {
   ServicoProdutoRepositoryImpl(this.remote);

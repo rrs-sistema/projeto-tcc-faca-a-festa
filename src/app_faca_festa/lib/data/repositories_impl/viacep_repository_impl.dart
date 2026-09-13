@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:app_faca_festa/data/models/endereco/endereco_cep_resultado.dart';
 import 'package:app_faca_festa/domain/repositories/cep_repository.dart';
+import 'package:app_faca_festa/domain/entities/endereco_cep_resultado.dart';
 
 class ViaCepRepositoryImpl implements CepRepository {
   ViaCepRepositoryImpl({http.Client? client})

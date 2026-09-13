@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../models/orcamento/orcamento_gasto_model.dart';
-import '../../models/orcamento/orcamento_validacao_resultado.dart';
+import 'package:app_faca_festa/domain/entities/orcamento_validacao_resultado.dart';
 
 class OrcamentoGastoRemoteDatasource {
   OrcamentoGastoRemoteDatasource({

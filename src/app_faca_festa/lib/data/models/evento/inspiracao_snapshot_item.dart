@@ -2,7 +2,6 @@ import 'inspiracao_model.dart';
 
 import 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
 
-export 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
 
 class InspiracaoSnapshotItem extends InspiracaoSnapshot {
   const InspiracaoSnapshotItem({

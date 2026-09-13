@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/fornecedor_interacao.dart';
 
-export 'package:app_faca_festa/domain/entities/fornecedor_interacao.dart';
 
 class FornecedorInteracaoModel extends FornecedorInteracao {
   const FornecedorInteracaoModel({

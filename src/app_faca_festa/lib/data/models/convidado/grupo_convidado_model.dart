@@ -1,6 +1,5 @@
 import 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
 
-export 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
 
 class GrupoConvidadoModel extends GrupoConvidado {
   const GrupoConvidadoModel({

@@ -10,6 +10,9 @@ import 'package:app_faca_festa/domain/entities/fornecedor_interacao.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/services/fornecedor_ai.dart';
+import 'package:app_faca_festa/domain/entities/sugestao_catalogo_fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/resumo_reputacao_fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/score_cotacao_fornecedor.dart';
 
 class FornecedorAiService implements FornecedorAiRegrasService {
   final DateTime Function() _clock;

@@ -1,6 +1,5 @@
 import 'package:app_faca_festa/domain/entities/perfil_festa.dart';
 
-export 'package:app_faca_festa/domain/entities/perfil_festa.dart';
 
 class PerfilFestaModel extends PerfilFesta {
   const PerfilFestaModel({

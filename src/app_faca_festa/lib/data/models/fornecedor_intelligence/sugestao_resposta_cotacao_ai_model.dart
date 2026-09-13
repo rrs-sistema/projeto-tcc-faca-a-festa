@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao_ai.dart';
 
-export 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao_ai.dart';
 
 class SugestaoRespostaCotacaoAiModel extends SugestaoRespostaCotacaoAi {
   const SugestaoRespostaCotacaoAiModel({

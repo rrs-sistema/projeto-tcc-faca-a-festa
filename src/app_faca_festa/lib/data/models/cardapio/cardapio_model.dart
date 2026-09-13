@@ -1,6 +1,5 @@
 import 'package:app_faca_festa/domain/entities/cardapio.dart';
 
-export 'package:app_faca_festa/domain/entities/cardapio.dart';
 
 extension PublicoAlvoCardapioPersistence on PublicoAlvoCardapio {
   String get firestoreValue => name;

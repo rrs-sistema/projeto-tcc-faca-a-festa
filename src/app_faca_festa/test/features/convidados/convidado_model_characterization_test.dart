@@ -1,5 +1,4 @@
-import 'package:app_faca_festa/data/models/convidado/convidado_model.dart'
-    hide Convidado, StatusConvidado, TipoConvidado;
+import 'package:app_faca_festa/data/models/convidado/convidado_model.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';

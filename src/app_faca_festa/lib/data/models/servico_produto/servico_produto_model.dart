@@ -1,7 +1,6 @@
 import '../DTO/fornecedor_servico_detalhado_dto.dart';
 import 'package:app_faca_festa/domain/entities/servico_produto.dart';
 
-export 'package:app_faca_festa/domain/entities/servico_produto.dart';
 
 class ServicoProdutoModel extends ServicoProduto {
   const ServicoProdutoModel({

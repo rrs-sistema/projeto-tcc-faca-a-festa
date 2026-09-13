@@ -1,11 +1,5 @@
 import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
 
-export 'package:app_faca_festa/domain/entities/cotacao_chat.dart'
-    show
-        CotacaoConversa,
-        CotacaoFornecedorResumo,
-        CotacaoMensagem,
-        CotacaoServicoResumo;
 
 class CotacaoConversaModel extends CotacaoConversa {
   const CotacaoConversaModel({

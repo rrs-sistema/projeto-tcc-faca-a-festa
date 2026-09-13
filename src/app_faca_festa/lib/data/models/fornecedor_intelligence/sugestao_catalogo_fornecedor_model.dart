@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/sugestao_catalogo_fornecedor.dart';
 
-export 'package:app_faca_festa/domain/entities/sugestao_catalogo_fornecedor.dart';
 
 class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
   const SugestaoCatalogoFornecedorModel({

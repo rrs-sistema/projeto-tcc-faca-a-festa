@@ -1,7 +1,6 @@
 import 'package:app_faca_festa/core/utils/tema_festa_capa_url.dart';
 import 'package:app_faca_festa/domain/entities/tema_festa.dart';
 
-export 'package:app_faca_festa/domain/entities/tema_festa.dart';
 
 class TemaFestaModel extends TemaFesta {
   const TemaFestaModel({

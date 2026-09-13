@@ -1,7 +1,7 @@
 import 'package:app_faca_festa/domain/entities/tarefa.dart';
 import 'package:app_faca_festa/domain/repositories/tarefa_repository.dart';
 import '../datasources/remote/tarefa_remote_datasource.dart';
-import '../models/tarefa/tarefa_model.dart' hide Tarefa, StatusTarefa;
+import '../models/tarefa/tarefa_model.dart';
 
 class TarefaRepositoryImpl implements TarefaRepository {
   TarefaRepositoryImpl(this.remote);

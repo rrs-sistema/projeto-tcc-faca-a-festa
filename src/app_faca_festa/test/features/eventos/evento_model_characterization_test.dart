@@ -2,6 +2,8 @@ import 'package:app_faca_festa/data/models/evento/evento_model.dart';
 import 'package:app_faca_festa/data/models/evento/tipo_evento.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
+import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 
 void main() {
   group('EventoModel characterization', () {

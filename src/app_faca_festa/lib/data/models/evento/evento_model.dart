@@ -1,8 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/evento.dart';
-export 'package:app_faca_festa/domain/entities/evento.dart'
-    show Evento, StatusEvento, StatusEventoExtension;
 
 // ======================================================
 // 🗓️ MODELO - EventoModel

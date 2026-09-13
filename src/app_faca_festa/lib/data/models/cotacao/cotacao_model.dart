@@ -3,9 +3,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/entities/cotacao_chat.dart';
 
-export 'package:app_faca_festa/domain/entities/cotacao.dart'
-    show Cotacao, StatusCotacao, ItemServicoCotacao;
-
 class CotacaoModel extends Cotacao {
   CotacaoModel({
     required super.id,

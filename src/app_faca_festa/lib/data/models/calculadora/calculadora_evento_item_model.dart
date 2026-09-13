@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
 
-export 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
 
 class CalculadoraEventoItemModel extends CalculadoraEventoItem {
   static const String collectionName = 'calculadora_evento_itens';

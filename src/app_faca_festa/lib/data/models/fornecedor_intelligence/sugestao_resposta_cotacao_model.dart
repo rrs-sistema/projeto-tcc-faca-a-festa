@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao.dart';
 
-export 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao.dart';
 
 class SugestaoRespostaCotacaoModel extends SugestaoRespostaCotacao {
   const SugestaoRespostaCotacaoModel({

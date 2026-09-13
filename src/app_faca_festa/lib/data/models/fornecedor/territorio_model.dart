@@ -1,6 +1,5 @@
 import 'package:app_faca_festa/domain/entities/territorio.dart';
 
-export 'package:app_faca_festa/domain/entities/territorio.dart' show Territorio;
 
 class TerritorioModel extends Territorio {
   const TerritorioModel({

@@ -2,8 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/orcamento.dart';
 
-export 'package:app_faca_festa/domain/entities/orcamento.dart'
-    show Orcamento, StatusOrcamento;
 
 /// ===========================================================
 /// 🔹 Modelo OrcamentoModel completo com melhorias

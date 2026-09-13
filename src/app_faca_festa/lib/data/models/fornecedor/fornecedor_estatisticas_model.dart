@@ -1,7 +1,6 @@
 import 'package:app_faca_festa/domain/entities/fornecedor_estatisticas.dart';
 import '../servico_produto/fornecedor_produto_servico_model.dart';
 
-export 'package:app_faca_festa/domain/entities/fornecedor_estatisticas.dart';
 
 class FornecedorEstatisticasModel extends FornecedorEstatisticas {
   const FornecedorEstatisticasModel({

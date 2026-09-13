@@ -1,6 +1,5 @@
 import 'package:app_faca_festa/domain/entities/servico_cotado.dart';
 
-export 'package:app_faca_festa/domain/entities/servico_cotado.dart';
 
 class ServicoCotadoDto extends ServicoCotado {
   const ServicoCotadoDto({

@@ -3,6 +3,8 @@ import 'dart:developer' as developer;
 
 import '../../models/calculadora/calculadora_evento_item_model.dart';
 import '../../models/calculadora/calculadora_item_base_model.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_evento_item.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_item_base.dart';
 
 class CalculadoraItensBaseRemoteDatasource {
   static const String collectionItensBase = 'calculadora_itens_base';

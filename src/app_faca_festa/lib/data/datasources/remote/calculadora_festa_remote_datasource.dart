@@ -6,6 +6,9 @@ import '../../models/evento/calculadora_festa_item_model.dart';
 import '../../models/evento/calculadora_festa_model.dart';
 import '../../models/model.dart';
 import 'package:app_faca_festa/domain/entities/cardapio.dart';
+import 'package:app_faca_festa/domain/entities/cardapio_item.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 
 /// Datasource de persistência das simulações da calculadora.
 ///

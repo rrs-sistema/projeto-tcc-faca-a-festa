@@ -1,8 +1,7 @@
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/repositories/convidado_repository.dart';
 import '../datasources/remote/convidado_remote_datasource.dart';
-import '../models/convidado/convidado_model.dart'
-    hide Convidado, StatusConvidado, TipoConvidado;
+import '../models/convidado/convidado_model.dart';
 
 class ConvidadoRepositoryImpl implements ConvidadoRepository {
   ConvidadoRepositoryImpl(this.remote);

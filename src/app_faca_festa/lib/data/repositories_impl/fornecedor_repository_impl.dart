@@ -6,8 +6,8 @@ import '../models/evento/evento_model.dart';
 import '../models/fornecedor/fornecedor_admin_snapshot.dart';
 import '../models/fornecedor/fornecedor_estatisticas_model.dart';
 import '../models/fornecedor/fornecedor_model.dart';
-import '../models/servico_produto/fornecedor_categoria_model.dart'
-    hide FornecedorCategoria;
+import '../models/servico_produto/fornecedor_categoria_model.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 
 class FornecedorRepositoryImpl implements FornecedorRepository {
   FornecedorRepositoryImpl(this.remote);

@@ -1,7 +1,7 @@
 import 'package:app_faca_festa/domain/entities/territorio.dart';
 import 'package:app_faca_festa/domain/repositories/admin_territorio_repository.dart';
 import '../datasources/remote/admin_territorio_remote_datasource.dart';
-import '../models/fornecedor/territorio_model.dart' hide Territorio;
+import '../models/fornecedor/territorio_model.dart';
 
 class AdminTerritorioRepositoryImpl implements AdminTerritorioRepository {
   AdminTerritorioRepositoryImpl(this.remote);

@@ -2,6 +2,7 @@ import 'package:app_faca_festa/data/datasources/remote/cotacao_remote_datasource
 import 'package:app_faca_festa/data/models/cotacao/cotacao_model.dart';
 import 'package:app_faca_festa/data/repositories_impl/cotacao_repository_impl.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 
 void main() {
   test('delega observacao das cotacoes do organizador', () async {

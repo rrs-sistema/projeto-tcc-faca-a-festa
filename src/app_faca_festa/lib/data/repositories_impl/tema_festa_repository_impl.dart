@@ -2,7 +2,7 @@ import 'package:app_faca_festa/domain/entities/tema_festa.dart';
 import 'package:app_faca_festa/domain/exceptions/tema_festa_exception.dart';
 import 'package:app_faca_festa/domain/repositories/tema_festa_repository.dart';
 import '../datasources/remote/tema_festa_remote_datasource.dart';
-import '../models/evento/tema_festa_model.dart' hide TemaFesta;
+import '../models/evento/tema_festa_model.dart';
 import '../services/functions/callable_https_client.dart';
 
 class TemaFestaRepositoryImpl implements TemaFestaRepository {

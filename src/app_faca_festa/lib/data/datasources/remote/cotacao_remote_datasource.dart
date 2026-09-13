@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/cotacao/cotacao_chat_model.dart';
 import '../../models/model.dart';
 import 'cotacao_functions_datasource.dart';
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 
 abstract interface class CotacaoRemoteDatasource {
   Stream<List<CotacaoModel>> observarMinhasCotacoes(String idUsuario);

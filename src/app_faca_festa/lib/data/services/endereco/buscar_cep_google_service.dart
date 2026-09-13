@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import 'package:app_faca_festa/data/models/endereco/endereco_cep_resultado.dart';
 import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
+import 'package:app_faca_festa/domain/entities/endereco_cep_resultado.dart';
 
 /// Cliente HTTP da function `buscarCepGoogle` (onRequest, southamerica-east1).
 ///

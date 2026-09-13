@@ -2,8 +2,8 @@ import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
 import 'package:app_faca_festa/domain/repositories/grupo_convidado_repository.dart';
 import '../datasources/remote/grupo_convidado_remote_datasource.dart';
-import '../models/convidado/convidado_model.dart' hide Convidado;
-import '../models/convidado/grupo_convidado_model.dart' hide GrupoConvidado;
+import '../models/convidado/convidado_model.dart';
+import '../models/convidado/grupo_convidado_model.dart';
 
 class GrupoConvidadoRepositoryImpl implements GrupoConvidadoRepository {
   GrupoConvidadoRepositoryImpl(this.remote);

@@ -1,6 +1,5 @@
 import 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
 
-export 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
 
 class CalculadoraFestaItemModel extends CalculadoraFestaItem {
   const CalculadoraFestaItemModel({

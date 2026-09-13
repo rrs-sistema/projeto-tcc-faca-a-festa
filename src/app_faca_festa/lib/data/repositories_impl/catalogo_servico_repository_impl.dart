@@ -2,10 +2,8 @@ import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 import 'package:app_faca_festa/domain/entities/subcategoria_servico.dart';
 import 'package:app_faca_festa/domain/repositories/catalogo_servico_repository.dart';
 import '../datasources/remote/catalogo_servico_remote_datasource.dart';
-import '../models/servico_produto/categoria_servico_model.dart'
-    hide CategoriaServico;
-import '../models/servico_produto/subcategoria_servico_model.dart'
-    hide SubcategoriaServico;
+import '../models/servico_produto/categoria_servico_model.dart';
+import '../models/servico_produto/subcategoria_servico_model.dart';
 
 class CatalogoServicoRepositoryImpl implements CatalogoServicoRepository {
   CatalogoServicoRepositoryImpl(this.remote);

@@ -1,6 +1,5 @@
 import 'package:app_faca_festa/domain/entities/convidados_equivalentes.dart';
 
-export 'package:app_faca_festa/domain/entities/convidados_equivalentes.dart';
 
 class ConvidadosEquivalentesModel extends ConvidadosEquivalentes {
   const ConvidadosEquivalentesModel({

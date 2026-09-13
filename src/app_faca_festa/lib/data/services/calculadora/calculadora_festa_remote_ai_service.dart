@@ -3,6 +3,8 @@ import '../../models/evento/calculadora_festa_item_model.dart';
 import '../../models/evento/estimativa_financeira_model.dart';
 import '../../models/evento/perfil_festa_model.dart';
 import 'package:app_faca_festa/domain/services/calculadora_festa_ai_service.dart';
+import 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
+import 'package:app_faca_festa/domain/entities/estimativa_financeira.dart';
 
 /// Função responsável por chamar o backend de IA.
 ///

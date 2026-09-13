@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/calculadora_item_base.dart';
 
-export 'package:app_faca_festa/domain/entities/calculadora_item_base.dart';
 
 class CalculadoraItemBaseModel extends CalculadoraItemBase {
   static const String collectionName = 'calculadora_itens_base';

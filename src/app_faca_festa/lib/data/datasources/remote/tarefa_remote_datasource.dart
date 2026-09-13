@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/tarefa/tarefa_model.dart';
+import 'package:app_faca_festa/domain/entities/tarefa.dart';
 
 class TarefaRemoteDatasource {
   TarefaRemoteDatasource(this.firestore);

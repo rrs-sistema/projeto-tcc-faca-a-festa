@@ -5,6 +5,7 @@ import '../datasources/remote/inspiracao_remote_datasource.dart';
 import '../models/evento/inspiracao_model.dart';
 import '../models/evento/inspiracao_snapshot_item.dart';
 import '../models/fornecedor/fornecedor_model.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 
 class InspiracaoRepositoryImpl implements InspiracaoRepository {
   InspiracaoRepositoryImpl(this.remote);

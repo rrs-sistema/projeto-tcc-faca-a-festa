@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 
-export 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 
 class CategoriaServicoModel extends CategoriaServico {
   CategoriaServicoModel({

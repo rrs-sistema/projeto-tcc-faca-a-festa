@@ -2,6 +2,7 @@ import 'package:app_faca_festa/data/models/evento/tema_festa_model.dart';
 import 'package:app_faca_festa/presentation/modules/tema/tema_festa_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:app_faca_festa/domain/entities/tema_festa.dart';
 
 void main() {
   group('TemaFestaModel', () {
