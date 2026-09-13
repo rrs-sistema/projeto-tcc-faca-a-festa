@@ -1,11 +1,12 @@
 import 'dart:typed_data';
 
+import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/domain/repositories/inspiracao_repository.dart';
 import '../datasources/remote/inspiracao_remote_datasource.dart';
 import '../models/evento/inspiracao_model.dart';
 import '../models/evento/inspiracao_snapshot_item.dart';
 import '../models/fornecedor/fornecedor_model.dart';
-import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 
 class InspiracaoRepositoryImpl implements InspiracaoRepository {
   InspiracaoRepositoryImpl(this.remote);
@@ -228,7 +229,7 @@ class InspiracaoRepositoryImpl implements InspiracaoRepository {
     required String eventoId,
     required String userId,
     required Inspiracao inspiracao,
-    required List<Map<String, dynamic>> tarefas,
+    required List<TarefaInspiracaoSugerida> tarefas,
   }) {
     return remote.criarChecklistDaInspiracao(
       eventoId: eventoId,
@@ -243,7 +244,7 @@ class InspiracaoRepositoryImpl implements InspiracaoRepository {
     required String eventoId,
     required String userId,
     required Inspiracao inspiracao,
-    required List<Map<String, dynamic>> itens,
+    required List<ItemOrcamentoInspiracaoSugerido> itens,
   }) {
     return remote.criarOrcamentoDaInspiracao(
       eventoId: eventoId,

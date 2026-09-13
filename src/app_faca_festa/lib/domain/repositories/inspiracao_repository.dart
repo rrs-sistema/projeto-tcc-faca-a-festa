@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import '../entities/fornecedor.dart';
 import '../entities/inspiracao.dart';
 import '../entities/inspiracao_snapshot.dart';
+import '../entities/inspiracao_sugestao.dart';
 import '../entities/referencia_evento.dart';
 
 abstract interface class InspiracaoRepository {
@@ -109,14 +110,14 @@ abstract interface class InspiracaoRepository {
     required String eventoId,
     required String userId,
     required Inspiracao inspiracao,
-    required List<Map<String, dynamic>> tarefas,
+    required List<TarefaInspiracaoSugerida> tarefas,
   });
 
   Future<void> criarOrcamentoDaInspiracao({
     required String eventoId,
     required String userId,
     required Inspiracao inspiracao,
-    required List<Map<String, dynamic>> itens,
+    required List<ItemOrcamentoInspiracaoSugerido> itens,
   });
 
   Future<void> atualizarReferenciaPlanejamento({

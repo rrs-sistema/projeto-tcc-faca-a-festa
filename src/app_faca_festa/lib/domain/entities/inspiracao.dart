@@ -1,3 +1,5 @@
+import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
+
 class Inspiracao {
   final String id;
   final String tipoEventoId;
@@ -13,8 +15,8 @@ class Inspiracao {
   final String? categoria;
   final List<String> fornecedoresRelacionados;
   final List<String> categoriasFornecedorSugeridas;
-  final List<Map<String, dynamic>> tarefasSugeridas;
-  final List<Map<String, dynamic>> itensOrcamentoSugeridos;
+  final List<TarefaInspiracaoSugerida> tarefasSugeridas;
+  final List<ItemOrcamentoInspiracaoSugerido> itensOrcamentoSugeridos;
   final String estilo;
   final String faixaCusto;
   final String nivelDificuldade;
@@ -66,8 +68,8 @@ class Inspiracao {
     String? categoria,
     List<String>? fornecedoresRelacionados,
     List<String>? categoriasFornecedorSugeridas,
-    List<Map<String, dynamic>>? tarefasSugeridas,
-    List<Map<String, dynamic>>? itensOrcamentoSugeridos,
+    List<TarefaInspiracaoSugerida>? tarefasSugeridas,
+    List<ItemOrcamentoInspiracaoSugerido>? itensOrcamentoSugeridos,
     String? estilo,
     String? faixaCusto,
     String? nivelDificuldade,

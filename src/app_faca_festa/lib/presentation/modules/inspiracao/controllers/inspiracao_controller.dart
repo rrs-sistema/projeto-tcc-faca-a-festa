@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/domain/entities/referencia_evento.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
 
@@ -521,19 +522,19 @@ class InspiracaoController extends GetxController {
       final tarefas = inspiracao.tarefasSugeridas.isNotEmpty
           ? inspiracao.tarefasSugeridas
           : [
-              {
-                'titulo': 'Separar referência visual: ${inspiracao.titulo}',
-                'descricao':
+              TarefaInspiracaoSugerida(
+                titulo: 'Separar referência visual: ${inspiracao.titulo}',
+                descricao:
                     'Usar esta inspiração como base para conversar com fornecedores e organizar os detalhes do evento.',
-                'categoria': inspiracao.categoria ?? 'Inspiração',
-              },
-              {
-                'titulo':
+                categoria: inspiracao.categoria ?? 'Inspiração',
+              ),
+              TarefaInspiracaoSugerida(
+                titulo:
                     'Solicitar orçamento para ${inspiracao.categoria ?? 'esta ideia'}',
-                'descricao':
+                descricao:
                     'Enviar a referência visual para pelo menos um fornecedor e comparar valores.',
-                'categoria': inspiracao.categoria ?? 'Inspiração',
-              },
+                categoria: inspiracao.categoria ?? 'Inspiração',
+              ),
             ];
 
       await _inspiracoes.criarChecklistDaInspiracao(
@@ -588,12 +589,10 @@ class InspiracaoController extends GetxController {
       final itens = inspiracao.itensOrcamentoSugeridos.isNotEmpty
           ? inspiracao.itensOrcamentoSugeridos
           : [
-              {
-                'categoria': inspiracao.categoria ?? 'Inspiração',
-                'item': inspiracao.titulo,
-                'custoEstimado': 0.0,
-                'custoReal': 0.0,
-              }
+              ItemOrcamentoInspiracaoSugerido(
+                categoria: inspiracao.categoria ?? 'Inspiração',
+                item: inspiracao.titulo,
+              ),
             ];
 
       await _inspiracoes.criarOrcamentoDaInspiracao(

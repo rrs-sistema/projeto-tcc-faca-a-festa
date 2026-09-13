@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/domain/entities/referencia_evento.dart';
 
 
@@ -52,12 +53,11 @@ class InspiracaoModel extends Inspiracao {
           List<String>.from(entity.fornecedoresRelacionados),
       categoriasFornecedorSugeridas:
           List<String>.from(entity.categoriasFornecedorSugeridas),
-      tarefasSugeridas: entity.tarefasSugeridas
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList(),
-      itensOrcamentoSugeridos: entity.itensOrcamentoSugeridos
-          .map((item) => Map<String, dynamic>.from(item))
-          .toList(),
+      tarefasSugeridas:
+          List<TarefaInspiracaoSugerida>.from(entity.tarefasSugeridas),
+      itensOrcamentoSugeridos: List<ItemOrcamentoInspiracaoSugerido>.from(
+        entity.itensOrcamentoSugeridos,
+      ),
       estilo: entity.estilo,
       faixaCusto: entity.faixaCusto,
       nivelDificuldade: entity.nivelDificuldade,
@@ -71,9 +71,17 @@ class InspiracaoModel extends Inspiracao {
 
   factory InspiracaoModel.fromFirestore(DocumentSnapshot doc) {
     final data = (doc.data() as Map<String, dynamic>?) ?? <String, dynamic>{};
+    return InspiracaoModel.fromMap(data, documentId: doc.id);
+  }
 
+  factory InspiracaoModel.fromMap(
+    Map<String, dynamic> data, {
+    String? documentId,
+  }) {
     return InspiracaoModel(
-      id: _asString(data['id']).isNotEmpty ? _asString(data['id']) : doc.id,
+      id: _asString(data['id']).isNotEmpty
+          ? _asString(data['id'])
+          : (documentId ?? ''),
       tipoEventoId: _asString(data['tipoEventoId'] ??
           data['idTipoEvento'] ??
           data['id_tipo_evento']),
@@ -92,8 +100,9 @@ class InspiracaoModel extends Inspiracao {
       fornecedoresRelacionados: _asStringList(data['fornecedoresRelacionados']),
       categoriasFornecedorSugeridas:
           _asStringList(data['categoriasFornecedorSugeridas']),
-      tarefasSugeridas: _asMapList(data['tarefasSugeridas']),
-      itensOrcamentoSugeridos: _asMapList(data['itensOrcamentoSugeridos']),
+      tarefasSugeridas: _asTarefas(data['tarefasSugeridas']),
+      itensOrcamentoSugeridos:
+          _asItensOrcamento(data['itensOrcamentoSugeridos']),
       estilo: _asString(data['estilo']),
       faixaCusto: _asString(data['faixaCusto']),
       nivelDificuldade: _asString(data['nivelDificuldade']),
@@ -123,8 +132,9 @@ class InspiracaoModel extends Inspiracao {
       'categoria': categoria ?? '',
       'fornecedoresRelacionados': fornecedoresRelacionados,
       'categoriasFornecedorSugeridas': categoriasFornecedorSugeridas,
-      'tarefasSugeridas': tarefasSugeridas,
-      'itensOrcamentoSugeridos': itensOrcamentoSugeridos,
+      'tarefasSugeridas': tarefasSugeridas.map(_tarefaToMap).toList(),
+      'itensOrcamentoSugeridos':
+          itensOrcamentoSugeridos.map(_itemOrcamentoToMap).toList(),
       'estilo': estilo,
       'faixaCusto': faixaCusto,
       'nivelDificuldade': nivelDificuldade,
@@ -166,8 +176,9 @@ class InspiracaoModel extends Inspiracao {
       'nivelDificuldade': nivelDificuldade,
       'fornecedoresRelacionados': fornecedoresRelacionados,
       'categoriasFornecedorSugeridas': categoriasFornecedorSugeridas,
-      'tarefasSugeridas': tarefasSugeridas,
-      'itensOrcamentoSugeridos': itensOrcamentoSugeridos,
+      'tarefasSugeridas': tarefasSugeridas.map(_tarefaToMap).toList(),
+      'itensOrcamentoSugeridos':
+          itensOrcamentoSugeridos.map(_itemOrcamentoToMap).toList(),
       'favorito': favorito,
       'status': status,
       'prioridade': prioridade,
@@ -196,8 +207,8 @@ class InspiracaoModel extends Inspiracao {
     String? categoria,
     List<String>? fornecedoresRelacionados,
     List<String>? categoriasFornecedorSugeridas,
-    List<Map<String, dynamic>>? tarefasSugeridas,
-    List<Map<String, dynamic>>? itensOrcamentoSugeridos,
+    List<TarefaInspiracaoSugerida>? tarefasSugeridas,
+    List<ItemOrcamentoInspiracaoSugerido>? itensOrcamentoSugeridos,
     String? estilo,
     String? faixaCusto,
     String? nivelDificuldade,
@@ -255,15 +266,148 @@ class InspiracaoModel extends Inspiracao {
     return <String>[];
   }
 
-  static List<Map<String, dynamic>> _asMapList(dynamic value) {
-    if (value == null) return <Map<String, dynamic>>[];
-    if (value is List) {
-      return value
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
+  static List<TarefaInspiracaoSugerida> _asTarefas(dynamic value) {
+    if (value is! List) return const <TarefaInspiracaoSugerida>[];
+
+    return value
+        .whereType<Map>()
+        .map((item) => _tarefaFromMap(Map<String, dynamic>.from(item)))
+        .where((tarefa) => tarefa.titulo.isNotEmpty)
+        .toList();
+  }
+
+  static TarefaInspiracaoSugerida _tarefaFromMap(Map<String, dynamic> map) {
+    final titulo = _firstString(map, ['titulo', 'nome']);
+    return TarefaInspiracaoSugerida(
+      titulo: titulo,
+      descricao: _asString(map['descricao']),
+      categoria: _asString(map['categoria']),
+      diasAntesEvento: _asInt(
+        map['diasAntesEvento'] ?? map['diasAntes'],
+        fallback: 30,
+      ),
+      prioridade: _asString(map['prioridade']).isEmpty
+          ? 'media'
+          : _asString(map['prioridade']),
+      obrigatoria: _asBool(map['obrigatoria']),
+      ordem: _asInt(map['ordem'], fallback: 1),
+      status: _asString(map['status']).isEmpty
+          ? 'pendente'
+          : _asString(map['status']),
+      origem: _asString(map['origem']),
+    );
+  }
+
+  static Map<String, dynamic> _tarefaToMap(TarefaInspiracaoSugerida tarefa) {
+    return {
+      'titulo': tarefa.titulo,
+      'nome': tarefa.titulo,
+      'descricao': tarefa.descricao,
+      'categoria': tarefa.categoria,
+      'diasAntesEvento': tarefa.diasAntesEvento,
+      'prioridade': tarefa.prioridade,
+      'obrigatoria': tarefa.obrigatoria,
+      'ordem': tarefa.ordem,
+      'status': tarefa.status,
+      'origem': tarefa.origem,
+    };
+  }
+
+  static List<ItemOrcamentoInspiracaoSugerido> _asItensOrcamento(
+    dynamic value,
+  ) {
+    if (value is! List) return const <ItemOrcamentoInspiracaoSugerido>[];
+
+    return value
+        .whereType<Map>()
+        .map((item) => _itemOrcamentoFromMap(Map<String, dynamic>.from(item)))
+        .where((item) => item.item.isNotEmpty)
+        .toList();
+  }
+
+  static ItemOrcamentoInspiracaoSugerido _itemOrcamentoFromMap(
+    Map<String, dynamic> map,
+  ) {
+    final nome = _firstString(map, ['item', 'nome']);
+    final custoEstimado = _asDouble(
+      map['custoEstimado'] ?? map['valorEstimado'],
+    );
+    return ItemOrcamentoInspiracaoSugerido(
+      item: nome,
+      categoria: _asString(map['categoria']),
+      descricao: _asString(map['descricao']),
+      custoEstimado: custoEstimado,
+      custoReal: _asDouble(map['custoReal']),
+      custoMinimo: _asDouble(map['custoMinimo']),
+      custoMaximo: _asDouble(map['custoMaximo']),
+      unidade: _asString(map['unidade']).isEmpty
+          ? 'unidade'
+          : _asString(map['unidade']),
+      quantidadeBase: _asDouble(map['quantidadeBase'], fallback: 1),
+      custoPorConvidado: _asDouble(map['custoPorConvidado']),
+      obrigatorio: _asBool(map['obrigatorio']),
+      ordem: _asInt(map['ordem'], fallback: 1),
+      statusPagamento: _asString(map['statusPagamento']).isEmpty
+          ? 'pendente'
+          : _asString(map['statusPagamento']),
+      origem: _asString(map['origem']),
+    );
+  }
+
+  static Map<String, dynamic> _itemOrcamentoToMap(
+    ItemOrcamentoInspiracaoSugerido item,
+  ) {
+    return {
+      'categoria': item.categoria,
+      'item': item.item,
+      'nome': item.item,
+      'descricao': item.descricao,
+      'custoEstimado': item.custoEstimado,
+      'valorEstimado': item.custoEstimado,
+      'custoMinimo': item.custoMinimo,
+      'custoMaximo': item.custoMaximo,
+      'unidade': item.unidade,
+      'quantidadeBase': item.quantidadeBase,
+      'custoPorConvidado': item.custoPorConvidado,
+      'obrigatorio': item.obrigatorio,
+      'ordem': item.ordem,
+      'custoReal': item.custoReal,
+      'statusPagamento': item.statusPagamento,
+      'origem': item.origem,
+    };
+  }
+
+  static String _firstString(Map<String, dynamic> map, List<String> keys) {
+    for (final key in keys) {
+      final text = _asString(map[key]).trim();
+      if (text.isNotEmpty) return text;
     }
-    return <Map<String, dynamic>>[];
+    return '';
+  }
+
+  static int _asInt(dynamic value, {int fallback = 0}) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value.trim()) ?? fallback;
+    return fallback;
+  }
+
+  static double _asDouble(dynamic value, {double fallback = 0}) {
+    if (value is num) return value.toDouble();
+    if (value is String) {
+      return double.tryParse(value.trim().replaceAll(',', '.')) ?? fallback;
+    }
+    return fallback;
+  }
+
+  static bool _asBool(dynamic value) {
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      return ['true', '1', 's', 'sim', 'y', 'yes'].contains(normalized);
+    }
+    return false;
   }
 
   static DateTime? _asDateTime(dynamic value) {

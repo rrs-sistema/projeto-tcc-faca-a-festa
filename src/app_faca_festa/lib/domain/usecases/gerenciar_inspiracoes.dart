@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import '../entities/fornecedor.dart';
 import '../entities/inspiracao.dart';
 import '../entities/inspiracao_snapshot.dart';
+import '../entities/inspiracao_sugestao.dart';
 import '../entities/referencia_evento.dart';
 import '../repositories/inspiracao_repository.dart';
 
@@ -212,7 +213,7 @@ class GerenciarInspiracoes {
     required String eventoId,
     required String userId,
     required Inspiracao inspiracao,
-    required List<Map<String, dynamic>> tarefas,
+    required List<TarefaInspiracaoSugerida> tarefas,
   }) {
     return repository.criarChecklistDaInspiracao(
       eventoId: eventoId,
@@ -226,7 +227,7 @@ class GerenciarInspiracoes {
     required String eventoId,
     required String userId,
     required Inspiracao inspiracao,
-    required List<Map<String, dynamic>> itens,
+    required List<ItemOrcamentoInspiracaoSugerido> itens,
   }) {
     return repository.criarOrcamentoDaInspiracao(
       eventoId: eventoId,

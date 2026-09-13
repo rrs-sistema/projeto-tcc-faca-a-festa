@@ -6,6 +6,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 import '../../models/evento/inspiracao_model.dart';
 import '../../models/evento/inspiracao_snapshot_item.dart';
 import '../../models/fornecedor/fornecedor_model.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 
 class InspiracaoRemoteDatasource {
   InspiracaoRemoteDatasource({
@@ -367,24 +368,25 @@ class InspiracaoRemoteDatasource {
     required String eventoId,
     required String userId,
     required InspiracaoModel inspiracao,
-    required List<Map<String, dynamic>> tarefas,
+    required List<TarefaInspiracaoSugerida> tarefas,
   }) async {
     final batch = _db.batch();
     final collection = _subcolecao(eventoId, subTarefas);
     for (final tarefa in tarefas) {
       final docRef = collection.doc();
-      final titulo = (tarefa['titulo'] ?? tarefa['nome'] ?? '').toString();
+      final categoria = tarefa.categoria.isNotEmpty
+          ? tarefa.categoria
+          : (inspiracao.categoria ?? '');
       batch.set(docRef, {
         'id': docRef.id,
         'eventoId': eventoId,
         'idEvento': eventoId,
         'userId': userId,
         'idUsuario': userId,
-        'nome': titulo,
-        'titulo': titulo,
-        'descricao': (tarefa['descricao'] ?? '').toString(),
-        'categoria':
-            (tarefa['categoria'] ?? inspiracao.categoria ?? '').toString(),
+        'nome': tarefa.titulo,
+        'titulo': tarefa.titulo,
+        'descricao': tarefa.descricao,
+        'categoria': categoria,
         'statusConclusao': false,
         'concluida': false,
         'origem': 'inspiracao',
@@ -403,26 +405,27 @@ class InspiracaoRemoteDatasource {
     required String eventoId,
     required String userId,
     required InspiracaoModel inspiracao,
-    required List<Map<String, dynamic>> itens,
+    required List<ItemOrcamentoInspiracaoSugerido> itens,
   }) async {
     final batch = _db.batch();
     final collection = _subcolecao(eventoId, subOrcamento);
     for (final item in itens) {
       final docRef = collection.doc();
-      final custoEstimado = _toDouble(item['custoEstimado']);
-      final custoReal = _toDouble(item['custoReal']);
+      final categoria = item.categoria.isNotEmpty
+          ? item.categoria
+          : (inspiracao.categoria ?? '');
+      final nomeItem = item.item.isNotEmpty ? item.item : inspiracao.titulo;
       batch.set(docRef, {
         'id': docRef.id,
         'eventoId': eventoId,
         'idEvento': eventoId,
         'userId': userId,
         'idUsuario': userId,
-        'categoria':
-            (item['categoria'] ?? inspiracao.categoria ?? '').toString(),
-        'item': (item['item'] ?? item['nome'] ?? inspiracao.titulo).toString(),
-        'descricao': (item['descricao'] ?? '').toString(),
-        'custoEstimado': custoEstimado,
-        'custoReal': custoReal,
+        'categoria': categoria,
+        'item': nomeItem,
+        'descricao': item.descricao,
+        'custoEstimado': item.custoEstimado,
+        'custoReal': item.custoReal,
         'valorPago': 0.0,
         'formaPagamento': '',
         'statusPagamento': 'pendente',
@@ -550,11 +553,5 @@ class InspiracaoRemoteDatasource {
     String subcolecao,
   ) {
     return _db.collection(_colecaoEventos).doc(eventoId).collection(subcolecao);
-  }
-
-  double _toDouble(dynamic value) {
-    if (value == null) return 0.0;
-    if (value is num) return value.toDouble();
-    return double.tryParse(value.toString().replaceAll(',', '.')) ?? 0.0;
   }
 }
