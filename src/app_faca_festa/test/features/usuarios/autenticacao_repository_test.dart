@@ -1,6 +1,7 @@
 import 'package:app_faca_festa/data/datasources/remote/autenticacao_remote_datasource.dart';
 import 'package:app_faca_festa/data/repositories_impl/autenticacao_repository_impl.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
+import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -253,15 +254,15 @@ class _AutenticacaoRemoteFake implements AutenticacaoRemoteDatasource {
   }
 
   @override
-  Future<Map<String, dynamic>> iniciarTotpMfa() async {
+  Future<InicioTotpMfa> iniciarTotpMfa() async {
     if (erro != null) throw erro!;
-    return const {};
+    return const InicioTotpMfa();
   }
 
   @override
-  Future<Map<String, dynamic>> solicitarCodigoEmailMfa() async {
+  Future<CodigoEmailMfa> solicitarCodigoEmailMfa() async {
     if (erro != null) throw erro!;
-    return const {};
+    return const CodigoEmailMfa();
   }
 
   @override

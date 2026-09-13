@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
+import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 import 'package:app_faca_festa/domain/repositories/grupo_convidado_repository.dart';
 
 class GrupoConvidadoController extends GetxController {
@@ -221,29 +222,29 @@ class GrupoConvidadoController extends GetxController {
     return mapa;
   }
 
-  Map<String, dynamic> get estatisticasGrupos => {
-        'totalGrupos': grupos.length,
-        'gruposComConvidados': gruposComConvidados,
-        'gruposVazios': gruposVazios,
-        'totalConvidados': convidados.length,
-        'confirmados': _totalStatus(StatusConvidado.confirmado),
-        'pendentes': _totalStatus(StatusConvidado.pendente),
-        'recusados': _totalStatus(StatusConvidado.recusado),
-        'adultos': _totalTipo(TipoConvidado.adulto),
-        'criancas': _totalTipo(TipoConvidado.crianca),
-        'bebes': _totalTipo(TipoConvidado.bebe),
-        'semGrupo': convidadosSemGrupo().length,
-      };
+  EstatisticasGruposConvidado get estatisticasGrupos => EstatisticasGruposConvidado(
+        totalGrupos: grupos.length,
+        gruposComConvidados: gruposComConvidados,
+        gruposVazios: gruposVazios,
+        totalConvidados: convidados.length,
+        confirmados: _totalStatus(StatusConvidado.confirmado),
+        pendentes: _totalStatus(StatusConvidado.pendente),
+        recusados: _totalStatus(StatusConvidado.recusado),
+        adultos: _totalTipo(TipoConvidado.adulto),
+        criancas: _totalTipo(TipoConvidado.crianca),
+        bebes: _totalTipo(TipoConvidado.bebe),
+        semGrupo: convidadosSemGrupo().length,
+      );
 
-  Map<String, dynamic> get estatisticasMesas {
-    return {
-      'totalMesas': convidadosPorMesaNumero.length,
-      'totalAssentosOcupados': convidados.where((c) => c.idMesa != null).length,
-      'confirmadosEmMesa': convidados
-          .where(
-              (c) => c.idMesa != null && c.status == StatusConvidado.confirmado)
-          .length,
-    };
+  EstatisticasMesas get estatisticasMesas {
+    final ocupados =
+        convidados.where((c) => c.idMesa != null).length;
+    return EstatisticasMesas(
+      totalMesas: convidadosPorMesaNumero.length,
+      assentos: ocupados,
+      ocupados: ocupados,
+      livres: 0,
+    );
   }
 
   int get totalGrupos => grupos.length;

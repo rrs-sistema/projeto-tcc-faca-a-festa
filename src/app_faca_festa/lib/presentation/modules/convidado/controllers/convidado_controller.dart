@@ -9,6 +9,7 @@ import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/repositories/convidado_repository.dart';
 import 'package:app_faca_festa/domain/repositories/presente_reservation_repository.dart';
 import 'package:app_faca_festa/domain/services/convite_email_service.dart';
+import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
 
 class ConvidadoController extends GetxController {
@@ -543,7 +544,7 @@ class ConvidadoController extends GetxController {
   }
 
   /// 🔹 Calcula estatísticas gerais de mesas (AGORA CORRETO)
-  Map<String, dynamic> get estatisticasMesas {
+  EstatisticasMesas get estatisticasMesas {
     final gruposMesa = grupoController.grupos;
 
     // Total de mesas cadastradas
@@ -573,28 +574,12 @@ class ConvidadoController extends GetxController {
     // Assentos livres
     final totalLivres = totalAssentos - totalOcupados;
 
-    return {
-      'totalMesas': totalMesas,
-      'assentos': totalAssentos,
-      'ocupados': totalOcupados,
-      'livres': totalLivres,
-    };
-  }
-
-  Map<String, dynamic> get estatisticasMesas001 {
-    final grupos = convidadosPorMesa;
-    final totalMesas = grupos.length;
-    final totalAssentos = grupos.values.fold<int>(0, (a, b) => a + b.length);
-    final totalOcupados =
-        convidados.where((c) => c.status == StatusConvidado.confirmado).length;
-    final totalLivres = totalAssentos - totalOcupados;
-
-    return {
-      'totalMesas': totalMesas,
-      'assentos': totalAssentos,
-      'ocupados': totalOcupados,
-      'livres': totalLivres,
-    };
+    return EstatisticasMesas(
+      totalMesas: totalMesas,
+      assentos: totalAssentos,
+      ocupados: totalOcupados,
+      livres: totalLivres,
+    );
   }
 
   /// =============================================================

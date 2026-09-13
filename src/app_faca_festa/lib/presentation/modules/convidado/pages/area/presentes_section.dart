@@ -54,16 +54,17 @@ class _PresentesSectionState extends State<PresentesSection> {
           return _emptyState(primary);
         }
 
-        final presentes = gifts.map(_giftToViewData).toList()
+        final presentes = List<Gift>.from(gifts)
           ..sort(_sortPresentes);
 
         final filtered = presentes.where(_matchesFilter).toList();
         final disponiveis =
             presentes.where((item) => !_isIndisponivel(item)).length;
         final escolhidos = presentes.length - disponiveis;
-        final pixCount = presentes.where((item) => _tipo(item) == 'pix').length;
+        final pixCount =
+            presentes.where((item) => item.tipo == GiftType.pix).length;
         final coletivoCount =
-            presentes.where((item) => _tipo(item) == 'coletivo').length;
+            presentes.where((item) => item.tipo == GiftType.coletivo).length;
 
         return CustomScrollView(
           physics: const BouncingScrollPhysics(
@@ -110,15 +111,17 @@ class _PresentesSectionState extends State<PresentesSection> {
                       item: item,
                       primary: primary,
                       onPixTap: () => _mostrarPixQrModal(
-                        nome: _text(item['nome'], fallback: 'Presente'),
-                        valorInicial: item['valor'],
-                        chavePix: _text(item['pix']),
+                        nome: item.nome.trim().isEmpty ? 'Presente' : item.nome,
+                        valorInicial: item.valor,
+                        chavePix: item.pix ?? '',
                         primary: primary,
                       ),
                       onContributeTap: () => _mostrarPixQrModal(
-                        nome: _text(item['nome'], fallback: 'Cota coletiva'),
-                        valorInicial: item['valor'],
-                        chavePix: _text(item['pix']),
+                        nome: item.nome.trim().isEmpty
+                            ? 'Cota coletiva'
+                            : item.nome,
+                        valorInicial: item.valor,
+                        chavePix: item.pix ?? '',
                         primary: primary,
                       ),
                       onReserveTap: () => _showReserveSoon(primary),
@@ -132,68 +135,43 @@ class _PresentesSectionState extends State<PresentesSection> {
     );
   }
 
-  int _sortPresentes(Map<String, dynamic> a, Map<String, dynamic> b) {
+  int _sortPresentes(Gift a, Gift b) {
     final unavailableA = _isIndisponivel(a) ? 1 : 0;
     final unavailableB = _isIndisponivel(b) ? 1 : 0;
     if (unavailableA != unavailableB) {
       return unavailableA.compareTo(unavailableB);
     }
 
-    final featuredA = a['destaque'] == true ? 0 : 1;
-    final featuredB = b['destaque'] == true ? 0 : 1;
-    if (featuredA != featuredB) return featuredA.compareTo(featuredB);
-
-    return _text(a['nome'])
-        .toLowerCase()
-        .compareTo(_text(b['nome']).toLowerCase());
+    return a.nome.toLowerCase().compareTo(b.nome.toLowerCase());
   }
 
-  bool _matchesFilter(Map<String, dynamic> item) {
-    final tipo = _tipo(item);
+  bool _matchesFilter(Gift item) {
     switch (_filter) {
       case _GiftFilter.todos:
         return true;
       case _GiftFilter.disponiveis:
         return !_isIndisponivel(item);
       case _GiftFilter.loja:
-        return tipo == 'fisico';
+        return item.tipo == GiftType.fisico;
       case _GiftFilter.pix:
-        return tipo == 'pix';
+        return item.tipo == GiftType.pix;
       case _GiftFilter.coletivo:
-        return tipo == 'coletivo';
+        return item.tipo == GiftType.coletivo;
     }
   }
 
-  Map<String, dynamic> _giftToViewData(Gift gift) {
-    return {
-      'id': gift.id,
-      'nome': gift.nome,
-      'descricao': gift.descricao,
-      'categoria': gift.categoria,
-      'tipo': gift.tipo.name,
-      'valor': gift.valor,
-      'meta_valor': gift.metaValor,
-      'valor_arrecadado': gift.valorArrecadado,
-      'loja': gift.loja,
-      'link': gift.link,
-      'pix': gift.pix,
-      'imagem': gift.imagem,
-      'status': gift.status.name,
-      'reservado_por': gift.reservadoPor,
-    };
-  }
+  bool _isIndisponivel(Gift gift) {
+    final reservadoPor = gift.reservadoPor;
+    final status = gift.status;
+    final isReservado = (reservadoPor != null &&
+            reservadoPor.trim().isNotEmpty) ||
+        status == GiftStatus.reservado ||
+        status == GiftStatus.comprado ||
+        status == GiftStatus.finalizado;
 
-  bool _isIndisponivel(Map<String, dynamic> data) {
-    final reservadoPor = data['reservado_por'];
-    final status = _text(data['status']).toLowerCase();
-    final isReservado =
-        (reservadoPor != null && reservadoPor.toString().trim().isNotEmpty) ||
-            status == 'reservado' ||
-            status == 'escolhido';
-
-    final isColetivo = _tipo(data) == 'coletivo';
-    final meta = _moneyValue(data['meta_valor'], fallback: 1.0);
-    final arrecadado = _moneyValue(data['valor_arrecadado']);
+    final isColetivo = gift.tipo == GiftType.coletivo;
+    final meta = gift.metaValor ?? 1.0;
+    final arrecadado = gift.valorArrecadado;
     final metaAlcancada = isColetivo && meta > 0 && arrecadado >= meta;
 
     return isReservado || metaAlcancada;
@@ -476,7 +454,7 @@ class _PresentesSectionState extends State<PresentesSection> {
 }
 
 class PremiumGiftCard extends StatelessWidget {
-  final Map<String, dynamic> item;
+  final Gift item;
   final Color primary;
   final VoidCallback onPixTap;
   final VoidCallback onContributeTap;
@@ -493,21 +471,22 @@ class PremiumGiftCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final tipo = _tipo(item);
-    final isColetivo = tipo == 'coletivo';
-    final isPix = tipo == 'pix';
-    final isFisico = tipo == 'fisico';
+    final tipo = item.tipo;
+    final isColetivo = tipo == GiftType.coletivo;
+    final isPix = tipo == GiftType.pix;
+    final isFisico = tipo == GiftType.fisico;
 
-    final nome = _text(item['nome'], fallback: 'Presente especial');
-    final loja = _text(item['loja']);
-    final link = _text(item['link']);
-    final imagem = _text(item['imagem']);
-    final descricao = _text(item['descricao']);
-    final temFoto = imagem.trim().isNotEmpty;
+    final nome =
+        item.nome.trim().isEmpty ? 'Presente especial' : item.nome.trim();
+    final loja = item.loja?.trim() ?? '';
+    final link = item.link?.trim() ?? '';
+    final imagem = item.imagem?.trim() ?? '';
+    final descricao = item.descricao?.trim() ?? '';
+    final temFoto = imagem.isNotEmpty;
 
-    final valor = _moneyValue(item['valor']);
-    final meta = _moneyValue(item['meta_valor'], fallback: 1.0);
-    final arrecadado = _moneyValue(item['valor_arrecadado']);
+    final valor = item.valor ?? 0.0;
+    final meta = item.metaValor ?? 1.0;
+    final arrecadado = item.valorArrecadado;
     final percent =
         meta > 0 ? (arrecadado / meta).clamp(0.0, 1.0).toDouble() : 0.0;
 
@@ -571,10 +550,10 @@ class PremiumGiftCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Hero(
-                        tag: 'gift-${item['id'] ?? nome}',
+                        tag: 'gift-${item.id.isEmpty ? nome : item.id}',
                         child: isFisico && temFoto
                             ? _ProductImage(url: imagem, primary: primary)
-                            : _GiftIconBox(tipo: tipo, primary: primary),
+                            : _GiftIconBox(tipo: tipo.name, primary: primary),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -583,7 +562,7 @@ class PremiumGiftCard extends StatelessWidget {
                           children: [
                             Row(
                               children: [
-                                _GiftTypePill(tipo: tipo, primary: primary),
+                                _GiftTypePill(tipo: tipo.name, primary: primary),
                                 if (link.isNotEmpty) ...[
                                   const SizedBox(width: 6),
                                   Icon(Icons.verified_rounded,
@@ -1603,23 +1582,25 @@ enum _GiftFilter { todos, disponiveis, loja, pix, coletivo }
 
 enum _GiftActionType { pix, contribute, link, reserve, none }
 
-String _tipo(Map<String, dynamic> item) {
-  final raw = _text(item['tipo']).toLowerCase().trim();
-  if (raw == 'pix') return 'pix';
-  if (raw == 'coletivo' || raw == 'cota' || raw == 'vaquinha') {
-    return 'coletivo';
-  }
-  return 'fisico';
+bool _isUnavailable(Gift item) {
+  final reservadoPor = item.reservadoPor;
+  final status = item.status;
+  final reservado = (reservadoPor != null && reservadoPor.trim().isNotEmpty) ||
+      status == GiftStatus.reservado ||
+      status == GiftStatus.comprado ||
+      status == GiftStatus.finalizado;
+
+  final coletivo = item.tipo == GiftType.coletivo;
+  final meta = item.metaValor ?? 1.0;
+  final arrecadado = item.valorArrecadado;
+  final metaAlcancada = coletivo && meta > 0 && arrecadado >= meta;
+
+  return reservado || metaAlcancada;
 }
 
-String _text(dynamic value, {String fallback = ''}) {
-  final text = value?.toString().trim() ?? '';
-  return text.isEmpty ? fallback : text;
-}
-
-String _subtitleByType(String tipo) {
-  if (tipo == 'pix') return 'Contribuição rápida por PIX';
-  if (tipo == 'coletivo') return 'Cota coletiva para todos ajudarem';
+String _subtitleByType(GiftType tipo) {
+  if (tipo == GiftType.pix) return 'Contribuição rápida por PIX';
+  if (tipo == GiftType.coletivo) return 'Cota coletiva para todos ajudarem';
   return 'Presente físico escolhido pelo organizador';
 }
 
@@ -1643,18 +1624,3 @@ String _formatCurrency(double value) {
       .format(value);
 }
 
-bool _isUnavailable(Map<String, dynamic> item) {
-  final reservadoPor = item['reservado_por'];
-  final status = _text(item['status']).toLowerCase();
-  final reservado =
-      (reservadoPor != null && reservadoPor.toString().trim().isNotEmpty) ||
-          status == 'reservado' ||
-          status == 'escolhido';
-
-  final coletivo = _tipo(item) == 'coletivo';
-  final meta = _moneyValue(item['meta_valor'], fallback: 1.0);
-  final arrecadado = _moneyValue(item['valor_arrecadado']);
-  final metaAlcancada = coletivo && meta > 0 && arrecadado >= meta;
-
-  return reservado || metaAlcancada;
-}

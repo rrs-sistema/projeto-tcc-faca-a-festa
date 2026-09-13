@@ -31,7 +31,9 @@ class AuditoriaRemoteDatasource {
       'idServico': registro.idServico,
       'idCotacao': registro.idCotacao,
       'idOrcamento': registro.idOrcamento,
-      'mudancas': registro.mudancas.map((m) => m.toMap()).toList(),
+      'mudancas': registro.mudancas
+          .map(AuditoriaEventoModel.mudancaToMap)
+          .toList(),
       'detalhe': registro.detalhe,
       'plataforma': registro.plataforma ?? _plataformaAtual(),
       'rota': registro.rota,

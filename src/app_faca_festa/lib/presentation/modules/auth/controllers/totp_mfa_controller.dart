@@ -65,8 +65,8 @@ class TotpMfaController extends GetxController {
     try {
       gerandoQr.value = true;
       final data = await _autenticacaoRepository.iniciarTotpMfa();
-      secret.value = (data['secret'] ?? '').toString();
-      otpauthUrl.value = (data['otpauthUrl'] ?? '').toString();
+      secret.value = data.secret;
+      otpauthUrl.value = data.otpauthUrl;
       if (secret.value.isEmpty || otpauthUrl.value.isEmpty) {
         _mostrarErro('Não foi possível gerar o autenticador. Tente novamente.');
       }
@@ -84,10 +84,12 @@ class TotpMfaController extends GetxController {
       enviandoEmail.value = true;
       EasyLoading.show(status: 'Enviando código...');
       final data = await _autenticacaoRepository.solicitarCodigoEmailMfa();
-      emailMascarado.value = (data['emailMascarado'] ?? '').toString();
+      emailMascarado.value = data.emailMascarado;
       EasyLoading.dismiss();
       _mostrarSucesso(
-        (data['message'] ?? 'Enviamos um código para o seu e-mail.').toString(),
+        data.mensagem.isEmpty
+            ? 'Enviamos um código para o seu e-mail.'
+            : data.mensagem,
       );
     } on AutenticacaoException catch (e) {
       EasyLoading.dismiss();

@@ -1,3 +1,5 @@
+import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
+
 class FornecedorMigracaoException implements Exception {
   FornecedorMigracaoException(this.message);
 
@@ -5,7 +7,7 @@ class FornecedorMigracaoException implements Exception {
 }
 
 abstract interface class FornecedorMigracaoRepository {
-  Future<Map<String, dynamic>> migrarTiposEventoFornecedores({
+  Future<ResultadoMigracaoTiposEvento> migrarTiposEventoFornecedores({
     required bool dryRun,
     required bool aplicar,
     required bool sobrescrever,

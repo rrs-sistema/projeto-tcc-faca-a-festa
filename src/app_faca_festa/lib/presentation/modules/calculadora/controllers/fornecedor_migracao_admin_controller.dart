@@ -39,9 +39,9 @@ class FornecedorMigracaoAdminController extends GetxController {
         limite: limite,
       );
 
-      resultado.value = data.toString();
+      resultado.value = data.resumo;
 
-      debugPrint('✅ [Migração Fornecedores] Resultado: $data');
+      debugPrint('✅ [Migração Fornecedores] Resultado: ${data.resumo}');
 
       Get.snackbar(
         dryRun ? 'Simulação concluída' : 'Migração concluída',

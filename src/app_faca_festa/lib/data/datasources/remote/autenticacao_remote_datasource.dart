@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:developer' as developer;
 
 import 'package:app_faca_festa/core/platform/plataforma_app.dart';
+import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import '../../services/functions/callable_https_client.dart';
 
@@ -65,9 +66,9 @@ abstract interface class AutenticacaoRemoteDatasource {
     required String novaSenha,
   });
 
-  Future<Map<String, dynamic>> iniciarTotpMfa();
+  Future<InicioTotpMfa> iniciarTotpMfa();
 
-  Future<Map<String, dynamic>> solicitarCodigoEmailMfa();
+  Future<CodigoEmailMfa> solicitarCodigoEmailMfa();
 
   Future<void> confirmarTotpMfa(String codigo);
 
@@ -394,14 +395,16 @@ class FirebaseAutenticacaoRemoteDatasource
   }
 
   @override
-  Future<Map<String, dynamic>> iniciarTotpMfa() => _chamarFunction(
-        'iniciarTotpMfa',
-      );
+  Future<InicioTotpMfa> iniciarTotpMfa() async {
+    final data = await _chamarFunction('iniciarTotpMfa');
+    return InicioTotpMfa.fromMap(data);
+  }
 
   @override
-  Future<Map<String, dynamic>> solicitarCodigoEmailMfa() => _chamarFunction(
-        'solicitarCodigoEmailMfa',
-      );
+  Future<CodigoEmailMfa> solicitarCodigoEmailMfa() async {
+    final data = await _chamarFunction('solicitarCodigoEmailMfa');
+    return CodigoEmailMfa.fromMap(data);
+  }
 
   @override
   Future<void> confirmarTotpMfa(String codigo) => _chamarFunctionSemRetorno(

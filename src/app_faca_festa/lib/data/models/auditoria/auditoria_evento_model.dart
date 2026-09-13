@@ -46,7 +46,7 @@ class AuditoriaEventoModel extends AuditoriaEvento {
       for (final item in mudancasRaw) {
         if (item is Map) {
           mudancas.add(
-            AuditoriaMudanca.fromMap(
+            AuditoriaEventoModel.mudancaFromMap(
               Map<String, dynamic>.from(item),
             ),
           );
@@ -97,6 +97,22 @@ class AuditoriaEventoModel extends AuditoriaEvento {
           _textoOpcional(map['hash_integridade'] ?? map['hashIntegridade']),
       criadoEm: _toDate(map['criado_em'] ?? map['criadoEm']),
     );
+  }
+
+  static AuditoriaMudanca mudancaFromMap(Map<String, dynamic> map) {
+    return AuditoriaMudanca(
+      campo: (map['campo'] ?? '').toString(),
+      de: (map['de'] ?? '').toString(),
+      para: (map['para'] ?? '').toString(),
+    );
+  }
+
+  static Map<String, dynamic> mudancaToMap(AuditoriaMudanca mudanca) {
+    return {
+      'campo': mudanca.campo,
+      'de': mudanca.de,
+      'para': mudanca.para,
+    };
   }
 
   static String? _textoOpcional(dynamic value) {

@@ -1,3 +1,5 @@
+import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
+
 class AutenticacaoException implements Exception {
   const AutenticacaoException(this.codigo, [this.mensagem]);
 
@@ -72,9 +74,9 @@ abstract interface class AutenticacaoRepository {
     required String novaSenha,
   });
 
-  Future<Map<String, dynamic>> iniciarTotpMfa();
+  Future<InicioTotpMfa> iniciarTotpMfa();
 
-  Future<Map<String, dynamic>> solicitarCodigoEmailMfa();
+  Future<CodigoEmailMfa> solicitarCodigoEmailMfa();
 
   Future<void> confirmarTotpMfa(String codigo);
 

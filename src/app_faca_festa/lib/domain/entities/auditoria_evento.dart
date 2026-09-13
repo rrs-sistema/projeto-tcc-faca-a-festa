@@ -8,20 +8,6 @@ class AuditoriaMudanca {
   final String campo;
   final String de;
   final String para;
-
-  Map<String, dynamic> toMap() => {
-        'campo': campo,
-        'de': de,
-        'para': para,
-      };
-
-  factory AuditoriaMudanca.fromMap(Map<String, dynamic> map) {
-    return AuditoriaMudanca(
-      campo: (map['campo'] ?? '').toString(),
-      de: (map['de'] ?? '').toString(),
-      para: (map['para'] ?? '').toString(),
-    );
-  }
 }
 
 class AuditoriaEvento {

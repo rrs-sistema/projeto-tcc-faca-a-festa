@@ -1,12 +1,14 @@
 import 'package:cloud_functions/cloud_functions.dart';
 
+import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
+
 class FornecedorMigracaoRemoteDatasource {
   FornecedorMigracaoRemoteDatasource({required FirebaseFunctions functions})
       : _functions = functions;
 
   final FirebaseFunctions _functions;
 
-  Future<Map<String, dynamic>> migrarTiposEventoFornecedores({
+  Future<ResultadoMigracaoTiposEvento> migrarTiposEventoFornecedores({
     required bool dryRun,
     required bool aplicar,
     required bool sobrescrever,
@@ -36,6 +38,8 @@ class FornecedorMigracaoRemoteDatasource {
       'limite': limite,
     });
 
-    return Map<String, dynamic>.from(response.data as Map);
+    return ResultadoMigracaoTiposEvento.fromMap(
+      Map<String, dynamic>.from(response.data as Map),
+    );
   }
 }

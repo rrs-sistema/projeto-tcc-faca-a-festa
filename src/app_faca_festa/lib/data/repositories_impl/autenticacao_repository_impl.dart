@@ -1,3 +1,4 @@
+import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import '../datasources/remote/autenticacao_remote_datasource.dart';
 
@@ -120,7 +121,7 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
   }
 
   @override
-  Future<Map<String, dynamic>> iniciarTotpMfa() async {
+  Future<InicioTotpMfa> iniciarTotpMfa() async {
     try {
       return await remote.iniciarTotpMfa();
     } on AutenticacaoRemoteException catch (erro) {
@@ -129,7 +130,7 @@ class AutenticacaoRepositoryImpl implements AutenticacaoRepository {
   }
 
   @override
-  Future<Map<String, dynamic>> solicitarCodigoEmailMfa() async {
+  Future<CodigoEmailMfa> solicitarCodigoEmailMfa() async {
     try {
       return await remote.solicitarCodigoEmailMfa();
     } on AutenticacaoRemoteException catch (erro) {

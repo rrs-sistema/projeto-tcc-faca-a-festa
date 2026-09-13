@@ -648,29 +648,11 @@ class MenuDrawerFacaFesta extends StatelessWidget {
   }
 
   String _resolverUsuarioIdAtual() {
-    try {
-      final dynamic usuario = (appController as dynamic).usuarioLogado.value;
-      final id = (usuario?.idUsuario ?? usuario?.id ?? '').toString().trim();
+    final doApp = (appController.usuarioLogado.value?.idUsuario ?? '').trim();
+    if (doApp.isNotEmpty) return doApp;
 
-      if (id.isNotEmpty) return id;
-    } catch (_) {}
-
-    try {
-      final dynamic usuario =
-          (usuarioController as dynamic).usuarioLogado.value;
-      final id = (usuario?.idUsuario ?? usuario?.id ?? '').toString().trim();
-
-      if (id.isNotEmpty) return id;
-    } catch (_) {}
-
-    try {
-      final dynamic usuario = (usuarioController as dynamic).usuarioAtual.value;
-      final id = (usuario?.idUsuario ?? usuario?.id ?? '').toString().trim();
-
-      if (id.isNotEmpty) return id;
-    } catch (_) {}
-
-    return '';
+    final doUsuario = (usuarioController.usuario.value?.idUsuario ?? '').trim();
+    return doUsuario;
   }
 
   String _resumoReferenciasDrawer() {
