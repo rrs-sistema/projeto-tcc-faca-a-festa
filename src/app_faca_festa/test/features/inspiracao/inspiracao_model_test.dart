@@ -67,4 +67,41 @@ void main() {
     expect(parsed.itensOrcamentoSugeridos.single.item, 'Buffet completo');
     expect(parsed.itensOrcamentoSugeridos.single.custoEstimado, 2500);
   });
+
+  test('reads admin visibility and event type lists from catalog maps', () {
+    final model = InspiracaoModel.fromMap({
+      'id': 'insp-2',
+      'titulo': 'Chá revelação',
+      'descricao': 'Paleta rosa e azul',
+      'imagemUrl': 'https://exemplo.test/cha.jpg',
+      'publicado': false,
+      'deletado': true,
+      'ordem': 7,
+      'tipoEventoIds': ['cha_revelacao'],
+      'tipoEventoSlugs': ['cha-revelacao'],
+      'tipoEventoNomes': ['Chá revelação'],
+      'tipoEventoSlug': 'cha_revelacao',
+      'tipoEventoNome': 'Cha revelacao',
+    });
+
+    expect(model.publicado, isFalse);
+    expect(model.deletado, isTrue);
+    expect(model.ordem, 7);
+    expect(model.tipoEventoIds, ['cha_revelacao']);
+    expect(model.tipoEventoSlugs, ['cha-revelacao', 'cha_revelacao']);
+    expect(model.tipoEventoNomes, ['Chá revelação', 'Cha revelacao']);
+  });
+
+  test('treats missing publicado as visible in the public catalog', () {
+    final model = InspiracaoModel.fromMap({
+      'id': 'insp-3',
+      'titulo': 'Festa junina',
+      'descricao': 'Bandeirinhas',
+      'imagemUrl': 'https://exemplo.test/junina.jpg',
+    });
+
+    expect(model.publicado, isTrue);
+    expect(model.deletado, isFalse);
+    expect(model.ordem, 0);
+  });
 }

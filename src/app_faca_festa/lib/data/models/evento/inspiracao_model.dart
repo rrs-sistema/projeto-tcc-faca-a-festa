@@ -11,6 +11,9 @@ class InspiracaoModel extends Inspiracao {
     super.tipoEventoId = '',
     super.tipoEvento = '',
     super.tipoEventoNormalizado = '',
+    super.tipoEventoIds = const [],
+    super.tipoEventoSlugs = const [],
+    super.tipoEventoNomes = const [],
     required super.titulo,
     required super.descricao,
     required super.imagemUrl,
@@ -28,6 +31,9 @@ class InspiracaoModel extends Inspiracao {
     super.nivelDificuldade = '',
     super.destaque = false,
     super.ativo = true,
+    super.publicado = true,
+    super.deletado = false,
+    super.ordem = 0,
     super.favorito = false,
     super.criadoEm,
     super.atualizadoEm,
@@ -41,6 +47,9 @@ class InspiracaoModel extends Inspiracao {
       tipoEventoId: entity.tipoEventoId,
       tipoEvento: entity.tipoEvento,
       tipoEventoNormalizado: entity.tipoEventoNormalizado,
+      tipoEventoIds: List<String>.from(entity.tipoEventoIds),
+      tipoEventoSlugs: List<String>.from(entity.tipoEventoSlugs),
+      tipoEventoNomes: List<String>.from(entity.tipoEventoNomes),
       titulo: entity.titulo,
       descricao: entity.descricao,
       imagemUrl: entity.imagemUrl,
@@ -63,6 +72,9 @@ class InspiracaoModel extends Inspiracao {
       nivelDificuldade: entity.nivelDificuldade,
       destaque: entity.destaque,
       ativo: entity.ativo,
+      publicado: entity.publicado,
+      deletado: entity.deletado,
+      ordem: entity.ordem,
       favorito: entity.favorito,
       criadoEm: entity.criadoEm,
       atualizadoEm: entity.atualizadoEm,
@@ -88,6 +100,15 @@ class InspiracaoModel extends Inspiracao {
       tipoEvento: _asString(data['tipoEvento'] ?? data['tipo_evento']),
       tipoEventoNormalizado: _asString(
           data['tipoEventoNormalizado'] ?? data['tipo_evento_normalizado']),
+      tipoEventoIds: _asStringList(data['tipoEventoIds']),
+      tipoEventoSlugs: _asStringListWithExtras(
+        data['tipoEventoSlugs'],
+        extras: [data['tipoEventoSlug']],
+      ),
+      tipoEventoNomes: _asStringListWithExtras(
+        data['tipoEventoNomes'],
+        extras: [data['tipoEventoNome']],
+      ),
       titulo: _asString(data['titulo']),
       descricao: _asString(data['descricao']),
       imagemUrl: _asString(data['imagemUrl'] ?? data['imagem_url']),
@@ -108,6 +129,9 @@ class InspiracaoModel extends Inspiracao {
       nivelDificuldade: _asString(data['nivelDificuldade']),
       destaque: data['destaque'] == true,
       ativo: data['ativo'] != false && data['deletado'] != true,
+      publicado: data['publicado'] != false,
+      deletado: data['deletado'] == true || data['deleted'] == true,
+      ordem: _asInt(data['ordem']),
       favorito: data['favorito'] == true,
       criadoEm: _asDateTime(
           data['criadoEm'] ?? data['dataCriacao'] ?? data['data_criacao']),
@@ -122,6 +146,9 @@ class InspiracaoModel extends Inspiracao {
       'tipoEventoId': tipoEventoId,
       'tipoEvento': tipoEvento,
       'tipoEventoNormalizado': tipoEventoNormalizado,
+      'tipoEventoIds': tipoEventoIds,
+      'tipoEventoSlugs': tipoEventoSlugs,
+      'tipoEventoNomes': tipoEventoNomes,
       'titulo': titulo,
       'descricao': descricao,
       'imagemUrl': imagemUrl,
@@ -140,6 +167,9 @@ class InspiracaoModel extends Inspiracao {
       'nivelDificuldade': nivelDificuldade,
       'destaque': destaque,
       'ativo': ativo,
+      'publicado': publicado,
+      'deletado': deletado,
+      'ordem': ordem,
       'favorito': favorito,
       'criadoEm': criadoEm == null
           ? FieldValue.serverTimestamp()
@@ -197,6 +227,9 @@ class InspiracaoModel extends Inspiracao {
     String? tipoEventoId,
     String? tipoEvento,
     String? tipoEventoNormalizado,
+    List<String>? tipoEventoIds,
+    List<String>? tipoEventoSlugs,
+    List<String>? tipoEventoNomes,
     String? titulo,
     String? descricao,
     String? imagemUrl,
@@ -214,6 +247,9 @@ class InspiracaoModel extends Inspiracao {
     String? nivelDificuldade,
     bool? destaque,
     bool? ativo,
+    bool? publicado,
+    bool? deletado,
+    int? ordem,
     bool? favorito,
     DateTime? criadoEm,
     DateTime? atualizadoEm,
@@ -224,6 +260,9 @@ class InspiracaoModel extends Inspiracao {
       tipoEvento: tipoEvento ?? this.tipoEvento,
       tipoEventoNormalizado:
           tipoEventoNormalizado ?? this.tipoEventoNormalizado,
+      tipoEventoIds: tipoEventoIds ?? this.tipoEventoIds,
+      tipoEventoSlugs: tipoEventoSlugs ?? this.tipoEventoSlugs,
+      tipoEventoNomes: tipoEventoNomes ?? this.tipoEventoNomes,
       titulo: titulo ?? this.titulo,
       descricao: descricao ?? this.descricao,
       imagemUrl: imagemUrl ?? this.imagemUrl,
@@ -244,6 +283,9 @@ class InspiracaoModel extends Inspiracao {
       nivelDificuldade: nivelDificuldade ?? this.nivelDificuldade,
       destaque: destaque ?? this.destaque,
       ativo: ativo ?? this.ativo,
+      publicado: publicado ?? this.publicado,
+      deletado: deletado ?? this.deletado,
+      ordem: ordem ?? this.ordem,
       favorito: favorito ?? this.favorito,
       criadoEm: criadoEm ?? this.criadoEm,
       atualizadoEm: atualizadoEm ?? this.atualizadoEm,
@@ -264,6 +306,30 @@ class InspiracaoModel extends Inspiracao {
           .toList();
     }
     return <String>[];
+  }
+
+  static List<String> _asStringListWithExtras(
+    dynamic value, {
+    List<dynamic> extras = const <dynamic>[],
+  }) {
+    final result = <String>[];
+    final seen = <String>{};
+
+    void add(dynamic raw) {
+      final text = _asString(raw).trim();
+      if (text.isEmpty) return;
+      if (seen.add(text.toLowerCase())) {
+        result.add(text);
+      }
+    }
+
+    for (final item in _asStringList(value)) {
+      add(item);
+    }
+    for (final extra in extras) {
+      add(extra);
+    }
+    return result;
   }
 
   static List<TarefaInspiracaoSugerida> _asTarefas(dynamic value) {

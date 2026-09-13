@@ -109,8 +109,8 @@ class InspiracaoController extends GetxController {
 
           final lista = snapshot
               .where((item) {
-                return _documentoInspiracaoVisivel(item.data) &&
-                    _pertenceAoTipoEventoAtualData(item.data);
+                return _documentoInspiracaoVisivel(item.inspiracao) &&
+                    _pertenceAoTipoEventoAtual(item.inspiracao);
               })
               .map((item) => item.inspiracao)
               .map(
@@ -895,15 +895,11 @@ class InspiracaoController extends GetxController {
     todasInspiracoes.assignAll(atualizadas);
   }
 
-  bool _documentoInspiracaoVisivel(Map<String, dynamic> data) {
-    final ativo = data['ativo'];
-    final publicado = data['publicado'];
-    final deletado = data['deletado'] == true || data['deleted'] == true;
-
-    return ativo != false && publicado != false && !deletado;
+  bool _documentoInspiracaoVisivel(Inspiracao inspiracao) {
+    return inspiracao.ativo && inspiracao.publicado && !inspiracao.deletado;
   }
 
-  bool _pertenceAoTipoEventoAtualData(Map<String, dynamic> data) {
+  bool _pertenceAoTipoEventoAtual(Inspiracao inspiracao) {
     final tokensAtuais = _tipoEventoTokensAtuais;
 
     if (tokensAtuais.isEmpty) {
@@ -911,15 +907,13 @@ class InspiracaoController extends GetxController {
     }
 
     final tokensDocumento = <String>{
-      ..._normalizarValoresTipoEvento(_readStringList(data, 'tipoEventoIds')),
-      ..._normalizarValoresTipoEvento(_readStringList(data, 'tipoEventoSlugs')),
-      ..._normalizarValoresTipoEvento(_readStringList(data, 'tipoEventoNomes')),
+      ..._normalizarValoresTipoEvento(inspiracao.tipoEventoIds),
+      ..._normalizarValoresTipoEvento(inspiracao.tipoEventoSlugs),
+      ..._normalizarValoresTipoEvento(inspiracao.tipoEventoNomes),
       ..._normalizarValoresTipoEvento([
-        data['tipoEvento'],
-        data['tipoEventoId'],
-        data['tipoEventoNormalizado'],
-        data['tipoEventoSlug'],
-        data['tipoEventoNome'],
+        inspiracao.tipoEvento,
+        inspiracao.tipoEventoId,
+        inspiracao.tipoEventoNormalizado,
       ]),
     }..removeWhere((value) => value.trim().isEmpty);
 
@@ -972,28 +966,6 @@ class InspiracaoController extends GetxController {
     }
 
     return tokens..removeWhere((value) => value.trim().isEmpty);
-  }
-
-  List<String> _readStringList(Map<String, dynamic> data, String field) {
-    final value = data[field];
-
-    if (value == null) return <String>[];
-
-    if (value is Iterable) {
-      return value
-          .map((item) => item?.toString().trim() ?? '')
-          .where((item) => item.isNotEmpty)
-          .toList();
-    }
-
-    final text = value.toString().trim();
-    if (text.isEmpty) return <String>[];
-
-    return text
-        .split(RegExp(r'[,;|]'))
-        .map((item) => item.trim())
-        .where((item) => item.isNotEmpty)
-        .toList();
   }
 
   bool _isTipoEventoGeral(String value) {
