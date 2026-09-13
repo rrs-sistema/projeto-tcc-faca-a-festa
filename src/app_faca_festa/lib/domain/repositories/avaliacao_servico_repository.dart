@@ -1,5 +1,8 @@
+import '../entities/avaliacao.dart';
+import '../entities/avaliacao_servico.dart';
+
 abstract class AvaliacaoServicoRepository {
-  Stream<List<Map<String, dynamic>>> observarAvaliacoesServico({
+  Stream<List<AvaliacaoServico>> observarAvaliacoesServico({
     required String idFornecedor,
     required String idServico,
   });
@@ -20,7 +23,7 @@ abstract class AvaliacaoServicoRepository {
     String? nomeEvento,
   });
 
-  Stream<List<Map<String, dynamic>>> observarAvaliacoesFornecedor(
+  Stream<List<Avaliacao>> observarAvaliacoesFornecedor(
     String idFornecedor,
   );
 

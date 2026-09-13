@@ -1,3 +1,5 @@
+import 'package:app_faca_festa/domain/entities/avaliacao.dart';
+import 'package:app_faca_festa/domain/entities/avaliacao_servico.dart';
 import 'package:app_faca_festa/domain/repositories/avaliacao_servico_repository.dart';
 import '../datasources/remote/avaliacao_servico_remote_datasource.dart';
 
@@ -7,7 +9,7 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
   final AvaliacaoServicoRemoteDatasource remote;
 
   @override
-  Stream<List<Map<String, dynamic>>> observarAvaliacoesServico({
+  Stream<List<AvaliacaoServico>> observarAvaliacoesServico({
     required String idFornecedor,
     required String idServico,
   }) {
@@ -52,7 +54,7 @@ class AvaliacaoServicoRepositoryImpl implements AvaliacaoServicoRepository {
   }
 
   @override
-  Stream<List<Map<String, dynamic>>> observarAvaliacoesFornecedor(
+  Stream<List<Avaliacao>> observarAvaliacoesFornecedor(
     String idFornecedor,
   ) {
     return remote.observarAvaliacoesFornecedor(idFornecedor);

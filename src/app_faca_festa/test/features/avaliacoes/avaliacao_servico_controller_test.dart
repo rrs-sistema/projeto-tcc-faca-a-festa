@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
+import 'package:app_faca_festa/domain/entities/avaliacao.dart';
+import 'package:app_faca_festa/domain/entities/avaliacao_servico.dart';
 import 'package:app_faca_festa/domain/repositories/avaliacao_servico_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_avaliacoes_servico.dart';
 
@@ -32,8 +34,8 @@ void main() {
     );
 
     repository.emitirAvaliacoesServico([
-      {'nota': 4.0},
-      {'nota': 5.0},
+      _avaliacaoServico(nota: 4),
+      _avaliacaoServico(nota: 5),
     ]);
     await pumpEventQueue();
 
@@ -45,8 +47,8 @@ void main() {
     await controller.carregarAvaliacoesFornecedor('fornecedor-1');
 
     repository.emitirAvaliacoesFornecedor([
-      {'nota': 3.0},
-      {'nota': 5.0},
+      _avaliacaoFornecedor(nota: 3),
+      _avaliacaoFornecedor(nota: 5),
     ]);
     await pumpEventQueue();
 
@@ -114,8 +116,8 @@ void main() {
 }
 
 class _AvaliacaoServicoRepositoryFake implements AvaliacaoServicoRepository {
-  final _servicoController = StreamController<List<Map<String, dynamic>>>();
-  final _fornecedorController = StreamController<List<Map<String, dynamic>>>();
+  final _servicoController = StreamController<List<AvaliacaoServico>>();
+  final _fornecedorController = StreamController<List<Avaliacao>>();
   final mediaServicoConsultas = <_MediaServicoConsulta>[];
   final avaliacoesServicoCriadas = <Map<String, dynamic>>[];
   final avaliacoesFornecedorCriadas = <Map<String, dynamic>>[];
@@ -124,11 +126,11 @@ class _AvaliacaoServicoRepositoryFake implements AvaliacaoServicoRepository {
   bool permiteAvaliarFornecedor = false;
   bool permiteAvaliarCotacao = true;
 
-  void emitirAvaliacoesServico(List<Map<String, dynamic>> avaliacoes) {
+  void emitirAvaliacoesServico(List<AvaliacaoServico> avaliacoes) {
     _servicoController.add(avaliacoes);
   }
 
-  void emitirAvaliacoesFornecedor(List<Map<String, dynamic>> avaliacoes) {
+  void emitirAvaliacoesFornecedor(List<Avaliacao> avaliacoes) {
     _fornecedorController.add(avaliacoes);
   }
 
@@ -138,7 +140,7 @@ class _AvaliacaoServicoRepositoryFake implements AvaliacaoServicoRepository {
   }
 
   @override
-  Stream<List<Map<String, dynamic>>> observarAvaliacoesServico({
+  Stream<List<AvaliacaoServico>> observarAvaliacoesServico({
     required String idFornecedor,
     required String idServico,
   }) {
@@ -183,7 +185,7 @@ class _AvaliacaoServicoRepositoryFake implements AvaliacaoServicoRepository {
   }
 
   @override
-  Stream<List<Map<String, dynamic>>> observarAvaliacoesFornecedor(
+  Stream<List<Avaliacao>> observarAvaliacoesFornecedor(
     String idFornecedor,
   ) {
     return _fornecedorController.stream;
@@ -237,4 +239,29 @@ class _MediaServicoConsulta {
 
   final String idFornecedor;
   final String idServico;
+}
+
+AvaliacaoServico _avaliacaoServico({required int nota}) {
+  return AvaliacaoServico(
+    id: 'avaliacao-$nota',
+    idFornecedorServico: 'fornecedor-1_servico-1',
+    idCliente: 'cliente-1',
+    nomeCliente: 'Ana',
+    nota: nota,
+    comentario: '',
+    data: DateTime(2026),
+  );
+}
+
+Avaliacao _avaliacaoFornecedor({required int nota}) {
+  return Avaliacao(
+    id: 'avaliacao-$nota',
+    idCliente: 'cliente-1',
+    nomeCliente: 'Ana',
+    idFornecedor: 'fornecedor-1',
+    evento: 'Casamento',
+    nota: nota,
+    comentario: '',
+    data: DateTime(2026),
+  );
 }

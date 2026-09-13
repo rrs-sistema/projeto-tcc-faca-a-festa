@@ -1,3 +1,5 @@
+import '../entities/avaliacao.dart';
+import '../entities/avaliacao_servico.dart';
 import '../repositories/avaliacao_servico_repository.dart';
 
 class GerenciarAvaliacoesServico {
@@ -5,7 +7,7 @@ class GerenciarAvaliacoesServico {
 
   final AvaliacaoServicoRepository repository;
 
-  Stream<List<Map<String, dynamic>>> observarAvaliacoesServico({
+  Stream<List<AvaliacaoServico>> observarAvaliacoesServico({
     required String idFornecedor,
     required String idServico,
   }) {
@@ -47,7 +49,7 @@ class GerenciarAvaliacoesServico {
     );
   }
 
-  Stream<List<Map<String, dynamic>>> observarAvaliacoesFornecedor(
+  Stream<List<Avaliacao>> observarAvaliacoesFornecedor(
     String idFornecedor,
   ) {
     return repository.observarAvaliacoesFornecedor(idFornecedor);

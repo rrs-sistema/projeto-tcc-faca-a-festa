@@ -2,13 +2,16 @@ import 'dart:developer' as developer;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../models/avaliacao/avaliacao_model.dart';
+import '../../models/fornecedor/avaliacao_servico_model.dart';
+
 class AvaliacaoServicoRemoteDatasource {
   AvaliacaoServicoRemoteDatasource({required FirebaseFirestore firestore})
       : _db = firestore;
 
   final FirebaseFirestore _db;
 
-  Stream<List<Map<String, dynamic>>> observarAvaliacoesServico({
+  Stream<List<AvaliacaoServicoModel>> observarAvaliacoesServico({
     required String idFornecedor,
     required String idServico,
   }) {
@@ -20,7 +23,17 @@ class AvaliacaoServicoRemoteDatasource {
         .collection('avaliacoes')
         .orderBy('data', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(
+                (doc) => AvaliacaoServicoModel.fromMap(
+                  doc.data(),
+                  documentId: doc.id,
+                  idFornecedorServico: idFornecedorServico,
+                ),
+              )
+              .toList(),
+        );
   }
 
   Future<double> getMediaServico({
@@ -76,7 +89,7 @@ class AvaliacaoServicoRemoteDatasource {
     });
   }
 
-  Stream<List<Map<String, dynamic>>> observarAvaliacoesFornecedor(
+  Stream<List<AvaliacaoModel>> observarAvaliacoesFornecedor(
     String idFornecedor,
   ) {
     return _db
@@ -85,7 +98,11 @@ class AvaliacaoServicoRemoteDatasource {
         .collection('avaliacoes')
         .orderBy('data', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) => doc.data()).toList());
+        .map(
+          (snapshot) => snapshot.docs
+              .map(AvaliacaoModel.fromSnapshot)
+              .toList(),
+        );
   }
 
   Future<void> adicionarAvaliacaoFornecedor({

@@ -39,7 +39,7 @@ class AvaliacaoModel extends Avaliacao {
       nomeCliente: map['nome_cliente'] ?? '',
       idFornecedor: map['id_fornecedor'] ?? '',
       nomeFornecedor: map['nome_fornecedor'],
-      evento: map['evento'] ?? '',
+      evento: (map['evento'] ?? map['nome_evento'] ?? '').toString(),
       nota: (map['nota'] ?? 0).toInt(),
       comentario: map['comentario'] ?? '',
       data: (map['data'] is Timestamp)

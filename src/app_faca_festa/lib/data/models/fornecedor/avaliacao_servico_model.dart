@@ -30,17 +30,41 @@ class AvaliacaoServicoModel extends AvaliacaoServico {
     };
   }
 
-  factory AvaliacaoServicoModel.fromMap(Map<String, dynamic> map) {
+  factory AvaliacaoServicoModel.fromMap(
+    Map<String, dynamic> map, {
+    String? documentId,
+    String? idFornecedorServico,
+  }) {
+    final idFornecedor = (map['id_fornecedor'] ?? '').toString();
+    final idServico = (map['id_servico'] ?? '').toString();
+    final composto = idFornecedor.isNotEmpty && idServico.isNotEmpty
+        ? '${idFornecedor}_$idServico'
+        : '';
+
     return AvaliacaoServicoModel(
-      id: map['id'] ?? '',
-      idFornecedorServico: map['id_fornecedor_servico'] ?? '',
-      idCliente: map['id_cliente'] ?? '',
-      nomeCliente: map['nome_cliente'] ?? '',
-      nota: map['nota'] ?? 0,
-      comentario: map['comentario'] ?? '',
-      data: (map['data'] as Timestamp).toDate(),
-      idEvento: map['id_evento'],
-      nomeEvento: map['nome_evento'],
+      id: (map['id'] ?? documentId ?? '').toString(),
+      idFornecedorServico:
+          (idFornecedorServico ?? map['id_fornecedor_servico'] ?? composto)
+              .toString(),
+      idCliente: (map['id_cliente'] ?? '').toString(),
+      nomeCliente: (map['nome_cliente'] ?? '').toString(),
+      nota: _nota(map['nota']),
+      comentario: (map['comentario'] ?? '').toString(),
+      data: _data(map['data']),
+      idEvento: map['id_evento']?.toString(),
+      nomeEvento: map['nome_evento']?.toString(),
     );
+  }
+
+  static int _nota(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.round();
+    return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  static DateTime _data(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    return DateTime.tryParse(value?.toString() ?? '') ?? DateTime.now();
   }
 }

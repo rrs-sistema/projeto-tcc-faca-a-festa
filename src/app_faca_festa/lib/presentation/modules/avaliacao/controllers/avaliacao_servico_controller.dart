@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/domain/entities/avaliacao.dart';
+import 'package:app_faca_festa/domain/entities/avaliacao_servico.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_avaliacoes_servico.dart';
 
@@ -11,21 +13,13 @@ class AvaliacaoServicoController extends GetxController {
   }) : _avaliacoes = avaliacoes;
 
   final GerenciarAvaliacoesServico _avaliacoes;
-  StreamSubscription<List<Map<String, dynamic>>>? _avaliacoesServicoSub;
-  StreamSubscription<List<Map<String, dynamic>>>? _avaliacoesFornecedorSub;
+  StreamSubscription<List<AvaliacaoServico>>? _avaliacoesServicoSub;
+  StreamSubscription<List<Avaliacao>>? _avaliacoesFornecedorSub;
 
-  // ======================================================
-  // 🔹 1. Avaliações do SERVIÇO
-  // ======================================================
-  final RxList<Map<String, dynamic>> avaliacoesServico =
-      <Map<String, dynamic>>[].obs;
+  final RxList<AvaliacaoServico> avaliacoesServico = <AvaliacaoServico>[].obs;
   final RxDouble mediaServico = 0.0.obs;
 
-  // ======================================================
-  // 🔹 2. Avaliações do FORNECEDOR
-  // ======================================================
-  final RxList<Map<String, dynamic>> avaliacoesFornecedor =
-      <Map<String, dynamic>>[].obs;
+  final RxList<Avaliacao> avaliacoesFornecedor = <Avaliacao>[].obs;
   final RxDouble mediaFornecedor = 0.0.obs;
 
   /// Controle se o organizador pode avaliar ou não
@@ -59,7 +53,7 @@ class AvaliacaoServicoController extends GetxController {
 
     final total = avaliacoesServico.fold<double>(
       0.0,
-      (s, item) => s + (item['nota'] ?? 0),
+      (s, item) => s + item.nota,
     );
 
     mediaServico.value = total / avaliacoesServico.length;
@@ -118,7 +112,7 @@ class AvaliacaoServicoController extends GetxController {
 
     final total = avaliacoesFornecedor.fold<double>(
       0.0,
-      (s, item) => s + (item['nota'] ?? 0),
+      (s, item) => s + item.nota,
     );
 
     mediaFornecedor.value = total / avaliacoesFornecedor.length;
