@@ -9,6 +9,7 @@ import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
+import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
 
 class MesasTab extends StatelessWidget {
   final EventThemeController theme;
@@ -44,7 +45,7 @@ class MesasTab extends StatelessWidget {
     return capacidade;
   }
 
-  Map<String, dynamic> _montarEstatisticasMesas({
+  EstatisticasMesas _montarEstatisticasMesas({
     required Map<String, List<Convidado>> grupos,
     required GrupoConvidadoController grupoController,
   }) {
@@ -61,12 +62,12 @@ class MesasTab extends StatelessWidget {
       totalAssentos += assentos;
       totalOcupados += ocupados;
     }
-    return {
-      'totalMesas': grupos.length,
-      'assentos': totalAssentos,
-      'ocupados': totalOcupados,
-      'livres': totalAssentos - totalOcupados,
-    };
+    return EstatisticasMesas(
+      totalMesas: grupos.length,
+      assentos: totalAssentos,
+      ocupados: totalOcupados,
+      livres: totalAssentos - totalOcupados,
+    );
   }
 
   @override
@@ -146,9 +147,9 @@ class MesasTab extends StatelessWidget {
           children: [
             _MesasHero(
               primary: primary,
-              totalMesas: estat['totalMesas'] as int,
-              ocupados: estat['ocupados'] as int,
-              assentos: estat['assentos'] as int,
+              totalMesas: estat.totalMesas,
+              ocupados: estat.ocupados,
+              assentos: estat.assentos,
             ),
             const SizedBox(height: 12),
             _ResumoMesas(estat: estat, primary: primary),
@@ -340,30 +341,30 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _ResumoMesas extends StatelessWidget {
-  final Map<String, dynamic> estat;
+  final EstatisticasMesas estat;
   final Color primary;
   const _ResumoMesas({required this.estat, required this.primary});
 
   @override
   Widget build(BuildContext context) {
     final resumo = [
-      _ResumoItem('Mesas', estat['totalMesas'] as int, Icons.table_bar_rounded,
+      _ResumoItem('Mesas', estat.totalMesas, Icons.table_bar_rounded,
           primary),
       _ResumoItem(
         'Assentos',
-        estat['assentos'] as int,
+        estat.assentos,
         Icons.event_seat_rounded,
         const Color(0xFFD97706),
       ),
       _ResumoItem(
         'Ocupados',
-        estat['ocupados'] as int,
+        estat.ocupados,
         Icons.how_to_reg_rounded,
         const Color(0xFFDB2777),
       ),
       _ResumoItem(
         'Livres',
-        estat['livres'] as int,
+        estat.livres,
         Icons.event_available_rounded,
         const Color(0xFF2563EB),
       ),
@@ -617,15 +618,15 @@ class _ConvidadoItem extends StatelessWidget {
 }
 
 class _GraficoMesas extends StatelessWidget {
-  final Map<String, dynamic> estat;
+  final EstatisticasMesas estat;
   final Color primary;
   const _GraficoMesas({required this.estat, required this.primary});
 
   @override
   Widget build(BuildContext context) {
-    final totalAssentos = (estat['assentos'] ?? 0).toDouble();
-    final totalOcupados = (estat['ocupados'] ?? 0).toDouble();
-    final totalLivres = (estat['livres'] ?? 0).toDouble();
+    final totalAssentos = estat.assentos.toDouble();
+    final totalOcupados = estat.ocupados.toDouble();
+    final totalLivres = estat.livres.toDouble();
 
     return Container(
       margin: const EdgeInsets.only(top: 8, bottom: 24),

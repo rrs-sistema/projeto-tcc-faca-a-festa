@@ -27,46 +27,6 @@ class GatilhosSugestaoBaseFesta {
   final int? tarefasPendentesMinimo;
   final int? convidadosEquivalentesMinimo;
 
-  factory GatilhosSugestaoBaseFesta.fromMap(Map<String, dynamic> map) {
-    return GatilhosSugestaoBaseFesta(
-      diasAntesEvento: _asInt(map['dias_antes_evento']),
-      duracaoMinimaHoras: _asInt(map['duracao_minima_horas']),
-      riscoMinimo: _asInt(map['risco_minimo']),
-      criancasMinimo: _asInt(map['criancas_minimo']),
-      adultosMinimo: _asInt(map['adultos_minimo']),
-      quantidadeMinimaConvidados: _asInt(map['quantidade_minima_convidados']),
-      percentualCriancasMinimo: _asInt(map['percentual_criancas_minimo']),
-      diferencaOrcamentoMaxima: _asInt(map['diferenca_orcamento_maxima']),
-      fornecedoresPendentesMinimo: _asInt(map['fornecedores_pendentes_minimo']),
-      tarefasPendentesMinimo: _asInt(map['tarefas_pendentes_minimo']),
-      convidadosEquivalentesMinimo:
-          _asInt(map['convidados_equivalentes_minimo']),
-    );
-  }
-
-  Map<String, dynamic> toMap() {
-    return <String, dynamic>{
-      if (diasAntesEvento != null) 'dias_antes_evento': diasAntesEvento,
-      if (duracaoMinimaHoras != null)
-        'duracao_minima_horas': duracaoMinimaHoras,
-      if (riscoMinimo != null) 'risco_minimo': riscoMinimo,
-      if (criancasMinimo != null) 'criancas_minimo': criancasMinimo,
-      if (adultosMinimo != null) 'adultos_minimo': adultosMinimo,
-      if (quantidadeMinimaConvidados != null)
-        'quantidade_minima_convidados': quantidadeMinimaConvidados,
-      if (percentualCriancasMinimo != null)
-        'percentual_criancas_minimo': percentualCriancasMinimo,
-      if (diferencaOrcamentoMaxima != null)
-        'diferenca_orcamento_maxima': diferencaOrcamentoMaxima,
-      if (fornecedoresPendentesMinimo != null)
-        'fornecedores_pendentes_minimo': fornecedoresPendentesMinimo,
-      if (tarefasPendentesMinimo != null)
-        'tarefas_pendentes_minimo': tarefasPendentesMinimo,
-      if (convidadosEquivalentesMinimo != null)
-        'convidados_equivalentes_minimo': convidadosEquivalentesMinimo,
-    };
-  }
-
   GatilhosSugestaoBaseFesta copyWith({
     Object? diasAntesEvento = _unset,
     Object? duracaoMinimaHoras = _unset,
@@ -118,13 +78,6 @@ class GatilhosSugestaoBaseFesta {
               ? this.convidadosEquivalentesMinimo
               : convidadosEquivalentesMinimo as int?,
     );
-  }
-
-  static int? _asInt(dynamic value) {
-    if (value == null) return null;
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    return int.tryParse(value.toString().trim());
   }
 }
 

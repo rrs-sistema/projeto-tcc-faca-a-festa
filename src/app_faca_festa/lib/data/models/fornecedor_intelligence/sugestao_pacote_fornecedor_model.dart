@@ -119,7 +119,7 @@ class SugestaoPacoteFornecedorModel extends SugestaoPacoteFornecedor {
       'tipo_pacote': tipoPacote,
       'nome_pacote': nomePacote,
       'descricao': descricao,
-      'itens_sugeridos': itensSugeridos.map((item) => item.toMap()).toList(),
+      'itens_sugeridos': itensSugeridos.map(_itemToMap).toList(),
       'valor_minimo': valorMinimo,
       'valor_estimado': valorEstimado,
       'valor_maximo': valorMaximo,
@@ -268,11 +268,28 @@ class SugestaoPacoteFornecedorModel extends SugestaoPacoteFornecedor {
 
     return value
         .whereType<Map>()
-        .map((item) => ItemPacoteFornecedorSugerido.fromMap(
-              Map<String, dynamic>.from(item),
-            ))
+        .map((item) => _itemFromMap(Map<String, dynamic>.from(item)))
         .where((item) => item.nome.isNotEmpty)
         .toList();
+  }
+
+  static ItemPacoteFornecedorSugerido _itemFromMap(Map<String, dynamic> map) {
+    return ItemPacoteFornecedorSugerido(
+      nome: (map['nome'] ?? '').toString().trim(),
+      quantidade: map['quantidade'] is num ? map['quantidade'] as num : null,
+      tipoMedida:
+          (map['tipo_medida'] ?? map['tipoMedida'] ?? '').toString().trim(),
+      valor: map['valor'] is num ? (map['valor'] as num).toDouble() : null,
+    );
+  }
+
+  static Map<String, dynamic> _itemToMap(ItemPacoteFornecedorSugerido item) {
+    return {
+      'nome': item.nome,
+      if (item.quantidade != null) 'quantidade': item.quantidade,
+      if (item.tipoMedida.isNotEmpty) 'tipo_medida': item.tipoMedida,
+      if (item.valor != null) 'valor': item.valor,
+    };
   }
 
   static DateTime _readDate(

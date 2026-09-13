@@ -123,7 +123,7 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
       'melhorias_prioritarias': melhoriasPrioritarias,
       'campos_ausentes': camposAusentes,
       'servicos_com_alerta':
-          servicosComAlerta.map((item) => item.toMap()).toList(),
+          servicosComAlerta.map(_alertaToMap).toList(),
       'categorias_sem_servico': categoriasSemServico,
       'total_servicos_ativos': totalServicosAtivos,
       'total_servicos_sem_imagem': totalServicosSemImagem,
@@ -267,9 +267,33 @@ class SugestaoCatalogoFornecedorModel extends SugestaoCatalogoFornecedor {
 
     return value
         .whereType<Map>()
-        .map((item) => ServicoCatalogoAlerta.fromMap(
-              Map<String, dynamic>.from(item),
-            ))
+        .map((item) => _alertaFromMap(Map<String, dynamic>.from(item)))
+        .toList();
+  }
+
+  static ServicoCatalogoAlerta _alertaFromMap(Map<String, dynamic> map) {
+    return ServicoCatalogoAlerta(
+      idServico:
+          (map['id_servico'] ?? map['idServico'] ?? '').toString().trim(),
+      nomeServico:
+          (map['nome_servico'] ?? map['nomeServico'] ?? '').toString().trim(),
+      alertas: _stringListFrom(map['alertas']),
+    );
+  }
+
+  static Map<String, dynamic> _alertaToMap(ServicoCatalogoAlerta alerta) {
+    return {
+      'id_servico': alerta.idServico,
+      'nome_servico': alerta.nomeServico,
+      'alertas': alerta.alertas,
+    };
+  }
+
+  static List<String> _stringListFrom(dynamic value) {
+    if (value is! List) return const [];
+    return value
+        .map((item) => item.toString().trim())
+        .where((item) => item.isNotEmpty)
         .toList();
   }
 

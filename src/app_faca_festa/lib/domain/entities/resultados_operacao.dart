@@ -6,14 +6,6 @@ class InicioTotpMfa {
 
   final String secret;
   final String otpauthUrl;
-
-  factory InicioTotpMfa.fromMap(Map<String, dynamic> map) {
-    return InicioTotpMfa(
-      secret: (map['secret'] ?? '').toString().trim(),
-      otpauthUrl:
-          (map['otpauthUrl'] ?? map['otpauth_url'] ?? '').toString().trim(),
-    );
-  }
 }
 
 class CodigoEmailMfa {
@@ -24,14 +16,6 @@ class CodigoEmailMfa {
 
   final String emailMascarado;
   final String mensagem;
-
-  factory CodigoEmailMfa.fromMap(Map<String, dynamic> map) {
-    return CodigoEmailMfa(
-      emailMascarado:
-          (map['emailMascarado'] ?? map['email_mascarado'] ?? '').toString(),
-      mensagem: (map['message'] ?? map['mensagem'] ?? '').toString(),
-    );
-  }
 }
 
 class ResultadoMigracaoTiposEvento {
@@ -66,30 +50,6 @@ class ResultadoMigracaoTiposEvento {
         'atualizados=$totalAtualizados ignorados=$totalIgnorados '
         'naoEncontrados=$totalNaoEncontrados';
   }
-
-  factory ResultadoMigracaoTiposEvento.fromMap(Map<String, dynamic> map) {
-    final rawResultados = map['resultados'];
-    return ResultadoMigracaoTiposEvento(
-      dryRun: map['dryRun'] == true,
-      aplicar: map['aplicar'] == true,
-      sobrescrever: map['sobrescrever'] == true,
-      limparCache: map['limparCache'] == true,
-      totalMapeados: _asInt(map['totalMapeados']),
-      totalEncontrados: _asInt(map['totalEncontrados']),
-      totalAtualizados: _asInt(map['totalAtualizados']),
-      totalIgnorados: _asInt(map['totalIgnorados']),
-      totalNaoEncontrados: _asInt(map['totalNaoEncontrados']),
-      totalCacheRemovido: _asInt(map['totalCacheRemovido']),
-      resultados: rawResultados is List
-          ? rawResultados
-              .whereType<Map>()
-              .map((item) => ItemMigracaoTipoEvento.fromMap(
-                    Map<String, dynamic>.from(item),
-                  ))
-              .toList()
-          : const [],
-    );
-  }
 }
 
 class ItemMigracaoTipoEvento {
@@ -112,30 +72,6 @@ class ItemMigracaoTipoEvento {
   final bool jaPossuiaTipos;
   final List<String> tipoEventoNomes;
   final String mensagem;
-
-  factory ItemMigracaoTipoEvento.fromMap(Map<String, dynamic> map) {
-    final nomes = map['tipoEventoNomes'];
-    return ItemMigracaoTipoEvento(
-      fornecedorId: (map['fornecedorId'] ?? '').toString(),
-      nomeEsperado: (map['nomeEsperado'] ?? '').toString(),
-      documentId: (map['documentId'] ?? '').toString().trim().isEmpty
-          ? null
-          : map['documentId'].toString(),
-      encontrado: map['encontrado'] == true,
-      atualizado: map['atualizado'] == true,
-      jaPossuiaTipos: map['jaPossuiaTipos'] == true,
-      tipoEventoNomes: nomes is List
-          ? nomes.map((item) => item.toString()).toList()
-          : const [],
-      mensagem: (map['mensagem'] ?? '').toString(),
-    );
-  }
-}
-
-int _asInt(dynamic value) {
-  if (value is int) return value;
-  if (value is num) return value.toInt();
-  return int.tryParse(value?.toString() ?? '') ?? 0;
 }
 
 class EstatisticasMesas {

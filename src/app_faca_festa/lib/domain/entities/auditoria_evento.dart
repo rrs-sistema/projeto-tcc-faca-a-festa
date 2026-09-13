@@ -63,6 +63,7 @@ class AuditoriaEvento {
   final String? atorTipo;
   final String? atorAuthType;
   final List<AuditoriaMudanca> mudancas;
+  /// Snapshot opaco do documento auditado; serialização fica na camada data.
   final Map<String, dynamic>? detalhe;
   final bool visivelFornecedor;
   final String? plataforma;
@@ -154,6 +155,7 @@ class RegistroAuditoria {
   final String? idCotacao;
   final String? idOrcamento;
   final List<AuditoriaMudanca> mudancas;
+  /// Snapshot opaco do documento auditado; serialização fica na camada data.
   final Map<String, dynamic>? detalhe;
   final String? plataforma;
   final String? rota;

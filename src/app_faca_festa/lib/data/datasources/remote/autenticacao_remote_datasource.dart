@@ -397,13 +397,13 @@ class FirebaseAutenticacaoRemoteDatasource
   @override
   Future<InicioTotpMfa> iniciarTotpMfa() async {
     final data = await _chamarFunction('iniciarTotpMfa');
-    return InicioTotpMfa.fromMap(data);
+    return _inicioTotpMfaDeMap(data);
   }
 
   @override
   Future<CodigoEmailMfa> solicitarCodigoEmailMfa() async {
     final data = await _chamarFunction('solicitarCodigoEmailMfa');
-    return CodigoEmailMfa.fromMap(data);
+    return _codigoEmailMfaDeMap(data);
   }
 
   @override
@@ -473,4 +473,20 @@ class FirebaseAutenticacaoRemoteDatasource
       throw AutenticacaoRemoteException(erro.code);
     }
   }
+}
+
+InicioTotpMfa _inicioTotpMfaDeMap(Map<String, dynamic> map) {
+  return InicioTotpMfa(
+    secret: (map['secret'] ?? '').toString().trim(),
+    otpauthUrl:
+        (map['otpauthUrl'] ?? map['otpauth_url'] ?? '').toString().trim(),
+  );
+}
+
+CodigoEmailMfa _codigoEmailMfaDeMap(Map<String, dynamic> map) {
+  return CodigoEmailMfa(
+    emailMascarado:
+        (map['emailMascarado'] ?? map['email_mascarado'] ?? '').toString(),
+    mensagem: (map['message'] ?? map['mensagem'] ?? '').toString(),
+  );
 }

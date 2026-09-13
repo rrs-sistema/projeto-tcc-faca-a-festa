@@ -211,25 +211,4 @@ class SugestaoBaseFesta {
         perfisFesta.contains(normalized) ||
         perfisFesta.contains('todos');
   }
-
-  Map<String, dynamic> toContextMap() {
-    return <String, dynamic>{
-      'id': id,
-      'versao': versao,
-      'titulo': titulo,
-      'descricao': descricao,
-      'modulo': modulo,
-      'tema': tema,
-      'tipo_evento': tipoEvento,
-      'perfis_festa': perfisFesta,
-      'categoria': categoria,
-      'prioridade': prioridade,
-      'gatilhos': gatilhos.toMap(),
-      'tags': tags,
-      'ordem': ordem,
-      'origem': origem,
-      'status_revisao': statusRevisao,
-      'data_publicacao': dataPublicacao?.toIso8601String(),
-    };
-  }
 }

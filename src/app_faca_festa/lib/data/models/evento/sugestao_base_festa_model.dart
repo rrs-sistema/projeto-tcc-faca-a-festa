@@ -204,7 +204,7 @@ class SugestaoBaseFestaModel extends SugestaoBaseFesta {
         _asString(map['prioridade'],
             fallback: PrioridadeSugestaoIA.media.value),
       ),
-      gatilhos: GatilhosSugestaoBaseFesta.fromMap(_asMap(map['gatilhos'])),
+      gatilhos: _gatilhosFromMap(_asMap(map['gatilhos'])),
       tags: _asStringList(map['tags']),
       ativo: _asBool(map['ativo'], fallback: true),
       excluido: _asBool(
@@ -250,7 +250,7 @@ class SugestaoBaseFestaModel extends SugestaoBaseFesta {
       'perfis_festa': perfisFesta,
       'categoria': categoria,
       'prioridade': prioridade,
-      'gatilhos': gatilhos.toMap(),
+      'gatilhos': _gatilhosToMap(gatilhos),
       'tags': tags,
       'ativo': ativo,
       'excluido': excluido,
@@ -270,28 +270,6 @@ class SugestaoBaseFestaModel extends SugestaoBaseFesta {
           ? FieldValue.serverTimestamp()
           : createdAt,
       'updated_at': includeDates ? FieldValue.serverTimestamp() : updatedAt,
-    };
-  }
-
-  @override
-  Map<String, dynamic> toContextMap() {
-    return <String, dynamic>{
-      'id': id,
-      'versao': versao,
-      'titulo': titulo,
-      'descricao': descricao,
-      'modulo': modulo,
-      'tema': tema,
-      'tipo_evento': tipoEvento,
-      'perfis_festa': perfisFesta,
-      'categoria': categoria,
-      'prioridade': prioridade,
-      'gatilhos': gatilhos.toMap(),
-      'tags': tags,
-      'ordem': ordem,
-      'origem': origem,
-      'status_revisao': statusRevisao,
-      'data_publicacao': dataPublicacao?.toIso8601String(),
     };
   }
 
@@ -520,5 +498,55 @@ class SugestaoBaseFestaModel extends SugestaoBaseFesta {
     if (value is String) return DateTime.tryParse(value);
     if (value is int) return DateTime.fromMillisecondsSinceEpoch(value);
     return null;
+  }
+
+  static GatilhosSugestaoBaseFesta _gatilhosFromMap(Map<String, dynamic> map) {
+    return GatilhosSugestaoBaseFesta(
+      diasAntesEvento: _asNullableInt(map['dias_antes_evento']),
+      duracaoMinimaHoras: _asNullableInt(map['duracao_minima_horas']),
+      riscoMinimo: _asNullableInt(map['risco_minimo']),
+      criancasMinimo: _asNullableInt(map['criancas_minimo']),
+      adultosMinimo: _asNullableInt(map['adultos_minimo']),
+      quantidadeMinimaConvidados: _asNullableInt(map['quantidade_minima_convidados']),
+      percentualCriancasMinimo: _asNullableInt(map['percentual_criancas_minimo']),
+      diferencaOrcamentoMaxima: _asNullableInt(map['diferenca_orcamento_maxima']),
+      fornecedoresPendentesMinimo: _asNullableInt(map['fornecedores_pendentes_minimo']),
+      tarefasPendentesMinimo: _asNullableInt(map['tarefas_pendentes_minimo']),
+      convidadosEquivalentesMinimo:
+          _asNullableInt(map['convidados_equivalentes_minimo']),
+    );
+  }
+
+  static Map<String, dynamic> _gatilhosToMap(GatilhosSugestaoBaseFesta gatilhos) {
+    return <String, dynamic>{
+      if (gatilhos.diasAntesEvento != null)
+        'dias_antes_evento': gatilhos.diasAntesEvento,
+      if (gatilhos.duracaoMinimaHoras != null)
+        'duracao_minima_horas': gatilhos.duracaoMinimaHoras,
+      if (gatilhos.riscoMinimo != null) 'risco_minimo': gatilhos.riscoMinimo,
+      if (gatilhos.criancasMinimo != null)
+        'criancas_minimo': gatilhos.criancasMinimo,
+      if (gatilhos.adultosMinimo != null)
+        'adultos_minimo': gatilhos.adultosMinimo,
+      if (gatilhos.quantidadeMinimaConvidados != null)
+        'quantidade_minima_convidados': gatilhos.quantidadeMinimaConvidados,
+      if (gatilhos.percentualCriancasMinimo != null)
+        'percentual_criancas_minimo': gatilhos.percentualCriancasMinimo,
+      if (gatilhos.diferencaOrcamentoMaxima != null)
+        'diferenca_orcamento_maxima': gatilhos.diferencaOrcamentoMaxima,
+      if (gatilhos.fornecedoresPendentesMinimo != null)
+        'fornecedores_pendentes_minimo': gatilhos.fornecedoresPendentesMinimo,
+      if (gatilhos.tarefasPendentesMinimo != null)
+        'tarefas_pendentes_minimo': gatilhos.tarefasPendentesMinimo,
+      if (gatilhos.convidadosEquivalentesMinimo != null)
+        'convidados_equivalentes_minimo': gatilhos.convidadosEquivalentesMinimo,
+    };
+  }
+
+  static int? _asNullableInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    return int.tryParse(value.toString().trim());
   }
 }
