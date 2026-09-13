@@ -1,6 +1,8 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import 'package:app_faca_festa/data/models/convidado/convidado_model.dart';
+import 'package:app_faca_festa/data/models/evento/evento_model.dart';
 import 'package:app_faca_festa/domain/services/abrir_convite_por_token.dart';
 import '../functions/callable_https_client.dart';
 
@@ -33,9 +35,18 @@ class AbrirConvitePorTokenService implements AbrirConvitePorToken {
       if (convidado is! Map || evento is! Map) {
         throw const AbrirConvitePorTokenException('internal');
       }
+      final convidadoModel = ConvidadoModel.fromMap(
+        Map<String, dynamic>.from(convidado),
+      );
+      final eventoModel = EventoModel.fromMap(
+        Map<String, dynamic>.from(evento),
+      );
+      if (convidadoModel.idConvidado.isEmpty || eventoModel.idEvento.isEmpty) {
+        throw const AbrirConvitePorTokenException('not-found');
+      }
       return AbrirConvitePorTokenResultado(
-        convidado: Map<String, dynamic>.from(convidado),
-        evento: Map<String, dynamic>.from(evento),
+        convidado: convidadoModel,
+        evento: eventoModel,
       );
     } on FirebaseFunctionsException catch (erro) {
       throw AbrirConvitePorTokenException(erro.code, erro.message);

@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/core/utils/convite_link.dart';
-import 'package:app_faca_festa/data/models/convidado/convidado_model.dart';
-import 'package:app_faca_festa/data/models/evento/evento_model.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import 'package:app_faca_festa/domain/repositories/convite_convidado_repository.dart';
@@ -147,11 +145,8 @@ class AppConviteController extends GetxController {
       }
 
       final resultado = await _abrirConvitePorToken.abrir(token);
-      final convidado = ConvidadoModel.fromMap(resultado.convidado);
-      final evento = EventoModel.fromMap(resultado.evento);
-      if (convidado.idConvidado.isEmpty || evento.idEvento.isEmpty) {
-        throw const AbrirConvitePorTokenException('not-found');
-      }
+      final convidado = resultado.convidado;
+      final evento = resultado.evento;
 
       _eventos.eventoAtual.value = evento;
       await _eventos.buscarTipoEvento(evento.idTipoEvento);

@@ -1,3 +1,6 @@
+import 'package:app_faca_festa/domain/entities/convidado.dart';
+import 'package:app_faca_festa/domain/entities/evento.dart';
+
 class AbrirConvitePorTokenException implements Exception {
   const AbrirConvitePorTokenException(this.codigo, [this.mensagem]);
 
@@ -11,8 +14,8 @@ class AbrirConvitePorTokenResultado {
     required this.evento,
   });
 
-  final Map<String, dynamic> convidado;
-  final Map<String, dynamic> evento;
+  final Convidado convidado;
+  final Evento evento;
 }
 
 abstract class AbrirConvitePorToken {
