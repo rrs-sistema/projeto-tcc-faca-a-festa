@@ -14,8 +14,7 @@ abstract class SugestaoBaseFestaRepositoryContract {
 
   Future<void> excluirLogicamente(String id);
 
-  Future<int> importarSugestoesTeste(
-    List<Map<String, dynamic>> sugestoes, {
+  Future<int> importarSugestoesTeste({
     bool sobrescrever = true,
   });
 }

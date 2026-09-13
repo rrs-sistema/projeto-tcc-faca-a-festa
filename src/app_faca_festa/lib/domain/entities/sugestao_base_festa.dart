@@ -1,3 +1,5 @@
+import 'package:app_faca_festa/domain/entities/gatilhos_sugestao_base_festa.dart';
+
 class SugestaoBaseFesta {
   final String id;
   final String titulo;
@@ -8,7 +10,7 @@ class SugestaoBaseFesta {
   final List<String> perfisFesta;
   final String categoria;
   final String prioridade;
-  final Map<String, dynamic> gatilhos;
+  final GatilhosSugestaoBaseFesta gatilhos;
   final List<String> tags;
   final bool ativo;
   final bool excluido;
@@ -60,7 +62,7 @@ class SugestaoBaseFesta {
       perfisFesta: <String>[],
       categoria: 'geral',
       prioridade: 'media',
-      gatilhos: <String, dynamic>{},
+      gatilhos: GatilhosSugestaoBaseFesta.empty,
       tags: <String>[],
       ativo: true,
       excluido: false,
@@ -83,7 +85,7 @@ class SugestaoBaseFesta {
     List<String>? perfisFesta,
     String? categoria,
     String? prioridade,
-    Map<String, dynamic>? gatilhos,
+    GatilhosSugestaoBaseFesta? gatilhos,
     List<String>? tags,
     bool? ativo,
     bool? excluido,
@@ -110,7 +112,7 @@ class SugestaoBaseFesta {
       perfisFesta: perfisFesta ?? List<String>.from(this.perfisFesta),
       categoria: categoria ?? this.categoria,
       prioridade: prioridade ?? this.prioridade,
-      gatilhos: gatilhos ?? Map<String, dynamic>.from(this.gatilhos),
+      gatilhos: gatilhos ?? this.gatilhos,
       tags: tags ?? List<String>.from(this.tags),
       ativo: ativo ?? this.ativo,
       excluido: excluido ?? this.excluido,
@@ -222,7 +224,7 @@ class SugestaoBaseFesta {
       'perfis_festa': perfisFesta,
       'categoria': categoria,
       'prioridade': prioridade,
-      'gatilhos': gatilhos,
+      'gatilhos': gatilhos.toMap(),
       'tags': tags,
       'ordem': ordem,
       'origem': origem,

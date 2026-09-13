@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import 'package:app_faca_festa/domain/entities/gatilhos_sugestao_base_festa.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_base_festa.dart';
 
 
@@ -134,7 +135,7 @@ class SugestaoBaseFestaModel extends SugestaoBaseFesta {
       perfisFesta: List<String>.from(entity.perfisFesta),
       categoria: entity.categoria,
       prioridade: entity.prioridade,
-      gatilhos: Map<String, dynamic>.from(entity.gatilhos),
+      gatilhos: entity.gatilhos,
       tags: List<String>.from(entity.tags),
       ativo: entity.ativo,
       excluido: entity.excluido,
@@ -162,7 +163,7 @@ class SugestaoBaseFestaModel extends SugestaoBaseFesta {
       perfisFesta: <String>[],
       categoria: 'geral',
       prioridade: 'media',
-      gatilhos: <String, dynamic>{},
+      gatilhos: GatilhosSugestaoBaseFesta.empty,
       tags: <String>[],
       ativo: true,
       excluido: false,
@@ -203,7 +204,7 @@ class SugestaoBaseFestaModel extends SugestaoBaseFesta {
         _asString(map['prioridade'],
             fallback: PrioridadeSugestaoIA.media.value),
       ),
-      gatilhos: _asMap(map['gatilhos']),
+      gatilhos: GatilhosSugestaoBaseFesta.fromMap(_asMap(map['gatilhos'])),
       tags: _asStringList(map['tags']),
       ativo: _asBool(map['ativo'], fallback: true),
       excluido: _asBool(
@@ -249,7 +250,7 @@ class SugestaoBaseFestaModel extends SugestaoBaseFesta {
       'perfis_festa': perfisFesta,
       'categoria': categoria,
       'prioridade': prioridade,
-      'gatilhos': gatilhos,
+      'gatilhos': gatilhos.toMap(),
       'tags': tags,
       'ativo': ativo,
       'excluido': excluido,
@@ -285,7 +286,7 @@ class SugestaoBaseFestaModel extends SugestaoBaseFesta {
       'perfis_festa': perfisFesta,
       'categoria': categoria,
       'prioridade': prioridade,
-      'gatilhos': gatilhos,
+      'gatilhos': gatilhos.toMap(),
       'tags': tags,
       'ordem': ordem,
       'origem': origem,
@@ -305,7 +306,7 @@ class SugestaoBaseFestaModel extends SugestaoBaseFesta {
     List<String>? perfisFesta,
     String? categoria,
     String? prioridade,
-    Map<String, dynamic>? gatilhos,
+    GatilhosSugestaoBaseFesta? gatilhos,
     List<String>? tags,
     bool? ativo,
     bool? excluido,

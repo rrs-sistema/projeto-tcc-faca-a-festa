@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/sugestao_base_festa_controller.dart';
+import 'package:app_faca_festa/domain/entities/gatilhos_sugestao_base_festa.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_base_festa.dart';
 import 'package:app_faca_festa/domain/repositories/sugestao_base_festa_repository_contract.dart';
 
@@ -82,7 +83,7 @@ SugestaoBaseFesta _sugestao({
     perfisFesta: const ['todos'],
     categoria: 'geral',
     prioridade: 'media',
-    gatilhos: const {},
+    gatilhos: GatilhosSugestaoBaseFesta.empty,
     tags: const ['tag'],
     ativo: ativo,
     ordem: ordem,
@@ -130,14 +131,13 @@ class _SugestaoBaseFestaRepositoryFake
   }
 
   @override
-  Future<int> importarSugestoesTeste(
-    List<Map<String, dynamic>> sugestoes, {
+  Future<int> importarSugestoesTeste({
     bool sobrescrever = true,
   }) async {
     importados.add((
-      quantidade: sugestoes.length,
+      quantidade: 3,
       sobrescrever: sobrescrever,
     ));
-    return sugestoes.length;
+    return 3;
   }
 }

@@ -69,10 +69,10 @@ class _SugestaoBaseFestaFormDialogState
     _tagsController = TextEditingController(text: sugestao.tags.join(', '));
     _ordemController = TextEditingController(text: sugestao.ordem.toString());
     _duracaoMinimaController = TextEditingController(
-      text: _mapValueAsString(sugestao.gatilhos['duracao_minima_horas']),
+      text: _mapValueAsString(sugestao.gatilhos.duracaoMinimaHoras),
     );
     _riscoMinimoController = TextEditingController(
-      text: _mapValueAsString(sugestao.gatilhos['risco_minimo']),
+      text: _mapValueAsString(sugestao.gatilhos.riscoMinimo),
     );
 
     _modulo = SugestaoBaseFestaOptions.modulos.contains(sugestao.modulo)
@@ -338,21 +338,13 @@ class _SugestaoBaseFestaFormDialogState
   Future<void> _salvar() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final gatilhos = <String, dynamic>{..._base.gatilhos};
     final duracaoMinima = int.tryParse(_duracaoMinimaController.text.trim());
     final riscoMinimo = int.tryParse(_riscoMinimoController.text.trim());
-
-    if (duracaoMinima != null && duracaoMinima > 0) {
-      gatilhos['duracao_minima_horas'] = duracaoMinima;
-    } else {
-      gatilhos.remove('duracao_minima_horas');
-    }
-
-    if (riscoMinimo != null && riscoMinimo > 0) {
-      gatilhos['risco_minimo'] = riscoMinimo;
-    } else {
-      gatilhos.remove('risco_minimo');
-    }
+    final gatilhos = _base.gatilhos.copyWith(
+      duracaoMinimaHoras:
+          duracaoMinima != null && duracaoMinima > 0 ? duracaoMinima : null,
+      riscoMinimo: riscoMinimo != null && riscoMinimo > 0 ? riscoMinimo : null,
+    );
 
     final sugestao = _base.copyWith(
       titulo: _tituloController.text.trim(),

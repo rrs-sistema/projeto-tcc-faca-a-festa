@@ -38,12 +38,10 @@ class SugestaoBaseFestaRepositoryImpl
   }
 
   @override
-  Future<int> importarSugestoesTeste(
-    List<Map<String, dynamic>> sugestoes, {
+  Future<int> importarSugestoesTeste({
     bool sobrescrever = true,
   }) {
     return remote.importarSugestoesTeste(
-      sugestoes,
       sobrescrever: sobrescrever,
     );
   }
