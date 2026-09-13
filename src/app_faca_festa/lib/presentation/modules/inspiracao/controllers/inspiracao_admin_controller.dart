@@ -6,7 +6,6 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
-import 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/data/seeds/inspiracao_seed.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
@@ -91,7 +90,7 @@ class InspiracaoAdminController extends GetxController {
   final RxInt totalDestaques = 0.obs;
   final RxInt totalExcluidas = 0.obs;
 
-  StreamSubscription<List<InspiracaoSnapshot>>? _subInspiracoes;
+  StreamSubscription<List<Inspiracao>>? _subInspiracoes;
 
   bool get possuiFiltrosAtivos {
     return termoBusca.value.trim().isNotEmpty ||
@@ -168,16 +167,7 @@ class InspiracaoAdminController extends GetxController {
 
       _subInspiracoes = _inspiracoes.observarInspiracoes().listen(
         (snapshot) {
-          final lista = <Inspiracao>[];
-
-          for (final item in snapshot) {
-            try {
-              lista.add(item.inspiracao);
-            } catch (e, s) {
-              _log('Erro ao converter inspiração ${item.inspiracao.id}: $e', s);
-            }
-          }
-
+          final lista = List<Inspiracao>.from(snapshot);
           lista.sort(_compararInspiracoes);
 
           todasInspiracoes.assignAll(lista);

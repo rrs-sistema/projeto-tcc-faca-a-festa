@@ -3,11 +3,12 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
+import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
+
 import '../../models/evento/inspiracao_evento_planejamento_model.dart';
 import '../../models/evento/inspiracao_model.dart';
-import '../../models/evento/inspiracao_snapshot_item.dart';
 import '../../models/fornecedor/fornecedor_model.dart';
-import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 
 class InspiracaoRemoteDatasource {
   InspiracaoRemoteDatasource({
@@ -25,15 +26,11 @@ class InspiracaoRemoteDatasource {
   final FirebaseFirestore _db;
   final FirebaseStorage _storage;
 
-  Stream<List<InspiracaoSnapshotItem>> observarInspiracoes() {
+  Stream<List<Inspiracao>> observarInspiracoes() {
     return _db.collection(_colecaoInspiracoes).snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        final data = <String, dynamic>{'id': doc.id, ...doc.data()};
-        return InspiracaoSnapshotItem(
-          inspiracao: InspiracaoModel.fromFirestore(doc),
-          data: data,
-        );
-      }).toList();
+      return snapshot.docs
+          .map<Inspiracao>((doc) => InspiracaoModel.fromFirestore(doc))
+          .toList();
     });
   }
 

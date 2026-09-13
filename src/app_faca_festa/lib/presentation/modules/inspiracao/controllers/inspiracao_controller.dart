@@ -8,7 +8,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_evento_planejamento.dart';
-import 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/domain/entities/referencia_evento.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
@@ -38,7 +37,7 @@ class InspiracaoController extends GetxController {
   final RxBool salvando = false.obs;
   final RxString categoriaSelecionada = 'Tudo'.obs;
 
-  StreamSubscription<List<InspiracaoSnapshot>>? _subInspiracoes;
+  StreamSubscription<List<Inspiracao>>? _subInspiracoes;
   StreamSubscription<List<ReferenciaEvento>>? _subReferencias;
   StreamSubscription<List<TarefaInspiracaoEvento>>? _subTarefas;
   StreamSubscription<List<ItemOrcamentoInspiracaoEvento>>? _subOrcamento;
@@ -109,10 +108,9 @@ class InspiracaoController extends GetxController {
 
           final lista = snapshot
               .where((item) {
-                return _documentoInspiracaoVisivel(item.inspiracao) &&
-                    _pertenceAoTipoEventoAtual(item.inspiracao);
+                return _documentoInspiracaoVisivel(item) &&
+                    _pertenceAoTipoEventoAtual(item);
               })
-              .map((item) => item.inspiracao)
               .map(
                 (insp) => insp.copyWith(
                   favorito: favoritasIds.contains(insp.id) || insp.favorito,

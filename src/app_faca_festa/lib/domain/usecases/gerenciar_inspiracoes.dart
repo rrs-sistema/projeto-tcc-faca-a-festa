@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import '../entities/fornecedor.dart';
 import '../entities/inspiracao.dart';
 import '../entities/inspiracao_evento_planejamento.dart';
-import '../entities/inspiracao_snapshot.dart';
 import '../entities/inspiracao_sugestao.dart';
 import '../entities/referencia_evento.dart';
 import '../repositories/inspiracao_repository.dart';
@@ -16,7 +15,7 @@ class GerenciarInspiracoes {
 
   final InspiracaoRepository repository;
 
-  Stream<List<InspiracaoSnapshot>> observarInspiracoes() {
+  Stream<List<Inspiracao>> observarInspiracoes() {
     return repository.observarInspiracoes();
   }
 

@@ -6,7 +6,6 @@ import 'package:app_faca_festa/domain/repositories/inspiracao_repository.dart';
 import '../datasources/remote/inspiracao_remote_datasource.dart';
 import '../models/evento/inspiracao_evento_planejamento_model.dart';
 import '../models/evento/inspiracao_model.dart';
-import '../models/evento/inspiracao_snapshot_item.dart';
 import '../models/fornecedor/fornecedor_model.dart';
 
 class InspiracaoRepositoryImpl implements InspiracaoRepository {
@@ -15,7 +14,7 @@ class InspiracaoRepositoryImpl implements InspiracaoRepository {
   final InspiracaoRemoteDatasource remote;
 
   @override
-  Stream<List<InspiracaoSnapshotItem>> observarInspiracoes() {
+  Stream<List<Inspiracao>> observarInspiracoes() {
     return remote.observarInspiracoes();
   }
 
