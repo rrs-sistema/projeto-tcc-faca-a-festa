@@ -16,8 +16,11 @@ import 'package:app_faca_festa/domain/repositories/push_token_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_documentos.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_carrinho_cotacao.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_convite_controller.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_destino_rota.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_rotas_sessao.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_totp_sessao.dart';
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/cotacao_controller.dart';
@@ -59,7 +62,12 @@ class AppController extends GetxController {
     InspiracaoController? Function()? inspiracaoControllerResolver,
     UsuarioController? usuarioController,
     UsuarioController? Function()? usuarioControllerResolver,
-  })  : _storage = storage ?? GetStorage(),
+  })  : totp = AppTotpSessao(
+          storage ?? GetStorage(),
+          contaTemLoginComSenha: () =>
+              autenticacaoRepository.contaAtualTemLoginComSenha,
+        ),
+        carrinho = AppCarrinhoCotacao(),
         _auditoria = auditoria,
         _auditoriaResolver = auditoriaResolver,
         _orcamentoGastoController = orcamentoGastoController,
@@ -83,7 +91,7 @@ class AppController extends GetxController {
   final RxList<EnderecoUsuario> enderecosUsuario = <EnderecoUsuario>[].obs;
 
   /// 🔹 Lista global de serviços selecionados para cotação
-  final RxList<ServicoCotado> servicosSelecionados = <ServicoCotado>[].obs;
+  RxList<ServicoCotado> get servicosSelecionados => carrinho.servicos;
 
   final RxBool contaIncompleta = false.obs;
   final RxBool carregando = false.obs;
@@ -92,20 +100,17 @@ class AppController extends GetxController {
   StreamSubscription<String>? _fcmTokenSub;
   bool _processandoSessao = false;
   bool _sessaoPendente = false;
-  bool totpVerificadoNestaSessao = false;
   bool devMode = true;
 
   static const String _logTag = '[AppController]';
-  static const String _chaveLoginMetodo = 'login_metodo';
-  static const String _metodoSenha = 'senha';
-  static const String _metodoGoogle = 'google';
-  final GetStorage _storage;
   final AutenticacaoRepository autenticacaoRepository;
   final PerfilUsuarioRepository perfilUsuarioRepository;
   final PushTokenRepository pushTokenRepository;
   final GerenciarDocumentos documentos;
   final GerenciarFornecedores fornecedores;
   final AppConviteController convite;
+  final AppTotpSessao totp;
+  final AppCarrinhoCotacao carrinho;
 
   // ✅ Injeção de controladores auxiliares
   final EventoController eventoController;
@@ -251,7 +256,7 @@ class AppController extends GetxController {
       }
 
       if (user == null) {
-        _limparEstadoTotp();
+        totp.limpar();
         if (token != null && token.isNotEmpty) {
           convite.guardarTokenConvite(token);
           debugPrint(
@@ -276,15 +281,23 @@ class AppController extends GetxController {
       final rotaAtual = Get.currentRoute;
       final noConvite = rotaAtual.startsWith('/convite');
       if (!noConvite &&
-          !_rotaTotp(rotaAtual) &&
-          !_rotaDestinoEstavel(rotaAtual) &&
-          !_usuarioJaNavegandoNaApp(rotaAtual) &&
+          !AppRotasSessao.ehTotp(rotaAtual) &&
+          !AppRotasSessao.destinoEstavel(rotaAtual) &&
+          !AppRotasSessao.usuarioJaNavegando(
+            rotaAtual,
+            temUsuario: usuarioLogado.value != null,
+          ) &&
           (rotaAtual.isEmpty || rotaAtual != '/splash')) {
         Future.microtask(() {
-          if (_rotaTotp(Get.currentRoute)) return;
+          if (AppRotasSessao.ehTotp(Get.currentRoute)) return;
           if (Get.currentRoute.startsWith('/convite')) return;
-          if (_rotaDestinoEstavel(Get.currentRoute)) return;
-          if (_usuarioJaNavegandoNaApp(Get.currentRoute)) return;
+          if (AppRotasSessao.destinoEstavel(Get.currentRoute)) return;
+          if (AppRotasSessao.usuarioJaNavegando(
+            Get.currentRoute,
+            temUsuario: usuarioLogado.value != null,
+          )) {
+            return;
+          }
           Get.offAllNamed('/splash');
         });
       }
@@ -315,7 +328,7 @@ class AppController extends GetxController {
           return;
         }
 
-        if (_deveExigirTotp()) {
+        if (totp.deveExigir()) {
           carregando.value = false;
           final metodoEmail = usuarioTotp.mfaMetodo == 'email' ||
               (usuarioTotp.mfaEmailAtivo && !usuarioTotp.mfaTotpAtivo);
@@ -378,8 +391,11 @@ class AppController extends GetxController {
 
         carregando.value = false;
         final rotaDepois = Get.currentRoute;
-        if (_rotaDestinoEstavel(rotaDepois) ||
-            _usuarioJaNavegandoNaApp(rotaDepois)) {
+        if (AppRotasSessao.destinoEstavel(rotaDepois) ||
+            AppRotasSessao.usuarioJaNavegando(
+              rotaDepois,
+              temUsuario: usuarioLogado.value != null,
+            )) {
           return;
         }
         Get.offAllNamed(destino.nome, arguments: destino.argumentos);
@@ -537,9 +553,9 @@ class AppController extends GetxController {
       usuarioLogado.value = null;
       enderecoPrincipal.value = null;
       enderecosUsuario.clear();
-      servicosSelecionados.clear();
+      carrinho.limpar();
       convite.limpar();
-      _limparEstadoTotp();
+      totp.limpar();
       themeController.definirPapelSessao(null);
       themeController.aplicarTemaProduto();
       Get.offAllNamed('/role');
@@ -625,69 +641,11 @@ class AppController extends GetxController {
     return usuarioComEndereco;
   }
 
-  void marcarLoginComSenha() {
-    totpVerificadoNestaSessao = false;
-    _storage.write(_chaveLoginMetodo, _metodoSenha);
-  }
+  void marcarLoginComSenha() => totp.marcarLoginComSenha();
 
-  void marcarLoginComGoogle() {
-    totpVerificadoNestaSessao = true;
-    _storage.write(_chaveLoginMetodo, _metodoGoogle);
-  }
+  void marcarLoginComGoogle() => totp.marcarLoginComGoogle();
 
-  void marcarTotpVerificado() {
-    totpVerificadoNestaSessao = true;
-  }
-
-  bool _deveExigirTotp() {
-    if (totpVerificadoNestaSessao) return false;
-    if (_storage.read(_chaveLoginMetodo) == _metodoGoogle) return false;
-    if (!_contaTemLoginComSenha()) return false;
-    return true;
-  }
-
-  bool _contaTemLoginComSenha() {
-    return autenticacaoRepository.contaAtualTemLoginComSenha;
-  }
-
-  bool _rotaTotp(String rota) =>
-      rota == '/loginTotp' || rota == '/loginTotpSetup';
-
-  bool _rotaDestinoEstavel(String rota) {
-    return rota == '/HomeEventScreen' ||
-        rota.startsWith('/HomeEventScreen/') ||
-        rota == '/welcome' ||
-        rota == '/fornecedor' ||
-        rota == '/fornecedores' ||
-        rota == '/admin' ||
-        rota == '/areaconvidado' ||
-        rota.startsWith('/areaconvidado') ||
-        rota == '/conviteNaoEncontrado';
-  }
-
-  /// Subtelas abertas com Get.to() (ex.: lista de fornecedores) não são
-  /// `/HomeEventScreen`. Sem esta guarda, qualquer revalidação de sessão
-  /// manda o usuário de volta à splash e ela fica eterna.
-  bool _usuarioJaNavegandoNaApp(String rota) {
-    if (usuarioLogado.value == null) return false;
-    if (rota.isEmpty) return false;
-    if (rota == '/splash' ||
-        rota == '/' ||
-        rota == '/notfound' ||
-        rota == '/role' ||
-        rota == '/login' ||
-        rota == '/register' ||
-        rota == '/forgotPassword' ||
-        _rotaTotp(rota)) {
-      return false;
-    }
-    return true;
-  }
-
-  void _limparEstadoTotp() {
-    totpVerificadoNestaSessao = false;
-    _storage.remove(_chaveLoginMetodo);
-  }
+  void marcarTotpVerificado() => totp.marcarVerificado();
 
   void _sincronizarUsuarioController(Usuario usuario) {
     final controller = _resolverUsuarioController();
@@ -791,26 +749,16 @@ class AppController extends GetxController {
   }
 
   /// 🔹 Adiciona serviço à lista (evita duplicatas)
-  void adicionarServico(ServicoCotado servico) {
-    if (!servicosSelecionados.any((s) => s.idProduto == servico.idProduto)) {
-      servicosSelecionados.add(servico);
-    }
-  }
+  void adicionarServico(ServicoCotado servico) => carrinho.adicionar(servico);
 
   /// 🔹 Remove serviço da lista
-  void removerServico(String idProduto) {
-    servicosSelecionados.removeWhere((s) => s.idProduto == idProduto);
-  }
+  void removerServico(String idProduto) => carrinho.remover(idProduto);
 
   /// 🔹 Limpa todos os serviços selecionados
-  void limparServicosSelecionados() {
-    servicosSelecionados.clear();
-  }
+  void limparServicosSelecionados() => carrinho.limpar();
 
   /// 🔹 Verifica se um serviço está selecionado
-  bool isServicoSelecionado(String idProduto) {
-    return servicosSelecionados.any((s) => s.idProduto == idProduto);
-  }
+  bool isServicoSelecionado(String idProduto) => carrinho.contem(idProduto);
 
   @override
   void onClose() {
