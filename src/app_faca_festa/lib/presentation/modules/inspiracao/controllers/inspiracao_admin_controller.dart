@@ -7,7 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
-import 'package:app_faca_festa/domain/seeds/inspiracao_seed.dart';
+import 'package:app_faca_festa/data/seeds/inspiracao_seed.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
 
 class ImagemGaleriaUploadPendente {

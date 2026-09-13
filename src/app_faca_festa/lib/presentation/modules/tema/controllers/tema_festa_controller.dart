@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:app_faca_festa/domain/entities/tema_festa.dart';
 import 'package:app_faca_festa/domain/exceptions/tema_festa_exception.dart';
-import 'package:app_faca_festa/domain/seeds/tema_festa_seed.dart';
+import 'package:app_faca_festa/data/seeds/tema_festa_seed.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_temas_festa.dart';
 import 'package:app_faca_festa/presentation/modules/tema/tema_festa_view_model.dart';
 
