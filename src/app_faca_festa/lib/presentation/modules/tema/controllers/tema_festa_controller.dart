@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:app_faca_festa/domain/entities/tema_festa.dart';
 import 'package:app_faca_festa/domain/exceptions/tema_festa_exception.dart';
-import 'package:app_faca_festa/data/seeds/tema_festa_seed.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_temas_festa.dart';
 import 'package:app_faca_festa/presentation/modules/tema/tema_festa_view_model.dart';
 
@@ -49,7 +48,8 @@ class TemaFestaController extends GetxController {
   List<TemaFestaViewModel> temasParaTipo(String? nomeTipoEvento) {
     return temasAtivos.where((tema) {
       if (tema.compativelComTipo(nomeTipoEvento)) return true;
-      final seed = temasFestaIniciais
+      final seed = _temasFesta
+          .catalogoInicial()
           .firstWhereOrNull((item) => item.idTema == tema.idTema);
       return seed?.compativelComTipo(nomeTipoEvento) == true;
     }).toList();
@@ -173,7 +173,6 @@ class TemaFestaController extends GetxController {
 
   Future<void> popularTemasIniciais() async {
     await _temasFesta.popularTemasIniciais(
-      temasIniciais: temasFestaIniciais,
       temasExistentes: temas,
     );
     await carregar();

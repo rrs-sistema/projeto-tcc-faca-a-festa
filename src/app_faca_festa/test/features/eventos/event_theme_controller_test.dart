@@ -199,8 +199,10 @@ class _TemaFestaRepositoryFake implements TemaFestaRepository {
   Future<void> removerCapaStorage({required String idTema}) async {}
 
   @override
+  List<TemaFesta> catalogoInicial() => const [];
+
+  @override
   Future<void> popularTemasIniciais({
-    required List<TemaFesta> temasIniciais,
     required List<TemaFesta> temasExistentes,
   }) async {}
 }

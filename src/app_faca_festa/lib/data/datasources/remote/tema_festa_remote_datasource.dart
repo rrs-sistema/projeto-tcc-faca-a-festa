@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
 import '../../models/evento/tema_festa_model.dart';
+import '../../seeds/tema_festa_seed.dart';
 import '../../services/functions/callable_https_client.dart';
 
 class TemaFestaRemoteDatasource {
@@ -60,11 +61,10 @@ class TemaFestaRemoteDatasource {
   }
 
   Future<void> popularTemasIniciais({
-    required List<TemaFestaModel> temasIniciais,
     required List<TemaFestaModel> temasExistentes,
   }) async {
     final batch = _db.batch();
-    for (final tema in temasIniciais) {
+    for (final tema in temasFestaIniciais.map(TemaFestaModel.fromEntity)) {
       final existente = temasExistentes
           .firstWhereOrNull((item) => item.idTema == tema.idTema);
       final mapa = Map<String, dynamic>.from(tema.toMap());

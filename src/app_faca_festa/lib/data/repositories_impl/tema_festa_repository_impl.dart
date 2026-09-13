@@ -3,6 +3,7 @@ import 'package:app_faca_festa/domain/exceptions/tema_festa_exception.dart';
 import 'package:app_faca_festa/domain/repositories/tema_festa_repository.dart';
 import '../datasources/remote/tema_festa_remote_datasource.dart';
 import '../models/evento/tema_festa_model.dart';
+import '../seeds/tema_festa_seed.dart';
 import '../services/functions/callable_https_client.dart';
 
 class TemaFestaRepositoryImpl implements TemaFestaRepository {
@@ -48,12 +49,16 @@ class TemaFestaRepositoryImpl implements TemaFestaRepository {
   }
 
   @override
+  @override
+  List<TemaFesta> catalogoInicial() {
+    return List<TemaFesta>.unmodifiable(temasFestaIniciais);
+  }
+
+  @override
   Future<void> popularTemasIniciais({
-    required List<TemaFesta> temasIniciais,
     required List<TemaFesta> temasExistentes,
   }) {
     return remote.popularTemasIniciais(
-      temasIniciais: temasIniciais.map(TemaFestaModel.fromEntity).toList(),
       temasExistentes: temasExistentes.map(TemaFestaModel.fromEntity).toList(),
     );
   }

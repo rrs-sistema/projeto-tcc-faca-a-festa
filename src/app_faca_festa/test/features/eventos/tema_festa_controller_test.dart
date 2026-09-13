@@ -70,7 +70,6 @@ void main() {
     await controller.popularTemasIniciais();
 
     expect(repository.populacoes, hasLength(1));
-    expect(repository.populacoes.single.temasIniciais, isNotEmpty);
     expect(repository.carregarChamadas, 1);
     expect(controller.temas.single.idTema, 'carregado');
   });
@@ -139,13 +138,14 @@ class _TemaFestaRepositoryFake implements TemaFestaRepository {
   }
 
   @override
+  List<TemaFesta> catalogoInicial() => const [];
+
+  @override
   Future<void> popularTemasIniciais({
-    required List<TemaFesta> temasIniciais,
     required List<TemaFesta> temasExistentes,
   }) async {
     populacoes.add(
       _PopulacaoTemas(
-        temasIniciais: temasIniciais,
         temasExistentes: temasExistentes,
       ),
     );
@@ -154,10 +154,8 @@ class _TemaFestaRepositoryFake implements TemaFestaRepository {
 
 class _PopulacaoTemas {
   const _PopulacaoTemas({
-    required this.temasIniciais,
     required this.temasExistentes,
   });
 
-  final List<TemaFesta> temasIniciais;
   final List<TemaFesta> temasExistentes;
 }

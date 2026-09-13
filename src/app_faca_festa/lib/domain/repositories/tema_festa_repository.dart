@@ -16,8 +16,9 @@ abstract class TemaFestaRepository {
 
   Future<void> removerCapaStorage({required String idTema});
 
+  List<TemaFesta> catalogoInicial();
+
   Future<void> popularTemasIniciais({
-    required List<TemaFesta> temasIniciais,
     required List<TemaFesta> temasExistentes,
   });
 }

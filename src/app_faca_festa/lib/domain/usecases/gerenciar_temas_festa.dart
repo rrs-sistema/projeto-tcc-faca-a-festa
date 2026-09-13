@@ -33,12 +33,14 @@ class GerenciarTemasFesta {
     return repository.removerCapaStorage(idTema: idTema);
   }
 
+  List<TemaFesta> catalogoInicial() {
+    return repository.catalogoInicial();
+  }
+
   Future<void> popularTemasIniciais({
-    required List<TemaFesta> temasIniciais,
     required List<TemaFesta> temasExistentes,
   }) {
     return repository.popularTemasIniciais(
-      temasIniciais: temasIniciais,
       temasExistentes: temasExistentes,
     );
   }
