@@ -19,8 +19,6 @@ class FornecedorListaAdmin {
     required this.categoriasFornecedor,
     required this.categorias,
     required this.subCategorias,
-    required this.categoriasServico,
-    required this.subcategoriasServico,
     required this.allServicosFornecedor,
     required this.filtroNome,
     required this.filtroCidade,
@@ -44,8 +42,6 @@ class FornecedorListaAdmin {
   final RxList<FornecedorCategoria> categoriasFornecedor;
   final RxList<CategoriaServico> categorias;
   final RxList<SubcategoriaServico> subCategorias;
-  final RxList<Map<String, dynamic>> categoriasServico;
-  final RxList<Map<String, dynamic>> subcategoriasServico;
   final RxList<FornecedorProdutoServico> allServicosFornecedor;
   final RxString filtroNome;
   final RxnString filtroCidade;
@@ -78,9 +74,7 @@ class FornecedorListaAdmin {
       fornecedores.value = snapshot.fornecedores;
       enderecos.value = snapshot.enderecos;
       categoriasFornecedor.value = snapshot.categoriasFornecedor;
-      categoriasServico.value = snapshot.categoriasServico;
       categorias.value = snapshot.categorias;
-      subcategoriasServico.value = snapshot.subcategoriasServico;
       subCategorias.value = snapshot.subcategorias;
       allServicosFornecedor.assignAll(snapshot.servicosFornecedor);
     } catch (e) {

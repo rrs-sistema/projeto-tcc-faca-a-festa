@@ -304,10 +304,7 @@ class _FornecedoresAdminListScreenState
         .toSet()
         .toList();
 
-    final categorias = controller.categoriasServico
-        .where((c) => c['ativo'] != false)
-        .map((c) => {'id': c['id'], 'nome': c['nome']})
-        .toList();
+    final categorias = controller.categorias.where((c) => c.ativo).toList();
 
     String cidadeSelecionada = controller.filtroCidade.value ?? '';
     String categoriaSelecionada = controller.filtroCategoria.value ?? '';
@@ -327,9 +324,8 @@ class _FornecedoresAdminListScreenState
       isScrollControlled: true,
       builder: (_) => StatefulBuilder(
         builder: (context, setState) {
-          final subcategorias = controller.subcategoriasServico
-              .where((s) => s['id_categoria'] == categoriaSelecionada)
-              .map((s) => {'id': s['id'], 'nome': s['nome']})
+          final subcategorias = controller.subCategorias
+              .where((s) => s.idCategoria == categoriaSelecionada)
               .toList();
 
           return Padding(
@@ -376,8 +372,10 @@ class _FornecedoresAdminListScreenState
                         : categoriaSelecionada,
                     items: categorias
                         .map((c) => DropdownMenuItem<String>(
-                              value: c['id'] as String?,
-                              child: Text(c['nome'] as String? ?? 'Sem nome'),
+                              value: c.id,
+                              child: Text(
+                                c.nome.trim().isEmpty ? 'Sem nome' : c.nome,
+                              ),
                             ))
                         .toList(),
                     onChanged: (v) =>
@@ -395,8 +393,8 @@ class _FornecedoresAdminListScreenState
                           : subcategoriaSelecionada,
                       items: subcategorias
                           .map((s) => DropdownMenuItem<String>(
-                                value: s['id'] as String?,
-                                child: Text(s['nome'] as String? ?? ''),
+                                value: s.id,
+                                child: Text(s.nome),
                               ))
                           .toList(),
                       onChanged: (v) =>

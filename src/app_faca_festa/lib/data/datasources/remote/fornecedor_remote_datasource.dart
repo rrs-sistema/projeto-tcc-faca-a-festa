@@ -115,29 +115,11 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
         .toList();
 
     final catServSnap = await firestore.collection('categoria_servico').get();
-    final categoriasServico = catServSnap.docs
-        .map((d) => {
-              'id': d.data()['id'] ?? d.id,
-              'nome': d.data()['nome'],
-              'descricao': d.data()['descricao'],
-              'ativo': d.data()['ativo'],
-            })
-        .toList();
     final categorias = catServSnap.docs
         .map((d) => CategoriaServicoModel.fromMap(d.data(), documentId: d.id))
         .toList();
 
     final subcatSnap = await firestore.collection('subcategoria_servico').get();
-    final subcategoriasServico = subcatSnap.docs
-        .map((d) => {
-              'id': d.data()['id'] ?? d.id,
-              'nome': d.data()['nome'],
-              'id_categoria':
-                  d.data()['id_categoria'] ?? d.data()['idCategoria'],
-              'descricao': d.data()['descricao'],
-              'ativo': d.data()['ativo'],
-            })
-        .toList();
     final subcategorias = subcatSnap.docs
         .map(
           (d) => SubcategoriaServicoModel.fromMap(d.data(), documentId: d.id),
@@ -158,9 +140,7 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
       fornecedores: listaFornecedores,
       enderecos: enderecos,
       categoriasFornecedor: categoriasFornecedor,
-      categoriasServico: categoriasServico,
       categorias: categorias,
-      subcategoriasServico: subcategoriasServico,
       subcategorias: subcategorias,
       servicosFornecedor: servicosFornecedor,
     );

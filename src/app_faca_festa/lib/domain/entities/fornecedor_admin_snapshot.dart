@@ -10,9 +10,7 @@ class FornecedorAdminSnapshot {
     required this.fornecedores,
     required this.enderecos,
     required this.categoriasFornecedor,
-    required this.categoriasServico,
     required this.categorias,
-    required this.subcategoriasServico,
     required this.subcategorias,
     required this.servicosFornecedor,
   });
@@ -20,9 +18,7 @@ class FornecedorAdminSnapshot {
   final List<Fornecedor> fornecedores;
   final List<EnderecoUsuario> enderecos;
   final List<FornecedorCategoria> categoriasFornecedor;
-  final List<Map<String, dynamic>> categoriasServico;
   final List<CategoriaServico> categorias;
-  final List<Map<String, dynamic>> subcategoriasServico;
   final List<SubcategoriaServico> subcategorias;
   final List<FornecedorProdutoServico> servicosFornecedor;
 }

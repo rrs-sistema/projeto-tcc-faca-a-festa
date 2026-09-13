@@ -60,8 +60,6 @@ class FornecedorController extends GetxController {
       categoriasFornecedor: categoriasFornecedor,
       categorias: categorias,
       subCategorias: subCategorias,
-      categoriasServico: categoriasServico,
-      subcategoriasServico: subcategoriasServico,
       allServicosFornecedor: allServicosFornecedor,
       filtroNome: filtroNome,
       filtroCidade: filtroCidade,
@@ -153,9 +151,6 @@ class FornecedorController extends GetxController {
 
   final RxList<SubcategoriaServico> subCategorias = <SubcategoriaServico>[].obs;
 
-  final categoriasServico = <Map<String, dynamic>>[].obs;
-  final subcategoriasServico = <Map<String, dynamic>>[].obs;
-
   final isLoadingServicos = false.obs;
   final isLoadingFotos = false.obs;
 
@@ -194,8 +189,6 @@ class FornecedorController extends GetxController {
     fotosServico.clear();
     categorias.clear();
     subCategorias.clear();
-    categoriasServico.clear();
-    subcategoriasServico.clear();
     await catalogo.cancelarEscuta();
     await painel.cancelarEscutas();
     ai.limparAiFornecedor();

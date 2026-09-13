@@ -13,9 +13,7 @@ class FornecedorAdminSnapshot extends domain.FornecedorAdminSnapshot {
     required List<FornecedorModel> fornecedores,
     required List<EnderecoUsuarioModel> enderecos,
     required List<FornecedorCategoriaModel> categoriasFornecedor,
-    required super.categoriasServico,
     required List<CategoriaServicoModel> categorias,
-    required super.subcategoriasServico,
     required List<SubcategoriaServicoModel> subcategorias,
     required List<FornecedorProdutoServicoModel> servicosFornecedor,
   }) : super(
