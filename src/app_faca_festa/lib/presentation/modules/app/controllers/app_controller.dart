@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
@@ -7,7 +6,6 @@ import 'dart:async';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
-import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/servico_cotado.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
@@ -20,6 +18,7 @@ import 'package:app_faca_festa/presentation/modules/app/controllers/app_carrinho
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_convite_controller.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_destino_rota.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_rotas_sessao.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_sessao_fornecedor.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_totp_sessao.dart';
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
@@ -39,9 +38,9 @@ class AppController extends GetxController {
     GetStorage? storage,
     required this.autenticacaoRepository,
     required this.perfilUsuarioRepository,
-    required this.pushTokenRepository,
+    required PushTokenRepository pushTokenRepository,
     required this.documentos,
-    required this.fornecedores,
+    required GerenciarFornecedores fornecedores,
     required this.convite,
     required this.eventoController,
     required this.orcamentoController,
@@ -68,6 +67,15 @@ class AppController extends GetxController {
               autenticacaoRepository.contaAtualTemLoginComSenha,
         ),
         carrinho = AppCarrinhoCotacao(),
+        sessaoFornecedor = AppSessaoFornecedor(
+          fornecedores: fornecedores,
+          fornecedorController: fornecedorController,
+          theme: themeController,
+          orcamentos: orcamentoController,
+          avaliacoes: avaliacaoController,
+          servicos: servicoController,
+          push: pushTokenRepository,
+        ),
         _auditoria = auditoria,
         _auditoriaResolver = auditoriaResolver,
         _orcamentoGastoController = orcamentoGastoController,
@@ -81,6 +89,10 @@ class AppController extends GetxController {
         _usuarioControllerResolver = usuarioControllerResolver {
     convite.vincular(
       obterUsuario: obterUsuario,
+      carregando: carregando,
+    );
+    sessaoFornecedor.vincular(
+      usuarioLogado: () => usuarioLogado.value,
       carregando: carregando,
     );
   }
@@ -97,7 +109,6 @@ class AppController extends GetxController {
   final RxBool carregando = false.obs;
   final RxBool encerrandoSessao = false.obs;
   StreamSubscription<SessaoUsuario?>? _sessaoSub;
-  StreamSubscription<String>? _fcmTokenSub;
   bool _processandoSessao = false;
   bool _sessaoPendente = false;
   bool devMode = true;
@@ -105,12 +116,11 @@ class AppController extends GetxController {
   static const String _logTag = '[AppController]';
   final AutenticacaoRepository autenticacaoRepository;
   final PerfilUsuarioRepository perfilUsuarioRepository;
-  final PushTokenRepository pushTokenRepository;
   final GerenciarDocumentos documentos;
-  final GerenciarFornecedores fornecedores;
   final AppConviteController convite;
   final AppTotpSessao totp;
   final AppCarrinhoCotacao carrinho;
+  final AppSessaoFornecedor sessaoFornecedor;
 
   // ✅ Injeção de controladores auxiliares
   final EventoController eventoController;
@@ -354,7 +364,7 @@ class AppController extends GetxController {
         // ----------------------------------------------------------
         switch (usuario.tipo) {
           case 'F': // 🧑‍🔧 Fornecedor
-            destino = await _resolverDestinoFornecedor(usuario.idUsuario);
+            destino = await sessaoFornecedor.resolverDestino(usuario.idUsuario);
             break;
 
           case 'C': // 🎁 Convidado
@@ -459,69 +469,8 @@ class AppController extends GetxController {
   }) =>
       convite.redirecionarConvidadoAposLogin(usuario, token: token);
 
-  Future<AppDestinoRota> _resolverDestinoFornecedor(String idUsuario) async {
-    final fornecedor = await fornecedores.buscarPorUsuario(idUsuario);
-
-    if (fornecedor == null) {
-      fornecedorController.fornecedor.value = null;
-      fornecedorController.aptoParaOperar.value = false;
-      return const AppDestinoRota('/fornecedor');
-    }
-
-    fornecedorController.fornecedor.value = fornecedor;
-    fornecedorController.aptoParaOperar.value = fornecedor.aptoParaOperar;
-
-    if (!fornecedor.aptoParaOperar) {
-      return const AppDestinoRota('/fornecedor');
-    }
-
-    await _iniciarPainelOperacionalFornecedor(fornecedor);
-    themeController.aplicarTemaProduto();
-    return const AppDestinoRota('/fornecedor');
-  }
-
-  Future<void> _iniciarPainelOperacionalFornecedor(
-    Fornecedor fornecedor,
-  ) async {
-    await atualizarFcmTokenFornecedor(fornecedor.idUsuario);
-
-    fornecedorController.ouvirMensagensNaoLidas(fornecedor.idUsuario);
-    fornecedorController.iniciarListenerFornecedor(fornecedor.idUsuario);
-    fornecedorController.escutarSolicitacoesPendentes(fornecedor.idUsuario);
-
-    orcamentoController.escutarOrcamentos(fornecedor.idUsuario);
-    avaliacaoController.carregarAvaliacoesFornecedor(fornecedor.idUsuario);
-    servicoController.carregarServicosComDetalhesOtimizado(
-      idFornecedor: fornecedor.idUsuario,
-    );
-  }
-
-  /// Recarrega o cadastro do fornecedor logado. Se o admin já aprovou
-  /// (`apto_para_operar`), abre a home operacional nesta sessão.
-  Future<void> verificarAprovacaoFornecedorPendente() async {
-    final usuario = usuarioLogado.value;
-    if (usuario == null || usuario.tipo != 'F') return;
-    if (carregando.value) return;
-
-    carregando.value = true;
-    try {
-      final destino = await _resolverDestinoFornecedor(usuario.idUsuario);
-      if (fornecedorController.aptoParaOperar.value) {
-        Get.offAllNamed(destino.nome, arguments: destino.argumentos);
-        return;
-      }
-
-      Get.snackbar(
-        'Em análise',
-        'Seu cadastro ainda não foi aprovado pelo administrador.',
-        backgroundColor: Colors.orange.shade400,
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
-    } finally {
-      carregando.value = false;
-    }
-  }
+  Future<void> verificarAprovacaoFornecedorPendente() =>
+      sessaoFornecedor.verificarAprovacaoPendente();
 
   // ------------------------------------------------------------
   // 🔹 Logout
@@ -597,6 +546,7 @@ class AppController extends GetxController {
     await tarefaController.encerrarEscutas();
     await cotacaoController.encerrarEscutas();
     fornecedorController.logoutFornecedor();
+    await sessaoFornecedor.encerrar();
 
     await _resolverOrcamentoGastoController()?.encerrarEscutas();
     await _resolverFornecedorLocalizacaoController()?.encerrarEscutas();
@@ -701,43 +651,6 @@ class AppController extends GetxController {
     return _usuarioControllerResolver?.call();
   }
 
-  Future<void> atualizarFcmTokenFornecedor(String idFornecedor) async {
-    if (!pushTokenRepository.suportaTokenPush) {
-      if (kDebugMode) {
-        print('ℹ️ FCM não suportado nesta plataforma para fornecedor.');
-      }
-      return;
-    }
-
-    try {
-      await pushTokenRepository.solicitarPermissao();
-
-      final token = await pushTokenRepository.obterTokenAtual();
-      if (token == null || token.isEmpty) return;
-
-      await fornecedores.atualizarFcmToken(
-        idFornecedor: idFornecedor,
-        token: token,
-      );
-
-      await _fcmTokenSub?.cancel();
-      _fcmTokenSub = pushTokenRepository.observarAtualizacoesToken().listen((
-        newToken,
-      ) async {
-        if (newToken.isEmpty) return;
-
-        await fornecedores.atualizarFcmToken(
-          idFornecedor: idFornecedor,
-          token: newToken,
-        );
-      });
-    } catch (e) {
-      if (kDebugMode) {
-        print('❌ Erro ao atualizar FCM token do fornecedor: $e');
-      }
-    }
-  }
-
   // ------------------------------------------------------------
   // 🔹 Utilitário genérico
   // ------------------------------------------------------------
@@ -763,7 +676,7 @@ class AppController extends GetxController {
   @override
   void onClose() {
     _sessaoSub?.cancel();
-    _fcmTokenSub?.cancel();
+    sessaoFornecedor.encerrar();
     super.onClose();
   }
 }
