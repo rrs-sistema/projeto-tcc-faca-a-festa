@@ -3,7 +3,6 @@ import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/servico_cotado.dart';
@@ -15,9 +14,8 @@ import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_documentos.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_carrinho_cotacao.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_ciclo_sessao.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_convite_controller.dart';
-import 'package:app_faca_festa/presentation/modules/app/controllers/app_destino_rota.dart';
-import 'package:app_faca_festa/presentation/modules/app/controllers/app_rotas_sessao.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_sessao_fornecedor.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_totp_sessao.dart';
 import 'package:app_faca_festa/presentation/modules/avaliacao/controllers/avaliacao_servico_controller.dart';
@@ -76,8 +74,6 @@ class AppController extends GetxController {
           servicos: servicoController,
           push: pushTokenRepository,
         ),
-        _auditoria = auditoria,
-        _auditoriaResolver = auditoriaResolver,
         _orcamentoGastoController = orcamentoGastoController,
         _orcamentoGastoControllerResolver = orcamentoGastoControllerResolver,
         _fornecedorLocalizacaoController = fornecedorLocalizacaoController,
@@ -87,6 +83,23 @@ class AppController extends GetxController {
         _inspiracaoControllerResolver = inspiracaoControllerResolver,
         _usuarioController = usuarioController,
         _usuarioControllerResolver = usuarioControllerResolver {
+    _cicloSessao = AppCicloSessao(
+      autenticacao: autenticacaoRepository,
+      perfil: perfilUsuarioRepository,
+      convite: convite,
+      totp: totp,
+      carrinho: carrinho,
+      sessaoFornecedor: sessaoFornecedor,
+      eventos: eventoController,
+      orcamentos: orcamentoController,
+      cotacoes: cotacaoController,
+      fornecedor: fornecedorController,
+      tarefas: tarefaController,
+      servicos: servicoController,
+      theme: themeController,
+      auditoria: auditoria,
+      auditoriaResolver: auditoriaResolver,
+    );
     convite.vincular(
       obterUsuario: obterUsuario,
       carregando: carregando,
@@ -95,25 +108,31 @@ class AppController extends GetxController {
       usuarioLogado: () => usuarioLogado.value,
       carregando: carregando,
     );
+    _cicloSessao.vincular(
+      usuarioLogado: usuarioLogado,
+      enderecoPrincipal: enderecoPrincipal,
+      enderecosUsuario: enderecosUsuario,
+      carregando: carregando,
+      encerrandoSessao: encerrandoSessao,
+      contaIncompleta: contaIncompleta,
+      sincronizarUsuarioController: _sincronizarUsuarioController,
+      validarDependenciasHomeEvent: _validarDependenciasHomeEvent,
+      validarDependenciasAdminDashboard: _validarDependenciasAdminDashboard,
+      pararEscutasOpcionais: _pararEscutasOpcionais,
+    );
   }
 
-  // Estado reativo do usuário
   final Rx<Usuario?> usuarioLogado = Rx<Usuario?>(null);
   final Rx<EnderecoUsuario?> enderecoPrincipal = Rx<EnderecoUsuario?>(null);
   final RxList<EnderecoUsuario> enderecosUsuario = <EnderecoUsuario>[].obs;
 
-  /// 🔹 Lista global de serviços selecionados para cotação
   RxList<ServicoCotado> get servicosSelecionados => carrinho.servicos;
 
   final RxBool contaIncompleta = false.obs;
   final RxBool carregando = false.obs;
   final RxBool encerrandoSessao = false.obs;
-  StreamSubscription<SessaoUsuario?>? _sessaoSub;
-  bool _processandoSessao = false;
-  bool _sessaoPendente = false;
   bool devMode = true;
 
-  static const String _logTag = '[AppController]';
   final AutenticacaoRepository autenticacaoRepository;
   final PerfilUsuarioRepository perfilUsuarioRepository;
   final GerenciarDocumentos documentos;
@@ -121,8 +140,8 @@ class AppController extends GetxController {
   final AppTotpSessao totp;
   final AppCarrinhoCotacao carrinho;
   final AppSessaoFornecedor sessaoFornecedor;
+  late final AppCicloSessao _cicloSessao;
 
-  // ✅ Injeção de controladores auxiliares
   final EventoController eventoController;
   final OrcamentoController orcamentoController;
   final CotacaoController cotacaoController;
@@ -131,8 +150,6 @@ class AppController extends GetxController {
   final AvaliacaoServicoController avaliacaoController;
   final ServicoProdutoController servicoController;
   final EventThemeController themeController;
-  final GerenciarAuditoria? _auditoria;
-  final GerenciarAuditoria? Function()? _auditoriaResolver;
   final OrcamentoGastoController? _orcamentoGastoController;
   final OrcamentoGastoController? Function()? _orcamentoGastoControllerResolver;
   final FornecedorLocalizacaoController? _fornecedorLocalizacaoController;
@@ -147,16 +164,10 @@ class AppController extends GetxController {
   void onInit() {
     super.onInit();
 
-    // O token do link é a credencial. Auth anônimo + callable abrem a área
-    // sem cadastro; id_usuario só é gravado depois de conta real.
     convite.capturarTokenInicial();
-
-    _monitorarSessao();
+    _cicloSessao.monitorar();
   }
 
-  // ------------------------------------------------------------
-  // 🔹 Carrega usuário logado e endereço principal
-  // ------------------------------------------------------------
   Future<Usuario?> prepararUsuarioComEndereco() async {
     try {
       final idUsuario = autenticacaoRepository.idUsuarioAtual;
@@ -164,7 +175,6 @@ class AppController extends GetxController {
 
       carregando.value = true;
 
-      // 🔹 1️⃣ Busca o documento do usuário
       final usuario = await perfilUsuarioRepository.buscarUsuario(idUsuario);
       if (usuario == null) {
         debugPrint('⚠️ Usuário não encontrado no Firestore.');
@@ -172,10 +182,11 @@ class AppController extends GetxController {
         return null;
       }
 
-      // 🔹 2️⃣ Busca subcoleção de endereços
       final enderecos =
           await perfilUsuarioRepository.listarEnderecos(idUsuario);
-      _aplicarPerfil(PerfilUsuario(usuario: usuario, enderecos: enderecos));
+      _cicloSessao.aplicarPerfil(
+        PerfilUsuario(usuario: usuario, enderecos: enderecos),
+      );
 
       carregando.value = false;
       return usuarioLogado.value;
@@ -204,251 +215,7 @@ class AppController extends GetxController {
     Get.offAllNamed('/HomeEventScreen');
   }
 
-  void iniciarSessao() {
-    if (_sessaoSub == null) {
-      _monitorarSessao();
-      return;
-    }
-
-    // Auth já está sendo observado e não emite de novo só porque
-    // voltamos ao splash (ex.: após cadastrar um evento).
-    final idUsuario = autenticacaoRepository.idUsuarioAtual;
-    if (idUsuario == null) {
-      unawaited(_processarSessao(null));
-      return;
-    }
-
-    unawaited(_processarSessao(SessaoUsuario(
-      idUsuario: idUsuario,
-      email: autenticacaoRepository.emailUsuarioAtual,
-    )));
-  }
-
-  // ------------------------------------------------------------
-  // 🔹 Monitora sessão do Firebase Auth e redireciona o usuário
-  // ------------------------------------------------------------
-  void _monitorarSessao() {
-    _sessaoSub?.cancel();
-    _sessaoSub = autenticacaoRepository.observarSessao().listen((user) {
-      unawaited(_processarSessao(user));
-    });
-  }
-
-  Future<void> _processarSessao(SessaoUsuario? user) async {
-    if (_processandoSessao) {
-      _sessaoPendente = true;
-      debugPrint(
-        '$_logTag Validação de sessão já em andamento. Nova tentativa será reprocessada.',
-      );
-      return;
-    }
-    _processandoSessao = true;
-
-    try {
-      await Future.delayed(
-          const Duration(milliseconds: 300)); // ✅ pequeno delay
-      final token = convite.tokenConviteAtual();
-
-      if (convite.acessoPorLink.value &&
-          (user == null ||
-              autenticacaoRepository.sessaoAnonima ||
-              autenticacaoRepository.sessaoVisitanteConvite)) {
-        debugPrint(
-            '$_logTag Visita por convite em andamento. Sem redirecionar.');
-        return;
-      }
-
-      if (convite.acessoPorLink.value &&
-          user != null &&
-          !autenticacaoRepository.sessaoAnonima &&
-          !autenticacaoRepository.sessaoVisitanteConvite) {
-        convite.acessoPorLink.value = false;
-      }
-
-      if (user == null) {
-        totp.limpar();
-        if (token != null && token.isNotEmpty) {
-          convite.guardarTokenConvite(token);
-          debugPrint(
-              '$_logTag Token de convite pendente; a tela de convite conduz: $token');
-          return;
-        }
-
-        usuarioLogado.value = null;
-        enderecoPrincipal.value = null;
-        eventoController.limparSessaoAtual();
-
-        if (Get.currentRoute != '/role') Get.offAllNamed('/role');
-        return;
-      }
-
-      if (autenticacaoRepository.sessaoAnonima ||
-          autenticacaoRepository.sessaoVisitanteConvite) {
-        debugPrint('$_logTag Sessão de convite; aguardando área do convidado.');
-        return;
-      }
-
-      final rotaAtual = Get.currentRoute;
-      final noConvite = rotaAtual.startsWith('/convite');
-      if (!noConvite &&
-          !AppRotasSessao.ehTotp(rotaAtual) &&
-          !AppRotasSessao.destinoEstavel(rotaAtual) &&
-          !AppRotasSessao.usuarioJaNavegando(
-            rotaAtual,
-            temUsuario: usuarioLogado.value != null,
-          ) &&
-          (rotaAtual.isEmpty || rotaAtual != '/splash')) {
-        Future.microtask(() {
-          if (AppRotasSessao.ehTotp(Get.currentRoute)) return;
-          if (Get.currentRoute.startsWith('/convite')) return;
-          if (AppRotasSessao.destinoEstavel(Get.currentRoute)) return;
-          if (AppRotasSessao.usuarioJaNavegando(
-            Get.currentRoute,
-            temUsuario: usuarioLogado.value != null,
-          )) {
-            return;
-          }
-          Get.offAllNamed('/splash');
-        });
-      }
-
-      carregando.value = true;
-
-      try {
-        // Busca usuário + endereços
-        final perfil = await _carregarPerfilComTentativas(user.idUsuario);
-
-        if (perfil == null) {
-          throw Exception('Usuário não encontrado no Firestore.');
-        }
-
-        final usuarioTotp = perfil.usuario;
-        if (usuarioTotp.ativo == false) {
-          carregando.value = false;
-          Get.snackbar(
-            'Conta desativada',
-            'Entre em contato com o suporte para reativar o acesso.',
-            backgroundColor: Colors.redAccent,
-            colorText: Colors.white,
-          );
-          await autenticacaoRepository.sair();
-          usuarioLogado.value = null;
-          eventoController.limparSessaoAtual();
-          Get.offAllNamed('/role');
-          return;
-        }
-
-        if (totp.deveExigir()) {
-          carregando.value = false;
-          final metodoEmail = usuarioTotp.mfaMetodo == 'email' ||
-              (usuarioTotp.mfaEmailAtivo && !usuarioTotp.mfaTotpAtivo);
-          final rota = (usuarioTotp.mfaTotpAtivo || usuarioTotp.mfaEmailAtivo)
-              ? '/loginTotp'
-              : '/loginTotpSetup';
-          if (Get.currentRoute != rota) {
-            Get.offAllNamed(
-              rota,
-              arguments: metodoEmail ? {'metodo': 'email'} : {'metodo': 'totp'},
-            );
-          }
-          return;
-        }
-
-        final usuario = _aplicarPerfil(perfil);
-        themeController.definirPapelSessao(usuario.tipo);
-
-        AppDestinoRota destino;
-
-        // ----------------------------------------------------------
-        // 🔹 Lógica de roteamento por tipo de usuário
-        // ----------------------------------------------------------
-        switch (usuario.tipo) {
-          case 'F': // 🧑‍🔧 Fornecedor
-            destino = await sessaoFornecedor.resolverDestino(usuario.idUsuario);
-            break;
-
-          case 'C': // 🎁 Convidado
-            destino = await convite.resolverDestinoConvidado(usuario, token: token);
-            break;
-
-          case 'A': // 🛠️ Administrador
-            themeController.aplicarTemaProduto();
-            servicoController.carregarServicosComDetalhesOtimizado();
-            _validarDependenciasAdminDashboard();
-            destino = const AppDestinoRota('/admin');
-            break;
-
-          default: // 🎉 Organizador
-            await eventoController.carregarEventosDoUsuario(usuario.idUsuario);
-            final evento = eventoController.eventoAtualEntidade;
-
-            if (evento != null) {
-              debugPrint(
-                  '🔹 Evento ativo: ${evento.nomeEvento} (${evento.idEvento})');
-              cotacaoController.ouvirMinhasCotacoes();
-              _validarDependenciasHomeEvent();
-              destino = const AppDestinoRota('/HomeEventScreen');
-            } else {
-              contaIncompleta.value = true;
-              if (Get.currentRoute == '/welcome') {
-                carregando.value = false;
-                return;
-              }
-              destino = const AppDestinoRota('/welcome');
-            }
-            break;
-        }
-
-        carregando.value = false;
-        final rotaDepois = Get.currentRoute;
-        if (AppRotasSessao.destinoEstavel(rotaDepois) ||
-            AppRotasSessao.usuarioJaNavegando(
-              rotaDepois,
-              temUsuario: usuarioLogado.value != null,
-            )) {
-          return;
-        }
-        Get.offAllNamed(destino.nome, arguments: destino.argumentos);
-      } catch (e, s) {
-        carregando.value = false;
-        debugPrint('❌ Erro ao validar sessão: $e\n$s');
-        Get.snackbar(
-          'Erro de sessão',
-          'Não foi possível validar sua conta. Tente novamente.',
-          backgroundColor: Colors.redAccent,
-          colorText: Colors.white,
-        );
-        Get.offAllNamed('/role');
-      }
-    } finally {
-      _processandoSessao = false;
-      if (_sessaoPendente) {
-        _sessaoPendente = false;
-        final idUsuario = autenticacaoRepository.idUsuarioAtual;
-        unawaited(_processarSessao(idUsuario == null
-            ? null
-            : SessaoUsuario(
-                idUsuario: idUsuario,
-                email: autenticacaoRepository.emailUsuarioAtual,
-              )));
-      }
-    }
-  }
-
-  Future<PerfilUsuario?> _carregarPerfilComTentativas(String idUsuario) async {
-    for (var tentativa = 1; tentativa <= 8; tentativa++) {
-      final perfil = await perfilUsuarioRepository.carregarPerfil(idUsuario);
-      if (perfil != null) return perfil;
-
-      debugPrint(
-        '$_logTag Perfil $idUsuario ainda não disponível no Firestore. '
-        'Tentativa $tentativa/8.',
-      );
-      await Future.delayed(const Duration(milliseconds: 350));
-    }
-
-    return null;
-  }
+  void iniciarSessao() => _cicloSessao.iniciar();
 
   RxString get conviteToken => convite.conviteToken;
   RxBool get acessoPorLink => convite.acessoPorLink;
@@ -458,8 +225,7 @@ class AppController extends GetxController {
 
   String? tokenConviteAtual() => convite.tokenConviteAtual();
 
-  void guardarTokenConvite(String token) =>
-      convite.guardarTokenConvite(token);
+  void guardarTokenConvite(String token) => convite.guardarTokenConvite(token);
 
   Future<void> abrirConvite(String token) => convite.abrirConvite(token);
 
@@ -472,90 +238,14 @@ class AppController extends GetxController {
   Future<void> verificarAprovacaoFornecedorPendente() =>
       sessaoFornecedor.verificarAprovacaoPendente();
 
-  // ------------------------------------------------------------
-  // 🔹 Logout
-  // ------------------------------------------------------------
-
   Future<void> logout() async {
-    await _encerrarSessao();
+    await _cicloSessao.encerrar();
   }
 
   Future<void> logoutFornecedor() async {
-    await _encerrarSessao(limparFornecedorAntes: true);
+    await _cicloSessao.encerrar(limparFornecedorAntes: true);
   }
 
-  Future<void> _encerrarSessao({bool limparFornecedorAntes = false}) async {
-    if (encerrandoSessao.value) return;
-    encerrandoSessao.value = true;
-    try {
-      if (limparFornecedorAntes) {
-        fornecedorController.logoutFornecedor();
-      }
-
-      await _sessaoSub?.cancel();
-      _sessaoSub = null;
-
-      await _pararEscutasDaSessao();
-      await _registrarLogoutAuditoria();
-
-      await autenticacaoRepository.sair();
-      usuarioLogado.value = null;
-      enderecoPrincipal.value = null;
-      enderecosUsuario.clear();
-      carrinho.limpar();
-      convite.limpar();
-      totp.limpar();
-      themeController.definirPapelSessao(null);
-      themeController.aplicarTemaProduto();
-      Get.offAllNamed('/role');
-      _monitorarSessao();
-    } finally {
-      encerrandoSessao.value = false;
-    }
-  }
-
-  Future<void> _registrarLogoutAuditoria() async {
-    try {
-      final auditoria = _auditoria ?? _auditoriaResolver?.call();
-      if (auditoria == null) return;
-
-      final usuario = usuarioLogado.value;
-      await auditoria.registrar(
-        RegistroAuditoria(
-          acao: 'LOGOUT_REALIZADO',
-          resumo: 'Logout realizado pelo usuário.',
-          entidadeTipo: 'sessao',
-          entidadeId: autenticacaoRepository.idUsuarioAtual,
-          entidadeNome:
-              usuario?.email ?? autenticacaoRepository.emailUsuarioAtual,
-          detalhe: {
-            'tipo': usuario?.tipo,
-            'email': usuario?.email ?? autenticacaoRepository.emailUsuarioAtual,
-          },
-          rota: Get.currentRoute,
-        ),
-      );
-    } catch (_) {
-      // Auditoria de logout não pode impedir o encerramento da sessão.
-    }
-  }
-
-  Future<void> _pararEscutasDaSessao() async {
-    await eventoController.encerrarEscutas();
-    await orcamentoController.encerrarEscutas();
-    await tarefaController.encerrarEscutas();
-    await cotacaoController.encerrarEscutas();
-    fornecedorController.logoutFornecedor();
-    await sessaoFornecedor.encerrar();
-
-    await _resolverOrcamentoGastoController()?.encerrarEscutas();
-    await _resolverFornecedorLocalizacaoController()?.encerrarEscutas();
-    await _resolverInspiracaoController()?.encerrarEscutas();
-  }
-
-  // ------------------------------------------------------------
-  // 🔹 Usuários (CRUD básico)
-  // ------------------------------------------------------------
   Future<void> salvarUsuario(Usuario usuario) async {
     await perfilUsuarioRepository.salvarUsuario(usuario);
     usuarioLogado.value = usuario;
@@ -563,32 +253,6 @@ class AppController extends GetxController {
 
   Future<Usuario?> obterUsuario(String id) async {
     return perfilUsuarioRepository.buscarUsuario(id);
-  }
-
-  Usuario _aplicarPerfil(PerfilUsuario perfil) {
-    final usuario = perfil.usuario;
-    final enderecos = perfil.enderecos;
-
-    enderecosUsuario.assignAll(enderecos);
-    if (enderecos.isEmpty) {
-      enderecoPrincipal.value = null;
-      usuarioLogado.value = usuario;
-      _sincronizarUsuarioController(usuario);
-      return usuario;
-    }
-
-    final principal = enderecos.firstWhere(
-      (endereco) => endereco.principal,
-      orElse: () => enderecos.first,
-    );
-    enderecoPrincipal.value = principal;
-    final usuarioComEndereco = usuario.copyWith(
-      cidade: principal.nomeCidade,
-      uf: principal.uf,
-    );
-    usuarioLogado.value = usuarioComEndereco;
-    _sincronizarUsuarioController(usuarioComEndereco);
-    return usuarioComEndereco;
   }
 
   void marcarLoginComSenha() => totp.marcarLoginComSenha();
@@ -651,9 +315,12 @@ class AppController extends GetxController {
     return _usuarioControllerResolver?.call();
   }
 
-  // ------------------------------------------------------------
-  // 🔹 Utilitário genérico
-  // ------------------------------------------------------------
+  Future<void> _pararEscutasOpcionais() async {
+    await _resolverOrcamentoGastoController()?.encerrarEscutas();
+    await _resolverFornecedorLocalizacaoController()?.encerrarEscutas();
+    await _resolverInspiracaoController()?.encerrarEscutas();
+  }
+
   Future<void> excluirDocumento(String colecao, String idDocumento) async {
     await documentos.excluirDocumento(
       colecao: colecao,
@@ -661,21 +328,17 @@ class AppController extends GetxController {
     );
   }
 
-  /// 🔹 Adiciona serviço à lista (evita duplicatas)
   void adicionarServico(ServicoCotado servico) => carrinho.adicionar(servico);
 
-  /// 🔹 Remove serviço da lista
   void removerServico(String idProduto) => carrinho.remover(idProduto);
 
-  /// 🔹 Limpa todos os serviços selecionados
   void limparServicosSelecionados() => carrinho.limpar();
 
-  /// 🔹 Verifica se um serviço está selecionado
   bool isServicoSelecionado(String idProduto) => carrinho.contem(idProduto);
 
   @override
   void onClose() {
-    _sessaoSub?.cancel();
+    unawaited(_cicloSessao.cancelarEscuta());
     sessaoFornecedor.encerrar();
     super.onClose();
   }
