@@ -1,8 +1,10 @@
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria_resumo.dart';
+
 class FornecedorCategoria {
   final String idFornecedor;
   final String idCategoria;
   final String? nomeCategoria;
-  final List<Map<String, dynamic>> subcategorias;
+  final List<FornecedorSubcategoriaResumo> subcategorias;
   final DateTime? dataCadastro;
 
   const FornecedorCategoria({
@@ -17,7 +19,7 @@ class FornecedorCategoria {
     String? idFornecedor,
     String? idCategoria,
     String? nomeCategoria,
-    List<Map<String, dynamic>>? subcategorias,
+    List<FornecedorSubcategoriaResumo>? subcategorias,
     DateTime? dataCadastro,
   }) {
     return FornecedorCategoria(

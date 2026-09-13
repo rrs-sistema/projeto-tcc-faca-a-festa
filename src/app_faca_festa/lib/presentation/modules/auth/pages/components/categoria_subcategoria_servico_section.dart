@@ -436,7 +436,7 @@ class _HorizontalScrollChipsState extends State<_HorizontalScrollChips> {
         child: Row(
           children: widget.subcats.map((sub) {
             final selecionada = widget.catSel.subcategorias
-                .any((s) => s['idSubcategoria'] == sub.id);
+                .any((s) => s.idSubcategoria == sub.id);
             return Padding(
               padding: const EdgeInsets.only(right: 8),
               child: FilterChip(

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria_resumo.dart';
 
 
 class FornecedorCategoriaModel extends FornecedorCategoria {
@@ -17,7 +18,7 @@ class FornecedorCategoriaModel extends FornecedorCategoria {
       'id_fornecedor': idFornecedor,
       'id_categoria': idCategoria,
       'nome_categoria': nomeCategoria,
-      'subcategorias': subcategorias,
+      'subcategorias': subcategorias.map(_subcategoriaToMap).toList(),
       // ✅ grava data local (evita erro de timestamp em array)
       'data_cadastro': dataCadastro != null
           ? Timestamp.fromDate(dataCadastro!)
@@ -30,9 +31,7 @@ class FornecedorCategoriaModel extends FornecedorCategoria {
       idFornecedor: map['id_fornecedor'] ?? '',
       idCategoria: map['id_categoria'] ?? '',
       nomeCategoria: map['nome_categoria'],
-      subcategorias: (map['subcategorias'] != null)
-          ? List<Map<String, dynamic>>.from(map['subcategorias'])
-          : [],
+      subcategorias: _readSubcategorias(map['subcategorias']),
       dataCadastro: map['data_cadastro'] is Timestamp
           ? (map['data_cadastro'] as Timestamp).toDate()
           : null,
@@ -44,7 +43,7 @@ class FornecedorCategoriaModel extends FornecedorCategoria {
     String? idFornecedor,
     String? idCategoria,
     String? nomeCategoria,
-    List<Map<String, dynamic>>? subcategorias,
+    List<FornecedorSubcategoriaResumo>? subcategorias,
     DateTime? dataCadastro,
   }) {
     return FornecedorCategoriaModel(
@@ -61,8 +60,48 @@ class FornecedorCategoriaModel extends FornecedorCategoria {
       idFornecedor: categoria.idFornecedor,
       idCategoria: categoria.idCategoria,
       nomeCategoria: categoria.nomeCategoria,
-      subcategorias: categoria.subcategorias,
+      subcategorias: List<FornecedorSubcategoriaResumo>.from(
+        categoria.subcategorias,
+      ),
       dataCadastro: categoria.dataCadastro,
     );
+  }
+
+  static List<FornecedorSubcategoriaResumo> _readSubcategorias(dynamic value) {
+    if (value is! List) return const <FornecedorSubcategoriaResumo>[];
+
+    return value
+        .whereType<Map>()
+        .map((item) {
+          final map = Map<String, dynamic>.from(item);
+          return FornecedorSubcategoriaResumo(
+            idSubcategoria: (map['idSubcategoria'] ??
+                    map['id_subcategoria'] ??
+                    '')
+                .toString()
+                .trim(),
+            nomeSubcategoria: (map['nomeSubcategoria'] ??
+                    map['nome_subcategoria'] ??
+                    map['subcategoria'] ??
+                    map['nome'] ??
+                    '')
+                .toString()
+                .trim(),
+          );
+        })
+        .where(
+          (sub) =>
+              sub.idSubcategoria.isNotEmpty || sub.nomeSubcategoria.isNotEmpty,
+        )
+        .toList();
+  }
+
+  static Map<String, dynamic> _subcategoriaToMap(
+    FornecedorSubcategoriaResumo subcategoria,
+  ) {
+    return {
+      'idSubcategoria': subcategoria.idSubcategoria,
+      'nomeSubcategoria': subcategoria.nomeSubcategoria,
+    };
   }
 }

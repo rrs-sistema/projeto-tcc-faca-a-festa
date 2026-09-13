@@ -9,6 +9,7 @@ import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria_resumo.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
 import 'package:app_faca_festa/domain/entities/servico_produto.dart';
 import 'package:app_faca_festa/domain/entities/subcategoria_servico.dart';
@@ -535,20 +536,20 @@ class RegisterController extends GetxController {
     if (index == -1) return;
 
     final atual = categoriasSelecionadas[index];
-    final subcats =
-        List<Map<String, dynamic>>.from((atual as dynamic).subcategorias ?? []);
+    final subcats = List<FornecedorSubcategoriaResumo>.from(atual.subcategorias);
 
     if (selected) {
-      subcats.add({
-        'idSubcategoria': sub.id,
-        'nomeSubcategoria': sub.nome,
-      });
+      subcats.add(
+        FornecedorSubcategoriaResumo(
+          idSubcategoria: sub.id,
+          nomeSubcategoria: sub.nome,
+        ),
+      );
     } else {
-      subcats.removeWhere((s) => s['idSubcategoria'] == sub.id);
+      subcats.removeWhere((s) => s.idSubcategoria == sub.id);
     }
 
-    categoriasSelecionadas[index] =
-        atual.copyWith(subcategorias: subcats.cast<Map<String, dynamic>>());
+    categoriasSelecionadas[index] = atual.copyWith(subcategorias: subcats);
     categoriasSelecionadas.refresh();
   }
 
