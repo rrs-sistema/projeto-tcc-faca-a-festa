@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
@@ -433,9 +434,8 @@ class FornecedorController extends GetxController {
   Future<void> atualizarEstatisticasFornecedor() =>
       painel.atualizarEstatisticas();
 
-  Future<List<Map<String, dynamic>>>
-      buscarSolicitacoesPendentesDetalhadas() =>
-          painel.listarSolicitacoesPendentesDetalhadas();
+  Future<List<Cotacao>> buscarSolicitacoesPendentesDetalhadas() =>
+      painel.listarSolicitacoesPendentesDetalhadas();
 
   void aplicarFiltros({
     String? nome,

@@ -1,3 +1,4 @@
+import '../entities/cotacao.dart';
 import '../entities/evento.dart';
 import '../entities/fornecedor.dart';
 import '../entities/fornecedor_admin_snapshot.dart';
@@ -32,7 +33,7 @@ abstract interface class FornecedorRepository {
 
   Future<List<Fornecedor>> listarFornecedoresDoEvento(String idEvento);
 
-  Future<List<Map<String, dynamic>>> listarSolicitacoesPendentesDetalhadas(
+  Future<List<Cotacao>> listarSolicitacoesPendentesDetalhadas(
     String idFornecedor,
   );
 

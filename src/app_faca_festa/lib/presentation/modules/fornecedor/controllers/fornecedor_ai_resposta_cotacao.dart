@@ -1,13 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao_ai.dart';
 import 'package:app_faca_festa/domain/services/fornecedor_ai.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
-import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_ai_cotacao_leitura.dart';
 
 /// Gera sugestão de resposta de cotação. Não envia nem grava no Firestore.
 class FornecedorAiRespostaCotacao {
@@ -47,10 +47,10 @@ class FornecedorAiRespostaCotacao {
   }
 
   Future<SugestaoRespostaCotacaoAi> gerar({
-    required dynamic solicitacao,
+    required Cotacao solicitacao,
     bool forceRefresh = false,
   }) async {
-    final idCotacao = FornecedorAiCotacaoLeitura.lerIdCotacao(solicitacao);
+    final idCotacao = solicitacao.id.trim();
 
     if (idCotacao.isEmpty) {
       return _fallback(
@@ -83,7 +83,7 @@ class FornecedorAiRespostaCotacao {
       carregandoPorCotacao[idCotacao] = true;
       isLoading.value = true;
 
-      final input = FornecedorAiCotacaoLeitura.montarInput(
+      final input = FornecedorAiCotacaoInput.fromCotacao(
         solicitacao,
         idFornecedor: fornecedorAtual.idFornecedor,
       );

@@ -1,4 +1,5 @@
 import '../entities/avaliacao_servico.dart';
+import '../entities/cotacao.dart';
 import '../entities/evento.dart';
 import '../entities/fornecedor.dart';
 import '../entities/fornecedor_interacao.dart';
@@ -83,6 +84,23 @@ class FornecedorAiCotacaoInput {
     this.visualizadoEm,
     this.dataResposta,
   });
+
+  factory FornecedorAiCotacaoInput.fromCotacao(
+    Cotacao cotacao, {
+    String? idFornecedor,
+  }) {
+    return FornecedorAiCotacaoInput(
+      idCotacao: cotacao.id,
+      idEvento: cotacao.idEvento,
+      idFornecedor: idFornecedor,
+      idOrganizador: cotacao.idUsuarioSolicitante,
+      categoriaSolicitada: cotacao.categoriaNome,
+      mensagemCliente: cotacao.descricao,
+      statusCotacao: cotacao.status.firestoreValue,
+      valorReferencia: cotacao.valorEstimadoTotal,
+      dataSolicitacao: cotacao.dataCadastro,
+    );
+  }
 
   FornecedorAiCotacaoInput copyWith({
     String? idCotacao,

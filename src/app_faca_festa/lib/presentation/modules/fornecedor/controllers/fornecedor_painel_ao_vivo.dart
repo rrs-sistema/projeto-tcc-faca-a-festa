@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
@@ -135,7 +136,7 @@ class FornecedorPainelAoVivo {
     }
   }
 
-  Future<List<Map<String, dynamic>>> listarSolicitacoesPendentesDetalhadas() {
+  Future<List<Cotacao>> listarSolicitacoesPendentesDetalhadas() {
     final f = fornecedor.value;
     if (f == null) return Future.value(const []);
     return _usecase().listarSolicitacoesPendentesDetalhadas(f.idFornecedor);

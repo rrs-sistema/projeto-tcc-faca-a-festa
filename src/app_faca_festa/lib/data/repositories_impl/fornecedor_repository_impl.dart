@@ -2,6 +2,7 @@ import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_produto_servico.dart';
 import 'package:app_faca_festa/domain/repositories/fornecedor_repository.dart';
 import '../datasources/remote/fornecedor_remote_datasource.dart';
+import '../models/cotacao/cotacao_model.dart';
 import '../models/evento/evento_model.dart';
 import '../models/fornecedor/fornecedor_admin_snapshot.dart';
 import '../models/fornecedor/fornecedor_estatisticas_model.dart';
@@ -71,7 +72,7 @@ class FornecedorRepositoryImpl implements FornecedorRepository {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listarSolicitacoesPendentesDetalhadas(
+  Future<List<CotacaoModel>> listarSolicitacoesPendentesDetalhadas(
     String idFornecedor,
   ) {
     return remote.listarSolicitacoesPendentesDetalhadas(idFornecedor);

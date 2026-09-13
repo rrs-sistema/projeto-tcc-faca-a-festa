@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
+import '../../models/cotacao/cotacao_model.dart';
 import '../../models/endereco/endereco_usuario.dart';
 import '../../models/evento/evento_model.dart';
 import '../../models/fornecedor/fornecedor_admin_snapshot.dart';
@@ -41,7 +42,7 @@ abstract interface class FornecedorRemoteDatasource {
 
   Future<List<FornecedorModel>> listarFornecedoresDoEvento(String idEvento);
 
-  Future<List<Map<String, dynamic>>> listarSolicitacoesPendentesDetalhadas(
+  Future<List<CotacaoModel>> listarSolicitacoesPendentesDetalhadas(
     String idFornecedor,
   );
 
@@ -398,13 +399,13 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> listarSolicitacoesPendentesDetalhadas(
+  Future<List<CotacaoModel>> listarSolicitacoesPendentesDetalhadas(
     String idFornecedor,
   ) async {
     final id = idFornecedor.trim();
-    if (id.isEmpty) return <Map<String, dynamic>>[];
+    if (id.isEmpty) return <CotacaoModel>[];
 
-    final resultado = <Map<String, dynamic>>[];
+    final resultado = <CotacaoModel>[];
     final snapshot = await firestore
         .collectionGroup('fornecedores')
         .where('id_fornecedor', isEqualTo: id)
@@ -412,29 +413,18 @@ class FirebaseFornecedorRemoteDatasource implements FornecedorRemoteDatasource {
         .get();
 
     for (final doc in snapshot.docs) {
-      final dataFornecedor = doc.data();
       final cotacaoRef = doc.reference.parent.parent;
       if (cotacaoRef == null) continue;
 
       final cotacaoSnap = await cotacaoRef.get();
       if (!cotacaoSnap.exists) continue;
 
-      final dataCotacao = cotacaoSnap.data() ?? <String, dynamic>{};
-      resultado.add({
-        'idCotacao': cotacaoRef.id,
-        'categoriaNome': dataCotacao['categoria_nome'] ?? 'Cotação',
-        'descricao': dataCotacao['observacao'] ?? '',
-        'dataEnvio': dataCotacao['data_envio'],
-        'dataLimite': dataCotacao['data_limite_resposta'],
-        'status': dataCotacao['status'],
-        'idEvento': dataCotacao['id_evento'],
-        'idUsuarioSolicitante': dataCotacao['id_usuario_solicitante'],
-        'prazoEntrega': dataFornecedor['prazo_entrega'],
-        'condicaoPagamento': dataFornecedor['condicao_pagamento'],
-        'observacaoFornecedor': dataFornecedor['observacao_fornecedor'],
-        'nomeSolicitante': dataCotacao['nome_usuario_solicitante'],
-        'valorEstimadoTotal': dataCotacao['valor_estimado_total'] ?? 0.0,
-      });
+      final cotacao = CotacaoModel.fromMap(
+        cotacaoSnap.data() ?? <String, dynamic>{},
+        cotacaoRef.id,
+      );
+      if (cotacao.id.trim().isEmpty) continue;
+      resultado.add(cotacao);
     }
 
     return resultado;

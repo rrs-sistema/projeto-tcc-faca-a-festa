@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/domain/entities/avaliacao_servico.dart';
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_interacao.dart';
@@ -15,7 +16,6 @@ import 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao_ai.dart
 import 'package:app_faca_festa/domain/services/fornecedor_ai.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedores.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_ai_analise_local.dart';
-import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_ai_cotacao_leitura.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_ai_resposta_cotacao.dart';
 
 class FornecedorAiController extends GetxController {
@@ -33,7 +33,7 @@ class FornecedorAiController extends GetxController {
   final FornecedorAiRespostaCotacao resposta;
 
   Fornecedor? Function()? _obterFornecedor;
-  Future<List<Map<String, dynamic>>> Function()? _obterSolicitacoesPendentes;
+  Future<List<Cotacao>> Function()? _obterSolicitacoesPendentes;
 
   /// Reservado para futuras streams específicas da IA.
   final List<StreamSubscription<dynamic>> _aiSubscriptions = [];
@@ -41,7 +41,7 @@ class FornecedorAiController extends GetxController {
   void vincular({
     required Fornecedor? Function() fornecedorAtual,
     required List<FornecedorServicoDetalhado> Function() servicosDetalhados,
-    required Future<List<Map<String, dynamic>>> Function()
+    required Future<List<Cotacao>> Function()
         solicitacoesPendentes,
   }) {
     _obterFornecedor = fornecedorAtual;
@@ -77,7 +77,7 @@ class FornecedorAiController extends GetxController {
       resposta.daCotacao(idCotacao);
 
   Future<SugestaoRespostaCotacaoAi> gerarRespostaCotacaoComIa({
-    required dynamic solicitacao,
+    required Cotacao solicitacao,
     bool forceRefresh = false,
   }) =>
       resposta.gerar(
@@ -146,18 +146,16 @@ class FornecedorAiController extends GetxController {
     }
 
     final obter = _obterSolicitacoesPendentes;
-    final solicitacoes = obter == null
-        ? const <Map<String, dynamic>>[]
-        : await obter();
+    final solicitacoes = obter == null ? const <Cotacao>[] : await obter();
 
     final cotacoes = solicitacoes
+        .where((cotacao) => cotacao.id.trim().isNotEmpty)
         .map(
-          (data) => FornecedorAiCotacaoLeitura.fromSolicitacaoMap(
-            data,
+          (cotacao) => FornecedorAiCotacaoInput.fromCotacao(
+            cotacao,
             idFornecedor: _obterFornecedor?.call()?.idFornecedor,
           ),
         )
-        .whereType<FornecedorAiCotacaoInput>()
         .toList();
 
     await analise.carregar(

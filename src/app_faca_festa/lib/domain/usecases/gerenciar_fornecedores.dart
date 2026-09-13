@@ -1,3 +1,4 @@
+import '../entities/cotacao.dart';
 import '../entities/evento.dart';
 import '../entities/fornecedor.dart';
 import '../entities/fornecedor_admin_snapshot.dart';
@@ -59,7 +60,7 @@ class GerenciarFornecedores {
     return repository.listarFornecedoresDoEvento(idEvento);
   }
 
-  Future<List<Map<String, dynamic>>> listarSolicitacoesPendentesDetalhadas(
+  Future<List<Cotacao>> listarSolicitacoesPendentesDetalhadas(
     String idFornecedor,
   ) {
     return repository.listarSolicitacoesPendentesDetalhadas(idFornecedor);

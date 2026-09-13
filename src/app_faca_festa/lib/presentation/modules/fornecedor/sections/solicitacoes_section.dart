@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
+import 'package:app_faca_festa/domain/entities/cotacao.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_resposta_cotacao_ai.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_cotacoes.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
@@ -127,10 +128,8 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
     });
   }
 
-  Widget _buildCotacaoCard(BuildContext context, dynamic item, int index) {
-    final idCotacao =
-        _readString(item, const ['idCotacao', 'id_cotacao', 'id']) ??
-            'cotacao_$index';
+  Widget _buildCotacaoCard(BuildContext context, Cotacao item, int index) {
+    final idCotacao = item.id.trim().isEmpty ? 'cotacao_$index' : item.id;
     final score = fornecedorController.ai.scoresCotacoes[idCotacao];
     final isGerando =
         fornecedorController.ai.isGerandoRespostaCotacaoAi(idCotacao);
@@ -159,11 +158,10 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
     );
   }
 
-  void _abrirResponderCotacao(BuildContext context, dynamic solicitacao) {
-    final idCotacao =
-        _readString(solicitacao, const ['id', 'idCotacao', 'id_cotacao']) ?? '';
+  void _abrirResponderCotacao(BuildContext context, Cotacao solicitacao) {
+    final idCotacao = solicitacao.id.trim();
 
-    if (idCotacao.trim().isEmpty) {
+    if (idCotacao.isEmpty) {
       Get.snackbar(
         'Cotação',
         'Não foi possível identificar a cotação para responder.',
@@ -173,50 +171,21 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
       return;
     }
 
+    final nomeSolicitante = solicitacao.nomeUsuarioSolicitante.trim();
+
     showResponderCotacaoBottomSheet(
       context: context,
       idCotacao: idCotacao,
-      categoriaNome: _readString(
-            solicitacao,
-            const ['categoriaNome', 'categoria_nome', 'categoria'],
-          ) ??
-          'Categoria não informada',
-      descricao: _readString(
-            solicitacao,
-            const ['descricao', 'observacao', 'mensagem', 'mensagemCliente'],
-          ) ??
-          'Sem descrição',
-      nomeSolicitante: _readString(
-            solicitacao,
-            const [
-              'nomeUsuarioSolicitante',
-              'nome_usuario_solicitante',
-              'nomeSolicitante',
-              'nome'
-            ],
-          ) ??
-          'Organizador',
-      dataLimite: _formatarDataCotacao(
-        _readDate(
-          solicitacao,
-          const [
-            'dataCadastro',
-            'data_cadastro',
-            'dataSolicitacao',
-            'data_solicitacao'
-          ],
-        ),
-      ),
-      ofertaDesejada: _readDouble(
-            solicitacao,
-            const [
-              'valorEstimadoTotal',
-              'valor_estimado_total',
-              'valorReferencia',
-              'valor_referencia'
-            ],
-          ) ??
-          0.0,
+      categoriaNome: (solicitacao.categoriaNome ?? '').trim().isEmpty
+          ? 'Categoria não informada'
+          : solicitacao.categoriaNome!,
+      descricao: (solicitacao.descricao ?? '').trim().isEmpty
+          ? 'Sem descrição'
+          : solicitacao.descricao!,
+      nomeSolicitante:
+          nomeSolicitante.isEmpty ? 'Organizador' : nomeSolicitante,
+      dataLimite: _formatarDataCotacao(solicitacao.dataCadastro),
+      ofertaDesejada: solicitacao.valorEstimadoTotal ?? 0.0,
       theme: widget.themeController,
       fornecedorController: fornecedorController,
       cotacoes: widget.cotacoes,
@@ -225,7 +194,7 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
 
   void _abrirRespostaSugerida(
     BuildContext context,
-    dynamic solicitacao,
+    Cotacao solicitacao,
     SugestaoRespostaCotacaoAi sugestao,
   ) {
     showModalBottomSheet(
@@ -863,7 +832,7 @@ class _CotacoesShell extends StatelessWidget {
 }
 
 class _CotacaoInteligenteCard extends StatelessWidget {
-  final dynamic solicitacao;
+  final Cotacao solicitacao;
   final String idCotacao;
   final double? score;
   final String? nivel;
@@ -887,35 +856,16 @@ class _CotacaoInteligenteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final categoria = _readString(
-          solicitacao,
-          const ['categoriaNome', 'categoria_nome', 'categoria'],
-        ) ??
-        'Cotação';
-    final solicitante = _readString(
-          solicitacao,
-          const [
-            'nomeUsuarioSolicitante',
-            'nome_usuario_solicitante',
-            'nomeSolicitante',
-            'nome'
-          ],
-        ) ??
-        'Organizador';
-    final descricao = _readString(
-          solicitacao,
-          const ['descricao', 'observacao', 'mensagem', 'mensagemCliente'],
-        ) ??
-        'Solicitação aguardando resposta.';
-    final valor = _readDouble(
-      solicitacao,
-      const [
-        'valorEstimadoTotal',
-        'valor_estimado_total',
-        'valorReferencia',
-        'valor_referencia'
-      ],
-    );
+    final categoria = (solicitacao.categoriaNome ?? '').trim().isEmpty
+        ? 'Cotação'
+        : solicitacao.categoriaNome!;
+    final solicitante = solicitacao.nomeUsuarioSolicitante.trim().isEmpty
+        ? 'Organizador'
+        : solicitacao.nomeUsuarioSolicitante;
+    final descricao = (solicitacao.descricao ?? '').trim().isEmpty
+        ? 'Solicitação aguardando resposta.'
+        : solicitacao.descricao!;
+    final valor = solicitacao.valorEstimadoTotal;
 
     final color = _scoreColor(score);
     final scoreLabel = score == null ? 'IA' : '${score!.toStringAsFixed(0)}%';
@@ -1449,162 +1399,6 @@ class _ReasonPill extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-String? _readString(dynamic source, List<String> keys) {
-  if (source == null) return null;
-
-  if (source is Map) {
-    for (final key in keys) {
-      final value = source[key];
-      if (value == null) continue;
-      final text = value.toString().trim();
-      if (text.isNotEmpty && text != 'null') return text;
-    }
-    return null;
-  }
-
-  for (final key in keys) {
-    try {
-      final value = _readObjectValue(source, key);
-      if (value == null) continue;
-      final text = value.toString().trim();
-      if (text.isNotEmpty && text != 'null') return text;
-    } catch (_) {
-      // ignora campos inexistentes em objetos tipados
-    }
-  }
-
-  return null;
-}
-
-double? _readDouble(dynamic source, List<String> keys) {
-  if (source == null) return null;
-
-  dynamic findValue() {
-    if (source is Map) {
-      for (final key in keys) {
-        if (source[key] != null) return source[key];
-      }
-      return null;
-    }
-
-    for (final key in keys) {
-      try {
-        final value = _readObjectValue(source, key);
-        if (value != null) return value;
-      } catch (_) {}
-    }
-
-    return null;
-  }
-
-  final value = findValue();
-
-  if (value is num) return value.toDouble();
-  if (value is String) {
-    final normalized = value
-        .replaceAll('R\$', '')
-        .replaceAll('.', '')
-        .replaceAll(',', '.')
-        .trim();
-    return double.tryParse(normalized);
-  }
-
-  return null;
-}
-
-DateTime? _readDate(dynamic source, List<String> keys) {
-  if (source == null) return null;
-
-  dynamic findValue() {
-    if (source is Map) {
-      for (final key in keys) {
-        if (source[key] != null) return source[key];
-      }
-      return null;
-    }
-
-    for (final key in keys) {
-      try {
-        final value = _readObjectValue(source, key);
-        if (value != null) return value;
-      } catch (_) {}
-    }
-
-    return null;
-  }
-
-  final value = findValue();
-
-  if (value is DateTime) return value;
-  if (value != null && value.runtimeType.toString() == 'Timestamp') {
-    try {
-      return value.toDate() as DateTime;
-    } catch (_) {}
-  }
-  if (value is String) return DateTime.tryParse(value);
-
-  return null;
-}
-
-dynamic _readObjectValue(dynamic source, String key) {
-  switch (key) {
-    case 'id':
-      return source.id;
-    case 'idCotacao':
-      return source.idCotacao;
-    case 'id_cotacao':
-      return source.idCotacao;
-    case 'idEvento':
-      return source.idEvento;
-    case 'id_evento':
-      return source.idEvento;
-    case 'categoriaNome':
-      return source.categoriaNome;
-    case 'categoria_nome':
-      return source.categoriaNome;
-    case 'categoria':
-      return source.categoriaNome;
-    case 'subcategoriaNome':
-      return source.subcategoriaNome;
-    case 'subcategoria_nome':
-      return source.subcategoriaNome;
-    case 'descricao':
-      return source.descricao;
-    case 'observacao':
-      return source.observacao;
-    case 'mensagem':
-      return source.mensagem;
-    case 'mensagemCliente':
-      return source.mensagemCliente;
-    case 'nomeUsuarioSolicitante':
-      return source.nomeUsuarioSolicitante;
-    case 'nome_usuario_solicitante':
-      return source.nomeUsuarioSolicitante;
-    case 'nomeSolicitante':
-      return source.nomeSolicitante;
-    case 'nome':
-      return source.nome;
-    case 'valorEstimadoTotal':
-      return source.valorEstimadoTotal;
-    case 'valor_estimado_total':
-      return source.valorEstimadoTotal;
-    case 'valorReferencia':
-      return source.valorReferencia;
-    case 'valor_referencia':
-      return source.valorReferencia;
-    case 'dataCadastro':
-      return source.dataCadastro;
-    case 'data_cadastro':
-      return source.dataCadastro;
-    case 'dataSolicitacao':
-      return source.dataSolicitacao;
-    case 'data_solicitacao':
-      return source.dataSolicitacao;
-    default:
-      return null;
   }
 }
 
