@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
-import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
@@ -27,6 +26,7 @@ import 'package:app_faca_festa/domain/usecases/gerenciar_servico_fotos.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_servicos_produto.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_ai_controller.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_lista_admin.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/dialogs/show_novo_orcamento_bottom_sheet.dart';
 
@@ -53,6 +53,27 @@ class FornecedorController extends GetxController {
         _appControllerResolver = appControllerResolver,
         _auditoria = auditoria,
         _auditoriaResolver = auditoriaResolver {
+    listaAdmin = FornecedorListaAdmin(
+      fornecedores: fornecedores,
+      enderecos: enderecos,
+      categoriasFornecedor: categoriasFornecedor,
+      categorias: categorias,
+      subCategorias: subCategorias,
+      categoriasServico: categoriasServico,
+      subcategoriasServico: subcategoriasServico,
+      allServicosFornecedor: allServicosFornecedor,
+      filtroNome: filtroNome,
+      filtroCidade: filtroCidade,
+      filtroCategoria: filtroCategoria,
+      filtroAprovado: filtroAprovado,
+      filtroAtivo: filtroAtivo,
+      ordenacaoSelecionada: ordenacaoSelecionada,
+      usecase: () => _fornecedores,
+      auditoria: () => _registradorAuditoria,
+      tipoUsuario: () => _resolverAppController()?.usuarioLogado.value?.tipo,
+      carregando: carregando,
+      erro: erro,
+    );
     ai.vincular(
       fornecedorAtual: () => fornecedor.value,
       servicosDetalhados: () => servicosDetalhado.toList(),
@@ -67,6 +88,7 @@ class FornecedorController extends GetxController {
   final GerenciarServicoFotos? _gerenciarServicoFotos;
   final GerenciarServicoFotos? Function()? _gerenciarServicoFotosResolver;
   final FornecedorAiController ai;
+  late final FornecedorListaAdmin listaAdmin;
   final AppController? _appController;
   final AppController? Function()? _appControllerResolver;
   final AuditoriaRegistrar? _auditoria;
@@ -130,11 +152,9 @@ class FornecedorController extends GetxController {
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
 
-  int get totalAptos =>
-      fornecedores.where((f) => f.ativo && f.aptoParaOperar).length;
-  int get totalPendentes =>
-      fornecedores.where((f) => f.ativo && !f.aptoParaOperar).length;
-  int get totalInativos => fornecedores.where((f) => !f.ativo).length;
+  int get totalAptos => listaAdmin.totalAptos;
+  int get totalPendentes => listaAdmin.totalPendentes;
+  int get totalInativos => listaAdmin.totalInativos;
   final filtroNome = ''.obs;
   final filtroCidade = RxnString();
   final filtroCategoria = RxnString();
@@ -336,30 +356,7 @@ class FornecedorController extends GetxController {
     return _appControllerResolver?.call();
   }
 
-  Future<void> carregarTodosFornecedores() async {
-    try {
-      carregando.value = true;
-      erro.value = '';
-
-      final tipo = _resolverAppController()?.usuarioLogado.value?.tipo;
-      final snapshot = await _fornecedores.carregarSnapshotAdmin(
-        incluirEnderecos: tipo == 'A',
-      );
-
-      fornecedores.value = snapshot.fornecedores;
-      enderecos.value = snapshot.enderecos;
-      categoriasFornecedor.value = snapshot.categoriasFornecedor;
-      categoriasServico.value = snapshot.categoriasServico;
-      categorias.value = snapshot.categorias;
-      subcategoriasServico.value = snapshot.subcategoriasServico;
-      subCategorias.value = snapshot.subcategorias;
-      allServicosFornecedor.assignAll(snapshot.servicosFornecedor);
-    } catch (e) {
-      erro.value = 'Erro ao carregar fornecedores: $e';
-    } finally {
-      carregando.value = false;
-    }
-  }
+  Future<void> carregarTodosFornecedores() => listaAdmin.carregarTodos();
 
   Future<Fornecedor?> buscarFornecedor(String idUsuario) async {
     try {
@@ -403,209 +400,28 @@ class FornecedorController extends GetxController {
     }
   }
 
-  // =============================================================
-  // 🔸 LISTA FILTRADA
-  // =============================================================
-  List<Fornecedor> get fornecedoresFiltrados {
-    final resultado = fornecedores.where((f) {
-      // 🔹 Busca endereço e categoria vinculados
-      final endereco =
-          enderecos.firstWhereOrNull((e) => e.idUsuario == f.idUsuario);
-      final cat = categoriasFornecedor
-          .firstWhereOrNull((c) => c.idFornecedor == f.idFornecedor)
-          ?.idCategoria;
+  List<Fornecedor> get fornecedoresFiltrados => listaAdmin.filtrados;
 
-      // 🔹 Avalia filtros
-      final matchNome = filtroNome.value.isEmpty ||
-          f.razaoSocial
-              .toLowerCase()
-              .contains(filtroNome.value.toLowerCase()) ||
-          (f.descricao
-                  ?.toLowerCase()
-                  .contains(filtroNome.value.toLowerCase()) ??
-              false) ||
-          f.email.toLowerCase().contains(filtroNome.value.toLowerCase());
+  String cidadeDoFornecedor(Fornecedor f) => listaAdmin.cidadeDoFornecedor(f);
 
-      final matchCidade = filtroCidade.value == null ||
-          (endereco?.nomeCidade
-                  ?.toLowerCase()
-                  .contains(filtroCidade.value!.toLowerCase()) ??
-              false);
+  List<String> nomesCategoriasDoFornecedor(Fornecedor f) =>
+      listaAdmin.nomesCategoriasDoFornecedor(f);
 
-      final matchCategoria =
-          filtroCategoria.value == null || cat == filtroCategoria.value;
+  int servicosDoFornecedor(Fornecedor f) => listaAdmin.servicosDoFornecedor(f);
 
-      final matchStatusAprovacao = filtroAprovado.value == null ||
-          f.aptoParaOperar == filtroAprovado.value;
+  void ordenarFornecedores() => listaAdmin.ordenar();
 
-      final matchStatusAtivo =
-          filtroAtivo.value == null || f.ativo == filtroAtivo.value;
+  Future<bool> aprovarFornecedor(String idFornecedor) =>
+      listaAdmin.aprovar(idFornecedor);
 
-      final passou = matchNome &&
-          matchCidade &&
-          matchCategoria &&
-          matchStatusAprovacao &&
-          matchStatusAtivo;
+  Future<void> desativarFornecedor(String idFornecedor) =>
+      listaAdmin.desativar(idFornecedor);
 
-      return passou;
-    }).toList();
-    return resultado;
-  }
+  Future<bool> reprovarFornecedor(String idFornecedor) =>
+      listaAdmin.reprovar(idFornecedor);
 
-  String cidadeDoFornecedor(Fornecedor f) {
-    return enderecos
-            .firstWhereOrNull((e) => e.idUsuario == f.idUsuario)
-            ?.nomeCidade ??
-        '';
-  }
-
-  List<String> nomesCategoriasDoFornecedor(Fornecedor f) {
-    return categoriasFornecedor
-        .where((c) => c.idFornecedor == f.idFornecedor)
-        .map((c) => (c.nomeCategoria ?? '').trim())
-        .where((n) => n.isNotEmpty)
-        .toSet()
-        .toList();
-  }
-
-  int servicosDoFornecedor(Fornecedor f) {
-    return allServicosFornecedor
-        .where((s) => s.idFornecedor == f.idFornecedor)
-        .length;
-  }
-
-  void ordenarFornecedores() {
-    final lista = [...fornecedores];
-    switch (ordenacaoSelecionada.value) {
-      case 'nome':
-        lista.sort((a, b) =>
-            a.razaoSocial.toLowerCase().compareTo(b.razaoSocial.toLowerCase()));
-        break;
-      case 'recentes':
-        lista.sort((a, b) => (b.dataCadastro).compareTo(a.dataCadastro));
-        break;
-      default:
-        lista.sort((a, b) {
-          if (a.ativo != b.ativo) return b.ativo ? 1 : -1;
-          if (a.aptoParaOperar != b.aptoParaOperar) {
-            return b.aptoParaOperar ? 1 : -1;
-          }
-          return a.razaoSocial
-              .toLowerCase()
-              .compareTo(b.razaoSocial.toLowerCase());
-        });
-    }
-    fornecedores.assignAll(lista);
-  }
-
-  // =============================================================
-  // 🔸 Aprovação e desativação
-  // =============================================================
-  Future<bool> aprovarFornecedor(String idFornecedor) {
-    return _definirAptoParaOperar(idFornecedor, true);
-  }
-
-  Future<void> desativarFornecedor(String idFornecedor) async {
-    try {
-      final atual = fornecedores.firstWhereOrNull(
-        (f) => f.idFornecedor == idFornecedor,
-      );
-      await _fornecedores.atualizarStatusAtivo(
-        idFornecedor: idFornecedor,
-        ativo: false,
-      );
-      fornecedores.removeWhere((f) => f.idFornecedor == idFornecedor);
-      _registradorAuditoria.registrar(
-        acao: 'FORNECEDOR_DESATIVADO',
-        resumo: 'Fornecedor desativado pelo administrador.',
-        entidadeTipo: 'fornecedor',
-        entidadeId: idFornecedor,
-        entidadeNome: atual?.razaoSocial,
-        idFornecedor: idFornecedor,
-        mudancas: const [
-          AuditoriaMudanca(campo: 'Ativo', de: 'sim', para: 'não'),
-        ],
-      );
-    } catch (e) {
-      debugPrint('❌ Erro ao desativar fornecedor $idFornecedor: $e');
-    }
-  }
-
-  Future<bool> reprovarFornecedor(String idFornecedor) {
-    return _definirAptoParaOperar(idFornecedor, false);
-  }
-
-  Future<bool> _definirAptoParaOperar(String idFornecedor, bool apto) async {
-    try {
-      final id = idFornecedor.trim();
-      if (id.isEmpty) {
-        debugPrint('❌ idFornecedor vazio ao atualizar apto_para_operar');
-        return false;
-      }
-
-      await _fornecedores.atualizarAptoParaOperar(
-        idFornecedor: id,
-        apto: apto,
-      );
-
-      final i = fornecedores.indexWhere(
-        (x) => x.idFornecedor == id || x.idUsuario == id,
-      );
-      final nome = i >= 0 ? fornecedores[i].razaoSocial : null;
-      if (i >= 0) {
-        fornecedores[i] = fornecedores[i].copyWith(aptoParaOperar: apto);
-      }
-      fornecedores.refresh();
-      _registradorAuditoria.registrar(
-        acao: apto ? 'FORNECEDOR_APROVADO' : 'FORNECEDOR_REPROVADO',
-        resumo: apto
-            ? 'Fornecedor liberado para operar na plataforma.'
-            : 'Fornecedor voltou para análise.',
-        entidadeTipo: 'fornecedor',
-        entidadeId: id,
-        entidadeNome: nome,
-        idFornecedor: id,
-        mudancas: [
-          AuditoriaMudanca(
-            campo: 'Apto para operar',
-            de: apto ? 'não' : 'sim',
-            para: apto ? 'sim' : 'não',
-          ),
-        ],
-      );
-      return true;
-    } catch (e) {
-      debugPrint('❌ Erro ao atualizar apto_para_operar de $idFornecedor: $e');
-      return false;
-    }
-  }
-
-  Future<void> ativarFornecedor(String idFornecedor) async {
-    try {
-      await _fornecedores.atualizarStatusAtivo(
-        idFornecedor: idFornecedor,
-        ativo: true,
-      );
-      final f =
-          fornecedores.firstWhereOrNull((x) => x.idFornecedor == idFornecedor);
-      if (f != null) {
-        fornecedores[fornecedores.indexOf(f)] = f.copyWith(ativo: true);
-      }
-      _registradorAuditoria.registrar(
-        acao: 'FORNECEDOR_ATIVADO',
-        resumo: 'Fornecedor reativado pelo administrador.',
-        entidadeTipo: 'fornecedor',
-        entidadeId: idFornecedor,
-        entidadeNome: f?.razaoSocial,
-        idFornecedor: idFornecedor,
-        mudancas: const [
-          AuditoriaMudanca(campo: 'Ativo', de: 'não', para: 'sim'),
-        ],
-      );
-    } catch (e) {
-      debugPrint('❌ Erro ao ativar fornecedor $idFornecedor: $e');
-    }
-  }
+  Future<void> ativarFornecedor(String idFornecedor) =>
+      listaAdmin.ativar(idFornecedor);
 
   // ==========================================================
   // === 🔹 1. Busca produtos do fornecedor pelo CÓDIGO DO EVENTO
@@ -839,19 +655,17 @@ class FornecedorController extends GetxController {
     bool? aprovado,
     bool? ativo,
   }) {
-    filtroNome.value = nome ?? '';
-    filtroCidade.value = cidade?.isEmpty ?? true ? null : cidade;
-    filtroCategoria.value = categoria?.isEmpty ?? true ? null : categoria;
-    filtroAprovado.value = aprovado;
-    filtroAtivo.value = ativo;
+    listaAdmin.aplicarFiltros(
+      nome: nome,
+      cidade: cidade,
+      categoria: categoria,
+      aprovado: aprovado,
+      ativo: ativo,
+    );
   }
 
   void limparFiltros() {
-    filtroNome.value = '';
-    filtroCidade.value = null;
-    filtroCategoria.value = null;
-    filtroAprovado.value = null;
-    filtroAtivo.value = null;
+    listaAdmin.limparFiltros();
     update();
   }
 
