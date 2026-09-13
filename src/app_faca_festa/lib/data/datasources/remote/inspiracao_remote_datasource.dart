@@ -4,11 +4,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_admin_patch.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 
 import '../../models/evento/inspiracao_evento_planejamento_model.dart';
 import '../../models/evento/inspiracao_model.dart';
 import '../../models/fornecedor/fornecedor_model.dart';
+import '../../seeds/inspiracao_seed.dart';
 
 class InspiracaoRemoteDatasource {
   InspiracaoRemoteDatasource({
@@ -38,10 +40,8 @@ class InspiracaoRemoteDatasource {
     return _db.collection(_colecaoInspiracoes).doc().id;
   }
 
-  Future<int> popularCatalogoInicial({
-    required List<Map<String, dynamic>> itens,
-    required String operador,
-  }) async {
+  Future<int> popularCatalogoInicial({required String operador}) async {
+    final itens = CatalogoInspiracao.itens;
     final collection = _db.collection(_colecaoInspiracoes);
     final existentes = await collection.get();
     final idsExistentes = existentes.docs.map((d) => d.id).toSet();
@@ -83,35 +83,33 @@ class InspiracaoRemoteDatasource {
   }
 
   Future<void> salvarInspiracaoAdmin({
-    required String id,
-    required Map<String, dynamic> payload,
+    required Inspiracao inspiracao,
     required String operador,
     required bool criar,
   }) {
-    final data = Map<String, dynamic>.from(payload)
+    final data = InspiracaoModel.fromEntity(inspiracao).toFirestore()
+      ..remove('criadoEm')
+      ..remove('atualizadoEm')
       ..['atualizadoPor'] = operador
       ..['atualizadoEm'] = FieldValue.serverTimestamp();
     if (criar) {
       data['criadoPor'] = operador;
       data['criadoEm'] = FieldValue.serverTimestamp();
-    } else {
-      data.remove('criadoPor');
-      data.remove('criadoEm');
     }
     return _db
         .collection(_colecaoInspiracoes)
-        .doc(id)
+        .doc(inspiracao.id)
         .set(data, SetOptions(merge: true));
   }
 
   Future<void> atualizarCamposAdmin({
     required String id,
-    required Map<String, dynamic> campos,
+    required InspiracaoAdminPatch patch,
     required String operador,
   }) {
     return _db.collection(_colecaoInspiracoes).doc(id).set(
       {
-        ...campos,
+        ..._patchAdminToMap(patch),
         'atualizadoPor': operador,
         'atualizadoEm': FieldValue.serverTimestamp(),
       },
@@ -562,5 +560,16 @@ class InspiracaoRemoteDatasource {
     String subcolecao,
   ) {
     return _db.collection(_colecaoEventos).doc(eventoId).collection(subcolecao);
+  }
+
+  Map<String, dynamic> _patchAdminToMap(InspiracaoAdminPatch patch) {
+    return <String, dynamic>{
+      if (patch.ativo != null) 'ativo': patch.ativo,
+      if (patch.publicado != null) 'publicado': patch.publicado,
+      if (patch.deletado != null) 'deletado': patch.deletado,
+      if (patch.destaque != null) 'destaque': patch.destaque,
+      if (patch.ordem != null) 'ordem': patch.ordem,
+      if (patch.imagemUrl != null) 'imagemUrl': patch.imagemUrl,
+    };
   }
 }

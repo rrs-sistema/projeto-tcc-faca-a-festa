@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_admin_patch.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/domain/repositories/inspiracao_repository.dart';
 import '../datasources/remote/inspiracao_remote_datasource.dart';
@@ -22,23 +23,18 @@ class InspiracaoRepositoryImpl implements InspiracaoRepository {
   String criarIdInspiracao() => remote.criarIdInspiracao();
 
   @override
-  Future<int> popularCatalogoInicial({
-    required List<Map<String, dynamic>> itens,
-    required String operador,
-  }) {
-    return remote.popularCatalogoInicial(itens: itens, operador: operador);
+  Future<int> popularCatalogoInicial({required String operador}) {
+    return remote.popularCatalogoInicial(operador: operador);
   }
 
   @override
   Future<void> salvarInspiracaoAdmin({
-    required String id,
-    required Map<String, dynamic> payload,
+    required Inspiracao inspiracao,
     required String operador,
     required bool criar,
   }) {
     return remote.salvarInspiracaoAdmin(
-      id: id,
-      payload: payload,
+      inspiracao: inspiracao,
       operador: operador,
       criar: criar,
     );
@@ -47,12 +43,12 @@ class InspiracaoRepositoryImpl implements InspiracaoRepository {
   @override
   Future<void> atualizarCamposAdmin({
     required String id,
-    required Map<String, dynamic> campos,
+    required InspiracaoAdminPatch patch,
     required String operador,
   }) {
     return remote.atualizarCamposAdmin(
       id: id,
-      campos: campos,
+      patch: patch,
       operador: operador,
     );
   }

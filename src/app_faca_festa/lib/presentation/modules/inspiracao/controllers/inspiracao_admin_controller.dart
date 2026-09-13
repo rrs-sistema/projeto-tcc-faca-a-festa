@@ -6,8 +6,8 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_admin_patch.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
-import 'package:app_faca_festa/data/seeds/inspiracao_seed.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
 
 class ImagemGaleriaUploadPendente {
@@ -208,7 +208,6 @@ class InspiracaoAdminController extends GetxController {
   /// IDs `insp_*` são preservados; documentos extras não são apagados.
   Future<int> popularCatalogoInicial() async {
     return _inspiracoes.popularCatalogoInicial(
-      itens: CatalogoInspiracao.itens,
       operador: _resolverUsuarioId(null),
     );
   }
@@ -328,19 +327,18 @@ class InspiracaoAdminController extends GetxController {
   }
 
   Future<String?> salvarInspiracao({
-    String? id,
-    required Map<String, dynamic> dados,
+    required Inspiracao inspiracao,
     XFile? imagemPrincipal,
     Uint8List? imagemPrincipalBytes,
     String? nomeImagemPrincipal,
     String? usuarioId,
     bool mostrarMensagem = true,
   }) async {
-    final docId = id?.trim();
+    final docId = inspiracao.id.trim();
 
-    if (docId == null || docId.isEmpty) {
+    if (docId.isEmpty) {
       return criarInspiracao(
-        dados: dados,
+        inspiracao: inspiracao,
         imagemPrincipal: imagemPrincipal,
         imagemPrincipalBytes: imagemPrincipalBytes,
         nomeImagemPrincipal: nomeImagemPrincipal,
@@ -350,8 +348,7 @@ class InspiracaoAdminController extends GetxController {
     }
 
     final sucesso = await editarInspiracao(
-      id: docId,
-      dados: dados,
+      inspiracao: inspiracao,
       imagemPrincipal: imagemPrincipal,
       imagemPrincipalBytes: imagemPrincipalBytes,
       nomeImagemPrincipal: nomeImagemPrincipal,
@@ -363,7 +360,7 @@ class InspiracaoAdminController extends GetxController {
   }
 
   Future<String?> criarInspiracao({
-    required Map<String, dynamic> dados,
+    required Inspiracao inspiracao,
     XFile? imagemPrincipal,
     Uint8List? imagemPrincipalBytes,
     String? nomeImagemPrincipal,
@@ -379,12 +376,8 @@ class InspiracaoAdminController extends GetxController {
 
       final id = _inspiracoes.criarIdInspiracao();
       final operador = _resolverUsuarioId(usuarioId);
-
-      final payload = _montarPayloadInspiracao(
-        id: id,
-        dados: dados,
-        isCreate: true,
-        usuarioId: operador,
+      var normalizada = _normalizarInspiracaoAdmin(
+        inspiracao.copyWith(id: id),
       );
 
       final possuiImagem =
@@ -399,13 +392,12 @@ class InspiracaoAdminController extends GetxController {
         );
 
         if (imagemUrl != null && imagemUrl.isNotEmpty) {
-          payload['imagemUrl'] = imagemUrl;
+          normalizada = normalizada.copyWith(imagemUrl: imagemUrl);
         }
       }
 
       await _inspiracoes.salvarInspiracaoAdmin(
-        id: id,
-        payload: payload,
+        inspiracao: normalizada,
         operador: operador,
         criar: true,
       );
@@ -435,15 +427,15 @@ class InspiracaoAdminController extends GetxController {
   }
 
   Future<bool> editarInspiracao({
-    required String id,
-    required Map<String, dynamic> dados,
+    required Inspiracao inspiracao,
     XFile? imagemPrincipal,
     Uint8List? imagemPrincipalBytes,
     String? nomeImagemPrincipal,
     String? usuarioId,
     bool mostrarMensagem = true,
   }) async {
-    if (id.trim().isEmpty) {
+    final id = inspiracao.id.trim();
+    if (id.isEmpty) {
       EasyLoading.showInfo('Inspiração inválida para edição.');
       return false;
     }
@@ -456,12 +448,7 @@ class InspiracaoAdminController extends GetxController {
       }
 
       final operador = _resolverUsuarioId(usuarioId);
-      final payload = _montarPayloadInspiracao(
-        id: id,
-        dados: dados,
-        isCreate: false,
-        usuarioId: operador,
-      );
+      var normalizada = _normalizarInspiracaoAdmin(inspiracao);
 
       final possuiImagem =
           imagemPrincipal != null || imagemPrincipalBytes != null;
@@ -475,13 +462,12 @@ class InspiracaoAdminController extends GetxController {
         );
 
         if (imagemUrl != null && imagemUrl.isNotEmpty) {
-          payload['imagemUrl'] = imagemUrl;
+          normalizada = normalizada.copyWith(imagemUrl: imagemUrl);
         }
       }
 
       await _inspiracoes.salvarInspiracaoAdmin(
-        id: id,
-        payload: payload,
+        inspiracao: normalizada,
         operador: operador,
         criar: false,
       );
@@ -536,10 +522,10 @@ class InspiracaoAdminController extends GetxController {
   }) {
     return _atualizarCampos(
       id,
-      <String, dynamic>{
-        'ativo': ativo,
-        if (ativo) 'deletado': false,
-      },
+      InspiracaoAdminPatch(
+        ativo: ativo,
+        deletado: ativo ? false : null,
+      ),
       usuarioId: usuarioId,
       mensagemLoading:
           ativo ? 'Ativando inspiração...' : 'Desativando inspiração...',
@@ -580,13 +566,11 @@ class InspiracaoAdminController extends GetxController {
   }) {
     return _atualizarCampos(
       id,
-      <String, dynamic>{
-        'publicado': publicado,
-        if (publicado) ...<String, dynamic>{
-          'ativo': true,
-          'deletado': false,
-        },
-      },
+      InspiracaoAdminPatch(
+        publicado: publicado,
+        ativo: publicado ? true : null,
+        deletado: publicado ? false : null,
+      ),
       usuarioId: usuarioId,
       mensagemLoading: publicado
           ? 'Publicando inspiração...'
@@ -628,7 +612,7 @@ class InspiracaoAdminController extends GetxController {
   }) {
     return _atualizarCampos(
       id,
-      <String, dynamic>{'destaque': destaque},
+      InspiracaoAdminPatch(destaque: destaque),
       usuarioId: usuarioId,
       mensagemLoading:
           destaque ? 'Marcando destaque...' : 'Removendo destaque...',
@@ -646,11 +630,11 @@ class InspiracaoAdminController extends GetxController {
   Future<bool> excluirLogicamente(String id, {String? usuarioId}) {
     return _atualizarCampos(
       id,
-      <String, dynamic>{
-        'ativo': false,
-        'publicado': false,
-        'deletado': true,
-      },
+      const InspiracaoAdminPatch(
+        ativo: false,
+        publicado: false,
+        deletado: true,
+      ),
       usuarioId: usuarioId,
       mensagemLoading: 'Excluindo inspiração...',
       mensagemSucesso: 'Inspiração excluída.',
@@ -661,10 +645,10 @@ class InspiracaoAdminController extends GetxController {
   Future<bool> restaurarInspiracao(String id, {String? usuarioId}) {
     return _atualizarCampos(
       id,
-      <String, dynamic>{
-        'ativo': true,
-        'deletado': false,
-      },
+      const InspiracaoAdminPatch(
+        ativo: true,
+        deletado: false,
+      ),
       usuarioId: usuarioId,
       mensagemLoading: 'Restaurando inspiração...',
       mensagemSucesso: 'Inspiração restaurada.',
@@ -680,7 +664,7 @@ class InspiracaoAdminController extends GetxController {
   }) {
     return _atualizarCampos(
       id,
-      <String, dynamic>{'ordem': ordem},
+      InspiracaoAdminPatch(ordem: ordem),
       usuarioId: usuarioId,
       mostrarMensagem: mostrarMensagem,
       mensagemLoading: 'Atualizando ordem...',
@@ -697,7 +681,7 @@ class InspiracaoAdminController extends GetxController {
   }) async {
     final sucesso = await _atualizarCampos(
       id,
-      <String, dynamic>{'imagemUrl': ''},
+      const InspiracaoAdminPatch(imagemUrl: ''),
       usuarioId: usuarioId,
       mostrarMensagem: mostrarMensagem,
       mensagemLoading: 'Removendo imagem...',
@@ -834,15 +818,11 @@ class InspiracaoAdminController extends GetxController {
     _reordenarTarefasSugeridasInternamente();
   }
 
-  List<Map<String, dynamic>> tarefasSugeridasParaFirestore() {
+  List<TarefaInspiracaoSugerida> tarefasSugeridasDoFormulario() {
     return tarefasSugeridasFormulario
         .asMap()
         .entries
-        .map(
-          (entry) => _tarefaToMap(
-            entry.value.copyWith(ordem: entry.key + 1),
-          ),
-        )
+        .map((entry) => entry.value.copyWith(ordem: entry.key + 1))
         .toList();
   }
 
@@ -954,14 +934,12 @@ class InspiracaoAdminController extends GetxController {
     _reordenarItensOrcamentoSugeridosInternamente();
   }
 
-  List<Map<String, dynamic>> itensOrcamentoSugeridosParaFirestore() {
+  List<ItemOrcamentoInspiracaoSugerido> itensOrcamentoSugeridosDoFormulario() {
     return itensOrcamentoSugeridosFormulario
         .asMap()
         .entries
         .map(
-          (entry) => _itemOrcamentoToMap(
-            entry.value.copyWith(ordem: entry.key + 1),
-          ),
+          (entry) => entry.value.copyWith(ordem: entry.key + 1),
         )
         .toList();
   }
@@ -1658,7 +1636,7 @@ class InspiracaoAdminController extends GetxController {
 
   Future<bool> _atualizarCampos(
     String id,
-    Map<String, dynamic> campos, {
+    InspiracaoAdminPatch patch, {
     String? usuarioId,
     bool mostrarMensagem = true,
     required String mensagemLoading,
@@ -1679,7 +1657,7 @@ class InspiracaoAdminController extends GetxController {
 
       await _inspiracoes.atualizarCamposAdmin(
         id: id,
-        campos: campos,
+        patch: patch,
         operador: _resolverUsuarioId(usuarioId),
       );
 
@@ -1687,7 +1665,7 @@ class InspiracaoAdminController extends GetxController {
         EasyLoading.showSuccess(mensagemSucesso);
       }
 
-      _log('Campos atualizados na inspiração $id: ${campos.keys.join(', ')}');
+      _log('Campos atualizados na inspiração $id.');
       return true;
     } catch (e, s) {
       if (mostrarMensagem && mensagemErro.isNotEmpty) {
@@ -1700,38 +1678,36 @@ class InspiracaoAdminController extends GetxController {
     }
   }
 
-  Map<String, dynamic> _montarPayloadInspiracao({
-    required String id,
-    required Map<String, dynamic> dados,
-    required bool isCreate,
-    required String usuarioId,
-  }) {
-    final payload = _removeNulls(Map<String, dynamic>.from(dados));
-
-    final titulo = _readString(payload, 'titulo');
+  Inspiracao _normalizarInspiracaoAdmin(Inspiracao inspiracao) {
+    final titulo = inspiracao.titulo.trim();
     if (titulo.isEmpty) {
       throw ArgumentError('Informe o título da inspiração.');
     }
 
-    final categoriaObrigatoria = _readString(payload, 'categoria');
-    if (categoriaObrigatoria.isEmpty) {
+    final categoria = (inspiracao.categoria ?? '').trim();
+    if (categoria.isEmpty) {
       throw ArgumentError('Informe a categoria da inspiração.');
     }
 
-    final tipoEvento = _readString(payload, 'tipoEvento');
-    final tipoEventoId = _readString(payload, 'tipoEventoId');
-    final tipoEventoNormalizadoInformado =
-        _readString(payload, 'tipoEventoNormalizado');
-    final tipoEventoNormalizado = tipoEventoNormalizadoInformado.isNotEmpty
-        ? _normalizeKey(tipoEventoNormalizadoInformado)
-        : _normalizeKey(tipoEvento);
+    final tipoEventoNormalizado = inspiracao.tipoEventoNormalizado.trim().isNotEmpty
+        ? _normalizeKey(inspiracao.tipoEventoNormalizado)
+        : _normalizeKey(inspiracao.tipoEvento);
 
-    final tipoEventoIds = _readStringList(payload, 'tipoEventoIds');
-    final tipoEventoSlugs = _readStringList(payload, 'tipoEventoSlugs');
-    final tipoEventoNomes = _readStringList(payload, 'tipoEventoNomes');
+    final tipoEventoIds = inspiracao.tipoEventoIds
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final tipoEventoSlugs = inspiracao.tipoEventoSlugs
+        .map(_normalizeKey)
+        .where((e) => e.isNotEmpty)
+        .toList();
+    final tipoEventoNomes = inspiracao.tipoEventoNomes
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
 
-    final possuiTipoEvento = tipoEvento.isNotEmpty ||
-        tipoEventoId.isNotEmpty ||
+    final possuiTipoEvento = inspiracao.tipoEvento.trim().isNotEmpty ||
+        inspiracao.tipoEventoId.trim().isNotEmpty ||
         tipoEventoNormalizado.isNotEmpty ||
         tipoEventoIds.isNotEmpty ||
         tipoEventoSlugs.isNotEmpty ||
@@ -1741,70 +1717,40 @@ class InspiracaoAdminController extends GetxController {
       throw ArgumentError('Selecione pelo menos um tipo de evento.');
     }
 
-    payload['id'] = id;
-    payload['titulo'] = titulo;
-    payload['descricao'] = _readString(payload, 'descricao');
-    payload['categoria'] = _readString(payload, 'categoria');
-    payload['categoriaId'] = _readString(payload, 'categoriaId');
-    payload['imagemUrl'] = _readString(payload, 'imagemUrl');
-    payload['galeriaUrls'] = _readStringList(payload, 'galeriaUrls');
-    payload['tags'] = _readStringList(payload, 'tags');
-    payload['paletaCores'] = _readStringList(payload, 'paletaCores');
-    payload['tipoEvento'] = tipoEvento;
-    payload['tipoEventoId'] = tipoEventoId;
-    payload['tipoEventoNormalizado'] = tipoEventoNormalizado;
-    payload['tipoEventoIds'] = tipoEventoIds.isNotEmpty
-        ? tipoEventoIds
-        : <String>[if (tipoEventoId.isNotEmpty) tipoEventoId];
-    payload['tipoEventoSlugs'] = tipoEventoSlugs.isNotEmpty
-        ? tipoEventoSlugs.map(_normalizeKey).where((e) => e.isNotEmpty).toList()
-        : <String>[if (tipoEventoNormalizado.isNotEmpty) tipoEventoNormalizado];
-    payload['tipoEventoNomes'] = tipoEventoNomes.isNotEmpty
-        ? tipoEventoNomes
-        : <String>[if (tipoEvento.isNotEmpty) tipoEvento];
-    payload['estilo'] = _readString(payload, 'estilo');
-    payload['faixaCusto'] = _readString(payload, 'faixaCusto');
-    payload['nivelDificuldade'] = _readString(payload, 'nivelDificuldade');
-    payload['fornecedoresRelacionados'] =
-        _readDynamicList(payload, 'fornecedoresRelacionados');
-    payload['categoriasFornecedorSugeridas'] =
-        _readStringList(payload, 'categoriasFornecedorSugeridas');
-    payload['tarefasSugeridas'] = _normalizarTarefasSugeridas(
-      _readMapList(payload, 'tarefasSugeridas'),
-    ).map(_tarefaToMap).toList();
-    payload['itensOrcamentoSugeridos'] = _normalizarItensOrcamentoSugeridos(
-      _readMapList(payload, 'itensOrcamentoSugeridos'),
-    ).map(_itemOrcamentoToMap).toList();
-    payload['ordem'] =
-        _readInt(payload, 'ordem', defaultValue: _proximaOrdem());
-
-    if (isCreate || payload.containsKey('destaque')) {
-      payload['destaque'] = _readBool(payload, 'destaque', defaultValue: false);
-    }
-
-    if (isCreate || payload.containsKey('ativo')) {
-      payload['ativo'] = _readBool(payload, 'ativo', defaultValue: true);
-    }
-
-    if (isCreate || payload.containsKey('publicado')) {
-      payload['publicado'] =
-          _readBool(payload, 'publicado', defaultValue: false);
-    }
-
-    if (isCreate || payload.containsKey('deletado')) {
-      payload['deletado'] = _readBool(payload, 'deletado', defaultValue: false);
-    }
-
-    if (isCreate) {
-      payload['criadoPor'] = usuarioId;
-    } else {
-      payload.remove('criadoPor');
-      payload.remove('criadoEm');
-    }
-
-    payload['atualizadoPor'] = usuarioId;
-
-    return payload;
+    return inspiracao.copyWith(
+      titulo: titulo,
+      descricao: inspiracao.descricao.trim(),
+      categoria: categoria,
+      categoriaId: (inspiracao.categoriaId ?? '').trim(),
+      imagemUrl: inspiracao.imagemUrl.trim(),
+      tipoEvento: inspiracao.tipoEvento.trim(),
+      tipoEventoId: inspiracao.tipoEventoId.trim(),
+      tipoEventoNormalizado: tipoEventoNormalizado,
+      tipoEventoIds: tipoEventoIds.isNotEmpty
+          ? tipoEventoIds
+          : <String>[
+              if (inspiracao.tipoEventoId.trim().isNotEmpty)
+                inspiracao.tipoEventoId.trim(),
+            ],
+      tipoEventoSlugs: tipoEventoSlugs.isNotEmpty
+          ? tipoEventoSlugs
+          : <String>[
+              if (tipoEventoNormalizado.isNotEmpty) tipoEventoNormalizado,
+            ],
+      tipoEventoNomes: tipoEventoNomes.isNotEmpty
+          ? tipoEventoNomes
+          : <String>[
+              if (inspiracao.tipoEvento.trim().isNotEmpty)
+                inspiracao.tipoEvento.trim(),
+            ],
+      estilo: inspiracao.estilo.trim(),
+      faixaCusto: inspiracao.faixaCusto.trim(),
+      nivelDificuldade: inspiracao.nivelDificuldade.trim(),
+      ordem: inspiracao.ordem > 0 ? inspiracao.ordem : _proximaOrdem(),
+      tarefasSugeridas: _aplicarPadroesTarefas(inspiracao.tarefasSugeridas),
+      itensOrcamentoSugeridos:
+          _aplicarPadroesItensOrcamento(inspiracao.itensOrcamentoSugeridos),
+    );
   }
 
   void _aplicarFiltros() {
@@ -2043,171 +1989,6 @@ class InspiracaoAdminController extends GetxController {
         normalized == 'tudo';
   }
 
-  String _readString(Map<String, dynamic> data, String key,
-      {String defaultValue = ''}) {
-    final value = data[key];
-    if (value == null) {
-      return defaultValue;
-    }
-
-    if (value is String) {
-      return value.trim();
-    }
-
-    return value.toString().trim();
-  }
-
-  bool _readBool(
-    Map<String, dynamic> data,
-    String key, {
-    required bool defaultValue,
-  }) {
-    final value = data[key];
-    if (value == null) {
-      return defaultValue;
-    }
-
-    if (value is bool) {
-      return value;
-    }
-
-    if (value is num) {
-      return value != 0;
-    }
-
-    final text = value.toString().trim().toLowerCase();
-    if (text.isEmpty) {
-      return defaultValue;
-    }
-
-    return text == 'true' ||
-        text == '1' ||
-        text == 's' ||
-        text == 'sim' ||
-        text == 'yes';
-  }
-
-  int _readInt(
-    Map<String, dynamic> data,
-    String key, {
-    required int defaultValue,
-  }) {
-    final value = data[key];
-    if (value == null) {
-      return defaultValue;
-    }
-
-    if (value is int) {
-      return value;
-    }
-
-    if (value is num) {
-      return value.toInt();
-    }
-
-    return int.tryParse(value.toString().trim()) ?? defaultValue;
-  }
-
-  double _readDouble(
-    Map<String, dynamic> data,
-    String key, {
-    required double defaultValue,
-  }) {
-    final value = data[key];
-    if (value == null) {
-      return defaultValue;
-    }
-
-    if (value is double) {
-      return value;
-    }
-
-    if (value is int) {
-      return value.toDouble();
-    }
-
-    if (value is num) {
-      return value.toDouble();
-    }
-
-    var text = value
-        .toString()
-        .replaceAll('R\$', '')
-        .replaceAll(RegExp(r'\s+'), '')
-        .trim();
-
-    if (text.isEmpty) {
-      return defaultValue;
-    }
-
-    if (text.contains(',')) {
-      text = text.replaceAll('.', '').replaceAll(',', '.');
-    }
-
-    return double.tryParse(text) ?? defaultValue;
-  }
-
-  List<String> _readStringList(Map<String, dynamic> data, String key) {
-    final value = data[key];
-    if (value == null) {
-      return <String>[];
-    }
-
-    if (value is List) {
-      return value
-          .map((e) => e?.toString().trim() ?? '')
-          .where((e) => e.isNotEmpty)
-          .toSet()
-          .toList();
-    }
-
-    final text = value.toString().trim();
-    if (text.isEmpty) {
-      return <String>[];
-    }
-
-    return text
-        .split(RegExp(r'[,;|]'))
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .toSet()
-        .toList();
-  }
-
-  List<dynamic> _readDynamicList(Map<String, dynamic> data, String key) {
-    final value = data[key];
-    if (value == null) {
-      return <dynamic>[];
-    }
-
-    if (value is List) {
-      return value;
-    }
-
-    return <dynamic>[value];
-  }
-
-  List<Map<String, dynamic>> _readMapList(
-      Map<String, dynamic> data, String key) {
-    final value = data[key];
-    if (value == null) {
-      return <Map<String, dynamic>>[];
-    }
-
-    if (value is List) {
-      return value
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    }
-
-    if (value is Map) {
-      return <Map<String, dynamic>>[Map<String, dynamic>.from(value)];
-    }
-
-    return <Map<String, dynamic>>[];
-  }
-
   List<ItemOrcamentoInspiracaoSugerido> _aplicarPadroesItensOrcamento(
     Iterable<ItemOrcamentoInspiracaoSugerido> itens,
   ) {
@@ -2229,63 +2010,6 @@ class InspiracaoAdminController extends GetxController {
     return normalizados;
   }
 
-  List<ItemOrcamentoInspiracaoSugerido> _normalizarItensOrcamentoSugeridos(
-    Iterable<Map<String, dynamic>> itens,
-  ) {
-    final normalizados = <ItemOrcamentoInspiracaoSugerido>[];
-
-    var ordem = 1;
-    for (final item in itens) {
-      final normalizado = _itemOrcamentoFromMap(
-        item,
-        ordemPadrao: ordem,
-      );
-
-      if (normalizado.categoria.isNotEmpty && normalizado.item.isNotEmpty) {
-        normalizados.add(normalizado);
-        ordem++;
-      }
-    }
-
-    return normalizados;
-  }
-
-  ItemOrcamentoInspiracaoSugerido _itemOrcamentoFromMap(
-    Map<String, dynamic> item, {
-    required int ordemPadrao,
-  }) {
-    return _aplicarPadroesItemOrcamento(
-      ItemOrcamentoInspiracaoSugerido(
-        item: _readString(
-          item,
-          'item',
-          defaultValue: _readString(item, 'nome'),
-        ),
-        categoria: _readString(item, 'categoria'),
-        descricao: _readString(item, 'descricao'),
-        custoEstimado: _readDouble(
-          item,
-          'custoEstimado',
-          defaultValue: _readDouble(item, 'valorEstimado', defaultValue: 0.0),
-        ),
-        custoReal: _readDouble(item, 'custoReal', defaultValue: 0.0),
-        custoMinimo: _readDouble(item, 'custoMinimo', defaultValue: 0.0),
-        custoMaximo: _readDouble(item, 'custoMaximo', defaultValue: 0.0),
-        unidade: _readString(item, 'unidade', defaultValue: 'unidade'),
-        quantidadeBase:
-            _readDouble(item, 'quantidadeBase', defaultValue: 1.0),
-        custoPorConvidado:
-            _readDouble(item, 'custoPorConvidado', defaultValue: 0.0),
-        obrigatorio: _readBool(item, 'obrigatorio', defaultValue: false),
-        ordem: _readInt(item, 'ordem', defaultValue: ordemPadrao),
-        statusPagamento:
-            _readString(item, 'statusPagamento', defaultValue: 'pendente'),
-        origem: _readString(item, 'origem'),
-      ),
-      ordemPadrao: ordemPadrao,
-    );
-  }
-
   ItemOrcamentoInspiracaoSugerido _aplicarPadroesItemOrcamento(
     ItemOrcamentoInspiracaoSugerido item, {
     required int ordemPadrao,
@@ -2304,29 +2028,6 @@ class InspiracaoAdminController extends GetxController {
       statusPagamento: statusPagamento.isEmpty ? 'pendente' : statusPagamento,
       origem: origem.isEmpty ? 'inspiracao_admin' : origem,
     );
-  }
-
-  Map<String, dynamic> _itemOrcamentoToMap(
-    ItemOrcamentoInspiracaoSugerido item,
-  ) {
-    return <String, dynamic>{
-      'categoria': item.categoria,
-      'item': item.item,
-      'nome': item.item,
-      'descricao': item.descricao,
-      'custoEstimado': item.custoEstimado,
-      'valorEstimado': item.custoEstimado,
-      'custoMinimo': item.custoMinimo,
-      'custoMaximo': item.custoMaximo,
-      'unidade': item.unidade,
-      'quantidadeBase': item.quantidadeBase,
-      'custoPorConvidado': item.custoPorConvidado,
-      'obrigatorio': item.obrigatorio,
-      'ordem': item.ordem,
-      'custoReal': item.custoReal,
-      'statusPagamento': item.statusPagamento,
-      'origem': item.origem,
-    };
   }
 
   String? _validarItemOrcamentoSugerido(
@@ -2398,55 +2099,6 @@ class InspiracaoAdminController extends GetxController {
     return normalizadas;
   }
 
-  List<TarefaInspiracaoSugerida> _normalizarTarefasSugeridas(
-    Iterable<Map<String, dynamic>> tarefas,
-  ) {
-    final normalizadas = <TarefaInspiracaoSugerida>[];
-
-    var ordem = 1;
-    for (final tarefa in tarefas) {
-      final normalizada = _tarefaFromMap(
-        tarefa,
-        ordemPadrao: ordem,
-      );
-
-      if (normalizada.titulo.isNotEmpty) {
-        normalizadas.add(normalizada);
-        ordem++;
-      }
-    }
-
-    return normalizadas;
-  }
-
-  TarefaInspiracaoSugerida _tarefaFromMap(
-    Map<String, dynamic> tarefa, {
-    required int ordemPadrao,
-  }) {
-    return _aplicarPadroesTarefa(
-      TarefaInspiracaoSugerida(
-        titulo: _readString(
-          tarefa,
-          'titulo',
-          defaultValue: _readString(tarefa, 'nome'),
-        ),
-        descricao: _readString(tarefa, 'descricao'),
-        categoria: _readString(tarefa, 'categoria'),
-        diasAntesEvento: _readInt(
-          tarefa,
-          'diasAntesEvento',
-          defaultValue: _readInt(tarefa, 'diasAntes', defaultValue: 30),
-        ),
-        prioridade: _readString(tarefa, 'prioridade', defaultValue: 'media'),
-        obrigatoria: _readBool(tarefa, 'obrigatoria', defaultValue: false),
-        ordem: _readInt(tarefa, 'ordem', defaultValue: ordemPadrao),
-        status: _readString(tarefa, 'status', defaultValue: 'pendente'),
-        origem: _readString(tarefa, 'origem'),
-      ),
-      ordemPadrao: ordemPadrao,
-    );
-  }
-
   TarefaInspiracaoSugerida _aplicarPadroesTarefa(
     TarefaInspiracaoSugerida tarefa, {
     required int ordemPadrao,
@@ -2465,21 +2117,6 @@ class InspiracaoAdminController extends GetxController {
       status: status.isEmpty ? 'pendente' : status,
       origem: origem.isEmpty ? 'inspiracao_admin' : origem,
     );
-  }
-
-  Map<String, dynamic> _tarefaToMap(TarefaInspiracaoSugerida tarefa) {
-    return <String, dynamic>{
-      'titulo': tarefa.titulo,
-      'nome': tarefa.titulo,
-      'descricao': tarefa.descricao,
-      'categoria': tarefa.categoria,
-      'diasAntesEvento': tarefa.diasAntesEvento,
-      'prioridade': tarefa.prioridade,
-      'obrigatoria': tarefa.obrigatoria,
-      'ordem': tarefa.ordem,
-      'status': tarefa.status,
-      'origem': tarefa.origem,
-    };
   }
 
   String _normalizarPrioridadeTarefa(String value) {
@@ -2504,18 +2141,6 @@ class InspiracaoAdminController extends GetxController {
     }
 
     tarefasSugeridasFormulario.assignAll(lista);
-  }
-
-  Map<String, dynamic> _removeNulls(Map<String, dynamic> data) {
-    final result = <String, dynamic>{};
-
-    data.forEach((key, value) {
-      if (value != null) {
-        result[key] = value;
-      }
-    });
-
-    return result;
   }
 
   String _normalizeText(String value) {

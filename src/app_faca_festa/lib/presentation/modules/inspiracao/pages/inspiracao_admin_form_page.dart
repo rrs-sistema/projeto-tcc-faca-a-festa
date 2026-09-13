@@ -2892,11 +2892,10 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       limparPendentes: false,
     );
 
-    final dados = _montarPayloadFormulario();
+    final inspiracao = _montarInspiracaoFormulario();
 
     final id = await controller.salvarInspiracao(
-      id: _isEdicao ? _inspiracaoId : null,
-      dados: dados,
+      inspiracao: inspiracao,
       usuarioId: widget.usuarioId,
     );
 
@@ -2972,44 +2971,49 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     }
   }
 
-  Map<String, dynamic> _montarPayloadFormulario() {
+  Inspiracao _montarInspiracaoFormulario() {
     final tipos = _resolverTiposEvento();
+    final categoriaId = _categoriaIdController.text.trim().isNotEmpty
+        ? _categoriaIdController.text.trim()
+        : _normalizeKey(_categoriaController.text);
+    final inicial = _inspiracaoInicial;
 
-    return <String, dynamic>{
-      'titulo': _tituloController.text.trim(),
-      'descricao': _descricaoController.text.trim(),
-      'categoria': _categoriaController.text.trim(),
-      'categoriaId': _categoriaIdController.text.trim().isNotEmpty
-          ? _categoriaIdController.text.trim()
-          : _normalizeKey(_categoriaController.text),
-      'imagemUrl': controller.imagemPrincipalUrlAtual.value.trim(),
-      'galeriaUrls': _parseStringList(_galeriaUrlsController.text),
-      'tags': _parseStringList(_tagsController.text),
-      'paletaCores': _parseStringList(_paletaCoresController.text),
-      'estilo': _estiloController.text.trim(),
-      'faixaCusto': _faixaCustoController.text.trim(),
-      'nivelDificuldade': _nivelDificuldadeController.text.trim(),
-      'ordem': int.tryParse(_ordemController.text.trim()) ??
+    return Inspiracao(
+      id: _isEdicao ? _inspiracaoId : '',
+      titulo: _tituloController.text.trim(),
+      descricao: _descricaoController.text.trim(),
+      categoria: _categoriaController.text.trim(),
+      categoriaId: categoriaId,
+      imagemUrl: controller.imagemPrincipalUrlAtual.value.trim(),
+      galeriaUrls: _parseStringList(_galeriaUrlsController.text),
+      tags: _parseStringList(_tagsController.text),
+      paletaCores: _parseStringList(_paletaCoresController.text),
+      estilo: _estiloController.text.trim(),
+      faixaCusto: _faixaCustoController.text.trim(),
+      nivelDificuldade: _nivelDificuldadeController.text.trim(),
+      ordem: int.tryParse(_ordemController.text.trim()) ??
           controller.proximaOrdemSugerida(),
-      'tipoEvento': tipos.tipoEvento,
-      'tipoEventoId': tipos.tipoEventoId,
-      'tipoEventoNormalizado': tipos.tipoEventoNormalizado,
-      'tipoEventoIds': tipos.tipoEventoIds,
-      'tipoEventoSlugs': tipos.tipoEventoSlugs,
-      'tipoEventoNomes': tipos.tipoEventoNomes,
-      'tarefasSugeridas': controller.tarefasSugeridasParaFirestore(),
-      'itensOrcamentoSugeridos':
-          controller.itensOrcamentoSugeridosParaFirestore(),
-      'categoriasFornecedorSugeridas': _parseStringList(
+      tipoEvento: tipos.tipoEvento,
+      tipoEventoId: tipos.tipoEventoId,
+      tipoEventoNormalizado: tipos.tipoEventoNormalizado,
+      tipoEventoIds: tipos.tipoEventoIds,
+      tipoEventoSlugs: tipos.tipoEventoSlugs,
+      tipoEventoNomes: tipos.tipoEventoNomes,
+      tarefasSugeridas: controller.tarefasSugeridasDoFormulario(),
+      itensOrcamentoSugeridos:
+          controller.itensOrcamentoSugeridosDoFormulario(),
+      categoriasFornecedorSugeridas: _parseStringList(
         _categoriasFornecedorSugeridasController.text,
       ),
-      'fornecedoresRelacionados':
+      fornecedoresRelacionados:
           _parseStringList(_fornecedoresRelacionadosController.text),
-      'ativo': _ativo,
-      'publicado': _publicado,
-      'destaque': _destaque,
-      'deletado': false,
-    };
+      ativo: _ativo,
+      publicado: _publicado,
+      destaque: _destaque,
+      deletado: false,
+      favorito: inicial?.favorito ?? false,
+      criadoEm: inicial?.criadoEm,
+    );
   }
 
   _TiposEventoResolvidos _resolverTiposEvento() {

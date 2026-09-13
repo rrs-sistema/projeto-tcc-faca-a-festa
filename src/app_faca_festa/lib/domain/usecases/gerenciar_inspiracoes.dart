@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import '../entities/fornecedor.dart';
 import '../entities/inspiracao.dart';
+import '../entities/inspiracao_admin_patch.dart';
 import '../entities/inspiracao_evento_planejamento.dart';
 import '../entities/inspiracao_sugestao.dart';
 import '../entities/referencia_evento.dart';
@@ -21,25 +22,17 @@ class GerenciarInspiracoes {
 
   String criarIdInspiracao() => repository.criarIdInspiracao();
 
-  Future<int> popularCatalogoInicial({
-    required List<Map<String, dynamic>> itens,
-    required String operador,
-  }) {
-    return repository.popularCatalogoInicial(
-      itens: itens,
-      operador: operador,
-    );
+  Future<int> popularCatalogoInicial({required String operador}) {
+    return repository.popularCatalogoInicial(operador: operador);
   }
 
   Future<void> salvarInspiracaoAdmin({
-    required String id,
-    required Map<String, dynamic> payload,
+    required Inspiracao inspiracao,
     required String operador,
     required bool criar,
   }) {
     return repository.salvarInspiracaoAdmin(
-      id: id,
-      payload: payload,
+      inspiracao: inspiracao,
       operador: operador,
       criar: criar,
     );
@@ -47,12 +40,12 @@ class GerenciarInspiracoes {
 
   Future<void> atualizarCamposAdmin({
     required String id,
-    required Map<String, dynamic> campos,
+    required InspiracaoAdminPatch patch,
     required String operador,
   }) {
     return repository.atualizarCamposAdmin(
       id: id,
-      campos: campos,
+      patch: patch,
       operador: operador,
     );
   }

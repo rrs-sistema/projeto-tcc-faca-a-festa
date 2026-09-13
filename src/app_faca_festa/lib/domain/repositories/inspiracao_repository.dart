@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import '../entities/fornecedor.dart';
 import '../entities/inspiracao.dart';
+import '../entities/inspiracao_admin_patch.dart';
 import '../entities/inspiracao_evento_planejamento.dart';
 import '../entities/inspiracao_sugestao.dart';
 import '../entities/referencia_evento.dart';
@@ -11,21 +12,17 @@ abstract interface class InspiracaoRepository {
 
   String criarIdInspiracao();
 
-  Future<int> popularCatalogoInicial({
-    required List<Map<String, dynamic>> itens,
-    required String operador,
-  });
+  Future<int> popularCatalogoInicial({required String operador});
 
   Future<void> salvarInspiracaoAdmin({
-    required String id,
-    required Map<String, dynamic> payload,
+    required Inspiracao inspiracao,
     required String operador,
     required bool criar,
   });
 
   Future<void> atualizarCamposAdmin({
     required String id,
-    required Map<String, dynamic> campos,
+    required InspiracaoAdminPatch patch,
     required String operador,
   });
 
