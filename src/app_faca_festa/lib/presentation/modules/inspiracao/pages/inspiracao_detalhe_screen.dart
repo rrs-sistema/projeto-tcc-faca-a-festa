@@ -541,14 +541,12 @@ class InspiracaoDetalheScreen extends StatelessWidget {
 
   String _categoriaId(Fornecedor fornecedor) {
     if (fornecedor.categorias.isEmpty) return '';
-    final raw = fornecedor.categorias.first;
-    return (raw['idCategoria'] ?? raw['id_categoria'] ?? '').toString();
+    return fornecedor.categorias.first.idCategoria;
   }
 
   String _categoriaNome(Fornecedor fornecedor) {
     if (fornecedor.categorias.isEmpty) return '';
-    final raw = fornecedor.categorias.first;
-    return (raw['nomeCategoria'] ?? raw['nome_categoria'] ?? '').toString();
+    return fornecedor.categorias.first.nomeCategoria;
   }
 
   Widget _descriptionCard(String descricao) {

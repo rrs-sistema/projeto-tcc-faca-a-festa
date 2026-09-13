@@ -788,13 +788,11 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
 
   String _categoriaFornecedorId(Fornecedor fornecedor) {
     if (fornecedor.categorias.isEmpty) return '';
-    final raw = fornecedor.categorias.first;
-    return (raw['idCategoria'] ?? raw['id_categoria'] ?? '').toString();
+    return fornecedor.categorias.first.idCategoria;
   }
 
   String _categoriaFornecedorNome(Fornecedor fornecedor) {
     if (fornecedor.categorias.isEmpty) return '';
-    final raw = fornecedor.categorias.first;
-    return (raw['nomeCategoria'] ?? raw['nome_categoria'] ?? '').toString();
+    return fornecedor.categorias.first.nomeCategoria;
   }
 }

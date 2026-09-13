@@ -1226,27 +1226,12 @@ class FornecedorAiService implements FornecedorAiRegrasService {
   }
 
   List<String> _extrairCategoriasFornecedor(Fornecedor fornecedor) {
-    final termos = <String>[];
-
-    for (final categoria in fornecedor.categorias) {
-      for (final key in [
-        'nome',
-        'categoria',
-        'nome_categoria',
-        'nomeCategoria',
-        'subcategoria',
-        'nome_subcategoria',
-        'nomeSubcategoria',
-        'descricao',
-      ]) {
-        final value = categoria[key];
-        if (value != null && _hasText(value.toString())) {
-          termos.add(_normalize(value.toString()));
-        }
-      }
-    }
-
-    return termos.toSet().toList();
+    return fornecedor.categorias
+        .expand((categoria) => categoria.termosBusca)
+        .map(_normalize)
+        .where(_hasText)
+        .toSet()
+        .toList();
   }
 
   List<String> _categoriasSemServico({

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria_resumo.dart';
 
 
 class FornecedorModel extends Fornecedor {
@@ -48,9 +49,7 @@ class FornecedorModel extends Fornecedor {
       ativo: entity.ativo,
       dataCadastro: entity.dataCadastro,
       bannerUrl: entity.bannerUrl,
-      categorias: entity.categorias
-          .map((categoria) => Map<String, dynamic>.from(categoria))
-          .toList(),
+      categorias: List<FornecedorCategoriaResumo>.from(entity.categorias),
       tipoEventoIds: List<String>.from(entity.tipoEventoIds),
       tipoEventoSlugs: List<String>.from(entity.tipoEventoSlugs),
       tipoEventoNomes: List<String>.from(entity.tipoEventoNomes),
@@ -77,7 +76,7 @@ class FornecedorModel extends Fornecedor {
     bool aptoParaOperar = false,
     bool ativo = true,
     String? bannerUrl,
-    List<Map<String, dynamic>> categorias = const [],
+    List<FornecedorCategoriaResumo> categorias = const [],
     List<String> tipoEventoIds = const [],
     List<String> tipoEventoSlugs = const [],
     List<String> tipoEventoNomes = const [],
@@ -110,28 +109,6 @@ class FornecedorModel extends Fornecedor {
   }
 
   Map<String, dynamic> toMap() {
-    final categoriasLimpa = categorias.map((c) {
-      final map = Map<String, dynamic>.from(c);
-
-      if (map['dataCadastro'] is DateTime) {
-        map['dataCadastro'] = Timestamp.fromDate(map['dataCadastro']);
-      }
-
-      if (map['data_cadastro'] is DateTime) {
-        map['data_cadastro'] = Timestamp.fromDate(map['data_cadastro']);
-      }
-
-      if (map['dataCadastro'] is FieldValue) {
-        map.remove('dataCadastro');
-      }
-
-      if (map['data_cadastro'] is FieldValue) {
-        map.remove('data_cadastro');
-      }
-
-      return map;
-    }).toList();
-
     return {
       // Campos legados usados atualmente no app.
       'id_fornecedor': idFornecedor,
@@ -145,7 +122,7 @@ class FornecedorModel extends Fornecedor {
       'ativo': ativo,
       'data_cadastro': Timestamp.fromDate(dataCadastro),
       'banner_url': bannerUrl,
-      'categorias': categoriasLimpa,
+      'categorias': categorias.map(_categoriaToMap).toList(),
 
       // Campos novos para IA de recomendação em camelCase.
       'tipoEventoIds': tipoEventoIds,
@@ -205,7 +182,7 @@ class FornecedorModel extends Fornecedor {
         ['data_cadastro', 'dataCadastro', 'createdAt'],
       ),
       bannerUrl: _readNullableString(map, ['banner_url', 'bannerUrl']),
-      categorias: _readMapList(map['categorias']),
+      categorias: _readCategorias(map['categorias']),
       tipoEventoIds: _readStringList(
         map,
         ['tipoEventoIds', 'tipo_evento_ids'],
@@ -258,7 +235,7 @@ class FornecedorModel extends Fornecedor {
     bool? ativo,
     DateTime? dataCadastro,
     String? bannerUrl,
-    List<Map<String, dynamic>>? categorias,
+    List<FornecedorCategoriaResumo>? categorias,
     List<String>? tipoEventoIds,
     List<String>? tipoEventoSlugs,
     List<String>? tipoEventoNomes,
@@ -476,12 +453,131 @@ class FornecedorModel extends Fornecedor {
     return <String>[];
   }
 
-  static List<Map<String, dynamic>> _readMapList(dynamic value) {
-    if (value is! List) return <Map<String, dynamic>>[];
+  static List<FornecedorCategoriaResumo> _readCategorias(dynamic value) {
+    if (value is! List) return const <FornecedorCategoriaResumo>[];
 
     return value
         .whereType<Map>()
-        .map((item) => Map<String, dynamic>.from(item))
+        .map((item) => _categoriaFromMap(Map<String, dynamic>.from(item)))
         .toList();
+  }
+
+  static FornecedorCategoriaResumo _categoriaFromMap(Map<String, dynamic> map) {
+    return FornecedorCategoriaResumo(
+      idCategoria: _readString(map, ['idCategoria', 'id_categoria']),
+      nomeCategoria: _readString(
+        map,
+        [
+          'nomeCategoria',
+          'nome_categoria',
+          'categoria_nome',
+          'categoriaNome',
+          'nome',
+          'categoria',
+        ],
+      ),
+      descricao: _readNullableString(map, ['descricao', 'description']),
+      subcategorias: _readSubcategorias(map),
+      dataCadastro: _readNullableDate(
+        map,
+        ['dataCadastro', 'data_cadastro', 'createdAt'],
+      ),
+    );
+  }
+
+  static List<FornecedorSubcategoriaResumo> _readSubcategorias(
+    Map<String, dynamic> map,
+  ) {
+    final resultado = <FornecedorSubcategoriaResumo>[];
+    final nested = map['subcategorias'];
+    if (nested is List) {
+      for (final item in nested.whereType<Map>()) {
+        final sub = Map<String, dynamic>.from(item);
+        final resumo = FornecedorSubcategoriaResumo(
+          idSubcategoria: _readString(
+            sub,
+            ['idSubcategoria', 'id_subcategoria'],
+          ),
+          nomeSubcategoria: _readString(
+            sub,
+            [
+              'nomeSubcategoria',
+              'nome_subcategoria',
+              'subcategoria',
+              'nome',
+            ],
+          ),
+        );
+        if (resumo.idSubcategoria.isNotEmpty ||
+            resumo.nomeSubcategoria.isNotEmpty) {
+          resultado.add(resumo);
+        }
+      }
+    }
+
+    final nomeAvulso = _readString(
+      map,
+      ['nomeSubcategoria', 'nome_subcategoria', 'subcategoria'],
+    );
+    if (nomeAvulso.isNotEmpty &&
+        !resultado.any((s) => s.nomeSubcategoria == nomeAvulso)) {
+      resultado.add(
+        FornecedorSubcategoriaResumo(nomeSubcategoria: nomeAvulso),
+      );
+    }
+
+    return resultado;
+  }
+
+  static Map<String, dynamic> _categoriaToMap(
+    FornecedorCategoriaResumo categoria,
+  ) {
+    final map = <String, dynamic>{
+      'idCategoria': categoria.idCategoria,
+      'id_categoria': categoria.idCategoria,
+      'nomeCategoria': categoria.nomeCategoria,
+      'nome_categoria': categoria.nomeCategoria,
+    };
+
+    final descricao = categoria.descricao?.trim();
+    if (descricao != null && descricao.isNotEmpty) {
+      map['descricao'] = descricao;
+    }
+
+    if (categoria.subcategorias.isNotEmpty) {
+      map['subcategorias'] = categoria.subcategorias
+          .map(
+            (sub) => {
+              'idSubcategoria': sub.idSubcategoria,
+              'nomeSubcategoria': sub.nomeSubcategoria,
+            },
+          )
+          .toList();
+    }
+
+    if (categoria.dataCadastro != null) {
+      final timestamp = Timestamp.fromDate(categoria.dataCadastro!);
+      map['dataCadastro'] = timestamp;
+      map['data_cadastro'] = timestamp;
+    }
+
+    return map;
+  }
+
+  static DateTime? _readNullableDate(
+    Map<String, dynamic> map,
+    List<String> keys,
+  ) {
+    for (final key in keys) {
+      final value = map[key];
+      if (value is Timestamp) return value.toDate();
+      if (value is DateTime) return value;
+      if (value is String) {
+        final parsed = DateTime.tryParse(value);
+        if (parsed != null) return parsed;
+      }
+    }
+
+    return null;
   }
 }

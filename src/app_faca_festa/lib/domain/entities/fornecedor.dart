@@ -1,3 +1,5 @@
+import 'package:app_faca_festa/domain/entities/fornecedor_categoria_resumo.dart';
+
 class Fornecedor {
   final String idFornecedor;
   final String idUsuario;
@@ -10,7 +12,7 @@ class Fornecedor {
   final bool ativo;
   final DateTime dataCadastro;
   final String? bannerUrl;
-  final List<Map<String, dynamic>> categorias;
+  final List<FornecedorCategoriaResumo> categorias;
   final List<String> tipoEventoIds;
   final List<String> tipoEventoSlugs;
   final List<String> tipoEventoNomes;
@@ -63,7 +65,7 @@ class Fornecedor {
     bool? ativo,
     DateTime? dataCadastro,
     String? bannerUrl,
-    List<Map<String, dynamic>>? categorias,
+    List<FornecedorCategoriaResumo>? categorias,
     List<String>? tipoEventoIds,
     List<String>? tipoEventoSlugs,
     List<String>? tipoEventoNomes,

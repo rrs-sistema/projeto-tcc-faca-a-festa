@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/core/utils/no_sqflite_cache_manager.dart';
 import 'fornecedor_premium_layout.dart';
 
@@ -29,7 +30,7 @@ class HeaderSection extends StatelessWidget {
           : 'Fornecedor Faça a Festa';
       final contato =
           _contatoPrincipal(fornecedor?.email, fornecedor?.telefone);
-      final categoria = _categoriaPrincipal(fornecedor?.categorias) ??
+      final categoria = _categoriaPrincipal(fornecedor) ??
           'Categoria não informada';
       final status = _statusText(ativo: ativo, apto: apto);
       final statusColor = _statusColor(ativo: ativo, apto: apto);
@@ -186,18 +187,12 @@ class HeaderSection extends StatelessWidget {
     return const Color(0xFFFFC857);
   }
 
-  static String? _categoriaPrincipal(List<Map<String, dynamic>>? categorias) {
-    if (categorias == null || categorias.isEmpty) return null;
+  static String? _categoriaPrincipal(Fornecedor? fornecedor) {
+    if (fornecedor == null || fornecedor.categorias.isEmpty) return null;
 
-    for (final item in categorias) {
-      final nome = (item['nome_categoria'] ??
-              item['nomeCategoria'] ??
-              item['categoria_nome'] ??
-              item['categoriaNome'] ??
-              item['nome'])
-          ?.toString()
-          .trim();
-      if (nome != null && nome.isNotEmpty) return nome;
+    for (final item in fornecedor.categorias) {
+      final nome = item.nomeCategoria.trim();
+      if (nome.isNotEmpty) return nome;
     }
 
     return null;

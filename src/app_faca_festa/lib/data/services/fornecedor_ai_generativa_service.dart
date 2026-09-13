@@ -562,7 +562,23 @@ Se não houver serviço solicitado, pergunte qual serviço o organizador deseja.
       'descricao': _safeString(fornecedor.descricao),
       'ativo': fornecedor.ativo,
       'apto_para_operar': fornecedor.aptoParaOperar,
-      'categorias': fornecedor.categorias,
+      'categorias': fornecedor.categorias
+          .map(
+            (categoria) => {
+              'id_categoria': _safeString(categoria.idCategoria),
+              'nome_categoria': _safeString(categoria.nomeCategoria),
+              'descricao': _safeString(categoria.descricao),
+              'subcategorias': categoria.subcategorias
+                  .map(
+                    (sub) => {
+                      'id_subcategoria': _safeString(sub.idSubcategoria),
+                      'nome_subcategoria': _safeString(sub.nomeSubcategoria),
+                    },
+                  )
+                  .toList(),
+            },
+          )
+          .toList(),
       'tipo_evento_nomes': fornecedor.tipoEventoNomes,
       'preco_minimo': _formatMoneyNullable(fornecedor.precoMinimo),
       'preco_maximo': _formatMoneyNullable(fornecedor.precoMaximo),
