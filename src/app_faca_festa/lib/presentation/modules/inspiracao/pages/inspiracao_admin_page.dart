@@ -758,15 +758,17 @@ class _InspiracaoAdminCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final data = controller.dadosDaInspiracao(inspiracao.id);
     final ativo = controller.isAtiva(inspiracao.id);
     final publicado = controller.isPublicada(inspiracao.id);
     final destaque = controller.isDestaque(inspiracao.id);
-    final imagemUrl = _imagemUrl(data);
-    final categoria = _categoria(data);
-    final tipoEvento = _tipoEvento(data);
-    final descricao = _descricao(data);
-    final tags = _tags(data);
+    final imagemUrl = inspiracao.imagemUrl.trim();
+    final categoria = (inspiracao.categoria ?? '').trim();
+    final tipoEvento = _tipoEvento();
+    final descricao = inspiracao.descricao.trim();
+    final tags = inspiracao.tags
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
 
     return Material(
       color: Colors.transparent,
@@ -1069,69 +1071,26 @@ class _InspiracaoAdminCard extends StatelessWidget {
     );
   }
 
-  String _imagemUrl(Map<String, dynamic> data) {
-    final raw = _readString(data, 'imagemUrl');
-    if (raw.isNotEmpty) return raw;
-    return inspiracao.imagemUrl.trim();
-  }
-
-  String _categoria(Map<String, dynamic> data) {
-    final raw = _readString(data, 'categoria');
-    if (raw.isNotEmpty) return raw;
-    return (inspiracao.categoria ?? '').trim();
-  }
-
-  String _tipoEvento(Map<String, dynamic> data) {
-    final nomes = _readStringList(data, 'tipoEventoNomes');
+  String _tipoEvento() {
+    final nomes = inspiracao.tipoEventoNomes
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
     if (nomes.isNotEmpty) {
       return nomes.length == 1
           ? nomes.first
           : '${nomes.first} +${nomes.length - 1}';
     }
-    final nome = _readString(data, 'tipoEvento');
+    final nome = inspiracao.tipoEvento.trim();
     if (nome.isNotEmpty) return nome;
-    final slugs = _readStringList(data, 'tipoEventoSlugs');
-    if (slugs.isNotEmpty) return _humanize(slugs.first);
-    return _readStringList(data, 'tipoEventoIds').isNotEmpty ? 'Múltiplos' : '';
-  }
-
-  String _descricao(Map<String, dynamic> data) {
-    final raw = _readString(data, 'descricao');
-    if (raw.isNotEmpty) return raw;
-    return inspiracao.descricao.trim();
-  }
-
-  List<String> _tags(Map<String, dynamic> data) {
-    final raw = _readStringList(data, 'tags');
-    if (raw.isNotEmpty) return raw;
-    return inspiracao.tags
+    final slugs = inspiracao.tipoEventoSlugs
         .map((e) => e.trim())
         .where((e) => e.isNotEmpty)
         .toList();
-  }
-
-  String _readString(Map<String, dynamic> data, String key) =>
-      data[key]?.toString().trim() ?? '';
-
-  List<String> _readStringList(Map<String, dynamic> data, String key) {
-    final value = data[key];
-    if (value == null) return <String>[];
-    if (value is List) {
-      return value
-          .map((e) => e?.toString().trim() ?? '')
-          .where((e) => e.isNotEmpty)
-          .toSet()
-          .toList();
-    }
-    final text = value.toString().trim();
-    return text.isEmpty
-        ? <String>[]
-        : text
-            .split(RegExp(r'[,;|]'))
-            .map((e) => e.trim())
-            .where((e) => e.isNotEmpty)
-            .toSet()
-            .toList();
+    if (slugs.isNotEmpty) return _humanize(slugs.first);
+    return inspiracao.tipoEventoIds.any((e) => e.trim().isNotEmpty)
+        ? 'Múltiplos'
+        : '';
   }
 
   String _humanize(String value) {

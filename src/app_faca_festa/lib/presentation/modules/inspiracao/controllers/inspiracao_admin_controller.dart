@@ -91,8 +91,6 @@ class InspiracaoAdminController extends GetxController {
   final RxInt totalDestaques = 0.obs;
   final RxInt totalExcluidas = 0.obs;
 
-  final Map<String, Map<String, dynamic>> _dadosPorId =
-      <String, Map<String, dynamic>>{};
   StreamSubscription<List<InspiracaoSnapshot>>? _subInspiracoes;
 
   bool get possuiFiltrosAtivos {
@@ -171,15 +169,9 @@ class InspiracaoAdminController extends GetxController {
       _subInspiracoes = _inspiracoes.observarInspiracoes().listen(
         (snapshot) {
           final lista = <Inspiracao>[];
-          _dadosPorId.clear();
 
           for (final item in snapshot) {
             try {
-              final data = Map<String, dynamic>.from(item.data);
-
-              data['id'] = item.inspiracao.id;
-              _dadosPorId[item.inspiracao.id] = data;
-
               lista.add(item.inspiracao);
             } catch (e, s) {
               _log('Erro ao converter inspiração ${item.inspiracao.id}: $e', s);
@@ -264,8 +256,7 @@ class InspiracaoAdminController extends GetxController {
     final categorias = <String>{};
 
     for (final item in todasInspiracoes) {
-      final data = dadosDaInspiracao(item.id);
-      final categoria = _readString(data, 'categoria');
+      final categoria = (item.categoria ?? '').trim();
       if (categoria.isNotEmpty) {
         categorias.add(categoria);
       }
@@ -281,12 +272,14 @@ class InspiracaoAdminController extends GetxController {
     final tipos = <String>{};
 
     for (final item in todasInspiracoes) {
-      final data = dadosDaInspiracao(item.id);
-      final nomes = _readStringList(data, 'tipoEventoNomes');
-      final nomePrincipal = _readString(data, 'tipoEvento');
+      final nomes = item.tipoEventoNomes
+          .map((e) => e.trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+      final nomePrincipal = item.tipoEvento.trim();
 
       if (nomes.isNotEmpty) {
-        tipos.addAll(nomes.where((e) => e.trim().isNotEmpty));
+        tipos.addAll(nomes);
       } else if (nomePrincipal.isNotEmpty) {
         tipos.add(nomePrincipal);
       }
@@ -310,29 +303,38 @@ class InspiracaoAdminController extends GetxController {
     ];
   }
 
-  Map<String, dynamic> dadosDaInspiracao(String id) {
-    return Map<String, dynamic>.from(
-        _dadosPorId[id] ?? const <String, dynamic>{});
-  }
-
   bool isAtiva(String id) {
-    final data = dadosDaInspiracao(id);
-    return _readBool(data, 'ativo', defaultValue: true) && !isDeletada(id);
+    final inspiracao = _inspiracaoPorId(id);
+    return (inspiracao?.ativo ?? true) && !isDeletada(id);
   }
 
   bool isPublicada(String id) {
-    final data = dadosDaInspiracao(id);
-    return _readBool(data, 'publicado', defaultValue: true) && !isDeletada(id);
+    final inspiracao = _inspiracaoPorId(id);
+    return (inspiracao?.publicado ?? true) && !isDeletada(id);
   }
 
   bool isDestaque(String id) {
-    final data = dadosDaInspiracao(id);
-    return _readBool(data, 'destaque', defaultValue: false) && !isDeletada(id);
+    final inspiracao = _inspiracaoPorId(id);
+    return (inspiracao?.destaque ?? false) && !isDeletada(id);
   }
 
   bool isDeletada(String id) {
-    final data = dadosDaInspiracao(id);
-    return _readBool(data, 'deletado', defaultValue: false);
+    return _inspiracaoPorId(id)?.deletado ?? false;
+  }
+
+  Inspiracao? _inspiracaoPorId(String id) {
+    final chave = id.trim();
+    if (chave.isEmpty) {
+      return null;
+    }
+
+    for (final item in todasInspiracoes) {
+      if (item.id == chave) {
+        return item;
+      }
+    }
+
+    return null;
   }
 
   Future<String?> salvarInspiracao({
@@ -756,10 +758,10 @@ class InspiracaoAdminController extends GetxController {
   }
 
   void prepararTarefasSugeridasFormulario(
-    List<Map<String, dynamic>> tarefas, {
+    Iterable<TarefaInspiracaoSugerida> tarefas, {
     bool limparAntes = true,
   }) {
-    final normalizadas = _normalizarTarefasSugeridas(tarefas);
+    final normalizadas = _aplicarPadroesTarefas(tarefas);
 
     if (limparAntes) {
       tarefasSugeridasFormulario.assignAll(normalizadas);
@@ -871,10 +873,10 @@ class InspiracaoAdminController extends GetxController {
   }
 
   void prepararItensOrcamentoSugeridosFormulario(
-    List<Map<String, dynamic>> itens, {
+    Iterable<ItemOrcamentoInspiracaoSugerido> itens, {
     bool limparAntes = true,
   }) {
-    final normalizados = _normalizarItensOrcamentoSugeridos(itens);
+    final normalizados = _aplicarPadroesItensOrcamento(itens);
 
     if (limparAntes) {
       itensOrcamentoSugeridosFormulario.assignAll(normalizados);
@@ -1822,23 +1824,21 @@ class InspiracaoAdminController extends GetxController {
     final status = statusSelecionado.value.trim().toLowerCase();
 
     final filtradas = todasInspiracoes.where((inspiracao) {
-      final data = dadosDaInspiracao(inspiracao.id);
-
-      if (!_passaStatus(data, status)) {
+      if (!_passaStatus(inspiracao, status)) {
         return false;
       }
 
       if (!_isFiltroTodos(tipoEventoSelecionado.value) &&
-          !_passaTipoEvento(data, tipoEvento)) {
+          !_passaTipoEvento(inspiracao, tipoEvento)) {
         return false;
       }
 
       if (!_isFiltroTodasCategorias(categoriaSelecionada.value) &&
-          !_passaCategoria(data, categoria)) {
+          !_passaCategoria(inspiracao, categoria)) {
         return false;
       }
 
-      if (termo.isNotEmpty && !_passaBusca(inspiracao, data, termo)) {
+      if (termo.isNotEmpty && !_passaBusca(inspiracao, termo)) {
         return false;
       }
 
@@ -1850,45 +1850,39 @@ class InspiracaoAdminController extends GetxController {
     inspiracoesFiltradas.refresh();
   }
 
-  bool _passaBusca(
-    Inspiracao inspiracao,
-    Map<String, dynamic> data,
-    String termo,
-  ) {
+  bool _passaBusca(Inspiracao inspiracao, String termo) {
     final valores = <String>[
       inspiracao.titulo,
       inspiracao.descricao,
       inspiracao.categoria ?? '',
-      _readString(data, 'categoria'),
-      _readString(data, 'categoriaId'),
-      _readString(data, 'tipoEvento'),
-      _readString(data, 'tipoEventoId'),
-      _readString(data, 'tipoEventoNormalizado'),
-      _readString(data, 'estilo'),
-      _readString(data, 'faixaCusto'),
-      _readString(data, 'nivelDificuldade'),
+      inspiracao.categoriaId ?? '',
+      inspiracao.tipoEvento,
+      inspiracao.tipoEventoId,
+      inspiracao.tipoEventoNormalizado,
+      inspiracao.estilo,
+      inspiracao.faixaCusto,
+      inspiracao.nivelDificuldade,
       ...inspiracao.tags,
-      ..._readStringList(data, 'tags'),
-      ..._readStringList(data, 'tipoEventoIds'),
-      ..._readStringList(data, 'tipoEventoSlugs'),
-      ..._readStringList(data, 'tipoEventoNomes'),
+      ...inspiracao.tipoEventoIds,
+      ...inspiracao.tipoEventoSlugs,
+      ...inspiracao.tipoEventoNomes,
     ];
 
     return valores.any((value) => _normalizeText(value).contains(termo));
   }
 
-  bool _passaTipoEvento(Map<String, dynamic> data, String tipoEventoFiltro) {
+  bool _passaTipoEvento(Inspiracao inspiracao, String tipoEventoFiltro) {
     if (tipoEventoFiltro.isEmpty || tipoEventoFiltro == 'todos') {
       return true;
     }
 
     final valores = <String>{
-      _readString(data, 'tipoEvento'),
-      _readString(data, 'tipoEventoId'),
-      _readString(data, 'tipoEventoNormalizado'),
-      ..._readStringList(data, 'tipoEventoIds'),
-      ..._readStringList(data, 'tipoEventoSlugs'),
-      ..._readStringList(data, 'tipoEventoNomes'),
+      inspiracao.tipoEvento,
+      inspiracao.tipoEventoId,
+      inspiracao.tipoEventoNormalizado,
+      ...inspiracao.tipoEventoIds,
+      ...inspiracao.tipoEventoSlugs,
+      ...inspiracao.tipoEventoNomes,
     }.map(_normalizeKey).where((e) => e.isNotEmpty).toSet();
 
     if (valores.isEmpty) {
@@ -1900,7 +1894,7 @@ class InspiracaoAdminController extends GetxController {
         valores.contains('geral');
   }
 
-  bool _passaCategoria(Map<String, dynamic> data, String categoriaFiltro) {
+  bool _passaCategoria(Inspiracao inspiracao, String categoriaFiltro) {
     if (categoriaFiltro.isEmpty ||
         categoriaFiltro == 'todas' ||
         categoriaFiltro == 'todos') {
@@ -1908,18 +1902,18 @@ class InspiracaoAdminController extends GetxController {
     }
 
     final valores = <String>{
-      _readString(data, 'categoria'),
-      _readString(data, 'categoriaId'),
+      inspiracao.categoria ?? '',
+      inspiracao.categoriaId ?? '',
     }.map(_normalizeKey).where((e) => e.isNotEmpty).toSet();
 
     return valores.contains(categoriaFiltro);
   }
 
-  bool _passaStatus(Map<String, dynamic> data, String status) {
-    final ativo = _readBool(data, 'ativo', defaultValue: true);
-    final publicado = _readBool(data, 'publicado', defaultValue: true);
-    final deletado = _readBool(data, 'deletado', defaultValue: false);
-    final destaque = _readBool(data, 'destaque', defaultValue: false);
+  bool _passaStatus(Inspiracao inspiracao, String status) {
+    final ativo = inspiracao.ativo;
+    final publicado = inspiracao.publicado;
+    final deletado = inspiracao.deletado;
+    final destaque = inspiracao.destaque;
 
     switch (status) {
       case statusAtivas:
@@ -1953,11 +1947,10 @@ class InspiracaoAdminController extends GetxController {
     int excluidas = 0;
 
     for (final item in todasInspiracoes) {
-      final data = dadosDaInspiracao(item.id);
-      final ativo = _readBool(data, 'ativo', defaultValue: true);
-      final publicado = _readBool(data, 'publicado', defaultValue: true);
-      final deletado = _readBool(data, 'deletado', defaultValue: false);
-      final destaque = _readBool(data, 'destaque', defaultValue: false);
+      final ativo = item.ativo;
+      final publicado = item.publicado;
+      final deletado = item.deletado;
+      final destaque = item.destaque;
 
       if (deletado) {
         excluidas++;
@@ -1992,18 +1985,12 @@ class InspiracaoAdminController extends GetxController {
   }
 
   int _compararInspiracoes(Inspiracao a, Inspiracao b) {
-    final dataA = dadosDaInspiracao(a.id);
-    final dataB = dadosDaInspiracao(b.id);
-
-    final destaqueA = _readBool(dataA, 'destaque', defaultValue: false);
-    final destaqueB = _readBool(dataB, 'destaque', defaultValue: false);
-
-    if (destaqueA != destaqueB) {
-      return destaqueA ? -1 : 1;
+    if (a.destaque != b.destaque) {
+      return a.destaque ? -1 : 1;
     }
 
-    final ordemA = _readInt(dataA, 'ordem', defaultValue: 999999);
-    final ordemB = _readInt(dataB, 'ordem', defaultValue: 999999);
+    final ordemA = a.ordem > 0 ? a.ordem : 999999;
+    final ordemB = b.ordem > 0 ? b.ordem : 999999;
 
     if (ordemA != ordemB) {
       return ordemA.compareTo(ordemB);
@@ -2017,11 +2004,10 @@ class InspiracaoAdminController extends GetxController {
       return 1;
     }
 
-    final maior = todasInspiracoes.fold<int>(0, (maiorAtual, item) {
-      final data = dadosDaInspiracao(item.id);
-      final ordem = _readInt(data, 'ordem', defaultValue: 0);
-      return ordem > maiorAtual ? ordem : maiorAtual;
-    });
+    final maior = todasInspiracoes.fold<int>(
+      0,
+      (maiorAtual, item) => item.ordem > maiorAtual ? item.ordem : maiorAtual,
+    );
 
     return maior + 1;
   }
@@ -2232,6 +2218,27 @@ class InspiracaoAdminController extends GetxController {
     return <Map<String, dynamic>>[];
   }
 
+  List<ItemOrcamentoInspiracaoSugerido> _aplicarPadroesItensOrcamento(
+    Iterable<ItemOrcamentoInspiracaoSugerido> itens,
+  ) {
+    final normalizados = <ItemOrcamentoInspiracaoSugerido>[];
+
+    var ordem = 1;
+    for (final item in itens) {
+      final normalizado = _aplicarPadroesItemOrcamento(
+        item,
+        ordemPadrao: ordem,
+      );
+
+      if (normalizado.categoria.isNotEmpty && normalizado.item.isNotEmpty) {
+        normalizados.add(normalizado);
+        ordem++;
+      }
+    }
+
+    return normalizados;
+  }
+
   List<ItemOrcamentoInspiracaoSugerido> _normalizarItensOrcamentoSugeridos(
     Iterable<Map<String, dynamic>> itens,
   ) {
@@ -2378,6 +2385,27 @@ class InspiracaoAdminController extends GetxController {
     }
 
     itensOrcamentoSugeridosFormulario.assignAll(lista);
+  }
+
+  List<TarefaInspiracaoSugerida> _aplicarPadroesTarefas(
+    Iterable<TarefaInspiracaoSugerida> tarefas,
+  ) {
+    final normalizadas = <TarefaInspiracaoSugerida>[];
+
+    var ordem = 1;
+    for (final tarefa in tarefas) {
+      final normalizada = _aplicarPadroesTarefa(
+        tarefa,
+        ordemPadrao: ordem,
+      );
+
+      if (normalizada.titulo.isNotEmpty) {
+        normalizadas.add(normalizada);
+        ordem++;
+      }
+    }
+
+    return normalizadas;
   }
 
   List<TarefaInspiracaoSugerida> _normalizarTarefasSugeridas(

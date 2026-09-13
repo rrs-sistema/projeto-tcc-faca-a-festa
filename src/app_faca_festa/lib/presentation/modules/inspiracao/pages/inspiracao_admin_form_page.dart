@@ -210,96 +210,67 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
 
   void _popularCampos() {
     final inspiracao = _inspiracaoInicial;
-    final data = inspiracao == null
-        ? <String, dynamic>{}
-        : controller.dadosDaInspiracao(inspiracao.id);
 
-    _tituloController.text =
-        _readString(data, 'titulo', fallback: inspiracao?.titulo ?? '');
-    _descricaoController.text = _readString(
-      data,
-      'descricao',
-      fallback: inspiracao?.descricao ?? '',
-    );
-    _categoriaController.text = _readString(
-      data,
-      'categoria',
-      fallback: inspiracao?.categoria ?? '',
-    );
-    _categoriaIdController.text = _readString(
-      data,
-      'categoriaId',
-      fallback: inspiracao?.categoriaId ?? '',
-    );
-    _imagemUrlController.text = _readString(
-      data,
-      'imagemUrl',
-      fallback: inspiracao?.imagemUrl ?? '',
-    );
-    _galeriaUrlsController.text =
-        _readStringList(data, 'galeriaUrls').join('\n');
-    _tagsController.text = _readStringList(
-      data,
-      'tags',
-      fallback: inspiracao?.tags ?? const <String>[],
-    ).join(', ');
-    _paletaCoresController.text =
-        _readStringList(data, 'paletaCores').join(', ');
-    _estiloController.text = _readString(data, 'estilo');
-    _faixaCustoController.text = _readString(data, 'faixaCusto');
-    _nivelDificuldadeController.text = _readString(data, 'nivelDificuldade');
-    _ordemController.text = _readInt(
-      data,
-      'ordem',
-      fallback: _isEdicao ? 0 : controller.proximaOrdemSugerida(),
-    ).toString();
+    if (inspiracao == null) {
+      _ordemController.text = controller.proximaOrdemSugerida().toString();
+      _ativo = true;
+      _publicado = false;
+      _destaque = false;
+      controller.prepararTarefasSugeridasFormulario(const []);
+      controller.prepararItensOrcamentoSugeridosFormulario(const []);
+      controller.prepararImagensFormulario(
+        imagemUrl: '',
+        galeriaUrls: const [],
+        limparPendentes: true,
+      );
+      return;
+    }
 
-    _tipoEventoController.text =
-        _readString(data, 'tipoEvento', fallback: inspiracao?.tipoEvento ?? '');
-    _tipoEventoIdController.text = _readString(
-      data,
-      'tipoEventoId',
-      fallback: inspiracao?.tipoEventoId ?? '',
-    );
-    _tipoEventoNormalizadoController.text = _readString(
-      data,
-      'tipoEventoNormalizado',
-      fallback: inspiracao?.tipoEventoNormalizado ?? '',
-    );
-    _tipoEventoIdsController.text =
-        _readStringList(data, 'tipoEventoIds').join(', ');
-    _tipoEventoSlugsController.text =
-        _readStringList(data, 'tipoEventoSlugs').join(', ');
-    _tipoEventoNomesController.text =
-        _readStringList(data, 'tipoEventoNomes').join(', ');
+    _tituloController.text = inspiracao.titulo;
+    _descricaoController.text = inspiracao.descricao;
+    _categoriaController.text = (inspiracao.categoria ?? '').trim();
+    _categoriaIdController.text = (inspiracao.categoriaId ?? '').trim();
+    _imagemUrlController.text = inspiracao.imagemUrl;
+    _galeriaUrlsController.text = _joinLinhas(inspiracao.galeriaUrls);
+    _tagsController.text = _joinLista(inspiracao.tags);
+    _paletaCoresController.text = _joinLista(inspiracao.paletaCores);
+    _estiloController.text = inspiracao.estilo;
+    _faixaCustoController.text = inspiracao.faixaCusto;
+    _nivelDificuldadeController.text = inspiracao.nivelDificuldade;
+    _ordemController.text = (_isEdicao
+            ? inspiracao.ordem
+            : controller.proximaOrdemSugerida())
+        .toString();
 
-    controller.prepararTarefasSugeridasFormulario(
-        _readMapList(data, 'tarefasSugeridas'));
+    _tipoEventoController.text = inspiracao.tipoEvento;
+    _tipoEventoIdController.text = inspiracao.tipoEventoId;
+    _tipoEventoNormalizadoController.text = inspiracao.tipoEventoNormalizado;
+    _tipoEventoIdsController.text = _joinLista(inspiracao.tipoEventoIds);
+    _tipoEventoSlugsController.text = _joinLista(inspiracao.tipoEventoSlugs);
+    _tipoEventoNomesController.text = _joinLista(inspiracao.tipoEventoNomes);
+
+    controller.prepararTarefasSugeridasFormulario(inspiracao.tarefasSugeridas);
     _tarefasSugeridasController.text =
         _formatarTarefas(controller.tarefasSugeridasFormulario);
     controller.prepararItensOrcamentoSugeridosFormulario(
-      _readMapList(data, 'itensOrcamentoSugeridos'),
+      inspiracao.itensOrcamentoSugeridos,
     );
     _itensOrcamentoSugeridosController.text = _formatarItensOrcamento(
       controller.itensOrcamentoSugeridosFormulario,
     );
-    _categoriasFornecedorSugeridasController.text = _readStringList(
-      data,
-      'categoriasFornecedorSugeridas',
-    ).join(', ');
-    _fornecedoresRelacionadosController.text = _readDynamicList(
-      data,
-      'fornecedoresRelacionados',
-    ).map((e) => e.toString()).where((e) => e.trim().isNotEmpty).join('\n');
+    _categoriasFornecedorSugeridasController.text =
+        _joinLista(inspiracao.categoriasFornecedorSugeridas);
+    _fornecedoresRelacionadosController.text =
+        _joinLinhas(inspiracao.fornecedoresRelacionados);
 
-    _ativo = _readBool(data, 'ativo', fallback: true);
-    _publicado = _readBool(data, 'publicado', fallback: false);
-    _destaque = _readBool(data, 'destaque', fallback: false);
+    _ativo = inspiracao.ativo;
+    _publicado = inspiracao.publicado;
+    _destaque = inspiracao.destaque;
 
-    final ids = _readStringList(data, 'tipoEventoIds');
+    final ids = inspiracao.tipoEventoIds;
     final idPrincipal = _tipoEventoIdController.text.trim();
-    final slugs = _readStringList(data, 'tipoEventoSlugs');
-    final nomes = _readStringList(data, 'tipoEventoNomes');
+    final slugs = inspiracao.tipoEventoSlugs;
+    final nomes = inspiracao.tipoEventoNomes;
 
     for (final option in _tiposEventoPadrao) {
       final selecionadoPorId =
@@ -3244,81 +3215,18 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
         .join('\n');
   }
 
-  String _readString(
-    Map<String, dynamic> data,
-    String key, {
-    String fallback = '',
-  }) {
-    final value = data[key];
-    if (value == null) return fallback;
-    final text = value.toString().trim();
-    return text.isEmpty ? fallback : text;
+  String _joinLista(Iterable<String> values) {
+    return values
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .join(', ');
   }
 
-  int _readInt(Map<String, dynamic> data, String key, {int fallback = 0}) {
-    final value = data[key];
-    if (value == null) return fallback;
-    if (value is int) return value;
-    if (value is num) return value.toInt();
-    return int.tryParse(value.toString()) ?? fallback;
-  }
-
-  bool _readBool(Map<String, dynamic> data, String key,
-      {bool fallback = false}) {
-    final value = data[key];
-    if (value == null) return fallback;
-    if (value is bool) return value;
-    final text = value.toString().trim().toLowerCase();
-    if (<String>{'true', '1', 'sim', 's', 'yes', 'y'}.contains(text)) {
-      return true;
-    }
-    if (<String>{'false', '0', 'nao', 'não', 'n', 'no'}.contains(text)) {
-      return false;
-    }
-    return fallback;
-  }
-
-  List<String> _readStringList(
-    Map<String, dynamic> data,
-    String key, {
-    List<String> fallback = const <String>[],
-  }) {
-    final value = data[key];
-    if (value == null) return fallback;
-    if (value is List) {
-      return value
-          .map((e) => e?.toString().trim() ?? '')
-          .where((e) => e.isNotEmpty)
-          .toSet()
-          .toList();
-    }
-
-    final text = value.toString().trim();
-    if (text.isEmpty) return fallback;
-    return _parseStringList(text);
-  }
-
-  List<dynamic> _readDynamicList(Map<String, dynamic> data, String key) {
-    final value = data[key];
-    if (value == null) return <dynamic>[];
-    if (value is List) return value;
-    return <dynamic>[value];
-  }
-
-  List<Map<String, dynamic>> _readMapList(
-      Map<String, dynamic> data, String key) {
-    final value = data[key];
-    if (value == null) return <Map<String, dynamic>>[];
-    if (value is List) {
-      return value
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    }
-    if (value is Map) {
-      return <Map<String, dynamic>>[Map<String, dynamic>.from(value)];
-    }
-    return <Map<String, dynamic>>[];
+  String _joinLinhas(Iterable<String> values) {
+    return values
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .join('\n');
   }
 
   String _normalizeKey(String value) {
