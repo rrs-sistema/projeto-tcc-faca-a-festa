@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
+import '../../models/evento/inspiracao_evento_planejamento_model.dart';
 import '../../models/evento/inspiracao_model.dart';
 import '../../models/evento/inspiracao_snapshot_item.dart';
 import '../../models/fornecedor/fornecedor_model.dart';
@@ -199,22 +200,33 @@ class InspiracaoRemoteDatasource {
     });
   }
 
-  Stream<List<Map<String, dynamic>>> observarTarefasEvento(String eventoId) {
-    return _observarMapasEvento(eventoId, subTarefas);
-  }
-
-  Stream<List<Map<String, dynamic>>> observarOrcamentoEvento(String eventoId) {
-    return _observarMapasEvento(eventoId, subOrcamento);
-  }
-
-  Stream<List<Map<String, dynamic>>> _observarMapasEvento(
+  Stream<List<TarefaInspiracaoEventoModel>> observarTarefasEvento(
     String eventoId,
-    String subcolecao,
   ) {
-    return _subcolecao(eventoId, subcolecao).snapshots().map((snapshot) {
-      return snapshot.docs.map((doc) {
-        return <String, dynamic>{'id': doc.id, ...doc.data()};
-      }).toList();
+    return _subcolecao(eventoId, subTarefas).snapshots().map((snapshot) {
+      return snapshot.docs
+          .map(
+            (doc) => TarefaInspiracaoEventoModel.fromMap(
+              doc.data(),
+              documentId: doc.id,
+            ),
+          )
+          .toList();
+    });
+  }
+
+  Stream<List<ItemOrcamentoInspiracaoEventoModel>> observarOrcamentoEvento(
+    String eventoId,
+  ) {
+    return _subcolecao(eventoId, subOrcamento).snapshots().map((snapshot) {
+      return snapshot.docs
+          .map(
+            (doc) => ItemOrcamentoInspiracaoEventoModel.fromMap(
+              doc.data(),
+              documentId: doc.id,
+            ),
+          )
+          .toList();
     });
   }
 

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import '../entities/fornecedor.dart';
 import '../entities/inspiracao.dart';
+import '../entities/inspiracao_evento_planejamento.dart';
 import '../entities/inspiracao_snapshot.dart';
 import '../entities/inspiracao_sugestao.dart';
 import '../entities/referencia_evento.dart';
@@ -113,11 +114,13 @@ class GerenciarInspiracoes {
     return repository.observarReferenciasEvento(eventoId);
   }
 
-  Stream<List<Map<String, dynamic>>> observarTarefasEvento(String eventoId) {
+  Stream<List<TarefaInspiracaoEvento>> observarTarefasEvento(String eventoId) {
     return repository.observarTarefasEvento(eventoId);
   }
 
-  Stream<List<Map<String, dynamic>>> observarOrcamentoEvento(String eventoId) {
+  Stream<List<ItemOrcamentoInspiracaoEvento>> observarOrcamentoEvento(
+    String eventoId,
+  ) {
     return repository.observarOrcamentoEvento(eventoId);
   }
 

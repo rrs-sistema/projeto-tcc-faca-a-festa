@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_evento_planejamento.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_snapshot.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/domain/entities/referencia_evento.dart';
@@ -23,10 +24,10 @@ class InspiracaoController extends GetxController {
   final RxList<Inspiracao> inspiracoesFiltradas = <Inspiracao>[].obs;
   final RxList<ReferenciaEvento> referenciasEvento = <ReferenciaEvento>[].obs;
 
-  final RxList<Map<String, dynamic>> tarefasInspiracaoEvento =
-      <Map<String, dynamic>>[].obs;
-  final RxList<Map<String, dynamic>> orcamentosInspiracaoEvento =
-      <Map<String, dynamic>>[].obs;
+  final RxList<TarefaInspiracaoEvento> tarefasInspiracaoEvento =
+      <TarefaInspiracaoEvento>[].obs;
+  final RxList<ItemOrcamentoInspiracaoEvento> orcamentosInspiracaoEvento =
+      <ItemOrcamentoInspiracaoEvento>[].obs;
   final RxList<Fornecedor> fornecedoresRelacionados = <Fornecedor>[].obs;
 
   final RxSet<String> referenciasSalvasIds = <String>{}.obs;
@@ -39,8 +40,8 @@ class InspiracaoController extends GetxController {
 
   StreamSubscription<List<InspiracaoSnapshot>>? _subInspiracoes;
   StreamSubscription<List<ReferenciaEvento>>? _subReferencias;
-  StreamSubscription<List<Map<String, dynamic>>>? _subTarefas;
-  StreamSubscription<List<Map<String, dynamic>>>? _subOrcamento;
+  StreamSubscription<List<TarefaInspiracaoEvento>>? _subTarefas;
+  StreamSubscription<List<ItemOrcamentoInspiracaoEvento>>? _subOrcamento;
 
   String? _tipoEventoAtual;
   String? _tipoEventoIdAtual;
@@ -446,37 +447,13 @@ class InspiracaoController extends GetxController {
   }
 
   bool checklistJaCriado(String inspiracaoId) {
-    return _existeVinculoLocalPorInspiracao(
-      tarefasInspiracaoEvento,
-      inspiracaoId,
-    );
+    return tarefasInspiracaoEvento
+        .any((t) => t.pertenceAInspiracao(inspiracaoId));
   }
 
   bool orcamentoJaCriado(String inspiracaoId) {
-    return _existeVinculoLocalPorInspiracao(
-      orcamentosInspiracaoEvento,
-      inspiracaoId,
-    );
-  }
-
-  bool _existeVinculoLocalPorInspiracao(
-    Iterable<Map<String, dynamic>> itens,
-    String inspiracaoId,
-  ) {
-    final id = inspiracaoId.trim();
-
-    if (id.isEmpty) return false;
-
-    return itens.any((item) {
-      final itemInspiracaoId = (item['inspiracaoId'] ?? '').toString().trim();
-      final origem = (item['origem'] ?? '').toString().trim().toLowerCase();
-      final ativo = item['ativo'] != false;
-      final deletado = item['deletado'] == true || item['deleted'] == true;
-
-      final origemValida = origem.isEmpty || origem.contains('inspiracao');
-
-      return itemInspiracaoId == id && origemValida && ativo && !deletado;
-    });
+    return orcamentosInspiracaoEvento
+        .any((item) => item.pertenceAInspiracao(inspiracaoId));
   }
 
   Future<void> _atualizarIndicadoresReferencia({
@@ -709,10 +686,10 @@ class InspiracaoController extends GetxController {
 
       if (removerPlanejamentoVinculado && inspiracaoId.isNotEmpty) {
         tarefasInspiracaoEvento.removeWhere(
-          (t) => (t['inspiracaoId'] ?? '').toString() == inspiracaoId,
+          (t) => t.inspiracaoId == inspiracaoId,
         );
         orcamentosInspiracaoEvento.removeWhere(
-          (o) => (o['inspiracaoId'] ?? '').toString() == inspiracaoId,
+          (o) => o.inspiracaoId == inspiracaoId,
         );
         tarefasInspiracaoEvento.refresh();
         orcamentosInspiracaoEvento.refresh();
@@ -734,23 +711,21 @@ class InspiracaoController extends GetxController {
   int totalTarefasPorInspiracao(String inspiracaoId) {
     if (inspiracaoId.isEmpty) return 0;
     return tarefasInspiracaoEvento
-        .where((t) => (t['inspiracaoId'] ?? '').toString() == inspiracaoId)
+        .where((t) => t.inspiracaoId == inspiracaoId)
         .length;
   }
 
   int tarefasConcluidasPorInspiracao(String inspiracaoId) {
     if (inspiracaoId.isEmpty) return 0;
-    return tarefasInspiracaoEvento.where((t) {
-      final pertence = (t['inspiracaoId'] ?? '').toString() == inspiracaoId;
-      final concluida = t['concluida'] == true || t['statusConclusao'] == true;
-      return pertence && concluida;
-    }).length;
+    return tarefasInspiracaoEvento
+        .where((t) => t.inspiracaoId == inspiracaoId && t.concluida)
+        .length;
   }
 
   int totalOrcamentosPorInspiracao(String inspiracaoId) {
     if (inspiracaoId.isEmpty) return 0;
     return orcamentosInspiracaoEvento
-        .where((o) => (o['inspiracaoId'] ?? '').toString() == inspiracaoId)
+        .where((o) => o.inspiracaoId == inspiracaoId)
         .length;
   }
 
@@ -758,12 +733,8 @@ class InspiracaoController extends GetxController {
     if (inspiracaoId.isEmpty) return 0.0;
 
     return orcamentosInspiracaoEvento
-        .where((o) => (o['inspiracaoId'] ?? '').toString() == inspiracaoId)
-        .fold<double>(0.0, (total, o) {
-      final real = _toDouble(o['custoReal']);
-      final estimado = _toDouble(o['custoEstimado']);
-      return total + (real > 0 ? real : estimado);
-    });
+        .where((o) => o.inspiracaoId == inspiracaoId)
+        .fold<double>(0.0, (total, o) => total + o.valorOrcado);
   }
 
   Future<void> _escutarSubcolecoesDoEvento() async {
@@ -852,20 +823,14 @@ class InspiracaoController extends GetxController {
     )
         .listen(
       (snapshot) {
-        final tarefas = snapshot.where((tarefa) {
-          final ativo = tarefa['ativo'] != false;
-          final deletado =
-              tarefa['deletado'] == true || tarefa['deleted'] == true;
-          final eventoId =
-              (tarefa['eventoId'] ?? tarefa['idEvento'] ?? '').toString();
-          final userId =
-              (tarefa['userId'] ?? tarefa['idUsuario'] ?? '').toString();
-
-          final mesmoEvento = eventoId.isEmpty || eventoId == _eventoIdAtual;
-          final mesmoUsuario = userId.isEmpty || userId == _userIdAtual;
-
-          return ativo && !deletado && mesmoEvento && mesmoUsuario;
-        }).toList();
+        final tarefas = snapshot
+            .where(
+              (tarefa) => tarefa.visivelPara(
+                eventoId: _eventoIdAtual!,
+                userId: _userIdAtual!,
+              ),
+            )
+            .toList();
 
         tarefasInspiracaoEvento.assignAll(tarefas);
         tarefasInspiracaoEvento.refresh();
@@ -897,18 +862,14 @@ class InspiracaoController extends GetxController {
     )
         .listen(
       (snapshot) {
-        final itens = snapshot.where((item) {
-          final ativo = item['ativo'] != false;
-          final deletado = item['deletado'] == true || item['deleted'] == true;
-          final eventoId =
-              (item['eventoId'] ?? item['idEvento'] ?? '').toString();
-          final userId = (item['userId'] ?? item['idUsuario'] ?? '').toString();
-
-          final mesmoEvento = eventoId.isEmpty || eventoId == _eventoIdAtual;
-          final mesmoUsuario = userId.isEmpty || userId == _userIdAtual;
-
-          return ativo && !deletado && mesmoEvento && mesmoUsuario;
-        }).toList();
+        final itens = snapshot
+            .where(
+              (item) => item.visivelPara(
+                eventoId: _eventoIdAtual!,
+                userId: _userIdAtual!,
+              ),
+            )
+            .toList();
 
         orcamentosInspiracaoEvento.assignAll(itens);
         orcamentosInspiracaoEvento.refresh();
@@ -1144,23 +1105,6 @@ class InspiracaoController extends GetxController {
     });
 
     return text.replaceAll(RegExp(r'\s+'), ' ').trim();
-  }
-
-  double _toDouble(dynamic value) {
-    if (value == null) return 0.0;
-    if (value is num) return value.toDouble();
-
-    var text = value.toString().trim();
-    if (text.isEmpty) return 0.0;
-
-    text = text
-        .replaceAll('R\$', '')
-        .replaceAll(' ', '')
-        .replaceAll('.', '')
-        .replaceAll(',', '.')
-        .trim();
-
-    return double.tryParse(text) ?? 0.0;
   }
 
   @override

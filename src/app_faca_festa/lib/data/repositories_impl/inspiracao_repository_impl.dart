@@ -4,6 +4,7 @@ import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/domain/repositories/inspiracao_repository.dart';
 import '../datasources/remote/inspiracao_remote_datasource.dart';
+import '../models/evento/inspiracao_evento_planejamento_model.dart';
 import '../models/evento/inspiracao_model.dart';
 import '../models/evento/inspiracao_snapshot_item.dart';
 import '../models/fornecedor/fornecedor_model.dart';
@@ -120,12 +121,16 @@ class InspiracaoRepositoryImpl implements InspiracaoRepository {
   }
 
   @override
-  Stream<List<Map<String, dynamic>>> observarTarefasEvento(String eventoId) {
+  Stream<List<TarefaInspiracaoEventoModel>> observarTarefasEvento(
+    String eventoId,
+  ) {
     return remote.observarTarefasEvento(eventoId);
   }
 
   @override
-  Stream<List<Map<String, dynamic>>> observarOrcamentoEvento(String eventoId) {
+  Stream<List<ItemOrcamentoInspiracaoEventoModel>> observarOrcamentoEvento(
+    String eventoId,
+  ) {
     return remote.observarOrcamentoEvento(eventoId);
   }
 
