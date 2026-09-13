@@ -16,6 +16,7 @@ import 'package:app_faca_festa/presentation/modules/usuario/pages/cadastro_event
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
+import 'package:app_faca_festa/domain/entities/uf_cidade.dart';
 import 'package:app_faca_festa/presentation/modules/auth/pages/role_selector_screen.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 
@@ -213,16 +214,18 @@ class _WelcomeEventScreenState extends State<WelcomeEventScreen> {
 
                                     // ✅ Atualiza seleção reativa no UF/CidadeController
                                     endCtrl.ufCidadeController.estadoSelecionado
-                                        .value = {
-                                      'nome': enderecoUsuario.uf ?? 'Paraná',
-                                      'uf': enderecoUsuario.uf ?? 'PR',
-                                    };
+                                        .value = Estado(
+                                      id: '',
+                                      nome: enderecoUsuario.uf ?? 'Paraná',
+                                      uf: enderecoUsuario.uf ?? 'PR',
+                                    );
                                     endCtrl.ufCidadeController.cidadeSelecionada
-                                        .value = {
-                                      'id_cidade': enderecoUsuario.idCidade,
-                                      'nome': enderecoUsuario.nomeCidade,
-                                      'uf': enderecoUsuario.uf ?? 'PR',
-                                    };
+                                        .value = Cidade(
+                                      id: '',
+                                      nome: enderecoUsuario.nomeCidade ?? '',
+                                      uf: enderecoUsuario.uf ?? 'PR',
+                                      idCidade: enderecoUsuario.idCidade,
+                                    );
                                   }
                                   eventoCadastroController.limpar(
                                       manterEndereco: true);

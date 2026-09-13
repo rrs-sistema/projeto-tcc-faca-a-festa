@@ -7,6 +7,7 @@ import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
+import 'package:app_faca_festa/domain/entities/uf_cidade.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
 import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
@@ -336,18 +337,20 @@ class EventoCadastroController extends GetxController {
 
       // 🔹 Atualiza seleção reativa da cidade/UF no UFCidadeController
       if (evento.uf != null) {
-        end.ufCidadeController.estadoSelecionado.value = {
-          'nome': evento.uf,
-          'uf': evento.uf,
-        };
+        end.ufCidadeController.estadoSelecionado.value = Estado(
+          id: '',
+          nome: evento.uf!,
+          uf: evento.uf!,
+        );
       }
 
       if (evento.idCidade != null || evento.nomeCidade != null) {
-        end.ufCidadeController.cidadeSelecionada.value = {
-          'id_cidade': evento.idCidade,
-          'nome': evento.nomeCidade ?? '',
-          'uf': evento.uf ?? '',
-        };
+        end.ufCidadeController.cidadeSelecionada.value = Cidade(
+          id: evento.idCidade ?? '',
+          nome: evento.nomeCidade ?? '',
+          uf: evento.uf ?? '',
+          idCidade: int.tryParse(evento.idCidade ?? ''),
+        );
       }
     }
 

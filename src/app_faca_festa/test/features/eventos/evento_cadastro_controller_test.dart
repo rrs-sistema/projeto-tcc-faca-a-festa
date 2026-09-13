@@ -3,6 +3,7 @@ import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidad
 import 'package:app_faca_festa/domain/entities/endereco_cep_resultado.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
+import 'package:app_faca_festa/domain/entities/uf_cidade.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
 import 'package:app_faca_festa/domain/repositories/uf_cidade_repository.dart';
 import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
@@ -141,9 +142,8 @@ class _EventoRepositoryFake implements EventoRepository {
 
 class _UfCidadeRepositoryFake implements UfCidadeRepository {
   @override
-  Future<List<Map<String, dynamic>>> carregarEstados() async => const [];
+  Future<List<Estado>> carregarEstados() async => const [];
 
   @override
-  Future<List<Map<String, dynamic>>> carregarCidades(String idEstado) async =>
-      const [];
+  Future<List<Cidade>> carregarCidades(String idEstado) async => const [];
 }

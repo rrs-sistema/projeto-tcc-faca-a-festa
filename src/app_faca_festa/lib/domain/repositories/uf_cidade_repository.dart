@@ -1,5 +1,7 @@
-abstract class UfCidadeRepository {
-  Future<List<Map<String, dynamic>>> carregarEstados();
+import '../entities/uf_cidade.dart';
 
-  Future<List<Map<String, dynamic>>> carregarCidades(String idEstado);
+abstract class UfCidadeRepository {
+  Future<List<Estado>> carregarEstados();
+
+  Future<List<Cidade>> carregarCidades(String idEstado);
 }

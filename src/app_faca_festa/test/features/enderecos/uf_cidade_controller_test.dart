@@ -2,6 +2,7 @@ import 'package:app_faca_festa/presentation/modules/usuario/controllers/uf_cidad
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/domain/entities/uf_cidade.dart';
 import 'package:app_faca_festa/domain/repositories/uf_cidade_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_ufs_cidades.dart';
 
@@ -20,54 +21,67 @@ void main() {
   tearDown(Get.reset);
 
   test('loads states through the use case', () async {
-    repository.estados = [
-      {'id': 'pr', 'nome': 'Parana', 'uf': 'PR'},
-      {'id': 'sp', 'nome': 'Sao Paulo', 'uf': 'SP'},
+    repository.estados = const [
+      Estado(id: 'pr', nome: 'Parana', uf: 'PR'),
+      Estado(id: 'sp', nome: 'Sao Paulo', uf: 'SP'),
     ];
 
     await controller.carregarEstados();
 
     expect(controller.estados, hasLength(2));
-    expect(controller.estados.first['uf'], 'PR');
+    expect(controller.estados.first.uf, 'PR');
     expect(controller.carregando.value, isFalse);
   });
 
   test('loads cities through the use case', () async {
-    repository.cidadesPorEstado['pr'] = [
-      {'id': 'maringa', 'nome': 'Maringa', 'uf': 'PR', 'id_cidade': '4115200'},
+    repository.cidadesPorEstado['pr'] = const [
+      Cidade(id: 'maringa', nome: 'Maringa', uf: 'PR', idCidade: 4115200),
     ];
 
     await controller.carregarCidades('pr');
 
     expect(repository.estadosConsultados, ['pr']);
-    expect(controller.cidades.single['nome'], 'Maringa');
+    expect(controller.cidades.single.nome, 'Maringa');
   });
 
   test('selects state, resets city and loads state cities', () async {
-    repository.cidadesPorEstado['pr'] = [
-      {'id': 'maringa', 'nome': 'Maringa', 'uf': 'PR', 'id_cidade': 4115200},
+    repository.cidadesPorEstado['pr'] = const [
+      Cidade(id: 'maringa', nome: 'Maringa', uf: 'PR', idCidade: 4115200),
     ];
-    controller.cidadeSelecionada.value = {'id_cidade': 123};
+    controller.cidadeSelecionada.value = const Cidade(
+      id: '',
+      nome: '',
+      uf: '',
+      idCidade: 123,
+    );
 
-    await controller.selecionarEstado({'id': 'pr', 'nome': 'Parana'});
+    await controller.selecionarEstado(
+      const Estado(id: 'pr', nome: 'Parana', uf: 'PR'),
+    );
 
-    expect(controller.estadoSelecionado.value?['id'], 'pr');
+    expect(controller.estadoSelecionado.value?.id, 'pr');
     expect(controller.cidadeSelecionada.value, isNull);
     expect(controller.cidades, hasLength(1));
   });
 
-  test('returns selected city id from number or string', () {
-    controller.selecionarCidade({'id_cidade': '4115200'});
+  test('returns selected city IBGE id', () {
+    controller.selecionarCidade(
+      const Cidade(id: '', nome: '', uf: '', idCidade: 4115200),
+    );
 
     expect(controller.idCidadeSelecionada, 4115200);
 
-    controller.selecionarCidade({'id_cidade': 3550308});
+    controller.selecionarCidade(
+      const Cidade(id: '', nome: '', uf: '', idCidade: 3550308),
+    );
 
     expect(controller.idCidadeSelecionada, 3550308);
   });
 
   test('clears cities when city loading fails', () async {
-    controller.cidades.add({'id': 'antiga'});
+    controller.cidades.add(
+      const Cidade(id: 'antiga', nome: 'Antiga', uf: 'PR'),
+    );
     repository.cidadesError = StateError('failure');
 
     await controller.carregarCidades('pr');
@@ -78,21 +92,21 @@ void main() {
 }
 
 class _UfCidadeRepositoryFake implements UfCidadeRepository {
-  List<Map<String, dynamic>> estados = [];
-  final cidadesPorEstado = <String, List<Map<String, dynamic>>>{};
+  List<Estado> estados = [];
+  final cidadesPorEstado = <String, List<Cidade>>{};
   final estadosConsultados = <String>[];
   Object? estadosError;
   Object? cidadesError;
 
   @override
-  Future<List<Map<String, dynamic>>> carregarEstados() async {
+  Future<List<Estado>> carregarEstados() async {
     final currentError = estadosError;
     if (currentError != null) throw currentError;
     return estados;
   }
 
   @override
-  Future<List<Map<String, dynamic>>> carregarCidades(String idEstado) async {
+  Future<List<Cidade>> carregarCidades(String idEstado) async {
     estadosConsultados.add(idEstado);
     final currentError = cidadesError;
     if (currentError != null) throw currentError;

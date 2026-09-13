@@ -1,3 +1,4 @@
+import '../entities/uf_cidade.dart';
 import '../repositories/uf_cidade_repository.dart';
 
 class GerenciarUfsCidades {
@@ -5,11 +6,11 @@ class GerenciarUfsCidades {
 
   final UfCidadeRepository repository;
 
-  Future<List<Map<String, dynamic>>> carregarEstados() {
+  Future<List<Estado>> carregarEstados() {
     return repository.carregarEstados();
   }
 
-  Future<List<Map<String, dynamic>>> carregarCidades(String idEstado) {
+  Future<List<Cidade>> carregarCidades(String idEstado) {
     return repository.carregarCidades(idEstado);
   }
 }
