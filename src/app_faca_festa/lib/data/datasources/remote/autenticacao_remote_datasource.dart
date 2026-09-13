@@ -1,10 +1,10 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'dart:developer' as developer;
 
+import 'package:app_faca_festa/core/platform/plataforma_app.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import '../../services/functions/callable_https_client.dart';
 
@@ -168,7 +168,7 @@ class FirebaseAutenticacaoRemoteDatasource
   @override
   Future<bool> entrarComGoogle() async {
     try {
-      if (kIsWeb) {
+      if (PlataformaApp.ehWeb) {
         return await _entrarComGoogleWeb();
       }
 
@@ -457,7 +457,7 @@ class FirebaseAutenticacaoRemoteDatasource
   @override
   Future<void> sair() async {
     try {
-      if (!kIsWeb) {
+      if (!PlataformaApp.ehWeb) {
         await _inicializarGoogleSignIn();
         await GoogleSignIn.instance.signOut();
       }

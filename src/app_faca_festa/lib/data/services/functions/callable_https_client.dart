@@ -2,8 +2,9 @@ import 'dart:convert';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
+import 'package:app_faca_festa/core/platform/plataforma_app.dart';
 
 class CallableHttpsException implements Exception {
   const CallableHttpsException(this.code, [this.message]);
@@ -31,10 +32,7 @@ class CallableHttpsClient {
   final String regiao;
   static const Duration _timeout = Duration(seconds: 30);
 
-  static bool get necessarioNaPlataformaAtual {
-    if (kIsWeb) return false;
-    return defaultTargetPlatform == TargetPlatform.windows;
-  }
+  static bool get necessarioNaPlataformaAtual => PlataformaApp.ehWindows;
 
   Future<Map<String, dynamic>> call(
     String nomeFunction, [

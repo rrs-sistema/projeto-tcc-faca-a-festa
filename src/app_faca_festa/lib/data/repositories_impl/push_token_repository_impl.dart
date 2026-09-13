@@ -1,6 +1,6 @@
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
 
+import 'package:app_faca_festa/core/platform/plataforma_app.dart';
 import 'package:app_faca_festa/domain/repositories/push_token_repository.dart';
 
 class FirebasePushTokenRepository implements PushTokenRepository {
@@ -11,10 +11,8 @@ class FirebasePushTokenRepository implements PushTokenRepository {
 
   @override
   bool get suportaTokenPush {
-    if (kIsWeb) return true;
-
-    return defaultTargetPlatform == TargetPlatform.android ||
-        defaultTargetPlatform == TargetPlatform.iOS;
+    if (PlataformaApp.ehWeb) return true;
+    return PlataformaApp.ehAndroidOuIos;
   }
 
   @override

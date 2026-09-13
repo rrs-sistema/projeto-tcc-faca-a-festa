@@ -1,10 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
-import 'package:flutter/foundation.dart';
 
+import 'package:app_faca_festa/core/platform/plataforma_app.dart';
+import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import '../../models/auditoria/auditoria_evento_model.dart';
 import '../../services/functions/callable_https_client.dart';
-import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 
 class AuditoriaRemoteDatasource {
   AuditoriaRemoteDatasource({
@@ -771,8 +771,5 @@ class AuditoriaRemoteDatasource {
     return const {};
   }
 
-  String _plataformaAtual() {
-    if (kIsWeb) return 'WEB';
-    return defaultTargetPlatform.name.toUpperCase();
-  }
+  String _plataformaAtual() => PlataformaApp.identificador;
 }
