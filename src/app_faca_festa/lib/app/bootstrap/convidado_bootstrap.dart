@@ -6,6 +6,7 @@ import 'package:app_faca_festa/data/datasources/remote/convidado_remote_datasour
 import 'package:app_faca_festa/data/datasources/remote/convite_convidado_remote_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/cardapio_remote_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/grupo_convidado_remote_datasource.dart';
+import 'package:app_faca_festa/data/datasources/remote/presente_reservation_remote_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/tarefa_remote_datasource.dart';
 import 'package:app_faca_festa/data/repositories_impl/convidado_repository_impl.dart';
 import 'package:app_faca_festa/data/repositories_impl/convite_convidado_repository_impl.dart';
@@ -149,9 +150,18 @@ abstract final class ConvidadoBootstrap {
       );
     }
 
+    if (!Get.isRegistered<PresenteReservationRemoteDatasource>()) {
+      Get.put<PresenteReservationRemoteDatasource>(
+        PresenteReservationRemoteDatasource(Get.find<FirebaseFirestore>()),
+        permanent: true,
+      );
+    }
+
     if (!Get.isRegistered<PresenteReservationRepository>()) {
       Get.put<PresenteReservationRepository>(
-        PresenteReservationRepositoryImpl(Get.find<FirebaseFirestore>()),
+        PresenteReservationRepositoryImpl(
+          Get.find<PresenteReservationRemoteDatasource>(),
+        ),
         permanent: true,
       );
     }

@@ -1,12 +1,11 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
+import 'package:app_faca_festa/data/datasources/remote/presente_reservation_remote_datasource.dart';
 import 'package:app_faca_festa/domain/repositories/presente_reservation_repository.dart';
 
 class PresenteReservationRepositoryImpl
     implements PresenteReservationRepository {
-  PresenteReservationRepositoryImpl(this.firestore);
+  PresenteReservationRepositoryImpl(this._remote);
 
-  final FirebaseFirestore firestore;
+  final PresenteReservationRemoteDatasource _remote;
 
   @override
   Future<void> reservar({
@@ -16,15 +15,12 @@ class PresenteReservationRepositoryImpl
     required String nomeConvidado,
     required DateTime dataReserva,
   }) {
-    return firestore
-        .collection('evento')
-        .doc(idEvento)
-        .collection('presentes')
-        .doc(idPresente)
-        .update({
-      'reservado_por': nomeConvidado,
-      'id_convidado': idConvidado,
-      'data_reserva': Timestamp.fromDate(dataReserva),
-    });
+    return _remote.reservar(
+      idEvento: idEvento,
+      idPresente: idPresente,
+      idConvidado: idConvidado,
+      nomeConvidado: nomeConvidado,
+      dataReserva: dataReserva,
+    );
   }
 }
