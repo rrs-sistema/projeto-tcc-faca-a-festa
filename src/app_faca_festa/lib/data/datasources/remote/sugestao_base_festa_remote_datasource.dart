@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/evento/sugestao_base_festa_model.dart';
-import '../../seeds/sugestao_base_festa_seed.dart';
+import '../../seeds/sugestao_base_festa_catalogo.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_base_festa.dart';
 
 class SugestaoBaseFestaRemoteDatasource {
@@ -152,19 +152,16 @@ class SugestaoBaseFestaRemoteDatasource {
   Future<int> importarSugestoesTeste({
     bool sobrescrever = true,
   }) async {
-    final sugestoes = sugestoesBaseFestaSeed;
+    final sugestoes = catalogoSugestoesBaseFesta();
     final batch = _firestore.batch();
     final now = FieldValue.serverTimestamp();
 
     for (final item in sugestoes) {
-      final id = (item['id'] ?? '').toString().trim();
+      final id = item.id.trim();
       if (id.isEmpty) continue;
 
       final ref = _collection.doc(id);
-      final model = SugestaoBaseFestaModel.fromMap(
-        Map<String, dynamic>.from(item),
-        idFallback: id,
-      );
+      final model = SugestaoBaseFestaModel.fromEntity(item).copyWith(id: id);
       final data = model.toMap(includeDates: true)
         ..['id'] = id
         ..['deleted'] = false
