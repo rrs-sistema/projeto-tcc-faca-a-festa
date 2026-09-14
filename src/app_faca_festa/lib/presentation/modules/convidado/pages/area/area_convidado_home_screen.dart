@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'dart:async';
 import 'dart:ui';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
@@ -431,10 +432,13 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
             Get.toNamed('/login');
             return;
           }
-          Get.toNamed('/login', arguments: {
-            'tipo': 'C',
-            'conviteToken': token,
-          });
+          Get.toNamed(
+            '/login',
+            arguments: AuthFluxoArgs(
+              tipo: 'C',
+              conviteToken: token,
+            ),
+          );
         },
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),

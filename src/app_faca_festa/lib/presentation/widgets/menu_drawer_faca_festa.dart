@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_itens_admin_controller.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_festa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/fornecedor_migracao_admin_controller.dart';
@@ -125,9 +126,9 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                       Get.back();
                       Get.toNamed(
                         '/gerenciarPresentes',
-                        arguments: {
-                          'eventoId': evento?.idEvento,
-                        },
+                        arguments: GerenciarPresentesArgs(
+                          eventoId: evento?.idEvento ?? '',
+                        ),
                       );
                     },
                   ),
@@ -638,12 +639,6 @@ class MenuDrawerFacaFesta extends StatelessWidget {
         controller: inspiracaoController,
         themeController: themeController,
       ),
-      arguments: {
-        'eventoId': evento.idEvento,
-        'idEvento': evento.idEvento,
-        'userId': usuarioId,
-        'idUsuario': usuarioId,
-      },
     );
   }
 

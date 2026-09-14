@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
@@ -130,11 +131,8 @@ class RegisterController extends GetxController {
   /// C = Convidado
   String get tipoCadastroAtual {
     final args = Get.arguments;
-    final rawTipo = args is Map ? args['tipo'] : null;
-    final tipo = (rawTipo ?? 'O').toString().trim().toUpperCase();
-
-    if (tipo.isEmpty) return 'O';
-    return tipo;
+    if (args is AuthFluxoArgs) return args.tipoNormalizado;
+    return 'O';
   }
 
   bool get cadastroComoFornecedor => tipoCadastroAtual == 'F';
@@ -863,47 +861,8 @@ class RegisterController extends GetxController {
   }
 
   bool _argumentsIndicamConvidado(dynamic args) {
-    if (args == null) return false;
-
-    if (args is Map) {
-      final valores = <dynamic>[
-        args['tipo'],
-        args['isConvidado'],
-        args['ehConvidado'],
-        args['convidado'],
-        args['cadastroConvidado'],
-        args['cadastroComoConvidado'],
-        args['tipoCadastro'],
-        args['origemCadastro'],
-        args['perfil'],
-        args['tipoUsuario'],
-      ];
-
-      final resultado = valores.any(_valorRepresentaConvidado);
-      _log('_argumentsIndicamConvidado=$resultado | valores=$valores');
-      return resultado;
-    }
-
-    final resultado = _valorRepresentaConvidado(args);
-    _log('_argumentsIndicamConvidado=$resultado | valor=$args');
-    return resultado;
-  }
-
-  bool _valorRepresentaConvidado(dynamic valor) {
-    if (valor == null) return false;
-    if (valor is bool) return valor;
-
-    final texto = _normalizeTexto(valor.toString());
-    return texto == 'c' ||
-        texto == 'convidado' ||
-        texto == 'guest' ||
-        texto == 'area convidado' ||
-        texto.contains('convidado') ||
-        texto.contains('guest');
-  }
-
-  String _normalizeTexto(String texto) {
-    return texto.replaceAll(RegExp(r'[^\w\s]'), '').trim().toLowerCase();
+    if (args is AuthFluxoArgs) return args.ehConvidado;
+    return false;
   }
 
   String _texto(String? value) => value?.trim() ?? '';
@@ -912,18 +871,9 @@ class RegisterController extends GetxController {
 
   String? _tokenConviteEntrada() {
     final args = Get.arguments;
-
-    if (args is Map) {
-      final raw = args['conviteToken'] ??
-          args['tokenConvite'] ??
-          args['token'] ??
-          args['convite_token'] ??
-          args['token_convite'];
-      final tokenArgs = raw?.toString().trim() ?? '';
-      if (tokenArgs.isNotEmpty) {
-        appController.guardarTokenConvite(tokenArgs);
-        return tokenArgs;
-      }
+    if (args is AuthFluxoArgs && args.conviteToken.trim().isNotEmpty) {
+      appController.guardarTokenConvite(args.conviteToken);
+      return args.conviteToken.trim();
     }
 
     return appController.tokenConviteAtual();

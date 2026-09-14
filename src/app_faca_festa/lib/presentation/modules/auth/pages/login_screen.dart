@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/auth/controllers/login_controller.dart';
@@ -324,11 +325,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             widget.appController.tokenConviteAtual()?.trim() ??
                                 '';
                         if (token.isNotEmpty) {
-                          Get.toNamed('/register', arguments: {
-                            'tipo': 'C',
-                            'convidado': true,
-                            'conviteToken': token,
-                          });
+                          Get.toNamed(
+                            '/register',
+                            arguments: AuthFluxoArgs(
+                              tipo: 'C',
+                              conviteToken: token,
+                            ),
+                          );
                           return;
                         }
                         Get.toNamed('/role');

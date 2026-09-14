@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'dart:ui';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/categoria_servico_controller.dart';
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/servico_produto_controller.dart';
 import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcategoria_servico_controller.dart';
@@ -51,14 +52,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     controller = widget.controller;
     fornecedorController = widget.fornecedorController;
     final args = Get.arguments;
-    if (args is Map) {
-      final token =
-          (args['conviteToken'] ?? args['tokenConvite'] ?? args['token'] ?? '')
-              .toString();
-      controller.appController.guardarTokenConvite(token);
+    if (args is AuthFluxoArgs) {
+      controller.appController.guardarTokenConvite(args.conviteToken);
     }
-    final tipo =
-        ((args is Map ? args['tipo'] : null) ?? 'O').toString().toUpperCase();
+    final tipo = args is AuthFluxoArgs ? args.tipoNormalizado : 'O';
     if (tipo == 'C' && !controller.appController.fluxoConviteAtivo) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -75,7 +72,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tipo = (Get.arguments?['tipo'] ?? 'O') as String;
+    final tipo = widget.controller.tipoCadastroAtual;
     final isFornecedor = tipo == 'F';
     final isConvidado = tipo == 'C';
     final theme = widget.themeController;

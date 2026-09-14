@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_cadastro_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 
@@ -60,7 +61,10 @@ class RoleSelectorScreen extends StatelessWidget {
                       color: Colors.pinkAccent,
                       onTap: () {
                         eventoCadastroController.limpar(manterEndereco: false);
-                        Get.toNamed('/register', arguments: {'tipo': 'O'});
+                        Get.toNamed(
+                          '/register',
+                          arguments: const AuthFluxoArgs(tipo: 'O'),
+                        );
                       },
                     ),
                     const SizedBox(height: 20),
@@ -70,7 +74,10 @@ class RoleSelectorScreen extends StatelessWidget {
                       color: Colors.green.shade600,
                       onTap: () {
                         eventoCadastroController.limpar(manterEndereco: false);
-                        Get.toNamed('/register', arguments: {'tipo': 'F'});
+                        Get.toNamed(
+                          '/register',
+                          arguments: const AuthFluxoArgs(tipo: 'F'),
+                        );
                       },
                     ),
                     const SizedBox(height: 50),

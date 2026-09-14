@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/core/database/app_database.dart';
 import 'package:app_faca_festa/data/datasources/local/gift_local_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/gift_remote_datasource.dart';
@@ -44,7 +45,7 @@ abstract final class GiftBootstrap {
     Get.lazyPut<GiftController>(() {
       final arguments = Get.arguments;
       final routeEventoId =
-          arguments is Map ? arguments['eventoId'] as String? : null;
+          arguments is GerenciarPresentesArgs ? arguments.eventoId : null;
       final eventoId = routeEventoId ??
           Get.find<EventoController>().eventoAtualEntidade?.idEvento ??
           '';

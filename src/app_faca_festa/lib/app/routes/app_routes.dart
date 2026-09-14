@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/core/utils/convite_link.dart';
-import 'package:app_faca_festa/domain/entities/convidado.dart';
-import 'package:app_faca_festa/domain/entities/evento.dart';
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 import 'package:app_faca_festa/domain/usecases/get_gifts/gift_usecases.dart';
 import 'package:app_faca_festa/presentation/modules/admin/controllers/admin_dashboard_controller.dart';
@@ -266,9 +265,9 @@ class AppRoutes {
           name: '/gerenciarPresentes',
           binding: GiftBinding(),
           page: () {
-            final args = Get.arguments as Map<String, dynamic>?;
+            final args = Get.arguments as GerenciarPresentesArgs?;
             return GerenciarPresentesPage(
-              eventoId: args?['eventoId'] ?? '',
+              eventoId: args?.eventoId ?? '',
               controller: Get.find<GiftController>(),
               themeController: Get.find<EventThemeController>(),
             );
@@ -374,10 +373,10 @@ class AppRoutes {
         GetPage(
           name: '/areaconvidado',
           page: () {
-            final args = Get.arguments as Map?;
+            final args = Get.arguments as AreaConvidadoArgs?;
             return AreaConvidadoHomeScreen(
-              convidado: args?['convidado'] as Convidado,
-              evento: args?['evento'] as Evento,
+              convidado: args!.convidado,
+              evento: args.evento,
               convidadoController: Get.find<ConvidadoController>(),
               eventoController: Get.find<EventoController>(),
               tarefaController: Get.find<TarefaController>(),

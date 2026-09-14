@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
@@ -251,7 +252,7 @@ class AppCicloSessao {
           if (Get.currentRoute != rota) {
             Get.offAllNamed(
               rota,
-              arguments: metodoEmail ? {'metodo': 'email'} : {'metodo': 'totp'},
+              arguments: TotpMfaArgs(metodo: metodoEmail ? 'email' : 'totp'),
             );
           }
           return;

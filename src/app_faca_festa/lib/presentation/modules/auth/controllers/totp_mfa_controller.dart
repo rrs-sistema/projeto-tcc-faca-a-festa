@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 
@@ -34,7 +35,7 @@ class TotpMfaController extends GetxController {
   void onInit() {
     super.onInit();
     final args = Get.arguments;
-    if (args is Map && args['metodo'] == 'email') {
+    if (args is TotpMfaArgs && args.ehEmail) {
       metodoLogin.value = etapaEmail;
       solicitarCodigoEmail();
       return;

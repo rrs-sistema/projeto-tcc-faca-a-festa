@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/core/utils/convite_link.dart';
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import 'package:app_faca_festa/domain/repositories/convite_convidado_repository.dart';
@@ -161,10 +162,10 @@ class AppConviteController extends GetxController {
 
       Get.offAllNamed(
         '/areaconvidado',
-        arguments: {
-          'convidado': convidado,
-          'evento': evento,
-        },
+        arguments: AreaConvidadoArgs(
+          convidado: convidado,
+          evento: evento,
+        ),
       );
     } on AutenticacaoException catch (e) {
       acessoPorLink.value = false;
@@ -255,10 +256,10 @@ class AppConviteController extends GetxController {
 
     return AppDestinoRota(
       '/areaconvidado',
-      {
-        'convidado': convidado,
-        'evento': evento,
-      },
+      AreaConvidadoArgs(
+        convidado: convidado,
+        evento: evento,
+      ),
     );
   }
 

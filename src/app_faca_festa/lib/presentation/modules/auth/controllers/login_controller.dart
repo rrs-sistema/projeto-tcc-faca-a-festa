@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
@@ -153,12 +154,9 @@ class LoginController extends GetxController {
 
   void _capturarTokenDosArgumentos(AppController app) {
     final args = Get.arguments;
-    if (args is! Map) return;
-    final raw = args['conviteToken'] ??
-        args['tokenConvite'] ??
-        args['token'] ??
-        args['convite_token'];
-    app.guardarTokenConvite(raw?.toString() ?? '');
+    if (args is AuthFluxoArgs) {
+      app.guardarTokenConvite(args.conviteToken);
+    }
   }
 
   Future<void> _registrarAcesso({

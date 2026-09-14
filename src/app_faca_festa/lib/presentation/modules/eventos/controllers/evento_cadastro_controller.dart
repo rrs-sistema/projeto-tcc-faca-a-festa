@@ -3,11 +3,13 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/core/utils/biblioteca.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/domain/entities/uf_cidade.dart';
+import 'package:app_faca_festa/domain/entities/usuario.dart';
 import 'package:app_faca_festa/domain/repositories/evento_repository.dart';
 import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
@@ -689,99 +691,31 @@ class EventoCadastroController extends GetxController {
     return true;
   }
 
-  bool _usuarioEhConvidado(dynamic usuario) {
+  bool _usuarioEhConvidado(Usuario? usuario) {
     if (usuario == null) {
       _log('_usuarioEhConvidado=false porque usuário é null.');
       return false;
     }
 
-    final valoresPossiveis = <dynamic>[
-      _safeRead(() => usuario.isConvidado),
-      _safeRead(() => usuario.ehConvidado),
-      _safeRead(() => usuario.convidado),
-      _safeRead(() => usuario.tipoUsuario),
-      _safeRead(() => usuario.tipo),
-      _safeRead(() => usuario.perfil),
-      _safeRead(() => usuario.role),
-      _safeRead(() => usuario.nivelAcesso),
-      _safeRead(() => usuario.grupoUsuario),
-      _safeRead(() => usuario.tipoCadastro),
-      _safeRead(() => usuario.origemCadastro),
-    ];
-
-    final usuarioMap = _safeRead(() => usuario.toMap());
-    if (usuarioMap is Map) {
-      for (final key in const [
-        'isConvidado',
-        'ehConvidado',
-        'convidado',
-        'tipoUsuario',
-        'tipo',
-        'perfil',
-        'role',
-        'nivelAcesso',
-        'grupoUsuario',
-        'tipoCadastro',
-        'origemCadastro',
-      ]) {
-        valoresPossiveis.add(usuarioMap[key]);
-      }
-    }
-
-    final filtrados = valoresPossiveis.where((v) => v != null).toList();
-    final resultado = filtrados.any(_valorRepresentaConvidado);
-    _log('_usuarioEhConvidado=$resultado | valores=$filtrados');
+    final resultado = (usuario.tipo ?? '').trim().toUpperCase() == 'C';
+    _log('_usuarioEhConvidado=$resultado | tipo=${usuario.tipo}');
     return resultado;
   }
 
   bool _argumentsIndicamConvidado(dynamic args) {
-    if (args == null) return false;
-
-    if (args is Map) {
-      final valores = <dynamic>[
-        args['isConvidado'],
-        args['ehConvidado'],
-        args['convidado'],
-        args['cadastroConvidado'],
-        args['cadastroComoConvidado'],
-        args['tipoCadastro'],
-        args['origemCadastro'],
-        args['perfil'],
-        args['tipoUsuario'],
-      ];
-      return valores.any(_valorRepresentaConvidado);
-    }
-
-    return _valorRepresentaConvidado(args);
+    return args is AuthFluxoArgs && args.ehConvidado;
   }
 
-  bool _valorRepresentaConvidado(dynamic valor) {
-    if (valor == null) return false;
-    if (valor is bool) return valor;
-
-    final texto = _normalizeTexto(valor.toString());
-    return texto == 'convidado' ||
-        texto == 'guest' ||
-        texto == 'area convidado' ||
-        texto.contains('convidado') ||
-        texto.contains('guest');
-  }
-
-  void _logUsuario(dynamic usuario) {
+  void _logUsuario(Usuario? usuario) {
     if (usuario == null) {
       _log('Usuário logado: null');
       return;
     }
 
-    final usuarioMap = _safeRead(() => usuario.toMap());
     _log('Usuário logado runtimeType=${usuario.runtimeType}');
     _log(
-        'Usuário id=${_safeRead(() => usuario.idUsuario)} | nome=${_safeRead(() => usuario.nome)}');
-    if (usuarioMap is Map) {
-      _log('Usuário toMap=$usuarioMap');
-    } else {
-      _log('Usuário sem toMap disponível.');
-    }
+      'Usuário id=${usuario.idUsuario} | nome=${usuario.nome} | tipo=${usuario.tipo}',
+    );
   }
 
   void _logEndereco(EnderecoUsuario endereco, {required String origem}) {
@@ -799,14 +733,6 @@ class EventoCadastroController extends GetxController {
 
   void _log(String mensagem) {
     debugPrint('$_logTag $mensagem');
-  }
-
-  dynamic _safeRead(dynamic Function() read) {
-    try {
-      return read();
-    } catch (_) {
-      return null;
-    }
   }
 
   /// 🔹 Exibe mensagens elegantes de erro
