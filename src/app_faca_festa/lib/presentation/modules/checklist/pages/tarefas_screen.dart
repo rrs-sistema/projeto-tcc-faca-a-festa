@@ -53,6 +53,7 @@ class TarefasScreen extends StatelessWidget {
         backgroundColor: Colors.grey.shade100,
         appBar: FestaAppBar(
           titulo: 'Minhas Tarefas',
+          themeController: themeController,
           acoes: [
             IconButton(
               icon: const Icon(Icons.add_task_outlined, color: Colors.white),

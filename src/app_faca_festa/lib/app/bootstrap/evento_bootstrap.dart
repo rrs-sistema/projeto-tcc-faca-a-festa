@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/app/bootstrap/uf_cidade_bootstrap.dart';
 import 'package:app_faca_festa/data/datasources/remote/evento_remote_ds.dart';
 import 'package:app_faca_festa/data/local/evento_ativo_store.dart';
 import 'package:app_faca_festa/data/repositories_impl/evento_repository_impl.dart';
@@ -28,6 +29,8 @@ import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_c
 /// Global composition root for the current-event session.
 abstract final class EventoBootstrap {
   static void register() {
+    UfCidadeBootstrap.register();
+
     if (!Get.isRegistered<EventoRemoteDatasource>()) {
       Get.put<EventoRemoteDatasource>(
         EventoRemoteDatasource(

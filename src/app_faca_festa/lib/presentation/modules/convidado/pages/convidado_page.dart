@@ -110,6 +110,7 @@ class _ConvidadosPageState extends State<ConvidadosPage>
           backgroundColor: const Color(0xFFF6F7FB),
           appBar: FestaAppBar(
             titulo: 'Central de Convites',
+            themeController: themeController,
             altura: 124,
             acoes: [
               IconButton(

@@ -56,3 +56,22 @@ class EnderecoUsuario {
         dataCadastro: dataCadastro ?? this.dataCadastro,
       );
 }
+
+/// Prefers the address marked [EnderecoUsuario.principal], else the first item.
+///
+/// Do not use [Iterable.firstWhere] with `orElse` on these lists: Firestore
+/// returns `List<EnderecoUsuarioModel>`, and Dart's covariant `List` then
+/// rejects `() => EnderecoUsuario`.
+EnderecoUsuario enderecoPrincipalOuPrimeiro(
+  Iterable<EnderecoUsuario> enderecos,
+) {
+  EnderecoUsuario? primeiro;
+  for (final endereco in enderecos) {
+    primeiro ??= endereco;
+    if (endereco.principal) return endereco;
+  }
+  if (primeiro == null) {
+    throw StateError('Lista de endereços vazia.');
+  }
+  return primeiro;
+}

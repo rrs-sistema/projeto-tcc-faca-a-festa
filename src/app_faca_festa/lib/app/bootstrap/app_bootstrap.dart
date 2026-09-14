@@ -31,13 +31,15 @@ abstract final class AppBootstrap {
     AppControllerBootstrap.registerSharedServices();
     AutenticacaoBootstrap.register();
     DocumentoBootstrap.register();
+    // UF/cidade before profile and event forms — those Get.put controllers
+    // that inject UFCidadeController immediately.
+    UfCidadeBootstrap.register();
     ConvidadoBootstrap.register();
     PerfilUsuarioBootstrap.register();
     FornecedorBootstrap.register();
     ComunidadeBootstrap.register();
     AvaliacaoServicoBootstrap.register();
     RankingBootstrap.register();
-    UfCidadeBootstrap.register();
     FornecedorRecomendacaoBootstrap.register();
     ServicoFotoBootstrap.register();
     ServicoProdutoBootstrap.register();

@@ -18,6 +18,7 @@ import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/forne
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_recomendacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/cotacao/servico_detalhe_screen.dart';
+import 'package:app_faca_festa/presentation/modules/fornecedor/pages/filtro_fornecedor_bottom_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_detalhe_screen.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 
@@ -114,12 +115,13 @@ class _FornecedorLocalizacaoScreenState
         appBar: FestaAppBar(
           titulo: 'Fornecedores',
           automaticamenteImplyLeading: automaticallyImplyLeading,
+          themeController: themeController,
           acoes: [
             IconButton(
               tooltip: 'Filtros',
               icon:
                   const Icon(Icons.tune_rounded, color: Colors.white, size: 20),
-              onPressed: () => Get.back(), // Pode adicionar a lógica do filtro
+              onPressed: _abrirFiltros,
             )
           ],
         ),
@@ -467,8 +469,17 @@ class _FornecedorLocalizacaoScreenState
     return controllerLocalizacao.fornecedores.toList();
   }
 
+  Future<void> _abrirFiltros() {
+    return FiltroFornecedorBottomSheet.show(
+      context: context,
+      controller: controllerLocalizacao,
+      themeController: themeController,
+    );
+  }
+
   List<FornecedorDetalhado> _aplicarFiltros(List<FornecedorDetalhado> lista) {
     final termo = termoBusca.trim().toLowerCase();
+    final avaliacaoMinima = controllerLocalizacao.avaliacaoMinima.value;
     var resultado = List<FornecedorDetalhado>.from(lista);
     if (categoriaSelecionada != null) {
       final idCategoria = categoriaSelecionada!.id;
@@ -488,6 +499,14 @@ class _FornecedorLocalizacaoScreenState
         return nome.contains(termo) ||
             descricao.contains(termo) ||
             categoria.contains(termo);
+      }).toList();
+    }
+    if (avaliacaoMinima > 0) {
+      resultado = resultado.where((f) {
+        final media = controllerLocalizacao
+                .mediasAvaliacoes[f.fornecedor.idFornecedor] ??
+            0.0;
+        return media >= avaliacaoMinima;
       }).toList();
     }
     resultado.sort((a, b) {

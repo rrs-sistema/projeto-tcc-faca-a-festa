@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/app/bootstrap/uf_cidade_bootstrap.dart';
 import 'package:app_faca_festa/data/datasources/remote/foto_perfil_remote_datasource.dart';
 import 'package:app_faca_festa/data/datasources/remote/perfil_usuario_remote_datasource.dart';
 import 'package:app_faca_festa/data/repositories_impl/foto_perfil_repository_impl.dart';
@@ -17,6 +18,8 @@ import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_
 
 abstract final class PerfilUsuarioBootstrap {
   static void register() {
+    UfCidadeBootstrap.register();
+
     if (!Get.isRegistered<PerfilUsuarioRemoteDatasource>()) {
       Get.put<PerfilUsuarioRemoteDatasource>(
         FirebasePerfilUsuarioRemoteDatasource(Get.find<FirebaseFirestore>()),

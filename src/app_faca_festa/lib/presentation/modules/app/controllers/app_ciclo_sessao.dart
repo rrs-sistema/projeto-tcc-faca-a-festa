@@ -364,10 +364,7 @@ class AppCicloSessao {
       return usuario;
     }
 
-    final principal = enderecos.firstWhere(
-      (endereco) => endereco.principal,
-      orElse: () => enderecos.first,
-    );
+    final principal = enderecoPrincipalOuPrimeiro(enderecos);
     _enderecoPrincipal?.value = principal;
     final usuarioComEndereco = usuario.copyWith(
       cidade: principal.nomeCidade,

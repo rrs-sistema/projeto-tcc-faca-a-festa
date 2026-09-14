@@ -195,6 +195,7 @@ class _ServicoProdutoListScreenState extends State<ServicoProdutoListScreen> {
             )
           : FestaAppBar(
               titulo: 'Serviços e Produtos',
+              themeController: theme,
               acoes: [
                 Container(
                   margin: const EdgeInsets.only(right: 8),

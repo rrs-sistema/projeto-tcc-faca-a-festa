@@ -99,6 +99,7 @@ class _EditUsuarioScreenState extends State<EditUsuarioScreen> {
       appBar: FestaAppBar(
         titulo: 'Editar Perfil',
         automaticamenteImplyLeading: true,
+        themeController: themeController,
       ),
       body: Form(
         key: _formKey,
