@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../models/evento/sugestao_base_festa_model.dart';
-import '../../seeds/sugestao_base_festa_catalogo.dart';
+import '../../seeds/sugestao_base_festa_seed.dart';
 import 'package:app_faca_festa/domain/entities/sugestao_base_festa.dart';
 
 class SugestaoBaseFestaRemoteDatasource {
