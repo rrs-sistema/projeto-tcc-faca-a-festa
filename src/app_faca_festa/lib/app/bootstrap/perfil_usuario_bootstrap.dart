@@ -6,9 +6,7 @@ import 'package:app_faca_festa/data/datasources/remote/foto_perfil_remote_dataso
 import 'package:app_faca_festa/data/datasources/remote/perfil_usuario_remote_datasource.dart';
 import 'package:app_faca_festa/data/repositories_impl/foto_perfil_repository_impl.dart';
 import 'package:app_faca_festa/data/repositories_impl/perfil_usuario_repository_impl.dart';
-import 'package:app_faca_festa/data/repositories_impl/viacep_repository_impl.dart';
 import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
-import 'package:app_faca_festa/domain/repositories/cep_repository.dart';
 import 'package:app_faca_festa/domain/repositories/foto_perfil_repository.dart';
 import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dart';
 import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
@@ -45,14 +43,11 @@ abstract final class PerfilUsuarioBootstrap {
         permanent: true,
       );
     }
-    if (!Get.isRegistered<CepRepository>()) {
-      Get.lazyPut<CepRepository>(() => ViaCepRepositoryImpl(), fenix: true);
-    }
     if (!Get.isRegistered<EnderecoUsuarioController>()) {
       Get.put(
         EnderecoUsuarioController(
           perfilRepository: Get.find<PerfilUsuarioRepository>(),
-          cepRepository: Get.find<CepRepository>(),
+          buscarCepService: Get.find<BuscarCepService>(),
         ),
         permanent: true,
       );

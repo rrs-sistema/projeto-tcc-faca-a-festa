@@ -3,18 +3,18 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/domain/entities/endereco_cep_resultado.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
-import 'package:app_faca_festa/domain/repositories/cep_repository.dart';
 import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dart';
+import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 
 class EnderecoUsuarioController extends GetxController {
   EnderecoUsuarioController({
     required PerfilUsuarioRepository perfilRepository,
-    required CepRepository cepRepository,
+    required BuscarCepService buscarCepService,
   })  : _perfilRepository = perfilRepository,
-        _cepRepository = cepRepository;
+        _buscarCepService = buscarCepService;
 
   final PerfilUsuarioRepository _perfilRepository;
-  final CepRepository _cepRepository;
+  final BuscarCepService _buscarCepService;
 
   final enderecoPrincipal = Rxn<EnderecoUsuario>();
   final carregando = false.obs;
@@ -105,7 +105,10 @@ class EnderecoUsuarioController extends GetxController {
 
   Future<EnderecoCepResultado?> buscarCep(String cep) async {
     try {
-      return _cepRepository.buscarCep(cep);
+      return await _buscarCepService.buscar(cep: cep);
+    } on BuscarCepException catch (e) {
+      debugPrint('❌ Erro ao buscar CEP: $e');
+      return null;
     } catch (e) {
       debugPrint('❌ Erro ao buscar CEP: $e');
       return null;

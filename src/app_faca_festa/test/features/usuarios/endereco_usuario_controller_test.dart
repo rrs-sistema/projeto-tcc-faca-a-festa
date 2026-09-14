@@ -5,23 +5,23 @@ import 'package:app_faca_festa/presentation/modules/usuario/controllers/endereco
 import 'package:app_faca_festa/domain/entities/endereco_cep_resultado.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/usuario.dart';
-import 'package:app_faca_festa/domain/repositories/cep_repository.dart';
 import 'package:app_faca_festa/domain/repositories/perfil_usuario_repository.dart';
+import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late _PerfilUsuarioRepositoryFake perfilRepository;
-  late _CepRepositoryFake cepRepository;
+  late _BuscarCepServiceFake buscarCepService;
   late EnderecoUsuarioController controller;
 
   setUp(() {
     Get.testMode = true;
     perfilRepository = _PerfilUsuarioRepositoryFake();
-    cepRepository = _CepRepositoryFake();
+    buscarCepService = _BuscarCepServiceFake();
     controller = EnderecoUsuarioController(
       perfilRepository: perfilRepository,
-      cepRepository: cepRepository,
+      buscarCepService: buscarCepService,
     );
   });
 
@@ -71,8 +71,9 @@ void main() {
     expect(controller.carregando.value, isFalse);
   });
 
-  test('delegates CEP lookup to repository as typed address result', () async {
-    cepRepository.resultado = const EnderecoCepResultado(
+  test('delegates CEP lookup to BuscarCepService as typed address result',
+      () async {
+    buscarCepService.resultado = const EnderecoCepResultado(
       cep: '87000-000',
       logradouro: 'Rua Teste',
       numero: '',
@@ -82,13 +83,13 @@ void main() {
       latitude: null,
       longitude: null,
       formatado: 'Rua Teste, Centro, Maringá, PR',
-      origemCalculo: 'viacep',
+      origemCalculo: 'google',
       possuiCoordenadas: false,
     );
 
     final resultado = await controller.buscarCep('87000-000');
 
-    expect(cepRepository.cepsConsultados, ['87000-000']);
+    expect(buscarCepService.cepsConsultados, ['87000-000']);
     expect(resultado?.logradouro, 'Rua Teste');
     expect(resultado?.uf, 'PR');
   });
@@ -115,14 +116,18 @@ EnderecoUsuario _endereco({
   );
 }
 
-class _CepRepositoryFake implements CepRepository {
+class _BuscarCepServiceFake implements BuscarCepService {
   final cepsConsultados = <String>[];
   EnderecoCepResultado? resultado;
 
   @override
-  Future<EnderecoCepResultado?> buscarCep(String cep) async {
+  Future<EnderecoCepResultado> buscar({required String cep}) async {
     cepsConsultados.add(cep);
-    return resultado;
+    final atual = resultado;
+    if (atual == null) {
+      throw const BuscarCepException('CEP não encontrado.');
+    }
+    return atual;
   }
 }
 
