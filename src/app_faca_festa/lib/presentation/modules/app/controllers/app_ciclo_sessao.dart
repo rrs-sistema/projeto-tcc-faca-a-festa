@@ -421,10 +421,10 @@ class AppCicloSessao {
           entidadeTipo: 'sessao',
           entidadeId: _autenticacao.idUsuarioAtual,
           entidadeNome: usuario?.email ?? _autenticacao.emailUsuarioAtual,
-          detalhe: {
-            'tipo': usuario?.tipo,
-            'email': usuario?.email ?? _autenticacao.emailUsuarioAtual,
-          },
+          detalhe: AuditoriaDetalhe(
+            tipo: usuario?.tipo,
+            email: usuario?.email ?? _autenticacao.emailUsuarioAtual,
+          ),
           rota: Get.currentRoute,
         ),
       );

@@ -10,6 +10,34 @@ class AuditoriaMudanca {
   final String para;
 }
 
+class AuditoriaDetalhe {
+  const AuditoriaDetalhe({
+    this.tipo,
+    this.documentPath,
+    this.metodo,
+    this.email,
+    this.dados = const {},
+  });
+
+  final String? tipo;
+  final String? documentPath;
+  final String? metodo;
+  final String? email;
+  /// Campos sanitizados do documento auditado (snapshot) ou extras da sessão.
+  final Map<String, Object?> dados;
+
+  bool get isEmpty =>
+      !_temTexto(tipo) &&
+      !_temTexto(documentPath) &&
+      !_temTexto(metodo) &&
+      !_temTexto(email) &&
+      dados.isEmpty;
+
+  bool get isNotEmpty => !isEmpty;
+
+  static bool _temTexto(String? value) => (value ?? '').trim().isNotEmpty;
+}
+
 class AuditoriaEvento {
   const AuditoriaEvento({
     required this.id,
@@ -63,8 +91,7 @@ class AuditoriaEvento {
   final String? atorTipo;
   final String? atorAuthType;
   final List<AuditoriaMudanca> mudancas;
-  /// Snapshot opaco do documento auditado; serialização fica na camada data.
-  final Map<String, dynamic>? detalhe;
+  final AuditoriaDetalhe? detalhe;
   final bool visivelFornecedor;
   final String? plataforma;
   final String? rota;
@@ -155,8 +182,7 @@ class RegistroAuditoria {
   final String? idCotacao;
   final String? idOrcamento;
   final List<AuditoriaMudanca> mudancas;
-  /// Snapshot opaco do documento auditado; serialização fica na camada data.
-  final Map<String, dynamic>? detalhe;
+  final AuditoriaDetalhe? detalhe;
   final String? plataforma;
   final String? rota;
 }

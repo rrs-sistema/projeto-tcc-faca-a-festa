@@ -13,7 +13,7 @@ abstract class AuditoriaRegistrar {
     String? idCotacao,
     String? idOrcamento,
     List<AuditoriaMudanca> mudancas = const [],
-    Map<String, dynamic>? detalhe,
+    AuditoriaDetalhe? detalhe,
     String? rota,
   });
 }
@@ -34,7 +34,7 @@ class AuditoriaRegistrarVazio implements AuditoriaRegistrar {
     String? idCotacao,
     String? idOrcamento,
     List<AuditoriaMudanca> mudancas = const [],
-    Map<String, dynamic>? detalhe,
+    AuditoriaDetalhe? detalhe,
     String? rota,
   }) {}
 }

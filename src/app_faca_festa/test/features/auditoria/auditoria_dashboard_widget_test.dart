@@ -83,9 +83,9 @@ void main() {
       sourceEventId: 'firebase-event-1',
       hashIntegridade: 'hash-integridade-1',
       algoritmoHash: 'sha256',
-      detalhe: {
-        'status': 'fechado',
-      },
+      detalhe: AuditoriaDetalhe(
+        dados: {'status': 'fechado'},
+      ),
       mudancas: [
         AuditoriaMudanca(campo: 'status', de: 'parcial', para: 'fechado'),
       ],

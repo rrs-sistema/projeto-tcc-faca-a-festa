@@ -74,10 +74,7 @@ void main() {
 
     expect(model.origem, 'snapshot');
     expect(model.documentPath, 'orcamento/1788344088644');
-    expect(model.detalhe?['dados'], isA<Map>());
-    expect(
-      (model.detalhe?['dados'] as Map)['anotacoes'],
-      'Passagens aéreas',
-    );
+    expect(model.detalhe?.dados, isA<Map>());
+    expect(model.detalhe?.dados['anotacoes'], 'Passagens aéreas');
   });
 }

@@ -383,7 +383,7 @@ class AuditoriaEventoCard extends StatelessWidget {
                     ],
                     theme: theme,
                   ),
-                  if ((evento.detalhe ?? {}).isNotEmpty) ...[
+                  if (evento.detalhe?.isNotEmpty == true) ...[
                     const SizedBox(height: 12),
                     _JsonDetailSection(
                       title: _ehSnapshot(evento)
@@ -420,9 +420,17 @@ class AuditoriaEventoCard extends StatelessWidget {
     return DateFormat('dd/MM/yyyy HH:mm:ss', 'pt_BR').format(data);
   }
 
-  static String _jsonAuditoria(Map<String, dynamic> detalhe) {
+  static String _jsonAuditoria(AuditoriaDetalhe detalhe) {
     const encoder = JsonEncoder.withIndent('  ');
-    return encoder.convert(_normalizarJson(detalhe));
+    return encoder.convert(_normalizarJson({
+      if ((detalhe.tipo ?? '').isNotEmpty) 'tipo': detalhe.tipo,
+      if ((detalhe.documentPath ?? '').isNotEmpty)
+        'document_path': detalhe.documentPath,
+      if ((detalhe.metodo ?? '').isNotEmpty) 'metodo': detalhe.metodo,
+      if ((detalhe.email ?? '').isNotEmpty) 'email': detalhe.email,
+      if (detalhe.tipo == 'snapshot') 'dados': detalhe.dados,
+      if (detalhe.tipo != 'snapshot') ...detalhe.dados,
+    }));
   }
 
   static String _textoEvidencia(AuditoriaEvento evento) {

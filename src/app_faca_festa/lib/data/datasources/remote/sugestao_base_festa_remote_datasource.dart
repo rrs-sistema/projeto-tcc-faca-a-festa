@@ -161,13 +161,15 @@ class SugestaoBaseFestaRemoteDatasource {
       if (id.isEmpty) continue;
 
       final ref = _collection.doc(id);
-      final data = <String, dynamic>{
-        ...item,
-        'id': id,
-        'deleted': false,
-        'created_at': now,
-        'updated_at': now,
-      };
+      final model = SugestaoBaseFestaModel.fromMap(
+        Map<String, dynamic>.from(item),
+        idFallback: id,
+      );
+      final data = model.toMap(includeDates: true)
+        ..['id'] = id
+        ..['deleted'] = false
+        ..['created_at'] = now
+        ..['updated_at'] = now;
 
       if (sobrescrever) {
         batch.set(ref, data, SetOptions(merge: true));

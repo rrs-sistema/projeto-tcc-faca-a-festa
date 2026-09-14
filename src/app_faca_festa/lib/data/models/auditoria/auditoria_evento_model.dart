@@ -54,10 +54,10 @@ class AuditoriaEventoModel extends AuditoriaEvento {
       }
     }
 
-    Map<String, dynamic>? detalhe;
+    AuditoriaDetalhe? detalhe;
     final detalheRaw = map['detalhe'];
     if (detalheRaw is Map) {
-      detalhe = Map<String, dynamic>.from(detalheRaw);
+      detalhe = detalheFromMap(Map<String, dynamic>.from(detalheRaw));
     }
 
     return AuditoriaEventoModel(
@@ -113,6 +113,71 @@ class AuditoriaEventoModel extends AuditoriaEvento {
       'de': mudanca.de,
       'para': mudanca.para,
     };
+  }
+
+  static AuditoriaDetalhe detalheFromMap(Map<String, dynamic> map) {
+    final dados = <String, Object?>{};
+    final dadosRaw = map['dados'];
+    if (dadosRaw is Map) {
+      dados.addAll(
+        dadosRaw.map(
+          (key, value) => MapEntry(key.toString(), _asObject(value)),
+        ),
+      );
+    }
+    const conhecidas = {
+      'tipo',
+      'document_path',
+      'documentPath',
+      'metodo',
+      'email',
+      'dados',
+    };
+    for (final entry in map.entries) {
+      if (conhecidas.contains(entry.key)) continue;
+      dados[entry.key] = _asObject(entry.value);
+    }
+    return AuditoriaDetalhe(
+      tipo: _textoOpcional(map['tipo']),
+      documentPath: _textoOpcional(map['document_path'] ?? map['documentPath']),
+      metodo: _textoOpcional(map['metodo']),
+      email: _textoOpcional(map['email']),
+      dados: dados,
+    );
+  }
+
+  static Map<String, dynamic> detalheToMap(AuditoriaDetalhe detalhe) {
+    if (detalhe.tipo == 'snapshot') {
+      return {
+        'tipo': 'snapshot',
+        if ((detalhe.documentPath ?? '').isNotEmpty)
+          'document_path': detalhe.documentPath,
+        if (detalhe.dados.isNotEmpty) 'dados': detalhe.dados,
+      };
+    }
+    return {
+      if ((detalhe.tipo ?? '').isNotEmpty) 'tipo': detalhe.tipo,
+      if ((detalhe.documentPath ?? '').isNotEmpty)
+        'document_path': detalhe.documentPath,
+      if ((detalhe.metodo ?? '').isNotEmpty) 'metodo': detalhe.metodo,
+      if ((detalhe.email ?? '').isNotEmpty) 'email': detalhe.email,
+      ...detalhe.dados,
+    };
+  }
+
+  static Object? _asObject(dynamic value) {
+    if (value == null || value is String || value is num || value is bool) {
+      return value;
+    }
+    if (value is Map) {
+      return value.map(
+        (key, item) => MapEntry(key.toString(), _asObject(item)),
+      );
+    }
+    if (value is Iterable) {
+      return value.map(_asObject).toList();
+    }
+    return value.toString();
   }
 
   static String? _textoOpcional(dynamic value) {

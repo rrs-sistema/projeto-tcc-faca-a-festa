@@ -174,10 +174,10 @@ class LoginController extends GetxController {
           entidadeTipo: 'sessao',
           entidadeId: _autenticacaoRepository.idUsuarioAtual,
           entidadeNome: _autenticacaoRepository.emailUsuarioAtual,
-          detalhe: {
-            'metodo': metodo,
-            'email': _autenticacaoRepository.emailUsuarioAtual,
-          },
+          detalhe: AuditoriaDetalhe(
+            metodo: metodo,
+            email: _autenticacaoRepository.emailUsuarioAtual,
+          ),
           rota: Get.currentRoute,
         ),
       );

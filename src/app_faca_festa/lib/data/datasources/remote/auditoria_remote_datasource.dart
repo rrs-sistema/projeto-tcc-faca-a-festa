@@ -34,7 +34,9 @@ class AuditoriaRemoteDatasource {
       'mudancas': registro.mudancas
           .map(AuditoriaEventoModel.mudancaToMap)
           .toList(),
-      'detalhe': registro.detalhe,
+      'detalhe': registro.detalhe == null
+          ? null
+          : AuditoriaEventoModel.detalheToMap(registro.detalhe!),
       'plataforma': registro.plataforma ?? _plataformaAtual(),
       'rota': registro.rota,
       'criadoEmLocal': DateTime.now().toUtc().toIso8601String(),
@@ -522,18 +524,18 @@ class AuditoriaRemoteDatasource {
     }).toList();
   }
 
-  Map<String, dynamic> _detalheSnapshot(
+  AuditoriaDetalhe _detalheSnapshot(
     QueryDocumentSnapshot<Map<String, dynamic>> doc,
     Map<String, dynamic> data,
   ) {
-    return {
-      'tipo': 'snapshot',
-      'document_path': '${doc.reference.parent.path}/${doc.id}',
-      'dados': _sanitizarDadosSnapshot(data),
-    };
+    return AuditoriaDetalhe(
+      tipo: 'snapshot',
+      documentPath: '${doc.reference.parent.path}/${doc.id}',
+      dados: _sanitizarDadosSnapshot(data),
+    );
   }
 
-  Map<String, dynamic> _sanitizarDadosSnapshot(Map<String, dynamic> data) {
+  Map<String, Object?> _sanitizarDadosSnapshot(Map<String, dynamic> data) {
     final entries = data.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
     return {
@@ -569,7 +571,7 @@ class AuditoriaRemoteDatasource {
     ].any(normalizado.contains);
   }
 
-  dynamic _valorSeguroSnapshot(dynamic value) {
+  Object? _valorSeguroSnapshot(dynamic value) {
     if (value == null || value is String || value is num || value is bool) {
       return value;
     }

@@ -59,19 +59,23 @@ class InspiracaoRemoteDatasource {
 
     for (final item in itens) {
       await commitSeCheio();
-      final id = (item['id'] ?? '').toString();
-      if (id.isEmpty) continue;
-      final payload = Map<String, dynamic>.from(item)
+      if (item.id.isEmpty) continue;
+      final payload = InspiracaoModel.fromEntity(item).toFirestore()
+        ..remove('criadoEm')
+        ..remove('atualizadoEm')
         ..['atualizadoEm'] = agora
-        ..['atualizadoPor'] = operador;
-      if (!idsExistentes.contains(id)) {
+        ..['atualizadoPor'] = operador
+        ..['origem'] = 'catalogo_festas'
+        ..['tipoEventoSlug'] = item.tipoEventoNormalizado
+        ..['tipoEventoNome'] = item.tipoEvento;
+      if (!idsExistentes.contains(item.id)) {
         payload['criadoEm'] = agora;
         payload['criadoPor'] = operador;
       } else {
         payload.remove('criadoEm');
         payload.remove('criadoPor');
       }
-      lote.set(collection.doc(id), payload, SetOptions(merge: true));
+      lote.set(collection.doc(item.id), payload, SetOptions(merge: true));
       operacoes++;
     }
 

@@ -1,3 +1,6 @@
+import 'package:app_faca_festa/domain/entities/inspiracao.dart';
+import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
+
 /// Catálogo inicial da tela de Inspiração.
 ///
 /// IDs `insp_*` são estáveis. Merge no Firestore não apaga documentos extras.
@@ -67,7 +70,7 @@ class CatalogoInspiracao {
   static String _img(String photoId) =>
       'https://images.unsplash.com/$photoId?auto=format&fit=crop&w=1400&q=80';
 
-  static List<Map<String, dynamic>> get itens => [
+  static List<Inspiracao> get itens => [
         _insp(
           id: 'insp_casamento_rustico_chacara',
           titulo: 'Casamento rústico na chácara',
@@ -1247,7 +1250,7 @@ class CatalogoInspiracao {
         ),
       ];
 
-  static Map<String, dynamic> _insp({
+  static Inspiracao _insp({
     required String id,
     required String titulo,
     required String descricao,
@@ -1263,8 +1266,8 @@ class CatalogoInspiracao {
     required String dificuldade,
     required List<String> fornecedores,
     required List<String> catsFornecedor,
-    required List<Map<String, dynamic>> tarefas,
-    required List<Map<String, dynamic>> orcamento,
+    required List<TarefaInspiracaoSugerida> tarefas,
+    required List<ItemOrcamentoInspiracaoSugerido> orcamento,
     bool destaque = false,
     int ordem = 100,
   }) {
@@ -1279,42 +1282,39 @@ class CatalogoInspiracao {
       }
     }
     final primario = eventos.first;
-    return {
-      'id': id,
-      'titulo': titulo,
-      'descricao': descricao,
-      'imagemUrl': imagem,
-      'galeriaUrls': galeria,
-      'tags': tags,
-      'paletaCores': paleta,
-      'categoria': categoria,
-      'categoriaId': categoriaId,
-      'tipoEventoId': primario.id,
-      'tipoEvento': primario.nome,
-      'tipoEventoNormalizado': primario.slug.replaceAll('-', '_'),
-      'tipoEventoSlug': primario.slug.replaceAll('-', '_'),
-      'tipoEventoNome': primario.nome,
-      'tipoEventoIds': ids,
-      'tipoEventoSlugs': slugs,
-      'tipoEventoNomes': nomes,
-      'estilo': estilo,
-      'faixaCusto': faixa,
-      'nivelDificuldade': dificuldade,
-      'fornecedoresRelacionados': fornecedores,
-      'categoriasFornecedorSugeridas': catsFornecedor,
-      'tarefasSugeridas': tarefas,
-      'itensOrcamentoSugeridos': orcamento,
-      'destaque': destaque,
-      'ativo': true,
-      'publicado': true,
-      'deletado': false,
-      'favorito': false,
-      'ordem': ordem,
-      'origem': 'catalogo_festas',
-    };
+    return Inspiracao(
+      id: id,
+      titulo: titulo,
+      descricao: descricao,
+      imagemUrl: imagem,
+      galeriaUrls: galeria,
+      tags: tags,
+      paletaCores: paleta,
+      categoria: categoria,
+      categoriaId: categoriaId,
+      tipoEventoId: primario.id,
+      tipoEvento: primario.nome,
+      tipoEventoNormalizado: primario.slug.replaceAll('-', '_'),
+      tipoEventoIds: ids,
+      tipoEventoSlugs: slugs,
+      tipoEventoNomes: nomes,
+      estilo: estilo,
+      faixaCusto: faixa,
+      nivelDificuldade: dificuldade,
+      fornecedoresRelacionados: fornecedores,
+      categoriasFornecedorSugeridas: catsFornecedor,
+      tarefasSugeridas: tarefas,
+      itensOrcamentoSugeridos: orcamento,
+      destaque: destaque,
+      ativo: true,
+      publicado: true,
+      deletado: false,
+      favorito: false,
+      ordem: ordem,
+    );
   }
 
-  static Map<String, dynamic> _tarefa(
+  static TarefaInspiracaoSugerida _tarefa(
     String titulo,
     String descricao,
     String categoria,
@@ -1323,21 +1323,20 @@ class CatalogoInspiracao {
     bool obrigatoria = false,
     int ordem = 1,
   }) {
-    return {
-      'titulo': titulo,
-      'nome': titulo,
-      'descricao': descricao,
-      'categoria': categoria,
-      'diasAntesEvento': dias,
-      'prioridade': prioridade,
-      'obrigatoria': obrigatoria,
-      'ordem': ordem,
-      'status': 'pendente',
-      'origem': 'inspiracao_seed',
-    };
+    return TarefaInspiracaoSugerida(
+      titulo: titulo,
+      descricao: descricao,
+      categoria: categoria,
+      diasAntesEvento: dias,
+      prioridade: prioridade,
+      obrigatoria: obrigatoria,
+      ordem: ordem,
+      status: 'pendente',
+      origem: 'inspiracao_seed',
+    );
   }
 
-  static Map<String, dynamic> _item(
+  static ItemOrcamentoInspiracaoSugerido _item(
     String categoria,
     String nome,
     double custo, {
@@ -1348,23 +1347,20 @@ class CatalogoInspiracao {
     bool obrigatorio = false,
     int ordem = 1,
   }) {
-    return {
-      'categoria': categoria,
-      'item': nome,
-      'nome': nome,
-      'descricao': descricao,
-      'custoEstimado': custo,
-      'valorEstimado': custo,
-      'custoMinimo': double.parse((custo * 0.8).toStringAsFixed(2)),
-      'custoMaximo': double.parse((custo * 1.25).toStringAsFixed(2)),
-      'unidade': unidade,
-      'quantidadeBase': quantidade,
-      'custoPorConvidado': porConvidado,
-      'obrigatorio': obrigatorio,
-      'ordem': ordem,
-      'custoReal': 0.0,
-      'statusPagamento': 'pendente',
-      'origem': 'inspiracao_seed',
-    };
+    return ItemOrcamentoInspiracaoSugerido(
+      categoria: categoria,
+      item: nome,
+      descricao: descricao,
+      custoEstimado: custo,
+      custoMinimo: double.parse((custo * 0.8).toStringAsFixed(2)),
+      custoMaximo: double.parse((custo * 1.25).toStringAsFixed(2)),
+      unidade: unidade,
+      quantidadeBase: quantidade,
+      custoPorConvidado: porConvidado,
+      obrigatorio: obrigatorio,
+      ordem: ordem,
+      statusPagamento: 'pendente',
+      origem: 'inspiracao_seed',
+    );
   }
 }

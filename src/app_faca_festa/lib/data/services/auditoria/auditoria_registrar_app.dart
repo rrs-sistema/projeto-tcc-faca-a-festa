@@ -25,7 +25,7 @@ class AuditoriaRegistrarApp implements AuditoriaRegistrar {
     String? idCotacao,
     String? idOrcamento,
     List<AuditoriaMudanca> mudancas = const [],
-    Map<String, dynamic>? detalhe,
+    AuditoriaDetalhe? detalhe,
     String? rota,
   }) {
     unawaited(
