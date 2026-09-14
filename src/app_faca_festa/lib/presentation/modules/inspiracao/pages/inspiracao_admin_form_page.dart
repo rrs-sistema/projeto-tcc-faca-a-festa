@@ -6,6 +6,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
@@ -170,9 +171,8 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
 
     controller = widget.controller;
 
-    final arguments = Get.arguments;
-    _inspiracaoInicial =
-        widget.inspiracao ?? (arguments is Inspiracao ? arguments : null);
+    _inspiracaoInicial = widget.inspiracao ??
+        InspiracaoAdminFormArgs.maybeOf(Get.arguments)?.inspiracao;
 
     _inicializarControllers();
     _popularCampos();
@@ -237,10 +237,9 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
     _estiloController.text = inspiracao.estilo;
     _faixaCustoController.text = inspiracao.faixaCusto;
     _nivelDificuldadeController.text = inspiracao.nivelDificuldade;
-    _ordemController.text = (_isEdicao
-            ? inspiracao.ordem
-            : controller.proximaOrdemSugerida())
-        .toString();
+    _ordemController.text =
+        (_isEdicao ? inspiracao.ordem : controller.proximaOrdemSugerida())
+            .toString();
 
     _tipoEventoController.text = inspiracao.tipoEvento;
     _tipoEventoIdController.text = inspiracao.tipoEventoId;
@@ -3000,8 +2999,7 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
       tipoEventoSlugs: tipos.tipoEventoSlugs,
       tipoEventoNomes: tipos.tipoEventoNomes,
       tarefasSugeridas: controller.tarefasSugeridasDoFormulario(),
-      itensOrcamentoSugeridos:
-          controller.itensOrcamentoSugeridosDoFormulario(),
+      itensOrcamentoSugeridos: controller.itensOrcamentoSugeridosDoFormulario(),
       categoriasFornecedorSugeridas: _parseStringList(
         _categoriasFornecedorSugeridasController.text,
       ),
@@ -3220,17 +3218,11 @@ class _InspiracaoAdminFormPageState extends State<InspiracaoAdminFormPage> {
   }
 
   String _joinLista(Iterable<String> values) {
-    return values
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .join(', ');
+    return values.map((e) => e.trim()).where((e) => e.isNotEmpty).join(', ');
   }
 
   String _joinLinhas(Iterable<String> values) {
-    return values
-        .map((e) => e.trim())
-        .where((e) => e.isNotEmpty)
-        .join('\n');
+    return values.map((e) => e.trim()).where((e) => e.isNotEmpty).join('\n');
   }
 
   String _normalizeKey(String value) {

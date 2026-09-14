@@ -51,11 +51,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.initState();
     controller = widget.controller;
     fornecedorController = widget.fornecedorController;
-    final args = Get.arguments;
-    if (args is AuthFluxoArgs) {
-      controller.appController.guardarTokenConvite(args.conviteToken);
-    }
-    final tipo = args is AuthFluxoArgs ? args.tipoNormalizado : 'O';
+    final args = AuthFluxoArgs.of(Get.arguments);
+    controller.appController.guardarTokenConvite(args.conviteToken);
+    final tipo = args.tipoNormalizado;
     if (tipo == 'C' && !controller.appController.fluxoConviteAtivo) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;

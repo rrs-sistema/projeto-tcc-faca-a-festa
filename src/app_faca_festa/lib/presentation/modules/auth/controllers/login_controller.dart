@@ -153,8 +153,8 @@ class LoginController extends GetxController {
   }
 
   void _capturarTokenDosArgumentos(AppController app) {
-    final args = Get.arguments;
-    if (args is AuthFluxoArgs) {
+    final args = AuthFluxoArgs.maybeOf(Get.arguments);
+    if (args != null) {
       app.guardarTokenConvite(args.conviteToken);
     }
   }

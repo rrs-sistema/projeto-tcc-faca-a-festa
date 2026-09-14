@@ -34,8 +34,8 @@ class TotpMfaController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final args = Get.arguments;
-    if (args is TotpMfaArgs && args.ehEmail) {
+    final args = TotpMfaArgs.maybeOf(Get.arguments);
+    if (args != null && args.ehEmail) {
       metodoLogin.value = etapaEmail;
       solicitarCodigoEmail();
       return;

@@ -265,7 +265,7 @@ class AppRoutes {
           name: '/gerenciarPresentes',
           binding: GiftBinding(),
           page: () {
-            final args = Get.arguments as GerenciarPresentesArgs?;
+            final args = GerenciarPresentesArgs.maybeOf(Get.arguments);
             return GerenciarPresentesPage(
               eventoId: args?.eventoId ?? '',
               controller: Get.find<GiftController>(),
@@ -351,9 +351,8 @@ class AppRoutes {
             final id =
                 (fornecedorController.fornecedor.value?.idFornecedor ?? '')
                     .trim();
-            final controller = id.isEmpty
-                ? null
-                : AuditoriaBootstrap.controllerFornecedor(id);
+            final controller =
+                id.isEmpty ? null : AuditoriaBootstrap.controllerFornecedor(id);
             controller?.carregar();
             return AuditoriaFornecedorScreen(
               fornecedorController: fornecedorController,
@@ -373,7 +372,7 @@ class AppRoutes {
         GetPage(
           name: '/areaconvidado',
           page: () {
-            final args = Get.arguments as AreaConvidadoArgs?;
+            final args = AreaConvidadoArgs.maybeOf(Get.arguments);
             return AreaConvidadoHomeScreen(
               convidado: args!.convidado,
               evento: args.evento,

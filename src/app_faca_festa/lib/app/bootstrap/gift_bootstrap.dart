@@ -43,9 +43,8 @@ abstract final class GiftBootstrap {
     }
 
     Get.lazyPut<GiftController>(() {
-      final arguments = Get.arguments;
       final routeEventoId =
-          arguments is GerenciarPresentesArgs ? arguments.eventoId : null;
+          GerenciarPresentesArgs.maybeOf(Get.arguments)?.eventoId;
       final eventoId = routeEventoId ??
           Get.find<EventoController>().eventoAtualEntidade?.idEvento ??
           '';

@@ -108,8 +108,8 @@ class RegisterController extends GetxController {
 
   final Rx<EnderecoSectionController> enderecoController;
 
-  /// Permite que a tela force o cadastro como convidado quando o tipo não vier
-  /// corretamente em Get.arguments.
+  /// Permite que a tela force o cadastro como convidado quando o tipo da rota
+  /// não vier como convidado.
   ///
   /// Exemplo na tela de cadastro do convidado:
   /// controller.configurarCadastroComoConvidado(true);
@@ -119,7 +119,7 @@ class RegisterController extends GetxController {
   void onInit() {
     super.onInit();
     _log(
-        'onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=${Get.arguments}');
+        'onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=$_argsFluxo');
     final token = _tokenConviteEntrada();
     if (token != null) appController.guardarTokenConvite(token);
     _log(
@@ -130,25 +130,23 @@ class RegisterController extends GetxController {
   /// O = Organizador
   /// F = Fornecedor
   /// C = Convidado
-  String get tipoCadastroAtual {
-    final args = Get.arguments;
-    if (args is AuthFluxoArgs) return args.tipoNormalizado;
-    return 'O';
-  }
+  AuthFluxoArgs get _argsFluxo => AuthFluxoArgs.of(Get.arguments);
+
+  String get tipoCadastroAtual => _argsFluxo.tipoNormalizado;
 
   bool get cadastroComoFornecedor => tipoCadastroAtual == 'F';
 
   bool get cadastroComoConvidado {
     final manual = cadastroConvidadoManual.value;
     final porTipo = tipoCadastroAtual == 'C';
-    final porArgumentos = _argumentsIndicamConvidado(Get.arguments);
+    final porArgumentos = _argsFluxo.ehConvidado;
 
     final resultado = manual || porTipo || porArgumentos;
 
     _log(
       'cadastroComoConvidado => $resultado | '
       'manual=$manual | porTipo=$porTipo | tipo=$tipoCadastroAtual | '
-      'porArgumentos=$porArgumentos | route=${Get.currentRoute} | args=${Get.arguments}',
+      'porArgumentos=$porArgumentos | route=${Get.currentRoute} | args=$_argsFluxo',
     );
 
     return resultado;
@@ -166,7 +164,7 @@ class RegisterController extends GetxController {
   Future<void> registrarUsuario() async {
     if (carregando.value) return;
     _log('===== INÍCIO registrarUsuario $_versaoDiagnostico =====');
-    _log('route=${Get.currentRoute} | args=${Get.arguments}');
+    _log('route=${Get.currentRoute} | args=$_argsFluxo');
 
     final tipo = tipoCadastroAtual;
     final cadastroConvidado = cadastroComoConvidado;
@@ -177,7 +175,7 @@ class RegisterController extends GetxController {
     }
 
     // Se a tela/argumentos indicarem cadastro de convidado, o tipo efetivo deve
-    // ser C mesmo que Get.arguments['tipo'] não tenha vindo corretamente.
+    // ser C mesmo que o tipo da rota não tenha vindo como convidado.
     final tipoEfetivo = cadastroConvidado ? 'C' : tipo;
 
     final enderecoAntesDoUid = enderecoController.value.toModel('');
@@ -652,20 +650,15 @@ class RegisterController extends GetxController {
     return false;
   }
 
-  bool _argumentsIndicamConvidado(dynamic args) {
-    if (args is AuthFluxoArgs) return args.ehConvidado;
-    return false;
-  }
-
   String _texto(String? value) => value?.trim() ?? '';
 
   String _normalizarEmail(String value) => value.trim().toLowerCase();
 
   String? _tokenConviteEntrada() {
-    final args = Get.arguments;
-    if (args is AuthFluxoArgs && args.conviteToken.trim().isNotEmpty) {
-      appController.guardarTokenConvite(args.conviteToken);
-      return args.conviteToken.trim();
+    final token = _argsFluxo.conviteToken.trim();
+    if (token.isNotEmpty) {
+      appController.guardarTokenConvite(token);
+      return token;
     }
 
     return appController.tokenConviteAtual();

@@ -132,7 +132,8 @@ class EventoCadastroController extends GetxController {
   bool get cadastroComoConvidado {
     final manual = cadastroConvidadoManual.value;
     final porUsuario = _usuarioEhConvidado(app.usuarioLogado.value);
-    final porArgumentos = _argumentsIndicamConvidado(Get.arguments);
+    final porArgumentos =
+        AuthFluxoArgs.maybeOf(Get.arguments)?.ehConvidado == true;
     final porRota = _normalizeTexto(Get.currentRoute).contains('convidado');
 
     final resultado = manual || porUsuario || porArgumentos || porRota;
@@ -140,7 +141,7 @@ class EventoCadastroController extends GetxController {
     _log(
       'cadastroComoConvidado => $resultado | '
       'manual=$manual | porUsuario=$porUsuario | porArgumentos=$porArgumentos | '
-      'porRota=$porRota | route=${Get.currentRoute} | args=${Get.arguments}',
+      'porRota=$porRota | route=${Get.currentRoute} | args=${AuthFluxoArgs.of(Get.arguments)}',
     );
 
     return resultado;
@@ -152,7 +153,7 @@ class EventoCadastroController extends GetxController {
   void onInit() {
     super.onInit();
     _log(
-        'onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=${Get.arguments}');
+        'onInit $_versaoDiagnostico | route=${Get.currentRoute} | args=${AuthFluxoArgs.of(Get.arguments)}');
   }
 
   void configurarCadastroComoConvidado(bool value) {
@@ -361,7 +362,7 @@ class EventoCadastroController extends GetxController {
 
   Future<void> salvarEvento() async {
     _log('===== INÍCIO salvarEvento $_versaoDiagnostico =====');
-    _log('route=${Get.currentRoute} | args=${Get.arguments}');
+    _log('route=${Get.currentRoute} | args=${AuthFluxoArgs.of(Get.arguments)}');
 
     final user = app.usuarioLogado.value;
     _logUsuario(user);
@@ -700,10 +701,6 @@ class EventoCadastroController extends GetxController {
     final resultado = (usuario.tipo ?? '').trim().toUpperCase() == 'C';
     _log('_usuarioEhConvidado=$resultado | tipo=${usuario.tipo}');
     return resultado;
-  }
-
-  bool _argumentsIndicamConvidado(dynamic args) {
-    return args is AuthFluxoArgs && args.ehConvidado;
   }
 
   void _logUsuario(Usuario? usuario) {

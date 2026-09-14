@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/controllers/inspiracao_admin_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/admin/admin_kit.dart';
@@ -603,7 +604,8 @@ class _InspiracaoAdminPageState extends State<InspiracaoAdminPage> {
 
     final route = widget.editarRouteName?.trim() ?? '';
     if (route.isNotEmpty) {
-      Get.toNamed(route, arguments: inspiracao);
+      Get.toNamed(route,
+          arguments: InspiracaoAdminFormArgs(inspiracao: inspiracao));
       return;
     }
 
