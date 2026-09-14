@@ -1,16 +1,18 @@
 import 'dart:developer' as developer;
 import 'dart:async';
 
-import 'package:get/get.dart';
-
 import 'package:app_faca_festa/domain/entities/auditoria_evento.dart';
 import 'package:app_faca_festa/domain/services/auditoria_registrar.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_auditoria.dart';
 
 class AuditoriaRegistrarApp implements AuditoriaRegistrar {
-  AuditoriaRegistrarApp(this._gerenciarAuditoria);
+  AuditoriaRegistrarApp(
+    this._gerenciarAuditoria, {
+    String Function()? rotaAtual,
+  }) : _rotaAtual = rotaAtual;
 
   final GerenciarAuditoria _gerenciarAuditoria;
+  final String Function()? _rotaAtual;
 
   @override
   void registrar({
@@ -43,7 +45,7 @@ class AuditoriaRegistrarApp implements AuditoriaRegistrar {
           idOrcamento: idOrcamento,
           mudancas: mudancas,
           detalhe: detalhe,
-          rota: rota ?? Get.currentRoute,
+          rota: rota ?? _rotaAtual?.call(),
         ),
       ),
     );

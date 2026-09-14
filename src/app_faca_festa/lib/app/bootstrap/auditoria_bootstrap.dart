@@ -42,7 +42,10 @@ class AuditoriaBootstrap {
 
     if (!Get.isRegistered<AuditoriaRegistrar>()) {
       Get.lazyPut<AuditoriaRegistrar>(
-        () => AuditoriaRegistrarApp(Get.find<GerenciarAuditoria>()),
+        () => AuditoriaRegistrarApp(
+          Get.find<GerenciarAuditoria>(),
+          rotaAtual: () => Get.currentRoute,
+        ),
         fenix: true,
       );
     }

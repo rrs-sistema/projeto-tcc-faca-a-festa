@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:get/get.dart';
 
 import '../../models/evento/tema_festa_model.dart';
 import '../../seeds/tema_festa_seed.dart';
@@ -65,8 +64,13 @@ class TemaFestaRemoteDatasource {
   }) async {
     final batch = _db.batch();
     for (final tema in temasFestaIniciais.map(TemaFestaModel.fromEntity)) {
-      final existente = temasExistentes
-          .firstWhereOrNull((item) => item.idTema == tema.idTema);
+      TemaFestaModel? existente;
+      for (final item in temasExistentes) {
+        if (item.idTema == tema.idTema) {
+          existente = item;
+          break;
+        }
+      }
       final mapa = Map<String, dynamic>.from(tema.toMap());
       final capaAtual = (existente?.imagemCapaUrl ?? '').trim();
       if (capaAtual.isNotEmpty) {
