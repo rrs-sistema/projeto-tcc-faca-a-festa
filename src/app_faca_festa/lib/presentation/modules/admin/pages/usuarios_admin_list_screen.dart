@@ -107,6 +107,8 @@ class UsuariosAdminListScreen extends StatelessWidget {
                     final user = lista[i];
                     final isAdmin = user.tipo == 'A';
                     final ativo = user.ativo;
+                    final estiloTipo =
+                        user.tipo != null ? _estiloTipo(user.tipo!) : null;
 
                     return Container(
                       decoration: BoxDecoration(
@@ -171,24 +173,21 @@ class UsuariosAdminListScreen extends StatelessWidget {
                                           ),
                                         ),
                                         const SizedBox(width: 8),
-                                        if (user.tipo != null)
+                                        if (estiloTipo != null)
                                           Container(
                                             padding: const EdgeInsets.symmetric(
                                                 horizontal: 8, vertical: 2),
                                             decoration: BoxDecoration(
                                               borderRadius:
                                                   BorderRadius.circular(6),
-                                              color: _getTipoColor(
-                                                  user.tipo!)['bg'],
+                                              color: estiloTipo.background,
                                             ),
                                             child: Text(
-                                              _getTipoColor(
-                                                  user.tipo!)['label'],
+                                              estiloTipo.label,
                                               style: GoogleFonts.poppins(
                                                 fontSize: 10,
                                                 fontWeight: FontWeight.w600,
-                                                color: _getTipoColor(
-                                                    user.tipo!)['text'],
+                                                color: estiloTipo.foreground,
                                                 letterSpacing: 0.5,
                                               ),
                                             ),
@@ -553,38 +552,50 @@ class UsuariosAdminListScreen extends StatelessWidget {
     );
   }
 
-  Map<String, dynamic> _getTipoColor(String tipo) {
+  _TipoUsuarioEstilo _estiloTipo(String tipo) {
     switch (tipo) {
       case 'A':
-        return {
-          'label': 'ADMIN',
-          'bg': Colors.blue.shade50,
-          'text': Colors.blue.shade700
-        };
+        return _TipoUsuarioEstilo(
+          label: 'ADMIN',
+          background: Colors.blue.shade50,
+          foreground: Colors.blue.shade700,
+        );
       case 'O':
-        return {
-          'label': 'ORG',
-          'bg': Colors.green.shade50,
-          'text': Colors.green.shade700
-        };
+        return _TipoUsuarioEstilo(
+          label: 'ORG',
+          background: Colors.green.shade50,
+          foreground: Colors.green.shade700,
+        );
       case 'F':
-        return {
-          'label': 'FORN',
-          'bg': Colors.orange.shade50,
-          'text': Colors.orange.shade800
-        };
+        return _TipoUsuarioEstilo(
+          label: 'FORN',
+          background: Colors.orange.shade50,
+          foreground: Colors.orange.shade800,
+        );
       case 'C':
-        return {
-          'label': 'CONV',
-          'bg': Colors.purple.shade50,
-          'text': Colors.purple.shade700
-        };
+        return _TipoUsuarioEstilo(
+          label: 'CONV',
+          background: Colors.purple.shade50,
+          foreground: Colors.purple.shade700,
+        );
       default:
-        return {
-          'label': 'N/D',
-          'bg': Colors.grey.shade100,
-          'text': Colors.grey.shade600
-        };
+        return _TipoUsuarioEstilo(
+          label: 'N/D',
+          background: Colors.grey.shade100,
+          foreground: Colors.grey.shade600,
+        );
     }
   }
+}
+
+class _TipoUsuarioEstilo {
+  const _TipoUsuarioEstilo({
+    required this.label,
+    required this.background,
+    required this.foreground,
+  });
+
+  final String label;
+  final Color background;
+  final Color foreground;
 }
