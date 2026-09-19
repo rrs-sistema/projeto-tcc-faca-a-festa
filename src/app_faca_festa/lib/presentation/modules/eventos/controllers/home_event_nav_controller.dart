@@ -1,8 +1,10 @@
 import 'package:get/get.dart';
 
-/// Navegação da home do organizador (abas Home / Fornecedores / Inspiração).
+/// Navegação da home do organizador (abas Festa / Convidados / Orçamento).
 class HomeEventNavController extends GetxController {
-  static const int abaFornecedores = 1;
+  static const int abaHome = 0;
+  static const int abaConvidados = 1;
+  static const int abaOrcamento = 2;
 
   void Function(int index)? _onMudarAba;
 
@@ -16,15 +18,20 @@ class HomeEventNavController extends GetxController {
     }
   }
 
-  void irParaFornecedores() {
-    final mudarAba = _onMudarAba;
-    if (mudarAba != null) {
-      _voltarParaHomeEventoSeNecessario();
-      mudarAba(abaFornecedores);
-      return;
-    }
+  void irParaConvidados() => _mudarAba(abaConvidados);
 
+  void irParaOrcamento() => _mudarAba(abaOrcamento);
+
+  void irParaFornecedores() {
+    _voltarParaHomeEventoSeNecessario();
     Get.toNamed('/fornecedores', preventDuplicates: false);
+  }
+
+  void _mudarAba(int index) {
+    final mudarAba = _onMudarAba;
+    if (mudarAba == null) return;
+    _voltarParaHomeEventoSeNecessario();
+    mudarAba(index);
   }
 
   void _voltarParaHomeEventoSeNecessario() {

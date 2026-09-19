@@ -25,6 +25,7 @@ Widget buildAnimatedHeader(
   BuildContext context, {
   required EventoController eventoController,
   required EventThemeController theme,
+  VoidCallback? onAbrirMenu,
 }) {
   final isCelular = MediaQuery.sizeOf(context).width < 650;
   final topInset = MediaQuery.paddingOf(context).top;
@@ -129,7 +130,7 @@ Widget buildAnimatedHeader(
                       ),
                     Positioned(
                       top: 12,
-                      left: 14,
+                      left: onAbrirMenu == null ? 14 : 52,
                       right: 52,
                       child: evento == null
                           ? Row(
@@ -206,6 +207,25 @@ Widget buildAnimatedHeader(
                               ),
                             ),
                     ),
+                    if (onAbrirMenu != null)
+                      Positioned(
+                        top: 8,
+                        left: 8,
+                        child: Material(
+                          color: Colors.black.withValues(alpha: 0.38),
+                          shape: const CircleBorder(),
+                          clipBehavior: Clip.antiAlias,
+                          child: IconButton(
+                            tooltip: 'Mais opções',
+                            visualDensity: VisualDensity.compact,
+                            padding: const EdgeInsets.all(8),
+                            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                            icon: const Icon(Icons.more_horiz_rounded,
+                                color: Colors.white, size: 18),
+                            onPressed: onAbrirMenu,
+                          ),
+                        ),
+                      ),
                     if (evento != null)
                       Positioned(
                         top: 8,

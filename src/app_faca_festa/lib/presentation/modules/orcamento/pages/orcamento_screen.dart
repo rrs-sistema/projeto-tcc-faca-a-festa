@@ -32,6 +32,7 @@ class OrcamentoScreen extends StatelessWidget {
   final EventoController eventoController;
   final AppController appController;
   final AvaliacaoServicoController avaliacaoController;
+  final bool automaticamenteImplyLeading;
 
   const OrcamentoScreen({
     super.key,
@@ -40,6 +41,7 @@ class OrcamentoScreen extends StatelessWidget {
     required this.eventoController,
     required this.appController,
     required this.avaliacaoController,
+    this.automaticamenteImplyLeading = true,
   });
 
   @override
@@ -66,7 +68,8 @@ class OrcamentoScreen extends StatelessWidget {
       return Scaffold(
         backgroundColor: Colors.grey.shade100,
         appBar: FestaAppBar(
-          titulo: 'Meu Orçamento',
+          titulo: 'Orçamento',
+          automaticamenteImplyLeading: automaticamenteImplyLeading,
           themeController: themeController,
           acoes: [
             IconButton(

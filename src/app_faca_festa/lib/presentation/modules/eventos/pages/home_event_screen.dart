@@ -22,8 +22,11 @@ import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_
 import 'package:app_faca_festa/domain/entities/fornecedor_detalhado.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_controller.dart';
-import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_localizacao_screen.dart';
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_detalhe_screen.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/home_organizador_copy.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/pages/seletor_evento_bottom_sheet.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/pages/welcome_event_screen.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/painel_cotacao_page.dart';
 import 'package:app_faca_festa/presentation/modules/orcamento/controllers/orcamento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
@@ -163,6 +166,64 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     }
   }
 
+  void _abrirMenu() {
+    _scaffoldKey.currentState?.openEndDrawer();
+  }
+
+  void _abrirInspiracao(EventThemeController theme) {
+    final evento = eventoController.eventoAtualEntidade;
+    final tipo = eventoController.tipoEventoAtualEntidade ??
+        const TipoEvento(idTipoEvento: '1', nome: 'Evento');
+    Get.to(
+      () => InspiracaoScreen(
+        key: ValueKey('inspiracao-${evento?.idEvento ?? 'sem-evento'}'),
+        tipoEvento: tipo,
+        controller: inspiracaoController,
+        themeController: theme,
+        homeEventNavController: homeEventNavController,
+        fornecedorController: fornecedorCadastroController,
+        fornecedorLocalizacaoController: fornecedorController,
+        avaliacaoController: avaliacaoController,
+        eventoController: eventoController,
+        appController: appController,
+        cotacoes: cotacaoController.gerenciarCotacoes,
+        eventoId: evento?.idEvento,
+        userId: appController.usuarioLogado.value?.idUsuario,
+      ),
+    );
+  }
+
+  void _abrirWelcome() {
+    Get.to(
+      () => WelcomeEventScreen(
+        themeController: theme,
+        appController: appController,
+        eventoController: eventoController,
+        eventoCadastroController: eventoCadastroController,
+        calculadoraController: calculadoraController,
+        cardapioController: cardapioController,
+        fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
+        temaFestaController: temaFestaController,
+      ),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 260),
+    );
+  }
+
+  void _abrirSeletorEvento() {
+    showSeletorEventoBottomSheet(
+      context,
+      eventoController: eventoController,
+      theme: theme,
+      appController: appController,
+      eventoCadastroController: eventoCadastroController,
+      calculadoraController: calculadoraController,
+      cardapioController: cardapioController,
+      fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
+      temasController: temaFestaController,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     isCelular = Biblioteca.isCelular(context);
@@ -195,6 +256,8 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
             inspiracaoAdminController: inspiracaoAdminController,
             temaFestaController: temaFestaController,
+            onAbrirFornecedores: homeEventNavController.irParaFornecedores,
+            onAbrirInspiracao: () => _abrirInspiracao(theme),
           ),
           body: PageView(
             controller: pageController,
@@ -204,18 +267,23 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             },
             children: [
               _buildHome(theme),
-              FornecedorLocalizacaoScreen(
-                showLeading: false,
-                appController: appController,
+              ConvidadosPage(
                 themeController: theme,
-                controllerLocalizacao: fornecedorController,
+                appController: appController,
                 eventoController: eventoController,
-                recomendacaoController: fornecedorRecomendacaoController,
-                fornecedorCadastroController: fornecedorCadastroController,
-                avaliacaoController: avaliacaoController,
-                cotacoes: cotacaoController.gerenciarCotacoes,
+                grupoController: grupoConvidadoController,
+                convidadoController: convidadoController,
+                cardapioController: cardapioController,
+                automaticamenteImplyLeading: false,
               ),
-              _buildInspiration(theme),
+              OrcamentoScreen(
+                themeController: theme,
+                orcamentoController: orcamentoController,
+                eventoController: eventoController,
+                appController: appController,
+                avaliacaoController: avaliacaoController,
+                automaticamenteImplyLeading: false,
+              ),
             ],
           ),
           bottomNavigationBar: FestaBottomBar(
@@ -223,23 +291,23 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             theme: theme,
             items: const [
               FestaNavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home_rounded,
-                label: 'Home',
+                icon: Icons.celebration_outlined,
+                activeIcon: Icons.celebration_rounded,
+                label: HomeOrganizadorCopy.barraHome,
               ),
               FestaNavItem(
-                icon: Icons.storefront_outlined,
-                activeIcon: Icons.storefront_rounded,
-                label: 'Fornecedores',
+                icon: Icons.people_alt_outlined,
+                activeIcon: Icons.people_alt_rounded,
+                label: HomeOrganizadorCopy.barraConvidados,
               ),
               FestaNavItem(
-                icon: Icons.lightbulb_outline_rounded,
-                activeIcon: Icons.lightbulb_rounded,
-                label: 'Inspiração',
+                icon: Icons.payments_outlined,
+                activeIcon: Icons.payments_rounded,
+                label: HomeOrganizadorCopy.barraOrcamento,
               ),
               FestaNavItem(
-                icon: Icons.menu_rounded,
-                label: 'Menu',
+                icon: Icons.more_horiz_rounded,
+                label: HomeOrganizadorCopy.barraMais,
                 isAction: true,
               ),
             ],
@@ -265,7 +333,10 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
       theme.secondaryColor.value;
       final eventoModel = eventoController.eventoAtualEntidade;
       if (eventoModel == null) {
-        return const Center(child: CircularProgressIndicator());
+        if (eventoController.carregando.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return _buildHomeSemEvento(theme);
       }
 
       final tipoEventoModel = eventoController.tipoEventoAtualEntidade;
@@ -283,6 +354,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
               context,
               eventoController: eventoController,
               theme: theme,
+              onAbrirMenu: _abrirMenu,
             ),
             Expanded(
               child: CustomScrollView(
@@ -302,12 +374,13 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                       ),
                     ),
                   ),
+                  _buildDashboardOverview(theme),
                   _buildBudgetChart(
                     eventoController,
                     orcamentoController.totalCustoEstimado,
                     theme,
+                    onAbrir: homeEventNavController.irParaOrcamento,
                   ),
-                  //_buildDashboardOverview(theme),
                   _buildQuickActions(
                     theme: theme,
                     convidadoController: convidadoController,
@@ -327,7 +400,19 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     calculadoraController: calculadoraController,
                     fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
                   ),
-                  _buildUpcomingTasks(tarefaController, theme),
+                  _buildUpcomingTasks(
+                    tarefaController,
+                    theme,
+                    onVerTodas: () => Get.to(
+                      () => TarefasScreen(
+                        themeController: theme,
+                        tarefaController: tarefaController,
+                        eventoController: eventoController,
+                        convidadoController: convidadoController,
+                        appController: appController,
+                      ),
+                    ),
+                  ),
 
                   _buildSuppliersCarousel(
                     fornecedorController,
@@ -356,7 +441,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     return SliverToBoxAdapter(
       child: Container(
         margin: const EdgeInsets.fromLTRB(16, 6, 16, 0),
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -375,12 +460,10 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
           final conf = totLista > 0 ? convidadoController.totalConfirmados : 0;
           final progConv = totConv > 0 ? conf / totConv : 0.0;
 
-          // Orçamento: usado (itens) vs teto informado no cadastro.
           final totOrc = orcamentoController.totalCustoEstimado.value;
           final limOrc = evento.custoEstimado ?? 0.0;
           final progOrc = limOrc > 0 ? (totOrc / limOrc).clamp(0.0, 1.0) : 0.0;
 
-          // Tarefas
           final concl = tarefaController.concluidas;
           final totTar = tarefaController.pendentes + tarefaController.concluidas;
           final progTar = totTar > 0 ? concl / totTar : 0.0;
@@ -389,54 +472,53 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
           final destaqueOrcamento =
               secundaria.computeLuminance() < 0.18 ? Color.lerp(cor, secundaria, 0.4)! : secundaria;
 
-          return Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _MiniCircularIndicator(
-                title: 'Convidados',
-                value: '$conf/$totConv',
-                progress: progConv,
-                color: cor,
-                onTap: () => Get.to(
-                  () => ConvidadosPage(
-                    themeController: theme,
-                    appController: appController,
-                    eventoController: eventoController,
-                    grupoController: grupoConvidadoController,
-                    convidadoController: convidadoController,
-                    cardapioController: cardapioController,
-                  ),
+              Text(
+                HomeOrganizadorCopy.resumoTitulo,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: const Color(0xFF1F2937),
                 ),
               ),
-              _MiniCircularIndicator(
-                title: 'Orçamento',
-                value: '${(progOrc * 100).toStringAsFixed(0)}%',
-                progress: progOrc,
-                color: destaqueOrcamento,
-                onTap: () => Get.to(
-                  () => OrcamentoScreen(
-                    themeController: theme,
-                    orcamentoController: orcamentoController,
-                    eventoController: eventoController,
-                    appController: appController,
-                    avaliacaoController: avaliacaoController,
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _MiniCircularIndicator(
+                    title: HomeOrganizadorCopy.resumoConvidados,
+                    value: totConv <= 0
+                        ? '0'
+                        : '$conf/$totConv',
+                    progress: progConv,
+                    color: cor,
+                    onTap: homeEventNavController.irParaConvidados,
                   ),
-                ),
-              ),
-              _MiniCircularIndicator(
-                title: 'Tarefas',
-                value: '$concl/$totTar',
-                progress: progTar,
-                color: Color.lerp(cor, destaqueOrcamento, 0.45)!,
-                onTap: () => Get.to(
-                  () => TarefasScreen(
-                    themeController: theme,
-                    tarefaController: tarefaController,
-                    eventoController: eventoController,
-                    convidadoController: convidadoController,
-                    appController: appController,
+                  _MiniCircularIndicator(
+                    title: HomeOrganizadorCopy.resumoOrcamento,
+                    value: HomeOrganizadorCopy.orcamentoPercentual(progOrc),
+                    progress: progOrc,
+                    color: destaqueOrcamento,
+                    onTap: homeEventNavController.irParaOrcamento,
                   ),
-                ),
+                  _MiniCircularIndicator(
+                    title: HomeOrganizadorCopy.resumoTarefas,
+                    value: totTar == 0 ? '0' : '$concl/$totTar',
+                    progress: progTar,
+                    color: Color.lerp(cor, destaqueOrcamento, 0.45)!,
+                    onTap: () => Get.to(
+                      () => TarefasScreen(
+                        themeController: theme,
+                        tarefaController: tarefaController,
+                        eventoController: eventoController,
+                        convidadoController: convidadoController,
+                        appController: appController,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           );
@@ -445,27 +527,92 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
     );
   }
 
-  Widget _buildInspiration(EventThemeController theme) {
-    return Obx(() {
-      final evento = eventoController.eventoAtualEntidade;
-      final tipo = eventoController.tipoEventoAtualEntidade ??
-          const TipoEvento(idTipoEvento: '1', nome: 'Evento');
-      return InspiracaoScreen(
-        key: ValueKey('inspiracao-${evento?.idEvento ?? 'sem-evento'}'),
-        tipoEvento: tipo,
-        controller: inspiracaoController,
-        themeController: theme,
-        homeEventNavController: homeEventNavController,
-        fornecedorController: fornecedorCadastroController,
-        fornecedorLocalizacaoController: fornecedorController,
-        avaliacaoController: avaliacaoController,
-        eventoController: eventoController,
-        appController: appController,
-        cotacoes: cotacaoController.gerenciarCotacoes,
-        eventoId: evento?.idEvento,
-        userId: appController.usuarioLogado.value?.idUsuario,
-      );
-    });
+  Widget _buildHomeSemEvento(EventThemeController theme) {
+    final primary = theme.primaryColor.value;
+    final temEventos = eventoController.eventosDoUsuario.isNotEmpty;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(28, 24, 28, 16),
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: IconButton(
+                tooltip: 'Mais opções',
+                onPressed: _abrirMenu,
+                icon: Icon(Icons.more_horiz_rounded, color: primary),
+              ),
+            ),
+            const Spacer(),
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: primary.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.celebration_rounded, color: primary, size: 36),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              HomeOrganizadorCopy.vazioTitulo,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              HomeOrganizadorCopy.vazioTexto,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                height: 1.4,
+                fontWeight: FontWeight.w500,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: _abrirWelcome,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: Text(
+                  HomeOrganizadorCopy.vazioCriar,
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 15.5),
+                ),
+              ),
+            ),
+            if (temEventos) ...[
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: _abrirSeletorEvento,
+                child: Text(
+                  HomeOrganizadorCopy.vazioEscolher,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w600,
+                    color: primary,
+                  ),
+                ),
+              ),
+            ],
+            const Spacer(flex: 2),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -493,50 +640,34 @@ Widget _buildQuickActions({
     child: Padding(
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
       child: Obx(() {
-        final concluidas = tarefaController.concluidas;
-        final totalTarefa = tarefaController.pendentes + tarefaController.concluidas;
-        final progress = totalTarefa > 0 ? concluidas / totalTarefa : 0.0;
-        final evento = eventoController.eventoAtual.value;
-        final totalListaConvidados = convidadoController.totalConvidados;
-        final totalConvidadosHome = totalListaConvidados > 0
-            ? totalListaConvidados
-            : (evento?.totalConvidadosCalculado ?? 0);
-        final orcamentoPlanejado = evento?.custoEstimado ?? 0.0;
-
         final primaria = theme.primaryColor.value;
         final secundaria = theme.secondaryColor.value;
         final media = Color.lerp(primaria, secundaria, 0.4)!;
         final destaque = secundaria.computeLuminance() < 0.18 ? media : secundaria;
         final itens = [
           {
-            'icon': Icons.people_alt_rounded,
-            'label': 'Convidados',
-            'color': primaria,
-            'val': "$totalConvidadosHome"
-          },
-          {
-            'icon': Icons.payments_rounded,
-            'label': 'Orçamento',
-            'color': destaque,
-            'val': "R\$ ${Biblioteca.formatarValorDecimal(orcamentoPlanejado)}"
-          },
-          {
-            'icon': Icons.storefront_rounded,
-            'label': 'Cotações',
+            'icon': Icons.request_quote_rounded,
+            'label': HomeOrganizadorCopy.atalhoCotacoes,
             'color': media,
-            'val': "${cotacaoController.totalCount.value}"
-          },
-          {
-            'icon': Icons.check_circle_outline,
-            'label': 'Tarefas',
-            'color': primaria,
-            'val': "${(progress * 100).toStringAsFixed(0)}%"
+            'val': HomeOrganizadorCopy.cotacoesValor(cotacaoController.totalCount.value),
           },
           {
             'icon': Icons.calculate_rounded,
-            'label': 'Calculadora',
+            'label': HomeOrganizadorCopy.atalhoCalculadora,
             'color': destaque,
-            'val': "Abrir"
+            'val': HomeOrganizadorCopy.calculadoraValor,
+          },
+          {
+            'icon': Icons.card_giftcard_rounded,
+            'label': HomeOrganizadorCopy.atalhoPresentes,
+            'color': primaria,
+            'val': HomeOrganizadorCopy.presentesValor,
+          },
+          {
+            'icon': Icons.storefront_rounded,
+            'label': HomeOrganizadorCopy.atalhoFornecedores,
+            'color': destaque,
+            'val': HomeOrganizadorCopy.fornecedoresValor,
           },
         ];
 
@@ -558,29 +689,6 @@ Widget _buildQuickActions({
               onTap: () {
                 if (i == 0) {
                   Get.to(
-                    () => ConvidadosPage(
-                      themeController: theme,
-                      appController: appController,
-                      eventoController: eventoController,
-                      grupoController: grupoConvidadoController,
-                      convidadoController: convidadoController,
-                      cardapioController: cardapioController,
-                    ),
-                  );
-                }
-                if (i == 1) {
-                  Get.to(
-                    () => OrcamentoScreen(
-                      themeController: theme,
-                      orcamentoController: orcamentoController,
-                      eventoController: eventoController,
-                      appController: appController,
-                      avaliacaoController: avaliacaoController,
-                    ),
-                  );
-                }
-                if (i == 2) {
-                  Get.to(
                     () => PainelCotacaoPage(
                       theme: theme,
                       cotacaoCtrl: cotacaoController,
@@ -594,18 +702,7 @@ Widget _buildQuickActions({
                     ),
                   );
                 }
-                if (i == 3) {
-                  Get.to(
-                    () => TarefasScreen(
-                      themeController: theme,
-                      tarefaController: tarefaController,
-                      eventoController: eventoController,
-                      convidadoController: convidadoController,
-                      appController: appController,
-                    ),
-                  );
-                }
-                if (i == 4) {
+                if (i == 1) {
                   Get.to(
                     () => CalculadoraFestaScreen(
                       calculadoraController: calculadoraController,
@@ -616,7 +713,15 @@ Widget _buildQuickActions({
                     ),
                   );
                 }
-                if (i == 5) {
+                if (i == 2) {
+                  Get.toNamed(
+                    '/gerenciarPresentes',
+                    arguments: GerenciarPresentesArgs(
+                      eventoId: eventoController.eventoAtualEntidade?.idEvento ?? '',
+                    ),
+                  );
+                }
+                if (i == 3) {
                   homeEventNavController.irParaFornecedores();
                 }
               },
@@ -760,7 +865,11 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
 }
 
 Widget _buildBudgetChart(
-    EventoController eventoController, RxDouble totalCustoEstimado, EventThemeController theme) {
+  EventoController eventoController,
+  RxDouble totalCustoEstimado,
+  EventThemeController theme, {
+  VoidCallback? onAbrir,
+}) {
   return SliverToBoxAdapter(
     child: Obx(() {
       final total = totalCustoEstimado.value;
@@ -768,72 +877,79 @@ Widget _buildBudgetChart(
       final usado = limite > 0 ? (total / limite).clamp(0, 1) : 0.0;
       final primary = theme.primaryColor.value;
 
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16),
-        padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
-        decoration: BoxDecoration(
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Material(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4))
-          ],
-        ),
-        child: Row(
-          children: [
-            SizedBox(
-              height: 60,
-              width: 60,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  PieChart(PieChartData(
-                    startDegreeOffset: 270,
-                    sectionsSpace: 0,
-                    centerSpaceRadius: 22,
-                    borderData: FlBorderData(show: false),
-                    sections: [
-                      PieChartSectionData(
-                          value: usado * 100, color: primary, radius: 8, showTitle: false),
-                      PieChartSectionData(
-                          value: (1 - usado) * 100,
-                          color: Colors.grey.shade200,
-                          radius: 8,
-                          showTitle: false),
-                    ],
-                  )),
-                  Icon(Icons.attach_money_rounded, color: primary, size: 18),
+          elevation: 0,
+          child: InkWell(
+            onTap: onAbrir,
+            borderRadius: BorderRadius.circular(20),
+            child: Container(
+              padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4))
                 ],
               ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+              child: Row(
                 children: [
-                  Text('Orçamento Geral',
-                      style: GoogleFonts.poppins(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1F2937))),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 2,
-                    alignment: WrapAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Usado: R\$ ${Biblioteca.formatarValorDecimal(total)}',
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
-                      ),
-                      Text(
-                        'Planejado: R\$ ${Biblioteca.formatarValorDecimal(limite)}',
-                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
-                      ),
-                    ],
+                  SizedBox(
+                    height: 60,
+                    width: 60,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        PieChart(PieChartData(
+                          startDegreeOffset: 270,
+                          sectionsSpace: 0,
+                          centerSpaceRadius: 22,
+                          borderData: FlBorderData(show: false),
+                          sections: [
+                            PieChartSectionData(
+                                value: usado * 100, color: primary, radius: 8, showTitle: false),
+                            PieChartSectionData(
+                                value: (1 - usado) * 100,
+                                color: Colors.grey.shade200,
+                                radius: 8,
+                                showTitle: false),
+                          ],
+                        )),
+                        Icon(Icons.attach_money_rounded, color: primary, size: 18),
+                      ],
+                    ),
                   ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(HomeOrganizadorCopy.gastoTitulo,
+                            style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w700,
+                                color: const Color(0xFF1F2937))),
+                        const SizedBox(height: 4),
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 2,
+                          alignment: WrapAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              '${HomeOrganizadorCopy.gastoUsado}: R\$ ${Biblioteca.formatarValorDecimal(total)}',
+                              style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
+                            ),
+                            Text(
+                              '${HomeOrganizadorCopy.gastoPlanejado}: R\$ ${Biblioteca.formatarValorDecimal(limite)}',
+                              style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
+                            ),
+                          ],
+                        ),
                   const SizedBox(height: 2),
                   Align(
                     alignment: Alignment.centerRight,
@@ -857,16 +973,64 @@ Widget _buildBudgetChart(
             ),
           ],
         ),
+            ),
+          ),
+        ),
       );
     }),
   );
 }
 
-Widget _buildUpcomingTasks(TarefaController tarefaController, EventThemeController theme) {
+Widget _buildUpcomingTasks(
+  TarefaController tarefaController,
+  EventThemeController theme, {
+  VoidCallback? onVerTodas,
+}) {
   return SliverToBoxAdapter(
     child: Obx(() {
       final proximas = tarefaController.tarefasProximas().take(2).toList();
-      if (proximas.isEmpty) return const SizedBox.shrink();
+      final primary = theme.primaryColor.value;
+
+      if (proximas.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            child: InkWell(
+              onTap: onVerTodas,
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.task_alt_rounded, color: primary, size: 22),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        HomeOrganizadorCopy.nenhumaTarefa,
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: const Color(0xFF1F2937),
+                        ),
+                      ),
+                    ),
+                    Text(
+                      HomeOrganizadorCopy.nenhumaTarefaAcao,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: primary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }
 
       return Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
@@ -884,9 +1048,27 @@ Widget _buildUpcomingTasks(TarefaController tarefaController, EventThemeControll
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Próximas tarefas',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700, fontSize: 14, color: const Color(0xFF1F2937))),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(HomeOrganizadorCopy.proximasTarefas,
+                      style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w700, fontSize: 14, color: const Color(0xFF1F2937))),
+                ),
+                if (onVerTodas != null)
+                  TextButton(
+                    onPressed: onVerTodas,
+                    child: Text(
+                      HomeOrganizadorCopy.verTodasTarefas,
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                        color: theme.primaryColor.value,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
             const SizedBox(height: 10),
             ...proximas.map((t) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -941,7 +1123,7 @@ Widget _buildSuppliersCarousel(
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-          child: Text('Fornecedores na região',
+          child: Text(HomeOrganizadorCopy.fornecedoresRegiao,
               style: GoogleFonts.poppins(
                   fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
         ),

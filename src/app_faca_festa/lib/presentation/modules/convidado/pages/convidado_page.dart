@@ -26,6 +26,7 @@ class ConvidadosPage extends StatefulWidget {
   final GrupoConvidadoController grupoController;
   final ConvidadoController convidadoController;
   final CardapioController cardapioController;
+  final bool automaticamenteImplyLeading;
 
   const ConvidadosPage({
     super.key,
@@ -35,6 +36,7 @@ class ConvidadosPage extends StatefulWidget {
     required this.grupoController,
     required this.convidadoController,
     required this.cardapioController,
+    this.automaticamenteImplyLeading = true,
   });
 
   @override
@@ -109,7 +111,8 @@ class _ConvidadosPageState extends State<ConvidadosPage>
         child: Scaffold(
           backgroundColor: const Color(0xFFF6F7FB),
           appBar: FestaAppBar(
-            titulo: 'Central de Convites',
+            titulo: 'Convidados',
+            automaticamenteImplyLeading: widget.automaticamenteImplyLeading,
             themeController: themeController,
             altura: 124,
             acoes: [

@@ -82,9 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: const Color(0xFFFFF3F8),
         body: AuthFestaShell(
           scrollable: true,
-          title: 'Entre e Faça a Festa?',
-          titleHighlight: 'participar?',
-          subtitle: 'Entre para planejar ou oferecer serviços no evento',
+          title: 'Entre e faça a festa',
+          titleHighlight: 'faça a festa',
+          subtitle: 'Acesse para planejar o evento ou oferecer serviços',
           footerLink: AuthFestaFooterLink(
             prefixo: 'Ainda não tem uma conta? ',
             acao: 'Cadastre-se aqui',

@@ -25,7 +25,7 @@ class RoleSelectorScreen extends StatelessWidget {
         body: AuthFestaShell(
           title: 'Como você quer participar?',
           titleHighlight: 'participar?',
-          subtitle: 'Escolha como deseja participar do evento 008',
+          subtitle: 'Escolha como deseja participar',
           footerLink: AuthFestaFooterLink(
             prefixo: 'Já tem uma conta? ',
             acao: 'Entrar aqui',
@@ -63,6 +63,17 @@ class RoleSelectorScreen extends StatelessWidget {
                     arguments: const AuthFluxoArgs(tipo: 'F'),
                   );
                 },
+              ),
+              const SizedBox(height: 18),
+              Text(
+                'Recebeu um convite? Abra o link enviado pelo organizador.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  height: 1.35,
+                  fontWeight: FontWeight.w500,
+                  color: AuthFestaBrand.muted,
+                ),
               ),
             ],
           ),

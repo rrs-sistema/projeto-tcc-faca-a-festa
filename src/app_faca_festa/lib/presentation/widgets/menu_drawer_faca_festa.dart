@@ -38,6 +38,8 @@ class MenuDrawerFacaFesta extends StatelessWidget {
   final FornecedorMigracaoAdminController fornecedorMigracaoAdminController;
   final InspiracaoAdminController inspiracaoAdminController;
   final TemaFestaController temaFestaController;
+  final VoidCallback? onAbrirFornecedores;
+  final VoidCallback? onAbrirInspiracao;
 
   const MenuDrawerFacaFesta({
     super.key,
@@ -54,6 +56,8 @@ class MenuDrawerFacaFesta extends StatelessWidget {
     required this.fornecedorMigracaoAdminController,
     required this.inspiracaoAdminController,
     required this.temaFestaController,
+    this.onAbrirFornecedores,
+    this.onAbrirInspiracao,
   });
 
   @override
@@ -86,10 +90,10 @@ class MenuDrawerFacaFesta extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 8),
                 children: [
-                  _sectionTitle('Principal'),
+                  _sectionTitle('Minha festa'),
                   _menuItem(
                     Icons.event_note_rounded,
-                    'Meu Evento',
+                    'Trocar festa',
                     subtitle: evento == null
                         ? 'Cadastre ou escolha um evento'
                         : eventoController.eventosDoUsuario.length > 1
@@ -99,8 +103,56 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                     onTap: _abrirSeletorEvento,
                   ),
                   _menuItem(
+                    Icons.wallet_giftcard_rounded,
+                    'Lista de presentes',
+                    subtitle: 'O que os convidados podem escolher',
+                    color: primary,
+                    onTap: () {
+                      Get.back();
+                      Get.toNamed(
+                        '/gerenciarPresentes',
+                        arguments: GerenciarPresentesArgs(
+                          eventoId: evento?.idEvento ?? '',
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  _sectionTitle('Descobrir'),
+                  _menuItem(
+                    Icons.storefront_outlined,
+                    'Fornecedores',
+                    subtitle: 'Serviços perto da festa',
+                    color: primary,
+                    onTap: () {
+                      Get.back();
+                      onAbrirFornecedores?.call();
+                    },
+                  ),
+                  _menuItem(
+                    Icons.lightbulb_outline_rounded,
+                    'Ideias para a festa',
+                    subtitle: 'Inspiração de decoração e estilo',
+                    color: primary,
+                    onTap: () {
+                      Get.back();
+                      Future.delayed(const Duration(milliseconds: 120), () {
+                        onAbrirInspiracao?.call();
+                      });
+                    },
+                  ),
+                  _menuItem(
+                    Icons.collections_bookmark_outlined,
+                    'Minhas referências',
+                    subtitle: _resumoReferenciasDrawer(),
+                    color: primary,
+                    onTap: () => _abrirMinhasReferencias(),
+                  ),
+                  const SizedBox(height: 10),
+                  _sectionTitle('Conta'),
+                  _menuItem(
                     Icons.person_outline_rounded,
-                    'Meu Perfil',
+                    'Meu perfil',
                     subtitle: 'Dados da conta',
                     color: primary,
                     onTap: () {
@@ -117,36 +169,12 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                       });
                     },
                   ),
-                  _menuItem(
-                    Icons.wallet_giftcard_rounded,
-                    'Gerenciar Presentes',
-                    subtitle: 'Sugestões e lista de presentes',
-                    color: primary,
-                    onTap: () {
-                      Get.back();
-                      Get.toNamed(
-                        '/gerenciarPresentes',
-                        arguments: GerenciarPresentesArgs(
-                          eventoId: evento?.idEvento ?? '',
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  _sectionTitle('Planejamento'),
-                  _menuItem(
-                    Icons.collections_bookmark_outlined,
-                    'Minhas Referências',
-                    subtitle: _resumoReferenciasDrawer(),
-                    color: primary,
-                    onTap: () => _abrirMinhasReferencias(),
-                  ),
                   if (_deveExibirAdminCalculadora()) ...[
                     const SizedBox(height: 10),
-                    _sectionTitle('Administração'),
+                    _sectionTitle('Administração do app'),
                     _menuItem(
                       Icons.lightbulb_outline_rounded,
-                      'Gerenciar Inspirações',
+                      'Gerenciar inspirações',
                       subtitle: 'Cadastre, publique e destaque ideias',
                       color: primary,
                       badgeText: 'Admin',
@@ -154,22 +182,13 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                     ),
                     _menuItem(
                       Icons.tune_rounded,
-                      'Itens da Calculadora',
+                      'Itens da calculadora',
                       subtitle: 'Catálogo e regras por evento',
                       color: primary,
                       badgeText: 'Admin',
                       onTap: () => _abrirCalculadoraItensAdmin(),
                     ),
                   ],
-                  const SizedBox(height: 10),
-                  _sectionTitle('Social'),
-                  _menuItem(
-                    Icons.people_alt_outlined,
-                    'Comunidade',
-                    subtitle: 'Em breve',
-                    color: primary,
-                    enabled: false,
-                  ),
                 ],
               ),
             ),
