@@ -26,7 +26,7 @@ part '../dialogs/orcamento_add_gasto_dialog.dart';
 part '../dialogs/orcamento_add_categoria_sheet.dart';
 part '../widgets/orcamento_avaliacao_helpers.dart';
 
-class OrcamentoScreen extends StatelessWidget {
+class OrcamentoScreen extends StatefulWidget {
   final EventThemeController themeController;
   final OrcamentoController orcamentoController;
   final EventoController eventoController;
@@ -45,6 +45,43 @@ class OrcamentoScreen extends StatelessWidget {
   });
 
   @override
+  State<OrcamentoScreen> createState() => _OrcamentoScreenState();
+}
+
+class _OrcamentoScreenState extends State<OrcamentoScreen> {
+  Worker? _eventoWorker;
+
+  EventThemeController get themeController => widget.themeController;
+  OrcamentoController get orcamentoController => widget.orcamentoController;
+  EventoController get eventoController => widget.eventoController;
+  AppController get appController => widget.appController;
+  AvaliacaoServicoController get avaliacaoController =>
+      widget.avaliacaoController;
+  bool get automaticamenteImplyLeading => widget.automaticamenteImplyLeading;
+
+  @override
+  void initState() {
+    super.initState();
+    _carregar();
+    _eventoWorker = ever(eventoController.eventoAtual, (_) {
+      _carregar();
+    });
+  }
+
+  @override
+  void dispose() {
+    _eventoWorker?.dispose();
+    super.dispose();
+  }
+
+  void _carregar() {
+    final idEvento = eventoController.eventoAtualEntidade?.idEvento ?? '';
+    if (idEvento.isNotEmpty) {
+      orcamentoController.carregarOrcamentosDoEvento(idEvento);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -53,12 +90,6 @@ class OrcamentoScreen extends StatelessWidget {
     ));
 
     final idEvento = eventoController.eventoAtualEntidade?.idEvento ?? '';
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (idEvento.isNotEmpty) {
-        orcamentoController.carregarOrcamentosDoEvento(idEvento);
-      }
-    });
 
     return Obx(() {
       final primary = themeController.primaryColor.value;
