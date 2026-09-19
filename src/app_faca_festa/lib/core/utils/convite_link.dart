@@ -4,7 +4,14 @@
 /// `/#/convite/{token}` — o mesmo que [ConviteRedirectPage] já trata.
 abstract final class ConviteLink {
   static const origemPublicaPadrao = 'https://faca-a-festa.web.app';
-  static final _tokenNoCaminho = RegExp(r'/convite/([^/?#]+)');
+  static final _tokenNoCaminho =
+      RegExp(r'/(?:convite|areaconvidado)/([^/?#]+)');
+
+  static String rotaAreaConvidado(String? token) {
+    final tokenLimpo = (token ?? '').trim();
+    if (tokenLimpo.isEmpty) return '/areaconvidado';
+    return '/areaconvidado/${Uri.encodeComponent(tokenLimpo)}';
+  }
 
   static String url(String token, {String? origem}) {
     final tokenLimpo = token.trim();

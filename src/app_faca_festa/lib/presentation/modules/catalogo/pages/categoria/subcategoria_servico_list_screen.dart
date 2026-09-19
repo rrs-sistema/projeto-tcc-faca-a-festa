@@ -63,12 +63,8 @@ class _SubcategoriaServicoListScreenState
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: AdminPalette.dark,
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.add_rounded),
-          label: Text('Nova subcategoria',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        floatingActionButton: AdminCreateFab(
+          label: 'Nova subcategoria',
           onPressed: () => showSubcategoriaServicoBottomSheet(
             context,
             subcategoria: null,
@@ -80,31 +76,35 @@ class _SubcategoriaServicoListScreenState
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               child: Column(
                 children: [
                   AdminSearchField(
                     hint: 'Buscar subcategoria',
                     onChanged: (v) => controller.busca.value = v,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Obx(() {
-                    return Row(
-                      children: [
-                        AdminSummaryChip(
-                          label: 'Nesta categoria',
-                          value: '${controller.subcategoriasFiltradas.length}',
-                          color: AdminPalette.primary,
-                          icon: Icons.account_tree_outlined,
-                        ),
-                        const SizedBox(width: 8),
-                        AdminSummaryChip(
-                          label: 'Ativas',
-                          value: '${controller.totalAtivas}',
-                          color: AdminPalette.success,
-                          icon: Icons.check_circle_outline_rounded,
-                        ),
-                      ],
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          AdminSummaryChip(
+                            label: 'Nesta categoria',
+                            value:
+                                '${controller.subcategoriasFiltradas.length}',
+                            color: AdminPalette.primary,
+                            icon: Icons.account_tree_outlined,
+                          ),
+                          const SizedBox(width: 6),
+                          AdminSummaryChip(
+                            label: 'Ativas',
+                            value: '${controller.totalAtivas}',
+                            color: AdminPalette.success,
+                            icon: Icons.check_circle_outline_rounded,
+                          ),
+                        ],
+                      ),
                     );
                   }),
                 ],
@@ -152,12 +152,13 @@ class _SubcategoriaServicoListScreenState
                   onRefresh: () =>
                       controller.carregarSubcategorias(widget.categoria.id),
                   child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
                     itemCount: lista.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (_, i) {
                       final s = lista[i];
                       final qtd = controller.servicosDe(s.id);
+                      final descricao = s.descricao?.trim();
                       return AdminCard(
                         onTap: () => showSubcategoriaServicoBottomSheet(
                           context,
@@ -175,66 +176,45 @@ class _SubcategoriaServicoListScreenState
                         },
                         child: Row(
                           children: [
-                            Container(
-                              width: 46,
-                              height: 46,
-                              decoration: BoxDecoration(
-                                color:
-                                    AdminPalette.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: Icon(
-                                CategoriaIcones.de(s.icone),
-                                color: AdminPalette.primary,
-                              ),
+                            AdminLeadingMark(
+                              icon: CategoriaIcones.de(s.icone),
+                              color: s.ativo
+                                  ? AdminPalette.primary
+                                  : AdminPalette.muted,
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 10),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     s.nome,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                     style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13.5,
                                       color: s.ativo
                                           ? AdminPalette.ink
                                           : AdminPalette.muted,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    s.descricao?.isNotEmpty == true
-                                        ? s.descricao!
-                                        : 'Sem descrição',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 12.5,
-                                      color: AdminPalette.muted,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Wrap(
-                                    spacing: 8,
-                                    children: [
-                                      AdminMetricChip(
-                                        icon: Icons.design_services_outlined,
-                                        label: qtd == 1
-                                            ? '1 serviço'
-                                            : '$qtd serviços',
-                                      ),
-                                      if (s.ativo)
-                                        AdminStatusChip.success('Ativa')
-                                      else
-                                        AdminStatusChip.neutral('Inativa'),
+                                  const SizedBox(height: 2),
+                                  AdminMetaLine(
+                                    parts: [
+                                      if (descricao != null &&
+                                          descricao.isNotEmpty)
+                                        descricao,
+                                      qtd == 1 ? '1 serviço' : '$qtd serviços',
                                     ],
                                   ),
                                 ],
                               ),
                             ),
-                            Switch.adaptive(
+                            if (!s.ativo)
+                              AdminStatusChip.neutral('Inativa',
+                                  icon: Icons.pause_rounded),
+                            AdminCompactSwitch(
                               value: s.ativo,
                               onChanged: (v) =>
                                   controller.atualizarStatus(s, v),

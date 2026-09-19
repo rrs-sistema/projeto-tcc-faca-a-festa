@@ -95,16 +95,18 @@ class AdminDashboardScreen extends StatelessWidget {
           titleSpacing: 20,
           title: Row(
             children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white24),
+              Image.asset(
+                'assets/logo/logo-faca-festa.png',
+                width: 52,
+                height: 52,
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+                opacity: const AlwaysStoppedAnimation(0.72),
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.celebration_rounded,
+                  color: Colors.white,
+                  size: 22,
                 ),
-                child: const Icon(Icons.celebration_rounded,
-                    color: Colors.white, size: 22),
               ),
               const SizedBox(width: 12),
               Column(

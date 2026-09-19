@@ -8,6 +8,7 @@ import 'package:app_faca_festa/presentation/modules/tema/admin_theme.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/tema_festa_view_model.dart';
+import 'package:app_faca_festa/presentation/widgets/admin/admin_kit.dart';
 import 'package:app_faca_festa/presentation/widgets/tema_capa_imagem.dart';
 import 'tema_festa_form_bottom_sheet.dart';
 
@@ -21,10 +22,6 @@ class TemaFestaAdminListScreen extends StatelessWidget {
     required this.theme,
   });
 
-  static const Color _dark = Color(0xFF1F2937);
-  static const Color _muted = Color(0xFF64748B);
-  static const Color _surface = Color(0xFFF8FAFC);
-
   @override
   Widget build(BuildContext context) {
     if (controller.temas.isEmpty && !controller.carregando.value) {
@@ -34,26 +31,10 @@ class TemaFestaAdminListScreen extends StatelessWidget {
     return Theme(
       data: theme.adminThemeData,
       child: Scaffold(
-        backgroundColor: _surface,
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          leading: IconButton(
-            tooltip: 'Voltar',
-            icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                color: Colors.white),
-            onPressed: () => Get.back(),
-          ),
-          title: Text(
-            'Temas da festa',
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-              color: Colors.white,
-            ),
-          ),
-          centerTitle: true,
-          flexibleSpace: Container(
-              decoration: BoxDecoration(gradient: theme.adminGradient)),
+        backgroundColor: AdminPalette.surface,
+        appBar: AdminBackAppBar(
+          title: 'Temas da festa',
+          subtitle: 'Catálogo visual',
           actions: [
             PopupMenuButton<String>(
               tooltip: 'Mais ações',
@@ -83,11 +64,8 @@ class TemaFestaAdminListScreen extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: _dark,
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.add_rounded),
-          label: Text('Novo tema', style: GoogleFonts.poppins(fontSize: 13)),
+        floatingActionButton: AdminCreateFab(
+          label: 'Novo tema',
           onPressed: () => showTemaFestaFormBottomSheet(
             context,
             theme: theme,
@@ -97,40 +75,15 @@ class TemaFestaAdminListScreen extends StatelessWidget {
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
-                    ),
-                    child: TextField(
-                      onChanged: (value) => controller.busca.value = value,
-                      style: GoogleFonts.poppins(fontSize: 14),
-                      decoration: InputDecoration(
-                        hintText: 'Buscar por nome, tipo ou descrição',
-                        hintStyle: GoogleFonts.poppins(
-                          fontSize: 13,
-                          color: Colors.grey.shade400,
-                        ),
-                        prefixIcon: Icon(
-                          Icons.search_rounded,
-                          color: Colors.grey.shade400,
-                          size: 20,
-                        ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                    ),
+                  AdminSearchField(
+                    hint: 'Buscar por nome, tipo ou descrição',
+                    onChanged: (value) => controller.busca.value = value,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Obx(() {
                     final atual = controller.filtroCategoria.value;
                     final chips = <(String, String)>[
@@ -145,15 +98,27 @@ class TemaFestaAdminListScreen extends StatelessWidget {
                         children: chips.map((chip) {
                           final selecionado = atual == chip.$1;
                           return Padding(
-                            padding: const EdgeInsets.only(right: 8),
+                            padding: const EdgeInsets.only(right: 6),
                             child: ChoiceChip(
                               label: Text(chip.$2),
                               selected: selecionado,
-                              selectedColor: _dark,
+                              selectedColor: AdminPalette.dark,
+                              visualDensity: VisualDensity.compact,
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              labelPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 0),
                               labelStyle: GoogleFonts.poppins(
-                                fontSize: 12,
+                                fontSize: 11.5,
                                 fontWeight: FontWeight.w600,
-                                color: selecionado ? Colors.white : _dark,
+                                color: selecionado
+                                    ? Colors.white
+                                    : AdminPalette.ink,
+                              ),
+                              side: BorderSide(
+                                color: selecionado
+                                    ? AdminPalette.dark
+                                    : AdminPalette.border,
                               ),
                               onSelected: (_) =>
                                   controller.filtroCategoria.value = chip.$1,
@@ -173,43 +138,44 @@ class TemaFestaAdminListScreen extends StatelessWidget {
                 }
                 final lista = controller.temasFiltrados;
                 if (lista.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.palette_outlined,
-                            size: 48, color: Colors.grey.shade300),
-                        const SizedBox(height: 12),
-                        Text(
-                          controller.temas.isEmpty
-                              ? 'Nenhum tema cadastrado'
-                              : 'Nenhum tema nesta busca',
-                          style: GoogleFonts.poppins(color: _muted),
-                        ),
-                      ],
-                    ),
+                  return AdminEmptyState(
+                    icon: Icons.palette_outlined,
+                    title: controller.temas.isEmpty
+                        ? 'Nenhum tema cadastrado'
+                        : 'Nenhum tema nesta busca',
+                    message: controller.temas.isEmpty
+                        ? 'Crie o primeiro tema ou popule o catálogo inicial.'
+                        : 'Tente outro termo ou categoria.',
+                    actionLabel: controller.temas.isEmpty ? 'Novo tema' : null,
+                    onAction: controller.temas.isEmpty
+                        ? () => showTemaFestaFormBottomSheet(
+                              context,
+                              theme: theme,
+                              controller: controller,
+                            )
+                        : null,
                   );
                 }
 
                 return ListView.separated(
-                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 88),
+                  padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
                   itemCount: lista.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (_, index) {
                     final tema = lista[index];
                     return Slidable(
                       endActionPane: ActionPane(
                         motion: const DrawerMotion(),
-                        extentRatio: 0.28,
+                        extentRatio: 0.22,
                         children: [
                           SlidableAction(
                             onPressed: (_) =>
                                 _confirmarExclusao(context, controller, tema),
-                            backgroundColor: const Color(0xFFE11D48),
+                            backgroundColor: AdminPalette.danger,
                             foregroundColor: Colors.white,
                             icon: Icons.delete_rounded,
                             label: 'Excluir',
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ],
                       ),
@@ -240,26 +206,14 @@ class TemaFestaAdminListScreen extends StatelessWidget {
     TemaFestaController controller,
     TemaFestaViewModel tema,
   ) async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Excluir tema'),
-        content: Text(
-            'Deseja excluir "${tema.nome}"? Eventos que já usam este tema não serão alterados.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Excluir'),
-          ),
-        ],
-      ),
+    final confirmar = await confirmarAcaoAdmin(
+      context,
+      titulo: 'Excluir tema',
+      mensagem:
+          'Deseja excluir "${tema.nome}"? Eventos que já usam este tema não serão alterados.',
+      confirmar: 'Excluir',
     );
-    if (confirmar == true) {
+    if (confirmar) {
       await controller.excluir(tema.idTema);
     }
   }
@@ -281,159 +235,115 @@ class _TemaFestaCard extends StatelessWidget {
     final tipos = tema.tiposEvento.isEmpty
         ? const <String>[]
         : tema.tiposEvento.map(TemaFestaTipos.rotulo).toList();
+    final descricao = (tema.descricao ?? '').trim();
 
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.grey.shade200),
-          ),
-          child: Opacity(
-            opacity: tema.ativo ? 1 : 0.58,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  height: 92,
-                  decoration: BoxDecoration(
-                    gradient: tema.gradient,
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(15)),
-                  ),
-                  child: TemaCapaImagem(
-                    url: tema.capaEfetiva,
-                    borderRadius:
-                        const BorderRadius.vertical(top: Radius.circular(15)),
-                    fallback: DecoratedBox(
+    return AdminCard(
+      onTap: onTap,
+      padding: const EdgeInsets.fromLTRB(8, 8, 6, 8),
+      child: Opacity(
+        opacity: tema.ativo ? 1 : 0.58,
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: 52,
+                height: 52,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    DecoratedBox(
                       decoration: BoxDecoration(gradient: tema.gradient),
                     ),
-                  ),
+                    TemaCapaImagem(
+                      url: tema.capaEfetiva,
+                      fallback: DecoratedBox(
+                        decoration: BoxDecoration(gradient: tema.gradient),
+                        child: Icon(tema.iconData,
+                            color: Colors.white.withValues(alpha: 0.92),
+                            size: 22),
+                      ),
+                    ),
+                  ],
                 ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(14, 12, 8, 14),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
                     children: [
-                      Container(
-                        width: 52,
-                        height: 52,
-                        decoration: BoxDecoration(
-                          gradient: tema.gradient,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Icon(tema.iconData, color: Colors.white),
-                      ),
-                      const SizedBox(width: 12),
                       Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    tema.nome,
-                                    style: GoogleFonts.poppins(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 15,
-                                      color: const Color(0xFF1F2937),
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 3,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: tema.ativo
-                                        ? const Color(0xFFECFDF5)
-                                        : const Color(0xFFF1F5F9),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    tema.ativo ? 'Ativo' : 'Inativo',
-                                    style: GoogleFonts.poppins(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: tema.ativo
-                                          ? const Color(0xFF047857)
-                                          : const Color(0xFF64748B),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              TemaFestaCategorias.rotulo(tema.categoria),
-                              style: GoogleFonts.poppins(
-                                fontSize: 12,
-                                color: const Color(0xFF64748B),
-                              ),
-                            ),
-                            if ((tema.descricao ?? '').trim().isNotEmpty) ...[
-                              const SizedBox(height: 4),
-                              Text(
-                                tema.descricao!,
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  color: const Color(0xFF475569),
-                                ),
-                              ),
-                            ],
-                            if (tipos.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 6,
-                                runSpacing: 6,
-                                children: tipos
-                                    .map(
-                                      (tipo) => Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8,
-                                          vertical: 3,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFFF1F5F9),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                        ),
-                                        child: Text(
-                                          tipo,
-                                          style: GoogleFonts.poppins(
-                                            fontSize: 11,
-                                            color: const Color(0xFF334155),
-                                          ),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                              ),
-                            ],
-                          ],
+                        child: Text(
+                          tema.nome,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13.5,
+                            height: 1.2,
+                            color: AdminPalette.ink,
+                          ),
                         ),
                       ),
-                      IconButton(
-                        tooltip: 'Excluir',
-                        onPressed: onDelete,
-                        icon:
-                            const Icon(Icons.delete_outline_rounded, size: 20),
-                        color: const Color(0xFF94A3B8),
+                      AdminStatusChip(
+                        label: tema.ativo ? 'Ativo' : 'Inativo',
+                        color: tema.ativo
+                            ? AdminPalette.success
+                            : AdminPalette.muted,
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  AdminMetaLine(
+                    parts: [
+                      TemaFestaCategorias.rotulo(tema.categoria),
+                      if (descricao.isNotEmpty) descricao,
+                    ],
+                  ),
+                  if (tipos.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 4,
+                      children: tipos
+                          .take(3)
+                          .map(
+                            (tipo) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 1,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AdminPalette.surface,
+                                borderRadius: BorderRadius.circular(6),
+                                border: Border.all(color: AdminPalette.border),
+                              ),
+                              child: Text(
+                                tipo,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: AdminPalette.ink,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
+            AdminIconAction(
+              tooltip: 'Excluir',
+              onPressed: onDelete,
+              icon: Icons.delete_outline_rounded,
+              color: const Color(0xFF94A3B8),
+            ),
+          ],
         ),
       ),
     );

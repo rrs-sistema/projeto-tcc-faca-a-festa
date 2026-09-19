@@ -12,6 +12,7 @@ import 'package:app_faca_festa/domain/entities/fornecedor_categoria.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_detalhado.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor_servico_detalhado.dart';
 import 'package:app_faca_festa/domain/entities/territorio.dart';
+import 'package:app_faca_festa/domain/repositories/autenticacao_repository.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_fornecedor_localizacao.dart';
 
 class FornecedorLocalizacaoController extends GetxController {
@@ -26,9 +27,11 @@ class FornecedorLocalizacaoController extends GetxController {
   bool _escutasAtivas = false;
   bool _escutaServicosAtiva = false;
   bool _inicializando = false;
+  int _tentativasAuth = 0;
   final Set<String> _fontesProntas = <String>{};
   final List<StreamSubscription<dynamic>> _subscriptions = [];
   Timer? _reconstrucaoDebounce;
+  Timer? _loadingTimeout;
 
   var userLongitude = 0.0.obs;
   var userLatitude = 0.0.obs;
@@ -74,6 +77,8 @@ class FornecedorLocalizacaoController extends GetxController {
   Future<void> encerrarEscutas() async {
     _reconstrucaoDebounce?.cancel();
     _reconstrucaoDebounce = null;
+    _loadingTimeout?.cancel();
+    _loadingTimeout = null;
     for (final sub in _subscriptions) {
       await sub.cancel();
     }
@@ -81,6 +86,7 @@ class FornecedorLocalizacaoController extends GetxController {
     _escutasAtivas = false;
     _escutaServicosAtiva = false;
     _dadosCarregados = false;
+    _fontesProntas.clear();
   }
 
   /// Carga única de GPS + streams. Reentradas na tela não disparam de novo.
@@ -90,13 +96,37 @@ class FornecedorLocalizacaoController extends GetxController {
 
     _inicializando = true;
     try {
+      if (!_usuarioAutenticado) {
+        carregando.value = false;
+        debugPrint(
+          '⏭️ Localização de fornecedores ignorada: usuário não autenticado.',
+        );
+        return;
+      }
+
+      if (forcarLocalizacao && _escutasAtivas) {
+        await encerrarEscutas();
+      }
+
+      carregando.value = true;
       await Future.wait<void>([
-        _obterLocalizacaoUsuario(forcar: forcarLocalizacao),
+        _obterLocalizacaoUsuario(forcar: forcarLocalizacao).timeout(
+          const Duration(seconds: 6),
+          onTimeout: () {
+            if (userLatitude.value == 0.0 && userLongitude.value == 0.0) {
+              _aplicarFallbackCuritiba();
+            }
+          },
+        ),
         carregarDados(),
       ]);
-      if (forcarLocalizacao || _dadosCarregados) {
-        _reconstruirLista();
+      _reconstruirLista();
+      if (_dadosCarregados) {
+        carregando.value = false;
       }
+    } catch (e, s) {
+      debugPrint('❌ Falha ao inicializar fornecedores: $e\n$s');
+      carregando.value = false;
     } finally {
       _inicializando = false;
     }
@@ -138,7 +168,10 @@ class FornecedorLocalizacaoController extends GetxController {
         return;
       }
 
-      final lastKnown = await Geolocator.getLastKnownPosition();
+      final lastKnown = await Geolocator.getLastKnownPosition().timeout(
+        const Duration(seconds: 2),
+        onTimeout: () => null,
+      );
       if (lastKnown != null) {
         _aplicarPosicao(lastKnown, origem: 'última conhecida');
         if (!forcar) {
@@ -198,13 +231,51 @@ class FornecedorLocalizacaoController extends GetxController {
     userLongitude.value = -49.27;
   }
 
+  bool get _usuarioAutenticado {
+    if (!Get.isRegistered<AutenticacaoRepository>()) return false;
+    return Get.find<AutenticacaoRepository>().idUsuarioAtual != null;
+  }
+
+  void _onErroEscuta(String fonte, Object e, StackTrace s) {
+    debugPrint('❌ Escuta "$fonte" falhou: $e\n$s');
+    _onFontePronta(fonte);
+    final mensagem = e.toString();
+    final semPermissao = mensagem.contains('permission-denied') ||
+        mensagem.contains('PERMISSION_DENIED') ||
+        mensagem.contains('Missing or insufficient permissions');
+    if (!semPermissao) return;
+
+    _escutasAtivas = false;
+    if (_tentativasAuth >= 3) {
+      carregando.value = false;
+      return;
+    }
+    _tentativasAuth++;
+    Future<void>.delayed(const Duration(seconds: 1), () async {
+      if (isClosed || _escutasAtivas || !_usuarioAutenticado) return;
+      await encerrarEscutas();
+      unawaited(inicializar());
+    });
+  }
+
   // ==========================================================
   // === CARGA PRINCIPAL (streams reativas)
   // ==========================================================
   Future<void> carregarDados() async {
     if (_escutasAtivas) return;
+
+    // fornecedor / territorio / fornecedor_categoria / avaliacoes exigem signedIn.
+    if (!_usuarioAutenticado) {
+      carregando.value = false;
+      debugPrint(
+        '⏭️ Escutas de localização ignoradas: usuário não autenticado.',
+      );
+      return;
+    }
+
     _escutasAtivas = true;
     carregando.value = true;
+    _iniciarTimeoutCarregamento();
 
     try {
       _subscriptions.add(
@@ -213,6 +284,8 @@ class FornecedorLocalizacaoController extends GetxController {
             categorias.assignAll(lista);
             _onFontePronta('categorias');
           },
+          onError: (Object e, StackTrace s) =>
+              _onErroEscuta('categorias', e, s),
         ),
       );
 
@@ -223,6 +296,8 @@ class FornecedorLocalizacaoController extends GetxController {
             debugPrint('✅ Fornecedores carregados: ${lista.length}');
             _onFontePronta('fornecedores');
           },
+          onError: (Object e, StackTrace s) =>
+              _onErroEscuta('fornecedores', e, s),
         ),
       );
 
@@ -233,27 +308,51 @@ class FornecedorLocalizacaoController extends GetxController {
             debugPrint('✅ Territórios carregados: ${lista.length}');
             _onFontePronta('territorios');
           },
+          onError: (Object e, StackTrace s) =>
+              _onErroEscuta('territorios', e, s),
         ),
       );
 
       _subscriptions.add(
-        _localizacao.observarCategoriasFornecedor().listen((lista) {
-          _relacoesRaw.assignAll(lista);
-          _onFontePronta('relacoes');
-        }),
+        _localizacao.observarCategoriasFornecedor().listen(
+          (lista) {
+            _relacoesRaw.assignAll(lista);
+            _onFontePronta('relacoes');
+          },
+          onError: (Object e, StackTrace s) =>
+              _onErroEscuta('relacoes', e, s),
+        ),
       );
 
       _subscriptions.add(
-        _localizacao.observarMediasAvaliacoes().listen((medias) {
-          mediasAvaliacoes.assignAll(medias);
-          debugPrint('✅ Avaliações carregadas: ${medias.length}');
-          if (_dadosCarregados) _atualizarListasPorTipo();
-        }),
+        _localizacao.observarMediasAvaliacoes().listen(
+          (medias) {
+            mediasAvaliacoes.assignAll(medias);
+            debugPrint('✅ Avaliações carregadas: ${medias.length}');
+            if (_dadosCarregados) _atualizarListasPorTipo();
+          },
+          onError: (Object e, StackTrace s) =>
+              _onErroEscuta('avaliacoes', e, s),
+        ),
       );
     } catch (e, s) {
+      _escutasAtivas = false;
       carregando.value = false;
       debugPrint('❌ Erro na escuta reativa: $e\n$s');
     }
+  }
+
+  void _iniciarTimeoutCarregamento() {
+    _loadingTimeout?.cancel();
+    _loadingTimeout = Timer(const Duration(seconds: 8), () {
+      if (!carregando.value) return;
+      debugPrint(
+        '⏰ Timeout ao carregar fornecedores. Fontes prontas: $_fontesProntas',
+      );
+      _dadosCarregados = true;
+      _reconstruirLista();
+      carregando.value = false;
+    });
   }
 
   void _onFontePronta(String fonte) {
@@ -270,6 +369,7 @@ class FornecedorLocalizacaoController extends GetxController {
     _reconstrucaoDebounce = Timer(const Duration(milliseconds: 80), () {
       _reconstruirLista();
       if (_dadosCarregados) {
+        _loadingTimeout?.cancel();
         carregando.value = false;
       }
     });
@@ -279,90 +379,129 @@ class FornecedorLocalizacaoController extends GetxController {
   // === RECONSTRUÇÃO DE LISTAS DETALHADAS
   // ==========================================================
   void _reconstruirLista() {
-    if (_fornecedoresRaw.isEmpty ||
-        categorias.isEmpty ||
-        territoriosFornecedores.isEmpty) {
+    if (_fornecedoresRaw.isEmpty) {
+      fornecedores.clear();
+      fornecedoresFiltrados.clear();
+      fornecedoresProximos.clear();
       return;
     }
-    final userLat = userLatitude.value;
-    final userLon = userLongitude.value;
 
-    final relacoesPorFornecedor = <String, List<FornecedorCategoria>>{};
-    for (final r in _relacoesRaw) {
-      relacoesPorFornecedor.putIfAbsent(r.idFornecedor, () => []).add(r);
-    }
+    try {
+      final userLat = userLatitude.value;
+      final userLon = userLongitude.value;
 
-    final categoriaPorId = {for (var c in categorias) c.id: c.nome};
-    final territorioPorFornecedor = {
-      for (var t in territoriosFornecedores) t.idFornecedor.trim(): t
-    };
+      final relacoesPorFornecedor = <String, List<FornecedorCategoria>>{};
+      for (final r in _relacoesRaw) {
+        relacoesPorFornecedor.putIfAbsent(r.idFornecedor, () => []).add(r);
+      }
 
-    final List<FornecedorDetalhado> listaDetalhada = [];
+      final categoriaPorId = {for (var c in categorias) c.id: c.nome};
+      final territorioPorFornecedor = {
+        for (var t in territoriosFornecedores) t.idFornecedor.trim(): t
+      };
 
-    for (final f in _fornecedoresRaw) {
-      final relacoesFornecedor = relacoesPorFornecedor[f.idFornecedor] ?? [];
-      if (relacoesFornecedor.isEmpty) continue;
+      final List<FornecedorDetalhado> listaDetalhada = [];
 
-      final nomeCategoria = relacoesFornecedor
-          .map((r) => categoriaPorId[r.idCategoria])
-          .whereType<String>()
-          .toSet()
-          .join(', ');
-
-      if (nomeCategoria.isEmpty) continue;
-
-      final territorio = territorioPorFornecedor[f.idFornecedor.trim()];
-      double? distanciaKm;
-      if (territorio != null) {
-        if (territorio.tipoCobertura == 'raio' &&
-            territorio.latitude != null &&
-            territorio.longitude != null) {
-          // 🔹 Cálculo padrão de distância
-          distanciaKm = _calcularDistancia(
-            userLat,
-            userLon,
-            territorio.latitude!,
-            territorio.longitude!,
-          );
-        } else if (territorio.tipoCobertura == 'regiao' &&
-            territorio.regioes != null &&
-            territorio.regioes!.isNotEmpty) {
-          final dentro =
-              _pontoDentroDaRegiao(userLat, userLon, territorio.regioes!);
-
-          if (dentro) {
-            distanciaKm = 0.0;
-          } else {
-            distanciaKm =
-                _distanciaAteRegiao(userLat, userLon, territorio.regioes!);
+      for (final f in _fornecedoresRaw) {
+        try {
+          final relacoesFornecedor =
+              relacoesPorFornecedor[f.idFornecedor] ?? [];
+          final nomesCategoria = relacoesFornecedor
+              .map((r) => categoriaPorId[r.idCategoria])
+              .whereType<String>()
+              .toSet();
+          if (nomesCategoria.isEmpty && f.categorias.isNotEmpty) {
+            nomesCategoria.addAll(
+              f.categorias
+                  .map((c) => c.nomeCategoria.trim())
+                  .where((nome) => nome.isNotEmpty),
+            );
           }
+          final nomeCategoria = nomesCategoria.join(', ');
+
+          final territorio = territorioPorFornecedor[f.idFornecedor.trim()];
+          listaDetalhada.add(
+            FornecedorDetalhado(
+              fornecedor: f,
+              categoriaNome: nomeCategoria,
+              categoriaId: relacoesFornecedor.isNotEmpty
+                  ? relacoesFornecedor.first.idCategoria
+                  : (f.categorias.isNotEmpty
+                      ? f.categorias.first.idCategoria
+                      : ''),
+              territorio: territorio,
+              distanciaKm: territorio == null
+                  ? null
+                  : _distanciaDoTerritorio(userLat, userLon, territorio),
+            ),
+          );
+        } catch (e, s) {
+          debugPrint(
+            '⚠️ Fornecedor ${f.idFornecedor} ignorado na vitrine: $e\n$s',
+          );
         }
       }
 
-      listaDetalhada.add(
-        FornecedorDetalhado(
-          fornecedor: f,
-          categoriaNome: nomeCategoria,
-          categoriaId: relacoesFornecedor.first.idCategoria,
-          territorio: territorio,
-          distanciaKm: distanciaKm,
-        ),
+      fornecedores.assignAll(listaDetalhada);
+      _filtrarPorRaio();
+      _atualizarListasPorTipo();
+    } catch (e, s) {
+      debugPrint('❌ Falha ao reconstruir vitrine de fornecedores: $e\n$s');
+    }
+  }
+
+  double? _distanciaDoTerritorio(
+    double userLat,
+    double userLon,
+    Territorio territorio,
+  ) {
+    if (territorio.tipoCobertura == 'raio' &&
+        territorio.latitude != null &&
+        territorio.longitude != null) {
+      return _calcularDistancia(
+        userLat,
+        userLon,
+        territorio.latitude!,
+        territorio.longitude!,
       );
     }
-
-    fornecedores.assignAll(listaDetalhada);
-    _filtrarPorRaio();
-    _atualizarListasPorTipo();
+    if (territorio.tipoCobertura == 'regiao' &&
+        territorio.regioes != null &&
+        territorio.regioes!.isNotEmpty) {
+      final pontos = _pontosDaRegiao(territorio.regioes!);
+      if (pontos.isEmpty) return null;
+      if (_pontoDentroDaRegiao(userLat, userLon, pontos)) return 0.0;
+      return _distanciaAteRegiao(userLat, userLon, pontos);
+    }
+    if (territorio.latitude != null && territorio.longitude != null) {
+      return _calcularDistancia(
+        userLat,
+        userLon,
+        territorio.latitude!,
+        territorio.longitude!,
+      );
+    }
+    return null;
   }
 
   Future<void> escutarServicosFornecedor(String idFornecedor) async {
+    if (!_usuarioAutenticado) {
+      carregandoServicosFornecedor.value = false;
+      return;
+    }
     carregandoServicosFornecedor.value = true;
     try {
-      final sub =
-          _localizacao.observarServicosFornecedor(idFornecedor).listen((lista) {
-        servicosFornecedor.assignAll(lista);
-        carregandoServicosFornecedor.value = false;
-      });
+      final sub = _localizacao.observarServicosFornecedor(idFornecedor).listen(
+        (lista) {
+          servicosFornecedor.assignAll(lista);
+          carregandoServicosFornecedor.value = false;
+        },
+        onError: (Object e, StackTrace s) {
+          carregandoServicosFornecedor.value = false;
+          _onErroEscuta('servicos_fornecedor', e, s);
+        },
+        cancelOnError: true,
+      );
       _subscriptions.add(sub);
     } catch (e, s) {
       carregandoServicosFornecedor.value = false;
@@ -373,14 +512,26 @@ class FornecedorLocalizacaoController extends GetxController {
 
   Future<void> escutarTodosServicos() async {
     if (_escutaServicosAtiva) return;
+    if (!_usuarioAutenticado) {
+      carregandoServicosFornecedor.value = false;
+      return;
+    }
     _escutaServicosAtiva = true;
     carregandoServicosFornecedor.value = true;
     try {
       _subscriptions.add(
-        _localizacao.observarTodosServicos().listen((lista) {
-          allService.assignAll(lista);
-          carregandoServicosFornecedor.value = false;
-        }),
+        _localizacao.observarTodosServicos().listen(
+          (lista) {
+            allService.assignAll(lista);
+            carregandoServicosFornecedor.value = false;
+          },
+          onError: (Object e, StackTrace s) {
+            _escutaServicosAtiva = false;
+            carregandoServicosFornecedor.value = false;
+            _onErroEscuta('todos_servicos', e, s);
+          },
+          cancelOnError: true,
+        ),
       );
     } catch (e, s) {
       _escutaServicosAtiva = false;
@@ -438,12 +589,21 @@ class FornecedorLocalizacaoController extends GetxController {
     }
   }
 
-  bool _pontoDentroDaRegiao(double lat, double lon, List<String> regioes) {
-    final pontos = regioes.map((r) {
+  List<LatLng> _pontosDaRegiao(List<String> regioes) {
+    final pontos = <LatLng>[];
+    for (final r in regioes) {
       final parts = r.split(',');
-      return LatLng(double.parse(parts[0]), double.parse(parts[1]));
-    }).toList();
+      if (parts.length < 2) continue;
+      final lat = double.tryParse(parts[0].trim());
+      final lon = double.tryParse(parts[1].trim());
+      if (lat == null || lon == null) continue;
+      pontos.add(LatLng(lat, lon));
+    }
+    return pontos;
+  }
 
+  bool _pontoDentroDaRegiao(double lat, double lon, List<LatLng> pontos) {
+    if (pontos.length < 3) return false;
     bool dentro = false;
     for (int i = 0, j = pontos.length - 1; i < pontos.length; j = i++) {
       final xi = pontos[i].latitude, yi = pontos[i].longitude;
@@ -456,18 +616,13 @@ class FornecedorLocalizacaoController extends GetxController {
     return dentro;
   }
 
-  double _distanciaAteRegiao(double lat, double lon, List<String> regioes) {
-    final pontos = regioes.map((r) {
-      final parts = r.split(',');
-      return LatLng(double.parse(parts[0]), double.parse(parts[1]));
-    }).toList();
-
+  double _distanciaAteRegiao(double lat, double lon, List<LatLng> pontos) {
+    if (pontos.isEmpty) return double.infinity;
     double menorDistancia = double.infinity;
 
     for (int i = 0; i < pontos.length; i++) {
       final p1 = pontos[i];
       final p2 = pontos[(i + 1) % pontos.length];
-
       final distancia = _distanciaPontoParaSegmento(lat, lon, p1, p2);
       if (distancia < menorDistancia) menorDistancia = distancia;
     }
@@ -530,25 +685,20 @@ class FornecedorLocalizacaoController extends GetxController {
       final territorio = f.territorio;
       final distancia = f.distanciaKm;
 
-      if (territorio == null) return false;
+      // Sem território cadastrado ainda entra na vitrine (não trava o catálogo).
+      if (territorio == null || distancia == null) return true;
 
-      // 🔹 Caso o território seja "região"
       if (territorio.tipoCobertura == 'regiao') {
-        // Se estiver dentro da região, sempre exibe
         if (distancia == 0.0) return true;
-
-        // Se estiver fora, mostra se estiver próximo da borda
-        return distancia != null && distancia <= raioGlobal;
+        return distancia <= raioGlobal;
       }
 
-      // 🔹 Caso o território seja "raio"
       if (territorio.tipoCobertura == 'raio') {
         final raioFornecedor = territorio.raioKm ?? raioGlobal;
-        if (distancia == null) return false;
         return distancia <= min(raioGlobal, raioFornecedor);
       }
 
-      return false;
+      return true;
     }).toList();
 
     debugPrint('✅ Fornecedores filtrados: ${fornecedoresFiltrados.length}');

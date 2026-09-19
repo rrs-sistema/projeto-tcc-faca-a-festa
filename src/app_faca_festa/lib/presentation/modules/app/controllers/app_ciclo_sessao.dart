@@ -304,6 +304,8 @@ class AppCicloSessao {
         _carregando?.value = false;
         final rotaDepois = Get.currentRoute;
         if (AppRotasSessao.destinoEstavel(rotaDepois) ||
+            rotaDepois == '/convite' ||
+            rotaDepois.startsWith('/convite/') ||
             AppRotasSessao.usuarioJaNavegando(
               rotaDepois,
               temUsuario: _usuarioLogado?.value != null,

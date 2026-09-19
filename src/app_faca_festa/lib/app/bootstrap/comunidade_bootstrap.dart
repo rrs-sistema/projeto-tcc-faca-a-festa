@@ -35,9 +35,10 @@ class ComunidadeBootstrap {
     }
 
     if (!Get.isRegistered<ComunidadeController>()) {
-      Get.put(
-        ComunidadeController(comunidade: Get.find<GerenciarComunidade>()),
-        permanent: true,
+      // Lazy: posts exige signedIn; não criar no boot da tela /role.
+      Get.lazyPut<ComunidadeController>(
+        () => ComunidadeController(comunidade: Get.find<GerenciarComunidade>()),
+        fenix: true,
       );
     }
   }

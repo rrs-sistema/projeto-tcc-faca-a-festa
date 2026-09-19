@@ -87,6 +87,7 @@ class AppConviteController extends GetxController {
     conviteTokenProcessado = '';
     conviteToken.value = '';
     acessoPorLink.value = false;
+    AreaConvidadoArgs.limpar();
   }
 
   String? _tokenConviteAtual() {
@@ -102,9 +103,9 @@ class AppConviteController extends GetxController {
 
   /// Abre o convite. Sem conta real, entra como visitante (auth anônimo).
   /// Conta tipo C vincula o token ao UID. Outros papéis são recusados.
-  Future<void> abrirConvite(String token) async {
+  Future<AreaConvidadoArgs?> abrirConvite(String token) async {
     final tokenLimpo = token.trim();
-    if (tokenLimpo.isEmpty) return;
+    if (tokenLimpo.isEmpty) return null;
 
     conviteToken.value = tokenLimpo;
     conviteProcessado = false;
@@ -116,8 +117,7 @@ class AppConviteController extends GetxController {
     if (idUsuario != null && !anonimo) {
       final usuario = await _obterUsuario?.call(idUsuario);
       if (usuario == null) {
-        await _abrirConviteComoVisitante(tokenLimpo);
-        return;
+        return _abrirConviteComoVisitante(tokenLimpo);
       }
 
       if (usuario.tipo != 'C') {
@@ -127,18 +127,22 @@ class AppConviteController extends GetxController {
           backgroundColor: Colors.orange.shade600,
           colorText: Colors.white,
         );
-        return;
+        return null;
       }
 
       acessoPorLink.value = false;
-      await redirecionarConvidadoAposLogin(usuario, token: tokenLimpo);
-      return;
+      final destinoRota =
+          await resolverDestinoConvidado(usuario, token: tokenLimpo);
+      if (destinoRota.nome == '/conviteNaoEncontrado') {
+        return null;
+      }
+      return AreaConvidadoArgs.atual();
     }
 
-    await _abrirConviteComoVisitante(tokenLimpo);
+    return _abrirConviteComoVisitante(tokenLimpo);
   }
 
-  Future<void> _abrirConviteComoVisitante(String token) async {
+  Future<AreaConvidadoArgs?> _abrirConviteComoVisitante(String token) async {
     acessoPorLink.value = true;
     try {
       if (_autenticacao.idUsuarioAtual == null) {
@@ -156,17 +160,15 @@ class AppConviteController extends GetxController {
         fallbackNomeTipo: _eventos.tipoEventoAtualEntidade?.nome,
       );
 
+      final destino = AreaConvidadoArgs(
+        convidado: convidado,
+        evento: evento,
+      );
+      AreaConvidadoArgs.guardar(destino);
       conviteProcessado = true;
       conviteTokenProcessado = token;
       _convidados.convidadoAtual.value = convidado;
-
-      Get.offAllNamed(
-        '/areaconvidado',
-        arguments: AreaConvidadoArgs(
-          convidado: convidado,
-          evento: evento,
-        ),
-      );
+      return destino;
     } on AutenticacaoException catch (e) {
       acessoPorLink.value = false;
       debugPrint('$_logTag Auth ao abrir convite: ${e.codigo}');
@@ -185,6 +187,7 @@ class AppConviteController extends GetxController {
       debugPrint('$_logTag Erro ao abrir convite como visitante: $e\n$s');
       Get.offAllNamed('/conviteNaoEncontrado');
     }
+    return null;
   }
 
   /// Usado também pelo cadastro: depois de criar uma conta do tipo convidado,
@@ -254,12 +257,16 @@ class AppConviteController extends GetxController {
       fallbackNomeTipo: _eventos.tipoEventoAtualEntidade?.nome,
     );
 
+    final destino = AreaConvidadoArgs(
+      convidado: convidado,
+      evento: evento,
+    );
+    AreaConvidadoArgs.guardar(destino);
     return AppDestinoRota(
-      '/areaconvidado',
-      AreaConvidadoArgs(
-        convidado: convidado,
-        evento: evento,
+      ConviteLink.rotaAreaConvidado(
+        tokenLimpo.isEmpty ? convidado.tokenParaLink : tokenLimpo,
       ),
+      destino,
     );
   }
 

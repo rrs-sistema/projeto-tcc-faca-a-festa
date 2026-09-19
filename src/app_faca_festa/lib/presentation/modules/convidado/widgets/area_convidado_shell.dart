@@ -9,6 +9,24 @@ const _sombraTextoCapa = <Shadow>[
 ];
 
 extension _AreaConvidadoShell on _AreaConvidadoHomeScreenState {
+  Widget _presentesIndisponiveis() {
+    final cor = theme.primaryColor.value;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          'A lista de presentes fica disponível em instantes.',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: cor,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _botaoCabecalhoConvidado({required Widget child}) {
     return Container(
       decoration: BoxDecoration(
@@ -92,20 +110,18 @@ extension _AreaConvidadoShell on _AreaConvidadoHomeScreenState {
         minimum: const EdgeInsets.fromLTRB(12, 0, 12, 10),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(28),
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-            child: Container(
-              height: 76,
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.96),
-                borderRadius: BorderRadius.circular(28),
-                border: Border.all(
-                  color: cor.withValues(alpha: 0.18),
-                  width: 1.1,
-                ),
+          child: Container(
+            height: 76,
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.96),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(
+                color: cor.withValues(alpha: 0.18),
+                width: 1.1,
               ),
-              child: Row(
+            ),
+            child: Row(
                 children: List.generate(itens.length, (i) {
                   final selected = _selectedIndex == i;
                   final item = itens[i];
@@ -208,7 +224,6 @@ extension _AreaConvidadoShell on _AreaConvidadoHomeScreenState {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 }

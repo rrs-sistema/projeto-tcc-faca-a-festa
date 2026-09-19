@@ -1,13 +1,14 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:app_faca_festa/presentation/modules/auth/controllers/password_reset_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/widgets/auth_festa_brand.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/presentation/widgets/custom_input_field.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
   const ForgotPasswordScreen({
@@ -21,102 +22,57 @@ class ForgotPasswordScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = themeController;
-    final gradient = theme.gradient.value;
-    final primary = theme.primaryColor.value;
+    const accent = AuthFestaBrand.rosaIcone;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/bg_event_002.jpeg'),
-                fit: BoxFit.cover,
-              ),
-            ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: FestaSystemUi.fundoClaro,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFFF3F8),
+        body: AuthFestaShell(
+          scrollable: true,
+          title: 'Recupere sua senha',
+          titleHighlight: 'senha',
+          subtitle: 'Informe seu e-mail para receber um código de verificação',
+          footerLink: AuthFestaFooterLink(
+            prefixo: 'Já tem uma conta? ',
+            acao: 'Entrar aqui',
+            onTap: () => Get.offNamed('/login'),
           ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  gradient.colors.first.withValues(alpha: 0.42),
-                  gradient.colors.last.withValues(alpha: 0.52),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-          ),
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: Container(color: Colors.black.withValues(alpha: 0.05)),
-          ),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
-                child: Container(
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(22),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Obx(
-                    () => Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: IconButton(
-                            onPressed: () => Get.back(),
-                            icon: const Icon(Icons.arrow_back_rounded),
-                            color: primary,
-                          ),
-                        ),
-                        Text(
-                          'Recuperar senha',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.fredoka(
-                            color: primary,
-                            fontSize: 30,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _descricaoEtapa(controller.etapa.value),
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.poppins(
-                            color: Colors.grey.shade700,
-                            fontSize: 13.5,
-                            height: 1.35,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        if (controller.etapa.value == 0)
-                          _EmailStep(controller: controller, primary: primary)
-                        else if (controller.etapa.value == 1)
-                          _CodeStep(controller: controller, primary: primary)
-                        else
-                          _SuccessStep(primary: primary),
-                      ],
+          child: AuthFestaCard(
+            child: Obx(
+              () => Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: IconButton(
+                      onPressed: () => Get.back(),
+                      icon: const Icon(Icons.arrow_back_rounded),
+                      color: accent,
                     ),
                   ),
-                ),
+                  Text(
+                    _descricaoEtapa(controller.etapa.value),
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      color: AuthFestaBrand.muted,
+                      fontSize: 13.5,
+                      height: 1.35,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  if (controller.etapa.value == 0)
+                    _EmailStep(controller: controller, primary: accent)
+                  else if (controller.etapa.value == 1)
+                    _CodeStep(controller: controller, primary: accent)
+                  else
+                    _SuccessStep(primary: accent),
+                ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -391,8 +347,11 @@ class _ActionButton extends StatelessWidget {
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          disabledBackgroundColor: primary.withValues(alpha: 0.55),
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
         ),
       ),
     );

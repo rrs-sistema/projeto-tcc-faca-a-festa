@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../models/DTO/fornecedor_servico_detalhado_dto.dart';
 import '../../models/fornecedor/fornecedor_model.dart';
@@ -18,12 +19,13 @@ class FornecedorLocalizacaoRemoteDatasource {
         .where('ativo', isEqualTo: true)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => CategoriaServicoModel.fromMap({
-                    'id': doc.id,
-                    ...doc.data(),
-                  }))
-              .toList(),
+          (snapshot) => _mapearDocs(
+            snapshot,
+            (doc) => CategoriaServicoModel.fromMap(
+              {'id': doc.id, ...doc.data()},
+              documentId: doc.id,
+            ),
+          ),
         );
   }
 
@@ -33,12 +35,13 @@ class FornecedorLocalizacaoRemoteDatasource {
         .where('ativo', isEqualTo: true)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => FornecedorModel.fromMap(
-                    doc.data(),
-                    documentId: doc.id,
-                  ))
-              .toList(),
+          (snapshot) => _mapearDocs(
+            snapshot,
+            (doc) => FornecedorModel.fromMap(
+              doc.data(),
+              documentId: doc.id,
+            ),
+          ),
         );
   }
 
@@ -48,17 +51,22 @@ class FornecedorLocalizacaoRemoteDatasource {
         .where('ativo', isEqualTo: true)
         .snapshots()
         .map(
-          (snapshot) => snapshot.docs
-              .map((doc) => TerritorioModel.fromMap(doc.data()))
-              .toList(),
+          (snapshot) => _mapearDocs(
+            snapshot,
+            (doc) => TerritorioModel.fromMap(
+              doc.data(),
+              documentId: doc.id,
+            ),
+          ),
         );
   }
 
   Stream<List<FornecedorCategoriaModel>> observarCategoriasFornecedor() {
     return _db.collection('fornecedor_categoria').snapshots().map(
-          (snapshot) => snapshot.docs
-              .map((doc) => FornecedorCategoriaModel.fromMap(doc.data()))
-              .toList(),
+          (snapshot) => _mapearDocs(
+            snapshot,
+            (doc) => FornecedorCategoriaModel.fromMap(doc.data()),
+          ),
         );
   }
 
@@ -343,6 +351,21 @@ class FornecedorLocalizacaoRemoteDatasource {
         data?['nome'] ??
         data?['nome_fantasia'] ??
         'Fornecedor não localizado';
+  }
+
+  List<T> _mapearDocs<T>(
+    QuerySnapshot<Map<String, dynamic>> snapshot,
+    T Function(QueryDocumentSnapshot<Map<String, dynamic>> doc) parse,
+  ) {
+    final lista = <T>[];
+    for (final doc in snapshot.docs) {
+      try {
+        lista.add(parse(doc));
+      } catch (e, s) {
+        debugPrint('⚠️ Documento ${doc.reference.path} ignorado: $e\n$s');
+      }
+    }
+    return lista;
   }
 
   Iterable<List<T>> _chunks<T>(List<T> values, int size) sync* {

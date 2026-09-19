@@ -61,12 +61,8 @@ class CategoriaServicoListScreen extends StatelessWidget {
             ),
           ],
         ),
-        floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: AdminPalette.dark,
-          foregroundColor: Colors.white,
-          icon: const Icon(Icons.add_rounded),
-          label: Text('Nova categoria',
-              style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+        floatingActionButton: AdminCreateFab(
+          label: 'Nova categoria',
           onPressed: () => showCategoriaServicoBottomSheet(
             context,
             controller: controller,
@@ -75,42 +71,45 @@ class CategoriaServicoListScreen extends StatelessWidget {
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               child: Column(
                 children: [
                   AdminSearchField(
                     hint: 'Buscar categoria ou descrição',
                     onChanged: (v) => controller.busca.value = v,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Obx(() {
-                    return Row(
-                      children: [
-                        AdminSummaryChip(
-                          label: 'Total',
-                          value: '${controller.categorias.length}',
-                          color: AdminPalette.primary,
-                          icon: Icons.category_rounded,
-                          onTap: () => controller.filtroAtivo.value = null,
-                        ),
-                        const SizedBox(width: 8),
-                        AdminSummaryChip(
-                          label: 'Ativas',
-                          value: '${controller.totalAtivas}',
-                          color: AdminPalette.success,
-                          icon: Icons.check_circle_outline_rounded,
-                          onTap: () => controller.filtroAtivo.value = true,
-                        ),
-                        const SizedBox(width: 8),
-                        AdminSummaryChip(
-                          label: 'Inativas',
-                          value:
-                              '${controller.categorias.length - controller.totalAtivas}',
-                          color: AdminPalette.muted,
-                          icon: Icons.pause_circle_outline_rounded,
-                          onTap: () => controller.filtroAtivo.value = false,
-                        ),
-                      ],
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          AdminSummaryChip(
+                            label: 'Total',
+                            value: '${controller.categorias.length}',
+                            color: AdminPalette.primary,
+                            icon: Icons.category_rounded,
+                            onTap: () => controller.filtroAtivo.value = null,
+                          ),
+                          const SizedBox(width: 6),
+                          AdminSummaryChip(
+                            label: 'Ativas',
+                            value: '${controller.totalAtivas}',
+                            color: AdminPalette.success,
+                            icon: Icons.check_circle_outline_rounded,
+                            onTap: () => controller.filtroAtivo.value = true,
+                          ),
+                          const SizedBox(width: 6),
+                          AdminSummaryChip(
+                            label: 'Inativas',
+                            value:
+                                '${controller.categorias.length - controller.totalAtivas}',
+                            color: AdminPalette.muted,
+                            icon: Icons.pause_circle_outline_rounded,
+                            onTap: () => controller.filtroAtivo.value = false,
+                          ),
+                        ],
+                      ),
                     );
                   }),
                 ],
@@ -151,9 +150,9 @@ class CategoriaServicoListScreen extends StatelessWidget {
                   color: AdminPalette.primary,
                   onRefresh: controller.carregarCategorias,
                   child: ListView.separated(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 88),
                     itemCount: lista.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (_, i) {
                       final c = lista[i];
                       return _CategoriaAdminCard(
@@ -253,24 +252,17 @@ class _CategoriaAdminCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final descricao = categoria.descricao?.trim();
     return AdminCard(
       onTap: onEditar,
       onLongPress: onExcluir,
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: AdminPalette.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              CategoriaIcones.de(categoria.icone),
-              color: AdminPalette.primary,
-            ),
+          AdminLeadingMark(
+            icon: CategoriaIcones.de(categoria.icone),
+            color: categoria.ativo ? AdminPalette.primary : AdminPalette.muted,
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,74 +275,44 @@ class _CategoriaAdminCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13.5,
+                          height: 1.2,
                           color: categoria.ativo
                               ? AdminPalette.ink
                               : AdminPalette.muted,
                         ),
                       ),
                     ),
-                    Switch.adaptive(
-                      value: categoria.ativo,
-                      onChanged: onToggle,
-                    ),
-                  ],
-                ),
-                Text(
-                  categoria.descricao?.isNotEmpty == true
-                      ? categoria.descricao!
-                      : 'Sem descrição cadastrada',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.5,
-                    color: AdminPalette.muted,
-                    height: 1.35,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
-                    AdminMetricChip(
-                      icon: Icons.account_tree_outlined,
-                      label: subcategorias == 1
-                          ? '1 subcategoria'
-                          : '$subcategorias subcategorias',
-                    ),
                     if (!categoria.ativo)
                       AdminStatusChip.neutral('Inativa',
-                          icon: Icons.pause_rounded)
-                    else
-                      AdminStatusChip.success('Ativa',
-                          icon: Icons.check_rounded),
+                          icon: Icons.pause_rounded),
                   ],
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    TextButton.icon(
-                      onPressed: onSubcategorias,
-                      icon: const Icon(Icons.subdirectory_arrow_right_rounded,
-                          size: 18),
-                      label: Text('Subcategorias',
-                          style: GoogleFonts.poppins(fontSize: 13)),
-                      style: TextButton.styleFrom(
-                          foregroundColor: AdminPalette.primary),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      tooltip: 'Excluir',
-                      onPressed: onExcluir,
-                      icon: const Icon(Icons.delete_outline_rounded,
-                          color: AdminPalette.danger),
-                    ),
+                const SizedBox(height: 2),
+                AdminMetaLine(
+                  parts: [
+                    if (descricao != null && descricao.isNotEmpty) descricao,
+                    subcategorias == 1
+                        ? '1 subcategoria'
+                        : '$subcategorias subcategorias',
                   ],
                 ),
               ],
             ),
+          ),
+          AdminIconAction(
+            tooltip: 'Subcategorias',
+            icon: Icons.account_tree_outlined,
+            color: AdminPalette.primary,
+            onPressed: onSubcategorias,
+          ),
+          AdminCompactSwitch(value: categoria.ativo, onChanged: onToggle),
+          AdminIconAction(
+            tooltip: 'Excluir',
+            icon: Icons.delete_outline_rounded,
+            color: AdminPalette.danger,
+            onPressed: onExcluir,
           ),
         ],
       ),

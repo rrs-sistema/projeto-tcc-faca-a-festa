@@ -4,8 +4,8 @@ import 'package:get/get.dart';
 
 import 'package:app_faca_festa/core/utils/convite_link.dart';
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
+import 'package:app_faca_festa/app/routes/area_convidado_rota.dart';
 import 'package:app_faca_festa/domain/services/buscar_cep_service.dart';
-import 'package:app_faca_festa/domain/usecases/get_gifts/gift_usecases.dart';
 import 'package:app_faca_festa/presentation/modules/admin/controllers/admin_dashboard_controller.dart';
 import 'package:app_faca_festa/presentation/modules/admin/controllers/admin_territorio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/admin/controllers/eventos_admin_controller.dart';
@@ -47,7 +47,6 @@ import 'package:app_faca_festa/presentation/modules/usuario/controllers/usuario_
 import 'package:app_faca_festa/presentation/modules/admin/pages/admin_dashboard_screen.dart';
 import 'package:app_faca_festa/presentation/modules/admin/pages/auditoria_admin_screen.dart';
 import 'package:app_faca_festa/presentation/modules/admin/pages/auditoria_dashboard_screen.dart';
-import 'package:app_faca_festa/presentation/modules/convidado/pages/area/area_convidado_home_screen.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/pages/convidado_page.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/pages/convite_nao_encontrado_screen.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/pages/convite_redirect_page.dart';
@@ -57,6 +56,7 @@ import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_localizacao_screen.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/orcamentos_screen.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/pages/home_event_screen.dart';
+import 'package:app_faca_festa/presentation/modules/legal/pages/privacidade_screen.dart';
 import 'package:app_faca_festa/presentation/modules/auth/pages/forgot_password_screen.dart';
 import 'package:app_faca_festa/presentation/modules/auth/pages/login_screen.dart';
 import 'package:app_faca_festa/presentation/modules/auth/pages/register_screen.dart';
@@ -133,6 +133,10 @@ class AppRoutes {
           middlewares: [
             PapelMiddleware(tiposPermitidos: const ['O'])
           ],
+        ),
+        GetPage(
+          name: '/privacidade',
+          page: () => const PrivacidadeScreen(),
         ),
         GetPage(
           name: '/splash',
@@ -371,19 +375,16 @@ class AppRoutes {
         ),
         GetPage(
           name: '/areaconvidado',
-          page: () {
-            final args = AreaConvidadoArgs.maybeOf(Get.arguments);
-            return AreaConvidadoHomeScreen(
-              convidado: args!.convidado,
-              evento: args.evento,
-              convidadoController: Get.find<ConvidadoController>(),
-              eventoController: Get.find<EventoController>(),
-              tarefaController: Get.find<TarefaController>(),
-              theme: Get.find<EventThemeController>(),
-              appController: Get.find<AppController>(),
-              giftUseCases: Get.find<GiftUseCases>(),
-            );
-          },
+          page: AreaConvidadoRota.page,
+          preventDuplicates: false,
+          middlewares: [
+            PapelMiddleware(tiposPermitidos: const ['C'])
+          ],
+        ),
+        GetPage(
+          name: '/areaconvidado/:token',
+          page: AreaConvidadoRota.page,
+          preventDuplicates: false,
           middlewares: [
             PapelMiddleware(tiposPermitidos: const ['C'])
           ],

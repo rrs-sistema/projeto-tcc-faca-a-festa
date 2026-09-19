@@ -1,7 +1,9 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_functions/cloud_functions.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'dart:async';
 import 'dart:developer' as developer;
+
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:app_faca_festa/core/platform/plataforma_app.dart';
 import 'package:app_faca_festa/domain/entities/resultados_operacao.dart';
@@ -446,14 +448,24 @@ class FirebaseAutenticacaoRemoteDatasource
           auth.currentUser != null) {
         return await _httpsClient.call(nome, data);
       }
-      final callable = _functions.httpsCallable(nome);
-      final resultado = await callable.call(data);
+      final callable = _functions.httpsCallable(
+        nome,
+        options: HttpsCallableOptions(timeout: const Duration(seconds: 25)),
+      );
+      final resultado = await callable.call(data).timeout(
+            const Duration(seconds: 28),
+          );
       final payload = resultado.data;
       if (payload is Map<String, dynamic>) return payload;
       if (payload is Map) {
         return payload.map((key, value) => MapEntry(key.toString(), value));
       }
       return const {};
+    } on TimeoutException {
+      throw const AutenticacaoRemoteException(
+        'deadline-exceeded',
+        'A verificação demorou demais. Tente novamente.',
+      );
     } on FirebaseFunctionsException catch (erro) {
       throw AutenticacaoRemoteException(erro.code, erro.message);
     } on CallableHttpsException catch (erro) {

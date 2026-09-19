@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -8,8 +6,10 @@ import 'package:qr_flutter/qr_flutter.dart';
 
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/auth/controllers/totp_mfa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/auth/widgets/auth_festa_brand.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/presentation/widgets/custom_input_field.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 
 class TotpSetupScreen extends StatefulWidget {
   const TotpSetupScreen({
@@ -44,82 +44,46 @@ class _TotpSetupScreenState extends State<TotpSetupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = widget.themeController;
-    final gradient = theme.gradient.value;
-    final primary = theme.primaryColor.value;
+    const accent = AuthFestaBrand.rosaIcone;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/bg_event_002.jpeg'),
-                fit: BoxFit.cover,
-              ),
-            ),
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: FestaSystemUi.fundoClaro,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFFFF3F8),
+        body: AuthFestaShell(
+          scrollable: true,
+          title: 'Proteja sua conta',
+          titleHighlight: 'conta',
+          subtitle: 'Escolha como confirmar o login com e-mail e senha',
+          footerLink: AuthFestaFooterLink(
+            prefixo: 'Quer usar outra conta? ',
+            acao: 'Sair aqui',
+            onTap: controller.sair,
           ),
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  gradient.colors.first.withValues(alpha: 0.42),
-                  gradient.colors.last.withValues(alpha: 0.52),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
+          child: AuthFestaCard(
+            child: Obx(() {
+              if (controller.etapa.value == TotpMfaController.etapaTotp) {
+                return _EtapaTotp(
+                  controller: controller,
+                  primary: accent,
+                  codigoCtrl: codigoCtrl,
+                );
+              }
+              if (controller.etapa.value == TotpMfaController.etapaEmail) {
+                return _EtapaEmail(
+                  controller: controller,
+                  primary: accent,
+                  codigoCtrl: codigoCtrl,
+                  cadastro: true,
+                );
+              }
+              return _EtapaEscolha(
+                controller: controller,
+                primary: accent,
+              );
+            }),
           ),
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-            child: Container(color: Colors.black.withValues(alpha: 0.05)),
-          ),
-          SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 18),
-                child: Container(
-                  padding: const EdgeInsets.all(22),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    borderRadius: BorderRadius.circular(22),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.12),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Obx(() {
-                    if (controller.etapa.value == TotpMfaController.etapaTotp) {
-                      return _EtapaTotp(
-                        controller: controller,
-                        primary: primary,
-                        codigoCtrl: codigoCtrl,
-                      );
-                    }
-                    if (controller.etapa.value ==
-                        TotpMfaController.etapaEmail) {
-                      return _EtapaEmail(
-                        controller: controller,
-                        primary: primary,
-                        codigoCtrl: codigoCtrl,
-                        cadastro: true,
-                      );
-                    }
-                    return _EtapaEscolha(
-                      controller: controller,
-                      primary: primary,
-                    );
-                  }),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -141,10 +105,10 @@ class _EtapaEscolha extends StatelessWidget {
         Text(
           'Verificação em duas etapas',
           textAlign: TextAlign.center,
-          style: GoogleFonts.fredoka(
-            color: primary,
-            fontSize: 26,
-            fontWeight: FontWeight.w600,
+          style: GoogleFonts.poppins(
+            color: AuthFestaBrand.titulo,
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 8),
@@ -152,7 +116,7 @@ class _EtapaEscolha extends StatelessWidget {
           'Escolha como você quer confirmar o login com e-mail e senha.',
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
-            color: Colors.grey.shade700,
+            color: AuthFestaBrand.muted,
             fontSize: 13.5,
             height: 1.35,
           ),
@@ -172,16 +136,6 @@ class _EtapaEscolha extends StatelessWidget {
           titulo: 'Código por e-mail',
           descricao: 'Enviamos um código de 6 dígitos para o e-mail da conta.',
           onTap: controller.escolherEmail,
-        ),
-        TextButton(
-          onPressed: controller.sair,
-          child: Text(
-            'Sair',
-            style: GoogleFonts.poppins(
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
         ),
       ],
     );
@@ -283,139 +237,160 @@ class _EtapaTotpState extends State<_EtapaTotp> {
     return Form(
       key: _formKey,
       autovalidateMode: _autovalidateMode,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: controller.voltarEscolha,
-              icon: Icon(Icons.arrow_back_rounded, color: primary),
-              label: Text(
-                'Trocar método',
-                style: GoogleFonts.poppins(
-                  color: primary,
-                  fontWeight: FontWeight.w600,
+      child: Obx(() {
+        final gerandoQr = controller.gerandoQr.value;
+        final otpauthUrl = controller.otpauthUrl.value;
+        final secret = controller.secret.value;
+        final falhouQr = controller.falhouQr.value;
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: controller.voltarEscolha,
+                icon: Icon(Icons.arrow_back_rounded, color: primary),
+                label: Text(
+                  'Trocar método',
+                  style: GoogleFonts.poppins(
+                    color: primary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
-          ),
-          Text(
-            'Autenticador',
-            style: GoogleFonts.fredoka(
-              color: primary,
-              fontSize: 28,
-              fontWeight: FontWeight.w600,
+            Text(
+              'Autenticador',
+              style: GoogleFonts.poppins(
+                color: AuthFestaBrand.titulo,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Escaneie o QR Code no Google Authenticator, Authy ou app similar e confirme o código de 6 dígitos.',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              color: Colors.grey.shade700,
-              fontSize: 13.5,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: 20),
-          if (controller.gerandoQr.value)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 32),
-              child: CircularProgressIndicator(),
-            )
-          else if (controller.otpauthUrl.value.isNotEmpty)
-            Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: QrImageView(
-                    data: controller.otpauthUrl.value,
-                    size: 196,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  'Ou informe esta chave no app:',
-                  style: GoogleFonts.poppins(
-                    fontSize: 12.5,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  controller.secret.value,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
-                    color: primary,
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () async {
-                    await Clipboard.setData(
-                      ClipboardData(text: controller.secret.value),
-                    );
-                    Get.rawSnackbar(
-                      message: 'Chave copiada. Cole no autenticador.',
-                      snackPosition: SnackPosition.TOP,
-                      backgroundColor: Colors.green.shade700,
-                      margin: const EdgeInsets.all(14),
-                      borderRadius: 12,
-                      duration: const Duration(seconds: 2),
-                    );
-                  },
-                  icon: Icon(Icons.copy_rounded, size: 18, color: primary),
-                  label: Text(
-                    'Copiar chave',
-                    style: GoogleFonts.poppins(
-                      color: primary,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          const SizedBox(height: 18),
-          CustomInputField(
-            label: 'Código do autenticador',
-            hintlabel: '000000',
-            icon: Icons.shield_outlined,
-            controller: widget.codigoCtrl,
-            color: primary,
-            titleColor: primary,
-            type: InputType.number,
-            isRequired: true,
-            maxLength: 6,
-            keyboardType: TextInputType.number,
-            validator: FormValidators.codigoVerificacao,
-            onChanged: (value) => controller.codigo.value = value,
-          ),
-          const SizedBox(height: 16),
-          _BotaoConfirmar(
-            primary: primary,
-            loading: controller.carregando.value,
-            label: 'Confirmar autenticador',
-            onPressed: _confirmar,
-          ),
-          TextButton(
-            onPressed: controller.sair,
-            child: Text(
-              'Sair',
+            const SizedBox(height: 8),
+            Text(
+              'Escaneie o QR Code no Google Authenticator, Authy ou app similar e confirme o código de 6 dígitos.',
+              textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 color: Colors.grey.shade700,
-                fontWeight: FontWeight.w600,
+                fontSize: 13.5,
+                height: 1.35,
               ),
             ),
-          ),
-        ],
-      ),
+            const SizedBox(height: 20),
+            if (gerandoQr)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 32),
+                child: CircularProgressIndicator(),
+              )
+            else if (otpauthUrl.isNotEmpty)
+              Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: QrImageView(
+                      data: otpauthUrl,
+                      size: 196,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Ou informe esta chave no app:',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12.5,
+                      color: Colors.grey.shade700,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    secret,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                      color: primary,
+                    ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(text: secret));
+                      Get.rawSnackbar(
+                        message: 'Chave copiada. Cole no autenticador.',
+                        snackPosition: SnackPosition.TOP,
+                        backgroundColor: Colors.green.shade700,
+                        margin: const EdgeInsets.all(14),
+                        borderRadius: 12,
+                        duration: const Duration(seconds: 2),
+                      );
+                    },
+                    icon: Icon(Icons.copy_rounded, size: 18, color: primary),
+                    label: Text(
+                      'Copiar chave',
+                      style: GoogleFonts.poppins(
+                        color: primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              )
+            else if (falhouQr)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Column(
+                  children: [
+                    Text(
+                      'Não foi possível gerar o QR Code.',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        color: Colors.grey.shade700,
+                        fontSize: 13.5,
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: controller.iniciarCadastro,
+                      icon: Icon(Icons.refresh_rounded, color: primary),
+                      label: Text(
+                        'Tentar novamente',
+                        style: GoogleFonts.poppins(
+                          color: primary,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 18),
+            CustomInputField(
+              label: 'Código do autenticador',
+              hintlabel: '000000',
+              icon: Icons.shield_outlined,
+              controller: widget.codigoCtrl,
+              color: primary,
+              titleColor: primary,
+              type: InputType.number,
+              isRequired: true,
+              maxLength: 6,
+              keyboardType: TextInputType.number,
+              validator: FormValidators.codigoVerificacao,
+              onChanged: (value) => controller.codigo.value = value,
+            ),
+            const SizedBox(height: 16),
+            _BotaoConfirmar(
+              primary: primary,
+              loading: controller.carregando.value,
+              label: 'Confirmar autenticador',
+              onPressed: _confirmar,
+            ),
+          ],
+        );
+      }),
     );
   }
 }
@@ -456,11 +431,12 @@ class _EtapaEmailState extends State<_EtapaEmail> {
   Widget build(BuildContext context) {
     final controller = widget.controller;
     final primary = widget.primary;
-    final destino = controller.emailMascarado.value;
     return Form(
       key: _formKey,
       autovalidateMode: _autovalidateMode,
-      child: Column(
+      child: Obx(() {
+        final destino = controller.emailMascarado.value;
+        return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (widget.cadastro)
@@ -483,10 +459,10 @@ class _EtapaEmailState extends State<_EtapaEmail> {
           Text(
             'Código por e-mail',
             textAlign: TextAlign.center,
-            style: GoogleFonts.fredoka(
-              color: primary,
-              fontSize: 26,
-              fontWeight: FontWeight.w600,
+            style: GoogleFonts.poppins(
+              color: AuthFestaBrand.titulo,
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const SizedBox(height: 8),
@@ -535,18 +511,9 @@ class _EtapaEmailState extends State<_EtapaEmail> {
               ),
             ),
           ),
-          TextButton(
-            onPressed: controller.sair,
-            child: Text(
-              'Sair',
-              style: GoogleFonts.poppins(
-                color: Colors.grey.shade700,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
         ],
-      ),
+      );
+      }),
     );
   }
 }
@@ -581,8 +548,10 @@ class _BotaoConfirmar extends StatelessWidget {
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: primary,
+          disabledBackgroundColor: primary.withValues(alpha: 0.55),
+          elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
       ),

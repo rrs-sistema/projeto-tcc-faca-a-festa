@@ -28,9 +28,9 @@ class FornecedorCategoriaModel extends FornecedorCategoria {
 
   factory FornecedorCategoriaModel.fromMap(Map<String, dynamic> map) {
     return FornecedorCategoriaModel(
-      idFornecedor: map['id_fornecedor'] ?? '',
-      idCategoria: map['id_categoria'] ?? '',
-      nomeCategoria: map['nome_categoria'],
+      idFornecedor: (map['id_fornecedor'] ?? '').toString().trim(),
+      idCategoria: (map['id_categoria'] ?? '').toString().trim(),
+      nomeCategoria: map['nome_categoria']?.toString(),
       subcategorias: _readSubcategorias(map['subcategorias']),
       dataCadastro: map['data_cadastro'] is Timestamp
           ? (map['data_cadastro'] as Timestamp).toDate()

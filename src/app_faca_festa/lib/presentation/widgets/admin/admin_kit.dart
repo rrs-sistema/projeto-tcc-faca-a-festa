@@ -18,12 +18,13 @@ class AdminBackAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => Size.fromHeight(subtitle == null ? 56 : 64);
+  Size get preferredSize => Size.fromHeight(subtitle == null ? 52 : 58);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
       automaticallyImplyLeading: false,
+      toolbarHeight: preferredSize.height,
       leading: IconButton(
         tooltip: 'Voltar',
         icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
@@ -40,7 +41,7 @@ class AdminBackAppBar extends StatelessWidget implements PreferredSizeWidget {
               style: GoogleFonts.poppins(
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
-                fontSize: 16,
+                fontSize: 15.5,
               ),
             )
           : Column(
@@ -51,7 +52,7 @@ class AdminBackAppBar extends StatelessWidget implements PreferredSizeWidget {
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w700,
                     color: Colors.white,
-                    fontSize: 16,
+                    fontSize: 15.5,
                   ),
                 ),
                 Text(
@@ -60,7 +61,7 @@ class AdminBackAppBar extends StatelessWidget implements PreferredSizeWidget {
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(
                     color: Colors.white70,
-                    fontSize: 11,
+                    fontSize: 10.5,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -88,40 +89,41 @@ class AdminSearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 48,
+      height: 40,
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AdminPalette.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.025),
+            blurRadius: 6,
+            offset: const Offset(0, 1),
           ),
         ],
       ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: GoogleFonts.poppins(fontSize: 14, color: AdminPalette.ink),
+        style: GoogleFonts.poppins(fontSize: 13.5, color: AdminPalette.ink),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle:
-              GoogleFonts.poppins(fontSize: 13, color: Colors.grey.shade400),
+              GoogleFonts.poppins(fontSize: 12.5, color: Colors.grey.shade400),
           prefixIcon:
-              Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
+              Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 18),
           suffixIcon: onClear == null
               ? null
               : IconButton(
                   tooltip: 'Limpar',
                   icon: Icon(Icons.close_rounded,
-                      size: 18, color: Colors.grey.shade400),
+                      size: 16, color: Colors.grey.shade400),
                   onPressed: onClear,
                 ),
           border: InputBorder.none,
+          isDense: true,
           contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         ),
       ),
     );
@@ -148,49 +150,50 @@ class AdminEmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 58,
+              height: 58,
               decoration: BoxDecoration(
                 color: AdminPalette.primary.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, size: 32, color: AdminPalette.primary),
+              child: Icon(icon, size: 26, color: AdminPalette.primary),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               title,
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: AdminPalette.ink,
               ),
             ),
             if (message != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 message!,
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
-                    fontSize: 13, color: AdminPalette.muted, height: 1.4),
+                    fontSize: 12.5, color: AdminPalette.muted, height: 1.35),
               ),
             ],
             if (actionLabel != null && onAction != null) ...[
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               FilledButton.icon(
                 onPressed: onAction,
-                icon: const Icon(Icons.add_rounded, size: 18),
+                icon: const Icon(Icons.add_rounded, size: 16),
                 label: Text(actionLabel!,
-                    style: GoogleFonts.poppins(fontWeight: FontWeight.w600)),
+                    style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600, fontSize: 13)),
                 style: FilledButton.styleFrom(
                   backgroundColor: AdminPalette.primary,
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 ),
               ),
             ],
@@ -228,23 +231,23 @@ class AdminStatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.22)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 13, color: color),
-            const SizedBox(width: 4),
+            Icon(icon, size: 11, color: color),
+            const SizedBox(width: 3),
           ],
           Text(
             label,
             style: GoogleFonts.poppins(
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: FontWeight.w700,
               color: color,
             ),
@@ -264,21 +267,21 @@ class AdminMetricChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
         color: AdminPalette.surface,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(7),
         border: Border.all(color: AdminPalette.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: AdminPalette.primary),
+          Icon(icon, size: 12, color: AdminPalette.primary),
           const SizedBox(width: 4),
           Text(
             label,
             style: GoogleFonts.poppins(
-              fontSize: 11,
+              fontSize: 10.5,
               fontWeight: FontWeight.w600,
               color: AdminPalette.ink,
             ),
@@ -309,37 +312,36 @@ class AdminSummaryChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(999),
       child: Container(
-        constraints: const BoxConstraints(minWidth: 108),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(999),
           border: Border.all(color: color.withValues(alpha: 0.18)),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Icon(icon, size: 14, color: color),
-                const SizedBox(width: 6),
-                Text(
-                  value,
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    color: AdminPalette.ink,
-                  ),
-                ),
-              ],
+            Icon(icon, size: 13, color: color),
+            const SizedBox(width: 6),
+            Text(
+              value,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: AdminPalette.ink,
+                height: 1,
+              ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(width: 5),
             Text(
               label,
-              style:
-                  GoogleFonts.poppins(fontSize: 11, color: AdminPalette.muted),
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: AdminPalette.muted,
+              ),
             ),
           ],
         ),
@@ -351,17 +353,17 @@ class AdminSummaryChip extends StatelessWidget {
 BoxDecoration adminCardDecoration({bool highlighted = false}) {
   return BoxDecoration(
     color: Colors.white,
-    borderRadius: BorderRadius.circular(16),
+    borderRadius: BorderRadius.circular(12),
     border: Border.all(
       color: highlighted
-          ? AdminPalette.primary.withValues(alpha: 0.35)
+          ? AdminPalette.primary.withValues(alpha: 0.32)
           : AdminPalette.border,
     ),
     boxShadow: [
       BoxShadow(
-        color: Colors.black.withValues(alpha: highlighted ? 0.06 : 0.03),
-        blurRadius: highlighted ? 14 : 8,
-        offset: const Offset(0, 3),
+        color: Colors.black.withValues(alpha: highlighted ? 0.05 : 0.02),
+        blurRadius: highlighted ? 10 : 6,
+        offset: const Offset(0, 2),
       ),
     ],
   );
@@ -378,7 +380,7 @@ class AdminCard extends StatelessWidget {
     required this.child,
     this.onTap,
     this.onLongPress,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.fromLTRB(12, 10, 10, 10),
   });
 
   @override
@@ -388,13 +390,145 @@ class AdminCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         onLongPress: onLongPress,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Ink(
           decoration: adminCardDecoration(),
           padding: padding,
           child: child,
         ),
       ),
+    );
+  }
+}
+
+class AdminLeadingMark extends StatelessWidget {
+  final IconData icon;
+  final Color color;
+  final double size;
+
+  const AdminLeadingMark({
+    super.key,
+    required this.icon,
+    this.color = AdminPalette.primary,
+    this.size = 36,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(icon, color: color, size: size * 0.5),
+    );
+  }
+}
+
+class AdminIconAction extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+  final Color? color;
+
+  const AdminIconAction({
+    super.key,
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: tooltip,
+      onPressed: onPressed,
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      icon: Icon(icon, size: 18, color: color ?? AdminPalette.muted),
+    );
+  }
+}
+
+class AdminCompactSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const AdminCompactSwitch({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Transform.scale(
+      scale: 0.78,
+      alignment: Alignment.centerRight,
+      child: Switch.adaptive(
+        value: value,
+        onChanged: onChanged,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+    );
+  }
+}
+
+class AdminMetaLine extends StatelessWidget {
+  final List<String> parts;
+
+  const AdminMetaLine({super.key, required this.parts});
+
+  @override
+  Widget build(BuildContext context) {
+    final visiveis = parts.where((p) => p.trim().isNotEmpty).toList();
+    if (visiveis.isEmpty) return const SizedBox.shrink();
+
+    return Text(
+      visiveis.join('  ·  '),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: GoogleFonts.poppins(
+        fontSize: 11.5,
+        color: AdminPalette.muted,
+        height: 1.25,
+      ),
+    );
+  }
+}
+
+class AdminCreateFab extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final VoidCallback onPressed;
+  final Color? backgroundColor;
+
+  const AdminCreateFab({
+    super.key,
+    required this.label,
+    required this.onPressed,
+    this.icon = Icons.add_rounded,
+    this.backgroundColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return FloatingActionButton.extended(
+      backgroundColor: backgroundColor ?? AdminPalette.dark,
+      foregroundColor: Colors.white,
+      elevation: 2,
+      extendedIconLabelSpacing: 8,
+      extendedPadding: const EdgeInsets.symmetric(horizontal: 16),
+      icon: Icon(icon, size: 18),
+      label: Text(
+        label,
+        style: GoogleFonts.poppins(fontWeight: FontWeight.w600, fontSize: 12.5),
+      ),
+      onPressed: onPressed,
     );
   }
 }
@@ -419,21 +553,21 @@ InputDecoration adminInputDecoration({
     helperStyle: GoogleFonts.poppins(fontSize: 11, color: AdminPalette.muted),
     errorMaxLines: 2,
     errorStyle: GoogleFonts.poppins(fontSize: 11.5, height: 1.2),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       borderSide: const BorderSide(color: AdminPalette.border),
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       borderSide: const BorderSide(color: AdminPalette.primary, width: 1.4),
     ),
     errorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       borderSide: const BorderSide(color: Colors.redAccent),
     ),
     focusedErrorBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(12),
       borderSide: const BorderSide(color: Colors.redAccent, width: 1.4),
     ),
   );
@@ -449,7 +583,7 @@ Future<bool> confirmarAcaoAdmin(
   final ok = await showDialog<bool>(
     context: context,
     builder: (_) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       title: Text(titulo,
           style:
               GoogleFonts.poppins(fontWeight: FontWeight.w700, fontSize: 16)),

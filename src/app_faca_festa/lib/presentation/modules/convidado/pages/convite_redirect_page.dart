@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
+import 'package:app_faca_festa/app/routes/area_convidado_tela.dart';
 import 'package:app_faca_festa/core/utils/convite_link.dart';
+import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 
 class ConviteRedirectPage extends StatefulWidget {
   const ConviteRedirectPage({
@@ -20,6 +22,7 @@ class ConviteRedirectPage extends StatefulWidget {
 
 class _ConviteRedirectPageState extends State<ConviteRedirectPage> {
   String? _erro;
+  AreaConvidadoArgs? _area;
 
   @override
   void initState() {
@@ -30,14 +33,32 @@ class _ConviteRedirectPageState extends State<ConviteRedirectPage> {
   }
 
   Future<void> _abrir() async {
-    final token =
-        (Get.parameters['token'] ?? ConviteLink.tokenDaUrl() ?? '').trim();
+    final jaAberto = AreaConvidadoArgs.atual();
+    if (jaAberto != null) {
+      if (!mounted) return;
+      setState(() => _area = jaAberto);
+      return;
+    }
+
+    final token = (Get.parameters['token'] ??
+            ConviteLink.tokenDaUrl() ??
+            widget.appController.tokenConviteAtual() ??
+            '')
+        .trim();
     if (token.isEmpty) {
       Get.offAllNamed('/role');
       return;
     }
     try {
-      await widget.appController.abrirConvite(token);
+      final args = await widget.appController.abrirConvite(token);
+      if (!mounted) return;
+      if (args == null) {
+        setState(() {
+          _erro = 'Não foi possível abrir este convite.';
+        });
+        return;
+      }
+      setState(() => _area = args);
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -48,6 +69,11 @@ class _ConviteRedirectPageState extends State<ConviteRedirectPage> {
 
   @override
   Widget build(BuildContext context) {
+    final area = _area;
+    if (area != null) {
+      return AreaConvidadoTela.de(area);
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFFFE4E1),
       body: Center(

@@ -36,6 +36,7 @@ class _ConfettiBackgroundState extends State<ConfettiBackground>
         'assets/animations/confetti_background.json',
         fit: BoxFit.cover,
         controller: _controller,
+        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
         onLoaded: (composition) {
           _controller.duration = composition.duration;
 

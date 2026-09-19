@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
@@ -29,7 +31,9 @@ class TotpMfaController extends GetxController {
   final emailMascarado = ''.obs;
   final carregando = false.obs;
   final gerandoQr = false.obs;
+  final falhouQr = false.obs;
   final enviandoEmail = false.obs;
+  bool _gerandoQrPedido = false;
 
   @override
   void onInit() {
@@ -46,8 +50,10 @@ class TotpMfaController extends GetxController {
   }
 
   void escolherAutenticador() {
+    gerandoQr.value = true;
+    falhouQr.value = false;
     etapa.value = etapaTotp;
-    iniciarCadastro();
+    unawaited(iniciarCadastro());
   }
 
   Future<void> escolherEmail() async {
@@ -60,22 +66,40 @@ class TotpMfaController extends GetxController {
     codigo.value = '';
     secret.value = '';
     otpauthUrl.value = '';
+    gerandoQr.value = false;
+    falhouQr.value = false;
   }
 
   Future<void> iniciarCadastro() async {
+    if (_gerandoQrPedido) return;
+    _gerandoQrPedido = true;
     try {
       gerandoQr.value = true;
-      final data = await _autenticacaoRepository.iniciarTotpMfa();
+      falhouQr.value = false;
+      final data = await _autenticacaoRepository.iniciarTotpMfa().timeout(
+            const Duration(seconds: 25),
+          );
       secret.value = data.secret;
       otpauthUrl.value = data.otpauthUrl;
       if (secret.value.isEmpty || otpauthUrl.value.isEmpty) {
+        falhouQr.value = true;
         _mostrarErro('Não foi possível gerar o autenticador. Tente novamente.');
       }
+    } on TimeoutException {
+      falhouQr.value = true;
+      _mostrarErro('A geração do QR demorou demais. Tente novamente.');
     } on AutenticacaoException catch (e) {
-      _mostrarErro(_traduzErro(e.codigo, e.mensagem));
+      falhouQr.value = true;
+      _mostrarErro(
+        e.codigo == 'deadline-exceeded'
+            ? 'A geração do QR demorou demais. Tente novamente.'
+            : _traduzErroQr(e.codigo, e.mensagem),
+      );
     } catch (_) {
+      falhouQr.value = true;
       _mostrarErro('Não foi possível gerar o QR Code. Tente novamente.');
     } finally {
+      _gerandoQrPedido = false;
       gerandoQr.value = false;
     }
   }
@@ -224,6 +248,21 @@ class TotpMfaController extends GetxController {
   }
 
   String _codigoLimpo() => codigo.value.replaceAll(RegExp(r'\D'), '');
+
+  String _traduzErroQr(String code, String? message) {
+    final mensagem = message?.trim();
+    if (mensagem != null && mensagem.isNotEmpty && code != 'internal') {
+      return mensagem;
+    }
+    switch (code) {
+      case 'unauthenticated':
+        return 'Faça login para continuar.';
+      case 'failed-precondition':
+        return mensagem ?? 'Autenticador ainda não configurado no servidor.';
+      default:
+        return 'Não foi possível gerar o QR Code. Tente novamente.';
+    }
+  }
 
   String _traduzErro(String code, String? message) {
     final mensagem = message?.trim();

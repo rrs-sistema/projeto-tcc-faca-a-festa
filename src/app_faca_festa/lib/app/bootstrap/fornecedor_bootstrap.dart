@@ -130,11 +130,11 @@ abstract final class FornecedorBootstrap {
       );
     }
     if (!Get.isRegistered<FornecedorLocalizacaoController>()) {
-      Get.lazyPut<FornecedorLocalizacaoController>(
-        () => FornecedorLocalizacaoController(
+      Get.put<FornecedorLocalizacaoController>(
+        FornecedorLocalizacaoController(
           localizacao: Get.find<GerenciarFornecedorLocalizacao>(),
         ),
-        fenix: true,
+        permanent: true,
       );
     }
   }

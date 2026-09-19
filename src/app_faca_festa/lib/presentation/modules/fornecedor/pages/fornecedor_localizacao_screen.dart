@@ -81,6 +81,7 @@ class _FornecedorLocalizacaoScreenState
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(controllerLocalizacao.inicializar());
       unawaited(_carregarRecomendacoesIA());
     });
   }

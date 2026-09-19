@@ -1,3 +1,5 @@
+import 'package:get/get.dart';
+
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/inspiracao.dart';
@@ -53,9 +55,40 @@ class AreaConvidadoArgs {
   final Convidado convidado;
   final Evento evento;
 
-  static AreaConvidadoArgs? maybeOf(Object? arguments) {
-    return arguments is AreaConvidadoArgs ? arguments : null;
+  /// GetX na web perde [Get.arguments] ao reparsear o hash.
+  static AreaConvidadoArgs? sessao;
+
+  static void guardar(AreaConvidadoArgs args) {
+    sessao = args;
+    if (!Get.isRegistered<AreaConvidadoSessao>()) {
+      Get.put(AreaConvidadoSessao(), permanent: true);
+    }
+    Get.find<AreaConvidadoSessao>().args = args;
   }
+
+  static void limpar() {
+    sessao = null;
+    if (Get.isRegistered<AreaConvidadoSessao>()) {
+      Get.find<AreaConvidadoSessao>().args = null;
+    }
+  }
+
+  static AreaConvidadoArgs? atual() {
+    if (Get.isRegistered<AreaConvidadoSessao>()) {
+      final guardado = Get.find<AreaConvidadoSessao>().args;
+      if (guardado != null) return guardado;
+    }
+    return sessao;
+  }
+
+  static AreaConvidadoArgs? maybeOf(Object? arguments) {
+    if (arguments is AreaConvidadoArgs) return arguments;
+    return atual();
+  }
+}
+
+class AreaConvidadoSessao extends GetxService {
+  AreaConvidadoArgs? args;
 }
 
 class GerenciarPresentesArgs {

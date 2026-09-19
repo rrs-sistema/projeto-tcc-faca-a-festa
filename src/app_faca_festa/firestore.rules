@@ -337,6 +337,39 @@ service cloud.firestore {
         && exists(/databases/$(database)/documents/cotacao/$(cotacaoId)/fornecedores/$(uid()));
     }
 
+    function fornecedorNaCotacao(cotacaoId, fornecedorId) {
+      return exists(/databases/$(database)/documents/cotacao/$(cotacaoId)/fornecedores/$(fornecedorId));
+    }
+
+    // Organizador da cotação ou o fornecedor da conversa (e admin).
+    function participanteChatCotacao(cotacaoId, fornecedorId) {
+      return signedIn()
+        && fornecedorNaCotacao(cotacaoId, fornecedorId)
+        && (
+          isAdmin()
+          || ehSolicitanteCotacao(cotacaoId)
+          || uid() == fornecedorId
+        );
+    }
+
+    function mensagemChatValida() {
+      return request.resource.data.keys().hasOnly([
+          'id_usuario',
+          'nome_usuario',
+          'mensagem',
+          'enviado_em',
+          'lido'
+        ])
+        && request.resource.data.id_usuario == uid()
+        && request.resource.data.nome_usuario is string
+        && request.resource.data.nome_usuario.size() <= 200
+        && request.resource.data.mensagem is string
+        && request.resource.data.mensagem.size() > 0
+        && request.resource.data.mensagem.size() <= 2000
+        && request.resource.data.lido == false
+        && request.resource.data.enviado_em is timestamp;
+    }
+
     // Create/update sensíveis de cotação passam pelas callables (Admin SDK).
     // O cliente só lê e (organizador) cancela/fecha campos permitidos.
     match /cotacao/{cotacaoId} {
@@ -382,11 +415,18 @@ service cloud.firestore {
             || ehSolicitanteCotacao(cotacaoId)
             || uid() == fornecedorId;
 
+          // servicos e demais subcoleções: só Cloud Functions (Admin SDK).
           allow create: if false;
 
           allow update, delete: if isAdmin()
             || ehSolicitanteCotacao(cotacaoId)
             || uid() == fornecedorId;
+        }
+
+        // Chat é gravado pelo cliente (stream em tempo real).
+        match /mensagens/{mensagemId} {
+          allow create: if participanteChatCotacao(cotacaoId, fornecedorId)
+            && mensagemChatValida();
         }
       }
     }

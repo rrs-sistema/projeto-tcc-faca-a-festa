@@ -11,6 +11,8 @@ abstract final class AppRotasSessao {
         rota == '/admin' ||
         rota == '/areaconvidado' ||
         rota.startsWith('/areaconvidado') ||
+        rota == '/convite' ||
+        rota.startsWith('/convite/') ||
         rota == '/conviteNaoEncontrado';
   }
 

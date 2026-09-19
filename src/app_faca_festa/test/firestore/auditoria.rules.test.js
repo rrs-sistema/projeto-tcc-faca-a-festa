@@ -14,6 +14,7 @@ const {
   getDocs,
   orderBy,
   query,
+  serverTimestamp,
   setDoc,
   updateDoc,
   where,
@@ -99,6 +100,15 @@ async function seed(env) {
       id_usuario: "org-1",
       nome_evento: "Festa do organizador",
       custo_estimado: 1000,
+    });
+    await setDoc(doc(db, "cotacao/cot-1"), {
+      id_usuario_solicitante: "org-1",
+      id_evento: "evento-org-1",
+      status: "pendente",
+    });
+    await setDoc(doc(db, "cotacao/cot-1/fornecedores/forn-1"), {
+      id_fornecedor: "forn-1",
+      status: "pendente",
     });
   });
 }
@@ -260,6 +270,77 @@ async function run() {
           nome: "Som",
           custo: 180,
           pago: 0,
+        },
+      ),
+    );
+
+    const mensagemPayload = {
+      id_usuario: "org-1",
+      nome_usuario: "Organizador",
+      mensagem: "Olá, tudo bem?",
+      enviado_em: serverTimestamp(),
+      lido: false,
+    };
+
+    await assertSucceeds(
+      setDoc(
+        doc(organizerDb, "cotacao/cot-1/fornecedores/forn-1/mensagens/msg-org"),
+        mensagemPayload,
+      ),
+    );
+    await assertSucceeds(
+      setDoc(
+        doc(supplierDb, "cotacao/cot-1/fornecedores/forn-1/mensagens/msg-forn"),
+        {
+          ...mensagemPayload,
+          id_usuario: "forn-1",
+          nome_usuario: "Fornecedor 1",
+          mensagem: "Sim, segue o orçamento.",
+        },
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(
+          otherOrganizerDb,
+          "cotacao/cot-1/fornecedores/forn-1/mensagens/msg-other-org",
+        ),
+        {
+          ...mensagemPayload,
+          id_usuario: "org-2",
+        },
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(
+          otherSupplierDb,
+          "cotacao/cot-1/fornecedores/forn-1/mensagens/msg-other-forn",
+        ),
+        {
+          ...mensagemPayload,
+          id_usuario: "forn-2",
+        },
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(
+          organizerDb,
+          "cotacao/cot-1/fornecedores/forn-1/mensagens/msg-spoof",
+        ),
+        {
+          ...mensagemPayload,
+          id_usuario: "forn-1",
+        },
+      ),
+    );
+    await assertFails(
+      setDoc(
+        doc(organizerDb, "cotacao/cot-1/fornecedores/forn-1/servicos/srv-1"),
+        {
+          nome_produto_servico: "Buffet",
+          quantidade: 1,
         },
       ),
     );

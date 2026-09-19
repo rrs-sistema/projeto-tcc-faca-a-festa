@@ -1,11 +1,11 @@
 {
-    "name": "app_faca_festa",
-    "short_name": "app_faca_festa",
+    "name": "Faça a Festa",
+    "short_name": "Faça a Festa",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#FFFFFF",
-    "description": "A new Flutter project.",
+    "description": "Planeje festas, convites e fornecedores em um só aplicativo.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

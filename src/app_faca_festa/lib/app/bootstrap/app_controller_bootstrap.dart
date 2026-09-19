@@ -101,31 +101,20 @@ abstract final class AppControllerBootstrap {
           auditoriaResolver: () => Get.isRegistered<GerenciarAuditoria>()
               ? Get.find<GerenciarAuditoria>()
               : null,
-          orcamentoGastoController: Get.isRegistered<OrcamentoGastoController>()
-              ? Get.find<OrcamentoGastoController>()
-              : null,
+          // Não fazer Get.find aqui: com lazyPut o find cria o controller no
+          // splash (antes do login) e dispara snapshots em coleções signedIn.
           orcamentoGastoControllerResolver: () =>
               Get.isRegistered<OrcamentoGastoController>()
                   ? Get.find<OrcamentoGastoController>()
-                  : null,
-          fornecedorLocalizacaoController:
-              Get.isRegistered<FornecedorLocalizacaoController>()
-                  ? Get.find<FornecedorLocalizacaoController>()
                   : null,
           fornecedorLocalizacaoControllerResolver: () =>
               Get.isRegistered<FornecedorLocalizacaoController>()
                   ? Get.find<FornecedorLocalizacaoController>()
                   : null,
-          inspiracaoController: Get.isRegistered<InspiracaoController>()
-              ? Get.find<InspiracaoController>()
-              : null,
           inspiracaoControllerResolver: () =>
               Get.isRegistered<InspiracaoController>()
                   ? Get.find<InspiracaoController>()
                   : null,
-          usuarioController: Get.isRegistered<UsuarioController>()
-              ? Get.find<UsuarioController>()
-              : null,
           usuarioControllerResolver: () => Get.isRegistered<UsuarioController>()
               ? Get.find<UsuarioController>()
               : null,

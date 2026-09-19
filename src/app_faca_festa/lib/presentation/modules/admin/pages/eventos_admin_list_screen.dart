@@ -43,31 +43,34 @@ class EventosAdminListScreen extends StatelessWidget {
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               child: Column(
                 children: [
                   AdminSearchField(
                     hint: 'Buscar por nome, tipo, cidade ou organizador',
                     onChanged: (v) => controller.busca.value = v,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Obx(() {
-                    return Row(
-                      children: [
-                        AdminSummaryChip(
-                          label: 'Total',
-                          value: '${controller.eventos.length}',
-                          color: AdminPalette.primary,
-                          icon: Icons.event_rounded,
-                        ),
-                        const SizedBox(width: 8),
-                        AdminSummaryChip(
-                          label: 'Em curso',
-                          value: '${controller.totalAtivos}',
-                          color: AdminPalette.success,
-                          icon: Icons.play_circle_outline_rounded,
-                        ),
-                      ],
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          AdminSummaryChip(
+                            label: 'Total',
+                            value: '${controller.eventos.length}',
+                            color: AdminPalette.primary,
+                            icon: Icons.event_rounded,
+                          ),
+                          const SizedBox(width: 6),
+                          AdminSummaryChip(
+                            label: 'Em curso',
+                            value: '${controller.totalAtivos}',
+                            color: AdminPalette.success,
+                            icon: Icons.play_circle_outline_rounded,
+                          ),
+                        ],
+                      ),
                     );
                   }),
                 ],
@@ -104,9 +107,9 @@ class EventosAdminListScreen extends StatelessWidget {
                   onRefresh: controller.carregarEventosComTipo,
                   child: ListView.separated(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
                     itemCount: lista.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (_, i) => _EventoAdminCard(
                       evento: lista[i],
                       controller: controller,
@@ -136,26 +139,14 @@ class _EventoAdminCard extends StatelessWidget {
 
     return AdminCard(
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: evento.emCurso
-                  ? AdminPalette.success.withValues(alpha: 0.1)
-                  : Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              evento.emCurso
-                  ? Icons.event_available_rounded
-                  : Icons.event_note_rounded,
-              color: evento.emCurso
-                  ? AdminPalette.success
-                  : Colors.orange.shade700,
-            ),
+          AdminLeadingMark(
+            icon: evento.emCurso
+                ? Icons.event_available_rounded
+                : Icons.event_note_rounded,
+            color: evento.emCurso ? AdminPalette.success : AdminPalette.warning,
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -166,58 +157,47 @@ class _EventoAdminCard extends StatelessWidget {
                       child: Text(
                         evento.nome,
                         style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13.5,
+                          height: 1.2,
                           color: AdminPalette.ink,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    PopupMenuButton<String>(
-                      icon: Icon(Icons.more_vert_rounded,
-                          color: Colors.grey.shade500, size: 20),
-                      onSelected: (v) => controller.acaoEvento(v, evento),
-                      itemBuilder: (_) => [
-                        if (!evento.aprovado)
-                          const PopupMenuItem(
-                              value: 'aprovar', child: Text('Aprovar')),
-                        const PopupMenuItem(
-                            value: 'excluir', child: Text('Excluir')),
-                      ],
-                    ),
-                  ],
-                ),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 6,
-                  children: [
                     AdminStatusChip(
                       label: evento.statusLabel,
                       color: evento.emCurso
                           ? AdminPalette.success
                           : AdminPalette.warning,
                     ),
-                    AdminMetricChip(
-                        icon: Icons.category_outlined, label: evento.tipoNome),
-                    AdminMetricChip(
-                      icon: Icons.location_on_outlined,
-                      label: evento.cidade ?? 'Cidade não cadastrada',
-                    ),
-                    AdminMetricChip(
-                        icon: Icons.person_outline, label: evento.organizador),
-                    AdminMetricChip(
-                        icon: Icons.calendar_month_outlined,
-                        label: dataFormatada),
+                  ],
+                ),
+                const SizedBox(height: 2),
+                AdminMetaLine(
+                  parts: [
+                    evento.tipoNome,
+                    evento.cidade ?? 'Cidade não cadastrada',
+                    evento.organizador,
+                    dataFormatada,
                     if (evento.totalConvidados > 0)
-                      AdminMetricChip(
-                        icon: Icons.groups_outlined,
-                        label: '${evento.totalConvidados} convidados',
-                      ),
+                      '${evento.totalConvidados} convidados',
                   ],
                 ),
               ],
             ),
+          ),
+          PopupMenuButton<String>(
+            padding: EdgeInsets.zero,
+            icon: Icon(Icons.more_vert_rounded,
+                color: Colors.grey.shade400, size: 18),
+            onSelected: (v) => controller.acaoEvento(v, evento),
+            itemBuilder: (_) => [
+              if (!evento.aprovado)
+                const PopupMenuItem(value: 'aprovar', child: Text('Aprovar')),
+              const PopupMenuItem(value: 'excluir', child: Text('Excluir')),
+            ],
           ),
         ],
       ),

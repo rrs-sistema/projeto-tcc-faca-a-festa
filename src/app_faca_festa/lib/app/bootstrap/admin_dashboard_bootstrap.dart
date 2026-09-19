@@ -37,11 +37,12 @@ class AdminDashboardBootstrap {
     }
 
     if (!Get.isRegistered<AdminDashboardController>()) {
-      Get.put(
-        AdminDashboardController(
+      // Lazy: carregar() consulta coleções signedIn; só ao abrir o painel.
+      Get.lazyPut<AdminDashboardController>(
+        () => AdminDashboardController(
           carregarDashboard: Get.find<CarregarAdminDashboard>(),
         ),
-        permanent: true,
+        fenix: true,
       );
     }
   }

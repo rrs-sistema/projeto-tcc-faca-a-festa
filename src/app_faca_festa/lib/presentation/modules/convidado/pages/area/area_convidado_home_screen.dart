@@ -1,10 +1,10 @@
 import 'package:url_launcher/url_launcher.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
@@ -33,7 +33,7 @@ class AreaConvidadoHomeScreen extends StatefulWidget {
   final TarefaController tarefaController;
   final EventThemeController theme;
   final AppController appController;
-  final GiftUseCases giftUseCases;
+  final GiftUseCases? giftUseCases;
 
   const AreaConvidadoHomeScreen({
     super.key,
@@ -61,7 +61,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
   TarefaController get tarefaController => widget.tarefaController;
   EventThemeController get theme => widget.theme;
   AppController get appController => widget.appController;
-  GiftUseCases get giftUseCases => widget.giftUseCases;
+  GiftUseCases? get giftUseCases => widget.giftUseCases;
 
   @override
   void initState() {
@@ -111,7 +111,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
       final icon = theme.icon.value;
       final evento = widget.evento;
       final titulo = evento.nomeEvento;
-      final temCapa = theme.temCapaTema;
+      final temCapa = !kIsWeb && theme.temCapaTema;
       final alturaCabecalho = temCapa ? 228.0 : 80.0;
 
       return Scaffold(
@@ -219,14 +219,11 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                         : Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Hero(
-                                tag: 'temaIcon',
-                                child: _botaoCabecalhoConvidado(
-                                  child: Icon(
-                                    icon,
-                                    color: theme.onPrimaryColor.value,
-                                    size: 22,
-                                  ),
+                              _botaoCabecalhoConvidado(
+                                child: Icon(
+                                  icon,
+                                  color: theme.onPrimaryColor.value,
+                                  size: 22,
                                 ),
                               ),
                               Expanded(
@@ -280,58 +277,48 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
             final nomeConvidado = convidadoAtual.nome.split(' ').first;
             final mensagemBoasVindas = 'Bem-vindo(a), $nomeConvidado! 🎉';
 
-            final pages = [
-              _buildInformacoesPage(evento),
-              PresentesSection(
-                evento: evento,
-                theme: theme,
-                giftUseCases: giftUseCases,
-              ),
-              _buildConfirmacaoPage(convidadoAtual),
-              _buildTarefasPage(evento, convidadoAtual),
-            ];
+            final presentes = giftUseCases;
+            final pagina = switch (_selectedIndex) {
+              1 => presentes == null
+                  ? _presentesIndisponiveis()
+                  : PresentesSection(
+                      evento: evento,
+                      theme: theme,
+                      giftUseCases: presentes,
+                    ),
+              2 => _buildConfirmacaoPage(convidadoAtual),
+              3 => _buildTarefasPage(evento, convidadoAtual),
+              _ => _buildInformacoesPage(evento),
+            };
 
             return Stack(
+              fit: StackFit.expand,
               children: [
                 Positioned.fill(
-                  child: AnimatedOpacity(
-                    opacity: 1,
-                    duration: const Duration(milliseconds: 600),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            gradient.colors.first.withValues(alpha: 0.8),
-                            gradient.colors.last.withValues(alpha: 0.6),
-                          ],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          gradient.colors.first.withValues(alpha: 0.8),
+                          gradient.colors.last.withValues(alpha: 0.6),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
                       ),
                     ),
                   ),
                 ),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 500),
-                  switchInCurve: Curves.easeOutBack,
-                  switchOutCurve: Curves.easeIn,
-                  child: Container(
-                    key: ValueKey(_selectedIndex),
-                    margin: EdgeInsets.only(
-                      top: temCapa ? alturaCabecalho + 4 : 100,
-                    ),
-                    decoration: BoxDecoration(
-                      color: theme.surfaceColor.value,
-                      borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(24)), // 🔹 Raio menor
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, -2),
-                        ),
-                      ],
-                    ),
+                Positioned(
+                  top: temCapa ? alturaCabecalho + 4 : 100,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Material(
+                    color: theme.surfaceColor.value,
+                    elevation: 2,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(24)),
+                    clipBehavior: Clip.antiAlias,
                     child: Column(
                       children: [
                         Padding(
@@ -342,7 +329,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                                 mensagemBoasVindas,
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 14, // 🔹 Fonte menor
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w700,
                                   color: theme.primaryColor.value,
                                 ),
@@ -352,7 +339,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                                 'Você foi convidado(a) para um momento especial!',
                                 textAlign: TextAlign.center,
                                 style: GoogleFonts.poppins(
-                                  fontSize: 12, // 🔹 Fonte menor
+                                  fontSize: 12,
                                   color: Colors.grey.shade700,
                                   height: 1.3,
                                 ),
@@ -366,17 +353,16 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                         ),
                         const Divider(
                             thickness: 0.5, indent: 16, endIndent: 16),
-                        Expanded(child: pages[_selectedIndex]),
+                        Expanded(child: pagina),
                         const SizedBox(height: 6),
                         Padding(
-                          padding:
-                              const EdgeInsets.only(bottom: 6), // 🔹 Compacto
+                          padding: const EdgeInsets.only(bottom: 6),
                           child: Column(
                             children: [
                               Text(
                                 'Organizado com 💕 pelo aplicativo',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 10, // 🔹 Fonte menor
+                                  fontSize: 10,
                                   color: Colors.grey.shade600,
                                   fontWeight: FontWeight.w400,
                                 ),
@@ -385,7 +371,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                               Text(
                                 '🎉 Faça a Festa',
                                 style: GoogleFonts.poppins(
-                                  fontSize: 13, // 🔹 Fonte menor
+                                  fontSize: 13,
                                   fontWeight: FontWeight.w700,
                                   color: theme.primaryColor.value,
                                 ),
@@ -397,7 +383,7 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
                     ),
                   ),
                 ),
-                ConfettiBackground(seconds: 30),
+                if (!kIsWeb) ConfettiBackground(seconds: 30),
               ],
             );
           }),

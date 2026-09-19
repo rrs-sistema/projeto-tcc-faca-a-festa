@@ -32,6 +32,42 @@ class AdminTerritorioScreen extends StatelessWidget {
     return f?.razaoSocial ?? 'Fornecedor não encontrado';
   }
 
+  /// Itens únicos por `idFornecedor`. Se o território apontar para um ID
+  /// que não está na lista (fornecedor removido/não carregado), inclui um
+  /// item sentinela para o [DropdownButtonFormField] não quebrar.
+  List<DropdownMenuItem<String>> _itensDropdownFornecedor(String idAtual) {
+    final vistos = <String>{};
+    final itens = <DropdownMenuItem<String>>[];
+
+    for (final f in fornecedorController.fornecedores) {
+      final id = f.idFornecedor.trim();
+      if (id.isEmpty || !vistos.add(id)) continue;
+      itens.add(
+        DropdownMenuItem(
+          value: id,
+          child: Text(
+            f.razaoSocial.trim().isEmpty ? id : f.razaoSocial,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      );
+    }
+
+    if (idAtual.isNotEmpty && vistos.add(idAtual)) {
+      itens.add(
+        DropdownMenuItem(
+          value: idAtual,
+          child: Text(
+            'Fornecedor não encontrado ($idAtual)',
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+      );
+    }
+
+    return itens;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Theme(
@@ -330,16 +366,12 @@ class AdminTerritorioScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           DropdownButtonFormField<String>(
-                            value: t.idFornecedor.isNotEmpty
-                                ? t.idFornecedor
+                            isExpanded: true,
+                            value: t.idFornecedor.trim().isNotEmpty
+                                ? t.idFornecedor.trim()
                                 : null,
-                            items: fornecedorController.fornecedores
-                                .map((f) => DropdownMenuItem(
-                                      value: f.idFornecedor,
-                                      child: Text(f.razaoSocial,
-                                          overflow: TextOverflow.ellipsis),
-                                    ))
-                                .toList(),
+                            items: _itensDropdownFornecedor(
+                                t.idFornecedor.trim()),
                             decoration: InputDecoration(
                               filled: true,
                               fillColor: Colors.grey.shade100,

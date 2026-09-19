@@ -79,6 +79,7 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
         children: [
           CustomInputField(
             label: 'Nome completo',
+            titleColor: Colors.black,
             hintlabel: 'Informe seu nome completo',
             icon: Icons.person_outline,
             controller: nomeCtrl,
@@ -87,9 +88,10 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
             validator: FormValidators.nomeCompleto,
             onChanged: (v) => controller.nome.value = v,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 10),
           CustomInputField(
             label: 'E-mail',
+            titleColor: Colors.black,
             hintlabel: 'Informe seu e-mail',
             icon: Icons.email_outlined,
             controller: emailCtrl,
@@ -102,13 +104,14 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
             ),
             onChanged: (v) => controller.email.value = v,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 10),
           CustomInputField(
             label: 'Senha',
+            titleColor: Colors.black,
             hintlabel: 'Mínimo 6 caracteres, com letra e número',
             icon: Icons.lock_outline,
             controller: senhaCtrl,
-            color: Colors.white,
+            color: primary,
             type: InputType.password,
             isRequired: true,
             validator: (v) => FormValidators.senha(
@@ -117,7 +120,7 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
             ),
             onChanged: (v) => controller.senha.value = v,
           ),
-          const SizedBox(height: 15),
+          const SizedBox(height: 10),
           if (enderecoObrigatorio)
             EnderecoSection(
               cor: primary,
@@ -131,19 +134,19 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
           Row(
             children: [
               Expanded(
-                  child: Divider(color: Colors.white.withValues(alpha: 0.35))),
+                  child: Divider(color: Colors.grey.shade200)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
                   'ou',
                   style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.85),
+                    color: Colors.grey.shade600,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
               Expanded(
-                  child: Divider(color: Colors.white.withValues(alpha: 0.35))),
+                  child: Divider(color: Colors.grey.shade200)),
             ],
           ),
           const SizedBox(height: 16),
@@ -164,6 +167,7 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
         )
       : BotaoSalvar(
           texto: controller.carregando.value ? 'Cadastrando...' : 'Cadastrar',
+          cor: primary,
           onPressed: () => _cadastrar(comGoogle: false),
         ));
 
@@ -178,7 +182,7 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
             style: OutlinedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: primary,
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.75)),
+              side: BorderSide(color: Colors.grey.shade200),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),

@@ -189,19 +189,19 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
           Row(
             children: [
               Expanded(
-                  child: Divider(color: Colors.white.withValues(alpha: 0.24))),
+                  child: Divider(color: Colors.grey.shade200)),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Text(
                   'ou',
                   style: GoogleFonts.poppins(
-                    color: Colors.white.withValues(alpha: 0.82),
+                    color: Colors.grey.shade600,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
               Expanded(
-                  child: Divider(color: Colors.white.withValues(alpha: 0.24))),
+                  child: Divider(color: Colors.grey.shade200)),
             ],
           ),
           const SizedBox(height: 16),
@@ -338,7 +338,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
             style: OutlinedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: primary,
-              side: BorderSide(color: Colors.white.withValues(alpha: 0.75)),
+              side: BorderSide(color: Colors.grey.shade200),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -453,12 +453,12 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.10),
+            color: const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
               color: state.hasError
                   ? Colors.redAccent.withValues(alpha: 0.85)
-                  : Colors.white.withValues(alpha: 0.18),
+                  : const Color(0xFFF0E6EC),
             ),
             boxShadow: [
               BoxShadow(
@@ -496,7 +496,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                       style: GoogleFonts.poppins(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
-                        color: Colors.white,
+                        color: const Color(0xFF111827),
                       ),
                     ),
                   ),
@@ -509,7 +509,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                 'Esses dados serão usados pela IA para recomendar fornecedores mais compatíveis.',
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
-                  color: Colors.white.withValues(alpha: 0.78),
+                  color: const Color(0xFF6B7280),
                   height: 1.35,
                 ),
               ),
@@ -541,7 +541,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                     side: BorderSide(
                       color: selected
                           ? primary.withValues(alpha: 0.0)
-                          : Colors.white.withValues(alpha: 0.35),
+                          : Colors.grey.shade200,
                     ),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -570,7 +570,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                 Text(
                   state.errorText!,
                   style: GoogleFonts.poppins(
-                    color: Colors.redAccent.shade100,
+                    color: Colors.redAccent,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w600,
                   ),

@@ -355,13 +355,25 @@ class ChatMensagensPage extends StatelessWidget {
 
     msgController.clear(); // Limpa na hora para a UI ficar fluida
 
-    await cotacoes.enviarMensagem(
-      idCotacao: idCotacao,
-      idFornecedor: idFornecedor,
-      idUsuario: usuario.idUsuario,
-      nomeUsuario: usuario.nome,
-      mensagem: texto,
-    );
+    try {
+      await cotacoes.enviarMensagem(
+        idCotacao: idCotacao,
+        idFornecedor: idFornecedor,
+        idUsuario: usuario.idUsuario,
+        nomeUsuario: usuario.nome,
+        mensagem: texto,
+      );
+    } catch (e) {
+      msgController.text = texto;
+      debugPrint('❌ Erro ao enviar mensagem do chat: $e');
+      Get.snackbar(
+        'Mensagem',
+        'Não foi possível enviar a mensagem. Tente novamente.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.redAccent,
+        colorText: Colors.white,
+      );
+    }
   }
 
   // ----------------------------------------------------------

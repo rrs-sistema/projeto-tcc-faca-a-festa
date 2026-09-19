@@ -1,0 +1,4 @@
+storePassword=COLOQUE_A_SENHA_DO_KEYSTORE
+keyPassword=COLOQUE_A_SENHA_DA_CHAVE
+keyAlias=facafesta
+storeFile=C:/Users/User/facafesta-upload-keystore.jks

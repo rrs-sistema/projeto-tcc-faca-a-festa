@@ -107,7 +107,7 @@ class _FornecedoresAdminListScreenState
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               child: Column(
                 children: [
                   AdminSearchField(
@@ -119,7 +119,7 @@ class _FornecedoresAdminListScreenState
                       controller.filtroNome.value = '';
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
                   Obx(() {
                     return SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
@@ -278,7 +278,8 @@ class _FornecedoresAdminListScreenState
                         categoriaController: categoriaController,
                         subcategoriaController: subcategoriaController,
                         avaliacaoController: avaliacaoController,
-                        servicoProdutoController: widget.servicoProdutoController,
+                        servicoProdutoController:
+                            widget.servicoProdutoController,
                         servicoFotoController: widget.servicoFotoController,
                         isCelular: isCelular,
                         primary: AdminPalette.primary,

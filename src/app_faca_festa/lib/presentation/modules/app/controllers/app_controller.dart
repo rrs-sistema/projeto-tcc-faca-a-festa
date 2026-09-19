@@ -3,6 +3,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
+import 'package:app_faca_festa/app/routes/app_route_args.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/servico_cotado.dart';
@@ -227,7 +228,8 @@ class AppController extends GetxController {
 
   void guardarTokenConvite(String token) => convite.guardarTokenConvite(token);
 
-  Future<void> abrirConvite(String token) => convite.abrirConvite(token);
+  Future<AreaConvidadoArgs?> abrirConvite(String token) =>
+      convite.abrirConvite(token);
 
   Future<void> redirecionarConvidadoAposLogin(
     Usuario usuario, {

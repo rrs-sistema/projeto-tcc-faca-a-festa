@@ -38,7 +38,7 @@ class OrcamentosAdminListScreen extends StatelessWidget {
         body: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 6),
               child: AdminSearchField(
                 hint: 'Buscar evento, categoria, cidade ou status',
                 onChanged: (v) => controller.busca.value = v,
@@ -79,8 +79,7 @@ class OrcamentosAdminListScreen extends StatelessWidget {
                   onRefresh: controller.carregarOrcamentosComEventoDetalhes,
                   child: ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 16),
+                    padding: const EdgeInsets.fromLTRB(12, 4, 12, 20),
                     children: grupos.entries.map((entry) {
                       final nomeEvento = entry.key;
                       final lista = entry.value;
@@ -131,162 +130,129 @@ class OrcamentosAdminListScreen extends StatelessWidget {
       final visivel = controller.detalhesVisiveis[nomeEvento] ?? false;
 
       return Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: adminCardDecoration(),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // === Cabeçalho do evento ===
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.indigo.shade50,
-                      borderRadius: BorderRadius.circular(8),
+              InkWell(
+                onTap: () {
+                  controller.detalhesVisiveis[nomeEvento] = !visivel;
+                },
+                child: Row(
+                  children: [
+                    AdminLeadingMark(
+                      icon: Icons.event_available_rounded,
+                      color: AdminPalette.primary,
                     ),
-                    child: Icon(Icons.event_available_rounded,
-                        color: Colors.indigo.shade600, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          nomeEvento,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 15,
-                            color: Colors.grey.shade900,
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            nomeEvento,
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13.5,
+                              height: 1.2,
+                              color: AdminPalette.ink,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        // 🔹 Wrap previne overflow
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 4,
-                          children: [
-                            Text(tipoEvento,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12, color: Colors.grey.shade600)),
-                            Text('•',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12, color: Colors.grey.shade400)),
-                            Text(cidade.isEmpty ? "Local indefinido" : cidade,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12, color: Colors.grey.shade600)),
-                            Text('•',
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12, color: Colors.grey.shade400)),
-                            Text(dataFormatada,
-                                style: GoogleFonts.poppins(
-                                    fontSize: 12, color: Colors.grey.shade600)),
-                          ],
-                        ),
-                      ],
+                          const SizedBox(height: 2),
+                          AdminMetaLine(
+                            parts: [
+                              tipoEvento,
+                              cidade.isEmpty ? 'Local indefinido' : cidade,
+                              dataFormatada,
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    tooltip: visivel ? 'Ocultar detalhes' : 'Ver detalhes',
-                    icon: Icon(
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Text(
+                        'R\$ ${totalCotado.toStringAsFixed(0)}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w700,
+                          color: AdminPalette.ink,
+                        ),
+                      ),
+                    ),
+                    Icon(
                       visivel
                           ? Icons.keyboard_arrow_up_rounded
                           : Icons.keyboard_arrow_down_rounded,
                       color: Colors.grey.shade500,
+                      size: 22,
                     ),
-                    onPressed: () {
-                      controller.detalhesVisiveis[nomeEvento] = !visivel;
-                    },
-                  ),
-                ],
+                  ],
+                ),
               ),
-
-              // === DETALHES (mostra/oculta) ===
               AnimatedCrossFade(
-                duration: const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 220),
                 crossFadeState: visivel
                     ? CrossFadeState.showFirst
                     : CrossFadeState.showSecond,
                 firstChild: Column(
                   children: [
-                    const Divider(
-                        height: 24, thickness: 0.5, color: Color(0xFFEEEEEE)),
-                    Column(
-                      children: orcamentos
-                          .map((o) => _buildOrcamentoItem(o))
-                          .toList(),
-                    ),
                     const SizedBox(height: 8),
+                    ...orcamentos.map(_buildOrcamentoItem),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade50,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.grey.shade200),
+                        color: AdminPalette.surface,
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text('Total Cotado:',
+                              Expanded(
+                                child: Text(
+                                  'Cotado  R\$ ${totalCotado.toStringAsFixed(2)}',
                                   style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                      fontWeight: FontWeight.w500)),
-                              Text('R\$ ${totalCotado.toStringAsFixed(2)}',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 14,
-                                      color: Colors.grey.shade900,
-                                      fontWeight: FontWeight.w600)),
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w600,
+                                    color: AdminPalette.ink,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                'Budget  R\$ ${custoEventoGeral.toStringAsFixed(2)}',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11.5,
+                                  color: AdminPalette.muted,
+                                ),
+                              ),
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('Budget Planejado:',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade600,
-                                      fontWeight: FontWeight.w500)),
-                              Text('R\$ ${custoEventoGeral.toStringAsFixed(2)}',
-                                  style: GoogleFonts.poppins(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade700,
-                                      fontWeight: FontWeight.w600)),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 6),
                           LinearPercentIndicator(
-                            lineHeight: 6.0,
+                            lineHeight: 4,
                             percent: percentualOrcamento / 100,
                             backgroundColor: Colors.grey.shade200,
                             progressColor: percentualOrcamento >= 100
-                                ? Colors.green.shade600
-                                : Colors.indigo.shade600,
+                                ? AdminPalette.success
+                                : AdminPalette.primary,
                             barRadius: const Radius.circular(4),
                             animation: true,
-                            animationDuration: 800,
+                            animationDuration: 700,
                             padding: EdgeInsets.zero,
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Text(
-                            '${percentualOrcamento.toStringAsFixed(1)}% do orçamento planejado já foi comprometido.',
+                            '${percentualOrcamento.toStringAsFixed(1)}% do orçamento planejado comprometido',
                             style: GoogleFonts.poppins(
-                                fontSize: 11, color: Colors.grey.shade500),
+                                fontSize: 10.5, color: AdminPalette.muted),
                           ),
                         ],
                       ),
@@ -308,88 +274,70 @@ class OrcamentosAdminListScreen extends StatelessWidget {
   Widget _buildOrcamentoItem(OrcamentoAdmin o) {
     final percent = o.percentualPago;
     final corProgresso = percent >= 1
-        ? Colors.green.shade600
-        : (percent >= 0.5 ? Colors.blue.shade600 : Colors.orange.shade600);
+        ? AdminPalette.success
+        : (percent >= 0.5 ? AdminPalette.primary : AdminPalette.warning);
+    final statusColor = o.status == 'Fechado'
+        ? AdminPalette.success
+        : (o.status == 'Cancelado'
+            ? AdminPalette.danger
+            : AdminPalette.warning);
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  o.categoria,
-                  style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    color: Colors.grey.shade800,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: o.status == 'Fechado'
-                      ? Colors.green.shade50
-                      : (o.status == 'Cancelado'
-                          ? Colors.red.shade50
-                          : Colors.orange.shade50),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  o.status.toUpperCase(),
-                  style: GoogleFonts.poppins(
-                    fontSize: 10,
-                    color: o.status == 'Fechado'
-                        ? Colors.green.shade700
-                        : (o.status == 'Cancelado'
-                            ? Colors.red.shade700
-                            : Colors.orange.shade700),
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: AdminPalette.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    o.categoria,
+                    style: GoogleFonts.poppins(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12.5,
+                      color: AdminPalette.ink,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // 🔹 Row protegida com Expanded para garantir que caberá em qualquer tela
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                  child: _valorItem(
-                      'Estimado', o.custoEstimado, Colors.grey.shade800)),
-              Expanded(
-                  child: _valorItem('Pago', o.pago, Colors.green.shade700)),
-              Expanded(
-                  child:
-                      _valorItem('Pendente', o.pendente, Colors.red.shade600)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          LinearPercentIndicator(
-            lineHeight: 4.0,
-            percent: percent,
-            backgroundColor: Colors.grey.shade100,
-            progressColor: corProgresso,
-            barRadius: const Radius.circular(4),
-            padding: EdgeInsets.zero,
-            animation: true,
-            animationDuration: 800,
-          ),
-        ],
+                AdminStatusChip(
+                    label: o.status.toUpperCase(), color: statusColor),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Expanded(
+                    child: _valorItem(
+                        'Estimado', o.custoEstimado, AdminPalette.ink)),
+                Expanded(
+                    child: _valorItem('Pago', o.pago, AdminPalette.success)),
+                Expanded(
+                    child: _valorItem(
+                        'Pendente', o.pendente, AdminPalette.danger)),
+              ],
+            ),
+            const SizedBox(height: 6),
+            LinearPercentIndicator(
+              lineHeight: 3,
+              percent: percent,
+              backgroundColor: Colors.grey.shade100,
+              progressColor: corProgresso,
+              barRadius: const Radius.circular(4),
+              padding: EdgeInsets.zero,
+              animation: true,
+              animationDuration: 700,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -400,7 +348,7 @@ class OrcamentosAdminListScreen extends StatelessWidget {
       children: [
         Text(
           label,
-          style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade500),
+          style: GoogleFonts.poppins(fontSize: 10, color: AdminPalette.muted),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -408,7 +356,7 @@ class OrcamentosAdminListScreen extends StatelessWidget {
         Text(
           'R\$ ${valor.toStringAsFixed(2)}',
           style: GoogleFonts.poppins(
-            fontSize: 12,
+            fontSize: 11.5,
             fontWeight: FontWeight.w600,
             color: color,
           ),

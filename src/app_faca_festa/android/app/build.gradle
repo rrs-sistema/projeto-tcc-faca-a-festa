@@ -29,6 +29,13 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 }
 
+if (keystoreProperties['keyAlias'] == 'ieadc') {
+    throw new GradleException(
+        "Assinatura de release aponta para o keystore de outro aplicativo (alias ieadc). " +
+        "Crie a chave do Faça a Festa com: powershell -ExecutionPolicy Bypass -File android/create-upload-keystore.ps1"
+    )
+}
+
 android {
     namespace = "com.rrs.system.technology.facafesta"
     compileSdk = 36
@@ -64,7 +71,19 @@ android {
 
     buildTypes {
         release {
-            signingConfig = signingConfigs.debug
+            signingConfig = signingConfigs.release
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            ndk {
+                debugSymbolLevel 'SYMBOL_TABLE'
+            }
+        }
+    }
+
+    packaging {
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 }

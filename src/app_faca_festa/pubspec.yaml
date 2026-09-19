@@ -1,8 +1,8 @@
 name: app_faca_festa
-description: "A new Flutter project."
+description: "Faça a Festa — planeje eventos, convites e fornecedores."
 publish_to: 'none'
 
-version: 1.0.0+2
+version: 1.0.1+3
 
 environment:
   sdk: ^3.6.1
@@ -81,7 +81,9 @@ flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
   image_path: "assets/logo/logo-faca-festa.png"
-  min_sdk_android: 21
+  adaptive_icon_background: "#FFD54F"
+  adaptive_icon_foreground: "assets/logo/logo-faca-festa.png"
+  min_sdk_android: 24
 
   web:
     generate: true

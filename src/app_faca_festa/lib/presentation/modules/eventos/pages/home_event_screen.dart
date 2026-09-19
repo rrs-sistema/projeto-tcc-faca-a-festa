@@ -8,6 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
+import 'dart:async';
 
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_localizacao_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
@@ -115,41 +116,35 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
   OrcamentoController get orcamentoController => widget.orcamentoController;
   TarefaController get tarefaController => widget.tarefaController;
   EventoController get eventoController => widget.eventoController;
-  HomeEventNavController get homeEventNavController =>
-      widget.homeEventNavController;
-  FornecedorLocalizacaoController get fornecedorController =>
-      widget.fornecedorController;
-  FornecedorController get fornecedorCadastroController =>
-      widget.fornecedorCadastroController;
+  HomeEventNavController get homeEventNavController => widget.homeEventNavController;
+  FornecedorLocalizacaoController get fornecedorController => widget.fornecedorController;
+  FornecedorController get fornecedorCadastroController => widget.fornecedorCadastroController;
   FornecedorRecomendacaoController get fornecedorRecomendacaoController =>
       widget.fornecedorRecomendacaoController;
-  AvaliacaoServicoController get avaliacaoController =>
-      widget.avaliacaoController;
+  AvaliacaoServicoController get avaliacaoController => widget.avaliacaoController;
   EventThemeController get theme => widget.themeController;
   CotacaoController get cotacaoController => widget.cotacaoController;
-  SolicitacoesController get solicitacoesController =>
-      widget.solicitacoesController;
+  SolicitacoesController get solicitacoesController => widget.solicitacoesController;
   InspiracaoController get inspiracaoController => widget.inspiracaoController;
   UsuarioController get usuarioController => widget.usuarioController;
-  EventoCadastroController get eventoCadastroController =>
-      widget.eventoCadastroController;
-  GrupoConvidadoController get grupoConvidadoController =>
-      widget.grupoConvidadoController;
+  EventoCadastroController get eventoCadastroController => widget.eventoCadastroController;
+  GrupoConvidadoController get grupoConvidadoController => widget.grupoConvidadoController;
   CardapioController get cardapioController => widget.cardapioController;
-  CalculadoraFestaController get calculadoraController =>
-      widget.calculadoraController;
+  CalculadoraFestaController get calculadoraController => widget.calculadoraController;
   CalculadoraItensAdminController get calculadoraItensAdminController =>
       widget.calculadoraItensAdminController;
   FornecedorMigracaoAdminController get fornecedorMigracaoAdminController =>
       widget.fornecedorMigracaoAdminController;
-  InspiracaoAdminController get inspiracaoAdminController =>
-      widget.inspiracaoAdminController;
+  InspiracaoAdminController get inspiracaoAdminController => widget.inspiracaoAdminController;
   TemaFestaController get temaFestaController => widget.temaFestaController;
 
   @override
   void initState() {
     super.initState();
     homeEventNavController.vincular(_irParaAba);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(fornecedorController.inicializar());
+    });
   }
 
   @override
@@ -197,8 +192,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
             calculadoraController: calculadoraController,
             calculadoraItensAdminController: calculadoraItensAdminController,
             cardapioController: cardapioController,
-            fornecedorMigracaoAdminController:
-                fornecedorMigracaoAdminController,
+            fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
             inspiracaoAdminController: inspiracaoAdminController,
             temaFestaController: temaFestaController,
           ),
@@ -302,14 +296,18 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                       child: ContadorEventoScreen(
                         key: ValueKey('contador-${eventoModel.idEvento}'),
                         dataEvento: eventoModel.data,
-                        tipoEvento:
-                            tipoEventoModel?.nome ?? eventoModel.nomeEvento,
+                        tipoEvento: tipoEventoModel?.nome ?? eventoModel.nomeEvento,
                         themeController: theme,
                         scrollController: _scrollControllerHome,
                       ),
                     ),
                   ),
-                  _buildDashboardOverview(theme),
+                  _buildBudgetChart(
+                    eventoController,
+                    orcamentoController.totalCustoEstimado,
+                    theme,
+                  ),
+                  //_buildDashboardOverview(theme),
                   _buildQuickActions(
                     theme: theme,
                     convidadoController: convidadoController,
@@ -321,22 +319,16 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     appController: appController,
                     fornecedorController: fornecedorController,
                     fornecedorCadastroController: fornecedorCadastroController,
-                    fornecedorRecomendacaoController:
-                        fornecedorRecomendacaoController,
+                    fornecedorRecomendacaoController: fornecedorRecomendacaoController,
                     avaliacaoController: avaliacaoController,
                     solicitacoesController: solicitacoesController,
                     grupoConvidadoController: grupoConvidadoController,
                     cardapioController: cardapioController,
                     calculadoraController: calculadoraController,
-                    fornecedorMigracaoAdminController:
-                        fornecedorMigracaoAdminController,
+                    fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
                   ),
                   _buildUpcomingTasks(tarefaController, theme),
-                  _buildBudgetChart(
-                    eventoController,
-                    orcamentoController.totalCustoEstimado,
-                    theme,
-                  ),
+
                   _buildSuppliersCarousel(
                     fornecedorController,
                     theme,
@@ -379,8 +371,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
         child: Obx(() {
           final evento = eventoController.eventoAtual.value ?? eventoModel;
           final totLista = convidadoController.totalConvidados;
-          final totConv =
-              totLista > 0 ? totLista : evento.totalConvidadosCalculado;
+          final totConv = totLista > 0 ? totLista : evento.totalConvidadosCalculado;
           final conf = totLista > 0 ? convidadoController.totalConfirmados : 0;
           final progConv = totConv > 0 ? conf / totConv : 0.0;
 
@@ -391,14 +382,12 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
 
           // Tarefas
           final concl = tarefaController.concluidas;
-          final totTar =
-              tarefaController.pendentes + tarefaController.concluidas;
+          final totTar = tarefaController.pendentes + tarefaController.concluidas;
           final progTar = totTar > 0 ? concl / totTar : 0.0;
 
           final secundaria = theme.secondaryColor.value;
-          final destaqueOrcamento = secundaria.computeLuminance() < 0.18
-              ? Color.lerp(cor, secundaria, 0.4)!
-              : secundaria;
+          final destaqueOrcamento =
+              secundaria.computeLuminance() < 0.18 ? Color.lerp(cor, secundaria, 0.4)! : secundaria;
 
           return Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -505,8 +494,7 @@ Widget _buildQuickActions({
       padding: const EdgeInsets.fromLTRB(16, 2, 16, 0),
       child: Obx(() {
         final concluidas = tarefaController.concluidas;
-        final totalTarefa =
-            tarefaController.pendentes + tarefaController.concluidas;
+        final totalTarefa = tarefaController.pendentes + tarefaController.concluidas;
         final progress = totalTarefa > 0 ? concluidas / totalTarefa : 0.0;
         final evento = eventoController.eventoAtual.value;
         final totalListaConvidados = convidadoController.totalConvidados;
@@ -518,8 +506,7 @@ Widget _buildQuickActions({
         final primaria = theme.primaryColor.value;
         final secundaria = theme.secondaryColor.value;
         final media = Color.lerp(primaria, secundaria, 0.4)!;
-        final destaque =
-            secundaria.computeLuminance() < 0.18 ? media : secundaria;
+        final destaque = secundaria.computeLuminance() < 0.18 ? media : secundaria;
         final itens = [
           {
             'icon': Icons.people_alt_rounded,
@@ -550,12 +537,6 @@ Widget _buildQuickActions({
             'label': 'Calculadora',
             'color': destaque,
             'val': "Abrir"
-          },
-          {
-            'icon': Icons.auto_awesome_rounded,
-            'label': 'IA Fornecedores',
-            'color': media,
-            'val': "Recomendar"
           },
         ];
 
@@ -631,8 +612,7 @@ Widget _buildQuickActions({
                       eventoController: eventoController,
                       themeController: theme,
                       cardapioController: cardapioController,
-                      fornecedorMigracaoAdminController:
-                          fornecedorMigracaoAdminController,
+                      fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
                     ),
                   );
                 }
@@ -658,11 +638,9 @@ Widget _buildQuickActions({
                   children: [
                     Container(
                       padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                          color: cor.withValues(alpha: 0.15),
-                          shape: BoxShape.circle),
-                      child:
-                          Icon(item['icon'] as IconData, size: 18, color: cor),
+                      decoration:
+                          BoxDecoration(color: cor.withValues(alpha: 0.15), shape: BoxShape.circle),
+                      child: Icon(item['icon'] as IconData, size: 18, color: cor),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -743,9 +721,7 @@ class _MiniCircularIndicator extends StatelessWidget {
             const SizedBox(height: 4),
             Text(title,
                 style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey.shade600)),
+                    fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
           ],
         ),
       ),
@@ -757,8 +733,7 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   final Widget child;
   final ScrollController scrollController;
 
-  ContadorEventoHeaderDelegate(
-      {required this.child, required this.scrollController});
+  ContadorEventoHeaderDelegate({required this.child, required this.scrollController});
 
   @override
   double get minExtent => 76;
@@ -766,20 +741,14 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => 76;
 
   @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
     final bannerSumiu = shrinkOffset > 45;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: bannerSumiu
-            ? Colors.white.withValues(alpha: 0.95)
-            : Colors.transparent,
+        color: bannerSumiu ? Colors.white.withValues(alpha: 0.95) : Colors.transparent,
         boxShadow: bannerSumiu
-            ? [
-                BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)
-              ]
+            ? [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)]
             : [],
       ),
       child: Center(child: child),
@@ -787,12 +756,11 @@ class ContadorEventoHeaderDelegate extends SliverPersistentHeaderDelegate {
   }
 
   @override
-  bool shouldRebuild(covariant ContadorEventoHeaderDelegate oldDelegate) =>
-      true;
+  bool shouldRebuild(covariant ContadorEventoHeaderDelegate oldDelegate) => true;
 }
 
-Widget _buildBudgetChart(EventoController eventoController,
-    RxDouble totalCustoEstimado, EventThemeController theme) {
+Widget _buildBudgetChart(
+    EventoController eventoController, RxDouble totalCustoEstimado, EventThemeController theme) {
   return SliverToBoxAdapter(
     child: Obx(() {
       final total = totalCustoEstimado.value;
@@ -801,8 +769,8 @@ Widget _buildBudgetChart(EventoController eventoController,
       final primary = theme.primaryColor.value;
 
       return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        padding: const EdgeInsets.only(left: 16, right: 16, top: 10, bottom: 10),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -828,10 +796,7 @@ Widget _buildBudgetChart(EventoController eventoController,
                     borderData: FlBorderData(show: false),
                     sections: [
                       PieChartSectionData(
-                          value: usado * 100,
-                          color: primary,
-                          radius: 8,
-                          showTitle: false),
+                          value: usado * 100, color: primary, radius: 8, showTitle: false),
                       PieChartSectionData(
                           value: (1 - usado) * 100,
                           color: Colors.grey.shade200,
@@ -861,13 +826,11 @@ Widget _buildBudgetChart(EventoController eventoController,
                     children: [
                       Text(
                         'Usado: R\$ ${Biblioteca.formatarValorDecimal(total)}',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11, color: Colors.grey.shade600),
+                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
                       ),
                       Text(
                         'Planejado: R\$ ${Biblioteca.formatarValorDecimal(limite)}',
-                        style: GoogleFonts.poppins(
-                            fontSize: 11, color: Colors.grey.shade600),
+                        style: GoogleFonts.poppins(fontSize: 11, color: Colors.grey.shade600),
                       ),
                     ],
                   ),
@@ -877,9 +840,7 @@ Widget _buildBudgetChart(EventoController eventoController,
                     child: Text(
                       '${Biblioteca.formatarValorDecimal(usado * 100)}%',
                       style: GoogleFonts.poppins(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w800,
-                          color: primary),
+                          fontSize: 11, fontWeight: FontWeight.w800, color: primary),
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -901,8 +862,7 @@ Widget _buildBudgetChart(EventoController eventoController,
   );
 }
 
-Widget _buildUpcomingTasks(
-    TarefaController tarefaController, EventThemeController theme) {
+Widget _buildUpcomingTasks(TarefaController tarefaController, EventThemeController theme) {
   return SliverToBoxAdapter(
     child: Obx(() {
       final proximas = tarefaController.tarefasProximas().take(2).toList();
@@ -926,9 +886,7 @@ Widget _buildUpcomingTasks(
           children: [
             Text('Próximas tarefas',
                 style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 14,
-                    color: const Color(0xFF1F2937))),
+                    fontWeight: FontWeight.w700, fontSize: 14, color: const Color(0xFF1F2937))),
             const SizedBox(height: 10),
             ...proximas.map((t) => Padding(
                   padding: const EdgeInsets.only(bottom: 8),
@@ -941,8 +899,8 @@ Widget _buildUpcomingTasks(
                           child: Text(t.titulo,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: GoogleFonts.poppins(
-                                  fontSize: 12, color: Colors.grey.shade800))),
+                              style:
+                                  GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade800))),
                       Text(_formatarDataTarefa(t.dataPrevista),
                           style: GoogleFonts.poppins(
                               fontSize: 10,
@@ -985,14 +943,11 @@ Widget _buildSuppliersCarousel(
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
           child: Text('Fornecedores na região',
               style: GoogleFonts.poppins(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: const Color(0xFF1F2937))),
+                  fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
         ),
         Obx(() {
           final fornecedores = fornecedorController.fornecedoresFiltrados
-              .where((f) =>
-                  f.fornecedor.ativo && f.fornecedor.aptoParaOperar != false)
+              .where((f) => f.fornecedor.ativo && f.fornecedor.aptoParaOperar != false)
               .toList();
           if (fornecedores.isEmpty && !fornecedorController.carregando.value) {
             return const SizedBox.shrink();
@@ -1003,9 +958,7 @@ Widget _buildSuppliersCarousel(
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: fornecedorController.carregando.value
-                  ? 4
-                  : fornecedores.length,
+              itemCount: fornecedorController.carregando.value ? 4 : fornecedores.length,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (_, index) {
                 if (fornecedorController.carregando.value) {
@@ -1015,8 +968,7 @@ Widget _buildSuppliersCarousel(
                       child: Container(
                           width: 110,
                           decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(16))));
+                              color: Colors.white, borderRadius: BorderRadius.circular(16))));
                 }
                 return _fornecedorCard(
                   fornecedorDetalhe: fornecedores[index],

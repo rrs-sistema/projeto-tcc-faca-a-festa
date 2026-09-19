@@ -29,6 +29,25 @@ void main() {
     );
   });
 
+  test('reads the token from the guest area hash', () {
+    expect(
+      ConviteLink.tokenDaUrl(
+        Uri.parse(
+          'https://faca-a-festa.web.app/#/areaconvidado/cf89bbba-55fc-4db8-ae67-adc1ffda4f82',
+        ),
+      ),
+      'cf89bbba-55fc-4db8-ae67-adc1ffda4f82',
+    );
+  });
+
+  test('builds the guest area route with the token', () {
+    expect(
+      ConviteLink.rotaAreaConvidado('abc-123'),
+      '/areaconvidado/abc-123',
+    );
+    expect(ConviteLink.rotaAreaConvidado('  '), '/areaconvidado');
+  });
+
   test('returns null when the invite path is missing', () {
     expect(
       ConviteLink.tokenDaUrl(Uri.parse('https://faca-a-festa.web.app/#/role')),

@@ -35,7 +35,7 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
           style: GoogleFonts.poppins(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            color: const Color(0xFF111827),
           ),
         ),
         const SizedBox(height: 4),
@@ -43,7 +43,7 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
           'Escolha categoria e pelo menos um serviço oferecido.',
           style: GoogleFonts.poppins(
             fontSize: 12,
-            color: Colors.white70,
+            color: const Color(0xFF6B7280),
           ),
         ),
         const SizedBox(height: 12),
@@ -73,7 +73,7 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                               'Nenhuma categoria disponível.',
                               style: GoogleFonts.poppins(
                                 fontSize: 13,
-                                color: Colors.white70,
+                                color: const Color(0xFF6B7280),
                               ),
                             ),
                           )
@@ -200,7 +200,7 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                     child: Text(
                       'Nenhuma subcategoria cadastrada.',
                       style: GoogleFonts.poppins(
-                        color: Colors.white70,
+                        color: const Color(0xFF6B7280),
                         fontSize: 13,
                       ),
                     ),
@@ -276,7 +276,7 @@ class CategoriaSubcategoriaServicoSection extends StatelessWidget {
                         child: Text(
                           'Selecione uma categoria para visualizar os serviços disponíveis.',
                           style: GoogleFonts.poppins(
-                            color: Colors.white70,
+                            color: const Color(0xFF6B7280),
                             fontSize: 13,
                           ),
                         ),
