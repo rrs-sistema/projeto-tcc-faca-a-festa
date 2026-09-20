@@ -144,7 +144,11 @@ class _FestaNavButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final icon = selected ? (item.activeIcon ?? item.icon) : item.icon;
 
-    return Padding(
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: selected ? '${item.label}, selecionado' : item.label,
+      child: Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: Material(
         color: Colors.transparent,
@@ -202,6 +206,7 @@ class _FestaNavButton extends StatelessWidget {
             ),
           ),
         ),
+      ),
       ),
     );
   }

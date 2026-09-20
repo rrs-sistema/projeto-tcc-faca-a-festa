@@ -7,6 +7,7 @@ import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 import 'package:app_faca_festa/domain/entities/calculadora_festa_item.dart';
 import 'package:app_faca_festa/presentation/modules/calculadora/controllers/calculadora_festa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_empty_state.dart';
 
 class MinhasSimulacoesCalculadoraBottomSheet extends StatelessWidget {
   final CalculadoraFestaController controller;
@@ -48,7 +49,7 @@ class MinhasSimulacoesCalculadoraBottomSheet extends StatelessWidget {
       } else if (simulacoes.isEmpty) {
         body = _EmptyState(
           primary: primary,
-          onRefresh: controller.carregarSimulacoesSalvas,
+          onVoltar: () => Navigator.of(context).maybePop(),
         );
       } else {
         body = RefreshIndicator(
@@ -685,32 +686,22 @@ class _ChipInfo extends StatelessWidget {
 
 class _EmptyState extends StatelessWidget {
   final Color primary;
-  final Future<void> Function() onRefresh;
+  final VoidCallback onVoltar;
 
-  const _EmptyState({required this.primary, required this.onRefresh});
+  const _EmptyState({required this.primary, required this.onVoltar});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.auto_awesome_motion_rounded,
-                color: primary.withValues(alpha: 0.2), size: 48),
-            const SizedBox(height: 12),
-            Text('Nada salvo ainda',
-                style: GoogleFonts.poppins(
-                    fontSize: 15, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 4),
-            Text('Gere um cálculo e salve para ver aqui.',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(fontSize: 12, color: Colors.grey)),
-            TextButton(onPressed: onRefresh, child: const Text('Atualizar')),
-          ],
-        ),
-      ),
+    return FestaEmptyState(
+      icon: Icons.auto_awesome_motion_rounded,
+      title: 'Nada salvo ainda',
+      message:
+          'Calcule as quantidades da festa e toque em Salvar para ver o histórico aqui.',
+      actionLabel: 'Voltar para calcular',
+      actionIcon: Icons.arrow_back_rounded,
+      onAction: onVoltar,
+      color: primary,
+      compact: true,
     );
   }
 }

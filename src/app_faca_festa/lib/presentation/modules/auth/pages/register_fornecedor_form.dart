@@ -11,7 +11,8 @@ import 'package:app_faca_festa/presentation/modules/catalogo/controllers/subcate
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/presentation/modules/auth/controllers/register_controller.dart';
-import 'package:app_faca_festa/presentation/widgets/primary_action_button.dart';
+import 'package:app_faca_festa/presentation/modules/auth/widgets/auth_festa_brand.dart';
+import 'package:app_faca_festa/presentation/widgets/cadastro_passos_bar.dart';
 import 'package:app_faca_festa/presentation/widgets/custom_input_field.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/components/endereco/endereco_section.dart';
 
@@ -47,6 +48,9 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
   final _formKey = GlobalKey<FormState>();
   var _autovalidateMode = AutovalidateMode.disabled;
   var _cadastroGoogle = false;
+  var _passo = 0;
+
+  static const _titulosPassos = ['Você', 'Empresa', 'Endereço', 'Atuação'];
 
   late final TextEditingController nomeCtrl;
   late final TextEditingController razaoCtrl;
@@ -64,42 +68,42 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
       id: '1eab2c53-a7d3-4a97-b473-02572464e779',
       slug: 'cha_de_bebe',
       nome: 'Chá de Bebê',
-      titulo: '🍼 Chá de Bebê',
+      titulo: 'Chá de Bebê',
       icon: Icons.child_care_rounded,
     ),
     _TipoEventoCadastro(
       id: '7f8aa427-9b80-45ef-9b7c-f4e7c08ffcda',
       slug: 'aniversario',
       nome: 'Aniversário',
-      titulo: '🎂 Aniversário',
+      titulo: 'Aniversário',
       icon: Icons.cake_rounded,
     ),
     _TipoEventoCadastro(
       id: 'ccbdb965-8f3c-4c92-bc94-2331c0ca2bb8',
       slug: 'festa_infantil',
       nome: 'Festa Infantil',
-      titulo: '🎈 Festa Infantil',
+      titulo: 'Festa Infantil',
       icon: Icons.toys_rounded,
     ),
     _TipoEventoCadastro(
       id: 'WlLdfdmu4Chvw2p8daUm',
       slug: 'formatura',
       nome: 'Formatura',
-      titulo: '🎓 Formatura',
+      titulo: 'Formatura',
       icon: Icons.school_rounded,
     ),
     _TipoEventoCadastro(
       id: '302191a2-dbf3-4ac6-ba53-08273b384cab',
       slug: 'casamento',
       nome: 'Casamento',
-      titulo: '💍 Casamento',
+      titulo: 'Casamento',
       icon: Icons.favorite_rounded,
     ),
     _TipoEventoCadastro(
       id: 'lXf0M5vMNvyRn52yQ2fY',
       slug: 'evento_corporativo',
       nome: 'Evento Corporativo',
-      titulo: '💼 Evento Corporativo',
+      titulo: 'Evento Corporativo',
       icon: Icons.business_center_rounded,
     ),
   ];
@@ -148,6 +152,28 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
     await controller.registrarUsuario();
   }
 
+  void _avancar() {
+    setState(() => _autovalidateMode = AutovalidateMode.onUserInteraction);
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    setState(() {
+      _autovalidateMode = AutovalidateMode.disabled;
+      _passo++;
+    });
+  }
+
+  void _continuarComGoogle() {
+    _cadastroGoogle = true;
+    _avancar();
+  }
+
+  void _voltar() {
+    if (_passo == 0) return;
+    setState(() {
+      _autovalidateMode = AutovalidateMode.disabled;
+      _passo--;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final primary = widget.primary;
@@ -159,208 +185,191 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _camposBasicos(primary, controller),
-          const SizedBox(height: 10),
-          _uploadBanner(primary),
-          const SizedBox(height: 10),
-          EnderecoSection(
+          CadastroPassosBar(
+            atual: _passo,
+            titulos: _titulosPassos,
             cor: primary,
-            controller: controller.enderecoController.value,
-            titulo: 'Dados de endereço',
           ),
+          if (_passo == 0) ..._passoConta(primary, controller),
+          if (_passo == 1) ..._passoEmpresa(primary, controller),
+          if (_passo == 2) ..._passoEndereco(primary, controller),
+          if (_passo == 3) ..._passoAtuacao(primary, controller),
           const SizedBox(height: 20),
-          CategoriaSubcategoriaServicoSection(
-            controller: controller,
-            primary: primary,
-            categoriaController: widget.categoriaController,
-            subcategoriaController: widget.subcategoriaController,
-            servicoController: widget.servicoController,
+          Obx(
+            () => CadastroPassosAcoes(
+              cor: primary,
+              continuarLabel: _passo == 3 ? 'Cadastrar' : 'Continuar',
+              onContinuar: _passo == 3
+                  ? () => _cadastrar(comGoogle: _cadastroGoogle)
+                  : _avancar,
+              onVoltar: _passo == 0 ? null : _voltar,
+              carregando: controller.carregando.value,
+            ),
           ),
-          const SizedBox(height: 20),
-          _tiposEventoSection(primary),
-          const SizedBox(height: 20),
-          PrimaryActionButton(
-            label: 'Cadastrar',
-            color: primary,
-            carregando: controller.carregando,
-            onPressed: () => _cadastrar(comGoogle: false),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                  child: Divider(color: Colors.grey.shade200)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Text(
-                  'ou',
-                  style: GoogleFonts.poppins(
-                    color: Colors.grey.shade600,
-                    fontWeight: FontWeight.w600,
+          if (_passo == 0) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(child: Divider(color: Colors.grey.shade200)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'ou',
+                    style: GoogleFonts.poppins(
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
+                Expanded(child: Divider(color: Colors.grey.shade200)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Obx(
+              () => AuthFestaGoogleButton(
+                label: 'Continuar com Google',
+                onPressed: controller.carregando.value
+                    ? null
+                    : _continuarComGoogle,
               ),
-              Expanded(
-                  child: Divider(color: Colors.grey.shade200)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _botaoCadastrarGoogle(primary, controller),
-          const SizedBox(height: 20),
-          PrimaryActionButton(
-            label: 'Cancelar/Sair',
-            color: Colors.grey,
-            carregando: controller.carregando,
-            icon: Icons.close,
-            onPressed: () => Navigator.pop(context),
-          ),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _camposBasicos(Color primary, RegisterController controller) => Column(
-        children: [
-          CustomInputField(
-            label: 'Nome do responsável',
-            hintlabel: 'Informe o nome do responsável',
-            icon: Icons.person_outline,
-            controller: nomeCtrl,
-            color: primary,
-            isRequired: true,
-            validator: (v) => FormValidators.nomeCompleto(
-              v,
-              campo: 'o nome completo do responsável',
-            ),
-            onChanged: (v) => controller.nome.value = v,
+  List<Widget> _passoConta(Color primary, RegisterController controller) => [
+        CustomInputField(
+          label: 'Nome do responsável',
+          hintlabel: 'Informe o nome do responsável',
+          icon: Icons.person_outline,
+          controller: nomeCtrl,
+          color: primary,
+          isRequired: true,
+          textInputAction: TextInputAction.next,
+          validator: (v) => FormValidators.nomeCompleto(
+            v,
+            campo: 'o nome completo do responsável',
           ),
-          const SizedBox(height: 10),
-          CustomInputField(
-            label: 'Razão social',
-            hintlabel: 'Informe a razão social',
-            icon: Icons.business_outlined,
-            controller: razaoCtrl,
-            color: primary,
-            isRequired: true,
-            validator: FormValidators.razaoSocial,
-            onChanged: (v) => controller.razaoSocial.value = v,
+          onChanged: (v) => controller.nome.value = v,
+        ),
+        const SizedBox(height: 10),
+        CustomInputField(
+          label: 'E-mail comercial',
+          hintlabel: 'Informe um e-mail comercial',
+          icon: Icons.email_outlined,
+          controller: emailCtrl,
+          color: primary,
+          type: InputType.email,
+          isRequired: !_cadastroGoogle,
+          textInputAction: TextInputAction.next,
+          validator: (v) => FormValidators.email(
+            v,
+            obrigatorio: !_cadastroGoogle,
           ),
-          const SizedBox(height: 10),
-          CustomInputField(
-            label: 'E-mail comercial',
-            hintlabel: 'Informe um e-mail comercial',
-            icon: Icons.email_outlined,
-            controller: emailCtrl,
-            color: primary,
-            type: InputType.email,
-            isRequired: true,
-            validator: (v) => FormValidators.email(
-              v,
-              obrigatorio: !_cadastroGoogle,
-            ),
-            onChanged: (v) => controller.email.value = v,
+          onChanged: (v) => controller.email.value = v,
+        ),
+        const SizedBox(height: 10),
+        CustomInputField(
+          label: 'Senha',
+          hintlabel: 'Mínimo 6 caracteres, com letra e número',
+          icon: Icons.lock_outline,
+          controller: senhaCtrl,
+          color: primary,
+          type: InputType.password,
+          isRequired: !_cadastroGoogle,
+          textInputAction: TextInputAction.next,
+          validator: (v) => FormValidators.senha(
+            v,
+            obrigatorio: !_cadastroGoogle,
           ),
-          const SizedBox(height: 10),
-          CustomInputField(
-            label: 'Senha',
-            hintlabel: 'Mínimo 6 caracteres, com letra e número',
-            icon: Icons.lock_outline,
-            controller: senhaCtrl,
-            color: primary,
-            type: InputType.password,
-            isRequired: true,
-            validator: (v) => FormValidators.senha(
-              v,
-              obrigatorio: !_cadastroGoogle,
-            ),
-            onChanged: (v) => controller.senha.value = v,
-          ),
-          const SizedBox(height: 10),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: CustomInputField(
-                  label: 'CNPJ',
-                  hintlabel: '00.000.000/0000-00',
-                  icon: Icons.badge_outlined,
-                  controller: cnpjCtrl,
-                  color: primary,
-                  type: InputType.cnpj,
-                  isRequired: true,
-                  onChanged: (v) =>
-                      controller.cnpj.value = FormValidators.somenteDigitos(v),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: CustomInputField(
-                  label: 'Telefone',
-                  hintlabel: 'Com DDD',
-                  icon: Icons.phone_outlined,
-                  controller: telefoneCtrl,
-                  type: InputType.phone,
-                  isRequired: true,
-                  color: primary,
-                  onChanged: (v) => controller.telefone.value =
-                      FormValidators.somenteDigitos(v),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          CustomInputField(
-            label: 'Descrição dos serviços (opcional)',
-            hintlabel: 'Se informar, use pelo menos 10 caracteres',
-            icon: Icons.description_outlined,
-            controller: descCtrl,
-            color: primary,
-            maxLength: 200,
-            maxLines: 3,
-            validator: FormValidators.descricaoServicos,
-            onChanged: (v) => controller.descricao.value = v,
-          ),
-        ],
-      );
+          onChanged: (v) => controller.senha.value = v,
+        ),
+        const SizedBox(height: 10),
+        CustomInputField(
+          label: 'Telefone',
+          hintlabel: 'Com DDD',
+          icon: Icons.phone_outlined,
+          controller: telefoneCtrl,
+          type: InputType.phone,
+          isRequired: true,
+          textInputAction: TextInputAction.done,
+          validator: FormValidators.telefone,
+          onFieldSubmitted: (_) => _avancar(),
+          color: primary,
+          onChanged: (v) =>
+              controller.telefone.value = FormValidators.somenteDigitos(v),
+        ),
+      ];
 
-  Widget _botaoCadastrarGoogle(
+  List<Widget> _passoEmpresa(Color primary, RegisterController controller) => [
+        CustomInputField(
+          label: 'Razão social',
+          hintlabel: 'Informe a razão social',
+          icon: Icons.business_outlined,
+          controller: razaoCtrl,
+          color: primary,
+          isRequired: true,
+          validator: FormValidators.razaoSocial,
+          onChanged: (v) => controller.razaoSocial.value = v,
+        ),
+        const SizedBox(height: 10),
+        CustomInputField(
+          label: 'CNPJ',
+          hintlabel: '00.000.000/0000-00',
+          icon: Icons.badge_outlined,
+          controller: cnpjCtrl,
+          color: primary,
+          type: InputType.cnpj,
+          isRequired: true,
+          validator: FormValidators.cnpj,
+          onChanged: (v) =>
+              controller.cnpj.value = FormValidators.somenteDigitos(v),
+        ),
+        const SizedBox(height: 10),
+        _uploadBanner(primary),
+        const SizedBox(height: 10),
+        CustomInputField(
+          label: 'Descrição dos serviços (opcional)',
+          hintlabel: 'Se informar, use pelo menos 10 caracteres',
+          icon: Icons.description_outlined,
+          controller: descCtrl,
+          color: primary,
+          maxLength: 200,
+          maxLines: 3,
+          validator: FormValidators.descricaoServicos,
+          onChanged: (v) => controller.descricao.value = v,
+        ),
+      ];
+
+  List<Widget> _passoEndereco(
     Color primary,
     RegisterController controller,
   ) =>
-      Obx(
-        () => SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: OutlinedButton.icon(
-            onPressed: controller.carregando.value
-                ? null
-                : () => _cadastrar(comGoogle: true),
-            style: OutlinedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: primary,
-              side: BorderSide(color: Colors.grey.shade200),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            icon: Text(
-              'G',
-              style: GoogleFonts.poppins(
-                color: const Color(0xFF4285F4),
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            label: Text(
-              'Cadastrar com Google',
-              style: GoogleFonts.poppins(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
+      [
+        EnderecoSection(
+          cor: primary,
+          controller: controller.enderecoController.value,
+          titulo: 'Endereço de atendimento',
         ),
-      );
+      ];
+
+  List<Widget> _passoAtuacao(
+    Color primary,
+    RegisterController controller,
+  ) =>
+      [
+        CategoriaSubcategoriaServicoSection(
+          controller: controller,
+          primary: primary,
+          categoriaController: widget.categoriaController,
+          subcategoriaController: widget.subcategoriaController,
+          servicoController: widget.servicoController,
+        ),
+        const SizedBox(height: 20),
+        _tiposEventoSection(primary),
+      ];
 
   Widget _uploadBanner(Color color) => GestureDetector(
         onTap: () async {
@@ -500,13 +509,11 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
                       ),
                     ),
                   ),
-                  _buildIaBadge(primary),
                 ],
               ),
               const SizedBox(height: 8),
               Text(
-                'Selecione os eventos em que este fornecedor costuma atuar. '
-                'Esses dados serão usados pela IA para recomendar fornecedores mais compatíveis.',
+                'Em quais festas você costuma trabalhar?',
                 style: GoogleFonts.poppins(
                   fontSize: 12.5,
                   color: const Color(0xFF6B7280),
@@ -580,38 +587,6 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
           ),
         );
       },
-    );
-  }
-
-  Widget _buildIaBadge(Color primary) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-      decoration: BoxDecoration(
-        color: primary.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: primary.withValues(alpha: 0.28),
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.psychology_rounded,
-            color: primary,
-            size: 15,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            'IA',
-            style: GoogleFonts.poppins(
-              color: primary,
-              fontWeight: FontWeight.w800,
-              fontSize: 11,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

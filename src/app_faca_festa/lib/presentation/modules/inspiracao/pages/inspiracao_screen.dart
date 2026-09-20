@@ -58,6 +58,8 @@ class InspiracaoScreen extends StatefulWidget {
 }
 
 class _InspiracaoScreenState extends State<InspiracaoScreen> {
+  int _destaqueIndex = 0;
+
   InspiracaoController get controller => widget.controller;
   EventThemeController get themeController => widget.themeController;
   HomeEventNavController get homeEventNavController =>
@@ -359,55 +361,110 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
     final imagens = items.take(5).toList();
     if (imagens.isEmpty) return const SizedBox.shrink();
 
-    return CarouselSlider.builder(
-      itemCount: imagens.length,
-      itemBuilder: (context, index, _) {
-        final item = imagens[index];
-        final url = item.imagemUrl;
+    final indexSeguro = _destaqueIndex.clamp(0, imagens.length - 1);
 
-        return ClipRRect(
-          borderRadius: BorderRadius.circular(16),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              url.isEmpty
-                  ? Container(
-                      color: Colors.grey.shade200,
-                      child: const Icon(Icons.image_not_supported,
-                          color: Colors.grey))
-                  : Image.network(url,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                          color: Colors.grey.shade200,
-                          child: const Icon(Icons.broken_image,
-                              color: Colors.grey))),
-              Container(
-                  decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                          colors: [Colors.transparent, Colors.black87],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter))),
-              Positioned(
-                left: 12,
-                bottom: 12,
-                right: 12,
-                child: Text(item.titulo,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700)),
+    return Column(
+      children: [
+        CarouselSlider.builder(
+          itemCount: imagens.length,
+          itemBuilder: (context, index, _) {
+            final item = imagens[index];
+            final url = item.imagemUrl;
+
+            return Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => _abrirDetalhe(item),
+                borderRadius: BorderRadius.circular(16),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      url.isEmpty
+                          ? Container(
+                              color: Colors.grey.shade200,
+                              child: const Icon(Icons.image_not_supported,
+                                  color: Colors.grey))
+                          : Image.network(url,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                  color: Colors.grey.shade200,
+                                  child: const Icon(Icons.broken_image,
+                                      color: Colors.grey))),
+                      const DecoratedBox(
+                          decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                  colors: [Colors.transparent, Colors.black87],
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter))),
+                      Positioned(
+                        left: 12,
+                        bottom: 12,
+                        right: 12,
+                        child: Text(item.titulo,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.poppins(
+                                color: Colors.white,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
+            );
+          },
+          options: CarouselOptions(
+            height: 160,
+            autoPlay: imagens.length > 1,
+            enlargeCenterPage: true,
+            viewportFraction: 0.85,
+            pauseAutoPlayOnTouch: true,
+            onPageChanged: (index, _) {
+              setState(() => _destaqueIndex = index);
+            },
           ),
-        );
-      },
-      options: CarouselOptions(
-        height: 160, // 🔹 Carrossel mais compacto[cite: 30]
-        autoPlay: true,
-        enlargeCenterPage: true,
-        viewportFraction: 0.85,
+        ),
+        if (imagens.length > 1) ...[
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(imagens.length, (i) {
+              final ativo = i == indexSeguro;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: ativo ? 16 : 7,
+                height: 7,
+                decoration: BoxDecoration(
+                  color: ativo
+                      ? themeController.primaryColor.value
+                      : Colors.grey.shade400,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              );
+            }),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _abrirDetalhe(Inspiracao insp) {
+    Get.to(
+      () => InspiracaoDetalheScreen(
+        inspiracao: insp,
+        themeController: themeController,
+        inspiracaoController: controller,
+        homeEventNavController: homeEventNavController,
+        fornecedorController: fornecedorController,
+        fornecedorLocalizacaoController: fornecedorLocalizacaoController,
+        avaliacaoController: avaliacaoController,
+        eventoController: eventoController,
+        appController: appController,
+        cotacoes: cotacoes,
       ),
     );
   }
@@ -475,21 +532,7 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
           final url = insp.imagemUrl;
 
           return GestureDetector(
-            onTap: () => Get.to(
-              () => InspiracaoDetalheScreen(
-                inspiracao: insp,
-                themeController: themeController,
-                inspiracaoController: controller,
-                homeEventNavController: homeEventNavController,
-                fornecedorController: fornecedorController,
-                fornecedorLocalizacaoController:
-                    fornecedorLocalizacaoController,
-                avaliacaoController: avaliacaoController,
-                eventoController: eventoController,
-                appController: appController,
-                cotacoes: cotacoes,
-              ),
-            ),
+            onTap: () => _abrirDetalhe(insp),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(16),
               child: Stack(
@@ -522,7 +565,9 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                   Positioned(
                     top: 6,
                     right: 6,
-                    child: InkWell(
+                    child: Tooltip(
+                      message: insp.favorito ? 'Favorita' : 'Marcar favorita',
+                      child: InkWell(
                       onTap: () => controller.alternarFavorito(insp.id),
                       child: Container(
                         padding: const EdgeInsets.all(4),
@@ -534,6 +579,7 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                                 : Icons.star_border_rounded,
                             color: insp.favorito ? Colors.amber : Colors.white,
                             size: 20),
+                        ),
                       ),
                     ),
                   ),
@@ -541,7 +587,28 @@ class _InspiracaoScreenState extends State<InspiracaoScreen> {
                     left: 8,
                     right: 8,
                     bottom: 8,
-                    child: _badgesPlanejamento(insp, primary),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _badgesPlanejamento(insp, primary),
+                        const SizedBox(height: 4),
+                        Text(
+                          insp.titulo,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            height: 1.2,
+                            shadows: const [
+                              Shadow(color: Colors.black54, blurRadius: 6),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),

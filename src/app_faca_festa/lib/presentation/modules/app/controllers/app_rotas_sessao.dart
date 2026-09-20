@@ -2,6 +2,13 @@ abstract final class AppRotasSessao {
   static bool ehTotp(String rota) =>
       rota == '/loginTotp' || rota == '/loginTotpSetup';
 
+  static bool ehConvite(String rota) =>
+      rota == '/convite' ||
+      rota.startsWith('/convite/') ||
+      rota == '/areaconvidado' ||
+      rota.startsWith('/areaconvidado') ||
+      rota == '/conviteNaoEncontrado';
+
   static bool destinoEstavel(String rota) {
     return rota == '/HomeEventScreen' ||
         rota.startsWith('/HomeEventScreen/') ||
@@ -9,11 +16,7 @@ abstract final class AppRotasSessao {
         rota == '/fornecedor' ||
         rota == '/fornecedores' ||
         rota == '/admin' ||
-        rota == '/areaconvidado' ||
-        rota.startsWith('/areaconvidado') ||
-        rota == '/convite' ||
-        rota.startsWith('/convite/') ||
-        rota == '/conviteNaoEncontrado';
+        ehConvite(rota);
   }
 
   /// Subtelas abertas com Get.to() (ex.: lista de fornecedores) não são

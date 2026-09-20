@@ -11,7 +11,7 @@ extension _CalculadoraFestaItens on _CalculadoraFestaScreenState {
       child: itens.isEmpty
           ? _EmptyMessage(
               icon: Icons.calculate_outlined,
-              text: 'Informe convidados para calcular.',
+              text: 'Informe quantas pessoas vêm para ver as sugestões.',
               iconColor: primary,
             )
           : Column(

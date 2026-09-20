@@ -113,8 +113,8 @@ class FiltroFornecedorBottomSheet extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     raioIlimitado
-                        ? 'Raio de busca (ilimitado)'
-                        : 'Raio de busca (${raioAtual.toStringAsFixed(1)} km)',
+                        ? 'Onde buscar: qualquer lugar'
+                        : 'Onde buscar: até ${raioAtual.toStringAsFixed(0)} km',
                     style: GoogleFonts.poppins(
                       fontWeight: FontWeight.w700,
                       color: Colors.grey.shade800,
@@ -127,11 +127,21 @@ class FiltroFornecedorBottomSheet extends StatelessWidget {
                     max: 100,
                     divisions: 20,
                     label: raioIlimitado
-                        ? 'Ilimitado'
+                        ? 'Qualquer lugar'
                         : '${sliderValue.round()} km',
                     activeColor: primary,
                     inactiveColor: primary.withValues(alpha: 0.22),
                     onChanged: controller.atualizarRaio,
+                  ),
+                  Text(
+                    raioIlimitado
+                        ? 'A lista mostra fornecedores de qualquer cidade.'
+                        : 'A lista mostra só quem atende nessa distância.',
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      height: 1.35,
+                      color: Colors.grey.shade600,
+                    ),
                   ),
                   Align(
                     alignment: Alignment.centerRight,
@@ -141,7 +151,7 @@ class FiltroFornecedorBottomSheet extends StatelessWidget {
                         size: 18,
                         color: primary,
                       ),
-                      label: const Text('Exibir todos os fornecedores'),
+                      label: const Text('Buscar em qualquer lugar'),
                       style: TextButton.styleFrom(
                         foregroundColor: primary,
                         textStyle: GoogleFonts.poppins(
@@ -152,7 +162,7 @@ class FiltroFornecedorBottomSheet extends StatelessWidget {
                         controller.atualizarRaio(_raioIlimitado);
                         Get.snackbar(
                           'Filtro atualizado',
-                          'Agora exibindo todos os fornecedores (raio ilimitado).',
+                          'A lista agora mostra fornecedores de qualquer lugar.',
                           backgroundColor: primary,
                           colorText: onPrimary,
                           snackPosition: SnackPosition.BOTTOM,

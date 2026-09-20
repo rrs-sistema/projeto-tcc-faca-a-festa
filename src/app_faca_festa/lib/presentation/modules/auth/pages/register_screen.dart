@@ -1,4 +1,3 @@
-import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -76,18 +75,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final title = isConvidado
         ? 'Acesse o convite'
         : isFornecedor
-            ? 'Ofereça seus serviços'
+            ? 'Crie conta de fornecedor'
             : 'Crie sua conta';
     final highlight = isConvidado
         ? 'convite'
         : isFornecedor
-            ? 'serviços'
+            ? 'fornecedor'
             : 'conta';
-    final subtitle = isConvidado
-        ? 'Crie sua conta para entrar no evento'
-        : isFornecedor
-            ? 'Mostre seu trabalho para quem está planejando'
-            : 'Organize, planeje e gerencie o seu evento';
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: FestaSystemUi.fundoClaro,
@@ -95,12 +89,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: const Color(0xFFFFF3F8),
         body: AuthFestaShell(
           scrollable: true,
+          logoSize: 112,
           title: title,
           titleHighlight: highlight,
-          subtitle: subtitle,
-          footerLink: AuthFestaFooterLink(
+          mostrarProvaSocial: false,
+          mostrarCreditos: false,
+          mostrarPrivacidade: true,
+          footerLink: AuthFestaContaButton(
             prefixo: 'Já tem conta? ',
-            acao: 'Entrar aqui',
+            acao: 'Entrar',
             onTap: () => Get.offNamed('/login'),
           ),
           child: Container(
@@ -117,40 +114,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ],
             ),
-            child: Column(
-              children: [
-                Text(
-                  'Campos com * são obrigatórios',
-                  style: GoogleFonts.poppins(
-                    color: AuthFestaBrand.muted,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w500,
+            child: isFornecedor
+                ? RegisterFornecedorForm(
+                    controller: controller,
+                    fornecedorController: fornecedorController,
+                    picker: picker,
+                    bannerBytes: bannerBytes,
+                    onBannerSelected: (arquivo, bytes) async {
+                      setState(() => bannerBytes = bytes);
+                      controller.bannerArquivo = arquivo;
+                      controller.bannerBytes = bytes;
+                    },
+                    primary: accent,
+                    categoriaController: widget.categoriaController,
+                    subcategoriaController: widget.subcategoriaController,
+                    servicoController: widget.servicoController,
+                  )
+                : RegisterOrganizadorForm(
+                    controller: controller,
+                    tipo: tipo,
+                    primary: accent,
                   ),
-                ),
-                const SizedBox(height: 16),
-                isFornecedor
-                    ? RegisterFornecedorForm(
-                        controller: controller,
-                        fornecedorController: fornecedorController,
-                        picker: picker,
-                        bannerBytes: bannerBytes,
-                        onBannerSelected: (arquivo, bytes) async {
-                          setState(() => bannerBytes = bytes);
-                          controller.bannerArquivo = arquivo;
-                          controller.bannerBytes = bytes;
-                        },
-                        primary: accent,
-                        categoriaController: widget.categoriaController,
-                        subcategoriaController: widget.subcategoriaController,
-                        servicoController: widget.servicoController,
-                      )
-                    : RegisterOrganizadorForm(
-                        controller: controller,
-                        tipo: tipo,
-                        primary: accent,
-                      ),
-              ],
-            ),
           ),
         ),
       ),

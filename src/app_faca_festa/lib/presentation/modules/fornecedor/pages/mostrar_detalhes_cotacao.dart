@@ -190,6 +190,14 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                       invertColors: true),
                                 ],
                               ),
+                              const SizedBox(height: 8),
+                              Text(
+                                cotacao.status.proximoPasso,
+                                style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    height: 1.35,
+                                    color: Colors.white.withValues(alpha: 0.92)),
+                              ),
                               const SizedBox(height: 10),
                               Divider(
                                   color: Colors.white.withValues(alpha: 0.3),
@@ -504,7 +512,7 @@ class _DetalhesCotacaoContent extends StatelessWidget {
                                               status == 'respondida')
                                             _btnAcao(
                                                 Icons.check_circle_outline,
-                                                "Fechar negócio",
+                                                "Contratar este",
                                                 Colors.green.shade600,
                                                 () => cotacaoController
                                                     .confirmarFornecedorEscolhido(
@@ -640,48 +648,43 @@ class _DetalhesCotacaoContent extends StatelessWidget {
 
   String _getFornecedorStatusText(String status) {
     return switch (status) {
-      'respondido' || 'respondida' => 'Respondido',
-      'recusado' || 'recusada' => 'Recusado',
-      'cancelado' || 'cancelada' => 'Cancelada',
-      'fechado' || 'fechada' => 'Fechado',
-      'parcial' || 'parcialmente' => 'Parcial',
-      'perdeucotacao' || 'perdeucotacao' => 'Perdeu',
-      _ => 'Aguardando'
+      'respondido' || 'respondida' => 'Preço recebido',
+      'recusado' || 'recusada' => 'Não ficou com este',
+      'cancelado' || 'cancelada' => 'Cancelado',
+      'fechado' || 'fechada' => 'Contratado',
+      'parcial' || 'parcialmente' => 'Alguns preços',
+      'perdeucotacao' || 'perdeuCotacao' => 'Não ficou com este',
+      _ => 'Aguardando preço'
     };
   }
 }
 
 Widget _buildStatusBadge(StatusCotacao status, {bool invertColors = false}) {
   late Color cor;
-  late String texto;
   late IconData icone;
 
   switch (status) {
     case StatusCotacao.respondida:
       cor = Colors.green.shade600;
-      texto = 'Respondida';
       icone = Icons.mark_chat_read_rounded;
       break;
     case StatusCotacao.parcial:
       cor = Colors.orange.shade700;
-      texto = 'Parcial';
       icone = Icons.hourglass_bottom_rounded;
       break;
     case StatusCotacao.concluida:
       cor = Colors.blue.shade700;
-      texto = 'Concluída';
       icone = Icons.verified_rounded;
       break;
     case StatusCotacao.cancelada:
       cor = Colors.red.shade700;
-      texto = 'Cancelada';
       icone = Icons.cancel_rounded;
       break;
     default:
       cor = Colors.grey.shade600;
-      texto = 'Pendente';
       icone = Icons.schedule_rounded;
   }
+  final texto = status.label;
 
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

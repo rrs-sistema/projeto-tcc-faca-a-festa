@@ -9,6 +9,7 @@ import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/convidado/components/abrir_adicionar_convidado.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/abrir_adicionar_grupo_bottom_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/cardapios_tab.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/estatisticas_tab.dart';
@@ -46,6 +47,8 @@ class ConvidadosPage extends StatefulWidget {
 class _ConvidadosPageState extends State<ConvidadosPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  final FocusNode _buscaListaFocus = FocusNode();
+  final RxBool listaEmSelecao = false.obs;
 
   final RxInt abaSelecionada = 0.obs;
   Worker? _eventoWorker;
@@ -60,7 +63,7 @@ class _ConvidadosPageState extends State<ConvidadosPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
 
     _iniciarEscutaDoEventoAtual();
 
@@ -96,6 +99,7 @@ class _ConvidadosPageState extends State<ConvidadosPage>
   void dispose() {
     _eventoWorker?.dispose();
     _tabController.dispose();
+    _buscaListaFocus.dispose();
     super.dispose();
   }
 
@@ -117,9 +121,9 @@ class _ConvidadosPageState extends State<ConvidadosPage>
             altura: 124,
             acoes: [
               IconButton(
-                tooltip: 'Pesquisar convidados',
+                tooltip: 'Buscar na lista',
                 icon: const Icon(Icons.search_rounded, color: Colors.white),
-                onPressed: _abrirListaConvidados,
+                onPressed: _focarBuscaLista,
               ),
               IconButton(
                 tooltip: 'Copiar e compartilhar convites',
@@ -152,7 +156,10 @@ class _ConvidadosPageState extends State<ConvidadosPage>
                   ),
                   child: TabBar(
                     controller: _tabController,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
                     padding: EdgeInsets.zero,
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 12),
                     indicatorSize: TabBarIndicatorSize.tab,
                     dividerColor: Colors.transparent,
                     splashFactory: NoSplash.splashFactory,
@@ -177,13 +184,16 @@ class _ConvidadosPageState extends State<ConvidadosPage>
                     unselectedLabelColor: const Color(0xFF6B7280),
                     labelStyle: GoogleFonts.poppins(
                       fontWeight: FontWeight.w700,
-                      fontSize: 11.8,
+                      fontSize: 11.5,
                     ),
                     unselectedLabelStyle: GoogleFonts.poppins(
                       fontWeight: FontWeight.w600,
-                      fontSize: 11.5,
+                      fontSize: 11.2,
                     ),
                     tabs: const [
+                      Tab(
+                          icon: Icon(Icons.people_alt_rounded, size: 18),
+                          text: 'Lista'),
                       Tab(
                           icon: Icon(Icons.groups_rounded, size: 18),
                           text: 'Grupos'),
@@ -206,6 +216,16 @@ class _ConvidadosPageState extends State<ConvidadosPage>
             controller: _tabController,
             physics: const NeverScrollableScrollPhysics(),
             children: [
+              ListaConvidadosScreen(
+                themeController: themeController,
+                convidadoController: convidadoController,
+                eventoController: eventoController,
+                grupoController: grupoController,
+                embedded: true,
+                buscaFocusNode: _buscaListaFocus,
+                onModoSelecaoChanged: (emSelecao) =>
+                    listaEmSelecao.value = emSelecao,
+              ),
               GruposTab(
                 grupoController: grupoController,
                 themeController: themeController,
@@ -238,7 +258,22 @@ class _ConvidadosPageState extends State<ConvidadosPage>
     return Obx(() {
       final aba = abaSelecionada.value;
 
-      if (aba == 1) {
+      if (aba == 0 && !listaEmSelecao.value) {
+        return FloatingActionButton.extended(
+          heroTag: 'btnNovoConvidado',
+          backgroundColor: primary,
+          foregroundColor: Colors.white,
+          elevation: 8,
+          icon: const Icon(Icons.person_add_alt_1_rounded),
+          label: Text(
+            'Novo convidado',
+            style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+          ),
+          onPressed: _abrirNovoConvidado,
+        );
+      }
+
+      if (aba == 2) {
         return FloatingActionButton.extended(
           heroTag: 'btnNovoCardapio',
           backgroundColor: primary,
@@ -253,7 +288,7 @@ class _ConvidadosPageState extends State<ConvidadosPage>
         );
       }
 
-      if (aba == 0) {
+      if (aba == 1) {
         return FloatingActionButton.extended(
           heroTag: 'btnNovoGrupo',
           backgroundColor: primary,
@@ -272,14 +307,41 @@ class _ConvidadosPageState extends State<ConvidadosPage>
     });
   }
 
-  void _abrirListaConvidados() {
-    Get.to(
-      () => ListaConvidadosScreen(
-        themeController: themeController,
-        convidadoController: convidadoController,
-        eventoController: eventoController,
-        grupoController: grupoController,
-      ),
+  void _focarBuscaLista() {
+    void focarCampo() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _buscaListaFocus.requestFocus();
+      });
+    }
+
+    if (_tabController.index != 0) {
+      _tabController.animateTo(0);
+      Future<void>.delayed(const Duration(milliseconds: 280), focarCampo);
+      return;
+    }
+
+    focarCampo();
+  }
+
+  void _abrirNovoConvidado() {
+    final evento = eventoController.eventoAtualEntidade;
+    if (evento == null || evento.idEvento.trim().isEmpty) {
+      _mostrarEventoNaoEncontrado();
+      return;
+    }
+
+    if (_tabController.index != 0) {
+      _tabController.animateTo(0);
+    }
+
+    abrirDialogAdicionarConvidado(
+      context,
+      themeController.primaryColor.value,
+      themeController: themeController,
+      eventoController: eventoController,
+      convidadoController: convidadoController,
+      grupoController: grupoController,
     );
   }
 

@@ -12,6 +12,7 @@ import 'package:app_faca_festa/core/utils/convite_compartilhar.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/services/convite_email_service.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/abrir_adicionar_convidado.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_empty_state.dart';
 
 class EnviarConvitesScreen extends StatefulWidget {
   final EventThemeController themeController;
@@ -77,7 +78,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
               ),
             ),
             Text(
-              'Copiar e compartilhar o link',
+              'Marque, copie o link ou envie o e-mail',
               style: GoogleFonts.poppins(
                 color: Colors.white.withValues(alpha: 0.88),
                 fontSize: 11,
@@ -186,7 +187,7 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                               fontWeight: FontWeight.w800,
                               color: const Color(0xFF111827))),
                       Text(
-                          'Copie, compartilhe ou envie o link por e-mail. O convidado abre e entra na área.',
+                          'Marque as pessoas e escolha: copiar o link ou enviar por e-mail.',
                           style: GoogleFonts.poppins(
                               fontSize: 11, color: const Color(0xFF6B7280))),
                     ],
@@ -481,7 +482,22 @@ class _EnviarConvitesScreenState extends State<EnviarConvitesScreen> {
                   ),
                 ),
               )
-            : const SizedBox.shrink(key: ValueKey('empty-send-bar')),
+            : SafeArea(
+                key: const ValueKey('empty-send-bar'),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                  child: Text(
+                    'Toque nas pessoas da lista. Depois aparecem as opções de copiar o link ou enviar o e-mail.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.poppins(
+                      fontSize: 12,
+                      height: 1.35,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF6B7280),
+                    ),
+                  ),
+                ),
+              ),
       );
     });
   }
@@ -974,98 +990,20 @@ class _EmptyInviteState extends StatelessWidget {
       builder: (context, constraints) {
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: constraints.maxHeight,
-            ),
-            child: Center(
-              child: Container(
-                width: double.infinity,
-                constraints: const BoxConstraints(maxWidth: 380),
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.black.withValues(alpha: 0.04),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.04),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: primary.withValues(alpha: 0.10),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.mark_email_unread_rounded,
-                        color: primary,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Nenhum convidado',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF111827),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Cadastre convidados para gerar o link e compartilhar.',
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: 11,
-                        height: 1.25,
-                        color: const Color(0xFF6B7280),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      height: 38,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: () async {
-                          FocusManager.instance.primaryFocus?.unfocus();
-                          await onAdd();
-                        },
-                        icon: const Icon(Icons.add_rounded,
-                            size: 17, color: Colors.white),
-                        label: Text(
-                          'Adicionar',
-                          style: GoogleFonts.poppins(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: FestaEmptyState(
+              icon: Icons.mark_email_unread_rounded,
+              title: 'Cadastre quem vai receber o convite',
+              message:
+                  'Com a lista pronta, você gera o link ou envia por e-mail.',
+              actionLabel: 'Adicionar convidado',
+              onAction: () async {
+                FocusManager.instance.primaryFocus?.unfocus();
+                await onAdd();
+              },
+              color: primary,
+              compact: true,
             ),
           ),
         );

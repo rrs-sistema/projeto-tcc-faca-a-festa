@@ -38,27 +38,36 @@ extension _AreaConvidadoShell on _AreaConvidadoHomeScreenState {
     );
   }
 
-  Widget _bannerCriarConta() {
+  Widget _botaoSairCabecalho() {
+    final visita = _visitaPorLink;
+    final label = visita ? 'Sair do convite' : 'Sair';
+    return Semantics(
+      button: true,
+      label: label,
+      child: Tooltip(
+        message: label,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: appController.logout,
+          child: _botaoCabecalhoConvidado(
+            child: Icon(
+              visita ? Icons.close_rounded : Icons.logout,
+              color: Colors.white,
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _bannerContaParaTarefas() {
     return Material(
       color: const Color(0xFFFFF3E0),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () {
-          final token = appController.tokenConviteAtual()?.trim() ??
-              appController.conviteToken.value.trim();
-          if (token.isEmpty) {
-            Get.toNamed('/login');
-            return;
-          }
-          Get.toNamed(
-            '/login',
-            arguments: AuthFluxoArgs(
-              tipo: 'C',
-              conviteToken: token,
-            ),
-          );
-        },
+        onTap: _abrirContaConvidado,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
           child: Row(
@@ -68,7 +77,7 @@ extension _AreaConvidadoShell on _AreaConvidadoHomeScreenState {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  'Entre ou crie uma conta para assumir tarefas deste evento.',
+                  'Entre para marcar o que você vai fazer nesta festa.',
                   style: GoogleFonts.poppins(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -129,7 +138,13 @@ extension _AreaConvidadoShell on _AreaConvidadoHomeScreenState {
                   return Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: Material(
+                      child: Semantics(
+                        button: true,
+                        selected: selected,
+                        label: selected
+                            ? '${item['label']}, selecionado'
+                            : item['label'] as String,
+                        child: Material(
                         color: Colors.transparent,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(22),
@@ -217,6 +232,7 @@ extension _AreaConvidadoShell on _AreaConvidadoHomeScreenState {
                           ),
                         ),
                       ),
+                    ),
                     ),
                   );
                 }),

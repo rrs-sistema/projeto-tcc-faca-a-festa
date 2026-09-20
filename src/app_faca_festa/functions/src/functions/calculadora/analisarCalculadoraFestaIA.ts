@@ -29,7 +29,8 @@ export const analisarCalculadoraFestaIA = onCall(
     secrets: [OPENAI_API_KEY],
   },
   async (request) => {
-    if (!request.auth?.uid) {
+    const uid = request.auth?.uid;
+    if (!uid) {
       throw new HttpsError(
         "unauthenticated",
         "Faça login para analisar a calculadora.",
@@ -38,6 +39,9 @@ export const analisarCalculadoraFestaIA = onCall(
 
     const rawData = asRecord(request.data);
     const payload = normalizarPayloadCalculadora(rawData);
+    if (!payload.id_usuario) {
+      payload.id_usuario = uid;
+    }
 
     const sugestoesBase = await buscarSugestoesBaseCalculadora({
       tipoEvento: asString(payload.tipo_evento ?? payload.tipoEvento),
@@ -256,6 +260,8 @@ async function salvarAnaliseNaSimulacao(
   analise: AnaliseCalculadoraIAResponse,
 ): Promise<void> {
   const idCalculo = asString(payload.id_calculo ?? payload.idCalculo ?? payload.id);
+  const idUsuario = asString(payload.id_usuario ?? payload.idUsuario);
+  const idEvento = asString(payload.id_evento ?? payload.idEvento);
 
   if (!idCalculo) {
     logger.info("Análise IA não persistida: id_calculo ausente no payload.");
@@ -271,6 +277,8 @@ async function salvarAnaliseNaSimulacao(
         analise_ia: analise,
         analise_ia_atualizada_em: admin.firestore.FieldValue.serverTimestamp(),
         data_atualizacao: admin.firestore.FieldValue.serverTimestamp(),
+        ...(idUsuario ? { id_usuario: idUsuario } : {}),
+        ...(idEvento ? { id_evento: idEvento } : {}),
       },
       { merge: true },
     );

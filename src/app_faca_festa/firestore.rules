@@ -47,6 +47,16 @@ service cloud.firestore {
       return data.id_usuario == uid() || data.idUsuario == uid();
     }
 
+    function campoIdFornecedor(data) {
+      return signedIn() && data.id_fornecedor == uid();
+    }
+
+    function idUsuarioAusente(data) {
+      return !('id_usuario' in data)
+        || data.id_usuario == null
+        || data.id_usuario == '';
+    }
+
     function emailDoUsuario() {
       return signedIn() && request.auth.token.email != null
         ? request.auth.token.email.lower()
@@ -295,15 +305,17 @@ service cloud.firestore {
 
     match /fornecedor_categoria/{id} {
       allow read: if signedIn();
-      allow write: if isAdmin()
-        || (signedIn() && request.resource.data.id_fornecedor == uid());
+      allow create, update: if isAdmin() || campoIdFornecedor(request.resource.data);
+      allow delete: if isAdmin() || campoIdFornecedor(resource.data);
     }
 
     match /fornecedor_servico/{id} {
       allow read: if signedIn();
-      allow write: if isAdmin()
-        || (signedIn() && (resource.data.id_fornecedor == uid()
-            || request.resource.data.id_fornecedor == uid()));
+      allow create: if isAdmin() || campoIdFornecedor(request.resource.data);
+      allow update: if isAdmin()
+        || campoIdFornecedor(resource.data)
+        || campoIdFornecedor(request.resource.data);
+      allow delete: if isAdmin() || campoIdFornecedor(resource.data);
 
       match /avaliacoes/{avaliacaoId} {
         allow read: if signedIn();
@@ -311,16 +323,17 @@ service cloud.firestore {
       }
     }
 
+    // create não tem `resource`; usar request.resource no create e resource no update/delete.
     match /servico_foto/{id} {
       allow read: if signedIn();
-      allow write: if isAdmin()
-        || (signedIn() && resource.data.id_fornecedor == uid());
+      allow create: if isAdmin() || campoIdFornecedor(request.resource.data);
+      allow update, delete: if isAdmin() || campoIdFornecedor(resource.data);
     }
 
     match /territorio/{id} {
       allow read: if signedIn();
-      allow write: if isAdmin()
-        || (signedIn() && resource.data.id_fornecedor == uid());
+      allow create: if isAdmin() || campoIdFornecedor(request.resource.data);
+      allow update, delete: if isAdmin() || campoIdFornecedor(resource.data);
     }
 
     function cotacaoDoc(cotacaoId) {
@@ -474,10 +487,30 @@ service cloud.firestore {
 
     match /calculadora_festa/{id} {
       allow read: if signedIn();
-      allow write: if isAdmin()
-        || (signedIn() && request.resource.data.id_usuario == uid())
+
+      // create: `resource` não existe. Dono do evento cobre o caso de id_usuario
+      // ausente; o cliente ainda deve gravar o UID para histórico e updates.
+      allow create: if isAdmin()
+        || (signedIn() && campoIdUsuario(request.resource.data))
+        || eventoDono(request.resource.data.id_evento);
+
+      // update: documento existente. Permite reivindicar simulação sem dono
+      // (ex.: merge da IA que criou o doc antes do save do app).
+      allow update: if isAdmin()
+        || (signedIn() && campoIdUsuario(resource.data))
+        || eventoDono(resource.data.id_evento)
+        || (
+          signedIn()
+          && campoIdUsuario(request.resource.data)
+          && idUsuarioAusente(resource.data)
+        );
+
+      allow delete: if isAdmin()
+        || (signedIn() && campoIdUsuario(resource.data))
         || eventoDono(resource.data.id_evento);
 
+      // Itens no mesmo batch do pai: get(parent) falha porque o pai ainda
+      // não está commitado. A regra do documento principal é o gate de dono.
       match /{subcolecao}/{docId} {
         allow read: if signedIn();
         allow write: if signedIn();

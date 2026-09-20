@@ -39,6 +39,8 @@ class CustomInputField extends StatefulWidget {
   final TextInputType? keyboardType;
   final int? maxLength;
   final int? maxLines;
+  final bool showCounter;
+  final TextAlign textAlign;
 
   // Validação
   final String? Function(String?)? validator;
@@ -49,6 +51,9 @@ class CustomInputField extends StatefulWidget {
   final double borderRadius;
   final EdgeInsets margin;
   final void Function(String)? onChanged;
+  final void Function(String)? onFieldSubmitted;
+  final TextInputAction? textInputAction;
+  final Iterable<String>? autofillHints;
   final Widget? suffixIcon;
   final bool autoFormat;
   final InputType type;
@@ -56,8 +61,8 @@ class CustomInputField extends StatefulWidget {
   const CustomInputField({
     super.key,
     required this.label,
-    required this.icon,
     required this.controller,
+    this.icon,
     this.hintlabel,
     this.color,
     this.colorIcon,
@@ -69,12 +74,17 @@ class CustomInputField extends StatefulWidget {
     this.keyboardType,
     this.maxLength,
     this.maxLines,
+    this.showCounter = true,
+    this.textAlign = TextAlign.start,
     this.validator,
     this.isRequired = false, // <-- Adicionado: Padrão é falso (opcional)
     this.obscureText = false,
     this.borderRadius = 14,
     this.margin = const EdgeInsets.only(bottom: 2),
     this.onChanged,
+    this.onFieldSubmitted,
+    this.textInputAction,
+    this.autofillHints,
     this.suffixIcon,
     this.autoFormat = true,
     this.type = InputType.text,
@@ -205,6 +215,12 @@ class _CustomInputFieldState extends State<CustomInputField> {
                   ? !showPassword
                   : widget.obscureText,
               keyboardType: finalKeyboardType,
+              textInputAction: _textInputAction,
+              onFieldSubmitted: widget.onFieldSubmitted,
+              autofillHints: widget.autofillHints ?? _autofillHintsPorTipo,
+              autocorrect: widget.type != InputType.email &&
+                  widget.type != InputType.password,
+              enableSuggestions: widget.type != InputType.password,
               onChanged: _onChanged,
               cursorColor: iconColor,
               inputFormatters: [
@@ -218,20 +234,24 @@ class _CustomInputFieldState extends State<CustomInputField> {
                     enableNegative: false,
                   ),
               ],
+              textAlign: widget.textAlign,
               style: GoogleFonts.poppins(
                 fontSize: 15,
                 fontWeight: FontWeight.w500,
                 color: textColor,
               ),
               decoration: InputDecoration(
-                prefixIcon: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: widget.icon != null
-                      ? Icon(widget.icon, size: 22, color: iconColor)
-                      : null,
-                ),
+                prefixIcon: widget.icon == null
+                    ? null
+                    : Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Icon(widget.icon, size: 22, color: iconColor),
+                      ),
                 suffixIcon: widget.type == InputType.password
                     ? IconButton(
+                        tooltip: showPassword
+                            ? 'Ocultar senha'
+                            : 'Mostrar senha',
                         icon: Icon(
                           showPassword
                               ? Icons.visibility
@@ -257,6 +277,7 @@ class _CustomInputFieldState extends State<CustomInputField> {
                   vertical: 10,
                   horizontal: 14,
                 ),
+                counterText: widget.showCounter ? null : '',
                 enabledBorder: border,
                 focusedBorder: border.copyWith(
                   borderSide: BorderSide(color: iconColor, width: 1.5),
@@ -276,6 +297,27 @@ class _CustomInputFieldState extends State<CustomInputField> {
         ],
       ),
     );
+  }
+
+  TextInputAction get _textInputAction {
+    if (widget.textInputAction != null) return widget.textInputAction!;
+    if (widget.type == InputType.multiline) return TextInputAction.newline;
+    return TextInputAction.next;
+  }
+
+  Iterable<String>? get _autofillHintsPorTipo {
+    switch (widget.type) {
+      case InputType.email:
+        return const [AutofillHints.email];
+      case InputType.password:
+        return const [AutofillHints.password];
+      case InputType.phone:
+        return const [AutofillHints.telephoneNumber];
+      case InputType.cep:
+        return const [AutofillHints.postalCode];
+      default:
+        return null;
+    }
   }
 
   void _onChanged(String value) {

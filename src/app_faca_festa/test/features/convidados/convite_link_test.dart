@@ -40,6 +40,11 @@ void main() {
     );
   });
 
+  test('builds the invite route with the token', () {
+    expect(ConviteLink.rotaConvite('abc-123'), '/convite/abc-123');
+    expect(ConviteLink.rotaConvite('  '), '/convite');
+  });
+
   test('builds the guest area route with the token', () {
     expect(
       ConviteLink.rotaAreaConvidado('abc-123'),
@@ -53,5 +58,37 @@ void main() {
       ConviteLink.tokenDaUrl(Uri.parse('https://faca-a-festa.web.app/#/role')),
       isNull,
     );
+  });
+
+  test('reads the token from pasted hash URL', () {
+    expect(
+      ConviteLink.tokenDeTexto(
+        'https://faca-a-festa.web.app/#/convite/abc-123',
+      ),
+      'abc-123',
+    );
+  });
+
+  test('reads the token from a message that contains the invite URL', () {
+    expect(
+      ConviteLink.tokenDeTexto(
+        'Oi! Segue o convite: https://faca-a-festa.web.app/#/convite/abc-123 até logo',
+      ),
+      'abc-123',
+    );
+  });
+
+  test('reads a raw token of at least 8 characters', () {
+    expect(
+      ConviteLink.tokenDeTexto('cf89bbba-55fc-4db8-ae67-adc1ffda4f82'),
+      'cf89bbba-55fc-4db8-ae67-adc1ffda4f82',
+    );
+  });
+
+  test('rejects pasted text without an invite', () {
+    expect(ConviteLink.tokenDeTexto('  '), isNull);
+    expect(ConviteLink.tokenDeTexto('abc'), isNull);
+    expect(ConviteLink.tokenDeTexto('https://faca-a-festa.web.app/#/role'),
+        isNull);
   });
 }

@@ -44,14 +44,22 @@ class InspiracaoDetalheScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = themeController.primaryColor.value;
-
     return Scaffold(
       body: Stack(
         children: [
-          Hero(
-            tag: 'insp_${inspiracao.id}',
-            child: _buildHeroImage(inspiracao.imagemUrl),
+          GestureDetector(
+            onTap: () => _abrirGaleriaFotos(
+              urls: [
+                inspiracao.imagemUrl,
+                ...inspiracao.galeriaUrls,
+              ],
+              indiceInicial: 0,
+              titulo: inspiracao.titulo,
+            ),
+            child: Hero(
+              tag: 'insp_${inspiracao.id}',
+              child: _buildHeroImage(inspiracao.imagemUrl),
+            ),
           ),
           Container(
             height: 400, // 🔹 Imagem de fundo ligeiramente menor[cite: 31]
@@ -68,223 +76,80 @@ class InspiracaoDetalheScreen extends StatelessWidget {
             ),
           ),
           Positioned(
-            left: 16,
-            right: 16,
-            top: 40,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                CircleAvatar(
-                  backgroundColor: Colors.black.withValues(alpha: 0.3),
-                  radius: 18,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white, size: 18),
+            left: 8,
+            right: 8,
+            top: 0,
+            child: SafeArea(
+              bottom: false,
+              child: Row(
+                children: [
+                  _botaoFotoAcao(
+                    tooltip: 'Fechar',
+                    icon: Icons.close_rounded,
                     onPressed: () => Get.back(),
-                    padding: EdgeInsets.zero,
                   ),
-                ),
-                Obx(() {
-                  final atual = _resolverInspiracaoAtual(
-                      inspiracaoController, inspiracao);
-                  return CircleAvatar(
-                    backgroundColor: Colors.black.withValues(alpha: 0.3),
-                    radius: 18,
-                    child: IconButton(
-                      icon: Icon(
-                          atual.favorito
-                              ? Icons.star_rounded
-                              : Icons.star_border_rounded,
-                          color: atual.favorito ? Colors.amber : Colors.white,
-                          size: 20),
+                  const Spacer(),
+                  Obx(() {
+                    final atual = _resolverInspiracaoAtual(
+                        inspiracaoController, inspiracao);
+                    return _botaoFotoAcao(
+                      tooltip: atual.favorito ? 'Favorita' : 'Marcar favorita',
+                      icon: atual.favorito
+                          ? Icons.star_rounded
+                          : Icons.star_border_rounded,
+                      iconColor:
+                          atual.favorito ? Colors.amber : Colors.white,
                       onPressed: () =>
                           inspiracaoController.alternarFavorito(atual.id),
-                      padding: EdgeInsets.zero,
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
-          Positioned(
-            left: 20, right: 20,
-            bottom: MediaQuery.of(context).size.height *
-                0.52, // 🔹 Ajuste dinâmico[cite: 31]
-            child: IgnorePointer(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if ((inspiracao.categoria ?? '').isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                          color: primary.withValues(alpha: 0.8),
-                          borderRadius: BorderRadius.circular(8)),
-                      child: Text(inspiracao.categoria!,
-                          style: GoogleFonts.poppins(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w700)),
-                    ),
-                  const SizedBox(height: 8),
-                  Text(
-                    inspiracao.titulo,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.playfairDisplay(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
-                        shadows: const [
-                          Shadow(color: Colors.black54, blurRadius: 6)
-                        ]),
-                  ),
+                    );
+                  }),
                 ],
               ),
             ),
           ),
-          DraggableScrollableSheet(
-            initialChildSize:
-                0.50, // 🔹 Começa mais baixo, dando mais espaço para a foto[cite: 31]
-            minChildSize: 0.50,
-            maxChildSize: 0.95,
-            builder: (context, scrollController) => Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                boxShadow: [
-                  BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 10,
-                      offset: Offset(0, -4))
-                ],
-              ),
-              child: SingleChildScrollView(
-                controller: scrollController,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 16), // 🔹 Compacto[cite: 31]
-                physics: const BouncingScrollPhysics(),
-                child: Obx(() {
-                  final atual = _resolverInspiracaoAtual(
-                      inspiracaoController, inspiracao);
-                  inspiracaoController.fornecedoresRelacionados.length;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Center(
-                        child: Container(
-                          width: 40,
-                          height: 4,
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                              color: Colors.grey.shade300,
-                              borderRadius: BorderRadius.circular(10)),
-                        ),
-                      ),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          if ((atual.categoria ?? '').isNotEmpty)
-                            _infoChip(
-                                icon: Icons.category_rounded,
-                                label: atual.categoria!,
-                                primary: primary),
-                          if ((atual.estilo).isNotEmpty)
-                            _infoChip(
-                                icon: Icons.palette_rounded,
-                                label: atual.estilo,
-                                primary: primary),
-                          if ((atual.faixaCusto).isNotEmpty)
-                            _infoChip(
-                                icon: Icons.payments_rounded,
-                                label: atual.faixaCusto,
-                                primary: primary),
-                        ],
-                      ),
-                      const SizedBox(height: 14),
-                      _descriptionCard(atual.descricao),
-                      const SizedBox(height: 16),
-                      if (atual.tags.isNotEmpty) ...[
-                        _sectionTitle('Tags'),
-                        const SizedBox(height: 8),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: atual.tags
-                              .map((tag) => Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                      color: Colors.grey.shade100,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                          color: Colors.grey.shade300)),
-                                  child: Text(tag,
-                                      style: GoogleFonts.poppins(
-                                          fontSize: 10,
-                                          color: Colors.grey.shade700,
-                                          fontWeight: FontWeight.w600))))
-                              .toList(),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      if (atual.galeriaUrls.isNotEmpty) ...[
-                        _sectionTitle('Mais fotos'),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          height: 100, // 🔹 Galeria mais fina[cite: 31]
-                          child: ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: atual.galeriaUrls.length,
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 10),
-                            itemBuilder: (_, i) => ClipRRect(
-                                borderRadius: BorderRadius.circular(12),
-                                child: _galleryImage(atual.galeriaUrls[i])),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-                      if (atual.paletaCores.isNotEmpty) ...[
-                        _sectionTitle('Paleta de cores'),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: atual.paletaCores
-                              .map((cor) => Expanded(
-                                  child: Container(
-                                      height: 32,
-                                      margin: const EdgeInsets.only(right: 6),
-                                      decoration: BoxDecoration(
-                                          color: _parseColor(cor),
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          border: Border.all(
-                                              color: Colors.black
-                                                  .withValues(alpha: 0.05))))))
-                              .toList(),
-                        ),
-                        const SizedBox(height: 20),
-                      ],
-                      _fornecedoresRelacionados(
-                          inspiracaoController, atual, primary),
-                      _buildAcoesPlanejamento(
-                          controller: inspiracaoController,
-                          homeEventNavController: homeEventNavController,
-                          inspiracao: atual,
-                          primary: primary),
-                      const SizedBox(height: 30),
-                    ],
-                  );
-                }),
-              ),
+          _FolhaDetalheInspiracao(
+            host: this,
+            onFechar: () => Get.back(),
+            onAbrirFotos: (urls, indice) => _abrirGaleriaFotos(
+              urls: urls,
+              indiceInicial: indice,
+              titulo: inspiracao.titulo,
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _botaoFotoAcao({
+    required String tooltip,
+    required IconData icon,
+    required VoidCallback onPressed,
+    Color iconColor = Colors.white,
+  }) {
+    return Material(
+      color: Colors.black.withValues(alpha: 0.42),
+      shape: const CircleBorder(),
+      child: IconButton(
+        tooltip: tooltip,
+        icon: Icon(icon, color: iconColor, size: 22),
+        onPressed: onPressed,
+      ),
+    );
+  }
+
+  void _abrirGaleriaFotos({
+    required List<String> urls,
+    required int indiceInicial,
+    required String titulo,
+  }) {
+    final limpas = urls.where((u) => u.trim().isNotEmpty).toList();
+    if (limpas.isEmpty) return;
+    Get.to(
+      () => _GaleriaInspiracaoPage(
+        urls: limpas,
+        indiceInicial: indiceInicial.clamp(0, limpas.length - 1),
+        titulo: titulo,
       ),
     );
   }
@@ -323,37 +188,37 @@ class InspiracaoDetalheScreen extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 14),
-
-            // 🔹 Botões principais alinhados horizontalmente (se couberem) ou vertical compacto[cite: 31]
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: salva
+                    ? null
+                    : () => controller.salvarInspiracaoNoEvento(inspiracao),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primary,
+                  disabledBackgroundColor: Colors.grey.shade300,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 13),
+                  elevation: 0,
+                ),
+                icon: Icon(
+                    salva
+                        ? Icons.bookmark_added_rounded
+                        : Icons.bookmark_add_rounded,
+                    size: 18,
+                    color: salva ? Colors.grey.shade600 : Colors.white),
+                label: Text(
+                    salva ? 'Guardada no evento' : 'Guardar no evento',
+                    style: GoogleFonts.poppins(
+                        color: salva ? Colors.grey.shade600 : Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700)),
+              ),
+            ),
+            const SizedBox(height: 10),
             Row(
               children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: salva
-                        ? null
-                        : () => controller.salvarInspiracaoNoEvento(inspiracao),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: primary,
-                      disabledBackgroundColor: Colors.grey.shade300,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      elevation: 0,
-                    ),
-                    icon: Icon(
-                        salva
-                            ? Icons.bookmark_added_rounded
-                            : Icons.bookmark_add_rounded,
-                        size: 16,
-                        color: salva ? Colors.grey.shade600 : Colors.white),
-                    label: Text(salva ? 'Salva' : 'Salvar',
-                        style: GoogleFonts.poppins(
-                            color: salva ? Colors.grey.shade600 : Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700)),
-                  ),
-                ),
-                const SizedBox(width: 10),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: checklist
@@ -380,11 +245,7 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                             fontSize: 12, fontWeight: FontWeight.w700)),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
+                const SizedBox(width: 10),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: orcamento
@@ -406,7 +267,7 @@ class InspiracaoDetalheScreen extends StatelessWidget {
                             ? Icons.check_circle_rounded
                             : Icons.account_balance_wallet_rounded,
                         size: 16),
-                    label: Text(orcamento ? 'Orçamento OK' : 'Gerar Orçamento',
+                    label: Text(orcamento ? 'Orçamento OK' : 'Orçamento',
                         style: GoogleFonts.poppins(
                             fontSize: 12, fontWeight: FontWeight.w700)),
                   ),
@@ -653,5 +514,341 @@ class InspiracaoDetalheScreen extends StatelessWidget {
     }
     final parsed = int.tryParse(text, radix: 16);
     return parsed == null ? Colors.grey.shade300 : Color(parsed);
+  }
+}
+
+class _FolhaDetalheInspiracao extends StatefulWidget {
+  const _FolhaDetalheInspiracao({
+    required this.host,
+    required this.onFechar,
+    required this.onAbrirFotos,
+  });
+
+  final InspiracaoDetalheScreen host;
+  final VoidCallback onFechar;
+  final void Function(List<String> urls, int indice) onAbrirFotos;
+
+  @override
+  State<_FolhaDetalheInspiracao> createState() => _FolhaDetalheInspiracaoState();
+}
+
+class _FolhaDetalheInspiracaoState extends State<_FolhaDetalheInspiracao> {
+  bool _fechando = false;
+
+  InspiracaoDetalheScreen get host => widget.host;
+
+  void _fechar() {
+    if (_fechando) return;
+    _fechando = true;
+    widget.onFechar();
+  }
+
+  List<String> _fotos(Inspiracao atual) {
+    final urls = <String>[];
+    void add(String value) {
+      final url = value.trim();
+      if (url.isEmpty || urls.contains(url)) return;
+      urls.add(url);
+    }
+
+    add(atual.imagemUrl);
+    for (final item in atual.galeriaUrls) {
+      add(item);
+    }
+    return urls;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = host.themeController.primaryColor.value;
+
+    return NotificationListener<DraggableScrollableNotification>(
+      onNotification: (notification) {
+        if (notification.extent <= 0.20) {
+          _fechar();
+        }
+        return false;
+      },
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.58,
+        minChildSize: 0.16,
+        maxChildSize: 0.95,
+        snap: true,
+        snapSizes: const [0.16, 0.58, 0.95],
+        builder: (context, scrollController) {
+          return Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 10,
+                    offset: Offset(0, -4))
+              ],
+            ),
+            child: SingleChildScrollView(
+              controller: scrollController,
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              physics: const BouncingScrollPhysics(),
+              child: Obx(() {
+                final atual = host._resolverInspiracaoAtual(
+                    host.inspiracaoController, host.inspiracao);
+                host.inspiracaoController.fornecedoresRelacionados.length;
+                final categoria = (atual.categoria ?? '').trim();
+                final estilo = atual.estilo.trim();
+                final estiloDuplicado = estilo.isNotEmpty &&
+                    estilo.toLowerCase() == categoria.toLowerCase();
+                final fotos = _fotos(atual);
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                            color: Colors.grey.shade300,
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                    ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            atual.titulo,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                              height: 1.15,
+                              color: const Color(0xFF111827),
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Fechar',
+                          onPressed: _fechar,
+                          color: const Color(0xFF1F2937),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                    TextButton.icon(
+                      onPressed: () => host.inspiracaoController
+                          .alternarFavorito(atual.id),
+                      style: TextButton.styleFrom(
+                        foregroundColor: atual.favorito
+                            ? Colors.amber.shade800
+                            : const Color(0xFF4B5563),
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      icon: Icon(
+                        atual.favorito
+                            ? Icons.star_rounded
+                            : Icons.star_border_rounded,
+                        size: 18,
+                      ),
+                      label: Text(
+                        atual.favorito ? 'Favorita' : 'Marcar favorita',
+                        style: GoogleFonts.poppins(
+                            fontSize: 12, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        if (categoria.isNotEmpty)
+                          host._infoChip(
+                              icon: Icons.category_rounded,
+                              label: categoria,
+                              primary: primary),
+                        if (estilo.isNotEmpty && !estiloDuplicado)
+                          host._infoChip(
+                              icon: Icons.palette_rounded,
+                              label: estilo,
+                              primary: primary),
+                        if (atual.faixaCusto.isNotEmpty)
+                          host._infoChip(
+                              icon: Icons.payments_rounded,
+                              label: atual.faixaCusto,
+                              primary: primary),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    host._descriptionCard(atual.descricao),
+                    const SizedBox(height: 16),
+                    if (atual.tags.isNotEmpty) ...[
+                      host._sectionTitle('Tags'),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: atual.tags
+                            .map((tag) => Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                    color: Colors.grey.shade100,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                        color: Colors.grey.shade300)),
+                                child: Text(tag,
+                                    style: GoogleFonts.poppins(
+                                        fontSize: 10,
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w600))))
+                            .toList(),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (atual.galeriaUrls.isNotEmpty) ...[
+                      host._sectionTitle('Mais fotos'),
+                      const SizedBox(height: 10),
+                      SizedBox(
+                        height: 100,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: atual.galeriaUrls.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 10),
+                          itemBuilder: (_, i) {
+                            final url = atual.galeriaUrls[i];
+                            final indice = fotos.indexOf(url.trim());
+                            return Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                onTap: () => widget.onAbrirFotos(
+                                  fotos,
+                                  indice < 0 ? i + 1 : indice,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: host._galleryImage(url),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    if (atual.paletaCores.isNotEmpty) ...[
+                      host._sectionTitle('Paleta de cores'),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: atual.paletaCores
+                            .map((cor) => Expanded(
+                                child: Container(
+                                    height: 32,
+                                    margin: const EdgeInsets.only(right: 6),
+                                    decoration: BoxDecoration(
+                                        color: host._parseColor(cor),
+                                        borderRadius:
+                                            BorderRadius.circular(8),
+                                        border: Border.all(
+                                            color: Colors.black
+                                                .withValues(alpha: 0.05))))))
+                            .toList(),
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                    host._fornecedoresRelacionados(
+                        host.inspiracaoController, atual, primary),
+                    host._buildAcoesPlanejamento(
+                        controller: host.inspiracaoController,
+                        homeEventNavController: host.homeEventNavController,
+                        inspiracao: atual,
+                        primary: primary),
+                    const SizedBox(height: 30),
+                  ],
+                );
+              }),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _GaleriaInspiracaoPage extends StatefulWidget {
+  const _GaleriaInspiracaoPage({
+    required this.urls,
+    required this.indiceInicial,
+    required this.titulo,
+  });
+
+  final List<String> urls;
+  final int indiceInicial;
+  final String titulo;
+
+  @override
+  State<_GaleriaInspiracaoPage> createState() => _GaleriaInspiracaoPageState();
+}
+
+class _GaleriaInspiracaoPageState extends State<_GaleriaInspiracaoPage> {
+  late final PageController _pageController;
+  late int _indice;
+
+  @override
+  void initState() {
+    super.initState();
+    _indice = widget.indiceInicial;
+    _pageController = PageController(initialPage: _indice);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        title: Text(
+          widget.urls.length > 1
+              ? '${widget.titulo}  ${_indice + 1}/${widget.urls.length}'
+              : widget.titulo,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: GoogleFonts.poppins(fontSize: 14, fontWeight: FontWeight.w600),
+        ),
+      ),
+      body: PageView.builder(
+        controller: _pageController,
+        itemCount: widget.urls.length,
+        onPageChanged: (value) => setState(() => _indice = value),
+        itemBuilder: (context, index) {
+          return InteractiveViewer(
+            child: Center(
+              child: Image.network(
+                widget.urls[index],
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(
+                  Icons.broken_image_rounded,
+                  color: Colors.white54,
+                  size: 48,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }

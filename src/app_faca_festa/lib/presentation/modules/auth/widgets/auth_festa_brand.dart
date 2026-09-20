@@ -80,6 +80,10 @@ class AuthFestaShell extends StatelessWidget {
     this.subtitle,
     this.footerLink,
     this.scrollable = false,
+    this.mostrarProvaSocial = true,
+    this.mostrarCreditos = true,
+    this.mostrarPrivacidade = false,
+    this.logoSize,
   });
 
   final Widget child;
@@ -88,22 +92,28 @@ class AuthFestaShell extends StatelessWidget {
   final String? subtitle;
   final Widget? footerLink;
   final bool scrollable;
+  final bool mostrarProvaSocial;
+  final bool mostrarCreditos;
+  final bool mostrarPrivacidade;
+  final double? logoSize;
 
   @override
   Widget build(BuildContext context) {
+    final curto = MediaQuery.sizeOf(context).height < 740;
     return Container(
       decoration: const BoxDecoration(gradient: AuthFestaBrand.fundo),
       child: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
             final content = Padding(
-              padding: const EdgeInsets.fromLTRB(22, 8, 22, 8),
+              padding:
+                  EdgeInsets.fromLTRB(22, curto ? 4 : 8, 22, curto ? 4 : 8),
               child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (!scrollable) const Spacer(flex: 2),
-                  const AuthFestaLogo(),
+                  AuthFestaLogo(size: logoSize),
                   if (title != null) ...[
-                    const SizedBox(height: 10),
+                    SizedBox(height: curto ? 6 : 10),
                     AuthFestaTitle(
                       text: title!,
                       highlight: titleHighlight,
@@ -122,47 +132,58 @@ class AuthFestaShell extends StatelessWidget {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 18),
+                  SizedBox(height: curto ? 12 : 18),
                   child,
-                  if (!scrollable) const Spacer(flex: 2),
-                  if (scrollable) const SizedBox(height: 20),
-                  const AuthFestaSocialProof(),
-                  if (footerLink != null) ...[
-                    const SizedBox(height: 6),
-                    Text(
-                      'ou',
-                      style: GoogleFonts.poppins(
-                        fontSize: 12,
-                        color: const Color(0xFFC4C7CC),
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    footerLink!,
-                    const SizedBox(height: 8),
-                    const AuthFestaDots(),
+                  if (mostrarProvaSocial ||
+                      footerLink != null ||
+                      mostrarCreditos ||
+                      mostrarPrivacidade) ...[
+                    SizedBox(height: curto ? 12 : 18),
+                    if (mostrarProvaSocial) const AuthFestaSocialProof(),
+                    if (footerLink != null) ...[
+                      if (mostrarProvaSocial) const SizedBox(height: 6),
+                      if (mostrarProvaSocial)
+                        Text(
+                          'ou',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: const Color(0xFFC4C7CC),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      if (mostrarProvaSocial) const SizedBox(height: 6),
+                      footerLink!,
+                      if (mostrarProvaSocial) ...[
+                        const SizedBox(height: 8),
+                        const AuthFestaDots(),
+                      ],
+                    ],
+                    if (mostrarCreditos) ...[
+                      SizedBox(height: curto ? 6 : 10),
+                      AuthFestaCredits(mostrarPrivacidade: !mostrarPrivacidade),
+                    ],
+                    if (mostrarPrivacidade) ...[
+                      SizedBox(height: curto ? 8 : 12),
+                      const AuthFestaPrivacidadeLink(),
+                    ],
                   ],
-                  const SizedBox(height: 10),
-                  const AuthFestaCredits(),
-                  if (!scrollable) const Spacer(flex: 1),
                 ],
               ),
             );
 
-            if (scrollable) {
-              return SingleChildScrollView(
-                physics: const ClampingScrollPhysics(),
-                padding: EdgeInsets.only(
-                  bottom: MediaQuery.viewInsetsOf(context).bottom,
+            return SingleChildScrollView(
+              physics: const ClampingScrollPhysics(),
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.viewInsetsOf(context).bottom +
+                    (scrollable ? 8 : 0),
+              ),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: Align(
+                  alignment: Alignment.center,
+                  child: content,
                 ),
-                child: content,
-              );
-            }
-
-            return SizedBox(
-              width: constraints.maxWidth,
-              height: constraints.maxHeight,
-              child: content,
+              ),
             );
           },
         ),
@@ -172,15 +193,19 @@ class AuthFestaShell extends StatelessWidget {
 }
 
 class AuthFestaLogo extends StatelessWidget {
-  const AuthFestaLogo({super.key});
+  const AuthFestaLogo({super.key, this.size});
+
+  final double? size;
 
   @override
   Widget build(BuildContext context) {
+    final size = this.size ??
+        (MediaQuery.sizeOf(context).height < 740 ? 96.0 : 120.0);
     return ClipOval(
       child: Image.asset(
         'assets/logo/logo-faca-festa.png',
-        width: 120,
-        height: 120,
+        width: size,
+        height: size,
         fit: BoxFit.cover,
         filterQuality: FilterQuality.high,
         errorBuilder: (_, __, ___) => Text(
@@ -325,8 +350,37 @@ class AuthFestaDots extends StatelessWidget {
   }
 }
 
+class AuthFestaPrivacidadeLink extends StatelessWidget {
+  const AuthFestaPrivacidadeLink({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(PrivacidadeScreen.rota());
+      },
+      child: Text(
+        'Política de privacidade',
+        textAlign: TextAlign.center,
+        style: GoogleFonts.poppins(
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+          color: AuthFestaBrand.rosa,
+          decoration: TextDecoration.underline,
+          decorationColor: AuthFestaBrand.rosa,
+        ),
+      ),
+    );
+  }
+}
+
 class AuthFestaCredits extends StatelessWidget {
-  const AuthFestaCredits({super.key});
+  const AuthFestaCredits({
+    super.key,
+    this.mostrarPrivacidade = true,
+  });
+
+  final bool mostrarPrivacidade;
 
   @override
   Widget build(BuildContext context) {
@@ -359,22 +413,10 @@ class AuthFestaCredits extends StatelessWidget {
             fontWeight: FontWeight.w400,
           ),
         ),
-        const SizedBox(height: 8),
-        GestureDetector(
-          onTap: () {
-            Navigator.of(context).push(PrivacidadeScreen.rota());
-          },
-          child: Text(
-            'Política de privacidade',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AuthFestaBrand.rosa,
-              decoration: TextDecoration.underline,
-              decorationColor: AuthFestaBrand.rosa,
-            ),
-          ),
-        ),
+        if (mostrarPrivacidade) ...[
+          const SizedBox(height: 8),
+          const AuthFestaPrivacidadeLink(),
+        ],
       ],
     );
   }
@@ -415,6 +457,105 @@ class AuthFestaFooterLink extends StatelessWidget {
           ],
         ),
         textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
+
+class AuthFestaContaButton extends StatelessWidget {
+  const AuthFestaContaButton({
+    super.key,
+    required this.prefixo,
+    required this.acao,
+    required this.onTap,
+  });
+
+  final String prefixo;
+  final String acao;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          side: const BorderSide(color: Color(0xFFF0E6EC)),
+          foregroundColor: AuthFestaBrand.rosa,
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: Text.rich(
+          TextSpan(
+            text: prefixo,
+            style: GoogleFonts.poppins(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF6B7280),
+            ),
+            children: [
+              TextSpan(
+                text: acao,
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: AuthFestaBrand.rosa,
+                ),
+              ),
+            ],
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
+}
+
+class AuthFestaGoogleButton extends StatelessWidget {
+  const AuthFestaGoogleButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+  });
+
+  final String label;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.grey.shade800,
+          side: BorderSide(color: Colors.grey.shade200),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+        icon: Text(
+          'G',
+          style: GoogleFonts.poppins(
+            color: const Color(0xFF4285F4),
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+        label: Text(
+          label,
+          style: GoogleFonts.poppins(
+            fontSize: 15,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
     );
   }

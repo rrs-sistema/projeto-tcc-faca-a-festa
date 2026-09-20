@@ -55,6 +55,11 @@ class Tarefa {
     DateTime? dataCadastro,
   }) : dataCadastro = dataCadastro ?? DateTime.now();
 
+  bool ehDoConvidado(String idConvidado) {
+    final id = idConvidado.trim();
+    return id.isNotEmpty && (idResponsavel ?? '').trim() == id;
+  }
+
   Tarefa copyWith({
     String? idTarefa,
     String? idEvento,

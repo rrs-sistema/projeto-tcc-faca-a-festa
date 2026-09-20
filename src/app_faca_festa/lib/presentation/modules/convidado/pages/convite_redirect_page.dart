@@ -50,7 +50,9 @@ class _ConviteRedirectPageState extends State<ConviteRedirectPage> {
       return;
     }
     try {
-      final args = await widget.appController.abrirConvite(token);
+      final args = await widget.appController
+          .abrirConvite(token)
+          .timeout(const Duration(seconds: 25));
       if (!mounted) return;
       if (args == null) {
         setState(() {
@@ -59,6 +61,12 @@ class _ConviteRedirectPageState extends State<ConviteRedirectPage> {
         return;
       }
       setState(() => _area = args);
+    } on TimeoutException {
+      if (!mounted) return;
+      setState(() {
+        _erro =
+            'O convite demorou para abrir. Verifique a conexão e tente novamente.';
+      });
     } catch (_) {
       if (!mounted) return;
       setState(() {

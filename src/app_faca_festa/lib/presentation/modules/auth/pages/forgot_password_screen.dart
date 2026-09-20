@@ -48,6 +48,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                     alignment: Alignment.centerLeft,
                     child: IconButton(
                       onPressed: () => Get.back(),
+                      tooltip: 'Voltar',
                       icon: const Icon(Icons.arrow_back_rounded),
                       color: accent,
                     ),
@@ -138,6 +139,8 @@ class _EmailStepState extends State<_EmailStep> {
             type: InputType.email,
             isRequired: true,
             validator: FormValidators.email,
+            textInputAction: TextInputAction.done,
+            onFieldSubmitted: (_) => _enviar(),
             onChanged: (value) => widget.controller.email.value = value,
             controller: emailCtrl,
           ),
@@ -211,6 +214,7 @@ class _CodeStepState extends State<_CodeStep> {
             type: InputType.number,
             isRequired: true,
             maxLength: 6,
+            textInputAction: TextInputAction.next,
             validator: FormValidators.codigoVerificacao,
             onChanged: (value) => widget.controller.codigo.value = value,
             controller: codigoCtrl,
@@ -225,9 +229,13 @@ class _CodeStepState extends State<_CodeStep> {
               titleColor: widget.primary,
               type: InputType.password,
               isRequired: true,
+              textInputAction: TextInputAction.next,
               validator: FormValidators.senha,
               obscureText: !widget.controller.exibirSenha.value,
               suffixIcon: IconButton(
+                tooltip: widget.controller.exibirSenha.value
+                    ? 'Ocultar senha'
+                    : 'Mostrar senha',
                 onPressed: () => widget.controller.exibirSenha.toggle(),
                 icon: Icon(
                   widget.controller.exibirSenha.value
@@ -250,6 +258,8 @@ class _CodeStepState extends State<_CodeStep> {
               titleColor: widget.primary,
               type: InputType.password,
               isRequired: true,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => _redefinir(),
               validator: (v) => FormValidators.confirmarSenha(
                 v,
                 senha: senhaCtrl.text,

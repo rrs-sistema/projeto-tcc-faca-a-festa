@@ -57,18 +57,28 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
   final GlobalKey _catalogoKey = GlobalKey();
   final GlobalKey _avaliacoesKey = GlobalKey();
   final GlobalKey _insightsKey = GlobalKey();
+  final ScrollController _scroll = ScrollController();
+  int _atalhoAtivo = 0;
 
   FornecedorController get controller => widget.controller;
 
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
   Future<void> _scrollToCotacoes() async {
+    setState(() => _atalhoAtivo = 0);
     await _scrollToSection(
       key: _cotacoesKey,
-      title: 'Cotações inteligentes',
-      fallbackMessage: 'Não foi possível localizar a seção de cotações agora.',
+      title: 'Pedidos de preço',
+      fallbackMessage: 'Não foi possível localizar os pedidos agora.',
     );
   }
 
   Future<void> _scrollToCatalogo() async {
+    setState(() => _atalhoAtivo = 1);
     await _scrollToSection(
       key: _catalogoKey,
       title: 'Catálogo',
@@ -77,6 +87,7 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
   }
 
   Future<void> _scrollToAvaliacoes() async {
+    setState(() => _atalhoAtivo = 2);
     await _scrollToSection(
       key: _avaliacoesKey,
       title: 'Avaliações',
@@ -175,6 +186,7 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                           : 12.0;
 
                   return CustomScrollView(
+                    controller: _scroll,
                     physics: const AlwaysScrollableScrollPhysics(),
                     slivers: [
                       SliverPadding(
@@ -182,7 +194,7 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
                           horizontalPadding,
                           8,
                           horizontalPadding,
-                          28,
+                          88,
                         ),
                         sliver: SliverToBoxAdapter(
                           child: Center(
@@ -267,6 +279,12 @@ class _FornecedorHomeScreenState extends State<FornecedorHomeScreen> {
               ),
             ),
           ),
+          bottomNavigationBar: _FornecedorAtalhosBar(
+            ativo: _atalhoAtivo,
+            onPedidos: _scrollToCotacoes,
+            onCatalogo: _scrollToCatalogo,
+            onAvaliacoes: _scrollToAvaliacoes,
+          ),
         ),
       );
     });
@@ -304,7 +322,7 @@ class _ProximaAcaoInteligenteSection extends StatelessWidget {
         return _PremiumActionShell(
           color: const Color(0xFF6366F1),
           icon: Icons.auto_awesome_rounded,
-          eyebrow: 'Inteligência comercial',
+          eyebrow: 'O que fazer agora',
           title: 'Analisando oportunidades...',
           message: 'Estamos cruzando catálogo, reputação e cotações.',
           priorityLabel: 'IA local',
@@ -324,7 +342,7 @@ class _ProximaAcaoInteligenteSection extends StatelessWidget {
       return _PremiumActionShell(
         color: color,
         icon: icon,
-        eyebrow: 'Próxima ação',
+        eyebrow: 'O que fazer agora',
         title: title,
         message: message,
         priorityLabel: _priorityLabel(priority, action?.urgente ?? false),
@@ -573,6 +591,76 @@ class _Pill extends StatelessWidget {
           color: color,
           fontSize: 10,
           fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _FornecedorAtalhosBar extends StatelessWidget {
+  const _FornecedorAtalhosBar({
+    required this.ativo,
+    required this.onPedidos,
+    required this.onCatalogo,
+    required this.onAvaliacoes,
+  });
+
+  final int ativo;
+  final VoidCallback onPedidos;
+  final VoidCallback onCatalogo;
+  final VoidCallback onAvaliacoes;
+
+  @override
+  Widget build(BuildContext context) {
+    const cor = Color(0xFF4F46E5);
+    final itens = [
+      (Icons.receipt_long_rounded, 'Pedidos', onPedidos),
+      (Icons.inventory_2_rounded, 'Catálogo', onCatalogo),
+      (Icons.star_rate_rounded, 'Avaliações', onAvaliacoes),
+    ];
+
+    return Material(
+      color: Colors.white,
+      elevation: 12,
+      shadowColor: Colors.black26,
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 6, 8, 8),
+          child: Row(
+            children: [
+              for (var i = 0; i < itens.length; i++)
+                Expanded(
+                  child: InkWell(
+                    onTap: itens[i].$3,
+                    borderRadius: BorderRadius.circular(14),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            itens[i].$1,
+                            size: 22,
+                            color: i == ativo ? cor : const Color(0xFF9CA3AF),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            itens[i].$2,
+                            style: GoogleFonts.poppins(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color:
+                                  i == ativo ? cor : const Color(0xFF6B7280),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

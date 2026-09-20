@@ -20,9 +20,9 @@
 ; ======================================================================
 
 #define MyAppName "Faça a Festa"
-; Alinhado ao pubspec.yaml: version: 1.0.1+3
-#define MyAppVersion "1.0.1"
-#define MyAppFileVersion "1.0.1.3"
+; Alinhado ao pubspec.yaml: version: 1.0.2+4
+#define MyAppVersion "1.0.2"
+#define MyAppFileVersion "1.0.2.4"
 #define MyAppPublisher "RRS System Technology"
 #define MyAppURL "https://faca-a-festa.web.app/"
 #define MyAppExeName "app_faca_festa.exe"

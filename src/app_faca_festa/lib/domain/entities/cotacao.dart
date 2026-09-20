@@ -12,18 +12,36 @@ enum StatusCotacao {
   String get label {
     switch (this) {
       case StatusCotacao.respondida:
-        return 'Respondida';
+        return 'Preço recebido';
       case StatusCotacao.parcial:
-        return 'Parcial';
+        return 'Alguns preços';
       case StatusCotacao.concluida:
-        return 'Concluída';
+        return 'Contratado';
       case StatusCotacao.cancelada:
-        return 'Perdeu cotação';
+        return 'Cancelado';
       case StatusCotacao.perdeuCotacao:
       case StatusCotacao.recusado:
-        return 'Recusado';
+        return 'Não ficou com este';
       case StatusCotacao.pendente:
-        return 'Pendente';
+        return 'Aguardando preço';
+    }
+  }
+
+  String get proximoPasso {
+    switch (this) {
+      case StatusCotacao.pendente:
+        return 'O fornecedor ainda está preparando o preço.';
+      case StatusCotacao.respondida:
+        return 'Compare o valor e contrate se gostar.';
+      case StatusCotacao.parcial:
+        return 'Alguns já responderam. Você pode comparar ou esperar o restante.';
+      case StatusCotacao.concluida:
+        return 'Serviço contratado. Depois da festa, avalie.';
+      case StatusCotacao.cancelada:
+        return 'Este pedido foi cancelado.';
+      case StatusCotacao.perdeuCotacao:
+      case StatusCotacao.recusado:
+        return 'Este fornecedor não ficou com o serviço.';
     }
   }
 

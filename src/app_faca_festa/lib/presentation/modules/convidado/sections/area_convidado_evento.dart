@@ -7,41 +7,15 @@ extension _AreaConvidadoEventoSection on _AreaConvidadoHomeScreenState {
       final eventoAtual = eventoObservado?.idEvento == evento.idEvento
           ? eventoObservado!
           : evento;
-      final tipo = eventoController.tipoEventoAtualEntidade?.nome ?? '';
-      final nomeEvento = eventoAtual.nomeEvento.trim().isEmpty
-          ? 'Evento Especial'
-          : eventoAtual.nomeEvento;
 
       return SingleChildScrollView(
         key: const ValueKey('info'),
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 16), // 🔹 Compacto
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            RichText(
-              textAlign: TextAlign.center,
-              text: TextSpan(
-                style: GoogleFonts.poppins(
-                    fontSize: 16, color: Colors.black87), // 🔹 Menor
-                children: [
-                  if (tipo.isNotEmpty)
-                    TextSpan(
-                      text: '$tipo: ',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: theme.primaryColor.value,
-                        fontSize: 14,
-                      ),
-                    ),
-                  TextSpan(
-                    text: nomeEvento,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w600, fontSize: 13),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 8),
+            if (_statusPresencaAtual == StatusConvidado.pendente)
+              _cartaoConfirmarPresenca(),
             _infoTileDataHora(
               eventoAtual.data,
               eventoAtual.hora,
@@ -54,6 +28,7 @@ extension _AreaConvidadoEventoSection on _AreaConvidadoHomeScreenState {
                   : (eventoAtual.logradouro?.isNotEmpty == true
                       ? '${eventoAtual.logradouro}, ${eventoAtual.numero ?? ''}'
                       : 'Local a definir'),
+              acaoLabel: 'Abrir mapa',
               onTap: () => _abrirNoMapa(eventoAtual),
             ),
             if ((eventoAtual.tema ?? '').trim().isNotEmpty)
@@ -73,10 +48,68 @@ extension _AreaConvidadoEventoSection on _AreaConvidadoHomeScreenState {
                 'Mensagem',
                 eventoAtual.mensagemConvidado ??
                     'Prepare-se para uma celebração especial! 💖'),
+            const SizedBox(height: 8),
+            Text(
+              'Organizado com o Faça a Festa',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                color: Colors.grey.shade500,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
           ],
         ),
       );
     });
+  }
+
+  Widget _cartaoConfirmarPresenca() {
+    final color = theme.primaryColor.value;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: _irParaPresenca,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(
+              children: [
+                Icon(Icons.how_to_reg_rounded, color: color, size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Confirme se você vai',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: color,
+                        ),
+                      ),
+                      Text(
+                        'Ajuda a organizar lugares, comida e o ritmo da festa.',
+                        style: GoogleFonts.poppins(
+                          fontSize: 11.5,
+                          height: 1.3,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: color),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _infoTile(IconData icon, String title, String value) {
@@ -187,9 +220,12 @@ extension _AreaConvidadoEventoSection on _AreaConvidadoHomeScreenState {
   }
 
   Widget _infoTileComAcao(IconData icon, String titulo, String valor,
-      {VoidCallback? onTap}) {
+      {VoidCallback? onTap, String? acaoLabel}) {
     final color = theme.primaryColor.value;
-    return Container(
+    return Semantics(
+      button: onTap != null,
+      label: acaoLabel == null ? '$titulo, $valor' : '$titulo, $valor. $acaoLabel',
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10), // 🔹 Compacto
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
@@ -230,17 +266,34 @@ extension _AreaConvidadoEventoSection on _AreaConvidadoHomeScreenState {
                 ),
               ),
               if (onTap != null)
-                Container(
-                  decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.all(6),
-                  child: Icon(Icons.navigation_rounded, color: color, size: 16),
+                Column(
+                  children: [
+                    Container(
+                      decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(8)),
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(Icons.navigation_rounded,
+                          color: color, size: 16),
+                    ),
+                    if (acaoLabel != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        acaoLabel,
+                        style: GoogleFonts.poppins(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
             ],
           ),
         ),
       ),
+    ),
     );
   }
 }

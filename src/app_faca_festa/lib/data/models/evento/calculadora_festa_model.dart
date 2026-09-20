@@ -172,6 +172,7 @@ class CalculadoraFestaModel extends CalculadoraFesta {
     final analiseIAModel = analiseIA == null
         ? null
         : AnaliseCalculadoraIAModel.fromEntity(analiseIA!);
+    final uid = idUsuario?.trim();
 
     return {
       'id_calculo': idCalculo,
@@ -192,7 +193,7 @@ class CalculadoraFestaModel extends CalculadoraFesta {
       'margem_personalizada': margemPersonalizada,
       'custo_total_estimado': custoTotalEstimado,
       'orcamento_disponivel': orcamentoDisponivel,
-      'id_usuario': idUsuario,
+      if (uid != null && uid.isNotEmpty) 'id_usuario': uid,
       'nome_evento': nomeEvento,
       'status_simulacao': statusSimulacao.value,
       'status_simulacao_label': statusSimulacao.label,

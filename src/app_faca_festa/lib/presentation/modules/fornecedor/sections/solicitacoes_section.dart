@@ -89,9 +89,9 @@ class _SolicitacoesSectionState extends State<SolicitacoesSection> {
         child: lista.isEmpty
             ? const _MensagemEstado(
                 icon: Icons.inbox_outlined,
-                title: 'Nenhuma cotação pendente',
+                title: 'Nenhum pedido de preço',
                 message:
-                    'Quando um organizador solicitar orçamento, as oportunidades aparecerão aqui.',
+                    'Quando um organizador pedir preço, as oportunidades aparecem aqui.',
                 color: Color(0xFF6366F1),
               )
             : LayoutBuilder(
@@ -748,7 +748,7 @@ class _CotacoesShell extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Cotações inteligentes',
+                          'Pedidos de preço',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(
@@ -759,7 +759,7 @@ class _CotacoesShell extends StatelessWidget {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Priorize oportunidades e responda com segurança.',
+                          'Responda o que chegou hoje. O organizador espera o valor e o prazo.',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.poppins(

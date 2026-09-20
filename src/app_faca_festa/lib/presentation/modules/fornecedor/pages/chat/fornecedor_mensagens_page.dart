@@ -138,7 +138,7 @@ class FornecedorMensagensPage extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              "Os organizadores enviarão mensagens por aqui assim que você receber uma cotação.",
+              "Os organizadores escrevem aqui depois de pedir preço.",
               style: GoogleFonts.poppins(
                 fontSize: 11.5,
                 color: Colors.grey.shade600,
@@ -309,7 +309,7 @@ class _CotacaoMensagemTile extends StatelessWidget {
       idFornecedor: idFornecedor,
     );
     if (detalhes == null) {
-      Get.snackbar("Erro", "Cotação não encontrada",
+      Get.snackbar("Erro", "Pedido de preço não encontrado",
           backgroundColor: Colors.redAccent, colorText: Colors.white);
       return;
     }

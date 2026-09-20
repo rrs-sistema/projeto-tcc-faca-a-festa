@@ -87,7 +87,7 @@ class PainelCotacaoPage extends StatelessWidget {
             else
               _buildMensagemVazia(
                 primary,
-                "Você ainda não fez nenhuma cotação.",
+                "Você ainda não pediu preço a nenhum fornecedor.",
               ),
             const SizedBox(height: 20),
           ],
@@ -220,7 +220,7 @@ class PainelCotacaoPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Painel de Cotações",
+                          "Pedidos de preço",
                           textAlign: TextAlign.center,
                           style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w700,
@@ -229,7 +229,7 @@ class PainelCotacaoPage extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          "Gerencie cotações e fornecedores",
+                          "Compare respostas e feche com quem combinou",
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -288,7 +288,7 @@ class PainelCotacaoPage extends StatelessWidget {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Gerencie seus Fornecedores',
+                'Seus pedidos de preço',
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w800,
                   fontSize: 15,
@@ -300,7 +300,7 @@ class PainelCotacaoPage extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         Text(
-          'Negocie com confiança, acompanhe respostas e monte a equipe ideal para o evento.',
+          'Peça preço, acompanhe as respostas e contrate quem combinou com a festa.',
           style: GoogleFonts.poppins(
             fontSize: 12, // 🔹 Fonte menor
             color: Colors.grey.shade700,
@@ -365,7 +365,7 @@ class PainelCotacaoPage extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          "Minhas Cotações Recentes",
+          "Seus pedidos",
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w700,
             fontSize: 14, // 🔹 Mais compacto
@@ -408,7 +408,10 @@ class PainelCotacaoPage extends StatelessWidget {
                 ),
                 subtitle: Padding(
                   padding: const EdgeInsets.only(top: 4),
-                  child: Wrap(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Wrap(
                     spacing: 6,
                     runSpacing: 4,
                     crossAxisAlignment: WrapCrossAlignment.center,
@@ -434,6 +437,17 @@ class PainelCotacaoPage extends StatelessWidget {
                       _buildStatusMiniBadge(cotacao.status),
                     ],
                   ),
+                      const SizedBox(height: 4),
+                      Text(
+                        cotacao.status.proximoPasso,
+                        style: GoogleFonts.poppins(
+                          fontSize: 11,
+                          height: 1.3,
+                          color: Colors.grey.shade700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                 children: [
@@ -452,7 +466,7 @@ class PainelCotacaoPage extends StatelessWidget {
                   }),
                   if (cotacao.status == StatusCotacao.pendente ||
                       cotacao.status == StatusCotacao.parcial)
-                    _buildAcaoCotacao(Colors.redAccent, "Cancelar cotação",
+                    _buildAcaoCotacao(Colors.redAccent, "Cancelar pedido",
                         Icons.cancel_outlined, () async {
                       EasyLoading.show(status: 'Processando...');
                       await solicitacoesCtrl.cancelarCotacao(cotacao.id);
@@ -533,35 +547,30 @@ class PainelCotacaoPage extends StatelessWidget {
 
   Widget _buildStatusMiniBadge(StatusCotacao status) {
     late Color cor;
-    late String texto;
     late IconData icone;
 
     switch (status) {
       case StatusCotacao.respondida:
         cor = Colors.green.shade700;
-        texto = 'Respondida';
         icone = Icons.mark_chat_read_rounded;
         break;
       case StatusCotacao.parcial:
         cor = Colors.orange.shade700;
-        texto = 'Parcial';
         icone = Icons.hourglass_bottom_rounded;
         break;
       case StatusCotacao.concluida:
         cor = Colors.blue.shade700;
-        texto = 'Concluída';
         icone = Icons.verified_rounded;
         break;
       case StatusCotacao.cancelada:
         cor = Colors.red.shade700;
-        texto = 'Cancelada';
         icone = Icons.cancel_rounded;
         break;
       default:
         cor = Colors.grey.shade600;
-        texto = 'Pendente';
         icone = Icons.schedule_rounded;
     }
+    final texto = status.label;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

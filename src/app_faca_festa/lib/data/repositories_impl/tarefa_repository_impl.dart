@@ -12,8 +12,13 @@ class TarefaRepositoryImpl implements TarefaRepository {
   Stream<List<Tarefa>> observarPorEvento(
     String idEvento, {
     bool ordenarPorData = false,
+    String? idResponsavel,
   }) =>
-      remote.observarPorEvento(idEvento, ordenarPorData: ordenarPorData);
+      remote.observarPorEvento(
+        idEvento,
+        ordenarPorData: ordenarPorData,
+        idResponsavel: idResponsavel,
+      );
 
   @override
   Future<void> adicionar(Tarefa tarefa) => remote.adicionar(

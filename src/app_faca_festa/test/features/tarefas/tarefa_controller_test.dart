@@ -24,6 +24,43 @@ void main() {
     await repository.close();
   });
 
+  test('guest listener keeps only tasks assigned to that guest', () async {
+    await controller.listenTarefas(
+      'evento-1',
+      idResponsavel: 'convidado-1',
+    );
+    repository.stream.add([
+      _tarefa('Minha tarefa', idResponsavel: 'convidado-1'),
+      _tarefa(
+        'Tarefa de outro',
+        id: 'tarefa-2',
+        idResponsavel: 'convidado-2',
+      ),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repository.eventoObservado, 'evento-1');
+    expect(repository.responsavelObservado, 'convidado-1');
+    expect(controller.tarefas, hasLength(1));
+    expect(controller.tarefas.single.titulo, 'Minha tarefa');
+  });
+
+  test('organizer listener keeps the full event checklist', () async {
+    await controller.listenTarefas('evento-1');
+    repository.stream.add([
+      _tarefa('Minha tarefa', idResponsavel: 'convidado-1'),
+      _tarefa(
+        'Tarefa de outro',
+        id: 'tarefa-2',
+        idResponsavel: 'convidado-2',
+      ),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repository.responsavelObservado, isNull);
+    expect(controller.tarefas, hasLength(2));
+  });
+
   test('task listener exposes repository entities and progress', () async {
     await controller.listenTarefas('evento-1');
     repository.stream.add([
@@ -94,18 +131,21 @@ Tarefa _tarefa(
   String titulo, {
   String id = 'tarefa-1',
   StatusTarefa status = StatusTarefa.aFazer,
+  String? idResponsavel,
 }) =>
     Tarefa(
       idTarefa: id,
       idEvento: 'evento-1',
       titulo: titulo,
       status: status,
+      idResponsavel: idResponsavel,
       dataCadastro: DateTime(2026, 8, 14),
     );
 
 class _TarefaRepositoryFake implements TarefaRepository {
   final stream = StreamController<List<Tarefa>>.broadcast();
   String? eventoObservado;
+  String? responsavelObservado;
   bool? ordenarPorData;
   Tarefa? adicionada;
   Tarefa? atualizada;
@@ -120,8 +160,10 @@ class _TarefaRepositoryFake implements TarefaRepository {
   Stream<List<Tarefa>> observarPorEvento(
     String idEvento, {
     bool ordenarPorData = false,
+    String? idResponsavel,
   }) {
     eventoObservado = idEvento;
+    responsavelObservado = idResponsavel;
     this.ordenarPorData = ordenarPorData;
     return stream.stream;
   }

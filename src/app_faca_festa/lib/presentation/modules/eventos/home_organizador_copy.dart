@@ -21,8 +21,20 @@ abstract final class HomeOrganizadorCopy {
 
   static const proximasTarefas = 'Próximas tarefas';
   static const verTodasTarefas = 'Ver todas';
-  static const nenhumaTarefa = 'Nenhuma tarefa prevista';
+  static const nenhumaTarefa = 'Nenhuma tarefa';
   static const nenhumaTarefaAcao = 'Criar a primeira';
+  static const tarefasEmDia = 'Todas as tarefas concluídas';
+
+  static String tarefasFaixaTitulo({required int total, required int pendentes}) {
+    if (total <= 0) return nenhumaTarefa;
+    if (pendentes <= 0) return tarefasEmDia;
+    return proximasTarefas;
+  }
+
+  static String tarefasFaixaAcao({required int total}) {
+    if (total <= 0) return nenhumaTarefaAcao;
+    return verTodasTarefas;
+  }
 
   static const fornecedoresRegiao = 'Fornecedores perto da festa';
 
@@ -53,7 +65,7 @@ abstract final class HomeOrganizadorCopy {
     return '$total pedidos';
   }
 
-  static const calculadoraValor = 'Estimar quantidades';
+  static const calculadoraValor = 'Estimar';
   static const presentesValor = 'Lista da festa';
-  static const fornecedoresValor = 'Buscar serviços';
+  static const fornecedoresValor = 'Perto da festa';
 }

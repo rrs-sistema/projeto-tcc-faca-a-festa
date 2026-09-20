@@ -14,6 +14,7 @@ import 'package:app_faca_festa/presentation/modules/calculadora/controllers/forn
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/widgets/cadastro_passos_bar.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 import 'minhas_simulacoes_calculadora_bottom_sheet.dart';
 import 'calculadora_item_icon_helper.dart';
@@ -76,6 +77,8 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
 
   final RxString idCardapioSelecionado = ''.obs;
   Worker? _cardapiosWorker;
+  int _passo = 0;
+  static const _titulosPassos = ['Pessoas', 'A festa', 'Sugestões'];
 
   @override
   void initState() {
@@ -328,28 +331,80 @@ class _CalculadoraFestaScreenState extends State<CalculadoraFestaScreen> {
                   child: ListView(
                     padding: const EdgeInsets.fromLTRB(6, 10, 6, 80),
                     children: [
-                      _buildHero(primary, gradient),
-                      const SizedBox(height: 10),
-                      _buildSimulacoesCard(primary),
-                      const SizedBox(height: 10),
-                      _buildBaseCalculoCard(primary),
-                      const SizedBox(height: 10),
-                      _buildPerfilFestaCard(primary),
-                      const SizedBox(height: 10),
-                      _buildTotaisCard(primary),
-                      const SizedBox(height: 10),
-                      _buildDuracaoCard(primary),
-                      const SizedBox(height: 10),
-                      if (calculadoraController.analisandoIA.value ||
-                          calculadoraController.analiseIA.value != null) ...[
-                        _buildAssistenteIACard(primary),
+                      CadastroPassosBar(
+                        atual: _passo,
+                        titulos: _titulosPassos,
+                        cor: primary,
+                      ),
+                      if (_passo == 0) ...[
+                        _buildHero(primary, gradient),
                         const SizedBox(height: 10),
+                        _buildBaseCalculoCard(primary),
+                        const SizedBox(height: 10),
+                        _buildTotaisCard(primary),
                       ],
-                      _buildResultadoCard(primary),
-                      const SizedBox(height: 10),
-                      _buildCardapioCard(primary),
+                      if (_passo == 1) ...[
+                        _buildPerfilFestaCard(primary),
+                        const SizedBox(height: 10),
+                        _buildDuracaoCard(primary),
+                      ],
+                      if (_passo == 2) ...[
+                        _buildResultadoCard(primary),
+                        const SizedBox(height: 10),
+                        if (calculadoraController.analisandoIA.value ||
+                            calculadoraController.analiseIA.value != null) ...[
+                          _buildAssistenteIACard(primary),
+                          const SizedBox(height: 10),
+                        ],
+                        _buildCardapioCard(primary),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Salve esta estimativa ou envie as sugestões para o cardápio da festa.',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            height: 1.35,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey.shade700,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildAcoes(primary),
+                        const SizedBox(height: 10),
+                        _buildSimulacoesCard(primary),
+                      ],
                       const SizedBox(height: 12),
-                      _buildAcoes(primary),
+                      if (_passo < 2)
+                        CadastroPassosAcoes(
+                          cor: primary,
+                          continuarLabel: 'Continuar',
+                          onContinuar: () => setState(() => _passo++),
+                          onVoltar: _passo == 0
+                              ? null
+                              : () => setState(() => _passo--),
+                        )
+                      else
+                        SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: OutlinedButton(
+                            onPressed: () => setState(() => _passo--),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: primary,
+                              side: BorderSide(
+                                color: primary.withValues(alpha: 0.45),
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: Text(
+                              'Voltar',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),

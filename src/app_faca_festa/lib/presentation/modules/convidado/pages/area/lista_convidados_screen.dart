@@ -11,12 +11,16 @@ import 'package:app_faca_festa/presentation/modules/convidado/controllers/convid
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_empty_state.dart';
 
 class ListaConvidadosScreen extends StatefulWidget {
   final EventThemeController themeController;
   final ConvidadoController convidadoController;
   final EventoController eventoController;
   final GrupoConvidadoController grupoController;
+  final bool embedded;
+  final FocusNode? buscaFocusNode;
+  final ValueChanged<bool>? onModoSelecaoChanged;
 
   const ListaConvidadosScreen({
     super.key,
@@ -24,6 +28,9 @@ class ListaConvidadosScreen extends StatefulWidget {
     required this.convidadoController,
     required this.eventoController,
     required this.grupoController,
+    this.embedded = false,
+    this.buscaFocusNode,
+    this.onModoSelecaoChanged,
   });
 
   @override
@@ -40,17 +47,29 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
   final RxString _filtroStatus = 'todos'.obs;
   final RxBool _modoSelecao = false.obs;
   final RxMap<String, Convidado> _selecionados = <String, Convidado>{}.obs;
+  late final FocusNode _buscaFocus;
+  late final bool _buscaFocusProprio;
 
   @override
   void initState() {
     super.initState();
+    _buscaFocusProprio = widget.buscaFocusNode == null;
+    _buscaFocus = widget.buscaFocusNode ?? FocusNode();
     _carregarConvidadosDoEventoAtual();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    if (_buscaFocusProprio) {
+      _buscaFocus.dispose();
+    }
     super.dispose();
+  }
+
+  void _definirModoSelecao(bool ativo) {
+    _modoSelecao.value = ativo;
+    widget.onModoSelecaoChanged?.call(ativo);
   }
 
   @override
@@ -61,6 +80,15 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
     return Obx(() {
       final modoSelecao = _modoSelecao.value;
       final totalSelecionados = _selecionados.length;
+
+      if (widget.embedded) {
+        return Scaffold(
+          backgroundColor: Colors.transparent,
+          body: _buildBody(primary),
+          bottomNavigationBar:
+              modoSelecao ? _buildBarraEnvioEmail(primary, gradient) : null,
+        );
+      }
 
       return Scaffold(
         backgroundColor: const Color(0xFFF6F7FB),
@@ -131,7 +159,7 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
                 tooltip: 'Selecionar para e-mail',
                 icon: const Icon(Icons.checklist_rounded,
                     color: Colors.white, size: 20),
-                onPressed: () => _modoSelecao.value = true,
+                onPressed: () => _definirModoSelecao(true),
               ),
               IconButton(
                 tooltip: 'Convites',
@@ -193,18 +221,19 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
               child: _buildSearchAndFilter(convidadoController, primary),
             ),
             if (carregando)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: CircularProgressIndicator(color: primary),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 48),
+                  child: Center(
+                    child: CircularProgressIndicator(color: primary),
+                  ),
                 ),
               )
             else if (lista.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _EmptyGuestsState(
-                  primary: primary,
-                  onAdd: () => _abrirAdicionarConvidado(primary),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 96),
+                  child: _buildEstadoListaVazia(primary),
                 ),
               )
             else
@@ -288,6 +317,61 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
     }).toList();
   }
 
+  Widget _buildEstadoListaVazia(Color primary) {
+    final termo = convidadoController.termoBusca.value.trim();
+    final filtro = _filtroStatus.value;
+    final filtrado = filtro != 'todos' || termo.isNotEmpty;
+
+    if (!filtrado) {
+      return _EmptyGuestsState(
+        primary: primary,
+        onAdd: () => _abrirAdicionarConvidado(primary),
+      );
+    }
+
+    final porStatus = switch (filtro) {
+      'confirmados' => (
+          'Nenhum confirmado',
+          'Ainda não há convidados com presença confirmada.'
+        ),
+      'pendentes' => (
+          'Nenhum pendente',
+          'Não há convidados aguardando resposta neste filtro.'
+        ),
+      'recusados' => (
+          'Nenhuma recusa',
+          'Ninguém recusou o convite ainda.'
+        ),
+      _ => (
+          'Nenhum resultado',
+          'Nenhum convidado combina com o que você buscou.'
+        ),
+    };
+
+    final titulo =
+        termo.isEmpty ? porStatus.$1 : 'Nenhum resultado para “$termo”';
+    final mensagem = termo.isEmpty
+        ? porStatus.$2
+        : 'Tente outro nome ou limpe a busca para ver a lista completa.';
+
+    return FestaEmptyState(
+      icon: Icons.search_off_rounded,
+      title: titulo,
+      message: mensagem,
+      actionLabel: 'Limpar filtro',
+      actionIcon: Icons.filter_alt_off_rounded,
+      onAction: _limparFiltroLista,
+      color: primary,
+      compact: true,
+    );
+  }
+
+  void _limparFiltroLista() {
+    _filtroStatus.value = 'todos';
+    _searchController.clear();
+    convidadoController.termoBusca.value = '';
+  }
+
   Widget _buildSearchAndFilter(ConvidadoController controller, Color primary) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 6, 8, 6), // Muito compacto
@@ -307,6 +391,7 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
             ),
             child: TextField(
               controller: _searchController,
+              focusNode: _buscaFocus,
               onChanged: (value) => controller.termoBusca.value = value,
               textInputAction: TextInputAction.search,
               style: const TextStyle(fontSize: 12),
@@ -568,13 +653,13 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
   }
 
   void _entrarSelecao(Convidado convidado) {
-    _modoSelecao.value = true;
+    _definirModoSelecao(true);
     _selecionados[_chaveConvidado(convidado)] = convidado;
     _selecionados.refresh();
   }
 
   void _sairSelecao() {
-    _modoSelecao.value = false;
+    _definirModoSelecao(false);
     _selecionados.clear();
   }
 
@@ -1145,51 +1230,14 @@ class _EmptyGuestsState extends StatelessWidget {
   const _EmptyGuestsState({required this.primary, required this.onAdd});
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.black.withValues(alpha: 0.05))),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                      color: primary.withValues(alpha: 0.1),
-                      shape: BoxShape.circle),
-                  child: Icon(Icons.person_add_alt_1_rounded,
-                      color: primary, size: 24)),
-              const SizedBox(height: 10),
-              Text('Nenhum convidado',
-                  style: GoogleFonts.poppins(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: const Color(0xFF111827))),
-              const SizedBox(height: 4),
-              Text('Adicione convidados para visualizar a lista.',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                      fontSize: 11, color: const Color(0xFF6B7280))),
-              const SizedBox(height: 12),
-              ElevatedButton.icon(
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10))),
-                onPressed: onAdd,
-                icon: const Icon(Icons.add_rounded, size: 16),
-                label: const Text('Adicionar', style: TextStyle(fontSize: 12)),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return FestaEmptyState(
+      icon: Icons.person_add_alt_1_rounded,
+      title: 'Ainda não tem convidados',
+      message: 'Adicione quem vem à festa para acompanhar a presença.',
+      actionLabel: 'Adicionar convidado',
+      onAction: onAdd,
+      color: primary,
+      compact: true,
     );
   }
 }

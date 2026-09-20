@@ -68,7 +68,7 @@ class ResumoSection extends StatelessWidget {
 
       final cards = [
         _MetricData(
-          title: 'Cotações pendentes',
+          title: 'Pedidos aguardando',
           value: controller.solicitacoesPendentes.value.toString(),
           subtitle: 'aguardando ação',
           icon: Icons.receipt_long_rounded,

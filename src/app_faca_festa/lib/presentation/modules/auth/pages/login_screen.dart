@@ -82,14 +82,13 @@ class _LoginScreenState extends State<LoginScreen> {
         backgroundColor: const Color(0xFFFFF3F8),
         body: AuthFestaShell(
           scrollable: true,
+          logoSize: 168,
           title: 'Entre e faça a festa',
           titleHighlight: 'faça a festa',
-          subtitle: 'Acesse para planejar o evento ou oferecer serviços',
-          footerLink: AuthFestaFooterLink(
-            prefixo: 'Ainda não tem uma conta? ',
-            acao: 'Cadastre-se aqui',
-            onTap: _irParaCadastro,
-          ),
+          mostrarProvaSocial: false,
+          mostrarCreditos: false,
+          mostrarPrivacidade: true,
+          footerLink: _CadastroContaButton(onTap: _irParaCadastro),
           child: Container(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
             decoration: BoxDecoration(
@@ -117,6 +116,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     titleColor: accent,
                     type: InputType.email,
                     isRequired: true,
+                    textInputAction: TextInputAction.next,
                     validator: FormValidators.email,
                     onChanged: (v) => controller.email.value = v,
                   ),
@@ -130,6 +130,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     titleColor: accent,
                     type: InputType.password,
                     isRequired: true,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _entrar(),
                     validator: FormValidators.senhaLogin,
                     onChanged: (v) => controller.senha.value = v,
                   ),
@@ -239,6 +241,53 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CadastroContaButton extends StatelessWidget {
+  const _CadastroContaButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        onPressed: onTap,
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size.fromHeight(48),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          side: const BorderSide(color: Color(0xFFF0E6EC)),
+          foregroundColor: AuthFestaBrand.rosa,
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: Text.rich(
+          TextSpan(
+            text: 'Ainda não tem uma conta? ',
+            style: GoogleFonts.poppins(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w500,
+              color: const Color(0xFF6B7280),
+            ),
+            children: [
+              TextSpan(
+                text: 'Cadastre-se',
+                style: GoogleFonts.poppins(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: AuthFestaBrand.rosa,
+                ),
+              ),
+            ],
+          ),
+          textAlign: TextAlign.center,
         ),
       ),
     );

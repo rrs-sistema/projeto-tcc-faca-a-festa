@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -582,6 +583,7 @@ class CalculadoraFestaController extends GetxController {
       perfilFesta: perfilSelecionado.value,
       margemPersonalizada: margemPersonalizada.value,
       orcamentoDisponivel: orcamentoDisponivel.value,
+      idUsuario: calculoAtual.value?.idUsuario ?? _uidAtual,
     );
 
     final itens = _service.calcularItens(
@@ -652,6 +654,13 @@ class CalculadoraFestaController extends GetxController {
     itensOrigemRemota.value = false;
     origemItensCalculadora.value = OrigemItensCalculadora.fallbackLocal;
     erroItensBase.value = '';
+  }
+
+  String? get _uidAtual {
+    if (Get.isRegistered<FirebaseAuth>()) {
+      return Get.find<FirebaseAuth>().currentUser?.uid;
+    }
+    return FirebaseAuth.instance.currentUser?.uid;
   }
 
   void _registrarTotaisDoEvento({

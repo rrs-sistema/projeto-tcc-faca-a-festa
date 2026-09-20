@@ -476,13 +476,39 @@ class FirebaseAutenticacaoRemoteDatasource
   @override
   Future<void> sair() async {
     try {
-      if (!PlataformaApp.ehWeb) {
-        await _inicializarGoogleSignIn();
-        await GoogleSignIn.instance.signOut();
-      }
+      await _sairDoGoogleSeNecessario();
       await auth.signOut();
     } on FirebaseAuthException catch (erro) {
       throw AutenticacaoRemoteException(erro.code);
+    }
+  }
+
+  Future<void> _sairDoGoogleSeNecessario() async {
+    if (PlataformaApp.ehWeb) return;
+
+    final usouGoogle = auth.currentUser?.providerData.any(
+          (provider) => provider.providerId == 'google.com',
+        ) ==
+        true;
+    if (!usouGoogle && !_googleInicializado) return;
+
+    try {
+      if (!_googleInicializado) {
+        await _inicializarGoogleSignIn().timeout(
+          const Duration(seconds: 2),
+        );
+      }
+      await GoogleSignIn.instance.signOut().timeout(
+        const Duration(seconds: 2),
+      );
+    } on TimeoutException {
+      developer.log(
+        '[AutenticacaoRemote] Google signOut excedeu o tempo; seguindo.',
+      );
+    } catch (erro) {
+      developer.log(
+        '[AutenticacaoRemote] Google signOut ignorado: $erro',
+      );
     }
   }
 }

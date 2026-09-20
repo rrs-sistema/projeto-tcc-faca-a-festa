@@ -21,5 +21,20 @@ void main() {
     test('percentual de orçamento', () {
       expect(HomeOrganizadorCopy.orcamentoPercentual(0.42), '42%');
     });
+
+    test('faixa de tarefas distingue vazio e concluídas', () {
+      expect(
+        HomeOrganizadorCopy.tarefasFaixaTitulo(total: 0, pendentes: 0),
+        HomeOrganizadorCopy.nenhumaTarefa,
+      );
+      expect(
+        HomeOrganizadorCopy.tarefasFaixaTitulo(total: 2, pendentes: 0),
+        HomeOrganizadorCopy.tarefasEmDia,
+      );
+      expect(
+        HomeOrganizadorCopy.tarefasFaixaAcao(total: 2),
+        HomeOrganizadorCopy.verTodasTarefas,
+      );
+    });
   });
 }

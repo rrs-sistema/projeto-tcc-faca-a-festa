@@ -18,6 +18,8 @@ export async function saveAnalysisIfPossible(
     data_ultima_analise_ia: admin.firestore.FieldValue.serverTimestamp(),
     fonte_ultima_analise_ia: analysis.fonte,
     versao_schema_ia: analysis.versao_schema,
+    ...(request.id_usuario ? { id_usuario: request.id_usuario } : {}),
+    ...(request.id_evento ? { id_evento: request.id_evento } : {}),
   }, { merge: true });
 
   if ((process.env.AI_SAVE_HISTORY ?? "true") !== "false") {

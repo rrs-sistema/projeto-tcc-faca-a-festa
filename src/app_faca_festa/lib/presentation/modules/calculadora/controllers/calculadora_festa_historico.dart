@@ -33,6 +33,7 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
         analiseIA: analiseIA.value,
         limparAnaliseIA: analiseIA.value == null,
         dataAtualizacao: DateTime.now(),
+        idUsuario: calculo.idUsuario ?? _uidAtual,
       );
 
       await _repository.salvarSimulacao(
@@ -47,6 +48,16 @@ extension CalculadoraFestaHistorico on CalculadoraFestaController {
         'Simulação salva',
         'O cálculo e a análise inteligente foram salvos com sucesso.',
         backgroundColor: Colors.teal,
+        colorText: Colors.white,
+      );
+    } on FirebaseException catch (e) {
+      final mensagem = e.code == 'permission-denied'
+          ? 'Sem permissão para salvar. Confirme que você está logado e é o organizador desta festa.'
+          : 'Não foi possível salvar a simulação: ${e.message ?? e.code}';
+      Get.snackbar(
+        'Erro',
+        mensagem,
+        backgroundColor: Colors.redAccent,
         colorText: Colors.white,
       );
     } catch (e) {

@@ -1,5 +1,6 @@
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/data/datasources/remote/calculadora_festa_remote_datasource.dart';
@@ -52,6 +53,7 @@ abstract final class CalculadoraBootstrap {
       Get.lazyPut<CalculadoraFestaRemoteDatasource>(
         () => CalculadoraFestaRemoteDatasource(
           firestore: Get.find<FirebaseFirestore>(),
+          auth: Get.find<FirebaseAuth>(),
         ),
         fenix: true,
       );

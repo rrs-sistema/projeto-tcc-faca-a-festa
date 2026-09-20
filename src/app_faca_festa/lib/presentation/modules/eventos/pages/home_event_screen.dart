@@ -990,6 +990,8 @@ Widget _buildUpcomingTasks(
     child: Obx(() {
       final proximas = tarefaController.tarefasProximas().take(2).toList();
       final primary = theme.primaryColor.value;
+      final total = tarefaController.total;
+      final pendentes = tarefaController.pendentes;
 
       if (proximas.isEmpty) {
         return Padding(
@@ -1004,11 +1006,20 @@ Widget _buildUpcomingTasks(
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    Icon(Icons.task_alt_rounded, color: primary, size: 22),
+                    Icon(
+                      total > 0
+                          ? Icons.check_circle_rounded
+                          : Icons.task_alt_rounded,
+                      color: primary,
+                      size: 22,
+                    ),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        HomeOrganizadorCopy.nenhumaTarefa,
+                        HomeOrganizadorCopy.tarefasFaixaTitulo(
+                          total: total,
+                          pendentes: pendentes,
+                        ),
                         style: GoogleFonts.poppins(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
@@ -1017,7 +1028,7 @@ Widget _buildUpcomingTasks(
                       ),
                     ),
                     Text(
-                      HomeOrganizadorCopy.nenhumaTarefaAcao,
+                      HomeOrganizadorCopy.tarefasFaixaAcao(total: total),
                       style: GoogleFonts.poppins(
                         fontWeight: FontWeight.w700,
                         fontSize: 12,

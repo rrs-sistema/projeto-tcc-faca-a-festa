@@ -4,6 +4,7 @@ abstract interface class TarefaRepository {
   Stream<List<Tarefa>> observarPorEvento(
     String idEvento, {
     bool ordenarPorData = false,
+    String? idResponsavel,
   });
 
   Future<void> adicionar(Tarefa tarefa);

@@ -155,7 +155,7 @@ class ChatMensagensPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Cotação: $idCotacao",
+                  "Pedido de preço",
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w700,
                     fontSize: 12.5,
@@ -404,7 +404,7 @@ class ChatMensagensPage extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            "Mande a primeira mensagem para o fornecedor.",
+            "Envie a primeira mensagem sobre este pedido de preço.",
             style: GoogleFonts.poppins(
                 fontSize: 11.5, color: Colors.grey.shade600),
           ),

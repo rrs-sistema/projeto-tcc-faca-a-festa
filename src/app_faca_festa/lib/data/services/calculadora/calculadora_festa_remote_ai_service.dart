@@ -33,12 +33,18 @@ class CalculadoraFestaRemoteAIService implements ICalculadoraFestaAIService {
     required List<CalculadoraFestaItem> itensCalculados,
     required String tipoEvento,
     double? orcamentoDisponivel,
+    String? idCalculo,
+    String? idEvento,
+    String? idUsuario,
   }) async {
     final payload = _montarPayload(
       estimativa: estimativa,
       itensCalculados: itensCalculados,
       tipoEvento: tipoEvento,
       orcamentoDisponivel: orcamentoDisponivel,
+      idCalculo: idCalculo,
+      idEvento: idEvento,
+      idUsuario: idUsuario,
     );
 
     final response = await executor(payload);
@@ -52,6 +58,9 @@ class CalculadoraFestaRemoteAIService implements ICalculadoraFestaAIService {
     required List<CalculadoraFestaItem> itensCalculados,
     required String tipoEvento,
     double? orcamentoDisponivel,
+    String? idCalculo,
+    String? idEvento,
+    String? idUsuario,
   }) {
     final estimativaModel = EstimativaFinanceiraModel.fromEntity(estimativa);
     final itensCalculadosModel =
@@ -66,7 +75,13 @@ class CalculadoraFestaRemoteAIService implements ICalculadoraFestaAIService {
         estimativaModel.perfil.margemSegurancaPadrao;
 
     return {
-      'id_evento': estimativaModel.idEvento,
+      if (idCalculo != null && idCalculo.trim().isNotEmpty)
+        'id_calculo': idCalculo.trim(),
+      'id_evento': (idEvento != null && idEvento.trim().isNotEmpty)
+          ? idEvento.trim()
+          : estimativaModel.idEvento,
+      if (idUsuario != null && idUsuario.trim().isNotEmpty)
+        'id_usuario': idUsuario.trim(),
       'tipo_evento': tipoEvento,
 
       // Mantém compatibilidade com validadores que aceitam perfil como objeto.

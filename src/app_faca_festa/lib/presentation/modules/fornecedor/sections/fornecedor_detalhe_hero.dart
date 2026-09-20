@@ -550,7 +550,7 @@ extension _FornecedorDetalheHero on FornecedorDetalheScreen {
                   icon: const Icon(Icons.request_quote_rounded,
                       size: 19, color: Colors.white),
                   label: Text(
-                    'Pedir orçamento',
+                    'Pedir preço',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(

@@ -26,7 +26,7 @@ class ConviteNaoEncontradoScreen extends StatelessWidget {
                   size: 64, color: Colors.orange.shade700),
               const SizedBox(height: 20),
               Text(
-                'Nenhum convite vinculado',
+                'Convite não encontrado',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   fontSize: 22,
@@ -35,8 +35,8 @@ class ConviteNaoEncontradoScreen extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'Esta conta de convidado ainda não está ligada a um evento. '
-                'Abra o link do convite enviado pelo organizador.',
+                'Este link de convite não está ligado a uma festa, ou já expirou. '
+                'Peça um novo link ao organizador e abra-o de novo.',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.poppins(
                   fontSize: 14,

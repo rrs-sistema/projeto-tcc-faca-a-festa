@@ -14,24 +14,40 @@ extension _AreaConvidadoTarefasSection on _AreaConvidadoHomeScreenState {
       final tarefas = tarefaController.tarefas
           .where((tarefa) =>
               tarefa.idEvento == evento.idEvento &&
-              (visita || tarefa.idResponsavel == convidado.idConvidado))
+              tarefa.ehDoConvidado(convidado.idConvidado))
           .toList();
 
       if (tarefas.isEmpty) {
-        return _emptyState(
+        return FestaEmptyState(
           icon: Icons.task_alt_rounded,
-          message: 'Nenhuma tarefa 📋',
-          subtitle: visita
-              ? 'O organizador ainda não cadastrou tarefas para este evento.'
-              : 'O organizador pode atribuir tarefas para você futuramente.',
+          title: 'Nenhuma tarefa sua',
+          message: visita
+              ? 'Quando o anfitrião atribuir algo a você, aparece aqui. Entre para marcar o andamento.'
+              : 'Se o anfitrião atribuir algo a você, aparece aqui.',
+          actionLabel: visita ? 'Entrar ou criar conta' : null,
+          actionIcon: Icons.login_rounded,
+          onAction: visita ? _abrirContaConvidado : null,
+          color: primary,
+          compact: true,
         );
       }
 
-      return ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 80), // 🔹 Compacto
-        itemCount: tarefas.length,
-        itemBuilder: (context, i) =>
-            _tarefaCard(tarefas[i], primary, somenteLeitura: visita),
+      return Column(
+        children: [
+          if (visita)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: _bannerContaParaTarefas(),
+            ),
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              itemCount: tarefas.length,
+              itemBuilder: (context, i) =>
+                  _tarefaCard(tarefas[i], primary, somenteLeitura: visita),
+            ),
+          ),
+        ],
       );
     });
   }
@@ -162,6 +178,9 @@ extension _AreaConvidadoTarefasSection on _AreaConvidadoHomeScreenState {
   }
 
   Future<void> _atualizarStatusTarefa(Tarefa tarefa, String novoStatus) async {
+    if (_visitaPorLink || !tarefa.ehDoConvidado(widget.convidado.idConvidado)) {
+      return;
+    }
     final status = StatusTarefa.fromString(novoStatus);
     final atualizado =
         await tarefaController.atualizarStatus(tarefa.idTarefa, status);
@@ -169,35 +188,5 @@ extension _AreaConvidadoTarefasSection on _AreaConvidadoHomeScreenState {
       Get.snackbar('Erro', 'Não foi possível atualizar a tarefa.',
           snackPosition: SnackPosition.BOTTOM);
     }
-  }
-
-  Widget _emptyState(
-      {required IconData icon, required String message, String? subtitle}) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon,
-                size: 48,
-                color: theme.primaryColor.value
-                    .withValues(alpha: 0.6)), // 🔹 Menor
-            const SizedBox(height: 12),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                    fontSize: 14, fontWeight: FontWeight.w600)),
-            if (subtitle != null) ...[
-              const SizedBox(height: 6),
-              Text(subtitle,
-                  textAlign: TextAlign.center,
-                  style:
-                      GoogleFonts.poppins(fontSize: 12, color: Colors.black54)),
-            ],
-          ],
-        ),
-      ),
-    );
   }
 }

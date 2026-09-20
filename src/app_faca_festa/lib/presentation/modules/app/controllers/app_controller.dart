@@ -218,6 +218,9 @@ class AppController extends GetxController {
 
   void iniciarSessao() => _cicloSessao.iniciar();
 
+  void reterNaSplash({Duration minimo = const Duration(milliseconds: 4500)}) =>
+      _cicloSessao.reterNaSplash(minimo: minimo);
+
   RxString get conviteToken => convite.conviteToken;
   RxBool get acessoPorLink => convite.acessoPorLink;
   bool get fluxoConviteAtivo => convite.fluxoConviteAtivo;

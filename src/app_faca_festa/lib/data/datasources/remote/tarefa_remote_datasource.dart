@@ -14,9 +14,14 @@ class TarefaRemoteDatasource {
   Stream<List<TarefaModel>> observarPorEvento(
     String idEvento, {
     bool ordenarPorData = false,
+    String? idResponsavel,
   }) {
     Query<Map<String, dynamic>> query =
         _tarefas.where('id_evento', isEqualTo: idEvento);
+    final responsavel = idResponsavel?.trim() ?? '';
+    if (responsavel.isNotEmpty) {
+      query = query.where('id_responsavel', isEqualTo: responsavel);
+    }
     if (ordenarPorData) {
       query = query.orderBy('data_prevista', descending: false);
     }

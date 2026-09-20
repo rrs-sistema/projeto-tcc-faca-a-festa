@@ -587,7 +587,7 @@ class _TarefaFake extends Fake implements TarefaController {
   final pendente = Completer<void>();
 
   @override
-  Future<void> listenTarefas(String idEvento) {
+  Future<void> listenTarefas(String idEvento, {String? idResponsavel}) {
     return _segurar(
       log,
       call: 'tarefa.listen:$idEvento',

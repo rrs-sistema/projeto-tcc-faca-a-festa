@@ -8,6 +8,7 @@ import 'package:app_faca_festa/presentation/modules/app/controllers/app_controll
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
+import 'package:app_faca_festa/presentation/widgets/festa_empty_state.dart';
 import './tarefa_dialog.dart';
 import 'package:get/get.dart';
 
@@ -56,28 +57,9 @@ class TarefasScreen extends StatelessWidget {
           themeController: themeController,
           acoes: [
             IconButton(
+              tooltip: 'Criar tarefa',
               icon: const Icon(Icons.add_task_outlined, color: Colors.white),
-              onPressed: () async {
-                await tarefaController.carregarUsuarios();
-                await showTarefaDialog(
-                  context: context,
-                  themeController: themeController,
-                  idUsuarioLogado: appController.usuarioLogado.value?.idUsuario,
-                  usuarios: [
-                    ...convidadoController.convidados,
-                    ...tarefaController.usuarios,
-                  ],
-                  onSave: (titulo, descricao, data, usuario) async {
-                    await tarefaController.adicionarTarefa(
-                        nome: titulo,
-                        descricao: descricao,
-                        dataPrevista: data,
-                        idResponsavel: usuario.idConvidado,
-                        idEvento:
-                            eventoController.eventoAtualEntidade!.idEvento);
-                  },
-                );
-              },
+              onPressed: () => _abrirNovaTarefa(context),
             ),
           ],
         ),
@@ -155,7 +137,7 @@ class TarefasScreen extends StatelessWidget {
             Expanded(
               child: Obx(() {
                 if (tarefas.isEmpty) {
-                  return _buildEmptyState(gradient, primary);
+                  return _buildEmptyState(context, primary);
                 }
 
                 return ListView.builder(
@@ -203,51 +185,37 @@ class TarefasScreen extends StatelessWidget {
     });
   }
 
-  Widget _buildEmptyState(LinearGradient gradient, Color primary) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          ShaderMask(
-            shaderCallback: (rect) => gradient.createShader(rect),
-            child: const Icon(Icons.fact_check_outlined,
-                size: 60, color: Colors.white), // Menor
-          ),
-          const SizedBox(height: 14),
-          Text(
-            'Nenhuma tarefa cadastrada ainda',
-            style: TextStyle(
-              color: primary,
-              fontWeight: FontWeight.bold,
-              fontSize: 15,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Toque no ícone ',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-              Icon(Icons.add_task_outlined,
-                  color: Colors.grey.shade700, size: 18),
-              Text(
-                ' acima para criar!',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade700,
-                ),
-              ),
-            ],
-          )
-        ],
-      ),
+  Future<void> _abrirNovaTarefa(BuildContext context) async {
+    await tarefaController.carregarUsuarios();
+    await showTarefaDialog(
+      context: context,
+      themeController: themeController,
+      idUsuarioLogado: appController.usuarioLogado.value?.idUsuario,
+      usuarios: [
+        ...convidadoController.convidados,
+        ...tarefaController.usuarios,
+      ],
+      onSave: (titulo, descricao, data, usuario) async {
+        await tarefaController.adicionarTarefa(
+          nome: titulo,
+          descricao: descricao,
+          dataPrevista: data,
+          idResponsavel: usuario.idConvidado,
+          idEvento: eventoController.eventoAtualEntidade!.idEvento,
+        );
+      },
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, Color primary) {
+    return FestaEmptyState(
+      icon: Icons.fact_check_outlined,
+      title: 'Nenhuma tarefa ainda',
+      message:
+          'Anote o que falta para o dia da festa, com prazo e responsável.',
+      actionLabel: 'Criar primeira tarefa',
+      onAction: () => _abrirNovaTarefa(context),
+      color: primary,
     );
   }
 }

@@ -25,6 +25,9 @@ extension CalculadoraFestaAnaliseIa on CalculadoraFestaController {
         itensCalculados: itensCalculados.toList(),
         tipoEvento: tipoEventoAtual.value,
         orcamentoDisponivel: orcamentoDisponivel.value,
+        idCalculo: calculoReferencia.idCalculo,
+        idEvento: calculoReferencia.idEvento,
+        idUsuario: calculoReferencia.idUsuario ?? _uidAtual,
       );
 
       if (!force && versaoSolicitada != _versaoAnaliseIA.value) {

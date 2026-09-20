@@ -38,4 +38,24 @@ void main() {
     expect(model.status, StatusTarefa.concluida);
     expect(model.dataCadastro, tarefa.dataCadastro);
   });
+
+  test('guest ownership matches only the assigned responsible', () {
+    final minha = Tarefa(
+      idTarefa: 'tarefa-1',
+      idEvento: 'evento-1',
+      titulo: 'Cotação do vestido',
+      idResponsavel: 'convidado-silvio',
+    );
+    final deOutro = minha.copyWith(idResponsavel: 'convidado-outro');
+    final semResponsavel = Tarefa(
+      idTarefa: 'tarefa-2',
+      idEvento: 'evento-1',
+      titulo: 'Sem responsável',
+    );
+
+    expect(minha.ehDoConvidado('convidado-silvio'), isTrue);
+    expect(deOutro.ehDoConvidado('convidado-silvio'), isFalse);
+    expect(semResponsavel.ehDoConvidado('convidado-silvio'), isFalse);
+    expect(minha.ehDoConvidado(''), isFalse);
+  });
 }

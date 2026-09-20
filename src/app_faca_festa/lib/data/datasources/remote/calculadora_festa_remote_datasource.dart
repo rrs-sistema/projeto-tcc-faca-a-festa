@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 import '../../models/cardapio/cardapio_item_model.dart';
 import '../../models/convidado/convidado_model.dart';
@@ -15,6 +16,7 @@ import 'package:app_faca_festa/domain/entities/calculadora_festa.dart';
 /// relacionados à coleção `calculadora_festa`.
 class CalculadoraFestaRemoteDatasource {
   final FirebaseFirestore _db;
+  final FirebaseAuth _auth;
 
   static const String collectionCalculadora = 'calculadora_festa';
   static const String collectionConvidado = 'convidado';
@@ -22,8 +24,11 @@ class CalculadoraFestaRemoteDatasource {
   static const String collectionOrcamentos = 'orcamento';
   static const String subcollectionItens = 'itens';
 
-  CalculadoraFestaRemoteDatasource({required FirebaseFirestore firestore})
-      : _db = firestore;
+  CalculadoraFestaRemoteDatasource({
+    required FirebaseFirestore firestore,
+    required FirebaseAuth auth,
+  })  : _db = firestore,
+        _auth = auth;
 
   CollectionReference<Map<String, dynamic>> get _calculadoraCollection {
     return _db.collection(collectionCalculadora);
@@ -75,7 +80,7 @@ class CalculadoraFestaRemoteDatasource {
 
     batch.set(
       calculoRef,
-      calculoModel.toMap(),
+      _mapComDono(calculoModel.toMap()),
       SetOptions(merge: true),
     );
 
@@ -445,6 +450,18 @@ class CalculadoraFestaRemoteDatasource {
       },
       SetOptions(merge: true),
     );
+  }
+
+  Map<String, dynamic> _mapComDono(Map<String, dynamic> dados) {
+    final uid = _auth.currentUser?.uid.trim();
+    if (uid == null || uid.isEmpty) {
+      throw StateError(
+        'É preciso estar autenticado para salvar a simulação da calculadora.',
+      );
+    }
+
+    dados['id_usuario'] = uid;
+    return dados;
   }
 
   String _gerarIdOrcamento({

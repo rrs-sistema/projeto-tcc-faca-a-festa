@@ -214,9 +214,9 @@ class _PresentesSectionState extends State<PresentesSection> {
     return _PremiumMessageState(
       primary: primary,
       icon: Icons.redeem_rounded,
-      title: 'Lista sendo preparada 🎁',
+      title: 'Ainda não há lista de presentes',
       subtitle:
-          'O organizador ainda está escolhendo os presentes. Volte em breve para participar desse momento especial.',
+          'O anfitrião ainda não cadastrou itens. Quando a lista estiver pronta, você escolhe aqui.',
     );
   }
 
@@ -224,9 +224,8 @@ class _PresentesSectionState extends State<PresentesSection> {
     return _PremiumMessageState(
       primary: primary,
       icon: Icons.manage_search_rounded,
-      title: 'Nada por aqui nesse filtro',
-      subtitle:
-          'Troque o filtro para ver outras formas de presentear os organizadores.',
+      title: 'Nada neste filtro',
+      subtitle: 'Troque o filtro para ver outros presentes da festa.',
       compact: true,
     );
   }

@@ -642,7 +642,9 @@ class _ResultadoItemTile extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  item.regraAplicada,
+                  item.regraAplicada.trim().isEmpty
+                      ? 'Sugestão da calculadora'
+                      : 'Sugestão · ${item.regraAplicada}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.poppins(

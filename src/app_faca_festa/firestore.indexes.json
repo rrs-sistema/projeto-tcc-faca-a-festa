@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "tarefa",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "id_evento", "order": "ASCENDING" },
+        { "fieldPath": "id_responsavel", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "fornecedores",
       "queryScope": "COLLECTION_GROUP",
       "fields": [

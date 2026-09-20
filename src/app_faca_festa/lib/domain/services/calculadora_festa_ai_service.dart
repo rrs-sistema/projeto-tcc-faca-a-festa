@@ -13,5 +13,8 @@ abstract class ICalculadoraFestaAIService {
     required List<CalculadoraFestaItem> itensCalculados,
     required String tipoEvento,
     double? orcamentoDisponivel,
+    String? idCalculo,
+    String? idEvento,
+    String? idUsuario,
   });
 }

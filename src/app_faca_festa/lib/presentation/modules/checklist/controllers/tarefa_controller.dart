@@ -47,6 +47,7 @@ class TarefaController extends GetxController {
   StreamSubscription<List<Tarefa>>? _tarefasSubscription;
   StreamSubscription<List<Convidado>>? _convidadosSubscription;
   String _idEventoUsuarios = '';
+  String _idResponsavelEscuta = '';
 
   EventoController? get _eventoAtualController {
     if (_eventoController != null) return _eventoController;
@@ -63,11 +64,23 @@ class TarefaController extends GetxController {
     return _appControllerResolver?.call();
   }
 
-  Future<void> listenTarefas(String idEvento) async {
+  Future<void> listenTarefas(String idEvento, {String? idResponsavel}) async {
     if (idEvento.isEmpty) return;
     carregando.value = true;
     erro.value = '';
-    await _iniciarEscuta(idEvento, ordenarPorData: false);
+    if (idResponsavel != null && idResponsavel.trim().isEmpty) {
+      await _tarefasSubscription?.cancel();
+      _tarefasSubscription = null;
+      _idResponsavelEscuta = '';
+      tarefas.clear();
+      carregando.value = false;
+      return;
+    }
+    await _iniciarEscuta(
+      idEvento,
+      ordenarPorData: false,
+      idResponsavel: idResponsavel,
+    );
   }
 
   void listenTarefas00(String? idEvento) {
@@ -79,13 +92,20 @@ class TarefaController extends GetxController {
   Future<void> _iniciarEscuta(
     String idEvento, {
     required bool ordenarPorData,
+    String? idResponsavel,
   }) async {
+    final responsavel = idResponsavel?.trim() ?? '';
+    _idResponsavelEscuta = responsavel;
     await _tarefasSubscription?.cancel();
     _tarefasSubscription = _repository
-        .observarPorEvento(idEvento, ordenarPorData: ordenarPorData)
+        .observarPorEvento(
+          idEvento,
+          ordenarPorData: ordenarPorData,
+          idResponsavel: responsavel.isEmpty ? null : responsavel,
+        )
         .listen(
       (lista) {
-        tarefas.assignAll(lista);
+        tarefas.assignAll(_filtrarPorResponsavel(lista));
         carregando.value = false;
       },
       onError: (Object error, StackTrace stackTrace) {
@@ -95,6 +115,12 @@ class TarefaController extends GetxController {
         carregando.value = false;
       },
     );
+  }
+
+  List<Tarefa> _filtrarPorResponsavel(List<Tarefa> lista) {
+    final responsavel = _idResponsavelEscuta.trim();
+    if (responsavel.isEmpty) return lista;
+    return lista.where((tarefa) => tarefa.ehDoConvidado(responsavel)).toList();
   }
 
   Future<void> carregarUsuarios() async {
@@ -200,16 +226,29 @@ class TarefaController extends GetxController {
   }
 
   List<Tarefa> tarefasProximas({int diasLimite = 30}) {
-    final hoje = DateTime.now().subtract(const Duration(days: 150));
-    final limite = hoje.add(Duration(days: diasLimite));
-    return tarefas
+    final agora = DateTime.now();
+    final limite = agora.add(Duration(days: diasLimite));
+    return tarefasPendentesOrdenadas
         .where((tarefa) =>
-            tarefa.dataPrevista != null &&
-            tarefa.dataPrevista!
-                .isAfter(hoje.subtract(const Duration(days: 1))) &&
-            tarefa.dataPrevista!.isBefore(limite))
-        .toList()
-      ..sort((a, b) => a.dataPrevista!.compareTo(b.dataPrevista!));
+            tarefa.dataPrevista == null ||
+            !tarefa.dataPrevista!.isAfter(limite))
+        .toList();
+  }
+
+  /// Pendentes da festa, as com data mais perto primeiro.
+  List<Tarefa> get tarefasPendentesOrdenadas {
+    final pendentes = tarefas
+        .where((tarefa) => tarefa.status != StatusTarefa.concluida)
+        .toList();
+    pendentes.sort((a, b) {
+      final dataA = a.dataPrevista;
+      final dataB = b.dataPrevista;
+      if (dataA == null && dataB == null) return 0;
+      if (dataA == null) return 1;
+      if (dataB == null) return -1;
+      return dataA.compareTo(dataB);
+    });
+    return pendentes;
   }
 
   double get progresso {
@@ -301,6 +340,7 @@ class TarefaController extends GetxController {
     _tarefasSubscription = null;
     _convidadosSubscription = null;
     _idEventoUsuarios = '';
+    _idResponsavelEscuta = '';
     tarefas.clear();
     usuarios.clear();
   }
@@ -311,6 +351,7 @@ class TarefaController extends GetxController {
     _tarefasSubscription = null;
     _convidadosSubscription = null;
     _idEventoUsuarios = '';
+    _idResponsavelEscuta = '';
     tarefas.clear();
     usuarios.clear();
   }

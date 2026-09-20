@@ -1,6 +1,6 @@
 part of '../pages/orcamento_screen.dart';
 
-extension _OrcamentoListaSection on OrcamentoScreen {
+extension _OrcamentoListaSection on _OrcamentoScreenState {
   Widget _categoriaCard(
     BuildContext context,
     Orcamento orcamento,

@@ -111,9 +111,8 @@ class FornecedorAguardandoAprovacaoScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          'Seu cadastro ainda não foi aprovado pelo administrador. '
-                          'Enquanto isso, o painel operacional permanece bloqueado: '
-                          'sem cotações, catálogo ou inteligência comercial.',
+                          'A análise costuma levar até 2 dias úteis. '
+                          'Enquanto isso, nada precisa ser reenviado: o painel de pedidos, catálogo e conversas abre quando o cadastro for aprovado.',
                           textAlign: TextAlign.center,
                           style: GoogleFonts.poppins(
                             fontSize: 13,

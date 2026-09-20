@@ -34,14 +34,16 @@ class _MinhasReferenciasEventoScreenState
   EventThemeController get themeController => widget.themeController;
   final RxString filtroStatus = 'todos'.obs;
 
-  static const List<String> statusOptions = [
+  static const List<String> statusFiltroOptions = [
     'todos',
     'salva',
-    'em_analise',
     'orcar',
-    'aprovada',
-    'contratada',
-    'executada',
+    'descartada',
+  ];
+
+  static const List<String> statusEditorOptions = [
+    'salva',
+    'orcar',
     'descartada',
   ];
 
@@ -271,7 +273,7 @@ class _MinhasReferenciasEventoScreenState
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         child: Row(
-          children: statusOptions.map((status) {
+          children: statusFiltroOptions.map((status) {
             final selected = filtroStatus.value == status;
             return GestureDetector(
               onTap: () {
@@ -618,145 +620,256 @@ class _MinhasReferenciasEventoScreenState
     final prioridadeSelecionada = ref.prioridade.obs;
     String anotacaoAtual = ref.anotacao;
 
-    Get.bottomSheet(
-      SafeArea(
-        child: Container(
-          padding:
-              const EdgeInsets.fromLTRB(16, 12, 16, 16), // 🔹 Mais compacto
-          decoration: const BoxDecoration(
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: false,
+      isDismissible: true,
+      enableDrag: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.black.withValues(alpha: 0.55),
+      builder: (sheetContext) {
+        final teclado = MediaQuery.viewInsetsOf(sheetContext).bottom;
+        final barraSistema = MediaQuery.viewPaddingOf(sheetContext).bottom;
+
+        return Padding(
+          padding: EdgeInsets.only(bottom: teclado),
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: IconTheme(
+              data: const IconThemeData(color: Color(0xFF1F2937), size: 22),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(sheetContext).height - teclado,
+                ),
+                child: Material(
               color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
-                        borderRadius: BorderRadius.circular(10)),
-                  ),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(24)),
+              clipBehavior: Clip.antiAlias,
+              child: SingleChildScrollView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  10,
+                  8,
+                  12 + (teclado > 0 ? 0 : barraSistema),
                 ),
-                Text('Editar referência',
-                    style: GoogleFonts.poppins(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w800,
-                        color: const Color(0xFF172033))),
-                Text(ref.titulo,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.poppins(
-                        fontSize: 12, color: Colors.grey.shade600)),
-                const SizedBox(height: 16),
-                Text('Status',
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700, fontSize: 12)),
-                const SizedBox(height: 6),
-                Obx(() => Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: statusOptions
-                          .where((s) => s != 'todos')
-                          .map((status) {
-                        final selected = statusSelecionado.value == status;
-                        return ChoiceChip(
-                          selected: selected,
-                          label: Text(_labelStatus(status)),
-                          onSelected: (_) => statusSelecionado.value = status,
-                          selectedColor: primary.withValues(alpha: 0.15),
-                          labelStyle: GoogleFonts.poppins(
-                              color: selected ? primary : Colors.grey.shade800,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11),
-                        );
-                      }).toList(),
-                    )),
-                const SizedBox(height: 16),
-                Text('Prioridade',
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700, fontSize: 12)),
-                const SizedBox(height: 6),
-                Obx(() => Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: prioridadeOptions.map((prioridade) {
-                        final selected =
-                            prioridadeSelecionada.value == prioridade;
-                        return ChoiceChip(
-                          selected: selected,
-                          label: Text(_labelPrioridade(prioridade)),
-                          onSelected: (_) =>
-                              prioridadeSelecionada.value = prioridade,
-                          selectedColor: primary.withValues(alpha: 0.15),
-                          labelStyle: GoogleFonts.poppins(
-                              color: selected ? primary : Colors.grey.shade800,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 11),
-                        );
-                      }).toList(),
-                    )),
-                const SizedBox(height: 16),
-                Text('Anotação',
-                    style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700, fontSize: 12)),
-                const SizedBox(height: 6),
-                TextFormField(
-                  initialValue: anotacaoAtual,
-                  minLines: 2,
-                  maxLines: 4,
-                  onChanged: (value) => anotacaoAtual = value,
-                  style: GoogleFonts.poppins(fontSize: 12),
-                  decoration: InputDecoration(
-                    hintText: 'Suas observações...',
-                    filled: true,
-                    fillColor: Colors.grey.shade50,
-                    contentPadding: const EdgeInsets.all(12),
-                    border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300)),
-                    enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey.shade300)),
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Center(
+                      child: Container(
+                        width: 40,
+                        height: 4,
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Editar referência',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: const Color(0xFF172033),
+                                ),
+                              ),
+                              Text(
+                                ref.titulo,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Fechar',
+                          onPressed: () => Navigator.of(sheetContext).pop(),
+                          color: const Color(0xFF1F2937),
+                          icon: const Icon(Icons.close_rounded),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Status',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w700, fontSize: 12)),
+                          const SizedBox(height: 6),
+                          Obx(() {
+                            final atual = statusSelecionado.value;
+                            final opcoes = [
+                              ...statusEditorOptions,
+                              if (atual.isNotEmpty &&
+                                  atual != 'todos' &&
+                                  !statusEditorOptions.contains(atual))
+                                atual,
+                            ];
+                            return Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: opcoes.map((status) {
+                                final selected =
+                                    statusSelecionado.value == status;
+                                return ChoiceChip(
+                                  selected: selected,
+                                  showCheckmark: true,
+                                  checkmarkColor: primary,
+                                  label: Text(_labelStatus(status)),
+                                  onSelected: (_) =>
+                                      statusSelecionado.value = status,
+                                  selectedColor:
+                                      primary.withValues(alpha: 0.15),
+                                  labelStyle: GoogleFonts.poppins(
+                                      color: selected
+                                          ? primary
+                                          : Colors.grey.shade800,
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 11),
+                                );
+                              }).toList(),
+                            );
+                          }),
+                          const SizedBox(height: 16),
+                          Text('Prioridade',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w700, fontSize: 12)),
+                          const SizedBox(height: 6),
+                          Obx(() => Wrap(
+                                spacing: 6,
+                                runSpacing: 6,
+                                children: prioridadeOptions.map((prioridade) {
+                                  final selected =
+                                      prioridadeSelecionada.value ==
+                                          prioridade;
+                                  return ChoiceChip(
+                                    selected: selected,
+                                    showCheckmark: true,
+                                    checkmarkColor: primary,
+                                    label: Text(_labelPrioridade(prioridade)),
+                                    onSelected: (_) =>
+                                        prioridadeSelecionada.value =
+                                            prioridade,
+                                    selectedColor:
+                                        primary.withValues(alpha: 0.15),
+                                    labelStyle: GoogleFonts.poppins(
+                                        color: selected
+                                            ? primary
+                                            : Colors.grey.shade800,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 11),
+                                  );
+                                }).toList(),
+                              )),
+                          const SizedBox(height: 16),
+                          Text('Anotação',
+                              style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w700, fontSize: 12)),
+                          const SizedBox(height: 6),
+                          TextFormField(
+                            initialValue: anotacaoAtual,
+                            minLines: 2,
+                            maxLines: 4,
+                            onChanged: (value) => anotacaoAtual = value,
+                            style: GoogleFonts.poppins(fontSize: 12),
+                            decoration: InputDecoration(
+                              hintText: 'Suas observações...',
+                              filled: true,
+                              fillColor: Colors.grey.shade50,
+                              contentPadding: const EdgeInsets.all(12),
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                      color: Colors.grey.shade300)),
+                              enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  borderSide: BorderSide(
+                                      color: Colors.grey.shade300)),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            children: [
+                              TextButton(
+                                onPressed: () =>
+                                    Navigator.of(sheetContext).pop(),
+                                child: Text(
+                                  'Cancelar',
+                                  style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    FocusScope.of(sheetContext).unfocus();
+                                    await controller
+                                        .atualizarReferenciaPlanejamento(
+                                      referenciaId: ref.id,
+                                      status: statusSelecionado.value,
+                                      prioridade: prioridadeSelecionada.value,
+                                      anotacao: anotacaoAtual.trim(),
+                                    );
+                                    if (sheetContext.mounted) {
+                                      Navigator.of(sheetContext).pop();
+                                    }
+                                  },
+                                  icon: const Icon(Icons.save_rounded,
+                                      color: Colors.white, size: 16),
+                                  label: Text(
+                                    'Salvar alterações',
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w700,
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: primary,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      FocusScope.of(context).unfocus();
-                      await controller.atualizarReferenciaPlanejamento(
-                          referenciaId: ref.id,
-                          status: statusSelecionado.value,
-                          prioridade: prioridadeSelecionada.value,
-                          anotacao: anotacaoAtual.trim());
-                      if (Get.isBottomSheetOpen == true) Get.back();
-                    },
-                    icon: const Icon(Icons.save_rounded,
-                        color: Colors.white, size: 16),
-                    label: Text('Salvar alterações',
-                        style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            fontSize: 13)),
-                    style: ElevatedButton.styleFrom(
-                        backgroundColor: primary,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12))),
-                  ),
-                ),
-              ],
+              ),
+            ),
+              ),
             ),
           ),
-        ),
-      ),
-      isScrollControlled: true,
+        );
+      },
     );
   }
 
@@ -954,7 +1067,7 @@ class _MinhasReferenciasEventoScreenState
         'todos': 'Todos',
         'salva': 'Salva',
         'em_analise': 'Análise',
-        'orcar': 'Orçar',
+        'orcar': 'Quero orçar',
         'aprovada': 'Aprovada',
         'contratada': 'Contratada',
         'executada': 'Executada',
