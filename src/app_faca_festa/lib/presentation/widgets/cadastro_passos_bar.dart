@@ -67,6 +67,7 @@ class CadastroPassosAcoes extends StatelessWidget {
     required this.onContinuar,
     this.onVoltar,
     this.carregando = false,
+    this.habilitado = true,
   });
 
   final Color cor;
@@ -74,6 +75,7 @@ class CadastroPassosAcoes extends StatelessWidget {
   final VoidCallback onContinuar;
   final VoidCallback? onVoltar;
   final bool carregando;
+  final bool habilitado;
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +108,7 @@ class CadastroPassosAcoes extends StatelessWidget {
           child: SizedBox(
             height: 48,
             child: ElevatedButton(
-              onPressed: carregando ? null : onContinuar,
+              onPressed: carregando || !habilitado ? null : onContinuar,
               style: ElevatedButton.styleFrom(
                 backgroundColor: cor,
                 foregroundColor: Colors.white,

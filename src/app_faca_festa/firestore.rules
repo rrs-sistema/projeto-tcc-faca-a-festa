@@ -127,6 +127,34 @@ service cloud.firestore {
       match /enderecos/{enderecoId} {
         allow read, write: if isAdmin() || (signedIn() && uid() == userId);
       }
+
+      match /solicitacoes_lgpd/{solicitacaoId} {
+        allow read: if isAdmin() || (signedIn() && uid() == userId);
+        allow create: if signedIn()
+          && uid() == userId
+          && request.resource.data.keys().hasOnly(['id', 'tipo', 'resumo', 'status', 'criado_em', 'id_usuario', 'nome_titular', 'email_titular'])
+          && request.resource.data.id == solicitacaoId
+          && request.resource.data.id_usuario == userId
+          && request.resource.data.tipo in ['acesso', 'correcao', 'exclusao', 'anonimizacao', 'oposicao', 'revogacao']
+          && request.resource.data.resumo is string
+          && request.resource.data.resumo.size() > 0
+          && request.resource.data.resumo.size() <= 500
+          && request.resource.data.nome_titular is string
+          && request.resource.data.nome_titular.size() <= 120
+          && request.resource.data.email_titular is string
+          && request.resource.data.email_titular.size() <= 160
+          && request.resource.data.status == 'registrada';
+        allow update, delete: if isAdmin();
+      }
+    }
+
+    match /{path=**}/solicitacoes_lgpd/{solicitacaoId} {
+      allow read: if isAdmin();
+    }
+
+    match /lgpd_protocolos/{protocoloId} {
+      allow read: if isAdmin();
+      allow write: if false;
     }
 
     // collectionGroup('enderecos') exige regra no ID da coleção, não só no caminho aninhado.

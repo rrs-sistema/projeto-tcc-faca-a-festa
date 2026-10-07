@@ -16,6 +16,7 @@ import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/domain/entities/tarefa.dart';
 import 'package:app_faca_festa/domain/usecases/get_gifts/gift_usecases.dart';
+import 'package:app_faca_festa/presentation/modules/legal/widgets/aviso_dados_convite_dialog.dart';
 import 'package:app_faca_festa/presentation/widgets/confetti_background.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_empty_state.dart';
 import 'package:app_faca_festa/presentation/widgets/tema_capa_imagem.dart';
@@ -85,6 +86,10 @@ class _AreaConvidadoHomeScreenState extends State<AreaConvidadoHomeScreen> {
         fallbackNomeTipo: eventoController.tipoEventoAtualEntidade?.nome,
       ),
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(mostrarAvisoDadosConvite(context));
+    });
   }
 
   @override

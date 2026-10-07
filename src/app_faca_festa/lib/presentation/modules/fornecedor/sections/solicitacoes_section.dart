@@ -11,6 +11,7 @@ import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/forne
 import 'package:app_faca_festa/presentation/modules/cotacao/controllers/solicitacoes_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/components/show_responder_cotacao_bottom_sheet.dart';
+import 'package:app_faca_festa/presentation/modules/legal/widgets/aviso_lgpd_card.dart';
 
 class SolicitacoesSection extends StatefulWidget {
   const SolicitacoesSection({
@@ -823,6 +824,8 @@ class _CotacoesShell extends StatelessWidget {
               );
             },
           ),
+          const SizedBox(height: 12),
+          const AvisoLgpdCard(texto: AvisoLgpdCard.acessoRestritoCotacao),
           const SizedBox(height: 12),
           child,
         ],

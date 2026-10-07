@@ -4,17 +4,20 @@ Future<void> _showAddGastoDialog(
   BuildContext context, {
   required String idOrcamento,
   required String categoria,
+  required double custoEstimado,
   required EventThemeController themeController,
   required OrcamentoController orcamentoController,
 }) async {
   final gastoController = orcamentoController.gastoController(idOrcamento);
 
-  final nomeCtrl = TextEditingController();
-  final custoCtrl = TextEditingController();
-  final pagoCtrl = TextEditingController();
-  final formKey = GlobalKey<FormState>();
   final dinheiroCusto = FormMasks.dinheiro();
   final dinheiroPago = FormMasks.dinheiro();
+  final nomeCtrl = TextEditingController();
+  final custoCtrl = TextEditingController(
+    text: custoEstimado > 0 ? dinheiroCusto.formatDouble(custoEstimado) : '',
+  );
+  final pagoCtrl = TextEditingController();
+  final formKey = GlobalKey<FormState>();
   final RxBool salvando = false.obs;
 
   final primary = themeController.primaryColor.value;
@@ -48,8 +51,8 @@ Future<void> _showAddGastoDialog(
         Get.snackbar(
           result.mensagem ?? 'Erro ao adicionar gasto',
           result.excedente != null
-              ? 'Excedeu o limite em R\$ ${result.excedente!.toStringAsFixed(2)}\n'
-                  'Limite permitido: R\$ ${result.limite!.toStringAsFixed(2)}'
+              ? 'Excedeu o limite em R\$ ${Biblioteca.formatarValorDecimal(result.excedente)}\n'
+                  'Limite permitido: R\$ ${Biblioteca.formatarValorDecimal(result.limite)}'
               : '',
           backgroundColor: Colors.redAccent,
           colorText: Colors.white,

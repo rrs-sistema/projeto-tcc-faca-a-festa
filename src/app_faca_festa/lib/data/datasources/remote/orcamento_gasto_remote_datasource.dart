@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../models/orcamento/orcamento_gasto_model.dart';
 import 'package:app_faca_festa/domain/entities/orcamento_validacao_resultado.dart';
+import 'package:app_faca_festa/domain/services/validar_limite_gasto.dart';
 
 class OrcamentoGastoRemoteDatasource {
   OrcamentoGastoRemoteDatasource({
@@ -57,29 +58,20 @@ class OrcamentoGastoRemoteDatasource {
     }
 
     final data = orcamentoSnap.data()!;
-    final double limiteCategoria = (data['custo_estimado'] ?? 0).toDouble();
+    final double limiteCategoria = _comoDouble(data['custo_estimado']);
     final String idEvento = data['id_evento'];
 
     final gastosSnap = await refOrcamento.collection('orcamento_gasto').get();
-    final totalAtual = gastosSnap.docs.fold(
-      0.0,
-      (s, d) => s + (d.data()['custo'] ?? 0.0),
+    final totalPagoCategoria = gastosSnap.docs.fold<double>(
+      0,
+      (soma, doc) => soma + _comoDouble(doc.data()['pago']),
     );
-
-    if (totalAtual + custo > limiteCategoria) {
-      final excedente = (totalAtual + custo) - limiteCategoria;
-
-      return OrcamentoValidacaoResultado.excedeuCategoria(
-        excedente: excedente,
-        limite: limiteCategoria,
-      );
-    }
 
     final eventoSnap = await _db.collection('evento').doc(idEvento).get();
     final double limiteEvento =
-        (eventoSnap.data()?['custo_estimado'] ?? 0).toDouble();
+        _comoDouble(eventoSnap.data()?['custo_estimado']);
 
-    double totalEvento = 0;
+    var totalPagoEvento = 0.0;
     final orcs = await _db
         .collection('orcamento')
         .where('id_evento', isEqualTo: idEvento)
@@ -87,19 +79,20 @@ class OrcamentoGastoRemoteDatasource {
 
     for (final doc in orcs.docs) {
       final gastosCat = await doc.reference.collection('orcamento_gasto').get();
-      for (final g in gastosCat.docs) {
-        totalEvento += (g.data()['custo'] ?? 0).toDouble();
+      for (final gasto in gastosCat.docs) {
+        totalPagoEvento += _comoDouble(gasto.data()['pago']);
       }
     }
 
-    if (totalEvento + custo > limiteEvento) {
-      final excedente = (totalEvento + custo) - limiteEvento;
-
-      return OrcamentoValidacaoResultado.excedeuEvento(
-        excedente: excedente,
-        limite: limiteEvento,
-      );
-    }
+    final limite = ValidarLimiteGasto.avaliar(
+      custo: custo,
+      pago: pago,
+      limiteCategoria: limiteCategoria,
+      totalPagoCategoria: totalPagoCategoria,
+      limiteEvento: limiteEvento,
+      totalPagoEvento: totalPagoEvento,
+    );
+    if (limite != null) return limite;
 
     final idGasto = _uuid.v4();
     final model = OrcamentoGastoModel(
@@ -130,6 +123,11 @@ class OrcamentoGastoRemoteDatasource {
     required String idGasto,
   }) {
     return _gastosRef(idOrcamento).doc(idGasto).delete();
+  }
+
+  double _comoDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    return 0;
   }
 
   CollectionReference<Map<String, dynamic>> _gastosRef(String idOrcamento) {

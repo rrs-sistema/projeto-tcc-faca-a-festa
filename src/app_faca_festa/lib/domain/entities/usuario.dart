@@ -13,6 +13,8 @@ class Usuario {
   final DateTime? dataCadastro;
   final String? cidade;
   final String? uf;
+  final DateTime? aceitePrivacidadeEm;
+  final String? versaoPoliticaPrivacidade;
 
   const Usuario({
     required this.idUsuario,
@@ -29,6 +31,8 @@ class Usuario {
     this.dataCadastro,
     this.cidade,
     this.uf,
+    this.aceitePrivacidadeEm,
+    this.versaoPoliticaPrivacidade,
   });
 
   Usuario copyWith({
@@ -46,6 +50,8 @@ class Usuario {
     DateTime? dataCadastro,
     String? cidade,
     String? uf,
+    DateTime? aceitePrivacidadeEm,
+    String? versaoPoliticaPrivacidade,
   }) =>
       Usuario(
         idUsuario: idUsuario ?? this.idUsuario,
@@ -62,5 +68,8 @@ class Usuario {
         dataCadastro: dataCadastro ?? this.dataCadastro,
         cidade: cidade ?? this.cidade,
         uf: uf ?? this.uf,
+        aceitePrivacidadeEm: aceitePrivacidadeEm ?? this.aceitePrivacidadeEm,
+        versaoPoliticaPrivacidade:
+            versaoPoliticaPrivacidade ?? this.versaoPoliticaPrivacidade,
       );
 }

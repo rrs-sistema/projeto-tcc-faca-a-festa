@@ -10,6 +10,7 @@ import {
   isSmtpNaoConfigurado,
 } from "../../shared/emailCodigo";
 import { admin } from "../../shared/firebaseAdmin";
+import { emailPermiteConvite } from "../lgpd/preferenciasNotificacao";
 
 const REGION = "southamerica-east1";
 const ORIGEM_PUBLICA = "https://faca-a-festa.web.app";
@@ -103,6 +104,11 @@ export const enviarConvitesPorEmail = onCall(
         const email = texto(data.email).toLowerCase();
         if (!EMAIL_OK.test(email)) {
           semEmail.push(idConvidado);
+          continue;
+        }
+        const permite = await emailPermiteConvite(admin.firestore(), email);
+        if (!permite) {
+          falhas.push({ id: idConvidado, motivo: "titular desligou convites" });
           continue;
         }
 

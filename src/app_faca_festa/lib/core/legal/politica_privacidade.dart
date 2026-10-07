@@ -3,7 +3,9 @@ abstract final class PoliticaPrivacidade {
   static const String urlPublica =
       'https://faca-a-festa.web.app/privacidade.html';
 
-  static const String atualizacao = '16 de setembro de 2026';
+  static const String versao = '2026-10-06';
+
+  static const String atualizacao = '6 de outubro de 2026';
 
   static const String introducao =
       'O Faça a Festa (“nós”, “aplicativo”) é um serviço de planejamento de '
@@ -30,19 +32,27 @@ abstract final class PoliticaPrivacidade {
           'Perfil opcional: foto, telefone e endereço.\n\n'
           'Eventos: informações que você cadastra sobre a festa (data, local, '
           'orçamento, checklist, cardápio, lista de presentes e convites).\n\n'
+          'Convidados: nome, contato, confirmação de presença e, quando o '
+          'organizador informa, o tipo (adulto, criança ou bebê) e o grupo '
+          'familiar.\n\n'
           'Fornecedores: dados comerciais como nome fantasia, categorias de '
           'serviço, área de atendimento, fotos do portfólio e, quando '
           'informado, CNPJ.\n\n'
           'Localização: apenas em primeiro plano, quando você autoriza, para '
           'sugerir fornecedores próximos e definir território de atendimento. '
-          'Não rastreamos localização em segundo plano.\n\n'
+          'O match de fornecedores usa cidade e região. O endereço completo '
+          'fica com o organizador do evento. Não rastreamos localização em '
+          'segundo plano.\n\n'
           'Contatos do aparelho: apenas se você autorizar, para facilitar o '
           'convite de convidados. Não enviamos sua agenda a terceiros para '
           'marketing.\n\n'
-          'Mídia: fotos que você escolhe na galeria (capa do evento, perfil ou '
-          'portfólio), enviadas ao Firebase Storage.\n\n'
+          'Mídia: fotos que você escolhe na galeria (capa do evento, perfil, '
+          'referências ou portfólio), enviadas ao Firebase Storage. O envio '
+          'exige a declaração de que há autorização das pessoas que aparecem '
+          'na imagem.\n\n'
           'Notificações: token do dispositivo para enviar avisos sobre cotações, '
-          'convites e avaliações, se você permitir.\n\n'
+          'convites e chat, se você permitir. Na conta, dá para desligar cada '
+          'tipo de aviso.\n\n'
           'Dados técnicos: identificadores de sessão, registros de auditoria de '
           'operações relevantes e diagnóstico de falhas necessários para '
           'segurança e funcionamento.',
@@ -86,9 +96,10 @@ abstract final class PoliticaPrivacidade {
       corpo:
           'Mantemos os dados enquanto a conta estiver ativa e pelo prazo '
           'necessário às obrigações legais e à segurança (por exemplo, '
-          'registros de auditoria). Você pode solicitar a exclusão da conta e '
-          'dos dados associados pelo suporte. Cópias de segurança podem levar '
-          'um prazo adicional para serem eliminadas.',
+          'registros de auditoria). Em Dados protegidos você solicita a exclusão, '
+          'a anonimização, o bloqueio ou a oposição. O pedido gera um protocolo. '
+          'A exclusão da conta é executada pelo administrador na fila de '
+          'protocolos. Logs de auditoria são mantidos por 365 dias.',
     ),
     PoliticaSecao(
       titulo: '7. Seus direitos (LGPD)',
@@ -102,9 +113,14 @@ abstract final class PoliticaPrivacidade {
     PoliticaSecao(
       titulo: '8. Crianças e adolescentes',
       corpo:
-          'O aplicativo destina-se a adultos que organizam eventos ou oferecem '
-          'serviços. Festas infantis são planejadas pelo responsável adulto. '
-          'Não coletamos dados de crianças de forma intencional.',
+          'O cadastro no aplicativo é feito por adultos (organizadores e '
+          'fornecedores). O organizador pode incluir crianças e bebês na lista '
+          'de convidados, apenas com o primeiro nome, para contar lugares e '
+          'buffet. Não pedimos documento, foto nem contato próprio da criança. '
+          'Quem insere esses dados declara ser o responsável, e o tratamento '
+          'segue o art. 14 da LGPD. Ao abrir o convite digital, o convidado é '
+          'informado de que nome, contato e confirmação de presença são usados '
+          'somente naquele evento.',
     ),
     PoliticaSecao(
       titulo: '9. Segurança',
@@ -121,6 +137,15 @@ abstract final class PoliticaPrivacidade {
           'aplicativo ou na legislação. A data de atualização consta no topo '
           'desta página. O uso continuado após a publicação indica ciência da '
           'versão vigente.',
+    ),
+    PoliticaSecao(
+      titulo: '11. Registro das operações',
+      corpo:
+          'O detalhamento de cada tela, dos campos tratados, da finalidade, '
+          'da base legal e da proteção está no aplicativo, em Dados protegidos, '
+          'na área da conta e também a partir desta política. Ali o titular '
+          'pode exportar o dossiê, corrigir o cadastro, revogar avisos, pedir '
+          'anonimização ou bloqueio, registrar oposição e solicitar a exclusão.',
     ),
   ];
 }

@@ -19,6 +19,8 @@ class UsuarioModel extends Usuario {
     super.dataCadastro,
     super.cidade,
     super.uf,
+    super.aceitePrivacidadeEm,
+    super.versaoPoliticaPrivacidade,
   });
 
   factory UsuarioModel.fromEntity(Usuario usuario) => UsuarioModel(
@@ -36,6 +38,8 @@ class UsuarioModel extends Usuario {
         dataCadastro: usuario.dataCadastro,
         cidade: usuario.cidade,
         uf: usuario.uf,
+        aceitePrivacidadeEm: usuario.aceitePrivacidadeEm,
+        versaoPoliticaPrivacidade: usuario.versaoPoliticaPrivacidade,
       );
 
   Map<String, dynamic> toMap() => {
@@ -54,6 +58,10 @@ class UsuarioModel extends Usuario {
             : Timestamp.fromDate(dataCadastro!),
         'cidade': cidade,
         'uf': uf,
+        'aceite_privacidade_em': aceitePrivacidadeEm == null
+            ? null
+            : Timestamp.fromDate(aceitePrivacidadeEm!),
+        'versao_politica_privacidade': versaoPoliticaPrivacidade,
       };
 
   factory UsuarioModel.fromMap(Map<String, dynamic> map) => UsuarioModel(
@@ -68,12 +76,20 @@ class UsuarioModel extends Usuario {
         mfaTotpAtivo: map['mfa_totp_ativo'] == true,
         mfaEmailAtivo: map['mfa_email_ativo'] == true,
         mfaMetodo: (map['mfa_metodo'] ?? '').toString(),
-        dataCadastro: map['data_cadastro'] is Timestamp
-            ? (map['data_cadastro'] as Timestamp).toDate()
-            : null,
+        dataCadastro: _data(map['data_cadastro']),
         cidade: map['cidade'],
         uf: map['uf'],
+        aceitePrivacidadeEm: _data(map['aceite_privacidade_em']),
+        versaoPoliticaPrivacidade:
+            map['versao_politica_privacidade']?.toString(),
       );
+
+  static DateTime? _data(dynamic value) {
+    if (value is Timestamp) return value.toDate();
+    if (value is DateTime) return value;
+    if (value is String) return DateTime.tryParse(value);
+    return null;
+  }
 
   @override
   UsuarioModel copyWith({
@@ -91,6 +107,8 @@ class UsuarioModel extends Usuario {
     DateTime? dataCadastro,
     String? cidade,
     String? uf,
+    DateTime? aceitePrivacidadeEm,
+    String? versaoPoliticaPrivacidade,
   }) =>
       UsuarioModel(
         idUsuario: idUsuario ?? this.idUsuario,
@@ -107,5 +125,8 @@ class UsuarioModel extends Usuario {
         dataCadastro: dataCadastro ?? this.dataCadastro,
         cidade: cidade ?? this.cidade,
         uf: uf ?? this.uf,
+        aceitePrivacidadeEm: aceitePrivacidadeEm ?? this.aceitePrivacidadeEm,
+        versaoPoliticaPrivacidade:
+            versaoPoliticaPrivacidade ?? this.versaoPoliticaPrivacidade,
       );
 }

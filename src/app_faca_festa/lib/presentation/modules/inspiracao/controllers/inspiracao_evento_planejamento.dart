@@ -126,6 +126,9 @@ extension InspiracaoEventoPlanejamento on InspiracaoController {
       return;
     }
 
+    final autorizado = await confirmarDireitoImagem();
+    if (!autorizado) return;
+
     try {
       final picker = ImagePicker();
       final image =

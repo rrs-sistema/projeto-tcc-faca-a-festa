@@ -1,100 +1,164 @@
 part of '../pages/orcamento_screen.dart';
 
+String _reais(double? valor) =>
+    'R\$ ${Biblioteca.formatarValorDecimal(valor)}';
+
 Widget resumoCard(
   LinearGradient gradient, {
-  required double custoEstimado,
-  required double custoFinal,
+  required double limite,
+  required double previsto,
+  required double pago,
 }) {
-  final percent =
-      (custoEstimado > 0) ? (custoFinal / custoEstimado).clamp(0.0, 1.0) : 0.0;
+  final temLimite = limite > 0;
+  final estourou = temLimite && previsto > limite;
+  final percentual =
+      temLimite ? (previsto / limite).clamp(0.0, 1.0) : 0.0;
+  final destaque = !temLimite
+      ? previsto
+      : estourou
+          ? previsto - limite
+          : limite - previsto;
+  final titulo = !temLimite
+      ? 'Sem limite'
+      : estourou
+          ? 'Acima do limite'
+          : 'Ainda cabe';
+  final apoio = temLimite ? 'Limite ${_reais(limite)}' : 'Defina o limite na festa';
 
-  return Container(
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    decoration: BoxDecoration(
-      gradient: gradient,
-      borderRadius: BorderRadius.circular(18),
-      boxShadow: [
-        BoxShadow(
+  return Semantics(
+    container: true,
+    label:
+        '$titulo ${_reais(destaque)}. $apoio. Previsto ${_reais(previsto)}. Pago ${_reais(pago)}.',
+    child: Container(
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
             color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 8,
-            offset: const Offset(0, 4)),
-      ],
-    ),
-    child: Row(
-      children: [
-        CircularPercentIndicator(
-          radius: 34,
-          lineWidth: 5,
-          percent: percent,
-          animation: true,
-          circularStrokeCap: CircularStrokeCap.round,
-          linearGradient: LinearGradient(
-            colors: [gradient.colors.first, gradient.colors.last],
+            offset: const Offset(0, 4),
           ),
-          backgroundColor: Colors.white.withValues(alpha: 0.3),
-          center: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
             children: [
-              Text(
-                '${(percent * 100).toStringAsFixed(0)}%',
-                style: GoogleFonts.poppins(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    fontSize: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titulo,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withValues(alpha: 0.88),
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _reais(destaque),
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 22,
+                        height: 1.15,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      apoio,
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withValues(alpha: 0.82),
+                        fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
               ),
+              if (temLimite) ...[
+                const SizedBox(width: 12),
+                Column(
+                  children: [
+                    CircularPercentIndicator(
+                      radius: 30,
+                      lineWidth: 6,
+                      percent: percentual,
+                      animation: true,
+                      circularStrokeCap: CircularStrokeCap.round,
+                      progressColor: Colors.white,
+                      backgroundColor: Colors.white.withValues(alpha: 0.28),
+                      center: Text(
+                        '${(percentual * 100).toStringAsFixed(0)}%',
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'previsto',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withValues(alpha: 0.85),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 12),
+          Row(
             children: [
-              Text(
-                'Resumo Financeiro',
-                style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13),
-              ),
-              const SizedBox(height: 6),
-              _infoBoxResumo(
-                  'Estimado:',
-                  'R\$ ${Biblioteca.formatarValorDecimal(custoEstimado)}',
-                  Icons.savings_rounded,
-                  Colors.white),
-              const SizedBox(height: 4),
-              _infoBoxResumo(
-                  'Final:',
-                  'R\$ ${Biblioteca.formatarValorDecimal(custoFinal)}',
-                  Icons.stacked_bar_chart_rounded,
-                  Colors.white),
+              _metricaResumo('Previsto', _reais(previsto)),
+              const SizedBox(width: 8),
+              _metricaResumo('Pago', _reais(pago)),
             ],
           ),
-        ),
-      ],
+        ],
+      ),
     ),
   );
 }
 
-Widget _infoBoxResumo(String label, String value, IconData icon, Color color) {
-  return Row(
-    children: [
-      Icon(icon, color: color.withValues(alpha: 0.8), size: 14),
-      const SizedBox(width: 4),
-      Text(
-        label,
-        style: GoogleFonts.poppins(
-            fontSize: 11,
-            color: color.withValues(alpha: 0.8),
-            fontWeight: FontWeight.w500),
+Widget _metricaResumo(String rotulo, String valor) {
+  return Expanded(
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(12),
       ),
-      const Spacer(),
-      Text(
-        value,
-        style: GoogleFonts.poppins(
-            fontWeight: FontWeight.bold, color: Colors.white, fontSize: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            rotulo,
+            style: GoogleFonts.poppins(
+              fontSize: 11,
+              color: Colors.white.withValues(alpha: 0.82),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            valor,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
-    ],
+    ),
   );
 }

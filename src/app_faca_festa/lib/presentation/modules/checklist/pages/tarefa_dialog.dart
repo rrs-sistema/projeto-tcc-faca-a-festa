@@ -1,8 +1,8 @@
-// ignore_for_file: use_build_context_synchronously
-
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
@@ -19,578 +19,767 @@ Future<void> showTarefaDialog({
   Convidado? responsavelInicial,
   required List<Convidado> usuarios,
   bool isEdit = false,
-  required void Function(String, String, DateTime, Convidado) onSave,
+  required Future<String?> Function(
+    String titulo,
+    String descricao,
+    DateTime? data,
+    Convidado responsavel,
+  ) onSave,
 }) async {
   final tituloController = TextEditingController(text: tituloInicial ?? '');
   final descricaoController =
       TextEditingController(text: descricaoInicial ?? '');
-  final dataController = TextEditingController(
-    text: DateFormat('dd/MM/yyyy').format(dataInicial ?? DateTime.now()),
-  );
-  DateTime dataSelecionada = dataInicial ?? DateTime.now();
   final formKey = GlobalKey<FormState>();
-  var autovalidateMode = AutovalidateMode.disabled;
-  String? erroResponsavel;
+  final RxBool salvando = false.obs;
   final usuariosElegiveis = _deduplicarElegiveis(
     usuarios.where((item) => item.podeSerResponsavelTarefa),
   );
-  Convidado? responsavelSelecionado;
-  if (responsavelInicial != null) {
-    for (final item in usuariosElegiveis) {
-      if (item.mesmoIdentificador(responsavelInicial)) {
-        responsavelSelecionado = item;
-        break;
-      }
+  String? erroResponsavel;
+  DateTime? dataSelecionada = dataInicial;
+  var responsavelSelecionado = _responsavelInicial(
+    usuariosElegiveis,
+    responsavelInicial,
+    idUsuarioLogado,
+    manterSomenteInformado: isEdit,
+  );
+
+  final primary = themeController.primaryColor.value;
+  final gradient = themeController.gradient.value;
+  const background = Color(0xFFF8FAFC);
+  const textDark = Color(0xFF1F2937);
+  const textMuted = Color(0xFF64748B);
+
+  Future<void> salvar(
+    BuildContext modalContext,
+    void Function(void Function()) setState,
+  ) async {
+    if (salvando.value) return;
+    final formValido = formKey.currentState?.validate() ?? false;
+    if (!formValido || responsavelSelecionado == null) {
+      setState(() {
+        erroResponsavel = responsavelSelecionado == null
+            ? 'Escolha quem faz esta tarefa'
+            : null;
+      });
+      return;
     }
-    if (responsavelSelecionado == null &&
-        responsavelInicial.podeSerResponsavelTarefa) {
-      responsavelSelecionado = responsavelInicial;
+
+    final titulo = tituloController.text.trim();
+    try {
+      salvando.value = true;
+      final erro = await onSave(
+        titulo,
+        descricaoController.text.trim(),
+        dataSelecionada,
+        responsavelSelecionado!,
+      );
+      if (erro != null && erro.isNotEmpty) {
+        Get.snackbar(
+          'Erro',
+          'Não foi possível salvar a tarefa.',
+          backgroundColor: Colors.redAccent,
+          colorText: Colors.white,
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(12),
+          borderRadius: 12,
+        );
+        return;
+      }
+
+      FocusManager.instance.primaryFocus?.unfocus();
+      HapticFeedback.lightImpact();
+      if (modalContext.mounted) {
+        Navigator.of(modalContext).pop();
+      }
+      Get.snackbar(
+        isEdit ? 'Tarefa atualizada' : 'Tarefa adicionada',
+        titulo,
+        backgroundColor: primary,
+        colorText: Colors.white,
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(12),
+        borderRadius: 12,
+        icon: const Icon(Icons.check_circle_outline_rounded,
+            color: Colors.white),
+      );
+    } finally {
+      salvando.value = false;
     }
   }
 
-  // 🔹 Trocado para showModalBottomSheet para seguir o padrão das outras telas
-  await showModalBottomSheet<void>(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (context) {
-      return Obx(() {
-        final gradient = themeController.gradient.value;
-        final primary = themeController.primaryColor.value;
+  Widget buildDragHandle() {
+    return Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(999),
+        ),
+      ),
+    );
+  }
 
-        return StatefulBuilder(
-          builder: (context, setState) {
-            final bottomInset = MediaQuery.of(context).viewInsets.bottom;
-
-            return FractionallySizedBox(
-              heightFactor: 0.90, // Altura padronizada
-              child: Container(
+  Widget buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      decoration: BoxDecoration(
+        gradient: gradient,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildDragHandle(),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: Colors
-                      .white, // Fundo sólido (sem blur para o bottom sheet)
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(28)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: primary.withValues(alpha: 0.15),
-                      blurRadius: 20,
-                      offset: const Offset(0, -5),
+                  color: Colors.white.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(14),
+                  border:
+                      Border.all(color: Colors.white.withValues(alpha: 0.30)),
+                ),
+                child: Icon(
+                  isEdit ? Icons.edit_note_rounded : Icons.task_alt_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isEdit ? 'Editar tarefa' : 'Nova tarefa',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white,
+                        fontSize: 18,
+                        height: 1.1,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isEdit
+                          ? 'Ajuste o que falta, o prazo e quem faz.'
+                          : 'Anote o que falta até o dia da festa.',
+                      style: GoogleFonts.poppins(
+                        color: Colors.white.withValues(alpha: 0.88),
+                        fontSize: 12,
+                        height: 1.35,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ],
                 ),
-                child: SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: EdgeInsets.only(
-                      left: 16,
-                      right: 16,
-                      bottom: bottomInset + 16, // Padding automático do teclado
-                    ),
-                    child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const SizedBox(height: 12),
-                          // 🔹 Drag Handle (Tracinho superior)
-                          Center(
-                            child: Container(
-                              width: 50,
-                              height: 4,
-                              decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
-                          // === Cabeçalho ===
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
+  Widget buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    String? hint,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    TextInputAction textInputAction = TextInputAction.next,
+    int maxLines = 1,
+    bool autofocus = false,
+    String? Function(String?)? validator,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: TextFormField(
+        controller: controller,
+        autofocus: autofocus,
+        textCapitalization: textCapitalization,
+        textInputAction: textInputAction,
+        maxLines: maxLines,
+        validator: validator,
+        style: GoogleFonts.poppins(
+          color: textDark,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          alignLabelWithHint: maxLines > 1,
+          labelStyle: GoogleFonts.poppins(
+            color: textMuted,
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+          ),
+          hintStyle:
+              GoogleFonts.poppins(color: Colors.grey.shade400, fontSize: 12),
+          prefixIcon: Column(
+            mainAxisAlignment: maxLines > 1
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: EdgeInsets.only(top: maxLines > 1 ? 16.0 : 0),
+                child: Icon(icon, color: primary, size: 20),
+              ),
+            ],
+          ),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: Colors.grey.shade200),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: BorderSide(color: primary, width: 1.2),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Colors.redAccent),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
+          ),
+          errorStyle: const TextStyle(fontSize: 11, height: 0.9),
+          errorMaxLines: 2,
+        ),
+      ),
+    );
+  }
+
+  try {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalContext) {
+        final teclado = MediaQuery.viewInsetsOf(modalContext).bottom;
+        final base = MediaQuery.paddingOf(modalContext).bottom;
+        return Padding(
+          padding: EdgeInsets.only(bottom: teclado),
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: const BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: StatefulBuilder(
+              builder: (context, setState) {
+                Future<void> escolherData() async {
+                  final agora = DateTime.now();
+                  final inicio = DateTime(2000);
+                  final fim = DateTime(2100);
+                  var inicial = dataSelecionada ?? agora;
+                  if (inicial.isBefore(inicio)) inicial = inicio;
+                  if (inicial.isAfter(fim)) inicial = fim;
+                  final novaData = await showDatePicker(
+                    context: modalContext,
+                    initialDate: inicial,
+                    firstDate: inicio,
+                    lastDate: fim,
+                    locale: const Locale('pt', 'BR'),
+                    helpText: 'Escolher prazo',
+                    cancelText: 'Cancelar',
+                    confirmText: 'Ok',
+                  );
+                  if (novaData == null) return;
+                  setState(() {
+                    dataSelecionada = DateTime(
+                      novaData.year,
+                      novaData.month,
+                      novaData.day,
+                    );
+                  });
+                }
+
+                return Form(
+                  key: formKey,
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        buildHeader(),
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            16,
+                            16,
+                            16,
+                            8 + (teclado > 0 ? 0 : base),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  gradient: isEdit
-                                      ? LinearGradient(
-                                          colors: [
-                                            Colors.orange.shade400,
-                                            Colors.deepOrangeAccent
-                                          ],
-                                          begin: Alignment.topLeft,
-                                          end: Alignment.bottomRight,
-                                        )
-                                      : gradient,
-                                ),
-                                padding: const EdgeInsets.all(10), // Reduzido
-                                child: Icon(
-                                  isEdit
-                                      ? Icons.edit_note_rounded
-                                      : Icons.task_alt,
-                                  color: Colors.white,
-                                  size: 22, // Reduzido
+                              buildTextField(
+                                controller: tituloController,
+                                label: 'O que fazer',
+                                hint: 'Ex.: Cotar o vestido',
+                                icon: Icons.edit_outlined,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                autofocus: true,
+                                validator: (v) => FormValidators.titulo(
+                                  v,
+                                  campo: 'o que fazer',
                                 ),
                               ),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  isEdit ? 'Editar Tarefa' : 'Nova Tarefa',
-                                  style: const TextStyle(
-                                    fontSize: 18, // Reduzido
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
-                                    letterSpacing: 0.2,
+                              buildTextField(
+                                controller: descricaoController,
+                                label: 'Detalhe',
+                                hint: 'Opcional',
+                                icon: Icons.notes_outlined,
+                                maxLines: 3,
+                                textCapitalization:
+                                    TextCapitalization.sentences,
+                                textInputAction: TextInputAction.newline,
+                                validator: (v) => FormValidators.descricao(
+                                  v,
+                                  campo: 'o detalhe',
+                                  minimo: 1,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Prazo',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: textDark,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  _PrazoChip(
+                                    rotulo: 'Sem prazo',
+                                    selecionado: dataSelecionada == null,
+                                    primary: primary,
+                                    onTap: () => setState(
+                                      () => dataSelecionada = null,
+                                    ),
+                                  ),
+                                  _PrazoChip(
+                                    rotulo: 'Hoje',
+                                    selecionado: _mesmoDia(
+                                      dataSelecionada,
+                                      DateTime.now(),
+                                    ),
+                                    primary: primary,
+                                    onTap: () => setState(
+                                      () => dataSelecionada = _hoje(),
+                                    ),
+                                  ),
+                                  _PrazoChip(
+                                    rotulo: 'Amanhã',
+                                    selecionado: _mesmoDia(
+                                      dataSelecionada,
+                                      DateTime.now()
+                                          .add(const Duration(days: 1)),
+                                    ),
+                                    primary: primary,
+                                    onTap: () => setState(
+                                      () => dataSelecionada =
+                                          _hoje().add(const Duration(days: 1)),
+                                    ),
+                                  ),
+                                  _PrazoChip(
+                                    rotulo: _rotuloOutraData(dataSelecionada),
+                                    selecionado:
+                                        _dataPersonalizada(dataSelecionada),
+                                    primary: primary,
+                                    icone: Icons.calendar_today_outlined,
+                                    onTap: escolherData,
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Quem faz',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                  color: textDark,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              if (usuariosElegiveis.isEmpty)
+                                Text(
+                                  'Ninguém com conta no app ainda. A pessoa precisa entrar com o mesmo e-mail do convite.',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    height: 1.35,
+                                    color: textMuted,
+                                  ),
+                                )
+                              else
+                                for (final usuario in usuariosElegiveis) ...[
+                                  _PessoaTile(
+                                    usuario: usuario,
+                                    voce: _ehUsuario(usuario, idUsuarioLogado),
+                                    selecionado: responsavelSelecionado !=
+                                            null &&
+                                        usuario.mesmoIdentificador(
+                                          responsavelSelecionado!,
+                                        ),
+                                    primary: primary,
+                                    onTap: () => setState(() {
+                                      responsavelSelecionado = usuario;
+                                      erroResponsavel = null;
+                                    }),
+                                  ),
+                                  const SizedBox(height: 8),
+                                ],
+                              if (erroResponsavel != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 8),
+                                  child: Text(
+                                    erroResponsavel!,
+                                    style: GoogleFonts.poppins(
+                                      color: const Color(0xFFB91C1C),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              const SizedBox(height: 8),
+                              Obx(() {
+                                final isSaving = salvando.value;
+                                return SizedBox(
+                                  width: double.infinity,
+                                  height: 48,
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: primary,
+                                      disabledBackgroundColor:
+                                          primary.withValues(alpha: 0.45),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                    ),
+                                    onPressed: isSaving
+                                        ? null
+                                        : () => salvar(modalContext, setState),
+                                    icon: isSaving
+                                        ? const SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Colors.white,
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.check_circle_outline_rounded,
+                                            color: Colors.white,
+                                            size: 18,
+                                          ),
+                                    label: Text(
+                                      isSaving ? 'Salvando...' : 'Salvar tarefa',
+                                      style: GoogleFonts.poppins(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              }),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 44,
+                                child: TextButton(
+                                  onPressed: () {
+                                    FocusManager.instance.primaryFocus
+                                        ?.unfocus();
+                                    Navigator.of(modalContext).pop();
+                                  },
+                                  style: TextButton.styleFrom(
+                                    foregroundColor: textMuted,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Cancelar',
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ),
                               ),
                             ],
                           ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
+    );
+  } finally {
+    FocusManager.instance.primaryFocus?.unfocus();
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    tituloController.dispose();
+    descricaoController.dispose();
+  }
+}
 
-                          const SizedBox(height: 16), // Espaçamento menor
+class _PrazoChip extends StatelessWidget {
+  const _PrazoChip({
+    required this.rotulo,
+    required this.selecionado,
+    required this.primary,
+    required this.onTap,
+    this.icone,
+  });
 
-                          // === Campos de formulário ===
-                          Form(
-                            key: formKey,
-                            autovalidateMode: autovalidateMode,
-                            child: Column(
-                              children: [
-                                _buildInput(
-                                  context,
-                                  controller: tituloController,
-                                  label: 'Título da Tarefa',
-                                  icon: Icons.title_outlined,
-                                  color: primary,
-                                  validator: (v) => FormValidators.titulo(
-                                    v,
-                                    campo: 'o título da tarefa',
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                _buildInput(
-                                  context,
-                                  controller: descricaoController,
-                                  label: 'Descrição da Tarefa',
-                                  icon: Icons.notes_outlined,
-                                  color: primary,
-                                  maxLines: 2, // Reduzido de 3 para 2
-                                  validator: (v) => FormValidators.descricao(
-                                    v,
-                                    campo: 'a descrição da tarefa',
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
+  final String rotulo;
+  final bool selecionado;
+  final Color primary;
+  final VoidCallback onTap;
+  final IconData? icone;
 
-                                // === Data Prevista ===
-                                GestureDetector(
-                                  onTap: () async {
-                                    final novaData = await showDatePicker(
-                                      context: context,
-                                      initialDate: dataSelecionada,
-                                      firstDate: DateTime(2000),
-                                      lastDate: DateTime(2100),
-                                      locale: const Locale('pt', 'BR'),
-                                      helpText: 'Selecionar Data Prevista',
-                                    );
-                                    if (novaData != null) {
-                                      setState(() {
-                                        dataSelecionada = novaData;
-                                        dataController.text =
-                                            DateFormat('dd/MM/yyyy')
-                                                .format(novaData);
-                                      });
-                                    }
-                                  },
-                                  child: AbsorbPointer(
-                                    child: _buildInput(
-                                      context,
-                                      controller: dataController,
-                                      label: 'Data Prevista',
-                                      icon: Icons.calendar_today_outlined,
-                                      color: primary,
-                                      readOnly: true,
-                                      validator: (v) => FormValidators.data(
-                                        v,
-                                        campo: 'a data prevista',
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selecionado ? primary.withValues(alpha: 0.1) : Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Container(
+          height: 40,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: selecionado ? primary : const Color(0xFFE5E7EB),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (icone != null) ...[
+                Icon(
+                  icone,
+                  size: 16,
+                  color: selecionado ? primary : const Color(0xFF4B5563),
+                ),
+                const SizedBox(width: 6),
+              ],
+              Text(
+                rotulo,
+                style: GoogleFonts.poppins(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: selecionado ? primary : const Color(0xFF374151),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-                          const SizedBox(height: 16),
+class _PessoaTile extends StatelessWidget {
+  const _PessoaTile({
+    required this.usuario,
+    required this.voce,
+    required this.selecionado,
+    required this.primary,
+    required this.onTap,
+  });
 
-                          // === Responsável ===
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Responsável pela Tarefa *',
-                              style: TextStyle(
-                                fontSize: 13, // Reduzido
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey.shade800,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+  final Convidado usuario;
+  final bool voce;
+  final bool selecionado;
+  final Color primary;
+  final VoidCallback onTap;
 
-                          // === Lista de usuários atualizada ===
-                          usuariosElegiveis.isEmpty
-                              ? Column(
-                                  children: [
-                                    const Icon(Icons.group_outlined,
-                                        size: 32, color: Colors.grey),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'Só convidados que já criaram conta no app\n(mesmo e-mail do convite) podem ser responsáveis.',
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                          color: Colors.grey.shade600,
-                                          fontSize: 13),
-                                    )
-                                  ],
-                                )
-                              : SizedBox(
-                                  height: 96, // 🔹 Bem mais compacto (era 120)
-                                  child: ListView.separated(
-                                    scrollDirection: Axis.horizontal,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 2),
-                                    itemCount: usuariosElegiveis.length,
-                                    separatorBuilder: (_, __) =>
-                                        const SizedBox(width: 10),
-                                    itemBuilder: (_, index) {
-                                      final usuario = usuariosElegiveis[index];
-                                      final selecionado =
-                                          responsavelSelecionado != null &&
-                                              usuario.mesmoIdentificador(
-                                                  responsavelSelecionado!);
-
-                                      final isOrganizador = usuario
-                                                  .idConvidado ==
-                                              idUsuarioLogado ||
-                                          usuario.idUsuario == idUsuarioLogado;
-
-                                      return GestureDetector(
-                                        onTap: () => setState(() {
-                                          responsavelSelecionado = usuario;
-                                          erroResponsavel = null;
-                                        }),
-                                        child: _buildUserCard(
-                                          usuario,
-                                          selecionado,
-                                          isOrganizador,
-                                          gradient,
-                                          primary,
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
-
-                          if (erroResponsavel != null) ...[
-                            const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                erroResponsavel!,
-                                style: const TextStyle(
-                                  color: Colors.redAccent,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-
-                          const SizedBox(height: 18),
-                          const Divider(height: 1, color: Colors.black12),
-
-                          // === Botões ===
-                          Padding(
-                            padding: const EdgeInsets.only(top: 14),
-                            child: _buildMobileButtons(
-                              context,
-                              tituloController,
-                              descricaoController,
-                              primary,
-                              isEdit,
-                              responsavelSelecionado,
-                              dataSelecionada,
-                              onSave,
-                              formKey: formKey,
-                              onTriedSubmit: () {
-                                setState(() {
-                                  autovalidateMode =
-                                      AutovalidateMode.onUserInteraction;
-                                  erroResponsavel = responsavelSelecionado ==
-                                          null
-                                      ? 'Selecione o responsável pela tarefa'
-                                      : null;
-                                });
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
+  @override
+  Widget build(BuildContext context) {
+    final nome = usuario.nome.trim();
+    return Material(
+      color: selecionado ? primary.withValues(alpha: 0.08) : Colors.white,
+      elevation: 0,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 56),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: selecionado ? primary : Colors.grey.shade200,
+                width: selecionado ? 1.5 : 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor:
+                      selecionado ? primary : const Color(0xFFE5E7EB),
+                  child: Text(
+                    _iniciais(nome),
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: selecionado
+                          ? Colors.white
+                          : const Color(0xFF374151),
                     ),
                   ),
                 ),
-              ),
-            );
-          },
-        );
-      });
-    },
-  );
-}
-
-Widget _buildUserCard(
-  Convidado usuario,
-  bool selecionado,
-  bool isOrganizador,
-  Gradient gradient,
-  Color primary,
-) {
-  return AnimatedContainer(
-    duration: const Duration(milliseconds: 250),
-    curve: Curves.easeOutCubic,
-    padding:
-        const EdgeInsets.symmetric(horizontal: 8, vertical: 6), // Mais compacto
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(16),
-      gradient: selecionado
-          ? gradient
-          : LinearGradient(
-              colors: [
-                Colors.white.withValues(alpha: 0.45),
-                Colors.white.withValues(alpha: 0.25),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-      border: Border.all(
-        color: selecionado ? Colors.white : Colors.black12,
-        width: selecionado ? 2 : 1,
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: selecionado ? 0.20 : 0.04),
-          blurRadius: selecionado ? 8 : 4,
-          offset: const Offset(0, 3),
-        ),
-      ],
-    ),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // === Avatar com borda animada ===
-        Container(
-          padding: const EdgeInsets.all(2), // Menor
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(
-              color:
-                  selecionado ? Colors.white : primary.withValues(alpha: 0.3),
-              width: selecionado ? 2 : 1.5,
-            ),
-          ),
-          child: CircleAvatar(
-            radius: 18, // 🔹 Era 26, reduzido para ficar compacto
-            backgroundImage: NetworkImage(
-              'https://ui-avatars.com/api/?name=${Uri.encodeComponent(usuario.nome)}&background=0D8ABC&color=fff',
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 4),
-
-        // === Nome ===
-        Text(
-          usuario.nome.split(' ')[0],
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: 11, // Reduzido
-            fontWeight: FontWeight.w600,
-            color: selecionado ? Colors.white : Colors.grey.shade800,
-          ),
-        ),
-
-        // === Badge de Organizador ===
-        if (isOrganizador)
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.only(top: 2),
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-              decoration: BoxDecoration(
-                color: selecionado
-                    ? Colors.white.withValues(alpha: 0.20)
-                    : Colors.grey.shade200,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                "Org.", // Abreviado para poupar espaço
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  color: selecionado ? Colors.white : Colors.grey.shade700,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        nome,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: const Color(0xFF1F2937),
+                        ),
+                      ),
+                      if (voce)
+                        Text(
+                          'Você',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: primary,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
+                if (selecionado)
+                  Icon(Icons.check_circle_rounded, color: primary, size: 22),
+              ],
             ),
           ),
-      ],
-    ),
-  );
+        ),
+      ),
+    );
+  }
 }
 
-Widget _buildMobileButtons(
-  BuildContext context,
-  TextEditingController tituloController,
-  TextEditingController descricaoController,
-  Color primary,
-  bool isEdit,
-  Convidado? responsavelSelecionado,
-  DateTime dataSelecionada,
-  void Function(String, String, DateTime, Convidado) onSave, {
-  required GlobalKey<FormState> formKey,
-  required VoidCallback onTriedSubmit,
+Convidado? _responsavelInicial(
+  List<Convidado> lista,
+  Convidado? inicial,
+  String? idUsuarioLogado, {
+  required bool manterSomenteInformado,
 }) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      // === BOTÃO PRINCIPAL ===
-      ElevatedButton.icon(
-        onPressed: () async {
-          onTriedSubmit();
-          final formValido = formKey.currentState?.validate() ?? false;
-          if (!formValido || responsavelSelecionado == null) {
-            return;
-          }
-
-          onSave(
-            tituloController.text.trim(),
-            descricaoController.text.trim(),
-            dataSelecionada,
-            responsavelSelecionado,
-          );
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                isEdit
-                    ? 'Tarefa atualizada com sucesso! ✅'
-                    : 'Tarefa criada com sucesso! 🎉',
-              ),
-              backgroundColor: primary,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-
-          Navigator.pop(context);
-        },
-        icon: Icon(
-          isEdit ? Icons.save_rounded : Icons.add_task_rounded,
-          color: Colors.white,
-          size: 18, // Reduzido
-        ),
-        label: Text(
-          isEdit ? 'Salvar Alterações' : 'Adicionar Tarefa',
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 14, // Reduzido
-            letterSpacing: 0.2,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primary,
-          elevation: 2, // Reduzido
-          padding: const EdgeInsets.symmetric(vertical: 12), // Mais fino
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12), // Menos curvo
-          ),
-        ),
-      ),
-
-      const SizedBox(height: 10),
-
-      // === BOTÃO CANCELAR ===
-      OutlinedButton.icon(
-        onPressed: () => Navigator.pop(context),
-        icon: const Icon(Icons.close, color: Colors.grey, size: 18), // Reduzido
-        label: const Text(
-          'Cancelar',
-          style: TextStyle(
-            color: Colors.grey,
-            fontWeight: FontWeight.w600,
-            fontSize: 14, // Reduzido
-          ),
-        ),
-        style: OutlinedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 12), // Mais fino
-          side: BorderSide(color: Colors.grey.shade300, width: 1.2),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      ),
-    ],
-  );
+  if (inicial != null) {
+    for (final item in lista) {
+      if (item.mesmoIdentificador(inicial)) return item;
+    }
+    if (inicial.podeSerResponsavelTarefa) return inicial;
+  }
+  if (manterSomenteInformado) return null;
+  final id = idUsuarioLogado?.trim() ?? '';
+  if (id.isNotEmpty) {
+    for (final item in lista) {
+      if (_ehUsuario(item, id)) return item;
+    }
+  }
+  if (lista.length == 1) return lista.first;
+  return null;
 }
 
-/// === Campo de entrada genérico (Compactado) ===
-Widget _buildInput(
-  BuildContext context, {
-  required String label,
-  required IconData icon,
-  required Color color,
-  TextEditingController? controller,
-  int maxLines = 1,
-  String? hintText,
-  bool readOnly = false,
-  String? Function(String?)? validator,
-}) {
-  return TextFormField(
-    controller: controller,
-    maxLines: maxLines,
-    readOnly: readOnly,
-    validator: validator,
-    style: const TextStyle(fontSize: 14), // Fonte interna menor
-    decoration: InputDecoration(
-      labelText: label,
-      hintText: hintText,
-      prefixIcon: Icon(icon, color: color, size: 20), // Ícone menor
-      labelStyle: TextStyle(
-        color: color.withValues(alpha: 0.8),
-        fontWeight: FontWeight.w500,
-        fontSize: 13, // Fonte label menor
-      ),
-      filled: true,
-      fillColor: Colors.grey.shade50,
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12), // Reduzido
-        borderSide: BorderSide(color: color, width: 1.4),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: Colors.grey.shade300),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Colors.redAccent, width: 1.2),
-      ),
-      errorStyle: const TextStyle(fontSize: 11, height: 0.9),
-      errorMaxLines: 2,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-    ),
-  );
+bool _ehUsuario(Convidado usuario, String? idUsuario) {
+  final id = idUsuario?.trim() ?? '';
+  if (id.isEmpty) return false;
+  return usuario.idConvidado.trim() == id || usuario.idUsuario?.trim() == id;
+}
+
+DateTime _hoje() {
+  final agora = DateTime.now();
+  return DateTime(agora.year, agora.month, agora.day);
+}
+
+bool _mesmoDia(DateTime? data, DateTime outra) {
+  if (data == null) return false;
+  return data.year == outra.year &&
+      data.month == outra.month &&
+      data.day == outra.day;
+}
+
+bool _dataPersonalizada(DateTime? data) {
+  if (data == null) return false;
+  final hoje = _hoje();
+  final amanha = hoje.add(const Duration(days: 1));
+  return !_mesmoDia(data, hoje) && !_mesmoDia(data, amanha);
+}
+
+String _rotuloOutraData(DateTime? data) {
+  if (!_dataPersonalizada(data)) return 'Outra data';
+  return DateFormat('dd/MM/yyyy').format(data!);
+}
+
+String _iniciais(String nome) {
+  final partes =
+      nome.split(RegExp(r'\s+')).where((parte) => parte.isNotEmpty).toList();
+  if (partes.isEmpty) return '?';
+  String letra(String parte) {
+    final runas = parte.runes;
+    if (runas.isEmpty) return '';
+    return String.fromCharCode(runas.first).toUpperCase();
+  }
+
+  if (partes.length == 1) return letra(partes.first);
+  return '${letra(partes.first)}${letra(partes.last)}';
 }
 
 List<Convidado> _deduplicarElegiveis(Iterable<Convidado> origem) {

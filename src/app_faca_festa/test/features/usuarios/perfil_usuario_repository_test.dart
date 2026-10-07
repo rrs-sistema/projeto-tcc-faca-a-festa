@@ -170,6 +170,8 @@ void main() {
         'data_cadastro',
         'cidade',
         'uf',
+        'aceite_privacidade_em',
+        'versao_politica_privacidade',
       });
       expect(map.containsKey('senha_hash'), isFalse);
       expect(map['id_usuario'], 'usuario-1');
@@ -379,4 +381,34 @@ class _PerfilUsuarioRemoteFake implements PerfilUsuarioRemoteDatasource {
     listagensDeUsuarios++;
     return usuarios;
   }
+
+  @override
+  Future<String> registrarSolicitacaoTitular({
+    required String idUsuario,
+    required String tipo,
+    required String resumo,
+    String nome = '',
+    String email = '',
+  }) async {
+    escritas.add({
+      'operacao': 'lgpd',
+      'idUsuario': idUsuario,
+      'tipo': tipo,
+      'resumo': resumo,
+    });
+    return 'protocolo-teste';
+  }
+
+  @override
+  Future<void> registrarAceitePolitica({
+    required String idUsuario,
+    required DateTime aceiteEm,
+    required String versao,
+  }) async {}
+
+  @override
+  Future<void> salvarPreferenciasNotificacao({
+    required String idUsuario,
+    required Map<String, bool> preferencias,
+  }) async {}
 }

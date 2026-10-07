@@ -76,6 +76,64 @@ void main() {
     expect(repository.grupoExcluido, 'grupo-1');
   });
 
+  test('creates a default group when the event has none', () async {
+    await controller.escutarGrupos('evento-1');
+    repository.grupos.add(const []);
+    await Future<void>.delayed(Duration.zero);
+
+    final grupo = await controller.garantirGrupoPadrao();
+
+    expect(grupo, isNotNull);
+    expect(grupo!.nome, GrupoConvidadoController.nomeGrupoPadrao);
+    expect(grupo.idEvento, 'evento-1');
+    expect(grupo.icone, 'group');
+    expect(repository.grupoSalvo, same(grupo));
+    expect(controller.grupos.single.idGrupo, grupo.idGrupo);
+  });
+
+  test('reuses the default group instead of creating another', () async {
+    await controller.escutarGrupos('evento-1');
+    repository.grupos.add([
+      _grupo(nome: '  ${GrupoConvidadoController.nomeGrupoPadrao}  '),
+    ]);
+    await Future<void>.delayed(Duration.zero);
+
+    final grupo = await controller.garantirGrupoPadrao();
+
+    expect(grupo?.idGrupo, 'grupo-1');
+    expect(repository.grupoSalvo, isNull);
+  });
+
+  test('does not create a default group when another group already exists',
+      () async {
+    await controller.escutarGrupos('evento-1');
+    repository.grupos.add([_grupo(nome: 'Família')]);
+    await Future<void>.delayed(Duration.zero);
+
+    final grupo = await controller.garantirGrupoPadrao();
+
+    expect(grupo, isNull);
+    expect(repository.grupoSalvo, isNull);
+  });
+
+  test('shares one default-group create while the first request is in flight',
+      () async {
+    await controller.escutarGrupos('evento-1');
+    repository.grupos.add(const []);
+    repository.atrasarSalvarGrupo = Completer<void>();
+    await Future<void>.delayed(Duration.zero);
+
+    final primeira = controller.garantirGrupoPadrao();
+    final segunda = controller.garantirGrupoPadrao();
+    await Future<void>.delayed(Duration.zero);
+    repository.atrasarSalvarGrupo!.complete();
+
+    final grupos = await Future.wait([primeira, segunda]);
+
+    expect(grupos.first?.idGrupo, grupos.last?.idGrupo);
+    expect(repository.salvamentos, 1);
+  });
+
   test('empty event clears state without opening repository streams', () async {
     controller.grupos.add(_grupo(nome: 'Família'));
     controller.convidados.add(_convidado(nome: 'Ana'));
@@ -126,6 +184,8 @@ class _GrupoConvidadoRepositoryFake implements GrupoConvidadoRepository {
   String? eventoGrupos;
   String? eventoConvidados;
   GrupoConvidado? grupoSalvo;
+  int salvamentos = 0;
+  Completer<void>? atrasarSalvarGrupo;
   Convidado? convidadoVinculado;
   GrupoConvidado? grupoVinculado;
   String? grupoExcluido;
@@ -149,7 +209,10 @@ class _GrupoConvidadoRepositoryFake implements GrupoConvidadoRepository {
 
   @override
   Future<void> salvarGrupo(GrupoConvidado grupo) async {
+    final espera = atrasarSalvarGrupo;
+    if (espera != null) await espera.future;
     grupoSalvo = grupo;
+    salvamentos++;
   }
 
   @override

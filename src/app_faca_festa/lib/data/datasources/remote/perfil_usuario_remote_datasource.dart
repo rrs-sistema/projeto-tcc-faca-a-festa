@@ -46,6 +46,25 @@ abstract interface class PerfilUsuarioRemoteDatasource {
     required String cidade,
     required String uf,
   });
+
+  Future<String> registrarSolicitacaoTitular({
+    required String idUsuario,
+    required String tipo,
+    required String resumo,
+    String nome = '',
+    String email = '',
+  });
+
+  Future<void> registrarAceitePolitica({
+    required String idUsuario,
+    required DateTime aceiteEm,
+    required String versao,
+  });
+
+  Future<void> salvarPreferenciasNotificacao({
+    required String idUsuario,
+    required Map<String, bool> preferencias,
+  });
 }
 
 class FirebasePerfilUsuarioRemoteDatasource
@@ -181,4 +200,51 @@ class FirebasePerfilUsuarioRemoteDatasource
         'cidade': cidade,
         'uf': uf,
       });
+
+  @override
+  Future<String> registrarSolicitacaoTitular({
+    required String idUsuario,
+    required String tipo,
+    required String resumo,
+    String nome = '',
+    String email = '',
+  }) async {
+    final doc = firestore
+        .collection('usuarios')
+        .doc(idUsuario)
+        .collection('solicitacoes_lgpd')
+        .doc();
+    await doc.set({
+      'id': doc.id,
+      'tipo': tipo,
+      'resumo': resumo,
+      'status': 'registrada',
+      'criado_em': FieldValue.serverTimestamp(),
+      'id_usuario': idUsuario,
+      'nome_titular': nome.trim(),
+      'email_titular': email.trim(),
+    });
+    return doc.id;
+  }
+
+  @override
+  Future<void> registrarAceitePolitica({
+    required String idUsuario,
+    required DateTime aceiteEm,
+    required String versao,
+  }) =>
+      firestore.collection('usuarios').doc(idUsuario).update({
+        'aceite_privacidade_em': Timestamp.fromDate(aceiteEm),
+        'versao_politica_privacidade': versao,
+      });
+
+  @override
+  Future<void> salvarPreferenciasNotificacao({
+    required String idUsuario,
+    required Map<String, bool> preferencias,
+  }) =>
+      firestore.collection('usuarios').doc(idUsuario).set(
+        {'preferencias_notificacao': preferencias},
+        SetOptions(merge: true),
+      );
 }

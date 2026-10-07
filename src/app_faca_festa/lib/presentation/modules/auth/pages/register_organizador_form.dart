@@ -6,6 +6,7 @@ import 'package:app_faca_festa/presentation/modules/auth/controllers/register_co
 import 'package:app_faca_festa/presentation/modules/auth/widgets/auth_festa_brand.dart';
 import 'package:app_faca_festa/presentation/widgets/cadastro_passos_bar.dart';
 import 'package:app_faca_festa/presentation/widgets/custom_input_field.dart';
+import 'package:app_faca_festa/presentation/modules/legal/widgets/aceite_privacidade_tile.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/components/endereco/endereco_section.dart';
 
 class RegisterOrganizadorForm extends StatefulWidget {
@@ -30,6 +31,7 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
   var _autovalidateMode = AutovalidateMode.disabled;
   var _cadastroGoogle = false;
   var _passo = 0;
+  var _aceitePrivacidade = false;
 
   static const _titulosPassos = ['Você', 'Endereço'];
 
@@ -63,6 +65,8 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
     });
 
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!_aceitePrivacidade) return;
+    controller.aceitePrivacidade.value = true;
 
     if (comGoogle) {
       await controller.registrarComGoogle();
@@ -124,11 +128,23 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
               titulo: 'Seu endereço',
               camposObrigatorios: true,
             ),
+          if (ultimo) ...[
+            const SizedBox(height: 12),
+            AceitePrivacidadeTile(
+              aceito: _aceitePrivacidade,
+              cor: primary,
+              onChanged: (valor) {
+                setState(() => _aceitePrivacidade = valor);
+                controller.aceitePrivacidade.value = valor;
+              },
+            ),
+          ],
           const SizedBox(height: 15),
           Obx(
             () => CadastroPassosAcoes(
               cor: primary,
               continuarLabel: ultimo ? 'Cadastrar' : 'Continuar',
+              habilitado: !ultimo || _aceitePrivacidade,
               onContinuar: ultimo
                   ? () => _cadastrar(comGoogle: _cadastroGoogle)
                   : _avancar,
@@ -160,7 +176,8 @@ class _RegisterOrganizadorFormState extends State<RegisterOrganizadorForm> {
                 label: ultimo
                     ? 'Cadastrar com Google'
                     : 'Continuar com Google',
-                onPressed: controller.carregando.value
+                onPressed: controller.carregando.value ||
+                        (ultimo && !_aceitePrivacidade)
                     ? null
                     : _continuarComGoogle,
               ),

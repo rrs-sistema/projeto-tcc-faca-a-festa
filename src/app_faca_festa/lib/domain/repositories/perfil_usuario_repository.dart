@@ -53,4 +53,23 @@ abstract interface class PerfilUsuarioRepository {
     required String cidade,
     required String uf,
   });
+
+  Future<String> registrarSolicitacaoTitular({
+    required String idUsuario,
+    required String tipo,
+    required String resumo,
+    String nome = '',
+    String email = '',
+  });
+
+  Future<void> registrarAceitePolitica({
+    required String idUsuario,
+    required DateTime aceiteEm,
+    required String versao,
+  });
+
+  Future<void> salvarPreferenciasNotificacao({
+    required String idUsuario,
+    required Map<String, bool> preferencias,
+  });
 }

@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 
+import 'package:app_faca_festa/core/legal/convidados_csv.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/services/convite_email_service.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/components/abrir_adicionar_convidado.dart';
@@ -65,6 +70,26 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
       _buscaFocus.dispose();
     }
     super.dispose();
+  }
+
+  Future<void> _exportarCsv() async {
+    final lista = convidadoController.convidados.toList();
+    if (lista.isEmpty) {
+      EasyLoading.showInfo('Não há convidados para exportar.');
+      return;
+    }
+    final csv = exportarConvidadosCsv(lista);
+    await Share.shareXFiles(
+      [
+        XFile.fromData(
+          Uint8List.fromList(utf8.encode(csv)),
+          mimeType: 'text/csv',
+          name: 'convidados-faca-festa.csv',
+        ),
+      ],
+      subject: 'Lista de convidados',
+      fileNameOverrides: const ['convidados-faca-festa.csv'],
+    );
   }
 
   void _definirModoSelecao(bool ativo) {
@@ -155,6 +180,12 @@ class _ListaConvidadosScreenState extends State<ListaConvidadosScreen> {
                 onPressed: _alternarSelecaoVisivel,
               )
             else ...[
+              IconButton(
+                tooltip: 'Exportar lista (CSV)',
+                icon: const Icon(Icons.download_rounded,
+                    color: Colors.white, size: 20),
+                onPressed: _exportarCsv,
+              ),
               IconButton(
                 tooltip: 'Selecionar para e-mail',
                 icon: const Icon(Icons.checklist_rounded,

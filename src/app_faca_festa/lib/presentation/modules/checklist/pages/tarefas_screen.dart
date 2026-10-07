@@ -1,20 +1,23 @@
-// ignore_for_file: use_build_context_synchronously
-import 'package:percent_indicator/circular_percent_indicator.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
-import 'package:google_fonts/google_fonts.dart';
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+
+import 'package:app_faca_festa/domain/entities/convidado.dart';
+import 'package:app_faca_festa/domain/entities/tarefa.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
+import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/home_organizador_copy.dart';
+import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_empty_state.dart';
-import './tarefa_dialog.dart';
-import 'package:get/get.dart';
 
-import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
-import 'package:app_faca_festa/presentation/modules/checklist/controllers/tarefa_controller.dart';
-import 'package:app_faca_festa/domain/entities/tarefa.dart';
+import 'tarefa_dialog.dart';
 
 class TarefasScreen extends StatelessWidget {
   final EventThemeController themeController;
@@ -40,157 +43,178 @@ class TarefasScreen extends StatelessWidget {
 
     return Obx(() {
       final primary = themeController.primaryColor.value;
-      final gradient = themeController.gradient.value;
 
-      if (tarefaController.carregando.value) {
+      if (tarefaController.carregando.value &&
+          tarefaController.tarefas.isEmpty) {
         return const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         );
       }
 
-      final tarefas = tarefaController.tarefas;
+      final agora = DateTime.now();
+      final pendentes = tarefaController.tarefasPendentesOrdenadas
+          .map(_comResponsavel)
+          .toList();
+      final concluidas = tarefaController.tarefas
+          .where((tarefa) => tarefa.status == StatusTarefa.concluida)
+          .map(_comResponsavel)
+          .toList()
+        ..sort(_porDataDesc);
+      final vazia = pendentes.isEmpty && concluidas.isEmpty;
+      final atrasadas = HomeOrganizadorCopy.contarAtrasadas(
+        pendentes.map((tarefa) => tarefa.dataPrevista),
+        agora,
+      );
 
       return Scaffold(
-        backgroundColor: Colors.grey.shade100,
+        backgroundColor: const Color(0xFFF3F4F6),
         appBar: FestaAppBar(
           titulo: 'Minhas Tarefas',
           themeController: themeController,
-          acoes: [
-            IconButton(
-              tooltip: 'Criar tarefa',
-              icon: const Icon(Icons.add_task_outlined, color: Colors.white),
-              onPressed: () => _abrirNovaTarefa(context),
-            ),
-          ],
         ),
-        // ===== Corpo =====
-        body: Column(
-          children: [
-            // ===== Indicador de progresso =====
-            Container(
-              margin: const EdgeInsets.fromLTRB(
-                  14, 14, 14, 8), // 🔹 Margens compactas
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16), // Raio menor
-                boxShadow: [
-                  BoxShadow(
-                    color: primary.withValues(alpha: 0.12),
-                    blurRadius: 6,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+        floatingActionButton: vazia
+            ? null
+            : FloatingActionButton.extended(
+                heroTag: 'nova-tarefa',
+                backgroundColor: primary,
+                foregroundColor: Colors.white,
+                elevation: 2,
+                icon: const Icon(Icons.add_rounded),
+                label: Text(
+                  HomeOrganizadorCopy.novaTarefa,
+                  style: GoogleFonts.poppins(fontWeight: FontWeight.w700),
+                ),
+                onPressed: () => _abrirNovaTarefa(context),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        body: vazia
+            ? _buildEmptyState(context, primary)
+            : Column(
                 children: [
-                  Text(
-                    '${tarefaController.concluidas} de ${tarefaController.tarefas.length} tarefas concluídas',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13, // Fonte menor
-                      color: primary,
-                    ),
+                  _ProgressoTarefas(
+                    total: tarefaController.total,
+                    pendentes: pendentes.length,
+                    atrasadas: atrasadas,
+                    progresso: tarefaController.progresso,
+                    primary: primary,
                   ),
-                  const SizedBox(height: 8),
-                  // 🔹 Barra de progresso verde estilizada
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Container(
-                      height: 10, // Barra mais fina
-                      width: double.infinity,
-                      color: Colors.grey.shade200,
-                      child: FractionallySizedBox(
-                        alignment: Alignment.centerLeft,
-                        widthFactor: tarefaController.progresso,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 600),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                primary.withValues(
-                                    alpha: 1.0), // Ajustado de 1.6
-                                primary.withValues(alpha: 0.9),
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 18, 16, 108),
+                      children: [
+                        if (pendentes.isNotEmpty)
+                          _GrupoTarefas(
+                            titulo: 'Para fazer',
+                            tarefas: pendentes,
+                            agora: agora,
+                            primary: primary,
+                            onToggle: (tarefa, feita) =>
+                                _alternarStatus(context, tarefa, feita),
+                            onEdit: (tarefa) => _abrirEdicao(context, tarefa),
+                            onDelete: (tarefa) =>
+                                _confirmarExclusao(context, tarefa),
                           ),
-                        ),
-                      ),
+                        if (pendentes.isNotEmpty && concluidas.isNotEmpty)
+                          const SizedBox(height: 22),
+                        if (concluidas.isNotEmpty)
+                          _GrupoTarefas(
+                            titulo: 'Concluídas',
+                            tarefas: concluidas,
+                            agora: agora,
+                            primary: primary,
+                            onToggle: (tarefa, feita) =>
+                                _alternarStatus(context, tarefa, feita),
+                            onEdit: (tarefa) => _abrirEdicao(context, tarefa),
+                            onDelete: (tarefa) =>
+                                _confirmarExclusao(context, tarefa),
+                          ),
+                      ],
                     ),
                   ),
                 ],
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 14, vertical: 6), // 🔹 Margens compactas
-              child: resumoTarefasCardElegante(
-                gradient,
-                totalTarefas: tarefaController.tarefas.length,
-                concluidas: tarefaController.concluidas,
-              ),
-            ),
-            // ===== Lista de tarefas =====
-            Expanded(
-              child: Obx(() {
-                if (tarefas.isEmpty) {
-                  return _buildEmptyState(context, primary);
-                }
-
-                return ListView.builder(
-                  itemCount: tarefas.length,
-                  padding:
-                      const EdgeInsets.all(14), // Espaçamento da lista menor
-                  itemBuilder: (context, index) {
-                    final tarefa = tarefas[index];
-                    final responsavel = convidadoController.convidados
-                        .firstWhereOrNull(
-                            (r) => r.idConvidado == tarefa.idResponsavel);
-                    final tarefaComResponsavel = responsavel != null
-                        ? tarefa.copyWith(responsavel: responsavel)
-                        : tarefa;
-
-                    return _TarefaCard(
-                      data: tarefaComResponsavel,
-                      themeGradient: gradient,
-                      primaryColor: primary,
-                      onToggle: (checked) {
-                        final novoStatus = checked
-                            ? StatusTarefa.concluida
-                            : StatusTarefa.aFazer;
-                        tarefaController.atualizarStatus(
-                            tarefa.idTarefa, novoStatus);
-                      },
-                      onDelete: () =>
-                          tarefaController.excluirTarefa(tarefa.idTarefa),
-                      onEdit: () => tarefaController.editarTarefa(
-                        tarefa.copyWith(descricao: tarefa.descricao),
-                      ),
-                      tarefaController: tarefaController,
-                      convidadoController: convidadoController,
-                      themeController: themeController,
-                      idUsuarioLogado:
-                          appController.usuarioLogado.value?.idUsuario,
-                    );
-                  },
-                );
-              }),
-            ),
-          ],
-        ),
       );
     });
   }
 
+  Tarefa _comResponsavel(Tarefa tarefa) {
+    final achado = _buscarResponsavel(tarefa.idResponsavel);
+    if (achado == null) return tarefa;
+    return tarefa.copyWith(responsavel: achado);
+  }
+
+  Convidado? _buscarResponsavel(String? idResponsavel) {
+    final id = idResponsavel?.trim() ?? '';
+    if (id.isEmpty) return null;
+    bool combina(Convidado item) {
+      return item.idConvidado.trim() == id || item.idUsuario?.trim() == id;
+    }
+
+    return convidadoController.convidados.firstWhereOrNull(combina) ??
+        tarefaController.usuarios.firstWhereOrNull(combina);
+  }
+
+  int _porDataDesc(Tarefa a, Tarefa b) {
+    final dataA = a.dataPrevista;
+    final dataB = b.dataPrevista;
+    if (dataA == null && dataB == null) return 0;
+    if (dataA == null) return 1;
+    if (dataB == null) return -1;
+    return dataB.compareTo(dataA);
+  }
+
+  Future<void> _alternarStatus(
+    BuildContext context,
+    Tarefa tarefa,
+    bool feita,
+  ) async {
+    final anterior = tarefa.status;
+    final novo = feita ? StatusTarefa.concluida : StatusTarefa.aFazer;
+    if (novo == anterior) return;
+
+    final ok = await tarefaController.atualizarStatus(tarefa.idTarefa, novo);
+    if (!context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (!ok) {
+      final mensagem = tarefaController.erro.value.trim();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            mensagem.isEmpty
+                ? HomeOrganizadorCopy.tarefaErroStatus
+                : mensagem,
+          ),
+        ),
+      );
+      return;
+    }
+    if (!feita) return;
+
+    HapticFeedback.lightImpact();
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: const Text(HomeOrganizadorCopy.tarefaConcluidaAviso),
+          action: SnackBarAction(
+            label: HomeOrganizadorCopy.desfazer,
+            onPressed: () {
+              tarefaController.atualizarStatus(tarefa.idTarefa, anterior);
+            },
+          ),
+        ),
+      );
+  }
+
   Future<void> _abrirNovaTarefa(BuildContext context) async {
     await tarefaController.carregarUsuarios();
+    if (!context.mounted) return;
+    final eventoId = eventoController.eventoAtualEntidade?.idEvento ?? '';
+    if (eventoId.isEmpty) return;
     await showTarefaDialog(
       context: context,
       themeController: themeController,
       idUsuarioLogado: appController.usuarioLogado.value?.idUsuario,
+      idEvento: eventoId,
       usuarios: [
         ...convidadoController.convidados,
         ...tarefaController.usuarios,
@@ -198,13 +222,94 @@ class TarefasScreen extends StatelessWidget {
       onSave: (titulo, descricao, data, usuario) async {
         await tarefaController.adicionarTarefa(
           nome: titulo,
-          descricao: descricao,
+          descricao: descricao.isEmpty ? null : descricao,
           dataPrevista: data,
           idResponsavel: usuario.idConvidado,
-          idEvento: eventoController.eventoAtualEntidade!.idEvento,
+          idEvento: eventoId,
+        );
+        final mensagem = tarefaController.erro.value.trim();
+        return mensagem.isEmpty ? null : mensagem;
+      },
+    );
+  }
+
+  Future<void> _abrirEdicao(BuildContext context, Tarefa tarefa) async {
+    await tarefaController.carregarUsuarios();
+    if (!context.mounted) return;
+    final atual = _comResponsavel(tarefa);
+    await showTarefaDialog(
+      context: context,
+      themeController: themeController,
+      idUsuarioLogado: appController.usuarioLogado.value?.idUsuario,
+      idEvento: atual.idEvento,
+      tituloInicial: atual.titulo,
+      descricaoInicial: atual.descricao,
+      dataInicial: atual.dataPrevista,
+      responsavelInicial: atual.responsavel,
+      usuarios: [
+        ...convidadoController.convidados,
+        ...tarefaController.usuarios,
+      ],
+      isEdit: true,
+      onSave: (titulo, descricao, data, usuario) async {
+        await tarefaController.editarTarefa(
+          Tarefa(
+            idTarefa: atual.idTarefa,
+            idEvento: atual.idEvento,
+            titulo: titulo,
+            descricao: descricao.isEmpty ? null : descricao,
+            dataPrevista: data,
+            idResponsavel: usuario.idConvidado,
+            responsavel: usuario,
+            status: atual.status,
+            dataCadastro: atual.dataCadastro,
+          ),
+        );
+        final mensagem = tarefaController.erro.value.trim();
+        return mensagem.isEmpty ? null : mensagem;
+      },
+    );
+  }
+
+  Future<void> _confirmarExclusao(BuildContext context, Tarefa tarefa) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Excluir tarefa?',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w700,
+              fontSize: 18,
+            ),
+          ),
+          content: Text(
+            '“${tarefa.titulo}” sai da lista da festa.',
+            style: GoogleFonts.poppins(fontSize: 14, height: 1.35),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('Cancelar'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(
+                'Excluir',
+                style: TextStyle(
+                  color: Colors.red.shade700,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
         );
       },
     );
+    if (confirmar != true) return;
+    await tarefaController.excluirTarefa(tarefa.idTarefa);
   }
 
   Widget _buildEmptyState(BuildContext context, Color primary) {
@@ -220,223 +325,96 @@ class TarefasScreen extends StatelessWidget {
   }
 }
 
-class _TarefaCard extends StatelessWidget {
-  final Tarefa data;
-  final LinearGradient themeGradient;
-  final Color primaryColor;
-  final TarefaController tarefaController;
-  final ConvidadoController convidadoController;
-  final EventThemeController themeController;
-  final String? idUsuarioLogado;
-  final ValueChanged<bool> onToggle;
-  final VoidCallback onDelete;
-  final VoidCallback onEdit;
-
-  const _TarefaCard({
-    required this.data,
-    required this.onToggle,
-    required this.onDelete,
-    required this.themeGradient,
-    required this.primaryColor,
-    required this.tarefaController,
-    required this.convidadoController,
-    required this.themeController,
-    required this.idUsuarioLogado,
-    required this.onEdit,
+class _ProgressoTarefas extends StatelessWidget {
+  const _ProgressoTarefas({
+    required this.total,
+    required this.pendentes,
+    required this.atrasadas,
+    required this.progresso,
+    required this.primary,
   });
 
+  final int total;
+  final int pendentes;
+  final int atrasadas;
+  final double progresso;
+  final Color primary;
+
   @override
   Widget build(BuildContext context) {
-    final tarefa = data;
-    final status = tarefa.status;
-    final concluida = status == StatusTarefa.concluida;
+    final emDia = pendentes <= 0;
+    final titulo = emDia
+        ? 'Tudo em dia'
+        : pendentes == 1
+            ? 'Falta 1'
+            : 'Faltam $pendentes';
+    final subtitulo = emDia
+        ? (total == 1 ? '1 concluída' : '$total concluídas')
+        : 'de $total ${total == 1 ? 'tarefa' : 'tarefas'}';
+    final alerta = !emDia && atrasadas > 0
+        ? (atrasadas == 1 ? '1 atrasada' : '$atrasadas atrasadas')
+        : null;
 
     return Padding(
-      padding:
-          const EdgeInsets.only(bottom: 12), // 🔹 Espaçamento compacto (era 16)
-      child: Slidable(
-        key: ValueKey(tarefa.idTarefa),
-        startActionPane: ActionPane(
-          motion: const StretchMotion(),
-          extentRatio: 0.35, // Menor swipe area
-          children: [
-            SlidableAction(
-              onPressed: (_) async {
-                await tarefaController.carregarUsuarios();
-                await showTarefaDialog(
-                  context: context,
-                  themeController: themeController,
-                  idUsuarioLogado: idUsuarioLogado,
-                  idEvento: tarefa.idEvento,
-                  tituloInicial: tarefa.titulo,
-                  descricaoInicial: tarefa.descricao,
-                  dataInicial: tarefa.dataPrevista,
-                  responsavelInicial: tarefa.responsavel,
-                  usuarios: [
-                    ...convidadoController.convidados,
-                    ...tarefaController.usuarios,
-                  ],
-                  isEdit: true,
-                  onSave: (titulo, descricao, data, usuario) async {
-                    await tarefaController.editarTarefa(
-                      tarefa.copyWith(
-                        titulo: titulo,
-                        descricao: descricao,
-                        dataPrevista: data,
-                        idResponsavel: usuario.idConvidado,
-                        responsavel: usuario,
-                      ),
-                    );
-                  },
-                );
-              },
-              backgroundColor: Colors.blue.shade400,
-              foregroundColor: Colors.white,
-              icon: Icons.edit_note_rounded,
-              label: 'Editar',
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ],
-        ),
-        endActionPane: ActionPane(
-          motion: const BehindMotion(),
-          extentRatio: 0.3,
-          children: [
-            SlidableAction(
-              onPressed: (_) => onDelete(),
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-              icon: Icons.delete_outline,
-              label: 'Excluir',
-              borderRadius: BorderRadius.circular(14),
-            ),
-          ],
-        ),
-
-        // === Card principal ===
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.all(14), // 🔹 Compacto (era 16)
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      child: Semantics(
+        container: true,
+        label:
+            '$titulo, $subtitulo${alerta == null ? '' : ', $alerta'}. ${HomeOrganizadorCopy.tarefasPercentual(progresso)}',
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 14, 18, 14),
           decoration: BoxDecoration(
-            gradient: concluida
-                ? LinearGradient(colors: [
-                    primaryColor.withValues(alpha: 0.05),
-                    Colors.white,
-                  ])
-                : const LinearGradient(
-                    colors: [Colors.white, Color(0xFFFCFDFD)], // Mais claro
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-            borderRadius: BorderRadius.circular(16), // Raio menor
-            border: Border.all(
-              color: concluida
-                  ? primaryColor.withValues(alpha: 0.4)
-                  : Colors.grey.shade200, // Borda mais suave
-              width: 1.0,
-            ),
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: primary.withValues(alpha: 0.08)),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withValues(alpha: 0.04), // Sombra sutil
-                blurRadius: 4,
-                offset: const Offset(0, 2),
+                color: primary.withValues(alpha: 0.08),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              // ===== Linha superior (título + botão check) =====
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // === Título e responsável ===
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              _AnelProgresso(progresso: progresso, cor: primary),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titulo,
+                      style: GoogleFonts.poppins(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        height: 1.1,
+                        color: const Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
                       children: [
                         Text(
-                          tarefa.titulo,
-                          style: TextStyle(
-                            fontSize: 13, // Menor
-                            fontWeight: FontWeight.bold,
-                            color:
-                                concluida ? primaryColor : Colors.grey.shade900,
-                            decoration:
-                                concluida ? TextDecoration.lineThrough : null,
+                          subtitulo,
+                          style: GoogleFonts.poppins(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: const Color(0xFF6B7280),
                           ),
                         ),
-                        const SizedBox(height: 2),
-                        Text(
-                          tarefa.responsavel?.nome ?? 'Sem responsável',
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                          style:
-                              const TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
+                        if (alerta != null)
+                          _Etiqueta(
+                            texto: alerta,
+                            cor: const Color(0xFFB91C1C),
+                          ),
                       ],
                     ),
-                  ),
-
-                  // === Botão check ===
-                  GestureDetector(
-                    onTap: () {
-                      final novo = status == StatusTarefa.concluida
-                          ? StatusTarefa.aFazer
-                          : StatusTarefa.concluida;
-                      onToggle(novo == StatusTarefa.concluida);
-                    },
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      transitionBuilder: (child, anim) =>
-                          ScaleTransition(scale: anim, child: child),
-                      child: concluida
-                          ? Icon(Icons.check_circle_rounded,
-                              key: const ValueKey(1),
-                              color: primaryColor,
-                              size: 26) // Menor
-                          : Icon(Icons.radio_button_unchecked,
-                              key: const ValueKey(0),
-                              color: Colors.grey.shade300,
-                              size: 26),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 8),
-
-              // ===== Descrição =====
-              if (tarefa.descricao?.isNotEmpty ?? false)
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.only(bottom: 10),
-                  child: Text(
-                    tarefa.descricao!,
-                    style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontSize: 13, // Menor
-                      height: 1.3,
-                    ),
-                  ),
+                  ],
                 ),
-
-              // ===== Linha inferior: data + status =====
-              Row(
-                children: [
-                  const Icon(Icons.calendar_today_outlined,
-                      size: 14, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    tarefa.dataPrevista != null
-                        ? DateFormat('dd/MM/yyyy').format(tarefa.dataPrevista!)
-                        : '--/--/----',
-                    style: const TextStyle(
-                        fontSize: 12, color: Colors.grey), // Menor
-                  ),
-                  const Spacer(),
-                  _StatusChip(status: status, primaryColor: primaryColor),
-                ],
               ),
             ],
           ),
@@ -446,206 +424,411 @@ class _TarefaCard extends StatelessWidget {
   }
 }
 
-/// === Etiqueta de status elegante ===
-class _StatusChip extends StatelessWidget {
-  final StatusTarefa status;
-  final Color primaryColor;
+class _AnelProgresso extends StatelessWidget {
+  const _AnelProgresso({required this.progresso, required this.cor});
 
-  const _StatusChip({required this.status, required this.primaryColor});
+  final double progresso;
+  final Color cor;
 
   @override
   Widget build(BuildContext context) {
-    late final Color bg;
-    late final Color text;
-    late final String label;
-
-    switch (status) {
-      case StatusTarefa.aFazer:
-        bg = Colors.orange.shade50;
-        text = Colors.orange.shade800;
-        label = 'A Fazer';
-        break;
-      case StatusTarefa.emAndamento:
-        bg = Colors.blue.shade50;
-        text = Colors.blue.shade700;
-        label = 'Andamento'; // Compactado
-        break;
-      case StatusTarefa.concluida:
-        bg = primaryColor.withValues(alpha: 0.1);
-        text = primaryColor;
-        label = 'Concluída';
-        break;
-    }
-
-    return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Mais fino
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: text,
-          fontSize: 11, // Fonte menor
-          fontWeight: FontWeight.w600,
+    final valor = progresso.clamp(0.0, 1.0);
+    return SizedBox(
+      width: 58,
+      height: 58,
+      child: CustomPaint(
+        painter: _AnelPainter(valor, cor),
+        child: Center(
+          child: Text(
+            '${(valor * 100).round()}%',
+            style: GoogleFonts.poppins(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: const Color(0xFF111827),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-Widget resumoTarefasCardElegante(
-  LinearGradient gradient, {
-  required int totalTarefas,
-  required int concluidas,
-}) {
-  final percent =
-      totalTarefas > 0 ? (concluidas / totalTarefas).clamp(0.0, 1.0) : 0.0;
-  final pendentes = totalTarefas - concluidas;
+class _AnelPainter extends CustomPainter {
+  _AnelPainter(this.progresso, this.cor);
 
-  return Container(
-    padding: const EdgeInsets.all(14), // 🔹 Compacto (era 16)
-    decoration: BoxDecoration(
-      gradient: gradient,
-      borderRadius: BorderRadius.circular(20), // Raio menor
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.10), // Sombra sutil
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  final double progresso;
+  final Color cor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final centro = Offset(size.width / 2, size.height / 2);
+    const traco = 5.0;
+    final raio = (size.width - traco) / 2;
+    final base = Paint()
+      ..color = cor.withValues(alpha: 0.12)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = traco;
+    final frente = Paint()
+      ..color = cor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = traco
+      ..strokeCap = StrokeCap.round;
+    canvas.drawCircle(centro, raio, base);
+    if (progresso <= 0) return;
+    canvas.drawArc(
+      Rect.fromCircle(center: centro, radius: raio),
+      -math.pi / 2,
+      math.pi * 2 * progresso,
+      false,
+      frente,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _AnelPainter oldDelegate) {
+    return oldDelegate.progresso != progresso || oldDelegate.cor != cor;
+  }
+}
+
+class _GrupoTarefas extends StatelessWidget {
+  const _GrupoTarefas({
+    required this.titulo,
+    required this.tarefas,
+    required this.agora,
+    required this.primary,
+    required this.onToggle,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final String titulo;
+  final List<Tarefa> tarefas;
+  final DateTime agora;
+  final Color primary;
+  final void Function(Tarefa tarefa, bool feita) onToggle;
+  final ValueChanged<Tarefa> onEdit;
+  final ValueChanged<Tarefa> onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // === Indicador Circular ===
-        CircularPercentIndicator(
-          radius: 36, // 🔹 Circulo Menor (era 42)
-          lineWidth: 5, // Linha mais fina
-          percent: percent,
-          animation: true,
-          circularStrokeCap: CircularStrokeCap.round,
-          linearGradient: LinearGradient(
-            colors: [
-              gradient.colors.first,
-              gradient.colors.last,
-            ],
-            begin: Alignment.bottomLeft,
-            end: Alignment.centerRight,
-          ),
-          backgroundColor: Colors.white.withValues(alpha: 0.25),
-          center: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '${(percent * 100).toStringAsFixed(0)}%',
-                style: GoogleFonts.poppins(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                  fontSize: 18, // Fonte menor
-                ),
-              ),
-              Text(
-                'Feito',
-                style: GoogleFonts.poppins(
-                  fontSize: 10, // Fonte menor
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white70,
-                ),
-              ),
-            ],
+        Padding(
+          padding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
+          child: Text(
+            '$titulo · ${tarefas.length}',
+            style: GoogleFonts.poppins(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: const Color(0xFF6B7280),
+            ),
           ),
         ),
-
-        // === Dados Resumo ===
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(left: 16), // Menos espaço interno
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Resumo das Tarefas',
-                  style: GoogleFonts.poppins(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14, // Fonte menor
-                    letterSpacing: 0.2,
+                for (var i = 0; i < tarefas.length; i++) ...[
+                  if (i > 0)
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      indent: 62,
+                      endIndent: 16,
+                      color: Color(0xFFF3F4F6),
+                    ),
+                  _LinhaTarefa(
+                    tarefa: tarefas[i],
+                    agora: agora,
+                    primary: primary,
+                    onToggle: (feita) => onToggle(tarefas[i], feita),
+                    onEdit: () => onEdit(tarefas[i]),
+                    onDelete: () => onDelete(tarefas[i]),
                   ),
-                ),
-                const SizedBox(height: 6),
-                _infoBoxResumoTarefa(
-                  'Concluídas', // Título encurtado
-                  '$concluidas de $totalTarefas',
-                  Icons.task_alt_rounded,
-                  Colors.white,
-                ),
-                const SizedBox(height: 4),
-                _infoBoxResumoTarefa(
-                  'Pendentes',
-                  '$pendentes tarefas',
-                  Icons.pending_actions_rounded,
-                  Colors.white70,
-                ),
-                const SizedBox(height: 6),
-                if (percent >= 1)
-                  Row(
-                    children: [
-                      const Icon(Icons.emoji_events_rounded,
-                          color: Colors.yellowAccent, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Todas concluídas! 🥳',
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.yellowAccent,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+                ],
               ],
             ),
           ),
         ),
       ],
-    ),
-  );
+    );
+  }
 }
 
-/// === Item de informação (reutilizável) ===
-Widget _infoBoxResumoTarefa(
-  String titulo,
-  String valor,
-  IconData icone,
-  Color cor,
-) {
-  return Row(
-    children: [
-      Icon(icone, color: cor, size: 16), // Ícone menor
-      const SizedBox(width: 6),
-      Expanded(
-        child: Text(
-          titulo,
-          style: GoogleFonts.poppins(
-            color: cor.withValues(alpha: 0.9),
-            fontSize: 12, // Fonte menor
-            fontWeight: FontWeight.w500,
+class _LinhaTarefa extends StatelessWidget {
+  const _LinhaTarefa({
+    required this.tarefa,
+    required this.agora,
+    required this.primary,
+    required this.onToggle,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final Tarefa tarefa;
+  final DateTime agora;
+  final Color primary;
+  final ValueChanged<bool> onToggle;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final concluida = tarefa.status == StatusTarefa.concluida;
+    final prazo = HomeOrganizadorCopy.prazoTarefa(tarefa.dataPrevista, agora);
+    final descricao = tarefa.descricao?.trim() ?? '';
+    final nome = tarefa.responsavel?.nome.trim() ?? '';
+    final data = _rotuloData(concluida, prazo);
+    final detalhe = [
+      if (data != null && !(prazo.hoje && !concluida)) data,
+      if (nome.isNotEmpty) nome,
+    ].join(' · ');
+
+    return Material(
+      color: Colors.white,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _MarcaTarefa(
+            feita: concluida,
+            primary: primary,
+            rotulo: concluida
+                ? 'Marcar ${tarefa.titulo} como pendente'
+                : '${HomeOrganizadorCopy.marcarFeita}: ${tarefa.titulo}',
+            onTap: () => onToggle(!concluida),
+          ),
+          Expanded(
+            child: InkWell(
+              onTap: onEdit,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(0, 14, 4, 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      tarefa.titulo,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        height: 1.25,
+                        color: concluida
+                            ? const Color(0xFF9CA3AF)
+                            : const Color(0xFF111827),
+                        decoration:
+                            concluida ? TextDecoration.lineThrough : null,
+                        decorationColor: const Color(0xFF9CA3AF),
+                      ),
+                    ),
+                    if (!concluida && descricao.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        descricao,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          height: 1.3,
+                          color: const Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                    if ((!concluida && (prazo.atrasada || prazo.hoje)) ||
+                        tarefa.status == StatusTarefa.emAndamento ||
+                        detalhe.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          if (!concluida && prazo.atrasada) ...[
+                            const _Etiqueta(
+                              texto: 'Atrasada',
+                              cor: Color(0xFFB91C1C),
+                            ),
+                            const SizedBox(width: 8),
+                          ] else if (!concluida && prazo.hoje) ...[
+                            const _Etiqueta(
+                              texto: 'Hoje',
+                              cor: Color(0xFFB45309),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          if (tarefa.status == StatusTarefa.emAndamento) ...[
+                            const _Etiqueta(
+                              texto: 'Em andamento',
+                              cor: Color(0xFF1D4ED8),
+                            ),
+                            const SizedBox(width: 8),
+                          ],
+                          if (detalhe.isNotEmpty)
+                            Expanded(
+                              child: Text(
+                                detalhe,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: concluida
+                                      ? const Color(0xFF9CA3AF)
+                                      : const Color(0xFF6B7280),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'Opções da tarefa',
+            padding: EdgeInsets.zero,
+            icon: const Icon(
+              Icons.more_horiz_rounded,
+              color: Color(0xFF9CA3AF),
+              size: 22,
+            ),
+            onSelected: (valor) {
+              if (valor == 'editar') onEdit();
+              if (valor == 'excluir') onDelete();
+            },
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'editar',
+                child: Row(
+                  children: [
+                    const Icon(Icons.edit_outlined, size: 18),
+                    const SizedBox(width: 10),
+                    Text('Editar', style: GoogleFonts.poppins(fontSize: 14)),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'excluir',
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_outline,
+                        size: 18, color: Colors.red.shade700),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Excluir',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        color: Colors.red.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String? _rotuloData(bool concluida, PrazoTarefaHome prazo) {
+    final data = tarefa.dataPrevista;
+    if (data == null) return null;
+    if (!concluida && prazo.hoje) return null;
+    if (!concluida && !prazo.atrasada) return prazo.rotulo;
+    return _curta(data);
+  }
+
+  String _curta(DateTime data) {
+    if (data.year == agora.year) return DateFormat('dd/MM').format(data);
+    return DateFormat('dd/MM/yyyy').format(data);
+  }
+}
+
+class _MarcaTarefa extends StatelessWidget {
+  const _MarcaTarefa({
+    required this.feita,
+    required this.primary,
+    required this.rotulo,
+    required this.onTap,
+  });
+
+  final bool feita;
+  final Color primary;
+  final String rotulo;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: rotulo,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: Center(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              curve: Curves.easeOut,
+              width: 24,
+              height: 24,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: feita ? primary : Colors.transparent,
+                border: Border.all(
+                  color: feita ? primary : const Color(0xFFD1D5DB),
+                  width: 1.8,
+                ),
+              ),
+              child: feita
+                  ? const Icon(Icons.check_rounded, size: 16, color: Colors.white)
+                  : null,
+            ),
           ),
         ),
       ),
-      Text(
-        valor,
+    );
+  }
+}
+
+class _Etiqueta extends StatelessWidget {
+  const _Etiqueta({required this.texto, required this.cor});
+
+  final String texto;
+  final Color cor;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: cor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        texto,
         style: GoogleFonts.poppins(
-          color: cor,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
-          fontSize: 12, // Fonte menor
+          color: cor,
+          height: 1.2,
         ),
       ),
-    ],
-  );
+    );
+  }
 }

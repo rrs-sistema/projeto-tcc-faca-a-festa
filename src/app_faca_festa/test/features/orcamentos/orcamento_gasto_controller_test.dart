@@ -56,7 +56,7 @@ void main() {
     );
 
     expect(resultado.ok, isFalse);
-    expect(resultado.mensagem, 'Orçamento total do evento excedido.');
+    expect(resultado.mensagem, 'O valor pago excede o orçamento do evento.');
     expect(repository.adicionados.single.idOrcamento, 'orcamento-1');
     expect(repository.adicionados.single.nome, 'Doces');
     expect(repository.adicionados.single.custo, 200);

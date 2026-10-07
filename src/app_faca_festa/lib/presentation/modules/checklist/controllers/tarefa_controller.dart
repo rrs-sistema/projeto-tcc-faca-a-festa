@@ -180,6 +180,7 @@ class TarefaController extends GetxController {
     String? idEvento,
   }) async {
     try {
+      erro.value = '';
       await _repository.adicionar(
         Tarefa(
           idTarefa: const Uuid().v4(),
@@ -198,6 +199,7 @@ class TarefaController extends GetxController {
 
   Future<void> editarTarefa(Tarefa tarefa) async {
     try {
+      erro.value = '';
       await _repository.atualizar(tarefa);
     } catch (e) {
       erro.value = 'Erro ao editar tarefa: $e';

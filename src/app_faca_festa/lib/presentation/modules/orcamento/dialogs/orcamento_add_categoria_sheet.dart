@@ -73,7 +73,7 @@ Future<void> showAddOrcamentoBottomSheet(
       }
 
       Get.snackbar(
-        'Orçamento adicionado',
+        'Item adicionado',
         descricao,
         backgroundColor: primary,
         colorText: Colors.white,
@@ -145,7 +145,7 @@ Future<void> showAddOrcamentoBottomSheet(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Adicionar ao orçamento',
+                      'Novo item',
                       style: GoogleFonts.poppins(
                         color: Colors.white,
                         fontSize: 18,
@@ -155,10 +155,10 @@ Future<void> showAddOrcamentoBottomSheet(
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Descreva o gasto e o custo estimado.',
+                      'Entra no previsto. O pagamento você registra depois, no item.',
                       style: GoogleFonts.poppins(
                         color: Colors.white.withValues(alpha: 0.88),
-                        fontSize: 11,
+                        fontSize: 12,
                         height: 1.35,
                         fontWeight: FontWeight.w500,
                       ),
@@ -167,44 +167,6 @@ Future<void> showAddOrcamentoBottomSheet(
                 ),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget buildSectionTitle({required IconData icon, required String title}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: primary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(icon, color: primary, size: 16),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 4),
-                Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    color: textDark,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
@@ -220,8 +182,10 @@ Future<void> showAddOrcamentoBottomSheet(
     TextCapitalization textCapitalization = TextCapitalization.none,
     TextInputAction textInputAction = TextInputAction.next,
     int maxLines = 1,
+    bool autofocus = false,
     List<TextInputFormatter>? inputFormatters,
     String? Function(String?)? validator,
+    void Function(String)? onFieldSubmitted,
   }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -238,12 +202,14 @@ Future<void> showAddOrcamentoBottomSheet(
       ),
       child: TextFormField(
         controller: controller,
+        autofocus: autofocus,
         keyboardType: keyboardType,
         textCapitalization: textCapitalization,
         textInputAction: textInputAction,
         maxLines: maxLines,
         inputFormatters: inputFormatters,
         validator: validator,
+        onFieldSubmitted: onFieldSubmitted,
         style: GoogleFonts.poppins(
             color: textDark, fontSize: 13, fontWeight: FontWeight.w600),
         decoration: InputDecoration(
@@ -299,72 +265,64 @@ Future<void> showAddOrcamentoBottomSheet(
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (modalContext) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.85,
-          minChildSize: 0.60,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (_, controllerScroll) {
-            return Container(
-              clipBehavior: Clip.antiAlias,
-              decoration: const BoxDecoration(
-                color: background,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                children: [
-                  buildHeader(),
-                  Expanded(
-                    child: Form(
-                      key: formKey,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
-                      child: ListView(
-                        controller: controllerScroll,
-                        padding: EdgeInsets.fromLTRB(
-                          16,
-                          16,
-                          16,
-                          MediaQuery.of(modalContext).viewInsets.bottom + 16,
-                        ),
+        final teclado = MediaQuery.viewInsetsOf(modalContext).bottom;
+        final base = MediaQuery.paddingOf(modalContext).bottom;
+        return Padding(
+          padding: EdgeInsets.only(bottom: teclado),
+          child: Container(
+            clipBehavior: Clip.antiAlias,
+            decoration: const BoxDecoration(
+              color: background,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            ),
+            child: Form(
+              key: formKey,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    buildHeader(),
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(16, 16, 16, 8 + (teclado > 0 ? 0 : base)),
+                      child: Column(
                         children: [
-                          buildSectionTitle(
-                            icon: Icons.edit_note_rounded,
-                            title: 'Detalhes do Orçamento',
-                          ),
                           buildTextField(
                             controller: nomeCtrl,
-                            label: 'Descrição do gasto',
-                            hint: 'Ex: Decoração, DJ, Bebidas...',
-                            icon: Icons.category_outlined,
+                            label: 'Nome do item',
+                            hint: 'Ex.: passagens, decoração, bolo',
+                            icon: Icons.sell_outlined,
                             textCapitalization: TextCapitalization.sentences,
-                            maxLines: 2,
+                            autofocus: true,
                             validator: (v) => FormValidators.descricao(
                               v,
-                              campo: 'a descrição do gasto',
+                              campo: 'o nome do item',
                               obrigatorio: true,
                               minimo: 3,
                             ),
                           ),
                           buildTextField(
                             controller: custoEstimadoCtrl,
-                            label: 'Custo estimado (R\$)',
+                            label: 'Valor previsto',
                             hint: 'R\$ 0,00',
-                            icon: Icons.savings_outlined,
+                            icon: Icons.payments_outlined,
                             keyboardType: const TextInputType.numberWithOptions(
                                 decimal: true),
                             textInputAction: TextInputAction.done,
                             inputFormatters: [dinheiroMask],
+                            onFieldSubmitted: (_) =>
+                                salvarOrcamento(modalContext),
                             validator: (v) => FormValidators.dinheiro(
                               v,
-                              campo: 'o custo estimado',
+                              campo: 'o valor previsto',
                             ),
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 8),
                           Obx(() {
                             final isSaving = salvando.value;
                             return SizedBox(
                               width: double.infinity,
-                              height: 44,
+                              height: 48,
                               child: ElevatedButton.icon(
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: primary,
@@ -390,48 +348,45 @@ Future<void> showAddOrcamentoBottomSheet(
                                         color: Colors.white,
                                         size: 18),
                                 label: Text(
-                                  isSaving ? 'Salvando...' : 'Salvar orçamento',
+                                  isSaving ? 'Salvando...' : 'Salvar item',
                                   style: GoogleFonts.poppins(
                                     color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
                               ),
                             );
                           }),
-                          const SizedBox(height: 6),
                           SizedBox(
                             width: double.infinity,
                             height: 44,
-                            child: TextButton.icon(
+                            child: TextButton(
                               onPressed: () {
                                 FocusManager.instance.primaryFocus?.unfocus();
                                 Navigator.of(modalContext).pop();
                               },
-                              icon: const Icon(Icons.close_rounded, size: 18),
-                              label: Text(
-                                'Cancelar',
-                                style: GoogleFonts.poppins(
-                                    fontWeight: FontWeight.w700, fontSize: 13),
-                              ),
                               style: TextButton.styleFrom(
                                 foregroundColor: textMuted,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
+                              child: Text(
+                                'Cancelar',
+                                style: GoogleFonts.poppins(
+                                    fontWeight: FontWeight.w600, fontSize: 14),
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 35),
                         ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            );
-          },
+            ),
+          ),
         );
       },
     );

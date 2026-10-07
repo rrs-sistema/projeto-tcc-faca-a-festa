@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import 'package:app_faca_festa/core/utils/form_validators.dart';
+import 'package:app_faca_festa/presentation/modules/legal/widgets/aviso_lgpd_card.dart';
 import 'package:app_faca_festa/presentation/widgets/custom_input_field.dart';
 import './endereco_section_controller.dart';
 
@@ -51,6 +52,8 @@ class EnderecoSection extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 10),
+          const AvisoLgpdCard(texto: AvisoLgpdCard.minimizacaoEndereco),
           const SizedBox(height: 10),
           CustomInputField(
             label: 'CEP',

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -15,6 +17,7 @@ import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_c
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/domain/entities/convidado.dart';
 import 'package:app_faca_festa/domain/entities/grupo_convidado.dart';
+import 'package:app_faca_festa/presentation/modules/legal/widgets/aviso_lgpd_card.dart';
 import 'package:app_faca_festa/presentation/widgets/cadastro_passos_bar.dart';
 import 'buscar_contato_agenda_sheet.dart';
 import 'show_cadastro_bottom_sheet.dart';
@@ -74,6 +77,7 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
   final _formKey = GlobalKey<FormState>();
   var _autovalidateMode = AutovalidateMode.disabled;
   var _passo = 0;
+  var _garantindoGrupoPadrao = false;
   late final RxString idGrupoSelecionado;
   late final Rx<TipoConvidado> tipoConvidado;
   late final RxBool cuidadoEspecial;
@@ -201,6 +205,54 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
       _autovalidateMode = AutovalidateMode.disabled;
       _passo = 1;
     });
+    unawaited(() async {
+      try {
+        await _prepararGrupoPadrao();
+      } catch (_) {}
+    }());
+  }
+
+  bool get _podeCadastrarGrupoPadrao {
+    final grupos = grupoController.grupos;
+    if (grupos.isEmpty) return true;
+    if (grupos.length != 1) return false;
+    return grupos.first.nome.trim().toLowerCase() ==
+        GrupoConvidadoController.nomeGrupoPadrao.toLowerCase();
+  }
+
+  Future<void> _prepararGrupoPadrao({String? idEvento}) async {
+    if (grupoSelecionadoAtual() != null || !_podeCadastrarGrupoPadrao) return;
+
+    if (grupoController.carregando.value && grupoController.grupos.isEmpty) {
+      try {
+        await grupoController.carregando.stream
+            .firstWhere((carregando) => !carregando)
+            .timeout(const Duration(seconds: 8));
+      } on TimeoutException {
+        return;
+      }
+    }
+    if (!mounted || grupoSelecionadoAtual() != null) return;
+    if (!_podeCadastrarGrupoPadrao) return;
+
+    final eventoId = (idEvento ??
+            eventoController.eventoAtualEntidade?.idEvento ??
+            '')
+        .trim();
+    if (eventoId.isEmpty) return;
+
+    if (mounted) setState(() => _garantindoGrupoPadrao = true);
+    try {
+      final grupo =
+          await grupoController.garantirGrupoPadrao(idEvento: eventoId);
+      if (!mounted || grupo == null) return;
+      if (idGrupoSelecionado.value.trim().isEmpty ||
+          grupoSelecionadoAtual() == null) {
+        idGrupoSelecionado.value = grupo.idGrupo;
+      }
+    } finally {
+      if (mounted) setState(() => _garantindoGrupoPadrao = false);
+    }
   }
 
   void _voltarConvidado() {
@@ -218,14 +270,6 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
     final nome = nomeCtrl.text.trim();
     final contato = telCtrl.text.trim();
     final email = emailCtrl.text.trim();
-    final grupo = grupoSelecionadoAtual();
-    if (grupo == null) {
-      showSnack(
-          title: 'Atenção',
-          message: 'Selecione um grupo.',
-          color: Colors.redAccent);
-      return;
-    }
     final idEvento = eventoController.eventoAtualEntidade?.idEvento ?? '';
     if (idEvento.isEmpty) {
       showSnack(
@@ -237,6 +281,17 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
 
     try {
       salvando.value = true;
+      if (grupoSelecionadoAtual() == null && _podeCadastrarGrupoPadrao) {
+        await _prepararGrupoPadrao(idEvento: idEvento);
+      }
+      final grupo = grupoSelecionadoAtual();
+      if (grupo == null) {
+        showSnack(
+            title: 'Atenção',
+            message: 'Selecione um grupo.',
+            color: Colors.redAccent);
+        return;
+      }
       final agora = DateTime.now();
       final convidadoEditando = widget.convidado;
 
@@ -679,6 +734,23 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
         );
       }
       if (grupos.isEmpty) {
+        if (_garantindoGrupoPadrao || grupoController.carregando.value) {
+          return Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+                color: Colors.white, borderRadius: BorderRadius.circular(14)),
+            child: Row(children: [
+              SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: primary)),
+              const SizedBox(width: 10),
+              Text('Preparando o grupo padrão...',
+                  style: GoogleFonts.poppins(color: textMuted, fontSize: 12))
+            ]),
+          );
+        }
         return Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
@@ -984,6 +1056,16 @@ class _AdicionarConvidadoSheetState extends State<_AdicionarConvidadoSheet> {
                             buildTipoCard(TipoConvidado.bebe)
                           ]),
                         ),
+                        Obx(() {
+                          final tipo = tipoConvidado.value;
+                          if (tipo == TipoConvidado.adulto) {
+                            return const SizedBox.shrink();
+                          }
+                          return const Padding(
+                            padding: EdgeInsets.only(top: 12),
+                            child: AvisoLgpdCard(texto: AvisoLgpdCard.dadosCrianca),
+                          );
+                        }),
                         const SizedBox(height: 12),
                         buildGroupDropdown(),
                         const SizedBox(height: 12),

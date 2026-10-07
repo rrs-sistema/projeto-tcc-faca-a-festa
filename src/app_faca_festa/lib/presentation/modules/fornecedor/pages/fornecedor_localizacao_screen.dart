@@ -478,6 +478,18 @@ class _FornecedorLocalizacaoScreenState
     );
   }
 
+  /// Mesma nota da home: o campo do cadastro do fornecedor.
+  /// A coleção `avaliacoes` entra só quando o cadastro ainda não tem média.
+  double _mediaFornecedor(FornecedorDetalhado detalhe) {
+    final fornecedor = detalhe.fornecedor;
+    final doCadastro = fornecedor.mediaAvaliacoes;
+    if (fornecedor.totalAvaliacoes > 0 && doCadastro > 0) {
+      return doCadastro;
+    }
+    return controllerLocalizacao.mediasAvaliacoes[fornecedor.idFornecedor] ??
+        doCadastro;
+  }
+
   List<FornecedorDetalhado> _aplicarFiltros(List<FornecedorDetalhado> lista) {
     final termo = termoBusca.trim().toLowerCase();
     final avaliacaoMinima = controllerLocalizacao.avaliacaoMinima.value;
@@ -503,20 +515,12 @@ class _FornecedorLocalizacaoScreenState
       }).toList();
     }
     if (avaliacaoMinima > 0) {
-      resultado = resultado.where((f) {
-        final media = controllerLocalizacao
-                .mediasAvaliacoes[f.fornecedor.idFornecedor] ??
-            0.0;
-        return media >= avaliacaoMinima;
-      }).toList();
+      resultado = resultado
+          .where((f) => _mediaFornecedor(f) >= avaliacaoMinima)
+          .toList();
     }
     resultado.sort((a, b) {
-      final cmpNota =
-          (controllerLocalizacao.mediasAvaliacoes[b.fornecedor.idFornecedor] ??
-                  0.0)
-              .compareTo(controllerLocalizacao
-                      .mediasAvaliacoes[a.fornecedor.idFornecedor] ??
-                  0.0);
+      final cmpNota = _mediaFornecedor(b).compareTo(_mediaFornecedor(a));
       if (cmpNota != 0) return cmpNota;
       return (a.distanciaKm ?? 999999).compareTo(b.distanciaKm ?? 999999);
     });
@@ -729,11 +733,9 @@ class _FornecedorLocalizacaoScreenState
           padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Column(
             children: fornecedoresFiltrados
-                .map((f) => _FornecedorListCard(
+                .map((f) =>                     _FornecedorListCard(
                       fornecedorDetalhado: f,
-                      media: controllerLocalizacao
-                              .mediasAvaliacoes[f.fornecedor.idFornecedor] ??
-                          0.0,
+                      media: _mediaFornecedor(f),
                       primary: primary,
                       categoriaSelecionada: categoriaSelecionada,
                       onTap: () => _abrirDetalheFornecedor(f),
@@ -759,9 +761,7 @@ class _FornecedorLocalizacaoScreenState
           width: 175, // Cards mais estreitos
           child: _FornecedorPremiumCard(
             fornecedorDetalhado: fornecedores[index],
-            media: controllerLocalizacao.mediasAvaliacoes[
-                    fornecedores[index].fornecedor.idFornecedor] ??
-                0.0,
+            media: _mediaFornecedor(fornecedores[index]),
             primary: primary,
             categoriaSelecionada: categoriaSelecionada,
             onTap: () => _abrirDetalheFornecedor(fornecedores[index]),

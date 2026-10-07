@@ -1,8 +1,13 @@
+import 'dart:convert';
+
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
+import 'package:share_plus/share_plus.dart';
 
+import 'package:app_faca_festa/core/legal/convidados_csv.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/cardapio_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/convidado_controller.dart';
 import 'package:app_faca_festa/presentation/modules/convidado/controllers/grupo_convidado_controller.dart';
@@ -84,6 +89,26 @@ class _ConvidadosPageState extends State<ConvidadosPage>
     });
   }
 
+  Future<void> _exportarCsv() async {
+    final lista = convidadoController.convidados.toList();
+    if (lista.isEmpty) {
+      EasyLoading.showInfo('Não há convidados para exportar.');
+      return;
+    }
+    final csv = exportarConvidadosCsv(lista);
+    await Share.shareXFiles(
+      [
+        XFile.fromData(
+          Uint8List.fromList(utf8.encode(csv)),
+          mimeType: 'text/csv',
+          name: 'convidados-faca-festa.csv',
+        ),
+      ],
+      subject: 'Lista de convidados',
+      fileNameOverrides: const ['convidados-faca-festa.csv'],
+    );
+  }
+
   void _iniciarEscutaDoEventoAtual() {
     final evento = eventoController.eventoAtualEntidade;
 
@@ -120,6 +145,11 @@ class _ConvidadosPageState extends State<ConvidadosPage>
             themeController: themeController,
             altura: 124,
             acoes: [
+              IconButton(
+                tooltip: 'Exportar lista (CSV)',
+                icon: const Icon(Icons.download_rounded, color: Colors.white),
+                onPressed: _exportarCsv,
+              ),
               IconButton(
                 tooltip: 'Buscar na lista',
                 icon: const Icon(Icons.search_rounded, color: Colors.white),

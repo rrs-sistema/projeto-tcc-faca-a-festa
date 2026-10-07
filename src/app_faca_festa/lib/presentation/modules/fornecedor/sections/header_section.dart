@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/controllers/fornecedor_controller.dart';
+import 'package:app_faca_festa/presentation/modules/legal/pages/central_privacidade_screen.dart';
+import 'package:app_faca_festa/presentation/modules/legal/pages/preferencias_notificacao_screen.dart';
 import 'package:app_faca_festa/domain/entities/fornecedor.dart';
 import 'package:app_faca_festa/core/utils/no_sqflite_cache_manager.dart';
 import 'fornecedor_premium_layout.dart';
@@ -125,6 +127,20 @@ class HeaderSection extends StatelessWidget {
               icon: Icons.policy_outlined,
               onPressed: () => Get.toNamed('/fornecedor/auditoria'),
             );
+            final dadosProtegidos = _HeaderIconButton(
+              tooltip: 'Dados protegidos',
+              icon: Icons.privacy_tip_outlined,
+              onPressed: () => Get.to(() => const CentralPrivacidadeScreen()),
+            );
+            final avisos = _HeaderIconButton(
+              tooltip: 'Avisos',
+              icon: Icons.notifications_none_rounded,
+              onPressed: () => Get.to(
+                () => PreferenciasNotificacaoScreen(
+                  idUsuario: appController.usuarioLogado.value?.idUsuario ?? '',
+                ),
+              ),
+            );
 
             if (compact) {
               return Column(
@@ -135,6 +151,10 @@ class HeaderSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(child: identity),
+                      const SizedBox(width: 8),
+                      dadosProtegidos,
+                      const SizedBox(width: 8),
+                      avisos,
                       const SizedBox(width: 8),
                       auditoria,
                       const SizedBox(width: 8),
@@ -156,6 +176,10 @@ class HeaderSection extends StatelessWidget {
                     child:
                         Align(alignment: Alignment.centerRight, child: chips)),
                 const SizedBox(width: 12),
+                dadosProtegidos,
+                const SizedBox(width: 8),
+                avisos,
+                const SizedBox(width: 8),
                 auditoria,
                 const SizedBox(width: 8),
                 logout,

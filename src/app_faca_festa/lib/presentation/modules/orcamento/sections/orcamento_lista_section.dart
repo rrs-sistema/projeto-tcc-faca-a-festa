@@ -10,13 +10,20 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
     required EventThemeController themeController,
     required OrcamentoController orcamentoController,
   }) {
-    final totalPrevisto =
-        'R\$ ${Biblioteca.formatarValorDecimal(orcamento.custoEstimado)}';
-
     final double custo = orcamento.custoEstimado ?? 0;
-    final double totalPago =
-        orcamentoController.totalPagoDoOrcamento(orcamento.idOrcamento);
     final bool servicoContratado = !mostrarBotaoAddGasto;
+    final double totalPago = servicoContratado
+        ? (orcamento.isFechado ? custo : 0)
+        : orcamentoController.totalPagoDoOrcamento(orcamento.idOrcamento);
+    final double percentPago =
+        custo > 0 ? (totalPago / custo).clamp(0.0, 1.0) : 0.0;
+    final String estado = servicoContratado
+        ? orcamento.status.label
+        : totalPago <= 0
+            ? 'Nada pago'
+            : totalPago >= custo && custo > 0
+                ? 'Pago'
+                : 'Pago ${_reais(totalPago)}';
 
     final bool podeAvaliar = servicoContratado &&
         orcamento.status == StatusOrcamento.fechado &&
@@ -58,7 +65,7 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
             iconColor: primary.withValues(alpha: 0.9),
             collapsedIconColor: Colors.grey.shade500,
             tilePadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             childrenPadding:
                 const EdgeInsets.only(left: 14, right: 14, bottom: 10),
             title: Row(
@@ -83,8 +90,13 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                       )
                     ],
                   ),
-                  child: const Icon(Icons.folder_special_rounded,
-                      color: Colors.white, size: 16),
+                  child: Icon(
+                    servicoContratado
+                        ? Icons.storefront_rounded
+                        : Icons.payments_rounded,
+                    color: Colors.white,
+                    size: 16,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -93,24 +105,54 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text(
-                        orcamento.anotacoes ?? 'Sem nome',
+                        orcamento.anotacoes?.trim().isNotEmpty == true
+                            ? orcamento.anotacoes!.trim()
+                            : (orcamento.nomeFornecedor ?? 'Sem nome'),
                         style: GoogleFonts.poppins(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
                           color: Colors.black87,
                         ),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        "Previsto: $totalPrevisto",
+                        estado,
                         style: GoogleFonts.poppins(
-                          fontSize: 11,
+                          fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: Colors.grey.shade600,
+                          color: percentPago >= 1 && custo > 0
+                              ? Colors.green.shade700
+                              : Colors.grey.shade600,
                         ),
                       ),
+                      if (!servicoContratado) ...[
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: percentPago,
+                            minHeight: 4,
+                            backgroundColor: Colors.grey.shade200,
+                            valueColor: AlwaysStoppedAnimation(
+                              percentPago >= 1
+                                  ? Colors.green.shade500
+                                  : primary,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  _reais(custo),
+                  style: GoogleFonts.poppins(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
               ],
@@ -130,19 +172,20 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10)),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        minimumSize: const Size(0, 32),
+                            horizontal: 12, vertical: 8),
+                        minimumSize: const Size(0, 40),
                       ),
                       onPressed: () => _showAddGastoDialog(
                         context,
                         idOrcamento: orcamento.idOrcamento,
                         categoria: orcamento.anotacoes ?? '',
+                        custoEstimado: orcamento.custoEstimado ?? 0,
                         themeController: themeController,
                         orcamentoController: orcamentoController,
                       ),
                       icon: const Icon(Icons.add_circle_outline, size: 16),
                       label: Text(
-                        'Adicionar',
+                        'Registrar gasto',
                         style: GoogleFonts.poppins(
                             fontWeight: FontWeight.w600, fontSize: 12),
                       ),
@@ -151,8 +194,8 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                   TextButton.icon(
                     style: TextButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      minimumSize: const Size(0, 32),
+                          horizontal: 8, vertical: 8),
+                      minimumSize: const Size(44, 40),
                     ),
                     onPressed: () async {
                       final confirm = await Get.dialog<bool>(
@@ -294,9 +337,9 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                   onTap: () async {
                     Biblioteca.showConfirmDialog(
                       context,
-                      title: 'Pergunta!',
+                      title: 'Marcar como pago',
                       message:
-                          'Deseja realmente marcar esse serviço como pago?',
+                          'Confirma que $nome foi pago por inteiro?',
                       confirmLabel: 'Pagar',
                       color: themeController.primaryColor.value,
                       onConfirm: () async {
@@ -322,8 +365,10 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                     );
                   },
                   child: Container(
+                    constraints: const BoxConstraints(minHeight: 36),
+                    alignment: Alignment.center,
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.green.shade50,
                       borderRadius: BorderRadius.circular(8),
@@ -343,10 +388,10 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
                 InkWell(
                   onTap: () =>
                       _confirmarExcluirGasto(context, idOrcamento, idGasto),
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 8),
+                  child: const Padding(
+                    padding: EdgeInsets.fromLTRB(10, 8, 4, 8),
                     child: Icon(Icons.delete_outline_rounded,
-                        color: Colors.redAccent.shade200, size: 18),
+                        color: Color(0xFFE57373), size: 20),
                   ),
                 ),
             ],
@@ -368,14 +413,14 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Pago: R\$ ${pago.toStringAsFixed(2)}',
+                'Pago: ${_reais(pago)}',
                 style: GoogleFonts.poppins(
-                    fontSize: 11,
+                    fontSize: 12,
                     fontWeight: FontWeight.w500,
                     color: Colors.teal.shade800),
               ),
               Text(
-                'Restante: R\$ ${restante.toStringAsFixed(2)}',
+                'Restante: ${_reais(restante)}',
                 style: GoogleFonts.poppins(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -427,8 +472,8 @@ extension _OrcamentoListaSection on _OrcamentoScreenState {
     final gastoController = orcamentoController.gastoController(idOrcamento);
     await Biblioteca.showConfirmDialog(
       context,
-      title: 'Excluindo gasto!',
-      message: 'Tem certeza que deseja excluir este item?',
+      title: 'Excluir gasto',
+      message: 'Este lançamento sai do item. O previsto do item não muda.',
       confirmLabel: 'Excluir',
       color: Colors.red,
       onConfirm: () async {

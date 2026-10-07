@@ -6,7 +6,6 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'dart:async';
 
@@ -41,6 +40,10 @@ import 'package:app_faca_festa/domain/entities/tipo_evento.dart';
 import 'package:app_faca_festa/presentation/widgets/menu_drawer_faca_festa.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_bottom_bar.dart';
 import 'package:app_faca_festa/presentation/widgets/festa_app_bar.dart';
+import 'package:app_faca_festa/domain/entities/convidado.dart';
+import 'package:app_faca_festa/domain/entities/tarefa.dart';
+import 'package:app_faca_festa/presentation/modules/checklist/pages/tarefa_dialog.dart';
+import 'package:app_faca_festa/presentation/modules/eventos/components/proximas_tarefas_faixa.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/components/build_animated_header.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
 import 'package:app_faca_festa/presentation/modules/inspiracao/pages/inspiracao_screen.dart';
@@ -168,6 +171,168 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
 
   void _abrirMenu() {
     _scaffoldKey.currentState?.openEndDrawer();
+  }
+
+  void _abrirListaTarefas(EventThemeController theme) {
+    Get.to(
+      () => TarefasScreen(
+        themeController: theme,
+        tarefaController: tarefaController,
+        eventoController: eventoController,
+        convidadoController: convidadoController,
+        appController: appController,
+      ),
+    );
+  }
+
+  Future<void> _abrirNovaTarefa(EventThemeController theme) async {
+    await tarefaController.carregarUsuarios();
+    if (!mounted) return;
+    final eventoId = eventoController.eventoAtualEntidade?.idEvento ?? '';
+    if (eventoId.isEmpty) return;
+    await showTarefaDialog(
+      context: context,
+      themeController: theme,
+      idUsuarioLogado: appController.usuarioLogado.value?.idUsuario,
+      idEvento: eventoId,
+      usuarios: [
+        ...convidadoController.convidados,
+        ...tarefaController.usuarios,
+      ],
+      onSave: (titulo, descricao, data, usuario) async {
+        await tarefaController.adicionarTarefa(
+          nome: titulo,
+          descricao: descricao.isEmpty ? null : descricao,
+          dataPrevista: data,
+          idResponsavel: usuario.idConvidado,
+          idEvento: eventoId,
+        );
+        final mensagem = tarefaController.erro.value.trim();
+        return mensagem.isEmpty ? null : mensagem;
+      },
+    );
+  }
+
+  Future<void> _abrirTarefa(EventThemeController theme, Tarefa tarefa) async {
+    await tarefaController.carregarUsuarios();
+    if (!mounted) return;
+    final responsavel = _responsavelDaTarefa(tarefa);
+    await showTarefaDialog(
+      context: context,
+      themeController: theme,
+      idUsuarioLogado: appController.usuarioLogado.value?.idUsuario,
+      idEvento: tarefa.idEvento,
+      tituloInicial: tarefa.titulo,
+      descricaoInicial: tarefa.descricao,
+      dataInicial: tarefa.dataPrevista,
+      responsavelInicial: responsavel,
+      usuarios: [
+        ...convidadoController.convidados,
+        ...tarefaController.usuarios,
+      ],
+      isEdit: true,
+      onSave: (titulo, descricao, data, usuario) async {
+        await tarefaController.editarTarefa(
+          Tarefa(
+            idTarefa: tarefa.idTarefa,
+            idEvento: tarefa.idEvento,
+            titulo: titulo,
+            descricao: descricao.isEmpty ? null : descricao,
+            dataPrevista: data,
+            idResponsavel: usuario.idConvidado,
+            responsavel: usuario,
+            status: tarefa.status,
+            dataCadastro: tarefa.dataCadastro,
+          ),
+        );
+        final mensagem = tarefaController.erro.value.trim();
+        return mensagem.isEmpty ? null : mensagem;
+      },
+    );
+  }
+
+  Future<void> _concluirTarefa(Tarefa tarefa) async {
+    final anterior = tarefa.status;
+    final ok = await tarefaController.atualizarStatus(
+      tarefa.idTarefa,
+      StatusTarefa.concluida,
+    );
+    if (!mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (!ok) {
+      final mensagem = tarefaController.erro.value.trim();
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            mensagem.isEmpty ? HomeOrganizadorCopy.tarefaErroStatus : mensagem,
+          ),
+        ),
+      );
+      return;
+    }
+    HapticFeedback.lightImpact();
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(HomeOrganizadorCopy.tarefaConcluidaAviso),
+          action: SnackBarAction(
+            label: HomeOrganizadorCopy.desfazer,
+            onPressed: () {
+              tarefaController.atualizarStatus(tarefa.idTarefa, anterior);
+            },
+          ),
+        ),
+      );
+  }
+
+  Map<String, String> _nomesResponsavel() {
+    final nomes = <String, String>{};
+    for (final convidado in convidadoController.convidados) {
+      final id = convidado.idConvidado.trim();
+      final nome = convidado.nome.trim();
+      if (id.isEmpty || nome.isEmpty) continue;
+      nomes[id] = nome;
+    }
+    return nomes;
+  }
+
+  Convidado? _responsavelDaTarefa(Tarefa tarefa) {
+    if (tarefa.responsavel != null) return tarefa.responsavel;
+    final id = tarefa.idResponsavel?.trim() ?? '';
+    if (id.isEmpty) return null;
+    for (final convidado in convidadoController.convidados) {
+      if (convidado.idConvidado.trim() == id) return convidado;
+    }
+    return null;
+  }
+
+  Widget _buildProximasTarefas(EventThemeController theme) {
+    return SliverToBoxAdapter(
+      child: Obx(() {
+        final agora = DateTime.now();
+        final pendentesLista = tarefaController.tarefasPendentesOrdenadas;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+          child: ProximasTarefasFaixa(
+            tarefas: pendentesLista.take(3).toList(),
+            total: tarefaController.total,
+            pendentes: tarefaController.pendentes,
+            atrasadas: HomeOrganizadorCopy.contarAtrasadas(
+              pendentesLista.map((tarefa) => tarefa.dataPrevista),
+              agora,
+            ),
+            primary: theme.primaryColor.value,
+            nomesResponsavel: _nomesResponsavel(),
+            onVerTodas: () => _abrirListaTarefas(theme),
+            onNova: () => _abrirNovaTarefa(theme),
+            onConcluir: _concluirTarefa,
+            onAbrir: (tarefa) => _abrirTarefa(theme, tarefa),
+            agora: agora,
+          ),
+        );
+      }),
+    );
   }
 
   void _abrirInspiracao(EventThemeController theme) {
@@ -400,20 +565,6 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     calculadoraController: calculadoraController,
                     fornecedorMigracaoAdminController: fornecedorMigracaoAdminController,
                   ),
-                  _buildUpcomingTasks(
-                    tarefaController,
-                    theme,
-                    onVerTodas: () => Get.to(
-                      () => TarefasScreen(
-                        themeController: theme,
-                        tarefaController: tarefaController,
-                        eventoController: eventoController,
-                        convidadoController: convidadoController,
-                        appController: appController,
-                      ),
-                    ),
-                  ),
-
                   _buildSuppliersCarousel(
                     fornecedorController,
                     theme,
@@ -422,7 +573,9 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     avaliacaoController: avaliacaoController,
                     eventoController: eventoController,
                     appController: appController,
+                    onVerTodos: homeEventNavController.irParaFornecedores,
                   ),
+                  _buildProximasTarefas(theme),
                   const SliverToBoxAdapter(child: SizedBox(height: 100)),
                 ],
               ),
@@ -508,15 +661,7 @@ class _HomeEventScreenModernState extends State<HomeEventScreen> {
                     value: totTar == 0 ? '0' : '$concl/$totTar',
                     progress: progTar,
                     color: Color.lerp(cor, destaqueOrcamento, 0.45)!,
-                    onTap: () => Get.to(
-                      () => TarefasScreen(
-                        themeController: theme,
-                        tarefaController: tarefaController,
-                        eventoController: eventoController,
-                        convidadoController: convidadoController,
-                        appController: appController,
-                      ),
-                    ),
+                    onTap: () => _abrirListaTarefas(theme),
                   ),
                 ],
               ),
@@ -679,7 +824,7 @@ Widget _buildQuickActions({
             crossAxisCount: 2,
             crossAxisSpacing: 8,
             mainAxisSpacing: 8,
-            childAspectRatio: 2.45,
+            childAspectRatio: 2.05,
           ),
           itemBuilder: (context, i) {
             final item = itens[i];
@@ -754,15 +899,18 @@ Widget _buildQuickActions({
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(item['label'] as String,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: GoogleFonts.poppins(
-                                  fontSize: 11,
-                                  color: Colors.grey.shade600,
-                                  fontWeight: FontWeight.w600)),
+                                  fontSize: 12.5,
+                                  height: 1.15,
+                                  color: const Color(0xFF1F2937),
+                                  fontWeight: FontWeight.w700)),
                           Text(item['val'] as String,
                               style: GoogleFonts.poppins(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                  color: const Color(0xFF1F2937)),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.grey.shade600),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis),
                         ],
@@ -796,16 +944,21 @@ class _MiniCircularIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return Semantics(
+      button: onTap != null,
+      label: '$title. $value',
+      child: InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minWidth: 72, minHeight: 72),
+        child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
         child: Column(
           children: [
             SizedBox(
-              height: 48,
-              width: 48,
+              height: 52,
+              width: 52,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -817,7 +970,7 @@ class _MiniCircularIndicator extends StatelessWidget {
                   Center(
                       child: Text(value,
                           style: GoogleFonts.poppins(
-                              fontSize: 10,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                               color: const Color(0xFF1F2937)))),
                 ],
@@ -826,10 +979,12 @@ class _MiniCircularIndicator extends StatelessWidget {
             const SizedBox(height: 4),
             Text(title,
                 style: GoogleFonts.poppins(
-                    fontSize: 11, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+                    fontSize: 12, fontWeight: FontWeight.w700, color: const Color(0xFF1F2937))),
           ],
         ),
       ),
+      ),
+    ),
     );
   }
 }
@@ -981,142 +1136,6 @@ Widget _buildBudgetChart(
   );
 }
 
-Widget _buildUpcomingTasks(
-  TarefaController tarefaController,
-  EventThemeController theme, {
-  VoidCallback? onVerTodas,
-}) {
-  return SliverToBoxAdapter(
-    child: Obx(() {
-      final proximas = tarefaController.tarefasProximas().take(2).toList();
-      final primary = theme.primaryColor.value;
-      final total = tarefaController.total;
-      final pendentes = tarefaController.pendentes;
-
-      if (proximas.isEmpty) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-          child: Material(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            child: InkWell(
-              onTap: onVerTodas,
-              borderRadius: BorderRadius.circular(20),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Icon(
-                      total > 0
-                          ? Icons.check_circle_rounded
-                          : Icons.task_alt_rounded,
-                      color: primary,
-                      size: 22,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        HomeOrganizadorCopy.tarefasFaixaTitulo(
-                          total: total,
-                          pendentes: pendentes,
-                        ),
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 13,
-                          color: const Color(0xFF1F2937),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      HomeOrganizadorCopy.tarefasFaixaAcao(total: total),
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                        color: primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        );
-      }
-
-      return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
-                blurRadius: 10,
-                offset: const Offset(0, 4))
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(HomeOrganizadorCopy.proximasTarefas,
-                      style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w700, fontSize: 14, color: const Color(0xFF1F2937))),
-                ),
-                if (onVerTodas != null)
-                  TextButton(
-                    onPressed: onVerTodas,
-                    child: Text(
-                      HomeOrganizadorCopy.verTodasTarefas,
-                      style: GoogleFonts.poppins(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                        color: theme.primaryColor.value,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            ...proximas.map((t) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    children: [
-                      Icon(Icons.radio_button_unchecked_rounded,
-                          color: Colors.grey.shade400, size: 18),
-                      const SizedBox(width: 8),
-                      Expanded(
-                          child: Text(t.titulo,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style:
-                                  GoogleFonts.poppins(fontSize: 12, color: Colors.grey.shade800))),
-                      Text(_formatarDataTarefa(t.dataPrevista),
-                          style: GoogleFonts.poppins(
-                              fontSize: 10,
-                              color: Colors.red.shade600,
-                              fontWeight: FontWeight.w600)),
-                    ],
-                  ),
-                )),
-          ],
-        ),
-      );
-    }),
-  );
-}
-
-String _formatarDataTarefa(DateTime? data) {
-  if (data == null) return 'Sem data';
-  final dif = data.difference(DateTime.now()).inDays;
-  if (dif == 0) return "Hoje";
-  if (dif == 1) return "Amanhã";
-  return DateFormat("dd/MM").format(data);
-}
-
 Widget _buildSuppliersCarousel(
   FornecedorLocalizacaoController fornecedorController,
   EventThemeController theme, {
@@ -1125,6 +1144,7 @@ Widget _buildSuppliersCarousel(
   required EventoController eventoController,
   required AppController appController,
   required CotacaoController cotacaoController,
+  required VoidCallback onVerTodos,
 }) {
   final cor = theme.primaryColor.value;
 
@@ -1133,25 +1153,90 @@ Widget _buildSuppliersCarousel(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 10),
-          child: Text(HomeOrganizadorCopy.fornecedoresRegiao,
-              style: GoogleFonts.poppins(
-                  fontSize: 15, fontWeight: FontWeight.w800, color: const Color(0xFF1F2937))),
+          padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  HomeOrganizadorCopy.fornecedoresRegiao,
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                    color: const Color(0xFF1F2937),
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: onVerTodos,
+                child: Text(
+                  HomeOrganizadorCopy.verFornecedores,
+                  style: GoogleFonts.poppins(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 12,
+                    color: cor,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
         Obx(() {
           final fornecedores = fornecedorController.fornecedoresFiltrados
               .where((f) => f.fornecedor.ativo && f.fornecedor.aptoParaOperar != false)
               .toList();
           if (fornecedores.isEmpty && !fornecedorController.carregando.value) {
-            return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+              child: Material(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                child: InkWell(
+                  onTap: onVerTodos,
+                  borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      child: Row(
+                        children: [
+                          Icon(Icons.storefront_outlined, color: cor, size: 22),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  HomeOrganizadorCopy.nenhumFornecedorPerto,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFF1F2937),
+                                  ),
+                                ),
+                                Text(
+                                  HomeOrganizadorCopy.nenhumFornecedorAcao,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: cor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Icon(Icons.chevron_right_rounded, color: cor),
+                        ],
+                      ),
+                    ),
+                ),
+              ),
+            );
           }
 
           return SizedBox(
-            height: 140, // 🔹 Mais compacto
+            height: 176,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: fornecedorController.carregando.value ? 4 : fornecedores.length,
+              padding: const EdgeInsets.fromLTRB(16, 2, 16, 8),
+              itemCount: fornecedorController.carregando.value ? 3 : fornecedores.length,
               separatorBuilder: (_, __) => const SizedBox(width: 12),
               itemBuilder: (_, index) {
                 if (fornecedorController.carregando.value) {
@@ -1159,9 +1244,9 @@ Widget _buildSuppliersCarousel(
                       baseColor: Colors.grey.shade300,
                       highlightColor: Colors.grey.shade100,
                       child: Container(
-                          width: 110,
+                          width: 150,
                           decoration: BoxDecoration(
-                              color: Colors.white, borderRadius: BorderRadius.circular(16))));
+                              color: Colors.white, borderRadius: BorderRadius.circular(18))));
                 }
                 return _fornecedorCard(
                   fornecedorDetalhe: fornecedores[index],
@@ -1195,57 +1280,152 @@ Widget _fornecedorCard({
   required CotacaoController cotacaoController,
 }) {
   final fornecedor = fornecedorDetalhe.fornecedor;
-  return GestureDetector(
-    onTap: () => Get.to(() => FornecedorDetalheScreen(
-          fornecedorDetalhado: fornecedorDetalhe,
-          selecionouCategoria: false,
-          themeController: themeController,
-          fornecedorController: fornecedorController,
-          fornecedorLocalizacaoController: fornecedorLocalizacaoController,
-          avaliacaoController: avaliacaoController,
-          eventoController: eventoController,
-          appController: appController,
-          cotacoes: cotacaoController.gerenciarCotacoes,
-        )),
-    child: Container(
-      width: 110,
-      decoration: BoxDecoration(
+  final contexto = _contextoFornecedor(fornecedorDetalhe);
+  final nota = _notaFornecedor(fornecedorDetalhe);
+  final legenda = [
+    fornecedor.razaoSocial,
+    if (contexto.isNotEmpty) contexto,
+    if (nota.isNotEmpty) 'nota $nota',
+  ].join('. ');
+  return Semantics(
+    button: true,
+    label: legenda,
+    child: Material(
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: const BorderSide(color: Color(0xFFE5E7EB)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => Get.to(() => FornecedorDetalheScreen(
+              fornecedorDetalhado: fornecedorDetalhe,
+              selecionouCategoria: false,
+              themeController: themeController,
+              fornecedorController: fornecedorController,
+              fornecedorLocalizacaoController: fornecedorLocalizacaoController,
+              avaliacaoController: avaliacaoController,
+              eventoController: eventoController,
+              appController: appController,
+              cotacoes: cotacaoController.gerenciarCotacoes,
+            )),
+        child: Ink(
+          width: 150,
+          height: 164,
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 8,
-                offset: const Offset(0, 3))
-          ]),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-            child: CachedNetworkImage(
-                imageUrl: fornecedor.bannerUrl ?? '',
-                height: 75,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 88,
                 width: double.infinity,
-                fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => Container(
-                    height: 75,
-                    color: Colors.grey.shade200,
-                    child: const Icon(Icons.store, color: Colors.grey))),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CachedNetworkImage(
+                      imageUrl: fornecedor.bannerUrl ?? '',
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => ColoredBox(
+                        color: cor.withValues(alpha: 0.08),
+                        child: Icon(Icons.storefront_outlined, color: cor, size: 28),
+                      ),
+                    ),
+                    if (nota.isNotEmpty)
+                      Positioned(
+                        top: 8,
+                        right: 8,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.star_rounded, size: 13, color: Color(0xFFF59E0B)),
+                              const SizedBox(width: 2),
+                              Text(
+                                nota,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: const Color(0xFF1F2937),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        fornecedor.razaoSocial,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          height: 1.2,
+                          color: const Color(0xFF1F2937),
+                        ),
+                      ),
+                      if (contexto.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          contexto,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.poppins(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: cor,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(8),
-            child: Text(fornecedor.razaoSocial,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.poppins(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: const Color(0xFF1F2937),
-                    height: 1.1)),
-          ),
-        ],
+        ),
       ),
     ),
   );
+}
+
+String _contextoFornecedor(FornecedorDetalhado detalhe) {
+  final categoria = _categoriaFornecedor(detalhe);
+  final distancia = HomeOrganizadorCopy.distanciaFornecedor(detalhe.distanciaKm);
+  if (categoria.isNotEmpty && distancia.isNotEmpty) {
+    return '$categoria · $distancia';
+  }
+  if (categoria.isNotEmpty) return categoria;
+  return distancia;
+}
+
+String _categoriaFornecedor(FornecedorDetalhado detalhe) {
+  final direta = detalhe.categoriaNome.trim();
+  if (direta.isNotEmpty) return direta;
+  for (final item in detalhe.fornecedor.categorias) {
+    final nome = item.nomeCategoria.trim();
+    if (nome.isNotEmpty) return nome;
+  }
+  return '';
+}
+
+String _notaFornecedor(FornecedorDetalhado detalhe) {
+  final media = detalhe.fornecedor.mediaAvaliacoes;
+  final total = detalhe.fornecedor.totalAvaliacoes;
+  if (total <= 0 || media <= 0) return '';
+  final texto = media.toStringAsFixed(1);
+  return texto.endsWith('.0') ? texto.substring(0, texto.length - 2) : texto;
 }

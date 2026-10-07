@@ -105,4 +105,42 @@ class PerfilUsuarioRepositoryImpl implements PerfilUsuarioRepository {
         cidade: cidade,
         uf: uf,
       );
+
+  @override
+  Future<String> registrarSolicitacaoTitular({
+    required String idUsuario,
+    required String tipo,
+    required String resumo,
+    String nome = '',
+    String email = '',
+  }) =>
+      remote.registrarSolicitacaoTitular(
+        idUsuario: idUsuario,
+        tipo: tipo,
+        resumo: resumo,
+        nome: nome,
+        email: email,
+      );
+
+  @override
+  Future<void> registrarAceitePolitica({
+    required String idUsuario,
+    required DateTime aceiteEm,
+    required String versao,
+  }) =>
+      remote.registrarAceitePolitica(
+        idUsuario: idUsuario,
+        aceiteEm: aceiteEm,
+        versao: versao,
+      );
+
+  @override
+  Future<void> salvarPreferenciasNotificacao({
+    required String idUsuario,
+    required Map<String, bool> preferencias,
+  }) =>
+      remote.salvarPreferenciasNotificacao(
+        idUsuario: idUsuario,
+        preferencias: preferencias,
+      );
 }

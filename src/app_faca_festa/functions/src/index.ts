@@ -1,4 +1,7 @@
 export { buscarCepGoogle } from "./address/buscarCepGoogle";
+export { exportarDossieTitular } from "./functions/lgpd/exportarDossieTitular";
+export { atenderSolicitacaoLgpd } from "./functions/lgpd/atenderSolicitacaoLgpd";
+export { expurgarAuditoriaAntiga } from "./functions/lgpd/expurgarAuditoriaAntiga";
 export { novaAvaliacaoProcessar } from "./functions/fornecedores/novaAvaliacaoProcessar";
 export { testarNotificacaoFornecedor } from "./functions/fornecedores/testarNotificacaoFornecedor";
 export { analisarCalculadoraFestaIA } from "./functions/calculadora/analisarCalculadoraFestaIA";

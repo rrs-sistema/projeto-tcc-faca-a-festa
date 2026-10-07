@@ -16,6 +16,7 @@ import 'package:app_faca_festa/domain/entities/evento.dart';
 import 'package:app_faca_festa/presentation/widgets/frase_aleatoria_widget.dart';
 import 'package:app_faca_festa/presentation/widgets/tema_capa_imagem.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/pages/banner_capa_crop_page.dart';
+import 'package:app_faca_festa/presentation/modules/legal/widgets/direito_imagem_dialog.dart';
 
 const _sombraCapa = <Shadow>[
   Shadow(color: Color(0xCC000000), blurRadius: 10, offset: Offset(0, 1)),
@@ -219,7 +220,7 @@ Widget buildAnimatedHeader(
                             tooltip: 'Mais opções',
                             visualDensity: VisualDensity.compact,
                             padding: const EdgeInsets.all(8),
-                            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
                             icon: const Icon(Icons.more_horiz_rounded,
                                 color: Colors.white, size: 18),
                             onPressed: onAbrirMenu,
@@ -315,7 +316,7 @@ Widget _botaoTrocarCapa({
       tooltip: 'Trocar foto do banner',
       visualDensity: VisualDensity.compact,
       padding: const EdgeInsets.all(8),
-      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+      constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
       icon: const Icon(Icons.photo_camera_outlined,
           color: Colors.white, size: 18),
       onPressed: () => _abrirOpcoesCapa(
@@ -618,6 +619,9 @@ Future<void> _escolherEEnviarCapa(
   EventoController eventoController,
 ) async {
   try {
+    final autorizado = await confirmarDireitoImagem();
+    if (!autorizado) return;
+
     final picker = ImagePicker();
     final arquivo = await picker.pickImage(
       source: ImageSource.gallery,

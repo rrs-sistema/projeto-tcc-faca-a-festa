@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 
 import 'package:app_faca_festa/app/routes/app_route_args.dart';
+import 'package:app_faca_festa/core/legal/politica_privacidade.dart';
 import 'package:app_faca_festa/core/utils/form_validators.dart';
 import 'package:app_faca_festa/domain/entities/categoria_servico.dart';
 import 'package:app_faca_festa/domain/entities/endereco_usuario.dart';
@@ -104,6 +105,7 @@ class RegisterController extends GetxController {
   Uint8List? bannerBytes;
 
   var carregando = false.obs;
+  final aceitePrivacidade = false.obs;
   RxBool exibirSenha = false.obs;
 
   final Rx<EnderecoSectionController> enderecoController;
@@ -221,6 +223,8 @@ class RegisterController extends GetxController {
         cidade: _texto(endereco.nomeCidade),
         uf: _texto(endereco.uf),
         dataCadastro: DateTime.now(),
+        aceitePrivacidadeEm: DateTime.now(),
+        versaoPoliticaPrivacidade: PoliticaPrivacidade.versao,
       );
 
       await _perfilUsuarioRepository.salvarUsuarioCadastro(
@@ -374,6 +378,8 @@ class RegisterController extends GetxController {
           cidade: _texto(enderecoAntesDoUid.nomeCidade),
           uf: _texto(enderecoAntesDoUid.uf),
           dataCadastro: DateTime.now(),
+          aceitePrivacidadeEm: DateTime.now(),
+          versaoPoliticaPrivacidade: PoliticaPrivacidade.versao,
         );
 
         await _perfilUsuarioRepository.salvarUsuarioCadastro(
@@ -448,6 +454,8 @@ class RegisterController extends GetxController {
     final tipoOriginal = tipoCadastroAtual;
     final cadastroConvidado = cadastroComoConvidado;
     final tipo = cadastroConvidado ? 'C' : tipoOriginal;
+
+    if (!_exigirAceitePrivacidade()) return false;
 
     _log('===== INÍCIO _validarCamposCadastro =====');
     _log(
@@ -545,10 +553,18 @@ class RegisterController extends GetxController {
     return true;
   }
 
+  bool _exigirAceitePrivacidade() {
+    if (aceitePrivacidade.value) return true;
+    _showError('Aceite a Política de Privacidade para continuar.');
+    return false;
+  }
+
   bool _validarCamposCadastroGoogle(
     String tipo,
     EnderecoUsuario endereco,
   ) {
+    if (!_exigirAceitePrivacidade()) return false;
+
     if (_falhou(FormValidators.nomeCompleto(
       nome.value,
       campo: tipo == 'F'

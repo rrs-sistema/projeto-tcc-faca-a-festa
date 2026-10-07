@@ -56,6 +56,7 @@ import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/fornecedor_localizacao_screen.dart';
 import 'package:app_faca_festa/presentation/modules/fornecedor/pages/orcamentos_screen.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/pages/home_event_screen.dart';
+import 'package:app_faca_festa/presentation/modules/legal/pages/central_privacidade_screen.dart';
 import 'package:app_faca_festa/presentation/modules/legal/pages/privacidade_screen.dart';
 import 'package:app_faca_festa/presentation/modules/auth/pages/forgot_password_screen.dart';
 import 'package:app_faca_festa/presentation/modules/auth/pages/login_screen.dart';
@@ -137,6 +138,10 @@ class AppRoutes {
         GetPage(
           name: '/privacidade',
           page: () => const PrivacidadeScreen(),
+        ),
+        GetPage(
+          name: '/privacidade/dados',
+          page: () => const CentralPrivacidadeScreen(),
         ),
         GetPage(
           name: '/splash',

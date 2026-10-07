@@ -11,6 +11,7 @@ import 'package:app_faca_festa/domain/entities/inspiracao_evento_planejamento.da
 import 'package:app_faca_festa/domain/entities/inspiracao_sugestao.dart';
 import 'package:app_faca_festa/domain/entities/referencia_evento.dart';
 import 'package:app_faca_festa/domain/usecases/gerenciar_inspiracoes.dart';
+import 'package:app_faca_festa/presentation/modules/legal/widgets/direito_imagem_dialog.dart';
 
 part 'inspiracao_evento_planejamento.dart';
 

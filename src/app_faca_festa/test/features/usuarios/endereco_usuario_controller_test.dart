@@ -222,4 +222,28 @@ class _PerfilUsuarioRepositoryFake implements PerfilUsuarioRepository {
     required String idUsuario,
     required String? email,
   }) async {}
+
+  @override
+  Future<String> registrarSolicitacaoTitular({
+    required String idUsuario,
+    required String tipo,
+    required String resumo,
+    String nome = '',
+    String email = '',
+  }) async {
+    return 'protocolo-teste';
+  }
+
+  @override
+  Future<void> registrarAceitePolitica({
+    required String idUsuario,
+    required DateTime aceiteEm,
+    required String versao,
+  }) async {}
+
+  @override
+  Future<void> salvarPreferenciasNotificacao({
+    required String idUsuario,
+    required Map<String, bool> preferencias,
+  }) async {}
 }

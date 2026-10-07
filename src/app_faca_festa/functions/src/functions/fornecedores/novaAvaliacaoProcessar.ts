@@ -1,5 +1,6 @@
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { admin } from "../../shared/firebaseAdmin";
+import { usuarioPermiteAviso } from "../lgpd/preferenciasNotificacao";
 
 type AvaliacaoResumo = {
     total: number;
@@ -210,6 +211,12 @@ async function enviarNotificacaoNovaAvaliacao(params: {
 
     if (!fcmToken || typeof fcmToken !== "string") {
         console.log("❌ Token inválido. Notificação não enviada.");
+        return;
+    }
+
+    const permite = await usuarioPermiteAviso(db, idFornecedor, "avaliacoes");
+    if (!permite) {
+        console.log("Aviso de avaliação desligado pelo titular.");
         return;
     }
 

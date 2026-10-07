@@ -21,6 +21,9 @@ import 'package:app_faca_festa/presentation/modules/inspiracao/pages/minhas_refe
 import 'package:app_faca_festa/presentation/modules/eventos/pages/seletor_evento_bottom_sheet.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/tema_festa_controller.dart';
+import 'package:app_faca_festa/presentation/modules/legal/pages/central_privacidade_screen.dart';
+import 'package:app_faca_festa/presentation/modules/legal/pages/solicitacoes_lgpd_admin_screen.dart';
+import 'package:app_faca_festa/presentation/modules/legal/pages/preferencias_notificacao_screen.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/pages/edit_usuario_screen.dart';
 import 'package:app_faca_festa/presentation/modules/eventos/controllers/evento_controller.dart';
 import 'package:app_faca_festa/presentation/modules/app/controllers/app_controller.dart';
@@ -153,6 +156,36 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                   const SizedBox(height: 10),
                   _sectionTitle('Conta'),
                   _menuItem(
+                    Icons.privacy_tip_outlined,
+                    'Dados protegidos',
+                    subtitle: 'Telas, campos e seus direitos',
+                    color: primary,
+                    onTap: () {
+                      Get.back();
+                      Future.delayed(const Duration(milliseconds: 120), () {
+                        Get.to(() => const CentralPrivacidadeScreen());
+                      });
+                    },
+                  ),
+                  _menuItem(
+                    Icons.notifications_none_rounded,
+                    'Avisos',
+                    subtitle: 'Convites, cotações e chat',
+                    color: primary,
+                    onTap: () {
+                      final idUsuario =
+                          appController.usuarioLogado.value?.idUsuario ?? '';
+                      Get.back();
+                      Future.delayed(const Duration(milliseconds: 120), () {
+                        Get.to(
+                          () => PreferenciasNotificacaoScreen(
+                            idUsuario: idUsuario,
+                          ),
+                        );
+                      });
+                    },
+                  ),
+                  _menuItem(
                     Icons.person_outline_rounded,
                     'Meu perfil',
                     subtitle: 'Dados da conta',
@@ -174,6 +207,19 @@ class MenuDrawerFacaFesta extends StatelessWidget {
                   if (_deveExibirAdminCalculadora()) ...[
                     const SizedBox(height: 10),
                     _sectionTitle('Administração do app'),
+                    _menuItem(
+                      Icons.folder_shared_outlined,
+                      'Protocolos LGPD',
+                      subtitle: 'Atender acesso, exclusão e oposição',
+                      color: primary,
+                      badgeText: 'Admin',
+                      onTap: () {
+                        Get.back();
+                        Future.delayed(const Duration(milliseconds: 120), () {
+                          Get.to(() => const SolicitacoesLgpdAdminScreen());
+                        });
+                      },
+                    ),
                     _menuItem(
                       Icons.lightbulb_outline_rounded,
                       'Gerenciar inspirações',

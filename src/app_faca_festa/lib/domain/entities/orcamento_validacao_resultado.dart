@@ -20,7 +20,18 @@ class OrcamentoValidacaoResultado {
   }) =>
       OrcamentoValidacaoResultado(
         ok: false,
-        mensagem: "Limite da categoria excedido.",
+        mensagem: 'O custo total é maior que o previsto da categoria.',
+        excedente: excedente,
+        limite: limite,
+      );
+
+  factory OrcamentoValidacaoResultado.excedeuPagamentoCategoria({
+    required double excedente,
+    required double limite,
+  }) =>
+      OrcamentoValidacaoResultado(
+        ok: false,
+        mensagem: 'O valor pago excede o previsto da categoria.',
         excedente: excedente,
         limite: limite,
       );
@@ -31,7 +42,7 @@ class OrcamentoValidacaoResultado {
   }) =>
       OrcamentoValidacaoResultado(
         ok: false,
-        mensagem: "Orçamento total do evento excedido.",
+        mensagem: 'O valor pago excede o orçamento do evento.',
         excedente: excedente,
         limite: limite,
       );

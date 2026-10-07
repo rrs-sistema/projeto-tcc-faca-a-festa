@@ -3,6 +3,7 @@ import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 
+import 'package:app_faca_festa/presentation/modules/legal/widgets/vigia_aceite_politica.dart';
 import 'package:app_faca_festa/presentation/modules/tema/controllers/event_theme_controller.dart';
 import 'routes/app_routes.dart';
 
@@ -31,7 +32,9 @@ class FacaFestaApp extends StatelessWidget {
       unknownRoute: AppRoutes.unknownRoute,
       getPages: AppRoutes.pages,
       builder: (context, child) {
-        final page = child ?? const EntradaAppPage();
+        final page = VigiaAceitePolitica(
+          child: child ?? const EntradaAppPage(),
+        );
         try {
           return EasyLoading.init()(context, page);
         } catch (_) {

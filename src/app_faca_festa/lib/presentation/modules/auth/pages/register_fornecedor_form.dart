@@ -14,6 +14,8 @@ import 'package:app_faca_festa/presentation/modules/auth/controllers/register_co
 import 'package:app_faca_festa/presentation/modules/auth/widgets/auth_festa_brand.dart';
 import 'package:app_faca_festa/presentation/widgets/cadastro_passos_bar.dart';
 import 'package:app_faca_festa/presentation/widgets/custom_input_field.dart';
+import 'package:app_faca_festa/presentation/modules/legal/widgets/aceite_privacidade_tile.dart';
+import 'package:app_faca_festa/presentation/modules/legal/widgets/direito_imagem_dialog.dart';
 import 'package:app_faca_festa/presentation/modules/usuario/components/endereco/endereco_section.dart';
 
 class RegisterFornecedorForm extends StatefulWidget {
@@ -49,6 +51,7 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
   var _autovalidateMode = AutovalidateMode.disabled;
   var _cadastroGoogle = false;
   var _passo = 0;
+  var _aceitePrivacidade = false;
 
   static const _titulosPassos = ['Você', 'Empresa', 'Endereço', 'Atuação'];
 
@@ -139,8 +142,10 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
     });
 
     if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!_aceitePrivacidade) return;
 
     final controller = widget.controller;
+    controller.aceitePrivacidade.value = true;
     _aplicarTiposEventoNoController(controller);
     controller.bannerBytes = widget.bannerBytes;
 
@@ -194,11 +199,23 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
           if (_passo == 1) ..._passoEmpresa(primary, controller),
           if (_passo == 2) ..._passoEndereco(primary, controller),
           if (_passo == 3) ..._passoAtuacao(primary, controller),
+          if (_passo == 3) ...[
+            const SizedBox(height: 12),
+            AceitePrivacidadeTile(
+              aceito: _aceitePrivacidade,
+              cor: primary,
+              onChanged: (valor) {
+                setState(() => _aceitePrivacidade = valor);
+                controller.aceitePrivacidade.value = valor;
+              },
+            ),
+          ],
           const SizedBox(height: 20),
           Obx(
             () => CadastroPassosAcoes(
               cor: primary,
               continuarLabel: _passo == 3 ? 'Cadastrar' : 'Continuar',
+              habilitado: _passo < 3 || _aceitePrivacidade,
               onContinuar: _passo == 3
                   ? () => _cadastrar(comGoogle: _cadastroGoogle)
                   : _avancar,
@@ -373,6 +390,8 @@ class _RegisterFornecedorFormState extends State<RegisterFornecedorForm> {
 
   Widget _uploadBanner(Color color) => GestureDetector(
         onTap: () async {
+          final autorizado = await confirmarDireitoImagem();
+          if (!autorizado) return;
           final picked = await widget.picker.pickImage(
             source: ImageSource.gallery,
           );

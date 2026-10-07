@@ -18,10 +18,13 @@ class GrupoConvidadoController extends GetxController {
   final RxBool carregando = false.obs;
   final RxString erro = ''.obs;
 
+  static const nomeGrupoPadrao = 'Geral';
+
   StreamSubscription<List<GrupoConvidado>>? _subGrupos;
   StreamSubscription<List<Convidado>>? _subConvidados;
   List<Convidado> _convidadosRecebidos = const [];
   String? _idEventoAtual;
+  Future<GrupoConvidado?>? _garantiaGrupoPadrao;
 
   Future<void> escutarGrupos(String idEvento) async {
     final eventoId = idEvento.trim();
@@ -90,6 +93,54 @@ class GrupoConvidadoController extends GetxController {
       mensagemErro: 'Erro ao adicionar grupo',
       acao: () => _repository.salvarGrupo(grupo),
     );
+  }
+
+  /// Garante um grupo quando o evento ainda não tem nenhum, para o cadastro
+  /// do primeiro convidado poder continuar.
+  ///
+  /// Reutiliza o grupo [nomeGrupoPadrao] se ele já existir. Não cria outro
+  /// grupo quando o evento já tem grupos diferentes.
+  Future<GrupoConvidado?> garantirGrupoPadrao({String? idEvento}) {
+    final emAndamento = _garantiaGrupoPadrao;
+    if (emAndamento != null) return emAndamento;
+
+    final futuro = _garantirGrupoPadrao(idEvento: idEvento);
+    _garantiaGrupoPadrao = futuro;
+    return futuro.whenComplete(() {
+      if (identical(_garantiaGrupoPadrao, futuro)) {
+        _garantiaGrupoPadrao = null;
+      }
+    });
+  }
+
+  Future<GrupoConvidado?> _garantirGrupoPadrao({String? idEvento}) async {
+    final existente = _buscarGrupoPorNome(nomeGrupoPadrao);
+    if (existente != null) return existente;
+    if (grupos.isNotEmpty) return null;
+
+    final eventoId = (idEvento ?? _idEventoAtual ?? '').trim();
+    if (eventoId.isEmpty) {
+      throw StateError(
+        'Nenhum evento selecionado para cadastrar o grupo padrão.',
+      );
+    }
+
+    final agora = DateTime.now();
+    final grupo = GrupoConvidado(
+      idGrupo: agora.millisecondsSinceEpoch.toString(),
+      idEvento: eventoId,
+      nome: nomeGrupoPadrao,
+      descricao: 'Grupo padrão dos convidados.',
+      icone: 'group',
+      corHex: '#0F766E',
+      dataCadastro: agora,
+      dataAtualizacao: agora,
+    );
+    await adicionarGrupo(grupo);
+    if (_buscarGrupoPorId(grupo.idGrupo) == null) {
+      grupos.add(grupo);
+    }
+    return grupo;
   }
 
   Future<void> atualizarGrupo(GrupoConvidado grupo) async {
